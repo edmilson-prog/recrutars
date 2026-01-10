@@ -5,6 +5,21 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-01-10
+
+### Added
+- Componente ProtectedRoute para proteção de rotas por tipo de usuário
+- Componente RedirectIfAuthenticated para redirecionar usuários logados
+- Redirecionamento automático baseado em autenticação e permissão
+
+### Fixed
+- Removidas rotas duplicadas no App.tsx (candidaturas, testes, mensagens, configuracoes)
+
+### Changed
+- Rotas privadas agora exigem autenticação e tipo de usuário correto
+- Usuários logados são redirecionados do /login para seu dashboard
+- Reorganizada estrutura de rotas por área (admin, empresa, candidato)
+
 ## [0.1.1] - 2025-01-10
 
 ### Fixed

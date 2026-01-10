@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { RedirectIfAuthenticated } from "@/components/auth/RedirectIfAuthenticated";
 
 // Public pages
 import Landing from "./pages/Landing";
@@ -40,37 +42,109 @@ const App = () => (
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/cadastro" element={<Register />} />
+            <Route path="/login" element={
+              <RedirectIfAuthenticated>
+                <Login />
+              </RedirectIfAuthenticated>
+            } />
+            <Route path="/cadastro" element={
+              <RedirectIfAuthenticated>
+                <Register />
+              </RedirectIfAuthenticated>
+            } />
             <Route path="/como-funciona" element={<HowItWorksPage />} />
             <Route path="/planos" element={<PlansPage />} />
 
             {/* Admin Routes */}
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/empresas" element={<AdminDashboard />} />
-            <Route path="/admin/candidatos" element={<AdminDashboard />} />
-            <Route path="/admin/configuracoes" element={<AdminDashboard />} />
+            <Route path="/admin" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/empresas" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/candidatos" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/configuracoes" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
 
             {/* Company Routes */}
-            <Route path="/empresa" element={<CompanyDashboard />} />
-            <Route path="/empresa/vagas" element={<CompanyJobs />} />
-            <Route path="/empresa/candidatos" element={<CompanyDashboard />} />
-            <Route path="/empresa/testes" element={<CompanyDashboard />} />
-            <Route path="/empresa/mensagens" element={<CompanyMessages />} />
-            <Route path="/empresa/configuracoes" element={<CompanyDashboard />} />
+            <Route path="/empresa" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/vagas" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyJobs />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/candidatos" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/testes" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/mensagens" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyMessages />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/configuracoes" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyDashboard />
+              </ProtectedRoute>
+            } />
 
             {/* Candidate Routes */}
-            <Route path="/candidato" element={<CandidateDashboard />} />
-            <Route path="/candidato/perfil" element={<CandidateProfile />} />
-            <Route path="/candidato/vagas" element={<CandidateJobSearch />} />
-            <Route path="/candidato/candidaturas" element={<CandidateDashboard />} />
-            <Route path="/candidato/testes" element={<CandidateTests />} />
-            <Route path="/candidato/mensagens" element={<CandidateMessages />} />
-            <Route path="/candidato/configuracoes" element={<CandidateDashboard />} />
-            <Route path="/candidato/candidaturas" element={<CandidateDashboard />} />
-            <Route path="/candidato/testes" element={<CandidateDashboard />} />
-            <Route path="/candidato/mensagens" element={<CandidateDashboard />} />
-            <Route path="/candidato/configuracoes" element={<CandidateDashboard />} />
+            <Route path="/candidato" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/perfil" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/vagas" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateJobSearch />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/candidaturas" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/testes" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateTests />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/mensagens" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateMessages />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/configuracoes" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateDashboard />
+              </ProtectedRoute>
+            } />
 
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
