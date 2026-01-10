@@ -18,9 +18,11 @@ import AdminDashboard from "./pages/admin/Dashboard";
 
 // Company pages
 import CompanyDashboard from "./pages/empresa/Dashboard";
+import CompanyJobs from "./pages/empresa/Jobs";
 
 // Candidate pages
 import CandidateDashboard from "./pages/candidato/Dashboard";
+import CandidateJobSearch from "./pages/candidato/JobSearch";
 
 const queryClient = new QueryClient();
 
@@ -47,7 +49,7 @@ const App = () => (
 
             {/* Company Routes */}
             <Route path="/empresa" element={<CompanyDashboard />} />
-            <Route path="/empresa/vagas" element={<CompanyDashboard />} />
+            <Route path="/empresa/vagas" element={<CompanyJobs />} />
             <Route path="/empresa/candidatos" element={<CompanyDashboard />} />
             <Route path="/empresa/testes" element={<CompanyDashboard />} />
             <Route path="/empresa/mensagens" element={<CompanyDashboard />} />
@@ -56,7 +58,7 @@ const App = () => (
             {/* Candidate Routes */}
             <Route path="/candidato" element={<CandidateDashboard />} />
             <Route path="/candidato/perfil" element={<CandidateDashboard />} />
-            <Route path="/candidato/vagas" element={<CandidateDashboard />} />
+            <Route path="/candidato/vagas" element={<CandidateJobSearch />} />
             <Route path="/candidato/candidaturas" element={<CandidateDashboard />} />
             <Route path="/candidato/testes" element={<CandidateDashboard />} />
             <Route path="/candidato/mensagens" element={<CandidateDashboard />} />
