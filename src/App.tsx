@@ -19,10 +19,14 @@ import AdminDashboard from "./pages/admin/Dashboard";
 // Company pages
 import CompanyDashboard from "./pages/empresa/Dashboard";
 import CompanyJobs from "./pages/empresa/Jobs";
+import CompanyMessages from "./pages/empresa/Messages";
 
 // Candidate pages
 import CandidateDashboard from "./pages/candidato/Dashboard";
 import CandidateJobSearch from "./pages/candidato/JobSearch";
+import CandidateTests from "./pages/candidato/Tests";
+import CandidateMessages from "./pages/candidato/Messages";
+import CandidateProfile from "./pages/candidato/Profile";
 
 const queryClient = new QueryClient();
 
@@ -52,13 +56,17 @@ const App = () => (
             <Route path="/empresa/vagas" element={<CompanyJobs />} />
             <Route path="/empresa/candidatos" element={<CompanyDashboard />} />
             <Route path="/empresa/testes" element={<CompanyDashboard />} />
-            <Route path="/empresa/mensagens" element={<CompanyDashboard />} />
+            <Route path="/empresa/mensagens" element={<CompanyMessages />} />
             <Route path="/empresa/configuracoes" element={<CompanyDashboard />} />
 
             {/* Candidate Routes */}
             <Route path="/candidato" element={<CandidateDashboard />} />
-            <Route path="/candidato/perfil" element={<CandidateDashboard />} />
+            <Route path="/candidato/perfil" element={<CandidateProfile />} />
             <Route path="/candidato/vagas" element={<CandidateJobSearch />} />
+            <Route path="/candidato/candidaturas" element={<CandidateDashboard />} />
+            <Route path="/candidato/testes" element={<CandidateTests />} />
+            <Route path="/candidato/mensagens" element={<CandidateMessages />} />
+            <Route path="/candidato/configuracoes" element={<CandidateDashboard />} />
             <Route path="/candidato/candidaturas" element={<CandidateDashboard />} />
             <Route path="/candidato/testes" element={<CandidateDashboard />} />
             <Route path="/candidato/mensagens" element={<CandidateDashboard />} />
