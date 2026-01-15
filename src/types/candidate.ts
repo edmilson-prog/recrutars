@@ -2,10 +2,20 @@
  * Types for Candidates
  * PRD-004: Tipos e Interfaces TypeScript
  * PRD-005: Experience e Education adicionadas
+ * PRD-026: Visibilidade do Perfil
  */
 
 import type { BehavioralTest } from './test';
 import type { SalaryRange } from './job';
+
+// PRD-026: Modos de visibilidade do perfil
+export type VisibilityMode = 'public' | 'partial' | 'private';
+
+// PRD-026: Configurações de visibilidade
+export interface VisibilitySettings {
+  mode: VisibilityMode;
+  anonymousId: string; // Ex: "4721" - gerado uma vez ao criar conta
+}
 
 export interface Experience {
   id: string;
@@ -63,4 +73,21 @@ export interface Candidate {
   deactivatedAt?: string;
   phone?: string;
   linkedin?: string;
+
+  // PRD-026: Visibilidade do perfil (opcional para compatibilidade com dados existentes)
+  visibility?: VisibilitySettings;
+}
+
+// PRD-026: Perfil anônimo para empresas (modo partial)
+export interface AnonymousProfile {
+  displayName: string; // "Perfil Anônimo #4721"
+  title: string;
+  location: string; // apenas cidade/estado
+  skills: string[];
+  experienceYears: number;
+  experienceAreas: string[]; // sem nomes de empresas
+  education: string;
+  discProfile?: string;
+  hasTest: boolean;
+  // NÃO inclui: name, avatar, email, phone, currentCompany, linkedin
 }

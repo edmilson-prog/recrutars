@@ -1,6 +1,7 @@
 /**
  * Candidates Page - Talent Pool
  * PRD-014: Banco de Talentos
+ * PRD-026: Respeita visibilidade do perfil
  */
 
 import { useState, useEffect } from 'react';
@@ -17,6 +18,8 @@ import {
   ChevronRight,
   Star,
   GraduationCap,
+  EyeOff,
+  Info,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -64,6 +67,18 @@ import { mockCandidates, mockJobs } from '@/data/mockData';
 import type { Candidate, Job } from '@/types';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  isVisibleInSearch,
+  isAnonymous,
+  getDisplayName,
+  getDisplayAvatar,
+  getVisibilitySettings,
+} from '@/utils/visibility';
 
 // Filter options
 const locations = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 'Curitiba, PR', 'Porto Alegre, RS'];
@@ -134,11 +149,18 @@ export default function CompanyCandidates() {
     (job) => job.companyId === 'company-1' && job.status === 'active'
   );
 
-  // Filter candidates
+  // Filter candidates (PRD-026: respeita visibilidade)
   const filteredCandidates = mockCandidates.filter((candidate) => {
+    // PRD-026: Primeiro verificar se o candidato é visível nas buscas
+    if (!isVisibleInSearch(candidate)) {
+      return false;
+    }
+
     const searchLower = debouncedSearch.toLowerCase();
+    // PRD-026: Busca pelo nome exibido (pode ser anônimo)
+    const displayName = getDisplayName(candidate);
     const matchesSearch =
-      candidate.name.toLowerCase().includes(searchLower) ||
+      displayName.toLowerCase().includes(searchLower) ||
       candidate.title.toLowerCase().includes(searchLower) ||
       candidate.skills.some((s) => s.toLowerCase().includes(searchLower));
 
@@ -208,7 +230,9 @@ export default function CompanyCandidates() {
     if (!selectedCandidate || !selectedJob) return;
 
     // Mock: create message (in real app, would call API)
-    toast.success(`Convite enviado para ${selectedCandidate.name} para a vaga "${selectedJob.title}"`);
+    // PRD-026: Usar nome de exibição (pode ser anônimo)
+    const displayName = getDisplayName(selectedCandidate);
+    toast.success(`Convite enviado para ${displayName} para a vaga "${selectedJob.title}"`);
     setIsInviteModalOpen(false);
     setSelectedCandidate(null);
     setSelectedJob(null);
@@ -419,6 +443,10 @@ export default function CompanyCandidates() {
 
             {paginatedCandidates.map((candidate, index) => {
               const matchScore = calculateMatch(candidate, companyJobs);
+              // PRD-026: Verificar se candidato é anônimo
+              const candidateIsAnonymous = isAnonymous(candidate);
+              const displayName = getDisplayName(candidate);
+              const displayAvatar = getDisplayAvatar(candidate);
 
               return (
                 <motion.div
@@ -429,23 +457,52 @@ export default function CompanyCandidates() {
                   className="bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium transition-all"
                 >
                   <div className="flex flex-col md:flex-row md:items-start gap-4">
+                    {/* PRD-026: Avatar ou ícone anônimo */}
                     <Avatar className="w-16 h-16 flex-shrink-0">
-                      <AvatarImage src={candidate.avatar} />
-                      <AvatarFallback className="text-lg bg-primary/10 text-primary">
-                        {candidate.name
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')
-                          .slice(0, 2)}
-                      </AvatarFallback>
+                      {candidateIsAnonymous ? (
+                        <AvatarFallback className="text-lg bg-muted text-muted-foreground">
+                          <EyeOff className="w-6 h-6" />
+                        </AvatarFallback>
+                      ) : (
+                        <>
+                          <AvatarImage src={displayAvatar || undefined} />
+                          <AvatarFallback className="text-lg bg-primary/10 text-primary">
+                            {candidate.name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')
+                              .slice(0, 2)}
+                          </AvatarFallback>
+                        </>
+                      )}
                     </Avatar>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                         <div>
-                          <h3 className="text-xl font-semibold text-foreground">
-                            {candidate.name}
-                          </h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-xl font-semibold text-foreground">
+                              {displayName}
+                            </h3>
+                            {/* PRD-026: Indicador de perfil anônimo */}
+                            {candidateIsAnonymous && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="text-xs cursor-help">
+                                    <EyeOff className="w-3 h-3 mr-1" />
+                                    Anônimo
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p className="font-medium mb-1">Perfil Anônimo</p>
+                                  <p className="text-xs">
+                                    Este candidato está em modo anônimo. Seus dados pessoais
+                                    serão revelados se ele aceitar seu convite.
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
                           <p className="text-muted-foreground">{candidate.title}</p>
                         </div>
 
@@ -630,7 +687,7 @@ export default function CompanyCandidates() {
           <DialogHeader>
             <DialogTitle>Convidar candidato</DialogTitle>
             <DialogDescription>
-              Envie um convite para {selectedCandidate?.name} se candidatar à vaga "
+              Envie um convite para {selectedCandidate ? getDisplayName(selectedCandidate) : ''} se candidatar à vaga "
               {selectedJob?.title}"
             </DialogDescription>
           </DialogHeader>
