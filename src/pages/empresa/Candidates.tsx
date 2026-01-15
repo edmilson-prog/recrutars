@@ -21,6 +21,7 @@ import {
   EyeOff,
   Info,
   Heart,
+  FileDown,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -86,6 +87,9 @@ import {
 import { useCandidateSelection, SelectionBar } from '@/components/compare/CandidateSelector';
 import { CandidateComparisonModal } from '@/components/compare/CandidateComparison';
 import { Checkbox } from '@/components/ui/checkbox';
+// PRD-032: Exportação de candidatos
+import { ExportCandidatesModal } from '@/components/export';
+import type { ExportContext } from '@/types/export';
 
 // Filter options
 const locations = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 'Curitiba, PR', 'Porto Alegre, RS'];
@@ -160,6 +164,9 @@ export default function CompanyCandidates() {
     canSelect,
   } = useCandidateSelection(3);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
+
+  // PRD-032: Estado do modal de exportação
+  const [showExportModal, setShowExportModal] = useState(false);
 
   // PRD-030: Hook de candidatos favoritos
   const { isFavorite, toggleFavorite } = useFavoriteCandidates();
@@ -494,6 +501,17 @@ export default function CompanyCandidates() {
                 {filteredCandidates.length !== 1 ? 's' : ''} encontrado
                 {filteredCandidates.length !== 1 ? 's' : ''}
               </p>
+              {/* PRD-032: Botão de exportar */}
+              {filteredCandidates.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowExportModal(true)}
+                >
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Exportar
+                </Button>
+              )}
             </div>
 
             {paginatedCandidates.map((candidate, index) => {
@@ -839,6 +857,19 @@ export default function CompanyCandidates() {
         onContactCandidate={(candidateId) => {
           toast.success('Redirecionando para mensagens...');
         }}
+      />
+
+      {/* PRD-032: Modal de exportação */}
+      <ExportCandidatesModal
+        open={showExportModal}
+        onOpenChange={setShowExportModal}
+        candidates={filteredCandidates}
+        context={{
+          source: 'talent_bank',
+          candidateCount: filteredCandidates.length,
+          companyName: 'TechCorp Soluções',
+        }}
+        calculateMatch={(candidate) => calculateMatch(candidate, companyJobs)}
       />
     </DashboardLayout>
   );

@@ -20,6 +20,7 @@ import {
   Users,
   EyeOff,
   GitCompare,
+  FileDown,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -67,6 +68,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useCandidateSelection, SelectionBar } from '@/components/compare/CandidateSelector';
 import { CandidateComparisonModal } from '@/components/compare/CandidateComparison';
 import { getCandidateDISCProfile } from '@/data/mockData';
+// PRD-032: Exportação de candidatos
+import { ExportCandidatesModal } from '@/components/export';
+import type { ExportContext } from '@/types/export';
 
 type SortOption = 'recent' | 'match' | 'experience';
 
@@ -113,6 +117,9 @@ export default function SavedCandidates() {
     canSelect,
   } = useCandidateSelection(3);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
+
+  // PRD-032: Estado do modal de exportação
+  const [showExportModal, setShowExportModal] = useState(false);
 
   // Get company jobs (mock: company-1)
   const companyJobs = mockJobs.filter(
@@ -448,6 +455,18 @@ export default function SavedCandidates() {
                   <SelectItem value="experience">Mais experiência</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* PRD-032: Botão de exportar */}
+              {sortedCandidates.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowExportModal(true)}
+                >
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Exportar
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -511,6 +530,19 @@ export default function SavedCandidates() {
             navigate(`/empresa/mensagens?to=${candidateId}`);
           }
         }}
+      />
+
+      {/* PRD-032: Modal de exportação */}
+      <ExportCandidatesModal
+        open={showExportModal}
+        onOpenChange={setShowExportModal}
+        candidates={sortedCandidates}
+        context={{
+          source: 'saved_candidates',
+          candidateCount: sortedCandidates.length,
+          companyName: 'TechCorp Soluções',
+        }}
+        calculateMatch={(candidate) => calculateMatch(candidate.skills, companyJobs)}
       />
 
       {/* Dialog de confirmação de remoção */}

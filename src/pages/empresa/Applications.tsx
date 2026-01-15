@@ -18,6 +18,7 @@ import {
   Filter,
   Send,
   Clock,
+  FileDown,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -84,6 +85,10 @@ import { toast } from 'sonner';
 import { useCandidateSelection, SelectionBar } from '@/components/compare/CandidateSelector';
 import { CandidateComparisonModal } from '@/components/compare/CandidateComparison';
 import { Checkbox } from '@/components/ui/checkbox';
+// PRD-032: Exportação de candidatos
+import { ExportCandidatesModal } from '@/components/export';
+import type { ExportContext } from '@/types/export';
+import type { Candidate } from '@/types';
 
 // Status configuration
 const STATUS_CONFIG: Record<
@@ -218,6 +223,9 @@ export default function CompanyApplications() {
   } = useCandidateSelection(3);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
 
+  // PRD-032: Estado do modal de exportação
+  const [showExportModal, setShowExportModal] = useState(false);
+
   // Get company jobs (mock: company-1)
   const companyJobs = mockJobs.filter(
     (job) =>
@@ -272,6 +280,11 @@ export default function CompanyApplications() {
     offer: filteredApplications.filter((a) => a.status === 'offer'),
     rejected: filteredApplications.filter((a) => a.status === 'rejected'),
   };
+
+  // PRD-032: Candidatos para exportação
+  const candidatesForExport: Candidate[] = filteredApplications
+    .map((app) => mockCandidates.find((c) => c.id === app.candidateId))
+    .filter((c): c is Candidate => c !== undefined);
 
   const handleCardClick = (app: Application) => {
     setSelectedApplication(app);
@@ -566,6 +579,18 @@ export default function CompanyApplications() {
                 <SelectItem value="pending">Pendente</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* PRD-032: Botão de exportar */}
+            {filteredApplications.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowExportModal(true)}
+              >
+                <FileDown className="w-4 h-4 mr-2" />
+                Exportar Lista
+              </Button>
+            )}
           </div>
         </div>
 
@@ -1212,6 +1237,21 @@ export default function CompanyApplications() {
         onContactCandidate={(candidateId) => {
           toast.success('Redirecionando para mensagens...');
         }}
+      />
+
+      {/* PRD-032: Modal de exportação */}
+      <ExportCandidatesModal
+        open={showExportModal}
+        onOpenChange={setShowExportModal}
+        candidates={candidatesForExport}
+        context={{
+          source: 'job_applications',
+          jobId: selectedJobId,
+          jobTitle: selectedJob?.title,
+          candidateCount: candidatesForExport.length,
+          companyName: 'TechCorp Soluções',
+        }}
+        calculateMatch={(candidate) => calculateMatch(candidate.id)}
       />
     </DashboardLayout>
   );
