@@ -1,12 +1,21 @@
+/**
+ * Behavioral Test Page
+ * PRD-008: Teste Comportamental
+ */
+
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, ChevronRight, Brain, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Clock, ChevronRight, ChevronLeft, Brain, CheckCircle2, AlertCircle, Download, Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { mockBehavioralTests } from '@/data/mockData';
+
+const STORAGE_KEY = 'gauge-pro-progress';
 
 interface Question {
   id: number;
@@ -97,11 +106,75 @@ const mockQuestions: Question[] = [
   },
 ];
 
-const profiles = {
-  D: { name: "Dominância", color: "hsl(var(--destructive))", description: "Orientado a resultados, decisivo, competitivo" },
-  I: { name: "Influência", color: "hsl(var(--warning))", description: "Comunicativo, entusiasmado, persuasivo" },
-  S: { name: "Estabilidade", color: "hsl(var(--success))", description: "Cooperativo, paciente, confiável" },
-  C: { name: "Conformidade", color: "hsl(var(--secondary))", description: "Analítico, preciso, metódico" },
+const profilesData = {
+  D: {
+    name: "Dominância",
+    color: "hsl(var(--destructive))",
+    description: "Orientado a resultados, decisivo, competitivo",
+    characteristics: [
+      "Foco em resultados e metas",
+      "Tomada de decisão rápida",
+      "Aceita desafios com facilidade",
+      "Direto e assertivo",
+    ],
+    idealEnvironments: [
+      "Empresas com metas claras",
+      "Ambientes competitivos",
+      "Posições de liderança",
+      "Startups e empresas dinâmicas",
+    ],
+  },
+  I: {
+    name: "Influência",
+    color: "hsl(var(--warning))",
+    description: "Comunicativo, entusiasmado, persuasivo",
+    characteristics: [
+      "Excelente comunicação",
+      "Motivador natural",
+      "Facilidade em networking",
+      "Otimista e entusiasmado",
+    ],
+    idealEnvironments: [
+      "Ambientes colaborativos",
+      "Empresas com cultura forte",
+      "Áreas de vendas e marketing",
+      "Equipes diversas",
+    ],
+  },
+  S: {
+    name: "Estabilidade",
+    color: "hsl(var(--success))",
+    description: "Cooperativo, paciente, confiável",
+    characteristics: [
+      "Excelente trabalho em equipe",
+      "Paciência e consistência",
+      "Lealdade e confiabilidade",
+      "Busca harmonia",
+    ],
+    idealEnvironments: [
+      "Empresas estáveis",
+      "Equipes consolidadas",
+      "Ambientes previsíveis",
+      "Organizações tradicionais",
+    ],
+  },
+  C: {
+    name: "Conformidade",
+    color: "hsl(var(--secondary))",
+    description: "Analítico, preciso, metódico",
+    characteristics: [
+      "Atenção aos detalhes",
+      "Pensamento analítico",
+      "Alta qualidade no trabalho",
+      "Organização e método",
+    ],
+    idealEnvironments: [
+      "Empresas com processos claros",
+      "Áreas técnicas e analíticas",
+      "Ambientes estruturados",
+      "Organizações baseadas em dados",
+    ],
+  },
 };
 
 export default function CandidateTests() {
@@ -110,19 +183,63 @@ export default function CandidateTests() {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes
   const [testCompleted, setTestCompleted] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [scores, setScores] = useState({ D: 0, I: 0, S: 0, C: 0 });
+  const [hasSavedProgress, setHasSavedProgress] = useState(false);
 
+  // Check for saved progress on mount
   useEffect(() => {
-    if (testStarted && !testCompleted && timeLeft > 0) {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      setHasSavedProgress(true);
+    }
+  }, []);
+
+  // Load saved progress when continuing
+  const loadSavedProgress = () => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const { answers: savedAnswers, currentQuestion: savedQuestion, timeLeft: savedTime } = JSON.parse(saved);
+      setAnswers(savedAnswers);
+      setCurrentQuestion(savedQuestion);
+      setTimeLeft(savedTime);
+      setTestStarted(true);
+    }
+  };
+
+  // Discard saved progress
+  const discardProgress = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setHasSavedProgress(false);
+    setAnswers({});
+    setCurrentQuestion(0);
+    setTimeLeft(15 * 60);
+    setTestStarted(true);
+  };
+
+  // Save progress to localStorage
+  useEffect(() => {
+    if (testStarted && !testCompleted && !isProcessing) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        answers,
+        currentQuestion,
+        timeLeft,
+      }));
+    }
+  }, [answers, currentQuestion, timeLeft, testStarted, testCompleted, isProcessing]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (testStarted && !testCompleted && !isProcessing && timeLeft > 0) {
       const timer = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
       return () => clearInterval(timer);
     }
-    if (timeLeft === 0 && testStarted) {
+    if (timeLeft === 0 && testStarted && !testCompleted) {
       finishTest();
     }
-  }, [testStarted, testCompleted, timeLeft]);
+  }, [testStarted, testCompleted, isProcessing, timeLeft]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -142,28 +259,91 @@ export default function CandidateTests() {
     }
   };
 
-  const finishTest = () => {
-    const newScores = { D: 0, I: 0, S: 0, C: 0 };
-    
-    Object.entries(answers).forEach(([qIndex, answer]) => {
-      const question = mockQuestions[parseInt(qIndex)];
-      const selectedOption = question.options.find(opt => opt.value === answer);
-      if (selectedOption) {
-        newScores[selectedOption.dimension] += 12.5; // 100 / 8 questions
-      }
-    });
+  const previousQuestion = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion(currentQuestion - 1);
+    }
+  };
 
-    setScores(newScores);
-    setTestCompleted(true);
+  const finishTest = () => {
+    setIsProcessing(true);
+    localStorage.removeItem(STORAGE_KEY);
+
+    // Simulate processing time
+    setTimeout(() => {
+      const newScores = { D: 0, I: 0, S: 0, C: 0 };
+
+      Object.entries(answers).forEach(([qIndex, answer]) => {
+        const question = mockQuestions[parseInt(qIndex)];
+        const selectedOption = question.options.find(opt => opt.value === answer);
+        if (selectedOption) {
+          newScores[selectedOption.dimension] += 12.5; // 100 / 8 questions
+        }
+      });
+
+      setScores(newScores);
+
+      // Save result to mock data
+      const dominantKey = getDominantProfileKey(newScores);
+      const newTest = {
+        id: `test-${Date.now()}`,
+        candidateId: 'candidate-1',
+        candidateName: 'Candidato Atual',
+        status: 'completed' as const,
+        sentAt: new Date().toISOString().split('T')[0],
+        completedAt: new Date().toISOString().split('T')[0],
+        result: {
+          dominance: Math.round(newScores.D),
+          influence: Math.round(newScores.I),
+          steadiness: Math.round(newScores.S),
+          compliance: Math.round(newScores.C),
+          profile: profilesData[dominantKey].name,
+          strengths: profilesData[dominantKey].characteristics.slice(0, 3),
+          watchPoints: ['Ponto de atenção 1', 'Ponto de atenção 2'],
+        },
+      };
+      mockBehavioralTests.push(newTest);
+
+      setIsProcessing(false);
+      setTestCompleted(true);
+    }, 2000);
+  };
+
+  const getDominantProfileKey = (scoreObj: typeof scores) => {
+    const maxScore = Math.max(...Object.values(scoreObj));
+    return Object.entries(scoreObj).find(([_, score]) => score === maxScore)?.[0] as keyof typeof profilesData;
   };
 
   const getDominantProfile = () => {
-    const maxScore = Math.max(...Object.values(scores));
-    return Object.entries(scores).find(([_, score]) => score === maxScore)?.[0] as keyof typeof profiles;
+    return getDominantProfileKey(scores);
+  };
+
+  const handleDownloadPDF = () => {
+    toast.success('Download iniciado! O PDF será enviado ao seu email.');
   };
 
   const progress = ((currentQuestion + 1) / mockQuestions.length) * 100;
 
+  // Processing screen
+  if (isProcessing) {
+    return (
+      <DashboardLayout userType="candidate">
+        <div className="max-w-md mx-auto text-center py-20">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+            className="w-20 h-20 mx-auto mb-6 rounded-2xl gradient-primary flex items-center justify-center"
+          >
+            <Loader2 className="w-10 h-10 text-primary-foreground" />
+          </motion.div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Processando seu perfil...</h2>
+          <p className="text-muted-foreground">Analisando suas respostas para gerar seu perfil DISC</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Initial screen
   if (!testStarted) {
     return (
       <DashboardLayout userType="candidate">
@@ -178,7 +358,7 @@ export default function CandidateTests() {
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-4">Teste Gauge-Pro</h1>
             <p className="text-muted-foreground mb-8">
-              O teste comportamental Gauge-Pro identifica seu perfil DISC, ajudando empresas a 
+              O teste comportamental Gauge-Pro identifica seu perfil DISC, ajudando empresas a
               entenderem suas características e encontrarem a melhor posição para você.
             </p>
 
@@ -199,26 +379,40 @@ export default function CandidateTests() {
                 <div>
                   <h4 className="font-semibold text-foreground">Importante</h4>
                   <p className="text-sm text-muted-foreground">
-                    Responda com sinceridade. Não há respostas certas ou erradas. 
-                    O teste não pode ser pausado após iniciado.
+                    Responda com sinceridade. Não há respostas certas ou erradas.
+                    Seu progresso será salvo automaticamente.
                   </p>
                 </div>
               </div>
             </div>
 
-            <Button size="xl" onClick={() => setTestStarted(true)}>
-              Iniciar Teste
-              <ChevronRight className="w-5 h-5" />
-            </Button>
+            {hasSavedProgress ? (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button variant="outline" onClick={discardProgress}>
+                  Novo Teste
+                </Button>
+                <Button size="xl" onClick={loadSavedProgress} className="gradient-primary">
+                  Continuar Teste
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </div>
+            ) : (
+              <Button size="xl" onClick={() => setTestStarted(true)} className="gradient-primary">
+                Iniciar Teste
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            )}
           </motion.div>
         </div>
       </DashboardLayout>
     );
   }
 
+  // Results screen
   if (testCompleted) {
     const dominant = getDominantProfile();
-    
+    const profile = profilesData[dominant];
+
     return (
       <DashboardLayout userType="candidate">
         <div className="max-w-3xl mx-auto space-y-6">
@@ -241,17 +435,17 @@ export default function CandidateTests() {
             className="bg-card rounded-2xl p-8 shadow-soft"
           >
             <h2 className="text-xl font-semibold text-foreground mb-6 text-center">Seu Perfil DISC</h2>
-            
+
             {/* DISC Chart */}
             <div className="flex justify-center items-end gap-6 h-64 mb-8">
-              {(Object.entries(scores) as [keyof typeof profiles, number][]).map(([key, score], index) => (
+              {(Object.entries(scores) as [keyof typeof profilesData, number][]).map(([key, score], index) => (
                 <motion.div
                   key={key}
                   initial={{ height: 0 }}
                   animate={{ height: `${Math.max(score, 10)}%` }}
                   transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
                   className="relative w-20 rounded-t-xl flex flex-col items-center justify-end"
-                  style={{ backgroundColor: profiles[key].color }}
+                  style={{ backgroundColor: profilesData[key].color }}
                 >
                   <span className="text-2xl font-bold text-white mb-2">{Math.round(score)}</span>
                   <div className="absolute -bottom-8 text-center">
@@ -262,51 +456,101 @@ export default function CandidateTests() {
             </div>
 
             {/* Dominant Profile */}
-            <div className="mt-12 p-6 rounded-xl" style={{ backgroundColor: `${profiles[dominant].color}20` }}>
+            <div className="mt-12 p-6 rounded-xl" style={{ backgroundColor: `${profile.color}20` }}>
               <h3 className="text-lg font-semibold text-foreground mb-2">
-                Seu perfil predominante: <span style={{ color: profiles[dominant].color }}>{profiles[dominant].name}</span>
+                Seu perfil predominante: <span style={{ color: profile.color }}>{profile.name}</span>
               </h3>
-              <p className="text-muted-foreground">{profiles[dominant].description}</p>
+              <p className="text-muted-foreground">{profile.description}</p>
             </div>
           </motion.div>
 
-          {/* Profile Details */}
+          {/* Characteristics */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-card rounded-2xl p-6 shadow-soft"
+          >
+            <h2 className="text-xl font-semibold text-foreground mb-4">Características Principais</h2>
+            <ul className="space-y-3">
+              {profile.characteristics.map((char, index) => (
+                <li key={index} className="flex items-start gap-3 text-muted-foreground">
+                  <span className="w-2 h-2 mt-2 rounded-full flex-shrink-0" style={{ backgroundColor: profile.color }} />
+                  {char}
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+
+          {/* Ideal Environments */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
+            className="bg-card rounded-2xl p-6 shadow-soft"
+          >
+            <h2 className="text-xl font-semibold text-foreground mb-4">Ambientes Ideais</h2>
+            <ul className="space-y-3">
+              {profile.idealEnvironments.map((env, index) => (
+                <li key={index} className="flex items-start gap-3 text-muted-foreground">
+                  <CheckCircle2 className="w-5 h-5 mt-0.5 text-success flex-shrink-0" />
+                  {env}
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+
+          {/* Profile Details Grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
             className="grid md:grid-cols-2 gap-4"
           >
-            {(Object.entries(profiles) as [keyof typeof profiles, typeof profiles.D][]).map(([key, profile]) => (
-              <div 
-                key={key} 
+            {(Object.entries(profilesData) as [keyof typeof profilesData, typeof profilesData.D][]).map(([key, profileData]) => (
+              <div
+                key={key}
                 className={cn(
                   "bg-card rounded-xl p-5 shadow-soft border-2 transition-all",
                   key === dominant ? "border-current" : "border-transparent"
                 )}
-                style={{ borderColor: key === dominant ? profile.color : 'transparent' }}
+                style={{ borderColor: key === dominant ? profileData.color : 'transparent' }}
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
-                    style={{ backgroundColor: profile.color }}
+                    style={{ backgroundColor: profileData.color }}
                   >
                     {key}
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground">{profile.name}</h4>
+                    <h4 className="font-semibold text-foreground">{profileData.name}</h4>
                     <div className="text-sm text-muted-foreground">{Math.round(scores[key])}%</div>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground">{profile.description}</p>
+                <p className="text-sm text-muted-foreground">{profileData.description}</p>
               </div>
             ))}
+          </motion.div>
+
+          {/* Download Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="flex justify-center"
+          >
+            <Button variant="outline" size="lg" onClick={handleDownloadPDF}>
+              <Download className="w-5 h-5 mr-2" />
+              Baixar PDF do Resultado
+            </Button>
           </motion.div>
         </div>
       </DashboardLayout>
     );
   }
 
+  // Question screen
   const question = mockQuestions[currentQuestion];
 
   return (
@@ -342,8 +586,8 @@ export default function CandidateTests() {
               {question.text}
             </h2>
 
-            <RadioGroup 
-              value={answers[currentQuestion] || ''} 
+            <RadioGroup
+              value={answers[currentQuestion] || ''}
               onValueChange={handleAnswer}
               className="space-y-3"
             >
@@ -366,13 +610,22 @@ export default function CandidateTests() {
               ))}
             </RadioGroup>
 
-            <div className="flex justify-end mt-8">
-              <Button 
+            <div className="flex justify-between mt-8">
+              <Button
+                variant="outline"
+                onClick={previousQuestion}
+                disabled={currentQuestion === 0}
+              >
+                <ChevronLeft className="w-5 h-5 mr-1" />
+                Anterior
+              </Button>
+              <Button
                 onClick={nextQuestion}
                 disabled={!answers[currentQuestion]}
+                className={answers[currentQuestion] ? 'gradient-primary' : ''}
               >
                 {currentQuestion < mockQuestions.length - 1 ? 'Próxima' : 'Finalizar'}
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-5 h-5 ml-1" />
               </Button>
             </div>
           </motion.div>

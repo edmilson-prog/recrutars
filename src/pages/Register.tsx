@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { GlassFooter } from '@/components/layout/GlassFooter';
 
 type AccountType = 'company' | 'candidate';
 
@@ -19,7 +20,8 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <>
+    <div className="min-h-screen flex pb-12">
       {/* Left - Visual */}
       <div className="hidden lg:flex flex-1 gradient-hero items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute inset-0">
@@ -186,5 +188,7 @@ export default function Register() {
         </motion.div>
       </div>
     </div>
+    <GlassFooter />
+    </>
   );
 }

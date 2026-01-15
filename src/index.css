@@ -59,6 +59,12 @@
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 228 48% 28%;
     --sidebar-ring: 207 70% 53%;
+
+    /* Glassmorphism tokens */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    --glass-blur: 10px;
   }
 
   .dark {
@@ -98,6 +104,12 @@
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 222 47% 15%;
     --sidebar-ring: 207 70% 53%;
+
+    /* Glassmorphism tokens (dark) */
+    --glass-bg: rgba(0, 0, 0, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    --glass-blur: 10px;
   }
 }
 
@@ -160,6 +172,22 @@
 
   .animate-slide-up {
     animation: slide-up 0.5s ease-out;
+  }
+
+  /* Glassmorphism utility */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+}
+
+/* Glassmorphism fallback for unsupported browsers */
+@supports not (backdrop-filter: blur(10px)) {
+  .glass {
+    background: hsl(var(--background) / 0.95);
   }
 }
 

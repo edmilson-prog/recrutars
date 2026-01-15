@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { User, Briefcase, GraduationCap, Code, DollarSign, MapPin, Save, Plus, X, Trash2 } from 'lucide-react';
+import { User, Briefcase, GraduationCap, Code, DollarSign, MapPin, Save, Plus, X, Trash2, Camera } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Select,
   SelectContent,
@@ -15,30 +16,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { mockCandidates } from '@/data/mockData';
+import type { Experience, Education } from '@/types';
 
-interface Experience {
-  id: string;
-  company: string;
-  role: string;
-  startDate: string;
-  endDate: string;
-  current: boolean;
-  description: string;
-}
-
-interface Education {
-  id: string;
-  institution: string;
-  degree: string;
-  field: string;
-  startYear: string;
-  endYear: string;
-}
+const MAX_ABOUT_LENGTH = 500;
 
 export default function CandidateProfile() {
   const candidate = mockCandidates[0];
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(candidate.avatar || null);
 
   const [profile, setProfile] = useState({
     name: candidate.name,
@@ -84,6 +83,7 @@ export default function CandidateProfile() {
 
   const [skills, setSkills] = useState<string[]>(candidate.skills);
   const [newSkill, setNewSkill] = useState('');
+  const [skillError, setSkillError] = useState('');
 
   const [salary, setSalary] = useState({
     min: candidate.salary.min.toString(),
@@ -91,6 +91,21 @@ export default function CandidateProfile() {
   });
 
   const [availability, setAvailability] = useState(candidate.availability);
+
+  // Ordenar experiências por data (mais recente primeiro, atual no topo)
+  const sortedExperiences = [...experiences].sort((a, b) => {
+    if (a.current) return -1;
+    if (b.current) return 1;
+    return b.startDate.localeCompare(a.startDate);
+  });
+
+  // Ordenar educação por ano (mais recente primeiro)
+  const sortedEducation = [...education].sort((a, b) =>
+    parseInt(b.startYear || '0') - parseInt(a.startYear || '0')
+  );
+
+  // Ordenar skills alfabeticamente
+  const sortedSkills = [...skills].sort((a, b) => a.localeCompare(b));
 
   const calculateCompletion = () => {
     let total = 0;
@@ -107,6 +122,27 @@ export default function CandidateProfile() {
   };
 
   const completion = calculateCompletion();
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+        toast.success('Foto atualizada!');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const addExperience = () => {
     setExperiences([
@@ -125,6 +161,7 @@ export default function CandidateProfile() {
 
   const removeExperience = (id: string) => {
     setExperiences(experiences.filter(exp => exp.id !== id));
+    toast.success('Experiência removida');
   };
 
   const updateExperience = (id: string, field: keyof Experience, value: string | boolean) => {
@@ -149,6 +186,7 @@ export default function CandidateProfile() {
 
   const removeEducation = (id: string) => {
     setEducation(education.filter(edu => edu.id !== id));
+    toast.success('Formação removida');
   };
 
   const updateEducation = (id: string, field: keyof Education, value: string) => {
@@ -158,10 +196,17 @@ export default function CandidateProfile() {
   };
 
   const addSkill = () => {
-    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
-      setSkills([...skills, newSkill.trim()]);
-      setNewSkill('');
+    const trimmed = newSkill.trim();
+    if (!trimmed) return;
+
+    if (skills.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+      setSkillError('Skill já adicionada');
+      return;
     }
+
+    setSkills([...skills, trimmed]);
+    setNewSkill('');
+    setSkillError('');
   };
 
   const removeSkill = (skill: string) => {
@@ -199,10 +244,55 @@ export default function CandidateProfile() {
           </div>
           <Progress value={completion} className="h-3" />
           <p className="text-sm text-muted-foreground mt-2">
-            {completion < 100 
-              ? 'Complete seu perfil para aumentar suas chances de ser encontrado' 
+            {completion < 100
+              ? 'Complete seu perfil para aumentar suas chances de ser encontrado'
               : 'Parabéns! Seu perfil está completo!'}
           </p>
+        </motion.div>
+
+        {/* Avatar Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="bg-card rounded-2xl p-6 shadow-soft"
+        >
+          <div className="flex items-center gap-6">
+            <div className="relative">
+              <Avatar className="w-24 h-24">
+                <AvatarImage src={avatarPreview || undefined} alt={profile.name} />
+                <AvatarFallback className="text-2xl gradient-primary text-primary-foreground">
+                  {getInitials(profile.name)}
+                </AvatarFallback>
+              </Avatar>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute -bottom-1 -right-1 rounded-full w-8 h-8"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Camera className="w-4 h-4" />
+              </Button>
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">{profile.name}</h2>
+              <p className="text-muted-foreground">{profile.title}</p>
+              <Button
+                variant="link"
+                className="p-0 h-auto text-sm"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Trocar foto
+              </Button>
+            </div>
+          </div>
         </motion.div>
 
         {/* Personal Info */}
@@ -234,8 +324,10 @@ export default function CandidateProfile() {
                 id="email"
                 type="email"
                 value={profile.email}
-                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                disabled
+                className="bg-muted cursor-not-allowed"
               />
+              <p className="text-xs text-muted-foreground">O e-mail não pode ser alterado</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="title">Cargo/Título</Label>
@@ -279,9 +371,13 @@ export default function CandidateProfile() {
                 id="about"
                 placeholder="Conte um pouco sobre você, sua carreira e objetivos..."
                 className="min-h-[120px]"
+                maxLength={MAX_ABOUT_LENGTH}
                 value={profile.about}
                 onChange={(e) => setProfile({ ...profile, about: e.target.value })}
               />
+              <p className="text-sm text-muted-foreground text-right">
+                {profile.about.length}/{MAX_ABOUT_LENGTH} caracteres
+              </p>
             </div>
           </div>
         </motion.div>
@@ -307,16 +403,33 @@ export default function CandidateProfile() {
           </div>
 
           <div className="space-y-6">
-            {experiences.map((exp, index) => (
+            {sortedExperiences.map((exp) => (
               <div key={exp.id} className="relative p-4 border border-border rounded-xl">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 text-destructive"
-                  onClick={() => removeExperience(exp.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remover experiência?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta ação não pode ser desfeita. A experiência será removida permanentemente.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => removeExperience(exp.id)}>
+                        Remover
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Empresa</Label>
@@ -344,7 +457,7 @@ export default function CandidateProfile() {
                     <Label>Data fim</Label>
                     <Input
                       type="month"
-                      value={exp.endDate}
+                      value={exp.endDate || ''}
                       disabled={exp.current}
                       placeholder={exp.current ? 'Atual' : ''}
                       onChange={(e) => updateExperience(exp.id, 'endDate', e.target.value)}
@@ -393,16 +506,33 @@ export default function CandidateProfile() {
           </div>
 
           <div className="space-y-6">
-            {education.map((edu) => (
+            {sortedEducation.map((edu) => (
               <div key={edu.id} className="relative p-4 border border-border rounded-xl">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 text-destructive"
-                  onClick={() => removeEducation(edu.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remover formação?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta ação não pode ser desfeita. A formação será removida permanentemente.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => removeEducation(edu.id)}>
+                        Remover
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Instituição</Label>
@@ -454,7 +584,7 @@ export default function CandidateProfile() {
                       <Input
                         type="number"
                         placeholder="2024"
-                        value={edu.endYear}
+                        value={edu.endYear || ''}
                         onChange={(e) => updateEducation(edu.id, 'endYear', e.target.value)}
                       />
                     </div>
@@ -480,7 +610,7 @@ export default function CandidateProfile() {
           </div>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            {skills.map((skill) => (
+            {sortedSkills.map((skill) => (
               <Badge
                 key={skill}
                 variant="secondary"
@@ -493,16 +623,24 @@ export default function CandidateProfile() {
             ))}
           </div>
 
-          <div className="flex gap-2">
-            <Input
-              placeholder="Adicionar habilidade..."
-              value={newSkill}
-              onChange={(e) => setNewSkill(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && addSkill()}
-            />
-            <Button variant="outline" onClick={addSkill}>
-              <Plus className="w-4 h-4" />
-            </Button>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Adicionar habilidade..."
+                value={newSkill}
+                onChange={(e) => {
+                  setNewSkill(e.target.value);
+                  setSkillError('');
+                }}
+                onKeyDown={(e) => e.key === 'Enter' && addSkill()}
+              />
+              <Button variant="outline" onClick={addSkill}>
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            {skillError && (
+              <p className="text-sm text-destructive">{skillError}</p>
+            )}
           </div>
         </motion.div>
 

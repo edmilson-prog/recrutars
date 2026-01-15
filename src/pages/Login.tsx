@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { GlassFooter } from '@/components/layout/GlassFooter';
 
 type UserType = 'admin' | 'company' | 'candidate';
 
@@ -35,7 +36,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <>
+    <div className="min-h-screen flex pb-12">
       {/* Left - Form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <motion.div
@@ -169,5 +171,7 @@ export default function Login() {
         </motion.div>
       </div>
     </div>
+    <GlassFooter />
+    </>
   );
 }

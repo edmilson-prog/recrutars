@@ -1,0 +1,15 @@
+/**
+ * Central export for all types
+ * PRD-004: Tipos e Interfaces TypeScript
+ */
+
+export * from './user';
+export * from './company';
+export * from './candidate';
+export * from './job';
+export * from './application';
+export * from './test';
+export * from './message';
+export * from './stats';
+export * from './curriculum';
+export * from './notifications';

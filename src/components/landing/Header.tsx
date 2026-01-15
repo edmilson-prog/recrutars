@@ -14,13 +14,9 @@ const navLinks = [
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const isHome = location.pathname === '/';
 
   return (
-    <header className={cn(
-      "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-      isHome ? "bg-transparent" : "bg-card/95 backdrop-blur-md shadow-soft"
-    )}>
+    <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 glass shadow-soft">
       <div className="container">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
@@ -28,10 +24,7 @@ export function Header() {
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
               <span className="text-xl font-bold text-primary-foreground">R</span>
             </div>
-            <span className={cn(
-              "text-xl font-bold",
-              isHome ? "text-primary-foreground" : "text-foreground"
-            )}>
+            <span className="text-xl font-bold text-foreground">
               RecrutaRS
             </span>
           </Link>
@@ -44,10 +37,8 @@ export function Header() {
                 to={link.href}
                 className={cn(
                   "text-sm font-medium transition-colors",
-                  isHome 
-                    ? "text-primary-foreground/80 hover:text-primary-foreground" 
-                    : "text-muted-foreground hover:text-foreground",
-                  location.pathname === link.href && (isHome ? "text-primary-foreground" : "text-foreground")
+                  "text-muted-foreground hover:text-foreground",
+                  location.pathname === link.href && "text-foreground"
                 )}
               >
                 {link.label}
@@ -57,14 +48,10 @@ export function Header() {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Button 
-              asChild 
-              variant={isHome ? "ghost" : "ghost"} 
-              className={cn(isHome && "text-primary-foreground hover:bg-primary-foreground/10")}
-            >
+            <Button asChild variant="ghost">
               <Link to="/login">Entrar</Link>
             </Button>
-            <Button asChild variant={isHome ? "hero-outline" : "default"}>
+            <Button asChild variant="default">
               <Link to="/cadastro">Criar conta</Link>
             </Button>
           </div>
@@ -72,10 +59,7 @@ export function Header() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className={cn(
-              "md:hidden p-2 rounded-lg transition-colors",
-              isHome ? "text-primary-foreground hover:bg-primary-foreground/10" : "text-foreground hover:bg-muted"
-            )}
+            className="md:hidden p-2 rounded-lg transition-colors text-foreground hover:bg-muted"
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>

@@ -1,6 +1,13 @@
-import { useState } from 'react';
+/**
+ * Job Search Page
+ * PRD-006: Busca e Visualização de Vagas
+ * PRD-007: Indicador visual de candidatura
+ */
+
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Briefcase, DollarSign, Building2, Clock, Heart, Filter, X } from 'lucide-react';
+import { Search, MapPin, Briefcase, DollarSign, Building2, Clock, Heart, Filter, X, ArrowUpDown, CheckCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,61 +28,103 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
-import { mockJobs, Job } from '@/data/mockData';
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { mockJobs } from '@/data/mockData';
+import type { Job } from '@/types';
 import { toast } from 'sonner';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useApplications } from '@/hooks/useApplications';
+import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
 
 const locations = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 'Curitiba, PR', 'Porto Alegre, RS'];
 const areas = ['Tecnologia', 'Produto', 'Design', 'Dados', 'Marketing', 'Comercial', 'RH', 'Financeiro'];
 const levels = ['Estágio', 'Junior', 'Pleno', 'Senior', 'Especialista', 'Gerente'];
 
+const ITEMS_PER_PAGE = 10;
+
+type SortOption = 'recent' | 'salary-high' | 'salary-low';
+
 export default function CandidateJobSearch() {
+  const navigate = useNavigate();
+
+  // Applications hook for checking applied status
+  const { hasApplied } = useApplications('candidate-1');
+
+  // Favorites hook (PRD-024)
+  const { isFavorite, toggleFavorite } = useFavoriteJobs();
+
+  // Search with debounce
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
+  // Filters
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [areaFilter, setAreaFilter] = useState<string>('all');
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [salaryRange, setSalaryRange] = useState([0, 30000]);
-  const [savedJobs, setSavedJobs] = useState<string[]>([]);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+
+  // Sorting and pagination
+  const [sortBy, setSortBy] = useState<SortOption>('recent');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // UI state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const activeJobs = mockJobs.filter(job => job.status === 'active');
 
+  // Filter jobs
   const filteredJobs = activeJobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          job.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          job.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = job.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                          job.companyName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                          job.description.toLowerCase().includes(debouncedSearch.toLowerCase());
     const matchesLocation = locationFilter === 'all' || job.location.includes(locationFilter);
     const matchesType = typeFilter === 'all' || job.type === typeFilter;
     const matchesArea = areaFilter === 'all' || job.area === areaFilter;
     const matchesLevel = levelFilter === 'all' || job.level === levelFilter;
     const matchesSalary = job.salary.min >= salaryRange[0] && job.salary.max <= salaryRange[1];
-    
+
     return matchesSearch && matchesLocation && matchesType && matchesArea && matchesLevel && matchesSalary;
   });
 
-  const toggleSaveJob = (jobId: string) => {
-    if (savedJobs.includes(jobId)) {
-      setSavedJobs(savedJobs.filter(id => id !== jobId));
-      toast.success('Vaga removida dos favoritos');
-    } else {
-      setSavedJobs([...savedJobs, jobId]);
-      toast.success('Vaga salva nos favoritos');
+  // Sort jobs
+  const sortedJobs = [...filteredJobs].sort((a, b) => {
+    switch (sortBy) {
+      case 'salary-high':
+        return b.salary.max - a.salary.max;
+      case 'salary-low':
+        return a.salary.min - b.salary.min;
+      case 'recent':
+      default:
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
-  };
+  });
 
-  const applyToJob = (job: Job) => {
-    toast.success(`Candidatura enviada para ${job.title}!`);
-    setSelectedJob(null);
+  // Pagination
+  const totalPages = Math.ceil(sortedJobs.length / ITEMS_PER_PAGE);
+  const paginatedJobs = sortedJobs.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, locationFilter, typeFilter, areaFilter, levelFilter, salaryRange, sortBy]);
+
+  const toggleSaveJob = (jobId: string) => {
+    const isNowFavorite = toggleFavorite(jobId);
+    toast.success(isNowFavorite ? 'Vaga salva!' : 'Vaga removida');
   };
 
   const clearFilters = () => {
+    setSearchTerm('');
     setLocationFilter('all');
     setTypeFilter('all');
     setAreaFilter('all');
@@ -83,7 +132,7 @@ export default function CandidateJobSearch() {
     setSalaryRange([0, 30000]);
   };
 
-  const hasActiveFilters = locationFilter !== 'all' || typeFilter !== 'all' || 
+  const hasActiveFilters = searchTerm !== '' || locationFilter !== 'all' || typeFilter !== 'all' ||
                            areaFilter !== 'all' || levelFilter !== 'all' ||
                            salaryRange[0] > 0 || salaryRange[1] < 30000;
 
@@ -181,6 +230,38 @@ export default function CandidateJobSearch() {
     </div>
   );
 
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+
+      if (currentPage > 3) {
+        pages.push('ellipsis');
+      }
+
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (currentPage < totalPages - 2) {
+        pages.push('ellipsis');
+      }
+
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+
   return (
     <DashboardLayout userType="candidate">
       <div className="space-y-6">
@@ -196,12 +277,22 @@ export default function CandidateJobSearch() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               placeholder="Buscar por cargo, empresa ou palavra-chave..."
-              className="pl-10"
+              className="pl-10 pr-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                onClick={() => setSearchTerm('')}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
           </div>
-          
+
           {/* Mobile Filter Button */}
           <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
             <SheetTrigger asChild>
@@ -242,21 +333,35 @@ export default function CandidateJobSearch() {
 
           {/* Jobs List */}
           <div className="flex-1 space-y-4">
-            {/* Results count */}
-            <div className="flex items-center justify-between">
+            {/* Results count and sorting */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <p className="text-muted-foreground">
-                {filteredJobs.length} vaga{filteredJobs.length !== 1 ? 's' : ''} encontrada{filteredJobs.length !== 1 ? 's' : ''}
+                {sortedJobs.length} vaga{sortedJobs.length !== 1 ? 's' : ''} encontrada{sortedJobs.length !== 1 ? 's' : ''}
               </p>
+
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Ordenar por" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recent">Mais recentes</SelectItem>
+                    <SelectItem value="salary-high">Maior salário</SelectItem>
+                    <SelectItem value="salary-low">Menor salário</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {filteredJobs.map((job, index) => (
+            {paginatedJobs.map((job, index) => (
               <motion.div
                 key={job.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 className="bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium transition-all cursor-pointer group"
-                onClick={() => setSelectedJob(job)}
+                onClick={() => navigate(`/candidato/vagas/${job.id}`)}
               >
                 <div className="flex flex-col md:flex-row md:items-start gap-4">
                   <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
@@ -277,8 +382,8 @@ export default function CandidateJobSearch() {
                         }}
                         className="p-2 hover:bg-muted rounded-lg transition-colors"
                       >
-                        <Heart 
-                          className={`w-5 h-5 ${savedJobs.includes(job.id) ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`} 
+                        <Heart
+                          className={`w-5 h-5 transition-colors ${isFavorite(job.id) ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`}
                         />
                       </button>
                     </div>
@@ -305,6 +410,12 @@ export default function CandidateJobSearch() {
                     <p className="mt-3 text-muted-foreground line-clamp-2">{job.description}</p>
 
                     <div className="flex flex-wrap gap-2 mt-4">
+                      {hasApplied(job.id) && (
+                        <Badge className="bg-success/20 text-success border-success/30 hover:bg-success/30">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Candidatado
+                        </Badge>
+                      )}
                       <Badge variant="secondary">{job.level}</Badge>
                       <Badge variant="secondary">{job.area}</Badge>
                       {job.requirements.slice(0, 2).map((req, i) => (
@@ -316,7 +427,7 @@ export default function CandidateJobSearch() {
               </motion.div>
             ))}
 
-            {filteredJobs.length === 0 && (
+            {sortedJobs.length === 0 && (
               <div className="text-center py-12 bg-card rounded-2xl shadow-soft">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                   <Search className="w-8 h-8 text-muted-foreground" />
@@ -328,90 +439,47 @@ export default function CandidateJobSearch() {
                 </Button>
               </div>
             )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="pt-6">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+
+                    {getPageNumbers().map((page, index) => (
+                      <PaginationItem key={index}>
+                        {page === 'ellipsis' ? (
+                          <span className="px-3 text-muted-foreground">...</span>
+                        ) : (
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        )}
+                      </PaginationItem>
+                    ))}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Job Details Dialog */}
-        <Dialog open={!!selectedJob} onOpenChange={() => setSelectedJob(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            {selectedJob && (
-              <>
-                <DialogHeader>
-                  <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Building2 className="w-8 h-8 text-primary" />
-                    </div>
-                    <div>
-                      <DialogTitle className="text-2xl">{selectedJob.title}</DialogTitle>
-                      <p className="text-muted-foreground">{selectedJob.companyName}</p>
-                    </div>
-                  </div>
-                </DialogHeader>
-
-                <div className="space-y-6 py-4">
-                  <div className="flex flex-wrap gap-3">
-                    <Badge className="bg-primary text-primary-foreground">{selectedJob.level}</Badge>
-                    <Badge variant="secondary">{selectedJob.area}</Badge>
-                    <Badge variant="outline">
-                      {selectedJob.type === 'remote' ? 'Remoto' : selectedJob.type === 'hybrid' ? 'Híbrido' : 'Presencial'}
-                    </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-xl">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-muted-foreground" />
-                      <span>{selectedJob.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-5 h-5 text-muted-foreground" />
-                      <span>R$ {selectedJob.salary.min.toLocaleString('pt-BR')} - {selectedJob.salary.max.toLocaleString('pt-BR')}</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-2">Descrição</h3>
-                    <p className="text-muted-foreground">{selectedJob.description}</p>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-2">Requisitos</h3>
-                    <ul className="space-y-2">
-                      {selectedJob.requirements.map((req, i) => (
-                        <li key={i} className="flex items-start gap-2 text-muted-foreground">
-                          <span className="w-1.5 h-1.5 mt-2 rounded-full bg-primary flex-shrink-0" />
-                          {req}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-2">Benefícios</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedJob.benefits.map((benefit, i) => (
-                        <Badge key={i} variant="outline" className="bg-success/10 text-success border-success/20">
-                          {benefit}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <Button className="flex-1" onClick={() => applyToJob(selectedJob)}>
-                      Candidatar-se
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => toggleSaveJob(selectedJob.id)}
-                    >
-                      <Heart className={`w-5 h-5 ${savedJobs.includes(selectedJob.id) ? 'fill-destructive text-destructive' : ''}`} />
-                    </Button>
-                  </div>
-                </div>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   );

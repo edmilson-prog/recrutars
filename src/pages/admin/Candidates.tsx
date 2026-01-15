@@ -1,0 +1,1125 @@
+/**
+ * Candidates Page - Candidate Management (Admin)
+ * PRD-021: Gestão de Candidatos
+ */
+
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Search,
+  Filter,
+  X,
+  User,
+  MapPin,
+  Briefcase,
+  Calendar,
+  CheckCircle2,
+  XCircle,
+  ChevronRight,
+  Power,
+  PowerOff,
+  Bell,
+  RotateCcw,
+  Brain,
+  Award,
+  Mail,
+  Phone,
+  Linkedin,
+} from 'lucide-react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { mockCandidates, mockApplications, mockCandidateAdminActions } from '@/data/mockData';
+import type { Candidate, CandidateStatus, CandidateAdminAction, Application } from '@/types';
+import { toast } from 'sonner';
+import { useDebounce } from '@/hooks/useDebounce';
+import { cn } from '@/lib/utils';
+
+// Constantes
+const ITEMS_PER_PAGE = 20;
+
+const STATUS_CONFIG = {
+  active: {
+    label: 'Ativo',
+    icon: CheckCircle2,
+    color: 'text-success',
+    bgColor: 'bg-success/10',
+  },
+  inactive: {
+    label: 'Inativo',
+    icon: XCircle,
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/10',
+  },
+};
+
+const TEST_STATUS_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'completed', label: 'Realizado' },
+  { value: 'not_completed', label: 'Não Realizado' },
+];
+
+const DISC_PROFILES = [
+  'Executor',
+  'Influenciador',
+  'Cooperativo',
+  'Analítico',
+  'Executor Analítico',
+  'Executor Estratégico',
+  'Executor Organizador',
+  'Executor Influenciador',
+  'Influenciador Estratégico',
+  'Influenciador Comunicador',
+  'Influenciador Executor',
+  'Cooperativo Influenciador',
+  'Analítico Cooperativo',
+  'Analítico Metódico',
+];
+
+export default function AdminCandidates() {
+  // Search with debounce
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
+  // Filters
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [testStatusFilter, setTestStatusFilter] = useState<string>('all');
+  const [discProfileFilter, setDiscProfileFilter] = useState<string>('all');
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // UI state
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+
+  // Action modals
+  const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
+  const [deactivateReason, setDeactivateReason] = useState('');
+  const [reactivateDialogOpen, setReactivateDialogOpen] = useState(false);
+  const [resetTestDialogOpen, setResetTestDialogOpen] = useState(false);
+  const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
+
+  // Data
+  const [candidates, setCandidates] = useState<Candidate[]>(mockCandidates);
+  const [actions, setActions] = useState<CandidateAdminAction[]>(mockCandidateAdminActions);
+  const [applications] = useState<Application[]>(mockApplications);
+
+  // Reset page on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, statusFilter, testStatusFilter, discProfileFilter]);
+
+  // Filter logic
+  const filteredCandidates = candidates.filter((candidate) => {
+    const searchLower = debouncedSearch.toLowerCase();
+    const matchesSearch =
+      candidate.name.toLowerCase().includes(searchLower) ||
+      candidate.email.toLowerCase().includes(searchLower);
+
+    const matchesStatus = statusFilter === 'all' || candidate.status === statusFilter;
+
+    let matchesTestStatus = true;
+    if (testStatusFilter === 'completed') {
+      matchesTestStatus = candidate.hasTest === true;
+    } else if (testStatusFilter === 'not_completed') {
+      matchesTestStatus = candidate.hasTest === false;
+    }
+
+    const matchesDiscProfile =
+      discProfileFilter === 'all' ||
+      (candidate.testResult?.result?.profile === discProfileFilter);
+
+    return matchesSearch && matchesStatus && matchesTestStatus && matchesDiscProfile;
+  });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredCandidates.length / ITEMS_PER_PAGE);
+  const paginatedCandidates = filteredCandidates.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Helper function for pagination
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, 4, '...', totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      }
+    }
+    return pages;
+  };
+
+  // Action handlers
+  const handleDeactivateCandidate = () => {
+    if (!selectedCandidate) return;
+
+    setCandidates((prev) =>
+      prev.map((c) =>
+        c.id === selectedCandidate.id
+          ? {
+              ...c,
+              status: 'inactive' as CandidateStatus,
+              deactivatedAt: new Date().toISOString().split('T')[0],
+            }
+          : c
+      )
+    );
+
+    const newAction: CandidateAdminAction = {
+      id: `cand-action-${Date.now()}`,
+      candidateId: selectedCandidate.id,
+      candidateName: selectedCandidate.name,
+      action: 'deactivated',
+      performedBy: 'Ana Silva (Admin)',
+      performedAt: new Date().toISOString(),
+      details: deactivateReason || 'Candidato desativado',
+    };
+
+    setActions((prev) => [newAction, ...prev]);
+
+    toast.success(`Candidato ${selectedCandidate.name} desativado com sucesso`);
+    setDeactivateDialogOpen(false);
+    setDeactivateReason('');
+  };
+
+  const handleReactivateCandidate = () => {
+    if (!selectedCandidate) return;
+
+    setCandidates((prev) =>
+      prev.map((c) =>
+        c.id === selectedCandidate.id
+          ? {
+              ...c,
+              status: 'active' as CandidateStatus,
+              deactivatedAt: undefined,
+            }
+          : c
+      )
+    );
+
+    const newAction: CandidateAdminAction = {
+      id: `cand-action-${Date.now()}`,
+      candidateId: selectedCandidate.id,
+      candidateName: selectedCandidate.name,
+      action: 'activated',
+      performedBy: 'Ana Silva (Admin)',
+      performedAt: new Date().toISOString(),
+      details: 'Candidato reativado',
+    };
+
+    setActions((prev) => [newAction, ...prev]);
+
+    toast.success(`Candidato ${selectedCandidate.name} reativado com sucesso`);
+    setReactivateDialogOpen(false);
+  };
+
+  const handleResetTest = () => {
+    if (!selectedCandidate) return;
+
+    setCandidates((prev) =>
+      prev.map((c) =>
+        c.id === selectedCandidate.id
+          ? {
+              ...c,
+              hasTest: false,
+              testResult: undefined,
+            }
+          : c
+      )
+    );
+
+    const newAction: CandidateAdminAction = {
+      id: `cand-action-${Date.now()}`,
+      candidateId: selectedCandidate.id,
+      candidateName: selectedCandidate.name,
+      action: 'test_reset',
+      performedBy: 'Ana Silva (Admin)',
+      performedAt: new Date().toISOString(),
+      details: 'Teste comportamental resetado',
+    };
+
+    setActions((prev) => [newAction, ...prev]);
+
+    toast.success(`Teste de ${selectedCandidate.name} resetado com sucesso`);
+    setResetTestDialogOpen(false);
+  };
+
+  const handleSendNotification = () => {
+    if (!selectedCandidate || !notificationMessage.trim()) return;
+
+    const newAction: CandidateAdminAction = {
+      id: `cand-action-${Date.now()}`,
+      candidateId: selectedCandidate.id,
+      candidateName: selectedCandidate.name,
+      action: 'notification_sent',
+      performedBy: 'Ana Silva (Admin)',
+      performedAt: new Date().toISOString(),
+      details: `Notificação enviada: ${notificationMessage}`,
+    };
+
+    setActions((prev) => [newAction, ...prev]);
+
+    toast.success(`Notificação enviada para ${selectedCandidate.name}`);
+    setNotificationDialogOpen(false);
+    setNotificationMessage('');
+  };
+
+  const handleClearFilters = () => {
+    setStatusFilter('all');
+    setTestStatusFilter('all');
+    setDiscProfileFilter('all');
+    setSearchTerm('');
+  };
+
+  // Filter content component (reusable for sidebar and mobile sheet)
+  const FilterContent = () => (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Label>Status</Label>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="active">Ativo</SelectItem>
+            <SelectItem value="inactive">Inativo</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Teste Comportamental</Label>
+        <Select value={testStatusFilter} onValueChange={setTestStatusFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione" />
+          </SelectTrigger>
+          <SelectContent>
+            {TEST_STATUS_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Perfil DISC</Label>
+        <Select value={discProfileFilter} onValueChange={setDiscProfileFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            {DISC_PROFILES.map((profile) => (
+              <SelectItem key={profile} value={profile}>
+                {profile}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Button
+        variant="outline"
+        className="w-full"
+        onClick={handleClearFilters}
+      >
+        <X className="h-4 w-4 mr-2" />
+        Limpar Filtros
+      </Button>
+    </div>
+  );
+
+  // Candidate card component
+  const CandidateCard = ({ candidate, index }: { candidate: Candidate; index: number }) => {
+    const StatusIcon = STATUS_CONFIG[candidate.status].icon;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.05 }}
+        className="bg-card border rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
+        onClick={() => {
+          setSelectedCandidate(candidate);
+          setDrawerOpen(true);
+        }}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-4 flex-1">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={candidate.avatar} />
+              <AvatarFallback className="bg-primary/10 text-primary">
+                {candidate.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-lg truncate">{candidate.name}</h3>
+                <Badge
+                  variant="secondary"
+                  className={cn(STATUS_CONFIG[candidate.status].bgColor, STATUS_CONFIG[candidate.status].color)}
+                >
+                  <StatusIcon className="h-3 w-3 mr-1" />
+                  {STATUS_CONFIG[candidate.status].label}
+                </Badge>
+              </div>
+
+              <p className="text-sm text-muted-foreground mb-2">{candidate.email}</p>
+
+              <p className="text-sm font-medium mb-2">{candidate.title}</p>
+
+              <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {candidate.location}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Briefcase className="h-3 w-3" />
+                  {candidate.experience} anos
+                </div>
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  Desde {new Date(candidate.createdAt).toLocaleDateString('pt-BR')}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {candidate.hasTest ? (
+                  <Badge variant="default" className="bg-success/10 text-success">
+                    <Brain className="h-3 w-3 mr-1" />
+                    Teste: {candidate.testResult?.result?.profile}
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="bg-warning/10 text-warning">
+                    <Brain className="h-3 w-3 mr-1" />
+                    Sem teste
+                  </Badge>
+                )}
+                <Badge variant="outline">
+                  {candidate.profileCompletion}% completo
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+        </div>
+      </motion.div>
+    );
+  };
+
+  // Candidate drawer component
+  const CandidateDrawer = () => {
+    if (!selectedCandidate) return null;
+
+    const candidateActions = actions.filter(
+      (action) => action.candidateId === selectedCandidate.id
+    );
+
+    const candidateApplications = applications.filter(
+      (app) => app.candidateId === selectedCandidate.id
+    );
+
+    return (
+      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader className="space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={selectedCandidate.avatar} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                    {selectedCandidate.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <SheetTitle className="text-2xl">{selectedCandidate.name}</SheetTitle>
+                  <p className="text-sm text-muted-foreground">{selectedCandidate.title}</p>
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      'mt-2',
+                      STATUS_CONFIG[selectedCandidate.status].bgColor,
+                      STATUS_CONFIG[selectedCandidate.status].color
+                    )}
+                  >
+                    {STATUS_CONFIG[selectedCandidate.status].label}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-2">
+              {selectedCandidate.status === 'active' ? (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setDeactivateDialogOpen(true)}
+                >
+                  <PowerOff className="h-4 w-4 mr-2" />
+                  Desativar
+                </Button>
+              ) : (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setReactivateDialogOpen(true)}
+                >
+                  <Power className="h-4 w-4 mr-2" />
+                  Reativar
+                </Button>
+              )}
+
+              {selectedCandidate.hasTest && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setResetTestDialogOpen(true)}
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Resetar Teste
+                </Button>
+              )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setNotificationDialogOpen(true)}
+              >
+                <Bell className="h-4 w-4 mr-2" />
+                Enviar Notificação
+              </Button>
+            </div>
+          </SheetHeader>
+
+          <Tabs defaultValue="profile" className="mt-6">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="profile">Perfil</TabsTrigger>
+              <TabsTrigger value="test">Teste</TabsTrigger>
+              <TabsTrigger value="applications">Candidaturas</TabsTrigger>
+              <TabsTrigger value="history">Histórico</TabsTrigger>
+            </TabsList>
+
+            {/* Tab: Perfil */}
+            <TabsContent value="profile" className="space-y-6 mt-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Informações Básicas</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span>{selectedCandidate.email}</span>
+                    </div>
+                    {selectedCandidate.phone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>{selectedCandidate.phone}</span>
+                      </div>
+                    )}
+                    {selectedCandidate.linkedin && (
+                      <div className="flex items-center gap-2">
+                        <Linkedin className="h-4 w-4 text-muted-foreground" />
+                        <a
+                          href={selectedCandidate.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          LinkedIn
+                        </a>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span>{selectedCandidate.location}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Experiência e Formação</h3>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Experiência:</span>{' '}
+                      {selectedCandidate.experience} anos
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Formação:</span>{' '}
+                      {selectedCandidate.education}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Disponibilidade:</span>{' '}
+                      {selectedCandidate.availability}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Habilidades</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCandidate.skills.map((skill) => (
+                      <Badge key={skill} variant="secondary">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Pretensão Salarial</h3>
+                  <p className="text-sm">
+                    R$ {selectedCandidate.salary.min.toLocaleString()} - R${' '}
+                    {selectedCandidate.salary.max.toLocaleString()}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Métricas</h3>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Perfil:</span>{' '}
+                      {selectedCandidate.profileCompletion}% completo
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Data de cadastro:</span>{' '}
+                      {new Date(selectedCandidate.createdAt).toLocaleDateString('pt-BR')}
+                    </div>
+                    {selectedCandidate.deactivatedAt && (
+                      <div>
+                        <span className="text-muted-foreground">Desativado em:</span>{' '}
+                        {new Date(selectedCandidate.deactivatedAt).toLocaleDateString('pt-BR')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Tab: Teste */}
+            <TabsContent value="test" className="space-y-6 mt-6">
+              {selectedCandidate.hasTest && selectedCandidate.testResult ? (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Resultado DISC</h3>
+                    <Badge variant="default" className="text-lg">
+                      {selectedCandidate.testResult.result?.profile}
+                    </Badge>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Pontuações</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Dominância</span>
+                          <span className="font-medium">
+                            {selectedCandidate.testResult.result?.dominance}%
+                          </span>
+                        </div>
+                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-red-500"
+                            style={{
+                              width: `${selectedCandidate.testResult.result?.dominance}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Influência</span>
+                          <span className="font-medium">
+                            {selectedCandidate.testResult.result?.influence}%
+                          </span>
+                        </div>
+                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-yellow-500"
+                            style={{
+                              width: `${selectedCandidate.testResult.result?.influence}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Estabilidade</span>
+                          <span className="font-medium">
+                            {selectedCandidate.testResult.result?.steadiness}%
+                          </span>
+                        </div>
+                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-green-500"
+                            style={{
+                              width: `${selectedCandidate.testResult.result?.steadiness}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Conformidade</span>
+                          <span className="font-medium">
+                            {selectedCandidate.testResult.result?.compliance}%
+                          </span>
+                        </div>
+                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-500"
+                            style={{
+                              width: `${selectedCandidate.testResult.result?.compliance}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Pontos Fortes</h3>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      {selectedCandidate.testResult.result?.strengths?.map((strength, i) => (
+                        <li key={i}>{strength}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Pontos de Atenção</h3>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      {selectedCandidate.testResult.result?.watchPoints?.map((point, i) => (
+                        <li key={i}>{point}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground">
+                    <div>
+                      Realizado em:{' '}
+                      {new Date(selectedCandidate.testResult.completedAt!).toLocaleDateString('pt-BR')}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="mb-2">Teste comportamental não realizado</p>
+                  <p className="text-sm">
+                    Este candidato ainda não completou o teste comportamental Gauge-Pro.
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Tab: Candidaturas */}
+            <TabsContent value="applications" className="space-y-4 mt-6">
+              {candidateApplications.length > 0 ? (
+                <div className="space-y-3">
+                  {candidateApplications.map((app) => (
+                    <div key={app.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <h4 className="font-medium">{app.jobTitle}</h4>
+                          <p className="text-sm text-muted-foreground">{app.companyName}</p>
+                        </div>
+                        <Badge variant="secondary">{app.status}</Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Aplicado em: {new Date(app.appliedAt).toLocaleDateString('pt-BR')}
+                      </div>
+                      {app.match && (
+                        <div className="mt-2">
+                          <Badge variant="default" className="bg-success/10 text-success">
+                            Match: {app.match}%
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Award className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Nenhuma candidatura registrada</p>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Tab: Histórico */}
+            <TabsContent value="history" className="space-y-4 mt-6">
+              {candidateActions.length > 0 ? (
+                <ScrollArea className="h-[400px] pr-4">
+                  <div className="space-y-4">
+                    {candidateActions
+                      .sort(
+                        (a, b) =>
+                          new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime()
+                      )
+                      .map((action) => (
+                        <div key={action.id} className="border-l-2 border-primary/20 pl-4 pb-4">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge variant="secondary">
+                                  {action.action === 'activated' && 'Ativado'}
+                                  {action.action === 'deactivated' && 'Desativado'}
+                                  {action.action === 'test_reset' && 'Teste Resetado'}
+                                  {action.action === 'notification_sent' && 'Notificação Enviada'}
+                                </Badge>
+                              </div>
+                              <p className="text-sm mb-1">{action.details}</p>
+                              <div className="text-xs text-muted-foreground">
+                                Por {action.performedBy} em{' '}
+                                {new Date(action.performedAt).toLocaleString('pt-BR')}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Nenhuma ação registrada</p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </SheetContent>
+      </Sheet>
+    );
+  };
+
+  return (
+    <DashboardLayout userType="admin">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Gestão de Candidatos</h1>
+            <p className="text-muted-foreground">
+              Gerencie candidatos da plataforma
+            </p>
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Search bar */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome ou email..."
+              className="pl-10 pr-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                onClick={() => setSearchTerm('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          {/* Mobile filter button */}
+          <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="md:hidden">
+                <Filter className="h-4 w-4 mr-2" />
+                Filtros
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+              <SheetHeader>
+                <SheetTitle>Filtros</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6">
+                <FilterContent />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        <div className="flex gap-6">
+          {/* Sidebar filters (desktop) */}
+          <div className="hidden md:block w-72 flex-shrink-0">
+            <div className="bg-card border rounded-lg p-6">
+              <h2 className="font-semibold mb-4">Filtros</h2>
+              <FilterContent />
+            </div>
+          </div>
+
+          {/* Main content */}
+          <div className="flex-1 space-y-6">
+            {/* Results count */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                {filteredCandidates.length} candidato(s) encontrado(s)
+              </p>
+            </div>
+
+            {/* Candidate list */}
+            {paginatedCandidates.length > 0 ? (
+              <div className="space-y-4">
+                {paginatedCandidates.map((candidate, index) => (
+                  <CandidateCard key={candidate.id} candidate={candidate} index={index} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 border rounded-lg bg-card">
+                <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum candidato encontrado</h3>
+                <p className="text-muted-foreground">
+                  Tente ajustar os filtros ou termo de busca.
+                </p>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                        className={
+                          currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'
+                        }
+                      />
+                    </PaginationItem>
+
+                    {getPageNumbers().map((page, index) => (
+                      <PaginationItem key={index}>
+                        {page === '...' ? (
+                          <span className="px-4">...</span>
+                        ) : (
+                          <PaginationLink
+                            onClick={() => handlePageChange(page as number)}
+                            isActive={currentPage === page}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        )}
+                      </PaginationItem>
+                    ))}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                        className={
+                          currentPage === totalPages
+                            ? 'pointer-events-none opacity-50'
+                            : 'cursor-pointer'
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Candidate Drawer */}
+      <CandidateDrawer />
+
+      {/* Deactivate Dialog */}
+      <AlertDialog open={deactivateDialogOpen} onOpenChange={setDeactivateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar Candidato</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja desativar o candidato {selectedCandidate?.name}? O candidato
+              não poderá mais acessar a plataforma.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="my-4">
+            <Label htmlFor="deactivate-reason">Motivo (opcional)</Label>
+            <Textarea
+              id="deactivate-reason"
+              placeholder="Digite o motivo da desativação..."
+              value={deactivateReason}
+              onChange={(e) => setDeactivateReason(e.target.value)}
+              className="mt-2"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeactivateCandidate}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Desativar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reactivate Dialog */}
+      <AlertDialog open={reactivateDialogOpen} onOpenChange={setReactivateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reativar Candidato</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja reativar o candidato {selectedCandidate?.name}? O candidato
+              poderá acessar a plataforma novamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReactivateCandidate}>Reativar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset Test Dialog */}
+      <AlertDialog open={resetTestDialogOpen} onOpenChange={setResetTestDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resetar Teste Comportamental</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja resetar o teste comportamental de {selectedCandidate?.name}? O
+              resultado atual será perdido e o candidato poderá realizar o teste novamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetTest}>Resetar Teste</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Notification Dialog */}
+      <Dialog open={notificationDialogOpen} onOpenChange={setNotificationDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enviar Notificação</DialogTitle>
+            <DialogDescription>
+              Envie uma notificação para {selectedCandidate?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="notification-message">Mensagem</Label>
+              <Textarea
+                id="notification-message"
+                placeholder="Digite a mensagem da notificação..."
+                value={notificationMessage}
+                onChange={(e) => setNotificationMessage(e.target.value)}
+                className="mt-2"
+                rows={4}
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {notificationMessage.length}/500 caracteres
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setNotificationDialogOpen(false);
+                setNotificationMessage('');
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSendNotification}
+              disabled={!notificationMessage.trim()}
+            >
+              Enviar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </DashboardLayout>
+  );
+}

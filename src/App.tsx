@@ -17,11 +17,17 @@ import NotFound from "./pages/NotFound";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
+import AdminCompanies from "./pages/admin/Companies";
+import AdminCandidates from "./pages/admin/Candidates";
 
 // Company pages
 import CompanyDashboard from "./pages/empresa/Dashboard";
 import CompanyJobs from "./pages/empresa/Jobs";
+import CompanyApplications from "./pages/empresa/Applications";
+import CompanyCandidates from "./pages/empresa/Candidates";
+import CompanyCandidateProfile from "./pages/empresa/CandidateProfile";
 import CompanyMessages from "./pages/empresa/Messages";
+import CompanySettings from "./pages/empresa/Settings";
 
 // Candidate pages
 import CandidateDashboard from "./pages/candidato/Dashboard";
@@ -29,16 +35,23 @@ import CandidateJobSearch from "./pages/candidato/JobSearch";
 import CandidateTests from "./pages/candidato/Tests";
 import CandidateMessages from "./pages/candidato/Messages";
 import CandidateProfile from "./pages/candidato/Profile";
+import CandidateJobDetails from "./pages/candidato/JobDetails";
+import CandidateApplications from "./pages/candidato/Applications";
+import CandidateSettings from "./pages/candidato/Settings";
+import CandidateCurriculums from "./pages/candidato/Curriculums";
+import CandidateCurriculumEdit from "./pages/candidato/CurriculumEdit";
+import CandidateSavedJobs from "./pages/candidato/SavedJobs";
+import CandidateNotifications from "./pages/candidato/Notifications";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
@@ -63,12 +76,12 @@ const App = () => (
             } />
             <Route path="/admin/empresas" element={
               <ProtectedRoute allowedTypes={['admin']}>
-                <AdminDashboard />
+                <AdminCompanies />
               </ProtectedRoute>
             } />
             <Route path="/admin/candidatos" element={
               <ProtectedRoute allowedTypes={['admin']}>
-                <AdminDashboard />
+                <AdminCandidates />
               </ProtectedRoute>
             } />
             <Route path="/admin/configuracoes" element={
@@ -88,9 +101,19 @@ const App = () => (
                 <CompanyJobs />
               </ProtectedRoute>
             } />
+            <Route path="/empresa/candidaturas" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyApplications />
+              </ProtectedRoute>
+            } />
             <Route path="/empresa/candidatos" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyDashboard />
+                <CompanyCandidates />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/candidatos/:id" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyCandidateProfile />
               </ProtectedRoute>
             } />
             <Route path="/empresa/testes" element={
@@ -105,7 +128,7 @@ const App = () => (
             } />
             <Route path="/empresa/configuracoes" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyDashboard />
+                <CompanySettings />
               </ProtectedRoute>
             } />
 
@@ -125,9 +148,19 @@ const App = () => (
                 <CandidateJobSearch />
               </ProtectedRoute>
             } />
+            <Route path="/candidato/vagas/:id" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateJobDetails />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/vagas-salvas" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateSavedJobs />
+              </ProtectedRoute>
+            } />
             <Route path="/candidato/candidaturas" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateDashboard />
+                <CandidateApplications />
               </ProtectedRoute>
             } />
             <Route path="/candidato/testes" element={
@@ -142,16 +175,31 @@ const App = () => (
             } />
             <Route path="/candidato/configuracoes" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateDashboard />
+                <CandidateSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/curriculos" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateCurriculums />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/curriculos/:id" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateCurriculumEdit />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/notificacoes" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateNotifications />
               </ProtectedRoute>
             } />
 
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+        </TooltipProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 

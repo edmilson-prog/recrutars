@@ -1,17 +1,23 @@
 import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, Building2, Users, Settings, LogOut, 
-  Briefcase, MessageSquare, Brain, FileText, Search, User
+import {
+  LayoutDashboard, Building2, Users, Settings, LogOut,
+  Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
+import { GlassHeader } from '@/components/layout/GlassHeader';
+import { GlassFooter } from '@/components/layout/GlassFooter';
+import { Badge } from '@/components/ui/badge';
+import { NotificationBell } from '@/components/notifications';
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  countKey?: 'savedJobs'; // Chave para contadores dinâmicos
 }
 
 const adminNav: NavItem[] = [
@@ -24,6 +30,7 @@ const adminNav: NavItem[] = [
 const companyNav: NavItem[] = [
   { href: '/empresa', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/empresa/vagas', label: 'Minhas Vagas', icon: Briefcase },
+  { href: '/empresa/candidaturas', label: 'Candidaturas', icon: ClipboardList },
   { href: '/empresa/candidatos', label: 'Banco de Talentos', icon: Users },
   { href: '/empresa/testes', label: 'Testes', icon: Brain },
   { href: '/empresa/mensagens', label: 'Mensagens', icon: MessageSquare },
@@ -32,9 +39,10 @@ const companyNav: NavItem[] = [
 
 const candidateNav: NavItem[] = [
   { href: '/candidato', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/candidato/perfil', label: 'Meu Perfil', icon: User },
+  { href: '/candidato/curriculos', label: 'Currículos', icon: FileText },
   { href: '/candidato/vagas', label: 'Buscar Vagas', icon: Search },
-  { href: '/candidato/candidaturas', label: 'Candidaturas', icon: FileText },
+  { href: '/candidato/vagas-salvas', label: 'Vagas Salvas', icon: Heart, countKey: 'savedJobs' },
+  { href: '/candidato/candidaturas', label: 'Candidaturas', icon: ClipboardList },
   { href: '/candidato/testes', label: 'Meus Testes', icon: Brain },
   { href: '/candidato/mensagens', label: 'Mensagens', icon: MessageSquare },
   { href: '/candidato/configuracoes', label: 'Configurações', icon: Settings },
@@ -50,11 +58,21 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const { user, logout, currentCompany, currentCandidate } = useAuth();
 
-  const navItems = userType === 'admin' 
-    ? adminNav 
-    : userType === 'company' 
-      ? companyNav 
+  // Hook de favoritos para contador (PRD-024)
+  const { favoritesCount } = useFavoriteJobs();
+
+  const navItems = userType === 'admin'
+    ? adminNav
+    : userType === 'company'
+      ? companyNav
       : candidateNav;
+
+  // Obter contadores para items do menu
+  const getItemCount = (countKey?: string): number | null => {
+    if (!countKey || userType !== 'candidate') return null;
+    if (countKey === 'savedJobs') return favoritesCount;
+    return null;
+  };
 
   const handleLogout = () => {
     logout();
@@ -91,14 +109,15 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.href;
+            const count = getItemCount(item.countKey);
             return (
               <Link
                 key={item.href}
                 to={item.href}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-                  isActive 
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "hover:bg-sidebar-accent/50"
                 )}
               >
@@ -106,7 +125,18 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                   "w-5 h-5",
                   isActive && "text-sidebar-primary"
                 )} />
-                <span className="font-medium">{item.label}</span>
+                <span className="font-medium flex-1">{item.label}</span>
+                {count !== null && count > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      "h-5 min-w-5 px-1.5 text-xs",
+                      isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : ""
+                    )}
+                  >
+                    {count}
+                  </Badge>
+                )}
               </Link>
             );
           })}
@@ -136,12 +166,33 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 bg-background overflow-auto">
-        <div className="p-8">
-          {children}
-        </div>
-      </main>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col bg-background relative">
+        {/* Glass Header */}
+        <GlassHeader>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-semibold text-foreground">
+                {navItems.find(item => item.href === location.pathname)?.label || 'Dashboard'}
+              </span>
+            </div>
+            {/* Notificações - apenas para candidatos (PRD-025) */}
+            {userType === 'candidate' && (
+              <NotificationBell />
+            )}
+          </div>
+        </GlassHeader>
+
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-auto pb-12">
+          <div className="p-8">
+            {children}
+          </div>
+        </main>
+
+        {/* Glass Footer - offset for sidebar */}
+        <GlassFooter className="left-64" />
+      </div>
     </div>
   );
 }
