@@ -32,6 +32,11 @@ import {
   ChevronDown,
   Mail,
   Phone,
+  MapPin,
+  Briefcase,
+  DollarSign,
+  Clock,
+  Send,
 } from "lucide-react";
 import { getMatchScoreColor } from "@/types/disc";
 
@@ -101,7 +106,7 @@ export function CandidateComparison({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card>
+              <Card className="h-full">
                 <CardContent className="pt-6">
                   {/* Avatar e info básica */}
                   <div className="flex flex-col items-center text-center mb-4">
@@ -119,6 +124,9 @@ export function CandidateComparison({
                       </AvatarFallback>
                     </Avatar>
                     <h3 className="font-semibold text-lg">{candidate.name}</h3>
+                    {candidate.currentRole && (
+                      <p className="text-sm text-muted-foreground">{candidate.currentRole}</p>
+                    )}
                     <Badge
                       className={cn(
                         "mt-2",
@@ -130,6 +138,53 @@ export function CandidateComparison({
                       {candidate.matchScore}% Match
                     </Badge>
                   </div>
+
+                  {/* PRD-031: Informações adicionais */}
+                  <div className="space-y-2 mb-4 text-sm">
+                    {candidate.experienceYears !== undefined && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Briefcase className="w-4 h-4" />
+                        <span>{candidate.experienceYears} {candidate.experienceYears === 1 ? "ano" : "anos"} de experiência</span>
+                      </div>
+                    )}
+                    {candidate.location && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin className="w-4 h-4" />
+                        <span>{candidate.location}</span>
+                      </div>
+                    )}
+                    {candidate.salary && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <DollarSign className="w-4 h-4" />
+                        <span>R$ {candidate.salary.min.toLocaleString("pt-BR")} - {candidate.salary.max.toLocaleString("pt-BR")}</span>
+                      </div>
+                    )}
+                    {candidate.availability && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="w-4 h-4" />
+                        <span>{candidate.availability}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* PRD-031: Habilidades top 5 */}
+                  {candidate.skills && candidate.skills.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Habilidades</p>
+                      <div className="flex flex-wrap gap-1">
+                        {candidate.skills.slice(0, 5).map((skill) => (
+                          <Badge key={skill} variant="outline" className="text-xs">
+                            {skill}
+                          </Badge>
+                        ))}
+                        {candidate.skills.length > 5 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{candidate.skills.length - 5}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Radar DISC mini */}
                   <div className="flex justify-center mb-4">
@@ -163,18 +218,17 @@ export function CandidateComparison({
                   <div className="flex gap-2">
                     {onInviteToInterview && (
                       <Button
-                        variant="outline"
                         size="sm"
                         className="flex-1"
                         onClick={() => onInviteToInterview(candidate.id)}
                       >
-                        <CalendarPlus className="w-4 h-4 mr-1" />
-                        Entrevista
+                        <Send className="w-4 h-4 mr-1" />
+                        Convidar
                       </Button>
                     )}
                     {onContactCandidate && (
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => onContactCandidate(candidate.id)}
                       >

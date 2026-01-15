@@ -17,18 +17,31 @@ import { Check, Minus, Trophy } from "lucide-react";
 interface MetricDefinition {
   key: string;
   label: string;
-  type: "number" | "boolean" | "string" | "years";
+  type: "number" | "boolean" | "string" | "years" | "currency";
   higherIsBetter?: boolean;
+  section?: string; // PRD-031: Agrupar por seção
 }
 
-// Métricas padrão para comparação
+// PRD-031: Métricas expandidas para comparação completa
 export const DEFAULT_COMPARISON_METRICS: MetricDefinition[] = [
-  { key: "matchScore", label: "Match Score", type: "number", higherIsBetter: true },
-  { key: "experienceYears", label: "Experiência", type: "years", higherIsBetter: true },
-  { key: "discD", label: "DISC - Dominância", type: "number" },
-  { key: "discI", label: "DISC - Influência", type: "number" },
-  { key: "discS", label: "DISC - Estabilidade", type: "number" },
-  { key: "discC", label: "DISC - Conformidade", type: "number" },
+  // Match
+  { key: "matchScore", label: "Match Score", type: "number", higherIsBetter: true, section: "Match" },
+  // Experiência
+  { key: "experienceYears", label: "Anos de Experiência", type: "years", higherIsBetter: true, section: "Experiência" },
+  { key: "currentRole", label: "Cargo Atual", type: "string", section: "Experiência" },
+  // Formação
+  { key: "education", label: "Formação", type: "string", section: "Formação" },
+  // Pretensão Salarial
+  { key: "salary", label: "Pretensão Salarial", type: "currency", section: "Informações" },
+  // Disponibilidade
+  { key: "availability", label: "Disponibilidade", type: "string", section: "Informações" },
+  // Localização
+  { key: "location", label: "Localização", type: "string", section: "Informações" },
+  // DISC
+  { key: "discD", label: "Dominância (D)", type: "number", section: "Perfil DISC" },
+  { key: "discI", label: "Influência (I)", type: "number", section: "Perfil DISC" },
+  { key: "discS", label: "Estabilidade (S)", type: "number", section: "Perfil DISC" },
+  { key: "discC", label: "Conformidade (C)", type: "number", section: "Perfil DISC" },
 ];
 
 interface ComparisonTableProps {
@@ -71,6 +84,15 @@ export function ComparisonTable({
     if (metric.key === "discI") return candidate.discProfile.i;
     if (metric.key === "discS") return candidate.discProfile.s;
     if (metric.key === "discC") return candidate.discProfile.c;
+    // PRD-031: Novos campos diretos
+    if (metric.key === "experienceYears") return candidate.experienceYears;
+    if (metric.key === "currentRole") return candidate.currentRole;
+    if (metric.key === "education") return candidate.education;
+    if (metric.key === "availability") return candidate.availability;
+    if (metric.key === "location") return candidate.location;
+    if (metric.key === "salary" && candidate.salary) {
+      return candidate.salary.min; // Usar min para comparação (menor = melhor para empresa)
+    }
 
     // Busca em metrics genérico
     return candidate.metrics?.[metric.key];
@@ -111,7 +133,8 @@ export function ComparisonTable({
   // Formatar valor para exibição
   const formatValue = (
     value: string | number | boolean | undefined,
-    metric: MetricDefinition
+    metric: MetricDefinition,
+    candidate?: CandidateForComparison
   ): React.ReactNode => {
     if (value === undefined || value === null) {
       return <Minus className="w-4 h-4 text-muted-foreground mx-auto" />;
@@ -127,6 +150,12 @@ export function ComparisonTable({
 
     if (metric.type === "years" && typeof value === "number") {
       return `${value} ${value === 1 ? "ano" : "anos"}`;
+    }
+
+    // PRD-031: Formatação de moeda
+    if (metric.type === "currency" && candidate?.salary) {
+      const { min, max } = candidate.salary;
+      return `R$ ${min.toLocaleString("pt-BR")} - ${max.toLocaleString("pt-BR")}`;
     }
 
     if (metric.type === "number" && typeof value === "number") {
@@ -216,7 +245,7 @@ export function ComparisonTable({
                                 isBest && "text-primary"
                               )}
                             >
-                              {formatValue(value, metric)}
+                              {formatValue(value, metric, candidate)}
                             </span>
                           </div>
                         </td>

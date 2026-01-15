@@ -5,6 +5,28 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.0] - 2026-01-15 (PRD-031)
+
+### Added
+- **Comparar Candidatos (Empresa)** - PRD-031
+  - Checkbox de seleção nos cards de candidatos (máximo 3)
+  - Barra flutuante de seleção com contador
+  - Modal de comparação lado a lado
+  - Métricas expandidas: Match Score, Experiência, Formação, Salário, Disponibilidade, Localização
+  - Perfil DISC com gráfico radar mini
+  - Habilidades top 5 com badges
+  - Destaque visual (troféu) para melhor valor em cada categoria
+  - Toggle "Mostrar apenas diferenças"
+  - Botões de ação: Convidar e Contatar
+
+### Changed
+- `CandidateForComparison` - expandido com campos: experienceYears, currentRole, education, skills, salary, availability, location
+- `ComparisonTable` - métricas expandidas com formatação de moeda (R$), anos e agrupamento por seção
+- `CandidateComparison` - seções visuais adicionais (informações, habilidades)
+- `SavedCandidates.tsx` - integração completa do sistema de comparação
+
+---
+
 ## [0.34.0] - 2026-01-15 (PRD-030)
 
 ### Added
