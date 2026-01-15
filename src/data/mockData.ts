@@ -24,12 +24,15 @@ import type {
   AdminAction,
   CandidateStatus,
   CandidateAdminAction,
+  VisibilitySettings,
   Curriculum,
   SkillWithLevel,
   EducationWithStatus,
   ExperienceWithCurrent,
   Course,
 } from '@/types';
+import type { Interview } from '@/types/interview';
+import type { FAQItem, Ticket, TicketMessage } from '@/types/help';
 
 // Re-export types for backward compatibility
 export type { User, Company, Candidate, Job, Application, BehavioralTest, Message, Conversation };
@@ -759,6 +762,7 @@ export const mockCandidates: Candidate[] = [
     createdAt: '2024-03-10',
     phone: '(11) 99999-8888',
     linkedin: 'https://linkedin.com/in/joaosantos',
+    visibility: { mode: 'public', anonymousId: '4721' } as VisibilitySettings,
   },
   {
     id: 'candidate-2',
@@ -795,6 +799,7 @@ export const mockCandidates: Candidate[] = [
     createdAt: '2024-03-15',
     phone: '(21) 98888-7777',
     linkedin: 'https://linkedin.com/in/mariaoliveira',
+    visibility: { mode: 'partial', anonymousId: '3856' } as VisibilitySettings,
   },
   {
     id: 'candidate-3',
@@ -814,6 +819,7 @@ export const mockCandidates: Candidate[] = [
     createdAt: '2024-04-01',
     phone: '(41) 97777-6666',
     linkedin: 'https://linkedin.com/in/pedrocosta',
+    visibility: { mode: 'private', anonymousId: '9214' } as VisibilitySettings,
   },
   {
     id: 'candidate-4',
@@ -3027,5 +3033,315 @@ export const mockCurriculums: Curriculum[] = [
     courses: [] as Course[],
     createdAt: '2024-04-01T10:00:00',
     updatedAt: '2024-04-01T10:00:00',
+  },
+];
+
+// Mock Interviews (PRD-027: Agendamento de Entrevistas)
+export const mockInterviews: Interview[] = [
+  // Pendente - aguardando resposta do candidato
+  {
+    id: 'interview-1',
+    applicationId: 'app-1',
+    jobId: 'job-1',
+    jobTitle: 'Desenvolvedor React Senior',
+    companyId: 'company-1',
+    companyName: 'Tech Solutions',
+    candidateId: 'candidate-1',
+    title: 'Entrevista Técnica',
+    type: 'video',
+    status: 'pending_candidate',
+    proposedSlots: [
+      { datetime: '2026-01-20T14:00:00' },
+      { datetime: '2026-01-21T10:00:00' },
+      { datetime: '2026-01-22T15:30:00' },
+    ],
+    duration: 60,
+    videoLink: 'https://meet.google.com/abc-defg-hij',
+    interviewerName: 'Carlos Silva',
+    interviewerRole: 'Tech Lead',
+    notes: 'Prepare-se para discutir sua experiência com React e arquitetura de componentes.',
+    responseDeadline: '2026-01-18T23:59:59',
+    createdAt: '2026-01-15T09:00:00',
+  },
+  // Pendente - aguardando confirmação da empresa
+  {
+    id: 'interview-2',
+    applicationId: 'app-2',
+    jobId: 'job-2',
+    jobTitle: 'Product Manager',
+    companyId: 'company-2',
+    companyName: 'Inovação Digital',
+    candidateId: 'candidate-1',
+    title: 'Entrevista com RH',
+    type: 'phone',
+    status: 'pending_company',
+    suggestedSlots: [
+      '2026-01-23T11:00:00',
+      '2026-01-24T14:00:00',
+    ],
+    suggestionReason: 'Tenho compromisso nos horários propostos. Os horários acima funcionam melhor para mim.',
+    duration: 45,
+    phoneNumber: '(11) 99999-8888',
+    createdAt: '2026-01-14T10:00:00',
+  },
+  // Confirmada
+  {
+    id: 'interview-3',
+    applicationId: 'app-3',
+    jobId: 'job-3',
+    jobTitle: 'Tech Lead',
+    companyId: 'company-1',
+    companyName: 'Tech Solutions',
+    candidateId: 'candidate-1',
+    title: 'Entrevista Final com CEO',
+    type: 'in_person',
+    status: 'confirmed',
+    confirmedDatetime: '2026-01-20T14:00:00',
+    duration: 60,
+    address: 'Av. Paulista, 1000, 10º andar - São Paulo, SP',
+    mapLink: 'https://maps.google.com/?q=Av.+Paulista,+1000',
+    interviewerName: 'Roberto Mendes',
+    interviewerRole: 'CEO',
+    notes: 'Trazer portfólio de projetos. Apresentação de 15min.',
+    createdAt: '2026-01-10T09:00:00',
+    confirmedAt: '2026-01-12T14:30:00',
+  },
+  // Realizada
+  {
+    id: 'interview-4',
+    applicationId: 'app-1',
+    jobId: 'job-1',
+    jobTitle: 'Desenvolvedor React Senior',
+    companyId: 'company-1',
+    companyName: 'Tech Solutions',
+    candidateId: 'candidate-1',
+    title: 'Triagem com RH',
+    type: 'video',
+    status: 'completed',
+    confirmedDatetime: '2026-01-10T10:00:00',
+    duration: 30,
+    videoLink: 'https://meet.google.com/xyz-uvwx-123',
+    interviewerName: 'Ana Paula',
+    interviewerRole: 'Recrutadora',
+    createdAt: '2026-01-05T09:00:00',
+    confirmedAt: '2026-01-06T11:00:00',
+    completedAt: '2026-01-10T10:45:00',
+  },
+  // Cancelada pela empresa
+  {
+    id: 'interview-5',
+    applicationId: 'app-4',
+    jobId: 'job-4',
+    jobTitle: 'Analista de Sistemas',
+    companyId: 'company-3',
+    companyName: 'StartUp Brasil',
+    candidateId: 'candidate-1',
+    title: 'Entrevista Técnica',
+    type: 'video',
+    status: 'cancelled_by_company',
+    confirmedDatetime: '2026-01-08T15:00:00',
+    duration: 60,
+    createdAt: '2026-01-02T10:00:00',
+    confirmedAt: '2026-01-03T09:00:00',
+    cancelledAt: '2026-01-07T16:00:00',
+    cancellationReason: 'Vaga preenchida',
+  },
+  // Entrevista para outro candidato (candidate-2)
+  {
+    id: 'interview-6',
+    applicationId: 'app-5',
+    jobId: 'job-1',
+    jobTitle: 'Desenvolvedor React Senior',
+    companyId: 'company-1',
+    companyName: 'Tech Solutions',
+    candidateId: 'candidate-2',
+    title: 'Entrevista Técnica',
+    type: 'video',
+    status: 'pending_candidate',
+    proposedSlots: [
+      { datetime: '2026-01-22T09:00:00' },
+      { datetime: '2026-01-22T14:00:00' },
+    ],
+    duration: 60,
+    videoLink: 'https://meet.google.com/def-ghij-klm',
+    interviewerName: 'Carlos Silva',
+    interviewerRole: 'Tech Lead',
+    responseDeadline: '2026-01-20T23:59:59',
+    createdAt: '2026-01-16T10:00:00',
+  },
+];
+
+// Mock FAQ Items (PRD-028: Central de Ajuda)
+export const mockFAQItems: FAQItem[] = [
+  // GERAL - Todos veem
+  {
+    id: 'faq-g-1',
+    question: 'Como altero minha senha?',
+    answer: 'Para alterar sua senha:\n\n1. Acesse "Configurações" no menu lateral\n2. Clique em "Alterar Senha"\n3. Digite sua senha atual\n4. Digite a nova senha\n5. Confirme a nova senha\n6. Clique em "Salvar"\n\n💡 Dica: Use uma senha forte com letras, números e símbolos.',
+    category: 'Conta',
+    area: 'general',
+  },
+  {
+    id: 'faq-g-2',
+    question: 'Como atualizo meu email?',
+    answer: 'Para atualizar seu email:\n\n1. Acesse "Configurações"\n2. Clique em "Alterar Email"\n3. Digite o novo email\n4. Você receberá um código de verificação no novo email\n5. Digite o código para confirmar\n\n⚠️ Importante: Você usará o novo email para fazer login.',
+    category: 'Conta',
+    area: 'general',
+  },
+  {
+    id: 'faq-g-3',
+    question: 'Como excluo minha conta?',
+    answer: 'Para excluir sua conta:\n\n1. Acesse "Configurações"\n2. Role até o final da página\n3. Clique em "Excluir Conta"\n4. Confirme a ação\n\n⚠️ Atenção: Esta ação é irreversível! Todos os seus dados serão permanentemente removidos.',
+    category: 'Conta',
+    area: 'general',
+  },
+
+  // CANDIDATO
+  {
+    id: 'faq-c-1',
+    question: 'Como me candidato a uma vaga?',
+    answer: 'Para se candidatar a uma vaga:\n\n1. Acesse "Buscar Vagas" no menu lateral\n2. Encontre a vaga desejada usando os filtros\n3. Clique em "Ver detalhes" para ver mais informações\n4. Clique no botão "Candidatar-se"\n5. Selecione qual currículo deseja usar\n6. Escreva uma mensagem opcional para a empresa\n7. Confirme sua candidatura\n\n💡 Dica: Mantenha seu currículo atualizado para aumentar suas chances!',
+    category: 'Candidaturas',
+    area: 'candidate',
+    relatedArticles: ['Como criar um currículo atrativo', 'Como funcionam os filtros de busca'],
+  },
+  {
+    id: 'faq-c-2',
+    question: 'Como acompanho minhas candidaturas?',
+    answer: 'Você pode acompanhar suas candidaturas em:\n\n1. Acesse "Candidaturas" no menu lateral\n2. Veja todas as suas candidaturas com status atualizado\n3. Use os filtros para ver por status: Pendentes, Em análise, Entrevista, etc.\n4. Clique em "Ver vaga" para detalhes\n\nOs status possíveis são:\n• Pendente: Aguardando análise da empresa\n• Em análise: Empresa está avaliando\n• Entrevista: Você foi selecionado para entrevista\n• Proposta: Você recebeu uma proposta\n• Reprovado: Candidatura não foi selecionada\n• Contratado: Parabéns! Você foi contratado',
+    category: 'Candidaturas',
+    area: 'candidate',
+  },
+  {
+    id: 'faq-c-3',
+    question: 'Como edito meu currículo?',
+    answer: 'Para editar seu currículo:\n\n1. Acesse "Currículos" no menu lateral\n2. Clique no currículo que deseja editar\n3. Faça as alterações necessárias\n4. Clique em "Salvar"\n\n💡 Dica: Você pode ter múltiplos currículos para diferentes tipos de vagas!',
+    category: 'Perfil',
+    area: 'candidate',
+  },
+  {
+    id: 'faq-c-4',
+    question: 'Como funciona o teste comportamental?',
+    answer: 'O teste DISC é um teste comportamental que avalia:\n\n• D (Dominância): Orientação para resultados\n• I (Influência): Orientação para pessoas\n• S (Estabilidade): Orientação para processos\n• C (Conformidade): Orientação para qualidade\n\nPara fazer o teste:\n1. Acesse "Meus Testes"\n2. Clique em "Fazer Teste DISC"\n3. Responda as 24 questões com sinceridade\n4. Veja seu perfil comportamental\n\n💡 Dica: Seja sincero nas respostas para obter um resultado preciso!',
+    category: 'Testes',
+    area: 'candidate',
+  },
+  {
+    id: 'faq-c-5',
+    question: 'Como controlo minha privacidade?',
+    answer: 'Você tem 3 modos de visibilidade:\n\n🌐 Modo Público:\n• Seu perfil completo é visível para empresas\n• Aparece nas buscas com nome e foto\n\n😎 Modo Anônimo:\n• Aparece como "Perfil Anônimo #XXXX"\n• Empresas veem suas habilidades mas não sua identidade\n• Você decide quando revelar sua identidade\n\n🔒 Modo Privado:\n• Seu perfil não aparece em buscas\n• Apenas candidaturas ativas são visíveis\n\nPara alterar: Acesse Configurações > Visibilidade do Perfil',
+    category: 'Privacidade',
+    area: 'candidate',
+  },
+
+  // EMPRESA
+  {
+    id: 'faq-e-1',
+    question: 'Como publico uma nova vaga?',
+    answer: 'Para publicar uma vaga:\n\n1. Acesse "Minhas Vagas"\n2. Clique em "+ Nova Vaga"\n3. Preencha as informações:\n   • Título e descrição\n   • Requisitos e benefícios\n   • Faixa salarial (opcional)\n   • Localização e modelo de trabalho\n4. Clique em "Publicar"\n\nSua vaga ficará visível imediatamente para candidatos!',
+    category: 'Vagas',
+    area: 'company',
+  },
+  {
+    id: 'faq-e-2',
+    question: 'Como funciona o Banco de Talentos?',
+    answer: 'O Banco de Talentos permite:\n\n• Buscar candidatos ativos na plataforma\n• Filtrar por habilidades, localização e experiência\n• Ver perfis comportamentais (DISC)\n• Enviar convites diretos para candidatos\n\nPara usar:\n1. Acesse "Banco de Talentos"\n2. Use os filtros de busca\n3. Veja os perfis disponíveis\n4. Clique em "Ver Perfil" para mais detalhes\n5. Envie convite para candidatos interessantes',
+    category: 'Talentos',
+    area: 'company',
+  },
+  {
+    id: 'faq-e-3',
+    question: 'Como gerencio as candidaturas recebidas?',
+    answer: 'Para gerenciar candidaturas:\n\n1. Acesse "Candidaturas"\n2. Veja todas as candidaturas por vaga\n3. Use os filtros por status\n4. Clique no candidato para ver detalhes\n5. Mova para as etapas:\n   • Em análise\n   • Entrevista\n   • Proposta\n   • Contratado/Reprovado\n\nVocê também pode:\n• Adicionar notas internas\n• Enviar mensagens\n• Agendar entrevistas',
+    category: 'Candidaturas',
+    area: 'company',
+  },
+];
+
+// Mock Tickets (PRD-028: Central de Ajuda)
+export const mockTickets: Ticket[] = [
+  // Ticket aberto do candidate-1
+  {
+    id: 'ticket-1',
+    number: 1247,
+    userId: 'candidate-1',
+    category: 'account',
+    subject: 'Problema com login',
+    status: 'answered',
+    messages: [
+      {
+        id: 'msg-1-1',
+        sender: 'user',
+        content: 'Não estou conseguindo acessar minha conta. Quando tento fazer login, aparece a mensagem "Credenciais inválidas" mas tenho certeza que a senha está correta.',
+        attachmentUrl: '/mock/screenshot_erro.png',
+        attachmentName: 'screenshot_erro.png',
+        createdAt: '2026-01-14T10:30:00',
+      },
+      {
+        id: 'msg-1-2',
+        sender: 'support',
+        content: 'Olá João!\n\nIdentificamos que houve uma tentativa de troca de senha na sua conta. Você realizou essa solicitação?\n\nCaso não tenha sido você, recomendamos:\n1. Utilizar o link "Esqueci minha senha"\n2. Definir uma nova senha segura\n3. Nos avisar para verificarmos a segurança da conta\n\nFicamos no aguardo!',
+        createdAt: '2026-01-14T14:15:00',
+      },
+    ],
+    createdAt: '2026-01-14T10:30:00',
+    updatedAt: '2026-01-14T14:15:00',
+  },
+  // Ticket aguardando resposta
+  {
+    id: 'ticket-2',
+    number: 1198,
+    userId: 'candidate-1',
+    category: 'tests',
+    subject: 'Dúvida sobre teste comportamental',
+    status: 'answered',
+    messages: [
+      {
+        id: 'msg-2-1',
+        sender: 'user',
+        content: 'Gostaria de saber se posso refazer o teste DISC. Fiz há 3 meses e sinto que algumas respostas não refletem mais meu comportamento atual.',
+        createdAt: '2026-01-10T09:00:00',
+      },
+      {
+        id: 'msg-2-2',
+        sender: 'support',
+        content: 'Olá João!\n\nSim, você pode refazer o teste DISC! Recomendamos esperar pelo menos 6 meses entre testes para que as mudanças comportamentais sejam mais significativas.\n\nComo você fez há 3 meses, sugerimos aguardar mais 3 meses para um resultado mais preciso. Mas se sentir que houve mudanças significativas, pode refazer quando quiser!\n\nQualquer dúvida, estamos à disposição.',
+        createdAt: '2026-01-10T11:30:00',
+      },
+    ],
+    createdAt: '2026-01-10T09:00:00',
+    updatedAt: '2026-01-10T11:30:00',
+  },
+  // Ticket resolvido
+  {
+    id: 'ticket-3',
+    number: 1156,
+    userId: 'candidate-1',
+    category: 'account',
+    subject: 'Como alterar email cadastrado',
+    status: 'resolved',
+    messages: [
+      {
+        id: 'msg-3-1',
+        sender: 'user',
+        content: 'Preciso alterar o email cadastrado na minha conta. Como faço?',
+        createdAt: '2026-01-05T14:00:00',
+      },
+      {
+        id: 'msg-3-2',
+        sender: 'support',
+        content: 'Olá João!\n\nPara alterar seu email:\n\n1. Acesse "Configurações"\n2. Clique em "Alterar Email"\n3. Digite o novo email\n4. Você receberá um código de verificação\n5. Digite o código para confirmar\n\nQualquer problema, nos avise!',
+        createdAt: '2026-01-05T15:00:00',
+      },
+      {
+        id: 'msg-3-3',
+        sender: 'user',
+        content: 'Perfeito! Consegui alterar. Obrigado!',
+        createdAt: '2026-01-06T08:00:00',
+      },
+    ],
+    createdAt: '2026-01-05T14:00:00',
+    updatedAt: '2026-01-06T08:00:00',
+    resolvedAt: '2026-01-06T08:00:00',
   },
 ];

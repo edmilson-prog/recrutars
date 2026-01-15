@@ -47,7 +47,7 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Recursos</h4>
             <ul className="space-y-2 text-sm text-primary-foreground/70">
               <li><Link to="#" className="hover:text-secondary transition-colors">Blog</Link></li>
-              <li><Link to="#" className="hover:text-secondary transition-colors">Central de ajuda</Link></li>
+              <li><Link to="/ajuda" className="hover:text-secondary transition-colors">Central de ajuda</Link></li>
               <li><Link to="#" className="hover:text-secondary transition-colors">Webinars</Link></li>
               <li><Link to="#" className="hover:text-secondary transition-colors">E-books</Link></li>
             </ul>
