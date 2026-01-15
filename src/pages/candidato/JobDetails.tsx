@@ -2,6 +2,7 @@
  * Job Details Page
  * PRD-006: Busca e Visualização de Vagas
  * PRD-007: Candidatura a Vagas
+ * PRD-002-dgn: Match Score e visualização DISC
  */
 
 import { useParams, useNavigate } from 'react-router-dom';
@@ -10,13 +11,18 @@ import { ArrowLeft, Building2, MapPin, DollarSign, Calendar, Briefcase, Heart, U
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { mockJobs } from '@/data/mockData';
+import { mockJobs, getMatchScore, getCandidateDISCProfile } from '@/data/mockData';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { useApplications } from '@/hooks/useApplications';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
 import { ApplicationModal } from '@/components/candidato/ApplicationModal';
 import { ApplicationSuccessModal } from '@/components/candidato/ApplicationSuccessModal';
+// PRD-002-dgn: Componentes de Match e DISC
+import { MatchBreakdown } from '@/components/match/MatchBreakdown';
+import { MatchStrengths } from '@/components/match/MatchStrengths';
+import { MatchOpportunities } from '@/components/match/MatchOpportunities';
+import { MatchComparison } from '@/components/match/MatchComparison';
 
 export default function JobDetails() {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +37,10 @@ export default function JobDetails() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const job = mockJobs.find(j => j.id === id);
+
+  // PRD-002-dgn: Match Score e perfil DISC
+  const matchResult = id ? getMatchScore('candidate-1', id) : undefined;
+  const candidateDISC = getCandidateDISCProfile('candidate-1');
 
   if (!job) {
     return (
@@ -211,6 +221,62 @@ export default function JobDetails() {
             </div>
           </div>
         </div>
+
+        {/* PRD-002-dgn: Match Score Section */}
+        {matchResult && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <MatchBreakdown
+              totalScore={matchResult.totalScore}
+              categories={matchResult.categories}
+              title="Sua Compatibilidade"
+              layout="horizontal"
+            />
+          </motion.div>
+        )}
+
+        {/* PRD-002-dgn: DISC Comparison */}
+        {candidateDISC && matchResult?.idealProfile && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <MatchComparison
+              candidateProfile={candidateDISC}
+              idealProfile={matchResult.idealProfile}
+              matchScore={matchResult.totalScore}
+              title="Comparação de Perfil DISC"
+            />
+          </motion.div>
+        )}
+
+        {/* PRD-002-dgn: Strengths and Opportunities */}
+        {matchResult && (matchResult.strengths.length > 0 || matchResult.opportunities.length > 0) && (
+          <div className="grid md:grid-cols-2 gap-6">
+            {matchResult.strengths.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <MatchStrengths strengths={matchResult.strengths} />
+              </motion.div>
+            )}
+            {matchResult.opportunities.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <MatchOpportunities opportunities={matchResult.opportunities} />
+              </motion.div>
+            )}
+          </div>
+        )}
 
         {/* Description */}
         <div className="bg-card rounded-2xl p-6 shadow-soft">

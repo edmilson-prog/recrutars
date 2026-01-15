@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RedirectIfAuthenticated } from "@/components/auth/RedirectIfAuthenticated";
 
@@ -59,11 +60,12 @@ const App = () => (
       enableSystem
       storageKey="recrutars-theme"
     >
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
+      <AccessibilityProvider>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
@@ -222,9 +224,10 @@ const App = () => (
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </TooltipProvider>
-      </AuthProvider>
-    </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </BrowserRouter>
+      </AccessibilityProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

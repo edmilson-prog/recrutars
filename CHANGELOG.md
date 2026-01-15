@@ -5,6 +5,182 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.0] - 2026-01-15 (Access)
+
+### Added
+- **Bottom Navigation Bar** para dispositivos móveis (PRD-003-dgn)
+  - Navegação fixa na parte inferior da tela (<768px)
+  - 5 itens principais: Início, Vagas, Candidaturas, Mensagens, Perfil
+  - Variantes para candidato e empresa
+  - Badges de notificação dinâmicos
+  - Comportamento scroll hide/show (oculta ao scrollar para baixo)
+  - Suporte a safe-area-inset para iPhone X+
+
+- **Skip Link** para navegação por teclado
+  - Visível apenas no foco (sr-only)
+  - Link direto para conteúdo principal (#main-content)
+  - Implementado em DashboardLayout e PublicLayout
+
+- **Painel de Configurações de Acessibilidade**
+  - Tamanho de fonte ajustável (12px a 24px)
+  - Espaçamento de linhas configurável (1.2 a 2.0)
+  - Toggle para reduzir animações
+  - Toggle para alto contraste
+  - Persistência em localStorage
+  - Aplicação imediata sem refresh
+
+### Added (Componentes)
+- `BottomNav`, `BottomNavItem` - navegação mobile
+- `SkipLink`, `MainContent`, `LiveRegion`, `ScreenReaderOnly` - acessibilidade
+- `AccessibilityPanel`, `AccessibilityFAB` - configurações de usuário
+- `AccessibilityContext`, `useAccessibility` - context e hook
+
+### Added (Hooks)
+- `useScrollDirection`, `useScrollVisibility` - detectar direção de scroll
+- `useAccessibilityPrefs` - preferências de acessibilidade
+
+### Changed
+- DashboardLayout agora oculta sidebar em mobile (<768px)
+- DashboardLayout usa hook `useIsMobile` para responsividade
+- GlassFooter ajusta posicionamento para mobile
+
+### Technical
+- CSS utilities: `.touch-target`, `.touch-target-sm`, `.touch-target-lg` (min 48x48px)
+- CSS utilities: `.skip-link` para skip links
+- CSS variables: `--a11y-font-size`, `--a11y-line-height`
+- Classes CSS: `.reduce-motion`, `.high-contrast`
+- Media query `prefers-reduced-motion: reduce` desabilita todas as animações
+- Focus states melhorados com `:focus-visible`
+- Landmarks semânticos: `<main id="main-content" role="main">`
+
+## [0.32.0] - 2026-01-15 (Radar)
+
+### Added
+- Visualização interativa de perfil DISC com radar chart e quadrante 2D (PRD-002-dgn)
+- Match Score com breakdown transparente por categorias:
+  - Skills Técnicas (40%), Experiência (30%), Perfil Comportamental (20%), Localização (10%)
+- Seção "Por que você combina" com pontos fortes específicos
+- Seção "Oportunidades de melhoria" com sugestões e impacto potencial
+- Comparação visual candidato vs perfil ideal da vaga (overlay radar)
+- Ferramenta de comparação de até 3 candidatos para recrutadores:
+  - Seleção via checkbox na lista de candidatos
+  - Layout lado a lado com cards e radar mini
+  - Tabela comparativa com destaque do melhor valor
+  - Toggle "Mostrar apenas diferenças"
+
+### Added (Componentes DISC)
+- `DISCRadarChart` e `DISCRadarChartMini` - radar chart com Recharts
+- `DISCQuadrant` e `DISCQuadrantMini` - quadrante 2D interativo
+- `DISCLegend`, `DISCLegendCompact`, `DISCDimensionCard` - legendas explicativas
+
+### Added (Componentes Match)
+- `MatchScoreCircle`, `MatchScoreInline`, `MatchScoreBadge` - exibição de score
+- `MatchProgressBar`, `MatchProgressBarSimple`, `MatchProgressStack` - barras de progresso
+- `MatchBreakdown`, `MatchBreakdownCompact`, `MatchSummary` - breakdown detalhado
+- `MatchStrengths`, `MatchStrengthsList` - pontos fortes
+- `MatchOpportunities`, `MatchOpportunitiesCompact`, `MatchOpportunitiesList` - oportunidades
+- `MatchComparison`, `MatchComparisonSideBySide`, `MatchCard` - comparação de perfis
+
+### Added (Componentes Compare)
+- `CandidateSelector`, `SelectionBar` - seleção de candidatos
+- `ComparisonTable`, `ComparisonTableCompact` - tabela comparativa
+- `CandidateComparison`, `CandidateComparisonModal` - comparação lado a lado
+- `CompareButton`, `ComparisonSummary` - ações e resumo
+- Hook `useCandidateSelection` para gerenciamento de seleção
+
+### Technical
+- Tipos TypeScript: `DISCProfile`, `DISCDimension`, `MatchCategory`, `MatchStrength`, `MatchOpportunity`, `MatchResult`, `CandidateForComparison`
+- Funções utilitárias: `getMatchScoreLevel`, `getMatchScoreColor`
+- Cores DISC padronizadas: D=#EF4444 (vermelho), I=#F59E0B (amarelo), S=#22C55E (verde), C=#3B82F6 (azul)
+- Cores semânticas de match: ≥80% verde, 60-79% amarelo, <60% vermelho
+- Tooltips explicativos em todas as métricas
+- Acessibilidade: aria-labels descritivos, valores sempre textuais (não apenas cor)
+- Responsividade: gráficos funcionam em mobile (min 200px)
+- Respeita `prefers-reduced-motion` para animações
+
+## [0.31.0] - 2026-01-15 (Quest)
+
+### Added
+- Sistema de Gamificação completo para candidatos (PRD-001-dgn)
+- Sistema de XP com pontuação por ações significativas:
+  - Login diário (10 XP), perfil completo (100 XP), teste Gauge-Pro (200 XP)
+  - Candidatura enviada (50 XP), visualização de vaga (2 XP)
+  - Entrevista recebida (150 XP), proposta recebida (300 XP)
+- 5 níveis de progressão: Iniciante, Explorador, Candidato Ativo, Profissional, Expert
+- 17 badges organizados em 5 categorias:
+  - Perfil: Primeiro Passo, Perfil Completo
+  - Testes: Autoconhecimento
+  - Candidaturas: Candidato Ativo, Persistente, Imparável, Entrevistado, Proposta Recebida, Contratado
+  - Atividade: Em Alta, No Radar, Streak Semanal, Streak Mensal, Streak Centenário, Explorador de Vagas
+  - Especiais: Madrugador, Coruja
+- Sistema de raridade de badges: Comum, Incomum, Raro, Épico, Lendário
+- Sistema de Streak com contador de dias consecutivos
+- Streak Freeze automático (1 por semana) para proteger streak
+- Celebrações visuais ao desbloquear badges (confetti para Épico/Lendário)
+- Celebrações visuais ao subir de nível (confetti + modal)
+- Animação flutuante de +XP ao ganhar pontos
+
+### Added (Componentes)
+- `LevelBadge` e `LevelBadgeCompact` - exibição de nível
+- `XPProgress` e `XPProgressCompact` - barra de progresso de XP
+- `XPGainAnimation` - animação flutuante de +XP
+- `LevelUpModal` - modal de celebração de level up
+- `BadgeCard` e `BadgeCardDetailed` - cards de badges
+- `BadgeGallery` - galeria de badges com filtros por categoria
+- `BadgeUnlockModal` - modal de conquista desbloqueada
+- `StreakCounter` e `StreakBanner` - contador de streak
+- `StreakCalendar` - calendário visual de atividade
+- `ProgressRing` - círculo de progresso animado
+- `NextAchievements` - próximas conquistas a desbloquear
+- `GamificationCard` - card de visão geral para dashboard
+
+### Technical
+- Tipos TypeScript: `GamificationState`, `Level`, `Badge`, `StreakState`, `XPAction`
+- Configuração centralizada em `gamificationConfig.ts` (fácil adicionar novos badges)
+- Hook `useGamification` para gerenciamento de estado completo
+- Persistência em localStorage com key `recrutars-gamification`
+- Integração com date-fns para cálculos de streak
+- Respeita `prefers-reduced-motion` para acessibilidade
+- Gamificação ética: foco em progresso pessoal, sem rankings competitivos
+
+## [0.30.0] - 2026-01-15 (Polish)
+
+### Added
+- Design System expandido com tokens de espaçamento, border-radius e timing (PRD-000-dgn)
+- Sistema de animações centralizado em `src/lib/animations.ts`
+- Hook `useReducedMotion` para acessibilidade (respeita prefers-reduced-motion)
+- Componente `PageTransition` para transições suaves entre páginas
+- Componentes de skeleton loading com efeito shimmer:
+  - `SkeletonCard`, `SkeletonJobCard`, `SkeletonCandidateCard`
+  - `SkeletonList`, `SkeletonSimpleList`
+  - `SkeletonTable`, `SkeletonTableRow`
+- Componentes de estado padronizados:
+  - `EmptyState` com ícones, título, descrição e ações opcionais
+  - `ErrorState` com variantes (error, warning, info) e retry
+  - `LoadingState` com variantes (spinner, dots, pulse)
+  - `SuccessState` com checkmark animado SVG
+- `LoadingButton` com spinner inline e estado de loading
+- `InteractiveCard` com hover lift, press scale e reveal de ações
+- Sistema de celebrações visuais com `canvas-confetti`:
+  - Hook `useConfetti` com variantes (fire, explosion, stars, canon)
+  - Componente `ConfettiTrigger` para disparo automático
+- Confetti explosion no modal de sucesso de candidatura
+- Checkmark animado SVG no modal de sucesso de candidatura
+
+### Changed
+- Modal `ApplicationSuccessModal` atualizado com animações e confetti
+
+### Technical
+- Novos keyframes CSS: shimmer, shake, checkmark-draw, circle-fill
+- Tokens CSS expandidos:
+  - Espaçamentos: --space-1 até --space-16 (escala 4px)
+  - Border-radius: --radius-xs até --radius-full
+  - Timing: --duration-fast (150ms), --duration-normal (300ms), --duration-slow (500ms)
+  - Easing: --ease-out, --ease-in-out, --ease-spring
+- Variants Framer Motion exportáveis: fadeIn, fadeInUp, fadeInDown, scaleIn, slideInLeft, slideInRight
+- Stagger animations: staggerContainer, staggerItem
+- Dependência canvas-confetti (~3KB gzipped) adicionada
+
 ## [0.29.0] - 2026-01-15
 
 ### Added

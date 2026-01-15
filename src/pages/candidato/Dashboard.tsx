@@ -3,16 +3,22 @@ import { FileText, Calendar, Brain, Eye, Search, MessageSquare, ArrowRight, Cloc
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { candidateStats, mockApplications, mockJobs, mockMessages, mockCandidates } from '@/data/mockData';
+import { candidateStats, mockApplications, mockJobs, mockMessages, mockCandidates, getCandidateDISCProfile, getMatchScore } from '@/data/mockData';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { DISCRadarChartMini } from '@/components/disc/DISCRadarChart';
+import { DISCLegendCompact } from '@/components/disc/DISCLegend';
+import { MatchScoreInline } from '@/components/match/MatchScoreCircle';
 
 export default function CandidateDashboard() {
   const { currentCandidate } = useAuth();
   const candidate = currentCandidate || mockCandidates[0];
-  
+
   const candidateApplications = mockApplications.filter(app => app.candidateId === 'candidate-1');
   const unreadMessages = mockMessages.filter(m => m.receiverId === 'candidate-1' && !m.read);
+
+  // PRD-002-dgn: Perfil DISC do candidato
+  const discProfile = getCandidateDISCProfile('candidate-1');
 
   const stats = [
     { label: 'Candidaturas', value: candidateApplications.length, icon: FileText },
@@ -61,6 +67,35 @@ export default function CandidateDashboard() {
             <span className="text-2xl font-bold text-foreground">{candidate.profileCompletion}%</span>
           </div>
         </motion.div>
+
+        {/* PRD-002-dgn: DISC Profile Card */}
+        {discProfile && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-card rounded-2xl p-6 shadow-soft"
+          >
+            <div className="flex flex-col md:flex-row md:items-center gap-6">
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold text-foreground mb-2">Meu Perfil DISC</h2>
+                <p className="text-muted-foreground mb-4">
+                  Seu perfil comportamental baseado no teste Gauge-Pro
+                </p>
+                <DISCLegendCompact profile={discProfile} />
+                <Button asChild variant="outline" className="mt-4">
+                  <Link to="/candidato/testes">
+                    Ver resultado completo
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+                </Button>
+              </div>
+              <div className="w-48 h-48 mx-auto md:mx-0">
+                <DISCRadarChartMini profile={discProfile} />
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -192,33 +227,44 @@ export default function CandidateDashboard() {
             </Link>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockJobs.filter(j => j.status === 'active').slice(0, 3).map((job) => (
-              <div key={job.id} className="p-5 rounded-xl border border-border hover:border-primary/50 hover:shadow-soft transition-all">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-5 h-5 text-primary" />
+            {mockJobs.filter(j => j.status === 'active').slice(0, 3).map((job) => {
+              const matchResult = getMatchScore('candidate-1', job.id);
+              return (
+                <div key={job.id} className="p-5 rounded-xl border border-border hover:border-primary/50 hover:shadow-soft transition-all">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Building2 className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-foreground">{job.title}</h3>
+                        <p className="text-sm text-muted-foreground">{job.companyName}</p>
+                      </div>
+                    </div>
+                    {/* PRD-002-dgn: Match Score */}
+                    {matchResult && (
+                      <MatchScoreInline score={matchResult.totalScore} />
+                    )}
                   </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">{job.title}</h3>
-                    <p className="text-sm text-muted-foreground">{job.companyName}</p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded">
+                      {job.location}
+                    </span>
+                    <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded">
+                      {job.type === 'remote' ? 'Remoto' : job.type === 'hybrid' ? 'Híbrido' : 'Presencial'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-secondary">
+                      R$ {job.salary.min.toLocaleString('pt-BR')} - {job.salary.max.toLocaleString('pt-BR')}
+                    </span>
+                    <Button asChild size="sm" variant="outline">
+                      <Link to={`/candidato/vagas/${job.id}`}>Ver vaga</Link>
+                    </Button>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded">
-                    {job.location}
-                  </span>
-                  <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded">
-                    {job.type === 'remote' ? 'Remoto' : job.type === 'hybrid' ? 'Híbrido' : 'Presencial'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-secondary">
-                    R$ {job.salary.min.toLocaleString('pt-BR')} - {job.salary.max.toLocaleString('pt-BR')}
-                  </span>
-                  <Button size="sm" variant="outline">Ver vaga</Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </motion.div>
       </div>

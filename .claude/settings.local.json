@@ -6,7 +6,9 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: implement PRD-003 to PRD-025 features\n\nPRD-003: Header/Footer com Glassmorphism\nPRD-004: Tipos e interfaces TypeScript\nPRD-005: Perfil completo do candidato\nPRD-006: Busca e visualização de vagas\nPRD-007: Candidatura a vagas\nPRD-008: Teste comportamental DISC\nPRD-009: Minhas candidaturas\nPRD-010: Mensagens do candidato\nPRD-011: Configurações do candidato\nPRD-012: Dashboard da empresa\nPRD-013: CRUD de vagas\nPRD-014: Banco de talentos\nPRD-015: Gestão de candidaturas\nPRD-016: Envio de testes\nPRD-017: Mensagens da empresa\nPRD-018: Configurações da empresa\nPRD-019: Dashboard admin\nPRD-020: Gestão de empresas \\(admin\\)\nPRD-021: Gestão de candidatos \\(admin\\)\nPRD-022: Currículos avançados\nPRD-023: Geração de PDF do currículo\nPRD-024: Vagas favoritas\nPRD-025: Sistema de notificações do candidato\n\nVersion: 0.25.0\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(ren:*)",
       "Bash(git -C \"D:\\\\claude\\\\.claude-worktrees\\\\recrutars-maike\\\\jolly-johnson\" log --oneline --all)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run lint)"
     ]
   }
 }

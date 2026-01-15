@@ -33,6 +33,14 @@ import type {
 } from '@/types';
 import type { Interview } from '@/types/interview';
 import type { FAQItem, Ticket, TicketMessage } from '@/types/help';
+import type {
+  DISCProfile,
+  MatchResult,
+  MatchCategory,
+  MatchStrength,
+  MatchOpportunity,
+  CandidateForComparison,
+} from '@/types/disc';
 
 // Re-export types for backward compatibility
 export type { User, Company, Candidate, Job, Application, BehavioralTest, Message, Conversation };
@@ -3345,3 +3353,453 @@ export const mockTickets: Ticket[] = [
     resolvedAt: '2026-01-06T08:00:00',
   },
 ];
+
+// =============================================================================
+// PRD-002-dgn: DISC Profiles e Match Scores
+// =============================================================================
+
+/**
+ * Perfis DISC ideais por vaga
+ * Cada vaga tem um perfil comportamental ideal para o cargo
+ */
+export const idealDISCProfiles: Record<string, DISCProfile> = {
+  // Desenvolvedor Full Stack Senior - precisa de D alto (liderança) e C alto (qualidade)
+  'job-1': { d: 75, i: 45, s: 40, c: 80 },
+  // Product Manager - precisa de I alto (comunicação) e D moderado (decisão)
+  'job-2': { d: 65, i: 80, s: 50, c: 55 },
+  // Designer UX/UI Pleno - precisa de I alto (criatividade) e S alto (colaboração)
+  'job-3': { d: 40, i: 75, s: 70, c: 60 },
+  // Analista de Dados Junior - precisa de C alto (análise) e S moderado (processo)
+  'job-4': { d: 35, i: 40, s: 65, c: 85 },
+  // DevOps Engineer - precisa de C alto (precisão) e D moderado (resolver problemas)
+  'job-5': { d: 60, i: 35, s: 55, c: 85 },
+};
+
+/**
+ * Dados de Match Score detalhados por combinação candidato-vaga
+ * Chave: "candidateId_jobId"
+ */
+export const mockMatchScores: Record<string, MatchResult> = {
+  // João Santos (candidate-1) x Desenvolvedor Full Stack Senior (job-1)
+  'candidate-1_job-1': {
+    totalScore: 85,
+    categories: [
+      {
+        id: 'skills',
+        name: 'Skills Técnicas',
+        weight: 40,
+        score: 90,
+        description: 'Correspondência entre suas habilidades e os requisitos da vaga',
+      },
+      {
+        id: 'experience',
+        name: 'Experiência',
+        weight: 30,
+        score: 85,
+        description: 'Tempo de experiência compatível com o nível da posição',
+      },
+      {
+        id: 'behavioral',
+        name: 'Perfil Comportamental',
+        weight: 20,
+        score: 78,
+        description: 'Alinhamento do seu perfil DISC com o perfil ideal',
+      },
+      {
+        id: 'location',
+        name: 'Localização',
+        weight: 10,
+        score: 80,
+        description: 'Compatibilidade de localização e modelo de trabalho',
+      },
+    ],
+    strengths: [
+      {
+        id: 's1',
+        text: 'Sua experiência com React (5+ anos) excede o requisito mínimo',
+        category: 'skills',
+        impact: 'high',
+      },
+      {
+        id: 's2',
+        text: 'Perfil Dominante (D=72) alinha com posições de liderança técnica',
+        category: 'behavioral',
+        impact: 'high',
+      },
+      {
+        id: 's3',
+        text: 'Experiência prévia com AWS atende ao requisito',
+        category: 'skills',
+        impact: 'medium',
+      },
+    ],
+    opportunities: [
+      {
+        id: 'o1',
+        text: 'Certificação AWS pode aumentar seu match',
+        category: 'skills',
+        potentialIncrease: 5,
+        actionable: true,
+      },
+      {
+        id: 'o2',
+        text: 'Desenvolver mais habilidades de Conformidade (C) para qualidade de código',
+        category: 'behavioral',
+        potentialIncrease: 3,
+        actionable: true,
+      },
+    ],
+    candidateProfile: { d: 72, i: 45, s: 58, c: 65 },
+    idealProfile: { d: 75, i: 45, s: 40, c: 80 },
+  },
+
+  // Maria Oliveira (candidate-2) x Desenvolvedor Full Stack Senior (job-1)
+  'candidate-2_job-1': {
+    totalScore: 72,
+    categories: [
+      {
+        id: 'skills',
+        name: 'Skills Técnicas',
+        weight: 40,
+        score: 75,
+        description: 'Correspondência entre suas habilidades e os requisitos da vaga',
+      },
+      {
+        id: 'experience',
+        name: 'Experiência',
+        weight: 30,
+        score: 80,
+        description: 'Tempo de experiência compatível com o nível da posição',
+      },
+      {
+        id: 'behavioral',
+        name: 'Perfil Comportamental',
+        weight: 20,
+        score: 58,
+        description: 'Alinhamento do seu perfil DISC com o perfil ideal',
+      },
+      {
+        id: 'location',
+        name: 'Localização',
+        weight: 10,
+        score: 70,
+        description: 'Compatibilidade de localização e modelo de trabalho',
+      },
+    ],
+    strengths: [
+      {
+        id: 's1',
+        text: 'Excelente comunicação (I=78) para trabalho em equipe',
+        category: 'behavioral',
+        impact: 'medium',
+      },
+      {
+        id: 's2',
+        text: 'Experiência sólida com metodologias ágeis',
+        category: 'experience',
+        impact: 'medium',
+      },
+    ],
+    opportunities: [
+      {
+        id: 'o1',
+        text: 'Desenvolver mais assertividade (D) para liderança técnica',
+        category: 'behavioral',
+        potentialIncrease: 8,
+        actionable: true,
+      },
+      {
+        id: 'o2',
+        text: 'Aprofundar conhecimentos em AWS',
+        category: 'skills',
+        potentialIncrease: 10,
+        actionable: true,
+      },
+    ],
+    candidateProfile: { d: 55, i: 78, s: 62, c: 48 },
+    idealProfile: { d: 75, i: 45, s: 40, c: 80 },
+  },
+
+  // Maria Oliveira (candidate-2) x Product Manager (job-2)
+  'candidate-2_job-2': {
+    totalScore: 91,
+    categories: [
+      {
+        id: 'skills',
+        name: 'Skills Técnicas',
+        weight: 40,
+        score: 88,
+        description: 'Correspondência entre suas habilidades e os requisitos da vaga',
+      },
+      {
+        id: 'experience',
+        name: 'Experiência',
+        weight: 30,
+        score: 90,
+        description: 'Tempo de experiência compatível com o nível da posição',
+      },
+      {
+        id: 'behavioral',
+        name: 'Perfil Comportamental',
+        weight: 20,
+        score: 95,
+        description: 'Alinhamento do seu perfil DISC com o perfil ideal',
+      },
+      {
+        id: 'location',
+        name: 'Localização',
+        weight: 10,
+        score: 100,
+        description: 'Compatibilidade de localização e modelo de trabalho',
+      },
+    ],
+    strengths: [
+      {
+        id: 's1',
+        text: 'Perfil Influenciador (I=78) perfeito para gestão de stakeholders',
+        category: 'behavioral',
+        impact: 'high',
+      },
+      {
+        id: 's2',
+        text: 'Forte habilidade de comunicação persuasiva',
+        category: 'behavioral',
+        impact: 'high',
+      },
+      {
+        id: 's3',
+        text: 'Experiência com metodologias ágeis atende aos requisitos',
+        category: 'skills',
+        impact: 'high',
+      },
+    ],
+    opportunities: [
+      {
+        id: 'o1',
+        text: 'Desenvolver mais atenção aos detalhes (C) para roadmaps',
+        category: 'behavioral',
+        potentialIncrease: 3,
+        actionable: true,
+      },
+    ],
+    candidateProfile: { d: 55, i: 78, s: 62, c: 48 },
+    idealProfile: { d: 65, i: 80, s: 50, c: 55 },
+  },
+
+  // Carla Mendes (candidate-4) x Analista de Dados Junior (job-4)
+  'candidate-4_job-4': {
+    totalScore: 94,
+    categories: [
+      {
+        id: 'skills',
+        name: 'Skills Técnicas',
+        weight: 40,
+        score: 92,
+        description: 'Correspondência entre suas habilidades e os requisitos da vaga',
+      },
+      {
+        id: 'experience',
+        name: 'Experiência',
+        weight: 30,
+        score: 88,
+        description: 'Tempo de experiência compatível com o nível da posição',
+      },
+      {
+        id: 'behavioral',
+        name: 'Perfil Comportamental',
+        weight: 20,
+        score: 98,
+        description: 'Alinhamento do seu perfil DISC com o perfil ideal',
+      },
+      {
+        id: 'location',
+        name: 'Localização',
+        weight: 10,
+        score: 100,
+        description: 'Compatibilidade de localização e modelo de trabalho',
+      },
+    ],
+    strengths: [
+      {
+        id: 's1',
+        text: 'Perfil Analítico (C=85) ideal para análise de dados',
+        category: 'behavioral',
+        impact: 'high',
+      },
+      {
+        id: 's2',
+        text: 'Alta Estabilidade (S=75) para processos metódicos',
+        category: 'behavioral',
+        impact: 'high',
+      },
+      {
+        id: 's3',
+        text: 'Domínio de Python e SQL atende perfeitamente',
+        category: 'skills',
+        impact: 'high',
+      },
+    ],
+    opportunities: [
+      {
+        id: 'o1',
+        text: 'Desenvolver habilidades de apresentação de dados',
+        category: 'skills',
+        potentialIncrease: 2,
+        actionable: true,
+      },
+    ],
+    candidateProfile: { d: 35, i: 42, s: 75, c: 85 },
+    idealProfile: { d: 35, i: 40, s: 65, c: 85 },
+  },
+
+  // João Santos (candidate-1) x Designer UX/UI Pleno (job-3)
+  'candidate-1_job-3': {
+    totalScore: 58,
+    categories: [
+      {
+        id: 'skills',
+        name: 'Skills Técnicas',
+        weight: 40,
+        score: 45,
+        description: 'Correspondência entre suas habilidades e os requisitos da vaga',
+      },
+      {
+        id: 'experience',
+        name: 'Experiência',
+        weight: 30,
+        score: 70,
+        description: 'Tempo de experiência compatível com o nível da posição',
+      },
+      {
+        id: 'behavioral',
+        name: 'Perfil Comportamental',
+        weight: 20,
+        score: 55,
+        description: 'Alinhamento do seu perfil DISC com o perfil ideal',
+      },
+      {
+        id: 'location',
+        name: 'Localização',
+        weight: 10,
+        score: 80,
+        description: 'Compatibilidade de localização e modelo de trabalho',
+      },
+    ],
+    strengths: [
+      {
+        id: 's1',
+        text: 'Experiência em desenvolvimento pode agregar visão técnica',
+        category: 'experience',
+        impact: 'low',
+      },
+    ],
+    opportunities: [
+      {
+        id: 'o1',
+        text: 'Desenvolver habilidades em Figma e design tools',
+        category: 'skills',
+        potentialIncrease: 20,
+        actionable: true,
+      },
+      {
+        id: 'o2',
+        text: 'Aumentar Influência (I) para colaboração criativa',
+        category: 'behavioral',
+        potentialIncrease: 10,
+        actionable: true,
+      },
+      {
+        id: 'o3',
+        text: 'Construir portfolio de UX/UI',
+        category: 'skills',
+        potentialIncrease: 15,
+        actionable: true,
+      },
+    ],
+    candidateProfile: { d: 72, i: 45, s: 58, c: 65 },
+    idealProfile: { d: 40, i: 75, s: 70, c: 60 },
+  },
+};
+
+/**
+ * Dados de candidatos formatados para comparação
+ * Usado nas páginas de empresa para comparar candidatos lado a lado
+ */
+export const mockCandidatesForComparison: CandidateForComparison[] = [
+  {
+    id: 'candidate-1',
+    name: 'João Santos',
+    avatar: undefined,
+    matchScore: 85,
+    discProfile: { d: 72, i: 45, s: 58, c: 65 },
+    metrics: {
+      experienceYears: 6,
+      hasReact: true,
+      hasNode: true,
+      hasAWS: true,
+      englishLevel: 'Avançado',
+      availability: 'Imediata',
+    },
+  },
+  {
+    id: 'candidate-2',
+    name: 'Maria Oliveira',
+    avatar: undefined,
+    matchScore: 72,
+    discProfile: { d: 55, i: 78, s: 62, c: 48 },
+    metrics: {
+      experienceYears: 5,
+      hasReact: true,
+      hasNode: true,
+      hasAWS: false,
+      englishLevel: 'Intermediário',
+      availability: '2 semanas',
+    },
+  },
+  {
+    id: 'candidate-4',
+    name: 'Carla Mendes',
+    avatar: undefined,
+    matchScore: 68,
+    discProfile: { d: 35, i: 42, s: 75, c: 85 },
+    metrics: {
+      experienceYears: 3,
+      hasReact: false,
+      hasNode: false,
+      hasAWS: false,
+      englishLevel: 'Básico',
+      availability: 'Imediata',
+    },
+  },
+];
+
+/**
+ * Função auxiliar para obter match score de um candidato para uma vaga
+ */
+export function getMatchScore(candidateId: string, jobId: string): MatchResult | undefined {
+  const key = `${candidateId}_${jobId}`;
+  return mockMatchScores[key];
+}
+
+/**
+ * Função auxiliar para obter perfil DISC ideal de uma vaga
+ */
+export function getIdealDISCProfile(jobId: string): DISCProfile | undefined {
+  return idealDISCProfiles[jobId];
+}
+
+/**
+ * Função auxiliar para obter perfil DISC de um candidato pelo teste comportamental
+ */
+export function getCandidateDISCProfile(candidateId: string): DISCProfile | undefined {
+  const test = mockBehavioralTests.find(
+    (t) => t.candidateId === candidateId && t.status === 'completed' && t.result
+  );
+  if (!test?.result) return undefined;
+  return {
+    d: test.result.dominance,
+    i: test.result.influence,
+    s: test.result.steadiness,
+    c: test.result.compliance,
+  };
+}
