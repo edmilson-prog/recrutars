@@ -74,9 +74,16 @@ import {
   mockApplicationHistory,
   mockMessages,
   mockConversations,
+  getCandidateDISCProfile,
+  getMatchScore,
 } from '@/data/mockData';
 import type { Application, ApplicationStatus, ApplicationNote, ApplicationHistory, TestRequestStatus, Message } from '@/types';
+import type { CandidateForComparison } from '@/types/disc';
 import { toast } from 'sonner';
+// PRD-002-dgn: Componentes de comparação
+import { useCandidateSelection, SelectionBar } from '@/components/compare/CandidateSelector';
+import { CandidateComparisonModal } from '@/components/compare/CandidateComparison';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Status configuration
 const STATUS_CONFIG: Record<
@@ -200,6 +207,16 @@ export default function CompanyApplications() {
 
   // History state (local)
   const [history, setHistory] = useState<ApplicationHistory[]>(mockApplicationHistory);
+
+  // PRD-002-dgn: Seleção de candidatos para comparação
+  const {
+    selectedIds,
+    toggleCandidate: toggleCompareCandidate,
+    clearSelection,
+    isSelected: isSelectedForComparison,
+    canSelect,
+  } = useCandidateSelection(3);
+  const [showComparisonModal, setShowComparisonModal] = useState(false);
 
   // Get company jobs (mock: company-1)
   const companyJobs = mockJobs.filter(
@@ -448,6 +465,40 @@ export default function CompanyApplications() {
     : [];
 
   const selectedJob = companyJobs.find((j) => j.id === selectedJobId);
+
+  // PRD-002-dgn: Converter candidato para formato de comparação
+  const convertToComparisonCandidate = (candidateId: string): CandidateForComparison | null => {
+    const candidate = mockCandidates.find((c) => c.id === candidateId);
+    if (!candidate) return null;
+
+    const discProfile = getCandidateDISCProfile(candidateId);
+    if (!discProfile) return null;
+
+    const matchResult = getMatchScore(candidateId, selectedJobId || 'job-1');
+    const matchScore = matchResult?.totalScore || calculateMatch(candidateId);
+
+    return {
+      id: candidate.id,
+      name: candidate.name,
+      avatar: candidate.avatar,
+      matchScore,
+      discProfile,
+      metrics: {
+        experience: candidate.experience,
+        education: candidate.education,
+        location: candidate.location,
+        availability: candidate.availability,
+        skillsCount: candidate.skills.length,
+        hasTest: candidate.hasTest,
+        profileCompletion: candidate.profileCompletion,
+      },
+    };
+  };
+
+  // PRD-002-dgn: Candidatos selecionados convertidos para comparação
+  const selectedCandidatesForComparison = selectedIds
+    .map((id) => convertToComparisonCandidate(id))
+    .filter((c): c is CandidateForComparison => c !== null);
 
   return (
     <DashboardLayout userType="company">
@@ -989,6 +1040,22 @@ export default function CompanyApplications() {
 
               {/* Actions */}
               <SheetFooter className="mt-6 flex-col sm:flex-row gap-2">
+                {/* PRD-002-dgn: Botão de comparação */}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (selectedApplication) {
+                      toggleCompareCandidate(selectedApplication.candidateId);
+                    }
+                  }}
+                  disabled={!isSelectedForComparison(selectedApplication.candidateId) && !canSelect}
+                  className="w-full sm:w-auto"
+                >
+                  {isSelectedForComparison(selectedApplication.candidateId)
+                    ? 'Remover da comparação'
+                    : 'Adicionar à comparação'}
+                </Button>
+
                 {selectedApplication.status !== 'rejected' && (
                   <>
                     <Select
@@ -1116,6 +1183,36 @@ export default function CompanyApplications() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* PRD-002-dgn: Barra de seleção para comparação */}
+      <SelectionBar
+        selectedCandidates={selectedCandidatesForComparison}
+        onRemove={(id) => toggleCompareCandidate(id)}
+        onClear={clearSelection}
+        onCompare={() => setShowComparisonModal(true)}
+      />
+
+      {/* PRD-002-dgn: Modal de comparação */}
+      <CandidateComparisonModal
+        open={showComparisonModal}
+        onOpenChange={setShowComparisonModal}
+        candidates={selectedCandidatesForComparison}
+        onInviteToInterview={(candidateId) => {
+          const candidate = mockCandidates.find((c) => c.id === candidateId);
+          if (candidate) {
+            toast.success(`Candidato ${candidate.name} movido para Entrevista`);
+            // Encontrar a candidatura e mover para entrevista
+            const app = applications.find((a) => a.candidateId === candidateId);
+            if (app) {
+              handleMove(app.id, 'interview');
+            }
+          }
+          setShowComparisonModal(false);
+        }}
+        onContactCandidate={(candidateId) => {
+          toast.success('Redirecionando para mensagens...');
+        }}
+      />
     </DashboardLayout>
   );
 }

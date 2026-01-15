@@ -1,3 +1,10 @@
+/**
+ * DashboardLayout Component
+ * PRD-003-dgn: Mobile-First e Acessibilidade
+ * - Sidebar oculta em mobile (<768px)
+ * - Bottom Navigation Bar em mobile
+ */
+
 import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -8,18 +15,22 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
+import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
 import { useInterviews } from '@/hooks/useInterviews';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { GlassHeader } from '@/components/layout/GlassHeader';
 import { GlassFooter } from '@/components/layout/GlassFooter';
 import { Badge } from '@/components/ui/badge';
 import { NotificationBell } from '@/components/notifications';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { BottomNav } from '@/components/navigation';
+import { SkipLink, AccessibilityPanel } from '@/components/accessibility';
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  countKey?: 'savedJobs' | 'interviews'; // Chave para contadores dinâmicos
+  countKey?: 'savedJobs' | 'interviews' | 'savedCandidates'; // Chave para contadores dinâmicos
 }
 
 const adminNav: NavItem[] = [
@@ -35,6 +46,7 @@ const companyNav: NavItem[] = [
   { href: '/empresa/vagas', label: 'Minhas Vagas', icon: Briefcase },
   { href: '/empresa/candidaturas', label: 'Candidaturas', icon: ClipboardList },
   { href: '/empresa/candidatos', label: 'Banco de Talentos', icon: Users },
+  { href: '/empresa/candidatos-salvos', label: 'Candidatos Salvos', icon: Heart, countKey: 'savedCandidates' },
   { href: '/empresa/testes', label: 'Testes', icon: Brain },
   { href: '/empresa/mensagens', label: 'Mensagens', icon: MessageSquare },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
@@ -64,8 +76,14 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const { user, logout, currentCompany, currentCandidate } = useAuth();
 
+  // PRD-003-dgn: Detectar viewport mobile
+  const isMobile = useIsMobile();
+
   // Hook de favoritos para contador (PRD-024)
   const { favoritesCount } = useFavoriteJobs();
+
+  // PRD-030: Hook de candidatos favoritos para contador
+  const { favoritesCount: savedCandidatesCount } = useFavoriteCandidates();
 
   // Hook de entrevistas para contador (PRD-027)
   const { pendingCount: interviewsPendingCount } = useInterviews('candidate-1');
@@ -78,7 +96,11 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   // Obter contadores para items do menu
   const getItemCount = (countKey?: string): number | null => {
-    if (!countKey || userType !== 'candidate') return null;
+    if (!countKey) return null;
+    // PRD-030: Contador de candidatos salvos (empresa)
+    if (countKey === 'savedCandidates' && userType === 'company') return savedCandidatesCount;
+    // Contadores do candidato
+    if (userType !== 'candidate') return null;
     if (countKey === 'savedJobs') return favoritesCount;
     if (countKey === 'interviews') return interviewsPendingCount;
     return null;
@@ -103,8 +125,15 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen flex w-full">
-      {/* Sidebar */}
-      <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col">
+      {/* PRD-003-dgn: Skip link para navegação por teclado */}
+      <SkipLink href="#main-content" />
+
+      {/* Sidebar - PRD-003-dgn: Oculta em mobile */}
+      <aside className={cn(
+        "w-64 bg-sidebar text-sidebar-foreground flex flex-col",
+        // Ocultar em mobile
+        "hidden md:flex"
+      )}>
         {/* Logo */}
         <div className="p-6 border-b border-sidebar-border">
           <Link to="/" className="flex items-center gap-2">
@@ -187,6 +216,8 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
               </span>
             </div>
             <div className="flex items-center gap-2">
+              {/* PRD-003-dgn: Painel de acessibilidade */}
+              <AccessibilityPanel />
               <ThemeToggle />
               {/* Notificações - apenas para candidatos (PRD-025) */}
               {userType === 'candidate' && (
@@ -196,16 +227,39 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
           </div>
         </GlassHeader>
 
-        {/* Scrollable Content */}
-        <main className="flex-1 overflow-auto pb-12">
-          <div className="p-8">
+        {/* Scrollable Content - PRD-003-dgn: padding extra para bottom nav em mobile */}
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 overflow-auto pb-12 md:pb-12 focus:outline-none"
+          role="main"
+          aria-label="Conteúdo principal"
+        >
+          <div className={cn(
+            "p-4 md:p-8",
+            // Padding bottom extra para bottom nav em mobile
+            isMobile && "pb-24"
+          )}>
             {children}
           </div>
         </main>
 
-        {/* Glass Footer - offset for sidebar */}
-        <GlassFooter className="left-64" />
+        {/* Glass Footer - offset for sidebar (desktop only) */}
+        <GlassFooter className={cn(
+          // Em mobile não tem sidebar, então sem offset
+          !isMobile && "left-64"
+        )} />
       </div>
+
+      {/* PRD-003-dgn: Bottom Navigation Bar - mobile only */}
+      <BottomNav
+        userType={userType}
+        badges={{
+          messages: 0, // TODO: Integrar com contador de mensagens não lidas
+          savedJobs: favoritesCount,
+          interviews: interviewsPendingCount,
+        }}
+      />
     </div>
   );
 }

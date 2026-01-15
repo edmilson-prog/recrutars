@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RedirectIfAuthenticated } from "@/components/auth/RedirectIfAuthenticated";
 
@@ -27,6 +28,7 @@ import CompanyJobs from "./pages/empresa/Jobs";
 import CompanyApplications from "./pages/empresa/Applications";
 import CompanyCandidates from "./pages/empresa/Candidates";
 import CompanyCandidateProfile from "./pages/empresa/CandidateProfile";
+import CompanySavedCandidates from "./pages/empresa/SavedCandidates";
 import CompanyMessages from "./pages/empresa/Messages";
 import CompanySettings from "./pages/empresa/Settings";
 
@@ -59,11 +61,12 @@ const App = () => (
       enableSystem
       storageKey="recrutars-theme"
     >
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
+      <AccessibilityProvider>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
@@ -134,6 +137,11 @@ const App = () => (
             <Route path="/empresa/candidatos/:id" element={
               <ProtectedRoute allowedTypes={['company']}>
                 <CompanyCandidateProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/candidatos-salvos" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanySavedCandidates />
               </ProtectedRoute>
             } />
             <Route path="/empresa/testes" element={
@@ -222,9 +230,10 @@ const App = () => (
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </TooltipProvider>
-      </AuthProvider>
-    </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </BrowserRouter>
+      </AccessibilityProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

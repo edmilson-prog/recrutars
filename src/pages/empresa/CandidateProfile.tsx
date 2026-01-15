@@ -19,6 +19,7 @@ import {
   Star,
   CheckCircle,
   AlertCircle,
+  Heart,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { mockCandidates, mockJobs } from '@/data/mockData';
 import type { Job } from '@/types';
 import { toast } from 'sonner';
+import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
 
 // Mock experience data based on candidate.experience field
 const generateMockExperiences = (candidateTitle: string, years: number) => {
@@ -111,6 +113,9 @@ export default function CandidateProfile() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [inviteMessage, setInviteMessage] = useState('');
+
+  // PRD-030: Hook de candidatos favoritos
+  const { isFavorite, toggleFavorite } = useFavoriteCandidates();
 
   const candidate = mockCandidates.find((c) => c.id === id);
 
@@ -214,21 +219,45 @@ export default function CandidateProfile() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  {matchScore > 0 && (
-                    <Badge
-                      variant="secondary"
-                      className={
-                        matchScore >= 80
-                          ? 'bg-success/20 text-success'
-                          : matchScore >= 60
-                          ? 'bg-warning/20 text-warning'
-                          : ''
-                      }
+                  <div className="flex items-center gap-2">
+                    {matchScore > 0 && (
+                      <Badge
+                        variant="secondary"
+                        className={
+                          matchScore >= 80
+                            ? 'bg-success/20 text-success'
+                            : matchScore >= 60
+                            ? 'bg-warning/20 text-warning'
+                            : ''
+                        }
+                      >
+                        <Star className="w-3 h-3 mr-1" />
+                        {matchScore}% match com suas vagas
+                      </Badge>
+                    )}
+                    {/* PRD-030: Botão de favoritar */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        const isNowFavorite = toggleFavorite(candidate.id);
+                        toast.success(
+                          isNowFavorite
+                            ? 'Candidato salvo!'
+                            : 'Candidato removido dos salvos'
+                        );
+                      }}
                     >
-                      <Star className="w-3 h-3 mr-1" />
-                      {matchScore}% match com suas vagas
-                    </Badge>
-                  )}
+                      <Heart
+                        className={`w-5 h-5 transition-colors ${
+                          isFavorite(candidate.id)
+                            ? 'fill-destructive text-destructive'
+                            : 'text-muted-foreground hover:text-destructive'
+                        }`}
+                      />
+                    </Button>
+                  </div>
 
                   {companyJobs.length > 0 ? (
                     <DropdownMenu>

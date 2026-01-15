@@ -20,6 +20,7 @@ import {
   GraduationCap,
   EyeOff,
   Info,
+  Heart,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -63,10 +64,12 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { mockCandidates, mockJobs } from '@/data/mockData';
+import { mockCandidates, mockJobs, getMatchScore, getCandidateDISCProfile } from '@/data/mockData';
 import type { Candidate, Job } from '@/types';
+import type { CandidateForComparison } from '@/types/disc';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
 import {
   Tooltip,
   TooltipContent,
@@ -79,6 +82,10 @@ import {
   getDisplayAvatar,
   getVisibilitySettings,
 } from '@/utils/visibility';
+// PRD-002-dgn: Componentes de comparação
+import { useCandidateSelection, SelectionBar } from '@/components/compare/CandidateSelector';
+import { CandidateComparisonModal } from '@/components/compare/CandidateComparison';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Filter options
 const locations = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 'Curitiba, PR', 'Porto Alegre, RS'];
@@ -143,6 +150,19 @@ export default function CompanyCandidates() {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [inviteMessage, setInviteMessage] = useState('');
+
+  // PRD-002-dgn: Seleção de candidatos para comparação
+  const {
+    selectedIds,
+    toggleCandidate: toggleCompareCandidate,
+    clearSelection,
+    isSelected: isSelectedForComparison,
+    canSelect,
+  } = useCandidateSelection(3);
+  const [showComparisonModal, setShowComparisonModal] = useState(false);
+
+  // PRD-030: Hook de candidatos favoritos
+  const { isFavorite, toggleFavorite } = useFavoriteCandidates();
 
   // Get company jobs (mock: company-1)
   const companyJobs = mockJobs.filter(
@@ -246,6 +266,41 @@ export default function CompanyCandidates() {
       setSkillsFilter([...skillsFilter, skill]);
     }
   };
+
+  // PRD-002-dgn: Converter candidato para formato de comparação
+  const convertToComparisonCandidate = (candidate: Candidate): CandidateForComparison | null => {
+    const discProfile = getCandidateDISCProfile(candidate.id);
+    if (!discProfile) return null;
+
+    const matchResult = getMatchScore(candidate.id, companyJobs[0]?.id || 'job-1');
+    const matchScore = matchResult?.totalScore || calculateMatch(candidate, companyJobs);
+
+    return {
+      id: candidate.id,
+      name: getDisplayName(candidate),
+      avatar: getDisplayAvatar(candidate) || undefined,
+      matchScore,
+      discProfile,
+      metrics: {
+        experience: candidate.experience,
+        education: candidate.education,
+        location: candidate.location,
+        availability: candidate.availability,
+        skillsCount: candidate.skills.length,
+        hasTest: candidate.hasTest,
+        profileCompletion: candidate.profileCompletion,
+      },
+    };
+  };
+
+  // PRD-002-dgn: Candidatos selecionados convertidos para comparação
+  const selectedCandidatesForComparison = selectedIds
+    .map((id) => {
+      const candidate = mockCandidates.find((c) => c.id === id);
+      if (!candidate) return null;
+      return convertToComparisonCandidate(candidate);
+    })
+    .filter((c): c is CandidateForComparison => c !== null);
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -447,6 +502,9 @@ export default function CompanyCandidates() {
               const candidateIsAnonymous = isAnonymous(candidate);
               const displayName = getDisplayName(candidate);
               const displayAvatar = getDisplayAvatar(candidate);
+              // PRD-002-dgn: Verificar se está selecionado para comparação
+              const isSelectedCompare = isSelectedForComparison(candidate.id);
+              const canSelectMore = canSelect;
 
               return (
                 <motion.div
@@ -454,11 +512,26 @@ export default function CompanyCandidates() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium transition-all"
+                  className={`bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium transition-all ${
+                    isSelectedCompare ? 'ring-2 ring-primary' : ''
+                  }`}
                 >
                   <div className="flex flex-col md:flex-row md:items-start gap-4">
-                    {/* PRD-026: Avatar ou ícone anônimo */}
-                    <Avatar className="w-16 h-16 flex-shrink-0">
+                    {/* PRD-002-dgn: Checkbox para comparação */}
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        checked={isSelectedCompare}
+                        disabled={!isSelectedCompare && !canSelectMore}
+                        onCheckedChange={() => toggleCompareCandidate(candidate.id)}
+                        className="mt-1"
+                        title={
+                          !isSelectedCompare && !canSelectMore
+                            ? 'Máximo de 3 candidatos para comparação'
+                            : 'Selecionar para comparar'
+                        }
+                      />
+                      {/* PRD-026: Avatar ou ícone anônimo */}
+                      <Avatar className="w-16 h-16 flex-shrink-0">
                       {candidateIsAnonymous ? (
                         <AvatarFallback className="text-lg bg-muted text-muted-foreground">
                           <EyeOff className="w-6 h-6" />
@@ -476,6 +549,7 @@ export default function CompanyCandidates() {
                         </>
                       )}
                     </Avatar>
+                    </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
@@ -522,6 +596,29 @@ export default function CompanyCandidates() {
                               {matchScore}% match
                             </Badge>
                           )}
+                          {/* PRD-030: Botão de favoritar */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const isNowFavorite = toggleFavorite(candidate.id);
+                              toast.success(
+                                isNowFavorite
+                                  ? 'Candidato salvo!'
+                                  : 'Candidato removido dos salvos'
+                              );
+                            }}
+                          >
+                            <Heart
+                              className={`w-5 h-5 transition-colors ${
+                                isFavorite(candidate.id)
+                                  ? 'fill-destructive text-destructive'
+                                  : 'text-muted-foreground hover:text-destructive'
+                              }`}
+                            />
+                          </Button>
                         </div>
                       </div>
 
@@ -718,6 +815,31 @@ export default function CompanyCandidates() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* PRD-002-dgn: Barra de seleção para comparação */}
+      <SelectionBar
+        selectedCandidates={selectedCandidatesForComparison}
+        onRemove={(id) => toggleCompareCandidate(id)}
+        onClear={clearSelection}
+        onCompare={() => setShowComparisonModal(true)}
+      />
+
+      {/* PRD-002-dgn: Modal de comparação */}
+      <CandidateComparisonModal
+        open={showComparisonModal}
+        onOpenChange={setShowComparisonModal}
+        candidates={selectedCandidatesForComparison}
+        onInviteToInterview={(candidateId) => {
+          const candidate = mockCandidates.find((c) => c.id === candidateId);
+          if (candidate && companyJobs.length > 0) {
+            handleOpenInviteModal(candidate, companyJobs[0]);
+          }
+          setShowComparisonModal(false);
+        }}
+        onContactCandidate={(candidateId) => {
+          toast.success('Redirecionando para mensagens...');
+        }}
+      />
     </DashboardLayout>
   );
 }

@@ -1,9 +1,10 @@
 /**
  * Application Success Modal Component
  * PRD-007: Candidatura a Vagas
+ * PRD-000-dgn: Design System e Microinterações
  */
 
-import { CheckCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,9 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { AnimatedCheckmark } from '@/components/ui/success-state';
+import { ConfettiTrigger } from '@/components/ui/confetti';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 interface ApplicationSuccessModalProps {
   isOpen: boolean;
@@ -24,30 +28,69 @@ export function ApplicationSuccessModal({
   onViewApplications,
   onContinueBrowsing,
 }: ApplicationSuccessModalProps) {
-  return (
-    <Dialog open={isOpen}>
-      <DialogContent className="sm:max-w-md text-center">
-        <DialogHeader className="items-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-success/20 flex items-center justify-center">
-            <CheckCircle className="w-8 h-8 text-success" />
-          </div>
-          <DialogTitle className="text-xl">Candidatura Enviada!</DialogTitle>
-          <DialogDescription className="text-center">
-            Sua candidatura foi enviada com sucesso.
-            <br />
-            Acompanhe o status em "Minhas Candidaturas".
-          </DialogDescription>
-        </DialogHeader>
+  const prefersReducedMotion = useReducedMotion();
 
-        <div className="flex flex-col gap-3 mt-4">
-          <Button onClick={onViewApplications} className="w-full gradient-primary">
-            Ver Minhas Candidaturas
-          </Button>
-          <Button variant="outline" onClick={onContinueBrowsing} className="w-full">
-            Continuar Buscando
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+  return (
+    <>
+      <ConfettiTrigger trigger={isOpen} variant="explosion" />
+      <Dialog open={isOpen}>
+        <DialogContent className="sm:max-w-md text-center">
+          <DialogHeader className="items-center">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{
+                duration: prefersReducedMotion ? 0 : 0.3,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+              className="mb-4"
+            >
+              <AnimatedCheckmark size={64} animate={!prefersReducedMotion} />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: prefersReducedMotion ? 0 : 0.3,
+                delay: prefersReducedMotion ? 0 : 0.3,
+              }}
+            >
+              <DialogTitle className="text-xl">Candidatura Enviada!</DialogTitle>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: prefersReducedMotion ? 0 : 0.3,
+                delay: prefersReducedMotion ? 0 : 0.4,
+              }}
+            >
+              <DialogDescription className="text-center">
+                Sua candidatura foi enviada com sucesso.
+                <br />
+                Acompanhe o status em "Minhas Candidaturas".
+              </DialogDescription>
+            </motion.div>
+          </DialogHeader>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: prefersReducedMotion ? 0 : 0.3,
+              delay: prefersReducedMotion ? 0 : 0.5,
+            }}
+            className="flex flex-col gap-3 mt-4"
+          >
+            <Button onClick={onViewApplications} className="w-full gradient-primary">
+              Ver Minhas Candidaturas
+            </Button>
+            <Button variant="outline" onClick={onContinueBrowsing} className="w-full">
+              Continuar Buscando
+            </Button>
+          </motion.div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
