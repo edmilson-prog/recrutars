@@ -31,6 +31,7 @@ import CompanyCandidateProfile from "./pages/empresa/CandidateProfile";
 import CompanySavedCandidates from "./pages/empresa/SavedCandidates";
 import CompanyMessages from "./pages/empresa/Messages";
 import CompanySettings from "./pages/empresa/Settings";
+import CompanyNotifications from "./pages/empresa/Notifications";
 
 // Candidate pages
 import CandidateDashboard from "./pages/candidato/Dashboard";
@@ -157,6 +158,11 @@ const App = () => (
             <Route path="/empresa/configuracoes" element={
               <ProtectedRoute allowedTypes={['company']}>
                 <CompanySettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/notificacoes" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyNotifications />
               </ProtectedRoute>
             } />
 

@@ -9,7 +9,7 @@ import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, Users, Settings, LogOut,
-  Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart, Calendar, HelpCircle
+  Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart, Calendar, HelpCircle, Bell
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import { GlassHeader } from '@/components/layout/GlassHeader';
 import { GlassFooter } from '@/components/layout/GlassFooter';
 import { Badge } from '@/components/ui/badge';
 import { NotificationBell } from '@/components/notifications';
+import { CompanyNotificationBell } from '@/components/notifications/CompanyNotificationBell';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { BottomNav } from '@/components/navigation';
 import { SkipLink, AccessibilityPanel } from '@/components/accessibility';
@@ -49,6 +50,7 @@ const companyNav: NavItem[] = [
   { href: '/empresa/candidatos-salvos', label: 'Candidatos Salvos', icon: Heart, countKey: 'savedCandidates' },
   { href: '/empresa/testes', label: 'Testes', icon: Brain },
   { href: '/empresa/mensagens', label: 'Mensagens', icon: MessageSquare },
+  { href: '/empresa/notificacoes', label: 'Notificações', icon: Bell },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/empresa/configuracoes', label: 'Configurações', icon: Settings },
 ];
@@ -219,9 +221,13 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
               {/* PRD-003-dgn: Painel de acessibilidade */}
               <AccessibilityPanel />
               <ThemeToggle />
-              {/* Notificações - apenas para candidatos (PRD-025) */}
+              {/* PRD-025: Notificações - candidatos */}
               {userType === 'candidate' && (
                 <NotificationBell />
+              )}
+              {/* PRD-033: Notificações - empresas */}
+              {userType === 'company' && (
+                <CompanyNotificationBell />
               )}
             </div>
           </div>

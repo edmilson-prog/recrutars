@@ -5,6 +5,49 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.37.0] - 2026-01-15 (PRD-033)
+
+### Added
+- **Sistema de Notificações (Empresa)** - PRD-033
+  - 10 tipos de notificação específicos para empresas:
+    - `new_application` - Nova candidatura recebida
+    - `invite_accepted` - Convite para vaga aceito
+    - `invite_declined` - Convite para vaga recusado
+    - `interview_confirmed` - Entrevista confirmada pelo candidato
+    - `interview_suggested` - Candidato sugeriu outro horário
+    - `interview_cancelled` - Entrevista cancelada
+    - `new_message` - Nova mensagem de candidato
+    - `test_completed` - Candidato completou teste comportamental
+    - `job_expiring` - Vaga expirando em breve
+    - `job_expired` - Vaga expirou
+  - Sino de notificações no header para empresas
+  - Dropdown com últimas 5 notificações
+  - Badge com contador de não lidas
+  - Botão "Marcar todas como lidas"
+  - Página completa de notificações (`/empresa/notificacoes`)
+  - Filtros: Todas, Candidaturas, Entrevistas, Mensagens, Vagas
+  - Agrupamento por data: Hoje, Ontem, Esta semana, Este mês, Anteriores
+  - Persistência de estado de leitura em localStorage
+  - Metadados contextuais: match %, perfil DISC, datas de entrevista, etc.
+  - Item "Notificações" no menu lateral da empresa
+
+### Added (Components)
+- `CompanyNotificationBell.tsx` - sino com popover e badge
+- `CompanyNotificationItem.tsx` - item individual com ícones por tipo
+
+### Added (Types)
+- `src/types/companyNotifications.ts` - tipos específicos para empresa
+
+### Added (Hooks)
+- `useCompanyNotifications.ts` - hook com estado e localStorage
+
+### Changed
+- `DashboardLayout.tsx` - sino no header + item no menu da empresa
+- `App.tsx` - rota `/empresa/notificacoes`
+- `src/types/index.ts` - export dos tipos de notificação da empresa
+
+---
+
 ## [0.36.0] - 2026-01-15 (PRD-032)
 
 ### Added
