@@ -124,7 +124,8 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    font-family: "Roboto Mono", monospace;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 }
 

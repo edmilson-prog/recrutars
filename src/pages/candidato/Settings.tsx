@@ -1,6 +1,7 @@
 /**
  * Candidate Settings Page
  * PRD-011: Configurações do Candidato
+ * PRD-026: Visibilidade do Perfil
  */
 
 import { useState } from 'react';
@@ -8,7 +9,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Shield,
   Bell,
-  Eye,
   AlertTriangle,
   Download,
 } from 'lucide-react';
@@ -18,7 +18,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { VisibilitySettings } from '@/components/candidato/VisibilitySettings';
+import { ThemeSettings } from '@/components/settings/ThemeSettings';
+import type { VisibilityMode } from '@/types/candidate';
 import {
   Card,
   CardContent,
@@ -67,8 +69,9 @@ export default function CandidateSettings() {
     newsletter: false,
   });
 
-  // Profile visibility state
-  const [profileVisibility, setProfileVisibility] = useState<'visible' | 'hidden'>('visible');
+  // PRD-026: Profile visibility state
+  const [visibilityMode, setVisibilityMode] = useState<VisibilityMode>('public');
+  const anonymousId = '4721'; // Mock: seria gerado ao criar conta
 
   // Modal states
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -99,10 +102,9 @@ export default function CandidateSettings() {
     toast.success('Preferências salvas');
   };
 
-  // Handle visibility change
-  const handleVisibilityChange = (value: string) => {
-    setProfileVisibility(value as 'visible' | 'hidden');
-    toast.success('Preferências de privacidade salvas');
+  // PRD-026: Handle visibility mode change
+  const handleVisibilityChange = (mode: VisibilityMode) => {
+    setVisibilityMode(mode);
   };
 
   // Handle download data (mock)
@@ -231,42 +233,28 @@ export default function CandidateSettings() {
           </CardContent>
         </Card>
 
-        {/* Privacy Section */}
+        {/* PRD-026: Privacy/Visibility Section */}
+        <VisibilitySettings
+          currentMode={visibilityMode}
+          anonymousId={anonymousId}
+          onSave={handleVisibilityChange}
+        />
+
+        {/* PRD-029: Appearence/Theme Section */}
+        <ThemeSettings />
+
+        {/* Download Data Section */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Eye className="w-5 h-5" />
-              Privacidade
+              <Download className="w-5 h-5" />
+              Meus Dados
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <p className="font-medium text-foreground mb-3">Visibilidade do perfil</p>
-              <RadioGroup value={profileVisibility} onValueChange={handleVisibilityChange}>
-                <div className="flex items-start space-x-3">
-                  <RadioGroupItem value="visible" id="visible" className="mt-1" />
-                  <Label htmlFor="visible" className="cursor-pointer">
-                    <span className="text-foreground">Visível para empresas</span>
-                    <span className="block text-sm text-muted-foreground">
-                      Empresas podem encontrar seu perfil no banco de talentos
-                    </span>
-                  </Label>
-                </div>
-                <div className="flex items-start space-x-3 mt-3">
-                  <RadioGroupItem value="hidden" id="hidden" className="mt-1" />
-                  <Label htmlFor="hidden" className="cursor-pointer">
-                    <span className="text-foreground">Oculto</span>
-                    <span className="block text-sm text-muted-foreground">
-                      Apenas empresas para as quais você se candidatou podem ver seu perfil
-                    </span>
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-            <Separator />
+          <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-foreground">Meus dados</p>
+                <p className="font-medium text-foreground">Exportar dados</p>
                 <p className="text-sm text-muted-foreground">
                   Baixe uma cópia de todos os seus dados
                 </p>

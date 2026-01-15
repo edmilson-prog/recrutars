@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', "system-ui", "sans-serif"],
+        sans: ['"Roboto Mono"', "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",

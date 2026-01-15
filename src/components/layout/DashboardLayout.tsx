@@ -2,28 +2,31 @@ import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, Users, Settings, LogOut,
-  Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart
+  Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart, Calendar, HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
+import { useInterviews } from '@/hooks/useInterviews';
 import { GlassHeader } from '@/components/layout/GlassHeader';
 import { GlassFooter } from '@/components/layout/GlassFooter';
 import { Badge } from '@/components/ui/badge';
 import { NotificationBell } from '@/components/notifications';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  countKey?: 'savedJobs'; // Chave para contadores dinâmicos
+  countKey?: 'savedJobs' | 'interviews'; // Chave para contadores dinâmicos
 }
 
 const adminNav: NavItem[] = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/empresas', label: 'Empresas', icon: Building2 },
   { href: '/admin/candidatos', label: 'Candidatos', icon: Users },
+  { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
 ];
 
@@ -34,6 +37,7 @@ const companyNav: NavItem[] = [
   { href: '/empresa/candidatos', label: 'Banco de Talentos', icon: Users },
   { href: '/empresa/testes', label: 'Testes', icon: Brain },
   { href: '/empresa/mensagens', label: 'Mensagens', icon: MessageSquare },
+  { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/empresa/configuracoes', label: 'Configurações', icon: Settings },
 ];
 
@@ -43,8 +47,10 @@ const candidateNav: NavItem[] = [
   { href: '/candidato/vagas', label: 'Buscar Vagas', icon: Search },
   { href: '/candidato/vagas-salvas', label: 'Vagas Salvas', icon: Heart, countKey: 'savedJobs' },
   { href: '/candidato/candidaturas', label: 'Candidaturas', icon: ClipboardList },
+  { href: '/candidato/entrevistas', label: 'Entrevistas', icon: Calendar, countKey: 'interviews' },
   { href: '/candidato/testes', label: 'Meus Testes', icon: Brain },
   { href: '/candidato/mensagens', label: 'Mensagens', icon: MessageSquare },
+  { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/candidato/configuracoes', label: 'Configurações', icon: Settings },
 ];
 
@@ -61,6 +67,9 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   // Hook de favoritos para contador (PRD-024)
   const { favoritesCount } = useFavoriteJobs();
 
+  // Hook de entrevistas para contador (PRD-027)
+  const { pendingCount: interviewsPendingCount } = useInterviews('candidate-1');
+
   const navItems = userType === 'admin'
     ? adminNav
     : userType === 'company'
@@ -71,6 +80,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const getItemCount = (countKey?: string): number | null => {
     if (!countKey || userType !== 'candidate') return null;
     if (countKey === 'savedJobs') return favoritesCount;
+    if (countKey === 'interviews') return interviewsPendingCount;
     return null;
   };
 
@@ -176,10 +186,13 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                 {navItems.find(item => item.href === location.pathname)?.label || 'Dashboard'}
               </span>
             </div>
-            {/* Notificações - apenas para candidatos (PRD-025) */}
-            {userType === 'candidate' && (
-              <NotificationBell />
-            )}
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              {/* Notificações - apenas para candidatos (PRD-025) */}
+              {userType === 'candidate' && (
+                <NotificationBell />
+              )}
+            </div>
           </div>
         </GlassHeader>
 

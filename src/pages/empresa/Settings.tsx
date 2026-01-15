@@ -28,6 +28,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ThemeSettings } from '@/components/settings/ThemeSettings';
 import {
   Card,
   CardContent,
@@ -265,7 +266,7 @@ export default function CompanySettings() {
 
         {/* Tabs */}
         <Tabs defaultValue="perfil" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="perfil" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
               <span className="hidden sm:inline">Perfil</span>
@@ -277,6 +278,10 @@ export default function CompanySettings() {
             <TabsTrigger value="conta" className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
               <span className="hidden sm:inline">Conta</span>
+            </TabsTrigger>
+            <TabsTrigger value="aparencia" className="flex items-center gap-2">
+              <Bell className="w-4 h-4" />
+              <span className="hidden sm:inline">Aparência</span>
             </TabsTrigger>
             <TabsTrigger value="plano" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
@@ -670,6 +675,11 @@ export default function CompanySettings() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Tab: Aparência (PRD-029) */}
+          <TabsContent value="aparencia" className="space-y-6">
+            <ThemeSettings />
           </TabsContent>
 
           {/* Tab: Plano */}

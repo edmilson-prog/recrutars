@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RedirectIfAuthenticated } from "@/components/auth/RedirectIfAuthenticated";
@@ -42,16 +43,27 @@ import CandidateCurriculums from "./pages/candidato/Curriculums";
 import CandidateCurriculumEdit from "./pages/candidato/CurriculumEdit";
 import CandidateSavedJobs from "./pages/candidato/SavedJobs";
 import CandidateNotifications from "./pages/candidato/Notifications";
+import CandidateInterviews from "./pages/candidato/Interviews";
+
+// Help pages
+import HelpPage from "./pages/Help";
+import TicketDetailsPage from "./pages/TicketDetails";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      storageKey="recrutars-theme"
+    >
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
@@ -67,6 +79,14 @@ const App = () => (
             } />
             <Route path="/como-funciona" element={<HowItWorksPage />} />
             <Route path="/planos" element={<PlansPage />} />
+
+            {/* Help Routes */}
+            <Route path="/ajuda" element={<HelpPage />} />
+            <Route path="/ajuda/tickets/:ticketId" element={
+              <ProtectedRoute allowedTypes={['candidate', 'company', 'admin']}>
+                <TicketDetailsPage />
+              </ProtectedRoute>
+            } />
 
             {/* Admin Routes */}
             <Route path="/admin" element={
@@ -193,6 +213,11 @@ const App = () => (
                 <CandidateNotifications />
               </ProtectedRoute>
             } />
+            <Route path="/candidato/entrevistas" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateInterviews />
+              </ProtectedRoute>
+            } />
 
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
@@ -200,6 +225,7 @@ const App = () => (
         </TooltipProvider>
       </AuthProvider>
     </BrowserRouter>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

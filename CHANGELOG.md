@@ -5,6 +5,126 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.0] - 2026-01-15
+
+### Added
+- Modo escuro (dark mode) com 3 opções: Claro, Escuro, Sistema (PRD-029)
+- Toggle de tema no header do dashboard (ícone sol/lua)
+- Seção "Aparência" nas configurações de candidato e empresa
+- 3 opções visuais de tema com ícones (Sol, Lua, Monitor)
+- Detecção automática da preferência do sistema operacional
+- Persistência da escolha de tema no localStorage
+- Script anti-flash para evitar mudança brusca ao carregar página
+- Transição suave de 200ms entre temas (background e texto)
+
+### Changed
+- Fonte alterada de Plus Jakarta Sans para Roboto Mono
+- Fonte aplicada globalmente: Roboto Mono (pesos 300, 400, 500, 700)
+- Fallback atualizado para monospace
+
+### Technical
+- ThemeProvider do next-themes integrado no App.tsx
+- Componente ThemeToggle com animação de ícones
+- Componente ThemeSettings com RadioGroup para escolha de tema
+- Atributo "class" aplicado no `<html>` para controle de tema
+- storageKey customizada: "recrutars-theme"
+- Variáveis CSS dark mode já existentes ativadas
+- Tailwind darkMode configurado com classe `.dark`
+- Glassmorphism funcional em ambos os temas
+
+## [0.28.0] - 2026-01-15
+
+### Added
+- Central de Ajuda com FAQ e sistema de tickets (PRD-028)
+- Página pública de ajuda (/ajuda) acessível sem autenticação
+- FAQ accordion com busca em tempo real (debounce 300ms)
+- Filtro de FAQ por categoria
+- FAQ específico por tipo de usuário (candidato, empresa, admin, geral)
+- Informações de contato (email, telefone, horário de atendimento)
+- Sistema de tickets de suporte para usuários autenticados
+- Aba "Meus Tickets" na página de ajuda (apenas para usuários logados)
+- Modal "Novo Ticket" com formulário completo
+- 10 categorias de ticket (conta, candidaturas, currículos, testes, entrevistas, mensagens, pagamentos, problemas técnicos, sugestões, outros)
+- Upload de anexos em tickets (PNG, JPG, PDF, máx 5MB)
+- Página de detalhes do ticket (/ajuda/tickets/:ticketId)
+- Thread de conversação em tickets com diferenciação visual
+- Campo para adicionar respostas ao ticket
+- Botão "Marcar como Resolvido" com confirmação
+- Simulação de respostas automáticas do suporte (2-5 segundos)
+- Respostas genéricas baseadas na categoria do ticket
+- Lista de tickets com filtros por status (Todos, Abertos, Respondidos, Resolvidos)
+- Status badges coloridos (Aberto: amarelo, Respondido: verde, Resolvido: cinza)
+- Auto-scroll para última mensagem nos tickets
+- Persistência de tickets no localStorage por usuário
+- Sistema de numeração automática de tickets (#1000+)
+- Link "Central de Ajuda" no footer da landing page
+- Item "Central de Ajuda" nos menus laterais de admin, empresa e candidato
+
+### Technical
+- Types: UserArea, TicketStatus, TicketCategory
+- Interfaces: FAQItem, TicketMessage, Ticket
+- Hook useFAQ para gerenciamento de FAQ com busca e filtros
+- Hook useTickets para gerenciamento completo de tickets
+- Componentes: ContactInfo, FAQSection, TicketsList, TicketCard, NewTicketModal
+- Componentes: TicketThread, TicketReply
+- Mock data: mockFAQItems (15 perguntas) e mockTickets (3 tickets de exemplo)
+- Validação de formulários com react-hook-form e zod
+- Upload de anexos com validação de tipo e tamanho
+- Formatação de datas com date-fns pt-BR
+- Labels e cores mapeados para categorias e status
+
+## [0.27.0] - 2026-01-15
+
+### Added
+- Sistema de agendamento de entrevistas para candidatos (PRD-027)
+- Página "Minhas Entrevistas" (/candidato/entrevistas)
+- 3 abas: Pendentes, Confirmadas, Realizadas
+- Aceitar horário proposto pela empresa
+- Sugerir horários alternativos (até 3)
+- Cancelar entrevista com motivo obrigatório
+- Suporte a 3 tipos: Videochamada, Telefone, Presencial
+- Mini-calendário com indicadores de entrevistas
+- Badge de entrevistas pendentes no menu lateral
+- Countdown para entrevistas próximas ("Hoje", "Amanhã", "Em X dias")
+- Cards com detalhes: entrevistador, observações, links/endereços
+- Dicas contextuais para cada tipo de entrevista
+
+### Technical
+- Type InterviewType ('video' | 'phone' | 'in_person')
+- Type InterviewStatus (6 estados: pending_candidate, pending_company, confirmed, completed, cancelled_by_candidate, cancelled_by_company)
+- Interface Interview com todos os campos necessários
+- Interface ProposedSlot para horários propostos
+- Hook useInterviews para gerenciamento de estado
+- Componentes: InterviewCard, AcceptInterviewModal, SuggestAlternativeModal, CancelInterviewModal, MiniCalendar
+- Integração com date-fns para formatação de datas em pt-BR
+
+## [0.26.0] - 2026-01-15
+
+### Added
+- Configuração de visibilidade do perfil do candidato (PRD-026)
+- 3 modos de visibilidade: Público, Parcial (Anônimo), Privado
+- Modo Público: perfil totalmente visível para empresas
+- Modo Parcial: aparece como "Perfil Anônimo #XXXX" nas buscas
+- Modo Privado: perfil não aparece em nenhuma busca
+- Componente VisibilitySettings com interface detalhada
+- Radio buttons com descrições, benefícios e alertas para cada modo
+- Tooltip explicativo sobre o modo anônimo
+- Exibição do identificador anônimo quando em modo parcial
+- Dica de segurança sobre privacidade dos dados
+- Filtro de candidatos em modo privado no Banco de Talentos
+- Indicador visual "Anônimo" com badge e tooltip para empresas
+- Avatar genérico (ícone EyeOff) para candidatos anônimos
+- Geração automática de anonymousId baseado no ID do candidato
+
+### Technical
+- Type VisibilityMode ('public' | 'partial' | 'private')
+- Interface VisibilitySettings { mode, anonymousId }
+- Interface AnonymousProfile para dados visíveis em modo parcial
+- Helpers: isVisibleInSearch, isAnonymous, getDisplayName, getDisplayAvatar
+- Função generateAnonymousId para IDs consistentes
+- src/utils/visibility.ts com helpers de visibilidade
+- Campo visibility opcional em Candidate para compatibilidade
+
 ## [0.25.0] - 2026-01-15
 
 ### Added
