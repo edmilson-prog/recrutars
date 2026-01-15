@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
+import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
 import { useInterviews } from '@/hooks/useInterviews';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { GlassHeader } from '@/components/layout/GlassHeader';
@@ -29,7 +30,7 @@ interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  countKey?: 'savedJobs' | 'interviews'; // Chave para contadores dinâmicos
+  countKey?: 'savedJobs' | 'interviews' | 'savedCandidates'; // Chave para contadores dinâmicos
 }
 
 const adminNav: NavItem[] = [
@@ -45,6 +46,7 @@ const companyNav: NavItem[] = [
   { href: '/empresa/vagas', label: 'Minhas Vagas', icon: Briefcase },
   { href: '/empresa/candidaturas', label: 'Candidaturas', icon: ClipboardList },
   { href: '/empresa/candidatos', label: 'Banco de Talentos', icon: Users },
+  { href: '/empresa/candidatos-salvos', label: 'Candidatos Salvos', icon: Heart, countKey: 'savedCandidates' },
   { href: '/empresa/testes', label: 'Testes', icon: Brain },
   { href: '/empresa/mensagens', label: 'Mensagens', icon: MessageSquare },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
@@ -80,6 +82,9 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   // Hook de favoritos para contador (PRD-024)
   const { favoritesCount } = useFavoriteJobs();
 
+  // PRD-030: Hook de candidatos favoritos para contador
+  const { favoritesCount: savedCandidatesCount } = useFavoriteCandidates();
+
   // Hook de entrevistas para contador (PRD-027)
   const { pendingCount: interviewsPendingCount } = useInterviews('candidate-1');
 
@@ -91,7 +96,11 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   // Obter contadores para items do menu
   const getItemCount = (countKey?: string): number | null => {
-    if (!countKey || userType !== 'candidate') return null;
+    if (!countKey) return null;
+    // PRD-030: Contador de candidatos salvos (empresa)
+    if (countKey === 'savedCandidates' && userType === 'company') return savedCandidatesCount;
+    // Contadores do candidato
+    if (userType !== 'candidate') return null;
     if (countKey === 'savedJobs') return favoritesCount;
     if (countKey === 'interviews') return interviewsPendingCount;
     return null;

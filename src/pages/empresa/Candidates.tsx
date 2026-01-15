@@ -20,6 +20,7 @@ import {
   GraduationCap,
   EyeOff,
   Info,
+  Heart,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -68,6 +69,7 @@ import type { Candidate, Job } from '@/types';
 import type { CandidateForComparison } from '@/types/disc';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
 import {
   Tooltip,
   TooltipContent,
@@ -158,6 +160,9 @@ export default function CompanyCandidates() {
     canSelect,
   } = useCandidateSelection(3);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
+
+  // PRD-030: Hook de candidatos favoritos
+  const { isFavorite, toggleFavorite } = useFavoriteCandidates();
 
   // Get company jobs (mock: company-1)
   const companyJobs = mockJobs.filter(
@@ -591,6 +596,29 @@ export default function CompanyCandidates() {
                               {matchScore}% match
                             </Badge>
                           )}
+                          {/* PRD-030: Botão de favoritar */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const isNowFavorite = toggleFavorite(candidate.id);
+                              toast.success(
+                                isNowFavorite
+                                  ? 'Candidato salvo!'
+                                  : 'Candidato removido dos salvos'
+                              );
+                            }}
+                          >
+                            <Heart
+                              className={`w-5 h-5 transition-colors ${
+                                isFavorite(candidate.id)
+                                  ? 'fill-destructive text-destructive'
+                                  : 'text-muted-foreground hover:text-destructive'
+                              }`}
+                            />
+                          </Button>
                         </div>
                       </div>
 

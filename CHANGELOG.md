@@ -5,6 +5,36 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.0] - 2026-01-15 (PRD-030)
+
+### Added
+- **Candidatos Favoritos (Empresa)** - PRD-030
+  - Botão de favoritar (coração) nos cards de candidato no Banco de Talentos
+  - Botão de favoritar na página de perfil do candidato
+  - Toggle de favorito com feedback instantâneo (toast)
+  - Nova opção "Candidatos Salvos" no menu lateral da empresa
+  - Badge com contador de candidatos salvos no menu
+  - Nova página `/empresa/candidatos-salvos`
+  - Ordenação: mais recentes, maior match, mais experiência
+  - Filtro por área de atuação
+  - Indicador "Salvo há X dias"
+  - Estado vazio com CTA para Banco de Talentos
+  - Persistência em localStorage
+
+### Added (Hooks)
+- `useFavoriteCandidates` - gerenciamento de candidatos favoritos
+- `formatCandidateSavedAt` - formatação de data de salvamento
+
+### Added (Pages)
+- `SavedCandidates` - página de candidatos salvos da empresa
+
+### Changed
+- `DashboardLayout` - adicionado item "Candidatos Salvos" no menu da empresa com badge
+- `Candidates.tsx` - adicionado botão de favoritar nos cards
+- `CandidateProfile.tsx` - adicionado botão de favoritar no header
+
+---
+
 ## [0.33.0] - 2026-01-15 (Access)
 
 ### Added
