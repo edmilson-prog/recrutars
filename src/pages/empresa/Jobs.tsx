@@ -16,6 +16,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -541,6 +542,9 @@ export default function CompanyJobs() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingJob ? 'Editar Vaga' : 'Nova Vaga'}</DialogTitle>
+            <DialogDescription>
+              {editingJob ? 'Atualize as informações da vaga.' : 'Preencha os dados para criar uma nova vaga.'}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-4">
             {/* Basic Info Section */}
