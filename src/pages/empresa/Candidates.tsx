@@ -65,9 +65,11 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { mockCandidates, mockJobs, getMatchScore, getCandidateDISCProfile } from '@/data/mockData';
+import { mockCandidates, mockJobs, getIdealDISCProfile, getCandidateDISCProfile } from '@/data/mockData';
 import type { Candidate, Job } from '@/types';
 import type { CandidateForComparison } from '@/types/disc';
+import { calculateMatchBreakdown } from '@/lib/matchCalculator';
+import { getMatchScoreColor } from '@/types/disc';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
@@ -116,22 +118,16 @@ const getExperienceRange = (years: number): string => {
   return '10+';
 };
 
-// Helper to calculate mock match percentage
+// PRD-035: Cálculo dinâmico de match usando matchCalculator
 const calculateMatch = (candidate: Candidate, jobs: Job[]): number => {
   if (jobs.length === 0) return 0;
-  // Mock: based on skills overlap and profile completion
-  const avgSkillMatch = jobs.reduce((acc, job) => {
-    const jobSkills = job.requirements.join(' ').toLowerCase();
-    const matchingSkills = candidate.skills.filter((s) =>
-      jobSkills.includes(s.toLowerCase())
-    ).length;
-    return acc + (matchingSkills / candidate.skills.length) * 100;
-  }, 0) / jobs.length;
 
-  const profileBonus = candidate.hasTest ? 10 : 0;
-  const completionBonus = candidate.profileCompletion * 0.2;
+  // Calcula o match para a primeira vaga ativa (ou faz média de todas)
+  const job = jobs[0];
+  const idealProfile = getIdealDISCProfile(job.id);
+  const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
 
-  return Math.min(99, Math.round(avgSkillMatch * 0.5 + profileBonus + completionBonus));
+  return matchResult.totalScore;
 };
 
 export default function CompanyCandidates() {
@@ -279,8 +275,8 @@ export default function CompanyCandidates() {
     const discProfile = getCandidateDISCProfile(candidate.id);
     if (!discProfile) return null;
 
-    const matchResult = getMatchScore(candidate.id, companyJobs[0]?.id || 'job-1');
-    const matchScore = matchResult?.totalScore || calculateMatch(candidate, companyJobs);
+    // PRD-035: Usa cálculo dinâmico de match
+    const matchScore = calculateMatch(candidate, companyJobs);
 
     return {
       id: candidate.id,
@@ -601,14 +597,7 @@ export default function CompanyCandidates() {
                         <div className="flex items-center gap-2">
                           {matchScore > 0 && (
                             <Badge
-                              variant="secondary"
-                              className={
-                                matchScore >= 80
-                                  ? 'bg-success/20 text-success'
-                                  : matchScore >= 60
-                                  ? 'bg-warning/20 text-warning'
-                                  : ''
-                              }
+                              className={`${getMatchScoreColor(matchScore).bg} ${getMatchScoreColor(matchScore).text} border ${getMatchScoreColor(matchScore).border}`}
                             >
                               <Star className="w-3 h-3 mr-1" />
                               {matchScore}% match

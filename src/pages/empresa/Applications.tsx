@@ -77,11 +77,13 @@ import {
   mockMessages,
   mockConversations,
   getCandidateDISCProfile,
-  getMatchScore,
+  getIdealDISCProfile,
 } from '@/data/mockData';
 import type { Application, ApplicationStatus, ApplicationNote, ApplicationHistory, TestRequestStatus, Message } from '@/types';
 import type { CandidateForComparison } from '@/types/disc';
 import { toast } from 'sonner';
+import { calculateMatchBreakdown } from '@/lib/matchCalculator';
+import { getMatchScoreColor } from '@/types/disc';
 // PRD-002-dgn: Componentes de comparação
 import { useCandidateSelection, SelectionBar } from '@/components/compare/CandidateSelector';
 import { CandidateComparisonModal } from '@/components/compare/CandidateComparison';
@@ -145,14 +147,21 @@ const DEADLINE_OPTIONS = [
 
 const DEFAULT_TEST_MESSAGE = `Olá! Para darmos continuidade ao processo seletivo, gostaríamos que você realizasse nosso teste comportamental Gauge-Pro. O teste leva cerca de 15-20 minutos e nos ajuda a entender melhor seu perfil.`;
 
-// Helper to calculate mock match percentage
+// PRD-035: Cálculo dinâmico de match - esta função é usada em múltiplos lugares
+// selectedJobId é usado para determinar qual vaga usar no cálculo
+let currentSelectedJobId = '';
 const calculateMatch = (candidateId: string): number => {
   const candidate = mockCandidates.find((c) => c.id === candidateId);
   if (!candidate) return 0;
-  const baseMatch = candidate.profileCompletion * 0.5;
-  const testBonus = candidate.hasTest ? 20 : 0;
-  const skillBonus = candidate.skills.length * 3;
-  return Math.min(99, Math.round(baseMatch + testBonus + skillBonus));
+
+  // Usa a vaga selecionada atualmente ou a primeira vaga da empresa
+  const job = mockJobs.find((j) => j.id === currentSelectedJobId) ||
+    mockJobs.find((j) => j.companyId === 'company-1' && j.status === 'active');
+  if (!job) return 0;
+
+  const idealProfile = getIdealDISCProfile(job.id);
+  const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
+  return matchResult.totalScore;
 };
 
 // Generate mock experience from candidate data
@@ -247,6 +256,11 @@ export default function CompanyApplications() {
       setSelectedJobId(companyJobs[0].id);
     }
   }, [companyJobs, selectedJobId]);
+
+  // PRD-035: Atualiza o jobId global para cálculo de match
+  useEffect(() => {
+    currentSelectedJobId = selectedJobId;
+  }, [selectedJobId]);
 
   // Filter applications for selected job
   const jobApplications = applications.filter(
@@ -495,8 +509,8 @@ export default function CompanyApplications() {
     const discProfile = getCandidateDISCProfile(candidateId);
     if (!discProfile) return null;
 
-    const matchResult = getMatchScore(candidateId, selectedJobId || 'job-1');
-    const matchScore = matchResult?.totalScore || calculateMatch(candidateId);
+    // PRD-035: Usa cálculo dinâmico de match
+    const matchScore = calculateMatch(candidateId);
 
     return {
       id: candidate.id,
@@ -700,14 +714,7 @@ export default function CompanyApplications() {
 
                 <div className="flex flex-wrap gap-2">
                   <Badge
-                    variant="secondary"
-                    className={
-                      selectedMatch >= 80
-                        ? 'bg-success/20 text-success'
-                        : selectedMatch >= 60
-                        ? 'bg-warning/20 text-warning'
-                        : ''
-                    }
+                    className={`${getMatchScoreColor(selectedMatch).bg} ${getMatchScoreColor(selectedMatch).text} border ${getMatchScoreColor(selectedMatch).border}`}
                   >
                     <Star className="w-3 h-3 mr-1" />
                     {selectedMatch}% match
@@ -1384,13 +1391,7 @@ function ApplicationCard({
       <div className="flex flex-wrap items-center gap-2 mt-3">
         <Badge
           variant="outline"
-          className={
-            match >= 80
-              ? 'text-success border-success/30'
-              : match >= 60
-              ? 'text-warning border-warning/30'
-              : ''
-          }
+          className={`${getMatchScoreColor(match).text} ${getMatchScoreColor(match).border.replace('border-', 'border-')}`}
         >
           <Star className="w-3 h-3 mr-1" />
           {match}%
