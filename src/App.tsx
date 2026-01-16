@@ -33,6 +33,7 @@ import CompanyMessages from "./pages/empresa/Messages";
 import CompanySettings from "./pages/empresa/Settings";
 import CompanyNotifications from "./pages/empresa/Notifications";
 import CompanyInterviews from "./pages/empresa/Interviews";
+import CompanySuggestedCandidates from "./pages/empresa/SuggestedCandidates";
 
 // Candidate pages
 import CandidateDashboard from "./pages/candidato/Dashboard";
@@ -46,8 +47,10 @@ import CandidateSettings from "./pages/candidato/Settings";
 import CandidateCurriculums from "./pages/candidato/Curriculums";
 import CandidateCurriculumEdit from "./pages/candidato/CurriculumEdit";
 import CandidateSavedJobs from "./pages/candidato/SavedJobs";
+import CandidateRecommendedJobs from "./pages/candidato/RecommendedJobs";
 import CandidateNotifications from "./pages/candidato/Notifications";
 import CandidateInterviews from "./pages/candidato/Interviews";
+import CandidateImportCV from "./pages/candidato/ImportCV";
 
 // Help pages
 import HelpPage from "./pages/Help";
@@ -171,6 +174,11 @@ const App = () => (
                 <CompanyInterviews />
               </ProtectedRoute>
             } />
+            <Route path="/empresa/vagas/:id/candidatos-sugeridos" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanySuggestedCandidates />
+              </ProtectedRoute>
+            } />
 
             {/* Candidate Routes */}
             <Route path="/candidato" element={
@@ -196,6 +204,11 @@ const App = () => (
             <Route path="/candidato/vagas-salvas" element={
               <ProtectedRoute allowedTypes={['candidate']}>
                 <CandidateSavedJobs />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/vagas-recomendadas" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateRecommendedJobs />
               </ProtectedRoute>
             } />
             <Route path="/candidato/candidaturas" element={
@@ -236,6 +249,11 @@ const App = () => (
             <Route path="/candidato/entrevistas" element={
               <ProtectedRoute allowedTypes={['candidate']}>
                 <CandidateInterviews />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/importar-cv" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateImportCV />
               </ProtectedRoute>
             } />
 

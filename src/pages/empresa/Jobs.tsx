@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Search, MoreVertical, Users, Eye, Pause, Play, Trash2, Edit, Copy, XCircle, X, Briefcase } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -42,6 +42,8 @@ import {
 import { mockJobs } from '@/data/mockData';
 import { Job, JobStatus } from '@/types';
 import { toast } from 'sonner';
+import { useJobAnalyzer, createJobFormData } from '@/hooks/useJobAnalyzer';
+import { JobAssistant } from '@/components/empresa/JobAssistant';
 
 // Common benefits for checkboxes
 const COMMON_BENEFITS = [
@@ -93,6 +95,66 @@ export default function CompanyJobs() {
   // Character limits
   const DESCRIPTION_LIMIT = 2000;
   const REQUIREMENTS_LIMIT = 1500;
+
+  // Job analyzer - create form data for analysis
+  const jobFormData = useMemo(() => {
+    if (!isFormOpen) return null;
+    return createJobFormData(formData, selectedBenefits, skills);
+  }, [isFormOpen, formData, selectedBenefits, skills]);
+
+  const { analysis, isAnalyzing } = useJobAnalyzer(jobFormData, {
+    enabled: isFormOpen,
+  });
+
+  // Handle suggestion application
+  const handleApplySuggestion = (field: string, value: string) => {
+    switch (field) {
+      case 'title':
+        setFormData(prev => ({ ...prev, title: value }));
+        break;
+      case 'description':
+        setFormData(prev => ({ ...prev, description: value }));
+        break;
+      case 'requirements':
+        setFormData(prev => ({ ...prev, requirements: value }));
+        break;
+      case 'location':
+        setFormData(prev => ({ ...prev, location: value }));
+        break;
+      case 'salary': {
+        // Parse salary suggestion (e.g., "R$ 5.000 - R$ 9.000")
+        const salaryMatch = value.match(/R\$\s*([\d.]+)\s*-\s*R\$\s*([\d.]+)/);
+        if (salaryMatch) {
+          const min = salaryMatch[1].replace(/\./g, '');
+          const max = salaryMatch[2].replace(/\./g, '');
+          setFormData(prev => ({
+            ...prev,
+            salaryMin: min,
+            salaryMax: max,
+            salaryNegotiable: false,
+          }));
+        }
+        break;
+      }
+      case 'benefits': {
+        // Add suggested benefits
+        const suggestedBenefits = value.split(', ').map(b => b.trim());
+        setSelectedBenefits(prev => {
+          const newBenefits = [...prev];
+          suggestedBenefits.forEach(benefit => {
+            if (COMMON_BENEFITS.includes(benefit) && !newBenefits.includes(benefit)) {
+              newBenefits.push(benefit);
+            }
+          });
+          return newBenefits;
+        });
+        break;
+      }
+      default:
+        break;
+    }
+    toast.success('Sugestão aplicada!');
+  };
 
   // Filter jobs
   const filteredJobs = jobs.filter(job => {
@@ -746,6 +808,13 @@ export default function CompanyJobs() {
                 </div>
               )}
             </div>
+
+            {/* Job Assistant */}
+            <JobAssistant
+              analysis={analysis}
+              isAnalyzing={isAnalyzing}
+              onApplySuggestion={handleApplySuggestion}
+            />
 
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t">

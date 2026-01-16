@@ -3,14 +3,15 @@ import { FileText, Calendar, Brain, Eye, Search, MessageSquare, ArrowRight, Cloc
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { candidateStats, mockApplications, mockJobs, mockMessages, mockCandidates, getCandidateDISCProfile, getMatchScore } from '@/data/mockData';
+import { candidateStats, mockApplications, mockMessages, mockCandidates, getCandidateDISCProfile } from '@/data/mockData';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DISCRadarChartMini } from '@/components/disc/DISCRadarChart';
 import { DISCLegendCompact } from '@/components/disc/DISCLegend';
-import { MatchScoreInline } from '@/components/match/MatchScoreCircle';
 // PRD-035: Banner de incentivo ao teste DISC
 import { DiscIncentiveBanner } from '@/components/candidato/DiscIncentiveBanner';
+// PRD-036: Widget de vagas recomendadas
+import { RecommendedJobsWidget } from '@/components/candidato/RecommendedJobsWidget';
 
 export default function CandidateDashboard() {
   const { currentCandidate } = useAuth();
@@ -221,60 +222,8 @@ export default function CandidateDashboard() {
           </motion.div>
         </div>
 
-        {/* Recommended Jobs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="bg-card rounded-2xl p-6 shadow-soft"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-foreground">Vagas Recomendadas</h2>
-            <Link to="/candidato/vagas" className="text-sm text-secondary font-medium hover:underline">
-              Ver todas
-            </Link>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockJobs.filter(j => j.status === 'active').slice(0, 3).map((job) => {
-              const matchResult = getMatchScore('candidate-1', job.id);
-              return (
-                <div key={job.id} className="p-5 rounded-xl border border-border hover:border-primary/50 hover:shadow-soft transition-all">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Building2 className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-foreground">{job.title}</h3>
-                        <p className="text-sm text-muted-foreground">{job.companyName}</p>
-                      </div>
-                    </div>
-                    {/* PRD-002-dgn: Match Score */}
-                    {matchResult && (
-                      <MatchScoreInline score={matchResult.totalScore} />
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded">
-                      {job.location}
-                    </span>
-                    <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded">
-                      {job.type === 'remote' ? 'Remoto' : job.type === 'hybrid' ? 'Híbrido' : 'Presencial'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-secondary">
-                      R$ {job.salary.min.toLocaleString('pt-BR')} - {job.salary.max.toLocaleString('pt-BR')}
-                    </span>
-                    <Button asChild size="sm" variant="outline">
-                      <Link to={`/candidato/vagas/${job.id}`}>Ver vaga</Link>
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
+        {/* PRD-036: Recommended Jobs Widget */}
+        <RecommendedJobsWidget candidateId={candidate.id} />
       </div>
     </DashboardLayout>
   );

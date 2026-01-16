@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { companyStats, mockJobs, mockApplications, mockBehavioralTests } from '@/data/mockData';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { SuggestedCandidatesWidget } from '@/components/empresa/SuggestedCandidatesWidget';
 
 /**
  * Returns greeting based on current hour
@@ -285,6 +286,21 @@ export default function CompanyDashboard() {
             </table>
           </div>
         </motion.div>
+
+        {/* PRD-037: Candidatos Sugeridos para vaga ativa */}
+        {companyJobs.filter(j => j.status === 'active').slice(0, 1).map((job) => (
+          <motion.div
+            key={`suggested-${job.id}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65 }}
+          >
+            <SuggestedCandidatesWidget
+              jobId={job.id}
+              jobTitle={job.title}
+            />
+          </motion.div>
+        ))}
 
         {/* RF-018 a RF-020: Ações Rápidas */}
         <motion.div

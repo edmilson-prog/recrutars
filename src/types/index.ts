@@ -14,3 +14,5 @@ export * from './stats';
 export * from './curriculum';
 export * from './notifications';
 export * from './companyNotifications';
+export * from './cvParser';
+export * from './jobAnalyzer';

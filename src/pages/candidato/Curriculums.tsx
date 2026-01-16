@@ -13,6 +13,7 @@ import {
   MoreVertical,
   FileText,
   FileDown,
+  FileUp,
   Eye,
   Edit,
   MapPin,
@@ -397,10 +398,16 @@ export default function Curriculums() {
               Gerencie seus currículos e mantenha-os atualizados
             </p>
           </div>
-          <Button onClick={handleCreateNew}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Currículo
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate('/candidato/importar-cv')}>
+              <FileUp className="h-4 w-4 mr-2" />
+              Importar CV
+            </Button>
+            <Button onClick={handleCreateNew}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Currículo
+            </Button>
+          </div>
         </div>
 
         {/* Tabs */}

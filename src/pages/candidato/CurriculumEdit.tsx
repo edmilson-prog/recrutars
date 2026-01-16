@@ -17,6 +17,7 @@ import {
   Check,
   X,
   Upload,
+  FileUp,
   ExternalLink,
   Link as LinkIcon,
   FileText,
@@ -398,6 +399,10 @@ export default function CurriculumEdit() {
               <Progress value={completeness.percentage} className="w-24 h-2" />
               <span className="text-sm font-medium">{completeness.percentage}%</span>
             </div>
+            <Button variant="outline" onClick={() => navigate('/candidato/importar-cv')}>
+              <FileUp className="h-4 w-4 mr-2" />
+              Importar CV
+            </Button>
             <Button onClick={handleSave} disabled={saving}>
               <Save className="h-4 w-4 mr-2" />
               {saving ? 'Salvando...' : 'Salvar'}
