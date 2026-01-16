@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
 import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
 import { useInterviews } from '@/hooks/useInterviews';
+import { useCompanyInterviews } from '@/hooks/useCompanyInterviews';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { GlassHeader } from '@/components/layout/GlassHeader';
 import { GlassFooter } from '@/components/layout/GlassFooter';
@@ -31,7 +32,7 @@ interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  countKey?: 'savedJobs' | 'interviews' | 'savedCandidates'; // Chave para contadores dinâmicos
+  countKey?: 'savedJobs' | 'interviews' | 'savedCandidates' | 'companyInterviews'; // Chave para contadores dinâmicos
 }
 
 const adminNav: NavItem[] = [
@@ -46,6 +47,7 @@ const companyNav: NavItem[] = [
   { href: '/empresa', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/empresa/vagas', label: 'Minhas Vagas', icon: Briefcase },
   { href: '/empresa/candidaturas', label: 'Candidaturas', icon: ClipboardList },
+  { href: '/empresa/entrevistas', label: 'Entrevistas', icon: Calendar, countKey: 'companyInterviews' },
   { href: '/empresa/candidatos', label: 'Banco de Talentos', icon: Users },
   { href: '/empresa/candidatos-salvos', label: 'Candidatos Salvos', icon: Heart, countKey: 'savedCandidates' },
   { href: '/empresa/testes', label: 'Testes', icon: Brain },
@@ -90,6 +92,9 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   // Hook de entrevistas para contador (PRD-027)
   const { pendingCount: interviewsPendingCount } = useInterviews('candidate-1');
 
+  // PRD-034: Hook de entrevistas da empresa para contador
+  const { pendingCount: companyInterviewsPendingCount } = useCompanyInterviews('company-1');
+
   const navItems = userType === 'admin'
     ? adminNav
     : userType === 'company'
@@ -101,6 +106,8 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
     if (!countKey) return null;
     // PRD-030: Contador de candidatos salvos (empresa)
     if (countKey === 'savedCandidates' && userType === 'company') return savedCandidatesCount;
+    // PRD-034: Contador de entrevistas pendentes (empresa)
+    if (countKey === 'companyInterviews' && userType === 'company') return companyInterviewsPendingCount;
     // Contadores do candidato
     if (userType !== 'candidate') return null;
     if (countKey === 'savedJobs') return favoritesCount;

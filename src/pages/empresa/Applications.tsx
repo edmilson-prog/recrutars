@@ -19,6 +19,7 @@ import {
   Send,
   Clock,
   FileDown,
+  Calendar,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -87,6 +88,9 @@ import { CandidateComparisonModal } from '@/components/compare/CandidateComparis
 import { Checkbox } from '@/components/ui/checkbox';
 // PRD-032: Exportação de candidatos
 import { ExportCandidatesModal } from '@/components/export';
+// PRD-034: Agendamento de entrevistas
+import { ScheduleInterviewModal } from '@/components/empresa/ScheduleInterviewModal';
+import { useCompanyInterviews } from '@/hooks/useCompanyInterviews';
 import type { ExportContext } from '@/types/export';
 import type { Candidate } from '@/types';
 
@@ -225,6 +229,10 @@ export default function CompanyApplications() {
 
   // PRD-032: Estado do modal de exportação
   const [showExportModal, setShowExportModal] = useState(false);
+
+  // PRD-034: Agendamento de entrevistas
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const { createInterview } = useCompanyInterviews('company-1');
 
   // Get company jobs (mock: company-1)
   const companyJobs = mockJobs.filter(
@@ -1065,6 +1073,18 @@ export default function CompanyApplications() {
 
               {/* Actions */}
               <SheetFooter className="mt-6 flex-col sm:flex-row gap-2">
+                {/* PRD-034: Botão de agendar entrevista */}
+                {selectedApplication.status !== 'rejected' && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowScheduleModal(true)}
+                    className="w-full sm:w-auto"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Agendar Entrevista
+                  </Button>
+                )}
+
                 {/* PRD-002-dgn: Botão de comparação */}
                 <Button
                   variant="outline"
@@ -1253,6 +1273,26 @@ export default function CompanyApplications() {
         }}
         calculateMatch={(candidate) => calculateMatch(candidate.id)}
       />
+
+      {/* PRD-034: Modal de agendamento de entrevista */}
+      {selectedApplication && selectedCandidate && (
+        <ScheduleInterviewModal
+          open={showScheduleModal}
+          onOpenChange={setShowScheduleModal}
+          candidateId={selectedApplication.candidateId}
+          candidateName={selectedCandidate.name}
+          jobId={selectedApplication.jobId}
+          jobTitle={selectedApplication.jobTitle}
+          applicationId={selectedApplication.id}
+          onSchedule={(data) => {
+            createInterview(data);
+            // Mover para status de entrevista automaticamente
+            handleMove(selectedApplication.id, 'interview');
+            toast.success('Entrevista agendada! O candidato foi notificado.');
+            setDrawerOpen(false);
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 }
