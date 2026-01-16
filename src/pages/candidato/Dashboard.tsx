@@ -9,6 +9,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DISCRadarChartMini } from '@/components/disc/DISCRadarChart';
 import { DISCLegendCompact } from '@/components/disc/DISCLegend';
 import { MatchScoreInline } from '@/components/match/MatchScoreCircle';
+// PRD-035: Banner de incentivo ao teste DISC
+import { DiscIncentiveBanner } from '@/components/candidato/DiscIncentiveBanner';
 
 export default function CandidateDashboard() {
   const { currentCandidate } = useAuth();
@@ -43,6 +45,12 @@ export default function CandidateDashboard() {
             </Link>
           </Button>
         </div>
+
+        {/* PRD-035: Banner de incentivo ao teste DISC */}
+        <DiscIncentiveBanner
+          context="dashboard"
+          profileCompletion={candidate.profileCompletion}
+        />
 
         {/* Profile Completion */}
         <motion.div

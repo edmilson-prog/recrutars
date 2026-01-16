@@ -23,6 +23,8 @@ import { MatchBreakdown } from '@/components/match/MatchBreakdown';
 import { MatchStrengths } from '@/components/match/MatchStrengths';
 import { MatchOpportunities } from '@/components/match/MatchOpportunities';
 import { MatchComparison } from '@/components/match/MatchComparison';
+// PRD-035: Banner de incentivo ao teste DISC
+import { DiscIncentiveBanner } from '@/components/candidato/DiscIncentiveBanner';
 
 export default function JobDetails() {
   const { id } = useParams<{ id: string }>();
@@ -221,6 +223,15 @@ export default function JobDetails() {
             </div>
           </div>
         </div>
+
+        {/* PRD-035: Banner de incentivo ao teste DISC (quando match < 80%) */}
+        {matchResult && matchResult.totalScore < 80 && (
+          <DiscIncentiveBanner
+            context="job_low_match"
+            currentMatch={matchResult.totalScore}
+            potentialMatch={Math.min(matchResult.totalScore + 15, 95)}
+          />
+        )}
 
         {/* PRD-002-dgn: Match Score Section */}
         {matchResult && (

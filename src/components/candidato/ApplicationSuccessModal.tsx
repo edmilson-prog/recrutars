@@ -2,6 +2,7 @@
  * Application Success Modal Component
  * PRD-007: Candidatura a Vagas
  * PRD-000-dgn: Design System e Microinterações
+ * PRD-035: Banner de incentivo ao teste DISC
  */
 
 import { motion } from 'framer-motion';
@@ -16,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { AnimatedCheckmark } from '@/components/ui/success-state';
 import { ConfettiTrigger } from '@/components/ui/confetti';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { DiscIncentiveBanner } from '@/components/candidato/DiscIncentiveBanner';
 
 interface ApplicationSuccessModalProps {
   isOpen: boolean;
@@ -89,6 +91,9 @@ export function ApplicationSuccessModal({
               Continuar Buscando
             </Button>
           </motion.div>
+
+          {/* PRD-035: Banner de incentivo ao teste DISC */}
+          <DiscIncentiveBanner context="after_application" />
         </DialogContent>
       </Dialog>
     </>
