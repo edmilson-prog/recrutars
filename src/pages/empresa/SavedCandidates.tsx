@@ -507,10 +507,10 @@ export default function SavedCandidates() {
 
       {/* PRD-031: Selection Bar para comparação */}
       <SelectionBar
-        selectedIds={selectedIds}
+        selectedCandidates={selectedCandidatesForComparison}
+        onRemove={(id) => toggleCompareCandidate(id)}
         onClear={clearSelection}
         onCompare={() => setShowComparisonModal(true)}
-        maxCount={3}
       />
 
       {/* PRD-031: Modal de comparação */}
