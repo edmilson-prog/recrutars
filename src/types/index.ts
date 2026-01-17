@@ -16,3 +16,6 @@ export * from './notifications';
 export * from './companyNotifications';
 export * from './cvParser';
 export * from './jobAnalyzer';
+export * from './messageTemplates';
+export * from './culturalFit';
+export * from './chatbot';

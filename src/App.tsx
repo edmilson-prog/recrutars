@@ -56,6 +56,9 @@ import CandidateImportCV from "./pages/candidato/ImportCV";
 import HelpPage from "./pages/Help";
 import TicketDetailsPage from "./pages/TicketDetails";
 
+// PRD-040: Chatbot de Suporte
+import { ChatbotWidget } from "./components/chatbot";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -72,6 +75,7 @@ const App = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <ChatbotWidget />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
