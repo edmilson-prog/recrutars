@@ -1,27 +1,141 @@
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Users, Building2, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from '@/components/ui/carousel';
+import Autoplay from 'embla-carousel-autoplay';
+import { cn } from '@/lib/utils';
+
+// Array de imagens do hero
+const heroImages = [
+  { src: '/images/hero/hero-01.jpg', alt: 'Profissionais colaborando' },
+  { src: '/images/hero/hero-02.jpg', alt: 'Ambiente de trabalho moderno' },
+  { src: '/images/hero/hero-03.jpg', alt: 'Equipe diversificada' },
+  { src: '/images/hero/hero-04.jpg', alt: 'Tecnologia e inovação' },
+  { src: '/images/hero/hero-05.jpg', alt: 'Sucesso profissional' },
+];
 
 export function Hero() {
+  // Estado do carrossel
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+
+  // Ref para a seção (necessário para parallax relativo)
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // Parallax com Framer Motion
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"]
+  });
+
+  // Transforma scroll em movimento Y (parallax sutil)
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const backgroundScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
+
+  // Sincroniza estado do carrossel
+  useEffect(() => {
+    if (!api) return;
+
+    const onSelect = () => {
+      setCurrent(api.selectedScrollSnap());
+    };
+
+    api.on('select', onSelect);
+    onSelect();
+
+    return () => {
+      api.off('select', onSelect);
+    };
+  }, [api]);
+
+  // Plugin autoplay com configuração
+  const autoplayPlugin = useRef(
+    Autoplay({
+      delay: 5000,
+      stopOnInteraction: false,
+      stopOnMouseEnter: true,
+    })
+  );
+
   return (
-    <section className="relative min-h-[90vh] flex items-center overflow-hidden gradient-hero">
-      {/* Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
+    <section
+      ref={sectionRef}
+      className="relative min-h-[90vh] flex items-center overflow-hidden"
+    >
+      {/* ========== BACKGROUND: Carrossel com Parallax ========== */}
+      <div className="absolute inset-0">
+        <Carousel
+          setApi={setApi}
+          opts={{ loop: true, duration: 40 }}
+          plugins={[autoplayPlugin.current]}
+          className="h-full w-full"
+        >
+          <CarouselContent className="h-full -ml-0">
+            {heroImages.map((image, index) => (
+              <CarouselItem key={index} className="h-full pl-0">
+                <motion.div
+                  style={{
+                    y: backgroundY,
+                    scale: backgroundScale,
+                  }}
+                  className="relative h-[120%] -mt-[10%] w-full"
+                >
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="w-full h-full object-cover"
+                    loading={index === 0 ? "eager" : "lazy"}
+                  />
+                </motion.div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
+
+        {/* Overlay gradiente para legibilidade do texto */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/80 to-primary/40" />
+
+        {/* Elementos decorativos (blobs) */}
         <div className="absolute top-1/4 -right-20 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse-soft" />
         <div className="absolute bottom-1/4 -left-20 w-80 h-80 bg-secondary/10 rounded-full blur-3xl animate-pulse-soft" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-secondary/5 to-transparent rounded-full" />
       </div>
 
+      {/* ========== INDICADORES DO CARROSSEL ========== */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+        {heroImages.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => api?.scrollTo(index)}
+            aria-label={`Ir para slide ${index + 1}`}
+            className={cn(
+              "h-2 rounded-full transition-all duration-300",
+              current === index
+                ? "w-8 bg-secondary"
+                : "w-2 bg-white/50 hover:bg-white/80"
+            )}
+          />
+        ))}
+      </div>
+
+      {/* ========== CONTEÚDO PRINCIPAL ========== */}
       <div className="container relative z-10 py-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Content */}
+
+          {/* Coluna Esquerda: Texto e CTAs */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="text-primary-foreground"
           >
+            {/* Badge */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -32,6 +146,7 @@ export function Hero() {
               <span className="text-sm font-medium">Avaliação comportamental com IA</span>
             </motion.div>
 
+            {/* Título */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -43,16 +158,18 @@ export function Hero() {
               para sua empresa
             </motion.h1>
 
+            {/* Descrição */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
               className="text-lg md:text-xl text-primary-foreground/80 mb-8 max-w-xl"
             >
-              Plataforma de recrutamento inteligente que conecta empresas a candidatos 
+              Plataforma de recrutamento inteligente que conecta empresas a candidatos
               através de avaliações comportamentais científicas e matching por IA.
             </motion.p>
 
+            {/* Botões CTA */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -94,7 +211,7 @@ export function Hero() {
             </motion.div>
           </motion.div>
 
-          {/* Visual Element */}
+          {/* Coluna Direita: Cards Flutuantes (APENAS DESKTOP) */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -102,7 +219,7 @@ export function Hero() {
             className="hidden lg:block"
           >
             <div className="relative">
-              {/* Cards Stack */}
+              {/* Card 1: Novo Candidato */}
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -123,6 +240,7 @@ export function Hero() {
                 </div>
               </motion.div>
 
+              {/* Card 2: Tech Solutions */}
               <motion.div
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
@@ -143,6 +261,7 @@ export function Hero() {
                 <div className="text-xs text-muted-foreground mt-2">75% do processo concluído</div>
               </motion.div>
 
+              {/* Card 3: Gauge-Pro DISC */}
               <motion.div
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
@@ -177,7 +296,7 @@ export function Hero() {
                 </div>
               </motion.div>
 
-              {/* Center circle decoration */}
+              {/* Círculos decorativos */}
               <div className="w-80 h-80 mx-auto rounded-full border-2 border-primary-foreground/20 flex items-center justify-center">
                 <div className="w-60 h-60 rounded-full border-2 border-primary-foreground/15 flex items-center justify-center">
                   <div className="w-40 h-40 rounded-full border-2 border-primary-foreground/10" />
