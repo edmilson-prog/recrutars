@@ -14,6 +14,14 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
 import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
@@ -140,11 +148,19 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
       ? currentCandidate?.name
       : user?.name;
 
-  const roleLabel = userType === 'admin' 
-    ? 'Administrador' 
-    : userType === 'company' 
-      ? 'Empresa' 
+  const roleLabel = userType === 'admin'
+    ? 'Administrador'
+    : userType === 'company'
+      ? 'Empresa'
       : 'Candidato';
+
+  const getProfileRoute = () => {
+    switch (userType) {
+      case 'candidate': return '/candidato/perfil';
+      case 'company': return '/empresa/configuracoes';
+      case 'admin': return '/admin/configuracoes';
+    }
+  };
 
   return (
     <div className="h-screen flex w-full overflow-hidden">
@@ -225,37 +241,19 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
           })}
         </nav>
 
-        {/* User section */}
+        {/* User section - apenas botão de sair */}
         <div className="p-4 border-t border-sidebar-border">
           {!isCollapsed ? (
-            <>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center">
-                  <span className="font-semibold text-sidebar-accent-foreground">
-                    {displayName?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{displayName}</div>
-                  <div className="text-xs text-sidebar-foreground/60">{roleLabel}</div>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                onClick={handleLogout}
-              >
-                <LogOut className="w-5 h-5 mr-3" />
-                Sair
-              </Button>
-            </>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              onClick={handleLogout}
+            >
+              <LogOut className="w-5 h-5 mr-3" />
+              Sair
+            </Button>
           ) : (
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center">
-                <span className="font-semibold text-sidebar-accent-foreground">
-                  {displayName?.charAt(0).toUpperCase()}
-                </span>
-              </div>
+            <div className="flex justify-center">
               <Button
                 variant="ghost"
                 size="icon"
@@ -292,6 +290,34 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
               {userType === 'company' && (
                 <CompanyNotificationBell />
               )}
+              {/* Avatar e nome do usuário com menu dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 pl-2 border-l border-border ml-2 hover:opacity-80 transition-opacity cursor-pointer">
+                    <div className="hidden sm:block text-right">
+                      <div className="text-sm font-medium">{displayName}</div>
+                      <div className="text-xs text-muted-foreground">{roleLabel}</div>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-sm font-semibold text-primary">
+                        {displayName?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate(getProfileRoute())}>
+                    <User className="w-4 h-4 mr-2" />
+                    Perfil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </GlassHeader>
