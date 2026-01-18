@@ -36,9 +36,9 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-primary-foreground/70">
               <li><Link to="/como-funciona" className="hover:text-secondary transition-colors">Como Funciona</Link></li>
               <li><Link to="/planos" className="hover:text-secondary transition-colors">Planos e Preços</Link></li>
-              <li><Link to="#" className="hover:text-secondary transition-colors">Gauge-Pro</Link></li>
-              <li><Link to="#" className="hover:text-secondary transition-colors">Para Empresas</Link></li>
-              <li><Link to="#" className="hover:text-secondary transition-colors">Para Candidatos</Link></li>
+              <li><Link to="/testes-corporativos" className="hover:text-secondary transition-colors">Testes Corporativos</Link></li>
+              <li><Link to="/para-empresas" className="hover:text-secondary transition-colors">Para Empresas</Link></li>
+              <li><Link to="/para-candidatos" className="hover:text-secondary transition-colors">Para Candidatos</Link></li>
             </ul>
           </div>
 

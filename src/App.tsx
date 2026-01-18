@@ -19,6 +19,9 @@ import QuemSomos from "./pages/QuemSomos";
 import MissaoVisaoValores from "./pages/MissaoVisaoValores";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import TermosUso from "./pages/TermosUso";
+import ForCompanies from "./pages/ForCompanies";
+import ForCandidates from "./pages/ForCandidates";
+import CorporateTests from "./pages/CorporateTests";
 import NotFound from "./pages/NotFound";
 
 // Admin pages
@@ -99,6 +102,9 @@ const App = () => (
             <Route path="/missao-visao-valores" element={<MissaoVisaoValores />} />
             <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
             <Route path="/termos-de-uso" element={<TermosUso />} />
+            <Route path="/para-empresas" element={<ForCompanies />} />
+            <Route path="/para-candidatos" element={<ForCandidates />} />
+            <Route path="/testes-corporativos" element={<CorporateTests />} />
 
             {/* Help Routes */}
             <Route path="/ajuda" element={<HelpPage />} />

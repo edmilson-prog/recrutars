@@ -4,7 +4,6 @@
  */
 
 import { ReactNode } from 'react';
-import { GlassFooter } from '@/components/layout/GlassFooter';
 import { SkipLink } from '@/components/accessibility';
 import { ForceLightTheme } from '@/components/theme/ForceLightTheme';
 
@@ -28,8 +27,6 @@ export function PublicLayout({ children }: PublicLayoutProps) {
       >
         {children}
       </main>
-
-      <GlassFooter />
     </>
   );
 }

@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { GlassFooter } from "@/components/layout/GlassFooter";
 
 const NotFound = () => {
   return (
@@ -18,7 +17,6 @@ const NotFound = () => {
           </Button>
         </div>
       </div>
-      <GlassFooter />
     </>
   );
 };

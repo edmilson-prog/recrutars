@@ -23,7 +23,6 @@ import { useTopRecommendations } from '@/hooks/useJobRecommendations';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 import { GlassHeader } from '@/components/layout/GlassHeader';
-import { GlassFooter } from '@/components/layout/GlassFooter';
 import { Badge } from '@/components/ui/badge';
 import { NotificationBell } from '@/components/notifications';
 import { CompanyNotificationBell } from '@/components/notifications/CompanyNotificationBell';
@@ -313,12 +312,6 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
             {children}
           </div>
         </main>
-
-        {/* Glass Footer - offset for sidebar (desktop only) */}
-        <GlassFooter className={cn(
-          // Em mobile não tem sidebar, então sem offset
-          !isMobile && (isCollapsed ? "left-20" : "left-64")
-        )} />
       </div>
 
       {/* PRD-003-dgn: Bottom Navigation Bar - mobile only */}
