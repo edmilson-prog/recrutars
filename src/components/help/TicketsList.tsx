@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Inbox } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { TicketCard } from './TicketCard';
@@ -51,37 +52,59 @@ export function TicketsList({ tickets, onViewDetails }: TicketsListProps) {
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-6">
-          {filteredTickets.length > 0 ? (
-            <div className="space-y-3">
-              {filteredTickets.map((ticket) => (
-                <TicketCard
-                  key={ticket.id}
-                  ticket={ticket}
-                  onViewDetails={onViewDetails}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-card/30 py-12">
-              <Inbox className="mb-4 h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mb-2 font-medium text-foreground">
-                {activeTab === 'all'
-                  ? 'Você não tem tickets'
-                  : `Nenhum ticket ${
-                      activeTab === 'open'
-                        ? 'aberto'
-                        : activeTab === 'answered'
-                        ? 'respondido'
-                        : 'resolvido'
-                    }`}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {activeTab === 'all'
-                  ? 'Crie um novo ticket para entrar em contato com o suporte.'
-                  : 'Tente selecionar outro filtro.'}
-              </p>
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            {filteredTickets.length > 0 ? (
+              <motion.div
+                key={`tickets-${activeTab}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-3"
+              >
+                {filteredTickets.map((ticket, index) => (
+                  <motion.div
+                    key={ticket.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                  >
+                    <TicketCard
+                      ticket={ticket}
+                      onViewDetails={onViewDetails}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div
+                key={`empty-${activeTab}`}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/50 bg-card/30 py-12"
+              >
+                <Inbox className="mb-4 h-12 w-12 text-muted-foreground/50" />
+                <h3 className="mb-2 font-medium text-foreground">
+                  {activeTab === 'all'
+                    ? 'Você não tem tickets'
+                    : `Nenhum ticket ${
+                        activeTab === 'open'
+                          ? 'aberto'
+                          : activeTab === 'answered'
+                          ? 'respondido'
+                          : 'resolvido'
+                      }`}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {activeTab === 'all'
+                    ? 'Crie um novo ticket para entrar em contato com o suporte.'
+                    : 'Tente selecionar outro filtro.'}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </TabsContent>
       </Tabs>
     </div>

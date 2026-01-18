@@ -15,6 +15,10 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import HowItWorksPage from "./pages/HowItWorks";
 import PlansPage from "./pages/Plans";
+import QuemSomos from "./pages/QuemSomos";
+import MissaoVisaoValores from "./pages/MissaoVisaoValores";
+import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
+import TermosUso from "./pages/TermosUso";
 import NotFound from "./pages/NotFound";
 
 // Admin pages
@@ -91,6 +95,10 @@ const App = () => (
             } />
             <Route path="/como-funciona" element={<HowItWorksPage />} />
             <Route path="/planos" element={<PlansPage />} />
+            <Route path="/quem-somos" element={<QuemSomos />} />
+            <Route path="/missao-visao-valores" element={<MissaoVisaoValores />} />
+            <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
+            <Route path="/termos-de-uso" element={<TermosUso />} />
 
             {/* Help Routes */}
             <Route path="/ajuda" element={<HelpPage />} />

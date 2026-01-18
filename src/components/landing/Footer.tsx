@@ -34,11 +34,11 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Produto</h4>
             <ul className="space-y-2 text-sm text-primary-foreground/70">
-              <li><Link to="/como-funciona" className="hover:text-secondary transition-colors">Como funciona</Link></li>
-              <li><Link to="/planos" className="hover:text-secondary transition-colors">Planos e preços</Link></li>
+              <li><Link to="/como-funciona" className="hover:text-secondary transition-colors">Como Funciona</Link></li>
+              <li><Link to="/planos" className="hover:text-secondary transition-colors">Planos e Preços</Link></li>
               <li><Link to="#" className="hover:text-secondary transition-colors">Gauge-Pro</Link></li>
-              <li><Link to="#" className="hover:text-secondary transition-colors">Para empresas</Link></li>
-              <li><Link to="#" className="hover:text-secondary transition-colors">Para candidatos</Link></li>
+              <li><Link to="#" className="hover:text-secondary transition-colors">Para Empresas</Link></li>
+              <li><Link to="#" className="hover:text-secondary transition-colors">Para Candidatos</Link></li>
             </ul>
           </div>
 
@@ -47,7 +47,7 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Recursos</h4>
             <ul className="space-y-2 text-sm text-primary-foreground/70">
               <li><Link to="#" className="hover:text-secondary transition-colors">Blog</Link></li>
-              <li><Link to="/ajuda" className="hover:text-secondary transition-colors">Central de ajuda</Link></li>
+              <li><Link to="/ajuda" className="hover:text-secondary transition-colors">Central de Ajuda</Link></li>
               <li><Link to="#" className="hover:text-secondary transition-colors">Webinars</Link></li>
               <li><Link to="#" className="hover:text-secondary transition-colors">E-books</Link></li>
             </ul>
@@ -57,21 +57,21 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Empresa</h4>
             <ul className="space-y-2 text-sm text-primary-foreground/70">
-              <li><Link to="#" className="hover:text-secondary transition-colors">Sobre nós</Link></li>
-              <li><Link to="#" className="hover:text-secondary transition-colors">Carreiras</Link></li>
+              <li><Link to="/quem-somos" className="hover:text-secondary transition-colors">Sobre Nós</Link></li>
+              <li><Link to="/missao-visao-valores" className="hover:text-secondary transition-colors">Missão e Valores</Link></li>
               <li><Link to="#" className="hover:text-secondary transition-colors">Contato</Link></li>
-              <li><Link to="#" className="hover:text-secondary transition-colors">Política de privacidade</Link></li>
-              <li><Link to="#" className="hover:text-secondary transition-colors">Termos de uso</Link></li>
+              <li><Link to="/politica-de-privacidade" className="hover:text-secondary transition-colors">Política de Privacidade</Link></li>
+              <li><Link to="/termos-de-uso" className="hover:text-secondary transition-colors">Termos de uso</Link></li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-primary-foreground/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-primary-foreground/60">
-            © 2024 RecrutaRS. Todos os direitos reservados.
+            © 2026 RecrutaRS. Todos os direitos reservados.
           </p>
           <p className="text-sm text-primary-foreground/60">
-            Desenvolvido por <span className="text-secondary">AILA Automação Inteligente</span>
+            Desenvolvido por <span className="text-secondary">AILA Sistemas Inteligentes</span>
           </p>
         </div>
       </div>

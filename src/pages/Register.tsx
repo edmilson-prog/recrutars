@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { GlassFooter } from '@/components/layout/GlassFooter';
+import { ForceLightTheme } from '@/components/theme/ForceLightTheme';
 
 type AccountType = 'company' | 'candidate';
 
@@ -21,6 +22,7 @@ export default function Register() {
 
   return (
     <>
+    <ForceLightTheme />
     <div className="min-h-screen flex pb-12">
       {/* Left - Visual */}
       <div className="hidden lg:flex flex-1 gradient-hero items-center justify-center p-12 relative overflow-hidden">

@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { APP_VERSION, APP_NAME } from '@/constants/app';
+import { APP_NAME } from '@/constants/app';
 
 interface GlassFooterProps {
   className?: string;
@@ -23,8 +23,6 @@ export function GlassFooter({ className }: GlassFooterProps) {
       )}
     >
       <span className="font-medium">{APP_NAME}</span>
-      <span className="mx-2">·</span>
-      <span>v{APP_VERSION}</span>
     </footer>
   );
 }

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { GlassFooter } from '@/components/layout/GlassFooter';
+import { ForceLightTheme } from '@/components/theme/ForceLightTheme';
 
 type UserType = 'admin' | 'company' | 'candidate';
 
@@ -37,6 +38,7 @@ export default function Login() {
 
   return (
     <>
+    <ForceLightTheme />
     <div className="min-h-screen flex pb-12">
       {/* Left - Form */}
       <div className="flex-1 flex items-center justify-center p-8">
