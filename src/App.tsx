@@ -63,6 +63,9 @@ import CandidateImportCV from "./pages/candidato/ImportCV";
 import HelpPage from "./pages/Help";
 import TicketDetailsPage from "./pages/TicketDetails";
 
+// About page (PRD-044)
+import AboutPage from "./pages/About";
+
 // PRD-040: Chatbot de Suporte
 import { ChatbotWidget } from "./components/chatbot";
 
@@ -111,6 +114,13 @@ const App = () => (
             <Route path="/ajuda/tickets/:ticketId" element={
               <ProtectedRoute allowedTypes={['candidate', 'company', 'admin']}>
                 <TicketDetailsPage />
+              </ProtectedRoute>
+            } />
+
+            {/* About Route (PRD-044) */}
+            <Route path="/sobre" element={
+              <ProtectedRoute allowedTypes={['candidate', 'company', 'admin']}>
+                <AboutPage />
               </ProtectedRoute>
             } />
 

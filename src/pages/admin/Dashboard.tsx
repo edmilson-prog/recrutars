@@ -3,12 +3,17 @@ import { motion } from 'framer-motion';
 import { Building2, Users, Briefcase, Brain, TrendingUp, ArrowUp, ArrowDown, ChevronRight, FileText, Target, AlertTriangle, Code2, GraduationCap, MapPin } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { adminStats, mockCompanies, mockCandidates, adminGrowthData, mockApplications, mockJobs, getIdealDISCProfile } from '@/data/mockData';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { calculateMatchBreakdown, calculateMatchStatistics } from '@/lib/matchCalculator';
 import type { MatchResult } from '@/types/disc';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const stats = [
   {
@@ -17,7 +22,8 @@ const stats = [
     icon: Building2,
     change: `+${adminStats.newCompaniesThisMonth}`,
     trend: 'up',
-    href: '/admin/empresas'
+    href: '/admin/empresas',
+    tooltip: 'Total de empresas com conta ativa na plataforma'
   },
   {
     label: 'Candidatos cadastrados',
@@ -25,7 +31,8 @@ const stats = [
     icon: Users,
     change: `+${adminStats.newCandidatesThisMonth}`,
     trend: 'up',
-    href: '/admin/candidatos'
+    href: '/admin/candidatos',
+    tooltip: 'Total de candidatos registrados na plataforma'
   },
   {
     label: 'Vagas ativas',
@@ -33,7 +40,8 @@ const stats = [
     icon: Briefcase,
     change: '+12',
     trend: 'up',
-    href: '/admin/vagas'
+    href: '/admin/vagas',
+    tooltip: 'Vagas publicadas e abertas para candidaturas'
   },
   {
     label: 'Testes concluídos',
@@ -41,7 +49,8 @@ const stats = [
     icon: Brain,
     change: '+45',
     trend: 'up',
-    href: '/admin/testes'
+    href: '/admin/testes',
+    tooltip: 'Total de testes comportamentais finalizados'
   },
 ];
 
@@ -128,29 +137,36 @@ export default function AdminDashboard() {
         {/* Stats Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
-            <Link key={stat.label} to={stat.href}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-card rounded-2xl p-6 shadow-soft hover:shadow-md transition-all cursor-pointer group relative"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-                    <stat.icon className="w-6 h-6 text-primary-foreground" />
-                  </div>
-                  <div className={`flex items-center gap-1 text-sm font-medium ${
-                    stat.trend === 'up' ? 'text-success' : 'text-destructive'
-                  }`}>
-                    {stat.trend === 'up' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
-                    {stat.change}
-                  </div>
-                </div>
-                <div className="text-3xl font-bold text-foreground mb-1">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </motion.div>
-            </Link>
+            <Tooltip key={stat.label}>
+              <TooltipTrigger asChild>
+                <Link to={stat.href}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-card rounded-2xl p-6 shadow-soft hover:shadow-md transition-all cursor-pointer group relative"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
+                        <stat.icon className="w-6 h-6 text-primary-foreground" />
+                      </div>
+                      <div className={`flex items-center gap-1 text-sm font-medium ${
+                        stat.trend === 'up' ? 'text-success' : 'text-destructive'
+                      }`}>
+                        {stat.trend === 'up' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                        {stat.change}
+                      </div>
+                    </div>
+                    <div className="text-3xl font-bold text-foreground mb-1">{stat.value}</div>
+                    <div className="text-sm text-muted-foreground">{stat.label}</div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </motion.div>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{stat.tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
           ))}
         </div>
 
@@ -178,7 +194,7 @@ export default function AdminDashboard() {
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                 />
-                <Tooltip
+                <RechartsTooltip
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',

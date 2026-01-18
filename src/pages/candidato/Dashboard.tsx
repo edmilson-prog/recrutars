@@ -3,6 +3,11 @@ import { FileText, Calendar, Brain, Eye, Search, MessageSquare, ArrowRight, Cloc
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { candidateStats, mockApplications, mockMessages, mockCandidates, getCandidateDISCProfile } from '@/data/mockData';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,10 +29,10 @@ export default function CandidateDashboard() {
   const discProfile = getCandidateDISCProfile('candidate-1');
 
   const stats = [
-    { label: 'Candidaturas', value: candidateApplications.length, icon: FileText },
-    { label: 'Entrevistas', value: candidateStats.interviews, icon: Calendar },
-    { label: 'Testes', value: candidateStats.testsCompleted, icon: Brain },
-    { label: 'Visualizações', value: candidateStats.profileViews, icon: Eye },
+    { label: 'Candidaturas', value: candidateApplications.length, icon: FileText, tooltip: 'Total de candidaturas enviadas para vagas' },
+    { label: 'Entrevistas', value: candidateStats.interviews, icon: Calendar, tooltip: 'Entrevistas agendadas ou realizadas' },
+    { label: 'Testes', value: candidateStats.testsCompleted, icon: Brain, tooltip: 'Testes comportamentais completados' },
+    { label: 'Visualizações', value: candidateStats.profileViews, icon: Eye, tooltip: 'Vezes que empresas visualizaram seu perfil' },
   ];
 
   return (
@@ -109,19 +114,25 @@ export default function CandidateDashboard() {
         {/* Stats Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-card rounded-2xl p-6 shadow-soft"
-            >
-              <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mb-4">
-                <stat.icon className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <div className="text-3xl font-bold text-foreground mb-1">{stat.value}</div>
-              <div className="text-sm text-muted-foreground">{stat.label}</div>
-            </motion.div>
+            <Tooltip key={stat.label}>
+              <TooltipTrigger asChild>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-card rounded-2xl p-6 shadow-soft cursor-help"
+                >
+                  <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mb-4">
+                    <stat.icon className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <div className="text-3xl font-bold text-foreground mb-1">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                </motion.div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{stat.tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
           ))}
         </div>
 

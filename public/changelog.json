@@ -1,0 +1,871 @@
+{
+  "versions": [
+    {
+      "version": "0.40.0",
+      "codename": "Cheerful Chomsky",
+      "type": "minor",
+      "releaseDate": "2026-01-18",
+      "prd": "PRD-044",
+      "description": "Pagina Sobre com historico de versoes e tooltip interativo no footer",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Pagina 'Sobre' com historico completo de versoes",
+            "Tooltip interativo de versao no footer (HoverCard)",
+            "Item 'Sobre' no menu lateral de todos os paineis",
+            "Busca e filtros no historico de versoes",
+            "Accordion expansivel com detalhes de cada versao"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.39.0",
+      "codename": "Brilliant Babbage",
+      "type": "minor",
+      "releaseDate": "2026-01-18",
+      "prd": "PRD-043",
+      "description": "Footer fixo com efeito glassmorphism nas areas autenticadas",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Footer fixo nas areas autenticadas (candidato, empresa, admin)",
+            "Efeito glassmorphism com backdrop-blur e transparencia",
+            "Versao do app exibida dinamicamente",
+            "Credito 'AILA Sistemas Inteligentes' no canto direito",
+            "Suporte a dark mode com cores ajustadas"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "DashboardLayout.tsx - integracao do GlassFooter",
+            "Padding bottom do conteudo ajustado para evitar sobreposicao"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.37.0",
+      "codename": "Awesome Ada",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "prd": "PRD-033",
+      "description": "Sistema de notificacoes completo para empresas",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "10 tipos de notificacao especificos para empresas",
+            "Sino de notificacoes no header para empresas",
+            "Dropdown com ultimas 5 notificacoes",
+            "Badge com contador de nao lidas",
+            "Pagina completa de notificacoes (/empresa/notificacoes)",
+            "Filtros: Todas, Candidaturas, Entrevistas, Mensagens, Vagas",
+            "Agrupamento por data: Hoje, Ontem, Esta semana, Este mes, Anteriores",
+            "Persistencia de estado de leitura em localStorage"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "DashboardLayout.tsx - sino no header + item no menu da empresa",
+            "App.tsx - rota /empresa/notificacoes"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.36.0",
+      "codename": "Zealous Zuse",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "prd": "PRD-032",
+      "description": "Exportacao de candidatos em Excel e PDF para empresas",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Modal de exportacao com selecao de formato (XLSX/PDF)",
+            "Checkboxes para selecao de campos a incluir",
+            "Ordenacao configuravel (match, nome, experiencia, recentes)",
+            "Exportacao Excel via biblioteca xlsx",
+            "Exportacao PDF via @react-pdf/renderer com template formatado",
+            "Botao Exportar no Banco de Talentos e Candidatos Salvos"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.35.0",
+      "codename": "Youthful Yau",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "prd": "PRD-031",
+      "description": "Comparacao lado a lado de ate 3 candidatos",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Checkbox de selecao nos cards de candidatos (maximo 3)",
+            "Barra flutuante de selecao com contador",
+            "Modal de comparacao lado a lado",
+            "Metricas expandidas: Match Score, Experiencia, Formacao, Salario",
+            "Perfil DISC com grafico radar mini",
+            "Toggle 'Mostrar apenas diferencas'"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.34.0",
+      "codename": "Xenial Xerox",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "prd": "PRD-030",
+      "description": "Sistema de candidatos favoritos para empresas",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Botao de favoritar (coracao) nos cards de candidato",
+            "Nova pagina /empresa/candidatos-salvos",
+            "Badge com contador de candidatos salvos no menu",
+            "Ordenacao: mais recentes, maior match, mais experiencia",
+            "Persistencia em localStorage"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.33.0",
+      "codename": "Witty Wozniak",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Bottom Navigation Bar e recursos de acessibilidade",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Bottom Navigation Bar para dispositivos moveis",
+            "Skip Link para navegacao por teclado",
+            "Painel de Configuracoes de Acessibilidade",
+            "Tamanho de fonte ajustavel (12px a 24px)",
+            "Toggle para reduzir animacoes",
+            "Toggle para alto contraste"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "DashboardLayout agora oculta sidebar em mobile (<768px)",
+            "GlassFooter ajusta posicionamento para mobile"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.32.0",
+      "codename": "Vibrant Viterbi",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Visualizacao interativa de perfil DISC e Match Score",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Radar chart interativo para perfil DISC",
+            "Match Score com breakdown transparente por categorias",
+            "Secao 'Por que voce combina' com pontos fortes",
+            "Comparacao visual candidato vs perfil ideal da vaga",
+            "Ferramenta de comparacao de ate 3 candidatos"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.31.0",
+      "codename": "Ultimate Ullman",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Sistema de gamificacao completo para candidatos",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Sistema de XP com pontuacao por acoes",
+            "5 niveis de progressao: Iniciante ate Expert",
+            "17 badges organizados em 5 categorias",
+            "Sistema de Streak com contador de dias consecutivos",
+            "Celebracoes visuais ao desbloquear badges (confetti)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.30.0",
+      "codename": "Tremendous Torvalds",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Design System expandido e sistema de animacoes",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Tokens de espacamento, border-radius e timing",
+            "Sistema de animacoes centralizado",
+            "Hook useReducedMotion para acessibilidade",
+            "Componentes de skeleton loading",
+            "Componentes de estado: Empty, Error, Loading, Success",
+            "Sistema de celebracoes visuais com canvas-confetti"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.29.0",
+      "codename": "Stellar Shannon",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Modo escuro (dark mode) com 3 opcoes",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Dark mode com 3 opcoes: Claro, Escuro, Sistema",
+            "Toggle de tema no header do dashboard",
+            "Secao 'Aparencia' nas configuracoes",
+            "Deteccao automatica da preferencia do sistema",
+            "Persistencia da escolha de tema no localStorage",
+            "Script anti-flash para evitar mudanca brusca"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Fonte alterada de Plus Jakarta Sans para Roboto Mono"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.28.0",
+      "codename": "Resilient Ritchie",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Central de Ajuda com FAQ e sistema de tickets",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Pagina publica de ajuda (/ajuda)",
+            "FAQ accordion com busca em tempo real",
+            "Sistema de tickets de suporte",
+            "10 categorias de ticket",
+            "Upload de anexos em tickets",
+            "Thread de conversacao em tickets",
+            "Simulacao de respostas automaticas do suporte"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.27.0",
+      "codename": "Quantum Quine",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Sistema de agendamento de entrevistas para candidatos",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Pagina 'Minhas Entrevistas' (/candidato/entrevistas)",
+            "3 abas: Pendentes, Confirmadas, Realizadas",
+            "Aceitar horario proposto pela empresa",
+            "Sugerir horarios alternativos (ate 3)",
+            "Mini-calendario com indicadores de entrevistas",
+            "Badge de entrevistas pendentes no menu lateral"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.26.0",
+      "codename": "Powerful Perlis",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Configuracao de visibilidade do perfil do candidato",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "3 modos de visibilidade: Publico, Parcial, Privado",
+            "Modo Parcial: aparece como 'Perfil Anonimo #XXXX'",
+            "Indicador visual 'Anonimo' com badge para empresas",
+            "Avatar generico para candidatos anonimos"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.25.0",
+      "codename": "Outstanding Odersky",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Sistema de notificacoes para candidatos",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Icone de sino no header do dashboard do candidato",
+            "Badge com contador de notificacoes nao lidas",
+            "Dropdown com as 5 ultimas notificacoes",
+            "Pagina completa de notificacoes (/candidato/notificacoes)",
+            "6 tipos de notificacao diferentes",
+            "Formatacao de tempo relativo"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.24.0",
+      "codename": "Noble Naur",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Sistema de vagas favoritas para candidatos",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Botao de coracao em todos os cards de vaga",
+            "Nova pagina 'Vagas Salvas' (/candidato/vagas-salvas)",
+            "Contador de vagas salvas no menu lateral",
+            "Indicador de prazo proximo 'Encerra em X dias'",
+            "Persistencia de favoritos via localStorage"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.23.0",
+      "codename": "Magnificent McCarthy",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Exportacao de curriculos em PDF com 3 templates",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Tres templates de PDF: Classico, Moderno, Minimalista",
+            "Modal de exportacao com selecao de template",
+            "Checkboxes para selecao de secoes a incluir",
+            "Opcao para incluir link do LinkedIn no PDF",
+            "Indicador de loading durante geracao do PDF"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.22.0",
+      "codename": "Legendary Lamport",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Sistema avancado de multiplos curriculos",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Pagina de listagem de curriculos com abas",
+            "Duplicar, arquivar/desarquivar curriculos",
+            "Calculo de completude detalhado",
+            "Barra de progresso visual por curriculo",
+            "Editor de curriculo em 5 abas",
+            "Badge 'Atual' nas experiencias em andamento"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Navegacao do candidato: 'Meu Perfil' renomeado para 'Curriculos'"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.21.0",
+      "codename": "Keen Knuth",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Gestao de candidatos para administrador",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Listagem de candidatos com busca por nome ou email",
+            "Filtros: status, teste comportamental, perfil DISC",
+            "Drawer de detalhes com 4 tabs",
+            "Tab Teste: resultado DISC completo com grafico",
+            "Acoes administrativas: desativar, reativar, resetar teste"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.20.0",
+      "codename": "Jovial Joy",
+      "type": "minor",
+      "releaseDate": "2026-01-15",
+      "description": "Gestao de empresas para administrador",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Listagem de empresas com busca por nome ou CNPJ",
+            "Filtros: status, plano, setor",
+            "Drawer de detalhes com 4 tabs",
+            "Acoes administrativas: desativar, reativar, alterar plano",
+            "Alertas visuais para empresas com pagamento pendente"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.19.0",
+      "codename": "Innovative Iverson",
+      "type": "minor",
+      "releaseDate": "2026-01-14",
+      "description": "Dashboard administrativo com visualizacoes avancadas",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Grafico de crescimento de empresas e candidatos",
+            "Distribuicao visual de candidaturas por status",
+            "Ranking das top 5 empresas por vagas ativas",
+            "Secao de acoes rapidas",
+            "Cards de metricas clicaveis"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.18.0",
+      "codename": "Humble Hopper",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Pagina de configuracoes da empresa completa",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Tab Perfil: upload de logo, informacoes basicas",
+            "Tab Equipe: lista de membros, convites pendentes",
+            "Tab Conta: seguranca, preferencias de notificacao",
+            "Tab Plano: informacoes do plano, barras de uso"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.17.0",
+      "codename": "Graceful Gosling",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Sistema de mensagens da empresa completo",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Lista de conversas agrupadas por candidato + vaga",
+            "Filtro por vaga com dropdown",
+            "Busca por nome do candidato",
+            "Indicador de mensagens nao lidas",
+            "Layout responsivo (lista/detalhe separados em mobile)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.16.0",
+      "codename": "Fantastic Floyd",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Solicitacao de teste comportamental pela empresa",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Modal de solicitacao com mensagem personalizavel e prazo",
+            "Status do teste na candidatura",
+            "Notificacao especial para candidato nas mensagens",
+            "Botao direto para realizar teste na notificacao"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.15.0",
+      "codename": "Epic Engelbart",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Gestao de Candidaturas completa (Pipeline Kanban)",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Pipeline visual (Kanban) com colunas de status",
+            "Cards de candidato com match e perfil DISC",
+            "Drawer com detalhes do candidato (5 tabs)",
+            "Movimentacao de candidatos entre etapas",
+            "Modal de reprovacao com motivo opcional",
+            "Anotacoes internas por candidato"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.14.0",
+      "codename": "Dynamic Dijkstra",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Banco de Talentos completo para empresas",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Listagem de candidatos com busca e filtros",
+            "Busca com debounce de 300ms",
+            "Cards de candidato com avatar e indicador de match",
+            "Pagina de perfil completo do candidato",
+            "Dropdown para convidar candidato para vagas"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.13.0",
+      "codename": "Creative Curry",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "CRUD completo de vagas da empresa",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Filtros por status com contadores",
+            "Formulario completo com checkboxes de beneficios",
+            "Edicao de vaga existente",
+            "Gestao de status (pausar, reativar, encerrar)",
+            "Duplicar e excluir vaga"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.12.0",
+      "codename": "Brilliant Berners-Lee",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Dashboard completo da empresa",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Saudacao personalizada com horario",
+            "Cards de metricas clicaveis",
+            "Grafico de barras de candidaturas por vaga",
+            "Secao de acoes pendentes e rapidas",
+            "Indicadores de match e teste nas candidaturas"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.11.0",
+      "codename": "Amazing Abelson",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Pagina de configuracoes do candidato",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Secao de seguranca (alterar email/senha)",
+            "Preferencias de notificacao por email",
+            "Configuracao de visibilidade do perfil",
+            "Botao para baixar dados pessoais",
+            "Opcao de desativar e excluir conta"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.10.0",
+      "codename": "Zesty Zuckerberg",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Sistema de mensagens do candidato completo",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Lista de conversas agrupadas por empresa e vaga",
+            "Visualizacao de historico de mensagens",
+            "Envio de novas mensagens em tempo real",
+            "Indicador de mensagens nao lidas",
+            "Busca de conversas por empresa ou vaga"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.9.0",
+      "codename": "Youthful Yoneda",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Pagina Minhas Candidaturas completa",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Listagem de candidaturas ordenada por data",
+            "Filtros por status com contadores",
+            "Cards com informacoes da vaga e empresa",
+            "Funcionalidade de cancelamento com confirmacao",
+            "Estado vazio com link para busca de vagas"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.8.0",
+      "codename": "Xtra Xerxes",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Teste comportamental Gauge-Pro aprimorado",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Botao 'Anterior' para navegacao entre questoes",
+            "Persistencia de progresso via localStorage",
+            "Tela de processamento animada ao finalizar",
+            "Secao 'Caracteristicas Principais' no resultado",
+            "Botao 'Baixar PDF'"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.7.0",
+      "codename": "Wonderful Wirth",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Fluxo completo de candidatura a vagas",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Modal de confirmacao de candidatura",
+            "Campo opcional de mensagem ao recrutador",
+            "Modal de sucesso com opcoes de navegacao",
+            "Indicador visual 'Candidatado' nas vagas ja aplicadas",
+            "Hook useApplications para gerenciamento de candidaturas"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.6.0",
+      "codename": "Valiant Von Neumann",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Busca de vagas com debounce e paginacao",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Busca de vagas com debounce de 300ms",
+            "Dropdown de ordenacao (recentes, maior/menor salario)",
+            "Paginacao de resultados (10 itens por pagina)",
+            "Pagina de detalhes da vaga",
+            "Secao 'Sobre a empresa' na pagina de detalhes"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.5.0",
+      "codename": "Ultimate Ullman",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Pagina de perfil completo do candidato",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Secao de foto de perfil com upload e preview",
+            "Contador de caracteres no campo 'Sobre mim'",
+            "Confirmacao de remocao via AlertDialog",
+            "Ordenacao automatica por data",
+            "Validacao de skills duplicadas"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.4.0",
+      "codename": "Terrific Turing",
+      "type": "minor",
+      "releaseDate": "2026-01-11",
+      "description": "Tipos TypeScript centralizados para todas as entidades",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Interface User e tipo UserType",
+            "Interface Company",
+            "Interface Candidate com BehavioralTest e SalaryRange",
+            "Interface Job com JobType, JobStatus e SalaryRange",
+            "Interface Application com ApplicationStatus",
+            "Interface BehavioralTest com TestResult e TestStatus"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.3.0",
+      "codename": "Stellar Shannon",
+      "type": "minor",
+      "releaseDate": "2026-01-10",
+      "description": "Header e Footer com efeito glassmorphism",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Header com efeito glassmorphism nas areas logadas",
+            "Footer com efeito glassmorphism exibindo versao",
+            "Componente GlassHeader reutilizavel",
+            "Componente GlassFooter reutilizavel",
+            "Componente PublicLayout para paginas publicas"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "DashboardLayout atualizado com GlassHeader e GlassFooter",
+            "Paginas publicas agora usam PublicLayout"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.2.0",
+      "codename": "Reliable Ritchie",
+      "type": "minor",
+      "releaseDate": "2025-01-10",
+      "description": "Protecao de rotas por tipo de usuario",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Componente ProtectedRoute para protecao de rotas",
+            "Componente RedirectIfAuthenticated",
+            "Redirecionamento automatico baseado em autenticacao"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Removidas rotas duplicadas no App.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.1.1",
+      "codename": "Quick Quine",
+      "type": "patch",
+      "releaseDate": "2025-01-10",
+      "description": "Remocao de referencias a plataforma externa",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Removidas referencias a plataforma Lovable do projeto"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Atualizados metadados do package.json para AILA",
+            "Atualizado README.md com informacoes do RecrutaRS",
+            "Removida dependencia lovable-tagger"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "codename": "Pioneering Prototype",
+      "type": "minor",
+      "releaseDate": "2025-01-10",
+      "description": "Estrutura inicial do projeto RecrutaRS",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Estrutura inicial do projeto RecrutaRS",
+            "Landing page com secoes Hero, Features, HowItWorks, CTA",
+            "Sistema de autenticacao mockado (Admin, Empresa, Candidato)",
+            "Dashboards para cada tipo de usuario",
+            "Componentes UI baseados em shadcn/ui",
+            "Sistema de rotas com React Router v6"
+          ]
+        }
+      ]
+    }
+  ]
+}

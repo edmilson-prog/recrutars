@@ -10,7 +10,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, Users, Settings, LogOut,
   Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart, Calendar, HelpCircle, Bell,
-  ChevronLeft, ChevronRight, Sparkles
+  ChevronLeft, ChevronRight, Sparkles, Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,7 @@ import { useTopRecommendations } from '@/hooks/useJobRecommendations';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 import { GlassHeader } from '@/components/layout/GlassHeader';
+import { GlassFooter } from '@/components/layout/GlassFooter';
 import { Badge } from '@/components/ui/badge';
 import { NotificationBell } from '@/components/notifications';
 import { CompanyNotificationBell } from '@/components/notifications/CompanyNotificationBell';
@@ -51,6 +52,7 @@ const adminNav: NavItem[] = [
   { href: '/admin/candidatos', label: 'Candidatos', icon: Users },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
+  { href: '/sobre', label: 'Sobre', icon: Info },
 ];
 
 const companyNav: NavItem[] = [
@@ -65,6 +67,7 @@ const companyNav: NavItem[] = [
   { href: '/empresa/notificacoes', label: 'Notificações', icon: Bell },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/empresa/configuracoes', label: 'Configurações', icon: Settings },
+  { href: '/sobre', label: 'Sobre', icon: Info },
 ];
 
 const candidateNav: NavItem[] = [
@@ -79,6 +82,7 @@ const candidateNav: NavItem[] = [
   { href: '/candidato/mensagens', label: 'Mensagens', icon: MessageSquare },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/candidato/configuracoes', label: 'Configurações', icon: Settings },
+  { href: '/sobre', label: 'Sobre', icon: Info },
 ];
 
 interface DashboardLayoutProps {
@@ -269,7 +273,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col bg-background relative overflow-hidden">
+      <div className="flex-1 flex flex-col bg-background relative">
         {/* Glass Header */}
         <GlassHeader>
           <div className="flex items-center justify-between w-full">
@@ -326,18 +330,21 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 overflow-auto pb-12 md:pb-12 focus:outline-none"
+          className="flex-1 overflow-auto pb-16 md:pb-16 focus:outline-none"
           role="main"
           aria-label="Conteúdo principal"
         >
           <div className={cn(
             "p-4 md:p-8",
-            // Padding bottom extra para bottom nav em mobile
-            isMobile && "pb-24"
+            // Padding bottom extra para bottom nav e footer em mobile
+            isMobile && "pb-32"
           )}>
             {children}
           </div>
         </main>
+
+        {/* PRD-043: Footer com Glassmorphism */}
+        <GlassFooter />
       </div>
 
       {/* PRD-003-dgn: Bottom Navigation Bar - mobile only */}
