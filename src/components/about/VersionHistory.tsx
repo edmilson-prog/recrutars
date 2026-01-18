@@ -49,11 +49,11 @@ export const VersionHistory = forwardRef<HTMLDivElement, VersionHistoryProps>(
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <CardTitle className="text-xl">Historico de Versoes</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
+              <div className="text-sm text-muted-foreground mt-1">
                 <Badge variant="secondary" className="font-normal">
                   {filteredVersions.length} de {versions.length} versoes
                 </Badge>
-              </p>
+              </div>
             </div>
           </div>
 
