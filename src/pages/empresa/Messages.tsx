@@ -19,6 +19,8 @@ import {
   ExternalLink,
   Users,
   X,
+  FileText,
+  Save,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -41,6 +43,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useMessages } from '@/hooks/useMessages';
+import { useMessageTemplates } from '@/hooks/useMessageTemplates';
+import {
+  TemplateSelector,
+  ToneSelector,
+  TemplatePreview,
+  SaveTemplateModal,
+} from '@/components/messages';
+import { toast } from 'sonner';
+import type { TemplateVariableData } from '@/types/messageTemplates';
 
 export default function CompanyMessages() {
   const {
@@ -57,6 +68,22 @@ export default function CompanyMessages() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedJobFilter, setSelectedJobFilter] = useState<string>('all');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // PRD-041: Message Templates
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [showTemplatePreview, setShowTemplatePreview] = useState(false);
+
+  const {
+    templates,
+    selectedTemplate,
+    selectedTone,
+    selectTemplate,
+    setTone,
+    getPreview,
+    saveCustomTemplate,
+    deleteCustomTemplate,
+  } = useMessageTemplates({ companyId: 'company-1' });
 
   // Get unique jobs from conversations for filter
   const jobOptions = useMemo(() => {
@@ -77,6 +104,16 @@ export default function CompanyMessages() {
 
   // Get selected conversation
   const selectedConversation = conversations.find(c => c.id === selectedConversationId);
+
+  // PRD-041: Variable data for template substitution
+  const templateVariableData: Partial<TemplateVariableData> = useMemo(() => {
+    if (!selectedConversation) return {};
+    return {
+      nome: selectedConversation.candidateName,
+      vaga: selectedConversation.jobTitle,
+      empresa: 'TechSolutions', // Mock company name
+    };
+  }, [selectedConversation]);
 
   // Get messages for selected conversation
   const selectedMessages = selectedConversationId
@@ -102,6 +139,24 @@ export default function CompanyMessages() {
     if (!newMessage.trim() || !selectedConversationId) return;
     sendMessage(selectedConversationId, newMessage.trim());
     setNewMessage('');
+    selectTemplate(null);
+    setShowTemplatePreview(false);
+  };
+
+  // PRD-041: Handle template selection
+  const handleTemplateSelect = (template: typeof selectedTemplate) => {
+    if (!template) return;
+    selectTemplate(template.id);
+    const preview = getPreview(templateVariableData);
+    setNewMessage(preview);
+    setShowTemplatePreview(true);
+    toast.success(`Template "${template.name}" aplicado`);
+  };
+
+  // PRD-041: Handle saving custom template
+  const handleSaveCustomTemplate = (name: string, content: string, category: string) => {
+    saveCustomTemplate(name, content, category as 'invitation' | 'feedback' | 'rejection' | 'followup' | 'welcome' | 'custom');
+    toast.success('Template salvo com sucesso!');
   };
 
   // Format date/time for display
@@ -397,7 +452,57 @@ export default function CompanyMessages() {
                 </ScrollArea>
 
                 {/* Message Input */}
-                <div className="p-4 border-t border-border">
+                <div className="p-4 border-t border-border space-y-3">
+                  {/* PRD-041: Template controls */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowTemplateSelector(true)}
+                      className="gap-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span className="hidden sm:inline">Templates</span>
+                    </Button>
+
+                    {showTemplatePreview && selectedTemplate && (
+                      <>
+                        <ToneSelector
+                          selectedTone={selectedTone}
+                          onToneChange={(tone) => {
+                            setTone(tone);
+                            const preview = getPreview(templateVariableData);
+                            setNewMessage(preview);
+                          }}
+                          className="flex-1 min-w-0"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            selectTemplate(null);
+                            setNewMessage('');
+                            setShowTemplatePreview(false);
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
+
+                    {newMessage.trim() && !selectedTemplate && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowSaveTemplateModal(true)}
+                        className="gap-1 ml-auto"
+                      >
+                        <Save className="w-4 h-4" />
+                        <span className="hidden sm:inline">Salvar como template</span>
+                      </Button>
+                    )}
+                  </div>
+
                   <div className="flex gap-3">
                     <Textarea
                       placeholder="Digite sua mensagem..."
@@ -440,6 +545,23 @@ export default function CompanyMessages() {
           </div>
         </div>
       </div>
+
+      {/* PRD-041: Template Selector Modal */}
+      <TemplateSelector
+        open={showTemplateSelector}
+        onOpenChange={setShowTemplateSelector}
+        templates={templates}
+        onSelect={handleTemplateSelect}
+        onDelete={deleteCustomTemplate}
+      />
+
+      {/* PRD-041: Save Template Modal */}
+      <SaveTemplateModal
+        open={showSaveTemplateModal}
+        onOpenChange={setShowSaveTemplateModal}
+        content={newMessage}
+        onSave={handleSaveCustomTemplate}
+      />
     </DashboardLayout>
   );
 }

@@ -9,7 +9,11 @@
       "Bash(git commit:*)",
       "Bash(npm install:*)",
       "Bash(npm run lint)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(ping:*)",
+      "Bash(npx eslint:*)"
     ]
   }
 }

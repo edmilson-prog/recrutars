@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Briefcase, GraduationCap, Code, DollarSign, MapPin, Save, Plus, X, Trash2, Camera } from 'lucide-react';
+import { User, Briefcase, GraduationCap, Code, DollarSign, MapPin, Save, Plus, X, Trash2, Camera, FileUp } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +35,7 @@ import type { Experience, Education } from '@/types';
 const MAX_ABOUT_LENGTH = 500;
 
 export default function CandidateProfile() {
+  const navigate = useNavigate();
   const candidate = mockCandidates[0];
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -226,10 +228,16 @@ export default function CandidateProfile() {
             <h1 className="text-3xl font-bold text-foreground">Meu Perfil</h1>
             <p className="text-muted-foreground">Mantenha suas informações atualizadas</p>
           </div>
-          <Button onClick={handleSave}>
-            <Save className="w-5 h-5 mr-2" />
-            Salvar Alterações
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate('/candidato/importar-cv')}>
+              <FileUp className="w-5 h-5 mr-2" />
+              Importar CV
+            </Button>
+            <Button onClick={handleSave}>
+              <Save className="w-5 h-5 mr-2" />
+              Salvar Alterações
+            </Button>
+          </div>
         </div>
 
         {/* Profile Completion */}

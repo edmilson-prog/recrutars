@@ -19,6 +19,8 @@ import {
   ChevronRight,
   Users,
   EyeOff,
+  GitCompare,
+  FileDown,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -56,11 +58,19 @@ import { toast } from 'sonner';
 import { useFavoriteCandidates, formatCandidateSavedAt } from '@/hooks/useFavoriteCandidates';
 import { mockJobs } from '@/data/mockData';
 import type { Candidate, Job } from '@/types';
+import type { CandidateForComparison } from '@/types/disc';
 import {
   isAnonymous,
   getDisplayName,
   getDisplayAvatar,
 } from '@/utils/visibility';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useCandidateSelection, SelectionBar } from '@/components/compare/CandidateSelector';
+import { CandidateComparisonModal } from '@/components/compare/CandidateComparison';
+import { getCandidateDISCProfile } from '@/data/mockData';
+// PRD-032: Exportação de candidatos
+import { ExportCandidatesModal } from '@/components/export';
+import type { ExportContext } from '@/types/export';
 
 type SortOption = 'recent' | 'match' | 'experience';
 
@@ -97,6 +107,19 @@ export default function SavedCandidates() {
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [areaFilter, setAreaFilter] = useState<string>('all');
   const [candidateToRemove, setCandidateToRemove] = useState<string | null>(null);
+
+  // PRD-031: Hook de seleção para comparação
+  const {
+    selectedIds,
+    toggleCandidate: toggleCompareCandidate,
+    clearSelection,
+    isSelected: isSelectedForComparison,
+    canSelect,
+  } = useCandidateSelection(3);
+  const [showComparisonModal, setShowComparisonModal] = useState(false);
+
+  // PRD-032: Estado do modal de exportação
+  const [showExportModal, setShowExportModal] = useState(false);
 
   // Get company jobs (mock: company-1)
   const companyJobs = mockJobs.filter(
@@ -138,6 +161,36 @@ export default function SavedCandidates() {
     return getUniqueAreas(savedCandidates);
   }, [savedCandidates]);
 
+  // PRD-031: Candidatos selecionados para comparação
+  const selectedCandidatesForComparison = useMemo((): CandidateForComparison[] => {
+    return selectedIds
+      .map((id) => {
+        const candidate = savedCandidates.find((c) => c.id === id);
+        if (!candidate) return null;
+
+        const discProfile = getCandidateDISCProfile(candidate);
+        const matchScore = calculateMatch(candidate.skills, companyJobs);
+
+        return {
+          id: candidate.id,
+          name: candidate.name,
+          avatar: candidate.avatar,
+          matchScore,
+          discProfile,
+          metrics: {},
+          // PRD-031: Campos adicionais
+          experienceYears: candidate.experience,
+          currentRole: candidate.title,
+          education: candidate.education,
+          skills: candidate.skills,
+          salary: candidate.salary,
+          availability: candidate.availability,
+          location: candidate.location,
+        };
+      })
+      .filter((c): c is CandidateForComparison => c !== null);
+  }, [selectedIds, savedCandidates, companyJobs]);
+
   const handleToggleFavorite = (candidateId: string) => {
     const isNowFavorite = toggleFavorite(candidateId);
     toast.success(isNowFavorite ? 'Candidato salvo!' : 'Candidato removido dos salvos');
@@ -166,6 +219,14 @@ export default function SavedCandidates() {
         className="bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium transition-all"
       >
         <div className="flex flex-col md:flex-row md:items-start gap-4">
+          {/* PRD-031: Checkbox para comparação */}
+          <Checkbox
+            checked={isSelectedForComparison(candidate.id)}
+            onCheckedChange={() => toggleCompareCandidate(candidate.id)}
+            disabled={!canSelect && !isSelectedForComparison(candidate.id)}
+            className="flex-shrink-0 mt-1"
+            aria-label={`Selecionar ${displayName} para comparação`}
+          />
           {/* Avatar */}
           <Avatar className="w-16 h-16 flex-shrink-0">
             {candidateIsAnonymous ? (
@@ -394,6 +455,18 @@ export default function SavedCandidates() {
                   <SelectItem value="experience">Mais experiência</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* PRD-032: Botão de exportar */}
+              {sortedCandidates.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowExportModal(true)}
+                >
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Exportar
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -431,6 +504,46 @@ export default function SavedCandidates() {
           </motion.div>
         )}
       </div>
+
+      {/* PRD-031: Selection Bar para comparação */}
+      <SelectionBar
+        selectedCandidates={selectedCandidatesForComparison}
+        onRemove={(id) => toggleCompareCandidate(id)}
+        onClear={clearSelection}
+        onCompare={() => setShowComparisonModal(true)}
+      />
+
+      {/* PRD-031: Modal de comparação */}
+      <CandidateComparisonModal
+        open={showComparisonModal}
+        onOpenChange={setShowComparisonModal}
+        candidates={selectedCandidatesForComparison}
+        onInviteToInterview={(candidateId) => {
+          const candidate = savedCandidates.find((c) => c.id === candidateId);
+          if (candidate) {
+            toast.success(`Convite enviado para ${candidate.name}`);
+          }
+        }}
+        onContactCandidate={(candidateId) => {
+          const candidate = savedCandidates.find((c) => c.id === candidateId);
+          if (candidate) {
+            navigate(`/empresa/mensagens?to=${candidateId}`);
+          }
+        }}
+      />
+
+      {/* PRD-032: Modal de exportação */}
+      <ExportCandidatesModal
+        open={showExportModal}
+        onOpenChange={setShowExportModal}
+        candidates={sortedCandidates}
+        context={{
+          source: 'saved_candidates',
+          candidateCount: sortedCandidates.length,
+          companyName: 'TechCorp Soluções',
+        }}
+        calculateMatch={(candidate) => calculateMatch(candidate.skills, companyJobs)}
+      />
 
       {/* Dialog de confirmação de remoção */}
       <AlertDialog open={!!candidateToRemove} onOpenChange={() => setCandidateToRemove(null)}>

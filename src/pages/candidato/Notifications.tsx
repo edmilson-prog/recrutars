@@ -1,6 +1,7 @@
 // PRD-025: Página completa de notificações do candidato
+// PRD-035: Banner de incentivo ao teste DISC
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Bell, CheckCheck, Filter } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -21,10 +22,12 @@ import {
 import type { NotificationFilter } from '@/types/notifications';
 import { filterLabels } from '@/types/notifications';
 import { cn } from '@/lib/utils';
+import { DiscIncentiveBanner } from '@/components/candidato/DiscIncentiveBanner';
 
 export default function Notifications() {
   const [filter, setFilter] = useState<NotificationFilter>('all');
   const {
+    notifications,
     unreadCount,
     markAsRead,
     markAllAsRead,
@@ -34,6 +37,11 @@ export default function Notifications() {
   const filteredNotifications = getFilteredNotifications(filter);
   const groupedNotifications = groupNotificationsByDate(filteredNotifications);
 
+  // PRD-035: Verificar se há notificações de convites/solicitações de teste
+  const hasInviteNotifications = useMemo(() => {
+    return notifications.some((n) => n.type === 'test_request');
+  }, [notifications]);
+
   const handleMarkAsRead = (id: string) => {
     markAsRead(id);
   };
@@ -41,6 +49,11 @@ export default function Notifications() {
   return (
     <DashboardLayout userType="candidate">
       <div className="space-y-6">
+        {/* PRD-035: Banner de incentivo ao teste DISC (quando há convites) */}
+        {hasInviteNotifications && (
+          <DiscIncentiveBanner context="invites_page" />
+        )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>

@@ -16,6 +16,7 @@ import {
   Check,
   Users,
   CreditCard,
+  Heart,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -71,6 +72,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { TeamMember, PendingInvite, CompanyPlan, CompanyNotificationPreferences } from '@/types/company';
 import { mockCompanies, mockTeamMembers, mockPendingInvites, mockCompanyPlan } from '@/data/mockData';
+import { useCulturalFit } from '@/hooks/useCulturalFit';
+import { CultureProfileForm } from '@/components/cultural';
 
 // Constants
 const INDUSTRY_OPTIONS = [
@@ -152,6 +155,20 @@ export default function CompanySettings() {
 
   // Plan data
   const [plan] = useState<CompanyPlan>(mockCompanyPlan);
+
+  // PRD-042: Cultural Fit
+  const {
+    formProfile: culturalFormProfile,
+    setFormDimension: setCulturalDimension,
+    updateCompanyValues: setCulturalValues,
+    updateCompanyDescription: setCulturalDescription,
+    saveCompanyProfile: saveCulturalProfile,
+    resetForm: resetCulturalForm,
+    isModified: isCulturalModified,
+    companyProfile: culturalCompanyProfile,
+  } = useCulturalFit({ companyId: 'company-1' });
+  const [culturalValues, setCulturalValuesState] = useState<string[]>(culturalCompanyProfile?.values || []);
+  const [culturalDescription, setCulturalDescriptionState] = useState<string>(culturalCompanyProfile?.description || '');
 
   // Handle logo change
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -247,6 +264,14 @@ export default function CompanySettings() {
     toast.success('Conta da empresa desativada. Vagas pausadas automaticamente.');
   };
 
+  // PRD-042: Handle save cultural profile
+  const handleSaveCulturalProfile = () => {
+    setCulturalValues(culturalValues);
+    setCulturalDescription(culturalDescription);
+    saveCulturalProfile();
+    toast.success('Perfil cultural salvo com sucesso!');
+  };
+
   // Notification options
   const notificationOptions = [
     { key: 'newApplications' as const, label: 'Novas candidaturas' },
@@ -266,10 +291,14 @@ export default function CompanySettings() {
 
         {/* Tabs */}
         <Tabs defaultValue="perfil" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="perfil" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
               <span className="hidden sm:inline">Perfil</span>
+            </TabsTrigger>
+            <TabsTrigger value="cultura" className="flex items-center gap-2">
+              <Heart className="w-4 h-4" />
+              <span className="hidden sm:inline">Cultura</span>
             </TabsTrigger>
             <TabsTrigger value="equipe" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
@@ -477,6 +506,21 @@ export default function CompanySettings() {
             <Button onClick={handleSaveProfile} className="w-full sm:w-auto">
               Salvar alterações
             </Button>
+          </TabsContent>
+
+          {/* Tab: Cultura (PRD-042) */}
+          <TabsContent value="cultura" className="space-y-6">
+            <CultureProfileForm
+              profile={culturalFormProfile}
+              values={culturalValues}
+              description={culturalDescription}
+              onDimensionChange={setCulturalDimension}
+              onValuesChange={setCulturalValuesState}
+              onDescriptionChange={setCulturalDescriptionState}
+              onSave={handleSaveCulturalProfile}
+              onReset={resetCulturalForm}
+              isModified={isCulturalModified || culturalValues.length > 0 || culturalDescription.length > 0}
+            />
           </TabsContent>
 
           {/* Tab: Equipe */}

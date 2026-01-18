@@ -43,10 +43,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
-import { mockCandidates, mockJobs } from '@/data/mockData';
+import { mockCandidates, mockJobs, getIdealDISCProfile } from '@/data/mockData';
 import type { Job } from '@/types';
 import { toast } from 'sonner';
 import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
+import { calculateMatchBreakdown } from '@/lib/matchCalculator';
+import { getMatchScoreColor } from '@/types/disc';
+import { MatchBreakdown } from '@/components/match/MatchBreakdown';
+import { MatchStrengths } from '@/components/match/MatchStrengths';
+import { MatchOpportunities } from '@/components/match/MatchOpportunities';
+import { MatchMethodologyModal } from '@/components/match/MatchMethodologyModal';
 
 // Mock experience data based on candidate.experience field
 const generateMockExperiences = (candidateTitle: string, years: number) => {
@@ -91,20 +97,7 @@ const generateMockExperiences = (candidateTitle: string, years: number) => {
   return experiences;
 };
 
-// Helper to calculate mock match percentage
-const calculateMatch = (candidateSkills: string[], jobs: Job[]): number => {
-  if (jobs.length === 0) return 0;
-  const avgSkillMatch =
-    jobs.reduce((acc, job) => {
-      const jobSkills = job.requirements.join(' ').toLowerCase();
-      const matchingSkills = candidateSkills.filter((s) =>
-        jobSkills.includes(s.toLowerCase())
-      ).length;
-      return acc + (matchingSkills / candidateSkills.length) * 100;
-    }, 0) / jobs.length;
-
-  return Math.min(99, Math.round(avgSkillMatch * 0.7 + 20));
-};
+// PRD-035: Cálculo dinâmico removido - agora usamos matchResult diretamente
 
 export default function CandidateProfile() {
   const { id } = useParams();
@@ -142,7 +135,14 @@ export default function CandidateProfile() {
     );
   }
 
-  const matchScore = calculateMatch(candidate.skills, companyJobs);
+  // PRD-035: Cálculo dinâmico de match
+  const firstJob = companyJobs[0];
+  const idealProfile = firstJob ? getIdealDISCProfile(firstJob.id) : undefined;
+  const matchResult = firstJob
+    ? calculateMatchBreakdown(candidate, firstJob, idealProfile)
+    : null;
+  const matchScore = matchResult?.totalScore || 0;
+
   const mockExperiences = generateMockExperiences(candidate.title, candidate.experience);
 
   const handleOpenInviteModal = (job: Job) => {
@@ -222,14 +222,7 @@ export default function CandidateProfile() {
                   <div className="flex items-center gap-2">
                     {matchScore > 0 && (
                       <Badge
-                        variant="secondary"
-                        className={
-                          matchScore >= 80
-                            ? 'bg-success/20 text-success'
-                            : matchScore >= 60
-                            ? 'bg-warning/20 text-warning'
-                            : ''
-                        }
+                        className={`${getMatchScoreColor(matchScore).bg} ${getMatchScoreColor(matchScore).text} border ${getMatchScoreColor(matchScore).border}`}
                       >
                         <Star className="w-3 h-3 mr-1" />
                         {matchScore}% match com suas vagas
@@ -494,11 +487,58 @@ export default function CandidateProfile() {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* PRD-035: Match Breakdown */}
+            {matchResult && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="space-y-2"
+              >
+                <MatchBreakdown
+                  totalScore={matchResult.totalScore}
+                  categories={matchResult.categories}
+                  title={`Match com ${firstJob?.title || 'vaga'}`}
+                />
+                <div className="flex justify-end">
+                  <MatchMethodologyModal />
+                </div>
+              </motion.div>
+            )}
+
+            {/* PRD-035: Strengths and Opportunities */}
+            {matchResult && matchResult.strengths.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <MatchStrengths
+                  strengths={matchResult.strengths}
+                  maxItems={3}
+                  compact
+                />
+              </motion.div>
+            )}
+
+            {matchResult && matchResult.opportunities.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+              >
+                <MatchOpportunities
+                  opportunities={matchResult.opportunities}
+                  maxItems={2}
+                />
+              </motion.div>
+            )}
+
             {/* Skills */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.3 }}
             >
               <Card>
                 <CardHeader>

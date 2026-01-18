@@ -9,7 +9,8 @@ import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, Users, Settings, LogOut,
-  Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart, Calendar, HelpCircle
+  Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart, Calendar, HelpCircle, Bell,
+  ChevronLeft, ChevronRight, Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -17,11 +18,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
 import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
 import { useInterviews } from '@/hooks/useInterviews';
+import { useCompanyInterviews } from '@/hooks/useCompanyInterviews';
+import { useTopRecommendations } from '@/hooks/useJobRecommendations';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 import { GlassHeader } from '@/components/layout/GlassHeader';
 import { GlassFooter } from '@/components/layout/GlassFooter';
 import { Badge } from '@/components/ui/badge';
 import { NotificationBell } from '@/components/notifications';
+import { CompanyNotificationBell } from '@/components/notifications/CompanyNotificationBell';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { BottomNav } from '@/components/navigation';
 import { SkipLink, AccessibilityPanel } from '@/components/accessibility';
@@ -30,7 +35,7 @@ interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  countKey?: 'savedJobs' | 'interviews' | 'savedCandidates'; // Chave para contadores dinâmicos
+  countKey?: 'savedJobs' | 'interviews' | 'savedCandidates' | 'companyInterviews' | 'recommendations'; // Chave para contadores dinâmicos
 }
 
 const adminNav: NavItem[] = [
@@ -45,10 +50,12 @@ const companyNav: NavItem[] = [
   { href: '/empresa', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/empresa/vagas', label: 'Minhas Vagas', icon: Briefcase },
   { href: '/empresa/candidaturas', label: 'Candidaturas', icon: ClipboardList },
+  { href: '/empresa/entrevistas', label: 'Entrevistas', icon: Calendar, countKey: 'companyInterviews' },
   { href: '/empresa/candidatos', label: 'Banco de Talentos', icon: Users },
   { href: '/empresa/candidatos-salvos', label: 'Candidatos Salvos', icon: Heart, countKey: 'savedCandidates' },
   { href: '/empresa/testes', label: 'Testes', icon: Brain },
   { href: '/empresa/mensagens', label: 'Mensagens', icon: MessageSquare },
+  { href: '/empresa/notificacoes', label: 'Notificações', icon: Bell },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/empresa/configuracoes', label: 'Configurações', icon: Settings },
 ];
@@ -56,6 +63,7 @@ const companyNav: NavItem[] = [
 const candidateNav: NavItem[] = [
   { href: '/candidato', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/candidato/curriculos', label: 'Currículos', icon: FileText },
+  { href: '/candidato/vagas-recomendadas', label: 'Vagas para Você', icon: Sparkles, countKey: 'recommendations' },
   { href: '/candidato/vagas', label: 'Buscar Vagas', icon: Search },
   { href: '/candidato/vagas-salvas', label: 'Vagas Salvas', icon: Heart, countKey: 'savedJobs' },
   { href: '/candidato/candidaturas', label: 'Candidaturas', icon: ClipboardList },
@@ -79,6 +87,9 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   // PRD-003-dgn: Detectar viewport mobile
   const isMobile = useIsMobile();
 
+  // Hook para sidebar recolhível
+  const { isCollapsed, toggleCollapse } = useSidebarCollapse();
+
   // Hook de favoritos para contador (PRD-024)
   const { favoritesCount } = useFavoriteJobs();
 
@@ -87,6 +98,15 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   // Hook de entrevistas para contador (PRD-027)
   const { pendingCount: interviewsPendingCount } = useInterviews('candidate-1');
+
+  // PRD-034: Hook de entrevistas da empresa para contador
+  const { pendingCount: companyInterviewsPendingCount } = useCompanyInterviews('company-1');
+
+  // PRD-036: Hook de recomendações para contador de novas vagas
+  const { newCount: recommendationsNewCount } = useTopRecommendations(
+    currentCandidate?.id || 'candidate-1',
+    5
+  );
 
   const navItems = userType === 'admin'
     ? adminNav
@@ -99,10 +119,14 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
     if (!countKey) return null;
     // PRD-030: Contador de candidatos salvos (empresa)
     if (countKey === 'savedCandidates' && userType === 'company') return savedCandidatesCount;
+    // PRD-034: Contador de entrevistas pendentes (empresa)
+    if (countKey === 'companyInterviews' && userType === 'company') return companyInterviewsPendingCount;
     // Contadores do candidato
     if (userType !== 'candidate') return null;
     if (countKey === 'savedJobs') return favoritesCount;
     if (countKey === 'interviews') return interviewsPendingCount;
+    // PRD-036: Contador de recomendações novas
+    if (countKey === 'recommendations') return recommendationsNewCount;
     return null;
   };
 
@@ -124,28 +148,47 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
       : 'Candidato';
 
   return (
-    <div className="min-h-screen flex w-full">
+    <div className="h-screen flex w-full overflow-hidden">
       {/* PRD-003-dgn: Skip link para navegação por teclado */}
       <SkipLink href="#main-content" />
 
       {/* Sidebar - PRD-003-dgn: Oculta em mobile */}
       <aside className={cn(
-        "w-64 bg-sidebar text-sidebar-foreground flex flex-col",
+        "h-screen bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300",
+        isCollapsed ? "w-20" : "w-64",
         // Ocultar em mobile
         "hidden md:flex"
       )}>
         {/* Logo */}
-        <div className="p-6 border-b border-sidebar-border">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center">
+        <div className={cn(
+          "p-6 border-b border-sidebar-border flex items-center",
+          isCollapsed ? "justify-center relative" : "justify-between"
+        )}>
+          <Link to="/" className={cn(
+            "flex items-center gap-2",
+            isCollapsed && "justify-center"
+          )}>
+            <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center flex-shrink-0">
               <span className="text-xl font-bold text-sidebar-primary-foreground">R</span>
             </div>
-            <span className="text-xl font-bold">RecrutaRS</span>
+            {!isCollapsed && <span className="text-xl font-bold">RecrutaRS</span>}
           </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleCollapse}
+            className={cn(
+              "h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent",
+              isCollapsed && "absolute right-2"
+            )}
+            aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
+          >
+            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.href;
             const count = getItemCount(item.countKey);
@@ -155,17 +198,19 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                 to={item.href}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                  isCollapsed && "justify-center px-2",
                   isActive
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "hover:bg-sidebar-accent/50"
                 )}
+                title={isCollapsed ? item.label : undefined}
               >
                 <item.icon className={cn(
-                  "w-5 h-5",
+                  "w-5 h-5 flex-shrink-0",
                   isActive && "text-sidebar-primary"
                 )} />
-                <span className="font-medium flex-1">{item.label}</span>
-                {count !== null && count > 0 && (
+                {!isCollapsed && <span className="font-medium flex-1">{item.label}</span>}
+                {!isCollapsed && count !== null && count > 0 && (
                   <Badge
                     variant="secondary"
                     className={cn(
@@ -183,30 +228,51 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
         {/* User section */}
         <div className="p-4 border-t border-sidebar-border">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center">
-              <span className="font-semibold text-sidebar-accent-foreground">
-                {displayName?.charAt(0).toUpperCase()}
-              </span>
+          {!isCollapsed ? (
+            <>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center">
+                  <span className="font-semibold text-sidebar-accent-foreground">
+                    {displayName?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{displayName}</div>
+                  <div className="text-xs text-sidebar-foreground/60">{roleLabel}</div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-5 h-5 mr-3" />
+                Sair
+              </Button>
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center">
+                <span className="font-semibold text-sidebar-accent-foreground">
+                  {displayName?.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                onClick={handleLogout}
+                title="Sair"
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium truncate">{displayName}</div>
-              <div className="text-xs text-sidebar-foreground/60">{roleLabel}</div>
-            </div>
-          </div>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            onClick={handleLogout}
-          >
-            <LogOut className="w-5 h-5 mr-3" />
-            Sair
-          </Button>
+          )}
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col bg-background relative">
+      <div className="flex-1 flex flex-col bg-background relative overflow-hidden">
         {/* Glass Header */}
         <GlassHeader>
           <div className="flex items-center justify-between w-full">
@@ -219,9 +285,13 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
               {/* PRD-003-dgn: Painel de acessibilidade */}
               <AccessibilityPanel />
               <ThemeToggle />
-              {/* Notificações - apenas para candidatos (PRD-025) */}
+              {/* PRD-025: Notificações - candidatos */}
               {userType === 'candidate' && (
                 <NotificationBell />
+              )}
+              {/* PRD-033: Notificações - empresas */}
+              {userType === 'company' && (
+                <CompanyNotificationBell />
               )}
             </div>
           </div>
@@ -247,7 +317,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         {/* Glass Footer - offset for sidebar (desktop only) */}
         <GlassFooter className={cn(
           // Em mobile não tem sidebar, então sem offset
-          !isMobile && "left-64"
+          !isMobile && (isCollapsed ? "left-20" : "left-64")
         )} />
       </div>
 

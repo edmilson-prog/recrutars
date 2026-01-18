@@ -18,6 +18,8 @@ import {
   Filter,
   Send,
   Clock,
+  FileDown,
+  Calendar,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -75,15 +77,24 @@ import {
   mockMessages,
   mockConversations,
   getCandidateDISCProfile,
-  getMatchScore,
+  getIdealDISCProfile,
 } from '@/data/mockData';
 import type { Application, ApplicationStatus, ApplicationNote, ApplicationHistory, TestRequestStatus, Message } from '@/types';
 import type { CandidateForComparison } from '@/types/disc';
 import { toast } from 'sonner';
+import { calculateMatchBreakdown } from '@/lib/matchCalculator';
+import { getMatchScoreColor } from '@/types/disc';
 // PRD-002-dgn: Componentes de comparação
 import { useCandidateSelection, SelectionBar } from '@/components/compare/CandidateSelector';
 import { CandidateComparisonModal } from '@/components/compare/CandidateComparison';
 import { Checkbox } from '@/components/ui/checkbox';
+// PRD-032: Exportação de candidatos
+import { ExportCandidatesModal } from '@/components/export';
+// PRD-034: Agendamento de entrevistas
+import { ScheduleInterviewModal } from '@/components/empresa/ScheduleInterviewModal';
+import { useCompanyInterviews } from '@/hooks/useCompanyInterviews';
+import type { ExportContext } from '@/types/export';
+import type { Candidate } from '@/types';
 
 // Status configuration
 const STATUS_CONFIG: Record<
@@ -136,14 +147,21 @@ const DEADLINE_OPTIONS = [
 
 const DEFAULT_TEST_MESSAGE = `Olá! Para darmos continuidade ao processo seletivo, gostaríamos que você realizasse nosso teste comportamental Gauge-Pro. O teste leva cerca de 15-20 minutos e nos ajuda a entender melhor seu perfil.`;
 
-// Helper to calculate mock match percentage
+// PRD-035: Cálculo dinâmico de match - esta função é usada em múltiplos lugares
+// selectedJobId é usado para determinar qual vaga usar no cálculo
+let currentSelectedJobId = '';
 const calculateMatch = (candidateId: string): number => {
   const candidate = mockCandidates.find((c) => c.id === candidateId);
   if (!candidate) return 0;
-  const baseMatch = candidate.profileCompletion * 0.5;
-  const testBonus = candidate.hasTest ? 20 : 0;
-  const skillBonus = candidate.skills.length * 3;
-  return Math.min(99, Math.round(baseMatch + testBonus + skillBonus));
+
+  // Usa a vaga selecionada atualmente ou a primeira vaga da empresa
+  const job = mockJobs.find((j) => j.id === currentSelectedJobId) ||
+    mockJobs.find((j) => j.companyId === 'company-1' && j.status === 'active');
+  if (!job) return 0;
+
+  const idealProfile = getIdealDISCProfile(job.id);
+  const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
+  return matchResult.totalScore;
 };
 
 // Generate mock experience from candidate data
@@ -218,6 +236,13 @@ export default function CompanyApplications() {
   } = useCandidateSelection(3);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
 
+  // PRD-032: Estado do modal de exportação
+  const [showExportModal, setShowExportModal] = useState(false);
+
+  // PRD-034: Agendamento de entrevistas
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const { createInterview } = useCompanyInterviews('company-1');
+
   // Get company jobs (mock: company-1)
   const companyJobs = mockJobs.filter(
     (job) =>
@@ -231,6 +256,11 @@ export default function CompanyApplications() {
       setSelectedJobId(companyJobs[0].id);
     }
   }, [companyJobs, selectedJobId]);
+
+  // PRD-035: Atualiza o jobId global para cálculo de match
+  useEffect(() => {
+    currentSelectedJobId = selectedJobId;
+  }, [selectedJobId]);
 
   // Filter applications for selected job
   const jobApplications = applications.filter(
@@ -272,6 +302,11 @@ export default function CompanyApplications() {
     offer: filteredApplications.filter((a) => a.status === 'offer'),
     rejected: filteredApplications.filter((a) => a.status === 'rejected'),
   };
+
+  // PRD-032: Candidatos para exportação
+  const candidatesForExport: Candidate[] = filteredApplications
+    .map((app) => mockCandidates.find((c) => c.id === app.candidateId))
+    .filter((c): c is Candidate => c !== undefined);
 
   const handleCardClick = (app: Application) => {
     setSelectedApplication(app);
@@ -474,8 +509,8 @@ export default function CompanyApplications() {
     const discProfile = getCandidateDISCProfile(candidateId);
     if (!discProfile) return null;
 
-    const matchResult = getMatchScore(candidateId, selectedJobId || 'job-1');
-    const matchScore = matchResult?.totalScore || calculateMatch(candidateId);
+    // PRD-035: Usa cálculo dinâmico de match
+    const matchScore = calculateMatch(candidateId);
 
     return {
       id: candidate.id,
@@ -566,6 +601,18 @@ export default function CompanyApplications() {
                 <SelectItem value="pending">Pendente</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* PRD-032: Botão de exportar */}
+            {filteredApplications.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowExportModal(true)}
+              >
+                <FileDown className="w-4 h-4 mr-2" />
+                Exportar Lista
+              </Button>
+            )}
           </div>
         </div>
 
@@ -667,14 +714,7 @@ export default function CompanyApplications() {
 
                 <div className="flex flex-wrap gap-2">
                   <Badge
-                    variant="secondary"
-                    className={
-                      selectedMatch >= 80
-                        ? 'bg-success/20 text-success'
-                        : selectedMatch >= 60
-                        ? 'bg-warning/20 text-warning'
-                        : ''
-                    }
+                    className={`${getMatchScoreColor(selectedMatch).bg} ${getMatchScoreColor(selectedMatch).text} border ${getMatchScoreColor(selectedMatch).border}`}
                   >
                     <Star className="w-3 h-3 mr-1" />
                     {selectedMatch}% match
@@ -1040,6 +1080,18 @@ export default function CompanyApplications() {
 
               {/* Actions */}
               <SheetFooter className="mt-6 flex-col sm:flex-row gap-2">
+                {/* PRD-034: Botão de agendar entrevista */}
+                {selectedApplication.status !== 'rejected' && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowScheduleModal(true)}
+                    className="w-full sm:w-auto"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Agendar Entrevista
+                  </Button>
+                )}
+
                 {/* PRD-002-dgn: Botão de comparação */}
                 <Button
                   variant="outline"
@@ -1213,6 +1265,41 @@ export default function CompanyApplications() {
           toast.success('Redirecionando para mensagens...');
         }}
       />
+
+      {/* PRD-032: Modal de exportação */}
+      <ExportCandidatesModal
+        open={showExportModal}
+        onOpenChange={setShowExportModal}
+        candidates={candidatesForExport}
+        context={{
+          source: 'job_applications',
+          jobId: selectedJobId,
+          jobTitle: selectedJob?.title,
+          candidateCount: candidatesForExport.length,
+          companyName: 'TechCorp Soluções',
+        }}
+        calculateMatch={(candidate) => calculateMatch(candidate.id)}
+      />
+
+      {/* PRD-034: Modal de agendamento de entrevista */}
+      {selectedApplication && selectedCandidate && (
+        <ScheduleInterviewModal
+          open={showScheduleModal}
+          onOpenChange={setShowScheduleModal}
+          candidateId={selectedApplication.candidateId}
+          candidateName={selectedCandidate.name}
+          jobId={selectedApplication.jobId}
+          jobTitle={selectedApplication.jobTitle}
+          applicationId={selectedApplication.id}
+          onSchedule={(data) => {
+            createInterview(data);
+            // Mover para status de entrevista automaticamente
+            handleMove(selectedApplication.id, 'interview');
+            toast.success('Entrevista agendada! O candidato foi notificado.');
+            setDrawerOpen(false);
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 }
@@ -1304,13 +1391,7 @@ function ApplicationCard({
       <div className="flex flex-wrap items-center gap-2 mt-3">
         <Badge
           variant="outline"
-          className={
-            match >= 80
-              ? 'text-success border-success/30'
-              : match >= 60
-              ? 'text-warning border-warning/30'
-              : ''
-          }
+          className={`${getMatchScoreColor(match).text} ${getMatchScoreColor(match).border.replace('border-', 'border-')}`}
         >
           <Star className="w-3 h-3 mr-1" />
           {match}%

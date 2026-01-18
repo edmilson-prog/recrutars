@@ -35,12 +35,15 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { mockJobs } from '@/data/mockData';
+import { mockJobs, mockCandidates, getIdealDISCProfile } from '@/data/mockData';
 import type { Job } from '@/types';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useApplications } from '@/hooks/useApplications';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
+import { calculateMatchBreakdown } from '@/lib/matchCalculator';
+import { useMemo } from 'react';
+import { getMatchScoreColor } from '@/types/disc';
 
 const locations = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 'Curitiba, PR', 'Porto Alegre, RS'];
 const areas = ['Tecnologia', 'Produto', 'Design', 'Dados', 'Marketing', 'Comercial', 'RH', 'Financeiro'];
@@ -48,7 +51,7 @@ const levels = ['Estágio', 'Junior', 'Pleno', 'Senior', 'Especialista', 'Gerent
 
 const ITEMS_PER_PAGE = 10;
 
-type SortOption = 'recent' | 'salary-high' | 'salary-low';
+type SortOption = 'recent' | 'salary-high' | 'salary-low' | 'match-high';
 
 export default function CandidateJobSearch() {
   const navigate = useNavigate();
@@ -79,6 +82,19 @@ export default function CandidateJobSearch() {
 
   const activeJobs = mockJobs.filter(job => job.status === 'active');
 
+  // PRD-035: Cache de match scores calculados dinamicamente
+  const currentCandidate = mockCandidates.find(c => c.id === 'candidate-1');
+  const matchScores = useMemo(() => {
+    if (!currentCandidate) return {};
+    const scores: Record<string, number> = {};
+    for (const job of activeJobs) {
+      const idealProfile = getIdealDISCProfile(job.id);
+      const result = calculateMatchBreakdown(currentCandidate, job, idealProfile);
+      scores[job.id] = result.totalScore;
+    }
+    return scores;
+  }, [currentCandidate, activeJobs]);
+
   // Filter jobs
   const filteredJobs = activeJobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
@@ -100,6 +116,8 @@ export default function CandidateJobSearch() {
         return b.salary.max - a.salary.max;
       case 'salary-low':
         return a.salary.min - b.salary.min;
+      case 'match-high':
+        return (matchScores[b.id] || 0) - (matchScores[a.id] || 0);
       case 'recent':
       default:
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -346,6 +364,7 @@ export default function CandidateJobSearch() {
                     <SelectValue placeholder="Ordenar por" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="match-high">Maior match</SelectItem>
                     <SelectItem value="recent">Mais recentes</SelectItem>
                     <SelectItem value="salary-high">Maior salário</SelectItem>
                     <SelectItem value="salary-low">Menor salário</SelectItem>
@@ -410,6 +429,14 @@ export default function CandidateJobSearch() {
                     <p className="mt-3 text-muted-foreground line-clamp-2">{job.description}</p>
 
                     <div className="flex flex-wrap gap-2 mt-4">
+                      {/* PRD-035: Badge de match score */}
+                      {matchScores[job.id] !== undefined && (
+                        <Badge
+                          className={`${getMatchScoreColor(matchScores[job.id]).bg} ${getMatchScoreColor(matchScores[job.id]).text} border ${getMatchScoreColor(matchScores[job.id]).border}`}
+                        >
+                          {matchScores[job.id]}% match
+                        </Badge>
+                      )}
                       {hasApplied(job.id) && (
                         <Badge className="bg-success/20 text-success border-success/30 hover:bg-success/30">
                           <CheckCircle className="w-3 h-3 mr-1" />

@@ -61,6 +61,14 @@ export interface CandidateForComparison {
   matchScore: number;
   discProfile: DISCProfile;
   metrics: Record<string, string | number | boolean>;
+  // PRD-031: Campos adicionais para comparação
+  experienceYears?: number;
+  currentRole?: string;
+  education?: string;
+  skills?: string[];
+  salary?: { min: number; max: number };
+  availability?: string;
+  location?: string;
 }
 
 export type MatchScoreLevel = "high" | "medium" | "low";
