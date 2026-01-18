@@ -230,8 +230,8 @@ export function DISCRadarChartMini({
     <DISCRadarChart
       profile={profile}
       size="sm"
-      showLabels={false}
-      showGrid={false}
+      showLabels={true}
+      showGrid={true}
       className={className}
     />
   );
