@@ -1,13 +1,43 @@
 {
   "versions": [
     {
+      "version": "0.41.0",
+      "codename": "Cheerful Chomsky",
+      "type": "minor",
+      "releaseDate": "2026-01-18",
+      "prd": "PRD-045",
+      "description": "Pagina de Configuracoes Admin com layout duas colunas e busca global",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Pagina de Configuracoes para Admin (/admin/configuracoes)",
+            "Layout duas colunas: Sidebar categorias (30%) + Conteudo (70%)",
+            "8 categorias expansiveis: Geral, IA, Gamificacao, Notificacoes, Integracoes, Usuarios, Relatorios, Sistema",
+            "Busca global com dropdown de resultados por tipo",
+            "Historico de alteracoes com filtros por categoria e periodo",
+            "Campos editaveis: TextField, Toggle, Select, ImageUpload, ColorPicker",
+            "Persistencia em localStorage",
+            "Responsivo com Drawer mobile para sidebar"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Rota /admin/configuracoes aponta para nova pagina Settings"
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.40.0",
       "codename": "Cheerful Chomsky",
       "type": "minor",
       "releaseDate": "2026-01-18",
       "prd": "PRD-044",
       "description": "Pagina Sobre com historico de versoes e tooltip interativo no footer",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

@@ -28,6 +28,7 @@ import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminCompanies from "./pages/admin/Companies";
 import AdminCandidates from "./pages/admin/Candidates";
+import AdminSettings from "./pages/admin/Settings";
 
 // Company pages
 import CompanyDashboard from "./pages/empresa/Dashboard";
@@ -142,7 +143,7 @@ const App = () => (
             } />
             <Route path="/admin/configuracoes" element={
               <ProtectedRoute allowedTypes={['admin']}>
-                <AdminDashboard />
+                <AdminSettings />
               </ProtectedRoute>
             } />
 

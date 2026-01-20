@@ -240,18 +240,18 @@ export default function HowItWorksPage() {
       <div className="min-h-screen">
         <Header />
 
-        {/* Hero Section - Fundo claro */}
-        <div className="pt-20 bg-gradient-to-b from-muted/50 to-background min-h-[35vh] flex items-center">
-          <div className="container py-12 text-center">
+        {/* Hero Section */}
+        <div className="pt-20 gradient-hero min-h-[40vh] flex items-center">
+          <div className="container py-16 text-center text-primary-foreground">
             <motion.h1
-              className="text-4xl md:text-5xl font-bold text-foreground mb-4"
+              className="text-4xl md:text-5xl font-bold mb-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
               Como Funciona
             </motion.h1>
             <motion.p
-              className="text-xl text-muted-foreground max-w-2xl mx-auto"
+              className="text-xl text-primary-foreground/80 max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}

@@ -39,14 +39,10 @@ export default function AboutPage() {
   if (isLoading) {
     return (
       <DashboardLayout userType={userType}>
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-6xl mx-auto space-y-6">
           <Skeleton className="h-64 w-full" />
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="md:col-span-2">
-              <Skeleton className="h-96 w-full" />
-            </div>
-            <Skeleton className="h-64 w-full" />
-          </div>
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-96 w-full" />
         </div>
       </DashboardLayout>
     );
@@ -56,7 +52,7 @@ export default function AboutPage() {
   if (error) {
     return (
       <DashboardLayout userType={userType}>
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <Card>
             <CardContent className="p-8 text-center">
               <AlertCircle className="w-12 h-12 mx-auto text-destructive mb-4" />
@@ -74,7 +70,7 @@ export default function AboutPage() {
 
   return (
     <DashboardLayout userType={userType}>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Hero Card com versao atual */}
         {currentVersion && (
           <AboutHeroCard
@@ -83,28 +79,21 @@ export default function AboutPage() {
           />
         )}
 
-        {/* Grid com historico e desenvolvedor */}
-        <div className="grid gap-6 md:grid-cols-3">
-          {/* Historico de versoes */}
-          <div className="md:col-span-2">
-            <VersionHistory
-              ref={historyRef}
-              versions={versions}
-              filteredVersions={filteredVersions}
-              search={filters.search}
-              releaseType={filters.releaseType}
-              dateRange={filters.dateRange}
-              onSearchChange={setSearch}
-              onReleaseTypeChange={setReleaseType}
-              onDateRangeChange={setDateRange}
-            />
-          </div>
+        {/* Card do desenvolvedor - horizontal abaixo do hero */}
+        <DeveloperCard />
 
-          {/* Card do desenvolvedor */}
-          <div>
-            <DeveloperCard />
-          </div>
-        </div>
+        {/* Historico de versoes - largura total */}
+        <VersionHistory
+          ref={historyRef}
+          versions={versions}
+          filteredVersions={filteredVersions}
+          search={filters.search}
+          releaseType={filters.releaseType}
+          dateRange={filters.dateRange}
+          onSearchChange={setSearch}
+          onReleaseTypeChange={setReleaseType}
+          onDateRangeChange={setDateRange}
+        />
       </div>
     </DashboardLayout>
   );

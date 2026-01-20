@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useTheme } from 'next-themes';
 
 /**
@@ -9,23 +9,31 @@ import { useTheme } from 'next-themes';
  */
 export function ForceLightTheme() {
   const { setTheme, theme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const previousThemeRef = useRef<string | undefined>(undefined);
 
+  // Armazena tema anterior uma vez no mount
   useEffect(() => {
-    // Store the current theme to restore later
-    const previousTheme = theme;
+    setMounted(true);
+    previousThemeRef.current = theme;
+  }, []);
 
-    // Force light theme on public pages
-    if (resolvedTheme !== 'light') {
+  // Força light quando montado e resolvedTheme disponível
+  useEffect(() => {
+    if (mounted && resolvedTheme && resolvedTheme !== 'light') {
       setTheme('light');
     }
+  }, [mounted, resolvedTheme, setTheme]);
 
-    // Restore the previous theme when unmounting (navigating to authenticated pages)
+  // Restaura tema anterior no unmount
+  useEffect(() => {
     return () => {
-      if (previousTheme && previousTheme !== 'light') {
-        setTheme(previousTheme);
+      const prev = previousThemeRef.current;
+      if (prev && prev !== 'light') {
+        setTheme(prev);
       }
     };
-  }, []); // Empty dependency array - only run on mount/unmount
+  }, [setTheme]);
 
   return null;
 }

@@ -5,6 +5,50 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.41.0] - 2026-01-18 (PRD-045)
+
+### Added
+- **Pagina de Configuracoes Admin** - PRD-045
+  - Layout duas colunas: Sidebar categorias (30%) + Conteudo (70%)
+  - Sidebar com 8 categorias expansiveis via Accordion:
+    - Geral: Dados da Plataforma, Identidade Visual, Preferencias Regionais
+    - Inteligencia Artificial: Gauge-Pro, Matching, Analise Comportamental
+    - Gamificacao: Niveis, Conquistas, Recompensas
+    - Notificacoes: Canais, Frequencia
+    - Integracoes: APIs Externas, Webhooks
+    - Usuarios & Permissoes: Politicas de senha e sessao
+    - Relatorios: Metricas, Exports
+    - Sistema: Manutencao, Logs, Seguranca
+  - Busca global com dropdown de resultados por tipo (categoria/subcategoria/campo)
+  - Historico de alteracoes com filtros por categoria e periodo
+  - Botao "Restaurar Padrao" por secao com confirmacao
+  - Campos editaveis: TextField, Toggle, Select, ImageUpload, ColorPicker
+  - Persistencia em localStorage com chave `recrutars-settings-admin`
+  - Responsivo: Drawer mobile para sidebar (< 768px)
+
+### Added (Files)
+- `src/types/settings.ts` - tipos ConfigCategory, ConfigField, ConfigHistoryEntry
+- `src/data/settingsConfig.ts` - categorias e campos do Admin com valores padrao
+- `src/hooks/useSettings.ts` - hook de gerenciamento de estado e persistencia
+- `src/components/settings/ConfigLayout.tsx` - layout principal com duas colunas
+- `src/components/settings/ConfigSidebar.tsx` - sidebar com Accordion
+- `src/components/settings/ConfigContent.tsx` - area de conteudo com campos
+- `src/components/settings/ConfigSection.tsx` - renderizacao por tipo de campo
+- `src/components/settings/ConfigSearch.tsx` - busca com dropdown de resultados
+- `src/components/settings/ConfigHistoryModal.tsx` - modal com lista filtrada
+- `src/components/settings/fields/ConfigTextField.tsx` - campo texto/numero/cor
+- `src/components/settings/fields/ConfigToggle.tsx` - campo boolean (Switch)
+- `src/components/settings/fields/ConfigSelect.tsx` - campo select/multiselect
+- `src/components/settings/fields/ConfigImageUpload.tsx` - upload de imagem
+- `src/components/settings/fields/index.ts` - barrel export dos fields
+- `src/components/settings/index.ts` - barrel export dos componentes
+- `src/pages/admin/Settings.tsx` - pagina Admin Settings
+
+### Changed
+- `src/App.tsx` - rota `/admin/configuracoes` aponta para AdminSettings
+
+---
+
 ## [0.40.0] - 2026-01-18 (PRD-044)
 
 ### Added
