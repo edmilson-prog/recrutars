@@ -19,3 +19,4 @@ export * from './jobAnalyzer';
 export * from './messageTemplates';
 export * from './culturalFit';
 export * from './chatbot';
+export * from './changelog';

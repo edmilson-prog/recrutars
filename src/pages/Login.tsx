@@ -5,9 +5,10 @@ import { Building2, User, Shield, ArrowRight, Mail, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { GlassFooter } from '@/components/layout/GlassFooter';
+import { ForceLightTheme } from '@/components/theme/ForceLightTheme';
 
 type UserType = 'admin' | 'company' | 'candidate';
 
@@ -37,7 +38,8 @@ export default function Login() {
 
   return (
     <>
-    <div className="min-h-screen flex pb-12">
+    <ForceLightTheme />
+    <div className="min-h-screen flex">
       {/* Left - Form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <motion.div
@@ -46,11 +48,12 @@ export default function Login() {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          <Link to="/" className="flex items-center gap-2 mb-8">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-              <span className="text-xl font-bold text-primary-foreground">R</span>
-            </div>
-            <span className="text-xl font-bold text-foreground">RecrutaRS</span>
+          <Link to="/" className="flex items-center mb-8">
+            <img
+              src="/images/logo-horizontal.png"
+              alt="RecrutaRS - Consultoria e Gestão"
+              className="h-12 w-auto"
+            />
           </Link>
 
           <h1 className="text-3xl font-bold text-foreground mb-2">Bem-vindo de volta</h1>
@@ -123,6 +126,13 @@ export default function Login() {
               </div>
             </div>
 
+            <div className="flex items-center space-x-2">
+              <Checkbox id="remember" />
+              <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
+                Lembrar-me
+              </Label>
+            </div>
+
             <Button 
               type="submit" 
               className="w-full" 
@@ -150,28 +160,31 @@ export default function Login() {
       </div>
 
       {/* Right - Visual */}
-      <div className="hidden lg:flex flex-1 gradient-hero items-center justify-center p-12 relative overflow-hidden">
+      <div className="hidden lg:block flex-1 gradient-hero relative overflow-hidden">
+        {/* Background decorations */}
         <div className="absolute inset-0">
           <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-secondary/20 rounded-full blur-3xl animate-pulse-soft" />
           <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-secondary/10 rounded-full blur-3xl animate-pulse-soft" />
         </div>
-        
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7 }}
-          className="relative z-10 text-center text-primary-foreground"
-        >
-          <h2 className="text-4xl font-bold mb-4">
-            Conecte-se aos melhores talentos
-          </h2>
-          <p className="text-xl text-primary-foreground/80 max-w-md">
-            Plataforma completa de recrutamento com avaliação comportamental e matching inteligente.
-          </p>
-        </motion.div>
+
+        {/* Centered content wrapper */}
+        <div className="absolute inset-0 flex items-center justify-center p-12">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7 }}
+            className="text-center text-primary-foreground"
+          >
+            <h2 className="text-4xl font-bold mb-4">
+              Conecte-se aos melhores talentos
+            </h2>
+            <p className="text-xl text-primary-foreground/80 max-w-md mx-auto">
+              Plataforma completa de recrutamento com avaliação comportamental e matching inteligente.
+            </p>
+          </motion.div>
+        </div>
       </div>
     </div>
-    <GlassFooter />
     </>
   );
 }

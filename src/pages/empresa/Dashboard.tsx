@@ -2,6 +2,11 @@ import { motion } from 'framer-motion';
 import { Briefcase, Users, UserPlus, Clock, Plus, ArrowUp, Eye, Search, MessageSquare, Brain, ChevronRight } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { companyStats, mockJobs, mockApplications, mockBehavioralTests } from '@/data/mockData';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,25 +44,29 @@ export default function CompanyDashboard() {
       label: 'Vagas ativas',
       value: activeJobsCount,
       icon: Briefcase,
-      href: '/empresa/vagas'
+      href: '/empresa/vagas',
+      tooltip: 'Vagas publicadas e recebendo candidaturas'
     },
     {
       label: 'Total de candidatos',
       value: totalCandidates,
       icon: Users,
-      href: '/empresa/candidatos'
+      href: '/empresa/candidatos',
+      tooltip: 'Soma de candidatos em todas as suas vagas'
     },
     {
       label: 'Novas hoje',
       value: newTodayCount,
       icon: UserPlus,
-      href: '/empresa/candidatos'
+      href: '/empresa/candidatos',
+      tooltip: 'Candidaturas recebidas nas ultimas 24 horas'
     },
     {
       label: 'Em análise',
       value: inReviewCount,
       icon: Clock,
-      href: '/empresa/candidatos'
+      href: '/empresa/candidatos',
+      tooltip: 'Candidatos aguardando sua avaliacao'
     },
   ];
 
@@ -114,26 +123,32 @@ export default function CompanyDashboard() {
         {/* Stats Grid - RF-001 a RF-005 */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Link
-                to={stat.href}
-                className="block bg-card rounded-2xl p-6 shadow-soft hover:shadow-md transition-shadow group"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-                    <stat.icon className="w-6 h-6 text-primary-foreground" />
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="text-3xl font-bold text-foreground mb-1">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
-              </Link>
-            </motion.div>
+            <Tooltip key={stat.label}>
+              <TooltipTrigger asChild>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Link
+                    to={stat.href}
+                    className="block bg-card rounded-2xl p-6 shadow-soft hover:shadow-md transition-shadow group"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
+                        <stat.icon className="w-6 h-6 text-primary-foreground" />
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div className="text-3xl font-bold text-foreground mb-1">{stat.value}</div>
+                    <div className="text-sm text-muted-foreground">{stat.label}</div>
+                  </Link>
+                </motion.div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{stat.tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
           ))}
         </div>
 

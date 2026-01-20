@@ -15,12 +15,20 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import HowItWorksPage from "./pages/HowItWorks";
 import PlansPage from "./pages/Plans";
+import QuemSomos from "./pages/QuemSomos";
+import MissaoVisaoValores from "./pages/MissaoVisaoValores";
+import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
+import TermosUso from "./pages/TermosUso";
+import ForCompanies from "./pages/ForCompanies";
+import ForCandidates from "./pages/ForCandidates";
+import CorporateTests from "./pages/CorporateTests";
 import NotFound from "./pages/NotFound";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminCompanies from "./pages/admin/Companies";
 import AdminCandidates from "./pages/admin/Candidates";
+import AdminSettings from "./pages/admin/Settings";
 
 // Company pages
 import CompanyDashboard from "./pages/empresa/Dashboard";
@@ -55,6 +63,9 @@ import CandidateImportCV from "./pages/candidato/ImportCV";
 // Help pages
 import HelpPage from "./pages/Help";
 import TicketDetailsPage from "./pages/TicketDetails";
+
+// About page (PRD-044)
+import AboutPage from "./pages/About";
 
 // PRD-040: Chatbot de Suporte
 import { ChatbotWidget } from "./components/chatbot";
@@ -91,12 +102,26 @@ const App = () => (
             } />
             <Route path="/como-funciona" element={<HowItWorksPage />} />
             <Route path="/planos" element={<PlansPage />} />
+            <Route path="/quem-somos" element={<QuemSomos />} />
+            <Route path="/missao-visao-valores" element={<MissaoVisaoValores />} />
+            <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
+            <Route path="/termos-de-uso" element={<TermosUso />} />
+            <Route path="/para-empresas" element={<ForCompanies />} />
+            <Route path="/para-candidatos" element={<ForCandidates />} />
+            <Route path="/testes-corporativos" element={<CorporateTests />} />
 
             {/* Help Routes */}
             <Route path="/ajuda" element={<HelpPage />} />
             <Route path="/ajuda/tickets/:ticketId" element={
               <ProtectedRoute allowedTypes={['candidate', 'company', 'admin']}>
                 <TicketDetailsPage />
+              </ProtectedRoute>
+            } />
+
+            {/* About Route (PRD-044) */}
+            <Route path="/sobre" element={
+              <ProtectedRoute allowedTypes={['candidate', 'company', 'admin']}>
+                <AboutPage />
               </ProtectedRoute>
             } />
 
@@ -118,7 +143,7 @@ const App = () => (
             } />
             <Route path="/admin/configuracoes" element={
               <ProtectedRoute allowedTypes={['admin']}>
-                <AdminDashboard />
+                <AdminSettings />
               </ProtectedRoute>
             } />
 

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { GlassFooter } from '@/components/layout/GlassFooter';
+import { ForceLightTheme } from '@/components/theme/ForceLightTheme';
 
 type AccountType = 'company' | 'candidate';
 
@@ -21,6 +21,7 @@ export default function Register() {
 
   return (
     <>
+    <ForceLightTheme />
     <div className="min-h-screen flex pb-12">
       {/* Left - Visual */}
       <div className="hidden lg:flex flex-1 gradient-hero items-center justify-center p-12 relative overflow-hidden">
@@ -38,7 +39,7 @@ export default function Register() {
           <h2 className="text-4xl font-bold mb-4">
             Junte-se a milhares de profissionais
           </h2>
-          <p className="text-xl text-primary-foreground/80 max-w-md">
+          <p className="text-xl text-primary-foreground/80 max-w-lg mx-auto">
             Empresas encontram os melhores talentos. Candidatos encontram as melhores oportunidades.
           </p>
         </motion.div>
@@ -52,11 +53,12 @@ export default function Register() {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          <Link to="/" className="flex items-center gap-2 mb-8">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-              <span className="text-xl font-bold text-primary-foreground">R</span>
-            </div>
-            <span className="text-xl font-bold text-foreground">RecrutaRS</span>
+          <Link to="/" className="flex items-center mb-8">
+            <img
+              src="/images/logo-horizontal.png"
+              alt="RecrutaRS - Consultoria e Gestão"
+              className="h-12 w-auto"
+            />
           </Link>
 
           <h1 className="text-3xl font-bold text-foreground mb-2">Criar conta</h1>
@@ -182,13 +184,12 @@ export default function Register() {
 
           <p className="mt-4 text-center text-xs text-muted-foreground">
             Ao criar uma conta, você concorda com nossos{' '}
-            <Link to="#" className="underline">Termos de Uso</Link> e{' '}
-            <Link to="#" className="underline">Política de Privacidade</Link>.
+            <Link to="/termos-de-uso" className="underline">Termos de Uso</Link> e{' '}
+            <Link to="/politica-de-privacidade" className="underline">Política de Privacidade</Link>.
           </p>
         </motion.div>
       </div>
     </div>
-    <GlassFooter />
     </>
   );
 }

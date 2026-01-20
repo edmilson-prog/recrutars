@@ -1,26 +1,20 @@
 /**
  * Candidate Settings Page
- * PRD-011: Configurações do Candidato
- * PRD-026: Visibilidade do Perfil
+ * PRD-045: Página de Configurações do Candidato
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Shield,
-  Bell,
-  AlertTriangle,
-  Download,
-} from 'lucide-react';
+import { AlertTriangle, Download, Mail, KeyRound } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { ConfigLayout } from '@/components/settings/ConfigLayout';
+import { candidateSettingsCategories } from '@/data/settingsConfig';
+import { useSettings } from '@/hooks/useSettings';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { VisibilitySettings } from '@/components/candidato/VisibilitySettings';
-import { ThemeSettings } from '@/components/settings/ThemeSettings';
-import type { VisibilityMode } from '@/types/candidate';
 import {
   Card,
   CardContent,
@@ -46,32 +40,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-
-// Notification preferences type
-interface NotificationPreferences {
-  newJobs: boolean;
-  applicationUpdates: boolean;
-  messages: boolean;
-  newsletter: boolean;
-}
 
 export default function CandidateSettings() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Notification preferences state
-  const [notifications, setNotifications] = useState<NotificationPreferences>({
-    newJobs: true,
-    applicationUpdates: true,
-    messages: true,
-    newsletter: false,
+  // Settings hook
+  const {
+    values,
+    history,
+    updateValue,
+    saveSection,
+    restoreDefaults,
+    isLoading,
+  } = useSettings({
+    categories: candidateSettingsCategories,
+    panel: 'candidate',
+    userId: user?.id || 'candidate-1',
+    userName: user?.name || 'Candidato',
+    entityId: user?.id,
   });
-
-  // PRD-026: Profile visibility state
-  const [visibilityMode, setVisibilityMode] = useState<VisibilityMode>('public');
-  const anonymousId = '4721'; // Mock: seria gerado ao criar conta
 
   // Modal states
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -94,17 +83,6 @@ export default function CandidateSettings() {
     if (!domain) return email;
     const maskedUser = userPart.slice(0, 2) + '•'.repeat(Math.max(0, userPart.length - 2));
     return `${maskedUser}@${domain}`;
-  };
-
-  // Handle notification preference change
-  const handleNotificationChange = (key: keyof NotificationPreferences, checked: boolean) => {
-    setNotifications(prev => ({ ...prev, [key]: checked }));
-    toast.success('Preferências salvas');
-  };
-
-  // PRD-026: Handle visibility mode change
-  const handleVisibilityChange = (mode: VisibilityMode) => {
-    setVisibilityMode(mode);
   };
 
   // Handle download data (mock)
@@ -156,35 +134,52 @@ export default function CandidateSettings() {
     toast.success('Conta excluída com sucesso');
   };
 
-  // Notification options
-  const notificationOptions = [
-    { key: 'newJobs' as const, label: 'Novas vagas compatíveis com meu perfil' },
-    { key: 'applicationUpdates' as const, label: 'Atualizações das minhas candidaturas' },
-    { key: 'messages' as const, label: 'Mensagens de empresas' },
-    { key: 'newsletter' as const, label: 'Newsletter e novidades da plataforma' },
-  ];
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="candidate">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-pulse text-muted-foreground">
+            Carregando configurações...
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="candidate">
-      <div className="space-y-6 max-w-3xl">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Configurações</h1>
-          <p className="text-muted-foreground">Gerencie suas preferências e dados da conta</p>
-        </div>
+      <div className="space-y-8">
+        {/* Main Config Layout */}
+        <ConfigLayout
+          title="Configurações"
+          subtitle="Gerencie suas preferências e dados da conta"
+          categories={candidateSettingsCategories}
+          values={values}
+          history={history}
+          onValueChange={updateValue}
+          onSave={saveSection}
+          onRestoreDefaults={restoreDefaults}
+        />
 
-        {/* Security Section */}
-        <Card>
+        {/* Security Actions Card - Separate from ConfigLayout */}
+        <Card className="max-w-3xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5" />
-              Segurança
+              <KeyRound className="w-5 h-5" />
+              Ações de Segurança
             </CardTitle>
+            <CardDescription>
+              Gerencie suas credenciais e baixe seus dados
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Email */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-foreground">Email</p>
+                <p className="font-medium text-foreground flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  Email
+                </p>
                 <p className="text-sm text-muted-foreground">
                   {maskEmail(user?.email || 'joao.santos@email.com')}
                 </p>
@@ -194,73 +189,32 @@ export default function CandidateSettings() {
               </Button>
             </div>
             <Separator />
+            {/* Password */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-foreground">Senha</p>
+                <p className="font-medium text-foreground flex items-center gap-2">
+                  <KeyRound className="w-4 h-4" />
+                  Senha
+                </p>
                 <p className="text-sm text-muted-foreground">••••••••</p>
               </div>
               <Button variant="outline" size="sm" onClick={() => setShowPasswordModal(true)}>
                 Alterar senha
               </Button>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Notifications Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="w-5 h-5" />
-              Notificações
-            </CardTitle>
-            <CardDescription>Escolha quais emails você deseja receber</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {notificationOptions.map(item => (
-              <div key={item.key} className="flex items-center space-x-3">
-                <Checkbox
-                  id={item.key}
-                  checked={notifications[item.key]}
-                  onCheckedChange={(checked) =>
-                    handleNotificationChange(item.key, checked as boolean)
-                  }
-                />
-                <Label htmlFor={item.key} className="text-foreground cursor-pointer">
-                  {item.label}
-                </Label>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* PRD-026: Privacy/Visibility Section */}
-        <VisibilitySettings
-          currentMode={visibilityMode}
-          anonymousId={anonymousId}
-          onSave={handleVisibilityChange}
-        />
-
-        {/* PRD-029: Appearence/Theme Section */}
-        <ThemeSettings />
-
-        {/* Download Data Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Download className="w-5 h-5" />
-              Meus Dados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            <Separator />
+            {/* Download Data */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-foreground">Exportar dados</p>
+                <p className="font-medium text-foreground flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Exportar dados
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  Baixe uma cópia de todos os seus dados
+                  Baixe uma cópia de todos os seus dados (LGPD)
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={handleDownloadData}>
-                <Download className="w-4 h-4 mr-2" />
                 Baixar dados
               </Button>
             </div>
@@ -268,12 +222,15 @@ export default function CandidateSettings() {
         </Card>
 
         {/* Danger Zone Section */}
-        <Card className="border-destructive/50">
+        <Card className="border-destructive/50 max-w-3xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="w-5 h-5" />
               Zona de Perigo
             </CardTitle>
+            <CardDescription>
+              Ações irreversíveis que afetam sua conta
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
