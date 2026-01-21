@@ -1,13 +1,79 @@
 {
   "versions": [
     {
+      "version": "0.43.0",
+      "codename": "Cheerful Chomsky",
+      "type": "minor",
+      "releaseDate": "2026-01-20",
+      "prd": "PRD-047 & PRD-048",
+      "description": "Sistema de Testes Comportamentais Gauge-Pro 2.0 para Candidatos e Empresas",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Teste Geral do Candidato (PRD-047): 50-60 perguntas balanceadas",
+            "Tipos de pergunta: Likert (1-5) e Situacional (A-D)",
+            "Salvamento automatico e sessao valida por 7 dias",
+            "Pagina de resultado com grafico radar e insights",
+            "Gamificacao: +50 XP e badge Perfil Completo",
+            "Teste por Vaga (PRD-048): Wizard de criacao em 3 passos",
+            "Selecao de competencias com prioridade critica/importante",
+            "Sistema de convites para candidatos internos",
+            "Links magicos para candidatos externos",
+            "Relatorio detalhado com ajuste de score pelo recrutador",
+            "Decisao de aprovar/avaliar depois/reprovar",
+            "Comparacao lado a lado de ate 4 candidatos"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Menu lateral candidato com Teste Comportamental",
+            "Menu de acoes das vagas com acesso ao teste"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.42.0",
+      "codename": "Cheerful Chomsky",
+      "type": "minor",
+      "releaseDate": "2026-01-20",
+      "prd": "PRD-046",
+      "description": "Banco de Perguntas e Avaliacao Comportamental Gauge-Pro 2.0",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Sistema de gerenciamento de perguntas Gauge-Pro 2.0",
+            "222 perguntas em 3 dimensoes e 20 categorias",
+            "Dimensoes: Personalidade (60), Carater (48), Competencias (114)",
+            "Tipos: Comportamental, Situacional, Autoavaliacao",
+            "Niveis: Basico, Intermediario, Avancado",
+            "Pagina Admin de Categorias com arvore hierarquica",
+            "Pagina Admin de Perguntas com busca, filtros e paginacao",
+            "CRUD completo: criar, editar, duplicar, ativar/desativar",
+            "Itens de menu 'Categorias' e 'Perguntas' no painel Admin"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Menu lateral Admin com novos itens de avaliacao"
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.41.0",
       "codename": "Cheerful Chomsky",
       "type": "minor",
       "releaseDate": "2026-01-18",
       "prd": "PRD-045",
       "description": "Pagina de Configuracoes Admin com layout duas colunas e busca global",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

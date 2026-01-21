@@ -10,7 +10,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, Users, Settings, LogOut,
   Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart, Calendar, HelpCircle, Bell,
-  ChevronLeft, ChevronRight, Sparkles, Info
+  ChevronLeft, ChevronRight, Sparkles, Info, FolderTree, FileQuestion
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -50,6 +50,8 @@ const adminNav: NavItem[] = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/empresas', label: 'Empresas', icon: Building2 },
   { href: '/admin/candidatos', label: 'Candidatos', icon: Users },
+  { href: '/admin/avaliacoes/categorias', label: 'Categorias', icon: FolderTree },
+  { href: '/admin/avaliacoes/perguntas', label: 'Perguntas', icon: FileQuestion },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
   { href: '/sobre', label: 'Sobre', icon: Info },
@@ -78,6 +80,7 @@ const candidateNav: NavItem[] = [
   { href: '/candidato/vagas-salvas', label: 'Vagas Salvas', icon: Heart, countKey: 'savedJobs' },
   { href: '/candidato/candidaturas', label: 'Candidaturas', icon: ClipboardList },
   { href: '/candidato/entrevistas', label: 'Entrevistas', icon: Calendar, countKey: 'interviews' },
+  { href: '/candidato/teste-comportamental', label: 'Teste Comportamental', icon: Brain },
   { href: '/candidato/testes', label: 'Meus Testes', icon: Brain },
   { href: '/candidato/mensagens', label: 'Mensagens', icon: MessageSquare },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },

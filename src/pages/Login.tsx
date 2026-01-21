@@ -160,7 +160,17 @@ export default function Login() {
       </div>
 
       {/* Right - Visual */}
-      <div className="hidden lg:block flex-1 gradient-hero relative overflow-hidden">
+      <div className="hidden lg:block flex-1 relative overflow-hidden">
+        {/* Background image */}
+        <img
+          src="/images/login-bg.jpg"
+          alt="Profissionais de negócios"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/75 to-primary/50" />
+
         {/* Background decorations */}
         <div className="absolute inset-0">
           <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-secondary/20 rounded-full blur-3xl animate-pulse-soft" />

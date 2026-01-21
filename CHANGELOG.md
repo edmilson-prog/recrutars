@@ -5,6 +5,153 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.43.0] - 2026-01-20 (PRD-047 & PRD-048)
+
+### Added
+- **Sistema de Testes Comportamentais Gauge-Pro 2.0** - PRD-047 & PRD-048
+
+#### PRD-047: Teste Geral do Candidato
+- Teste voluntario com 50-60 perguntas balanceadas
+- Tipos de pergunta: Likert (escala 1-5) e Situacional (A-D)
+- Algoritmo de selecao que balanceia:
+  - ~35% Personalidade, ~30% Carater, ~35% Competencias
+  - Minimo 2 perguntas por categoria
+  - Balanceamento de niveis (Basico/Intermediario/Avancado)
+- Salvamento automatico de respostas a cada pergunta
+- Sessao valida por 7 dias com possibilidade de pausar/retomar
+- Cooldown de 90 dias para refazer o teste
+- Pagina de resultado com:
+  - Grafico radar por dimensao (Recharts)
+  - Barras de progresso por categoria
+  - Insights personalizados por dimensao
+  - Recomendacoes de carreira
+- Gamificacao: +50 XP e badge "Perfil Completo"
+- Menu "Teste Comportamental" no dashboard do candidato
+
+#### PRD-048: Teste por Vaga (Empresa)
+- Wizard de 3 passos para criacao de teste:
+  1. Selecao de competencias (2-8) com prioridade (critica/importante)
+  2. Revisao de perguntas sugeridas (15-25)
+  3. Preview e publicacao
+- Sistema de convites:
+  - Lista de candidatos internos com status de convite
+  - Gerador de links magicos para candidatos externos
+  - Gestao de convites (reenviar, cancelar, visualizar)
+- Link magico publico (/t/:token):
+  - Landing page com informacoes do teste
+  - Formulario de dados basicos
+  - Expiracao configuravel (3-30 dias)
+  - Limite de 50 links por vaga
+- Relatorio do candidato:
+  - Score geral e por competencia
+  - Pontos fortes e areas de desenvolvimento
+  - Red flags com alertas visuais
+  - Analise detalhada por resposta
+  - Ajuste de score pelo recrutador
+  - Decisao: aprovar/avaliar depois/reprovar
+- Comparacao de candidatos:
+  - Selecao de ate 4 candidatos
+  - Tabela comparativa por competencia
+  - Grafico radar sobreposto
+- Botao "Teste Comportamental" no menu de acoes das vagas
+
+### Added (Files)
+- `src/data/behavioralAssessmentData.ts` - configuracoes e mock data
+- `src/hooks/useBehavioralAssessment.ts` - gerenciamento de sessao do teste
+- `src/hooks/useQuestionSelection.ts` - algoritmo de selecao balanceada
+- `src/hooks/useAssessmentAnalysis.ts` - analise com regras de fallback
+- `src/hooks/useJobAssessment.ts` - CRUD de testes por vaga
+- `src/hooks/useCompetencySelection.ts` - selecao de competencias e pesos
+- `src/hooks/useMagicLink.ts` - geracao e validacao de links magicos
+- `src/hooks/useRecruiterAnalysis.ts` - analise com ajustes do recrutador
+- Componentes do teste candidato:
+  - `src/components/assessment/TestIntro.tsx`
+  - `src/components/assessment/TestProgress.tsx`
+  - `src/components/assessment/LikertScale.tsx`
+  - `src/components/assessment/SituationalOptions.tsx`
+  - `src/components/assessment/QuestionDisplay.tsx`
+  - `src/components/assessment/TestNavigation.tsx`
+  - `src/components/assessment/AnalysisProgress.tsx`
+  - `src/components/assessment/ResultBanner.tsx`
+  - `src/components/assessment/DimensionRadar.tsx`
+  - `src/components/assessment/CategoryBars.tsx`
+  - `src/components/assessment/InsightsSection.tsx`
+  - `src/components/assessment/CareerRecommendations.tsx`
+- Componentes do teste por vaga:
+  - `src/components/job-assessment/CompetencySelector.tsx`
+  - `src/components/job-assessment/QuestionSuggestions.tsx`
+  - `src/components/job-assessment/TestPreview.tsx`
+  - `src/components/job-assessment/TestWizard.tsx`
+  - `src/components/job-assessment/InternalCandidateList.tsx`
+  - `src/components/job-assessment/MagicLinkGenerator.tsx`
+  - `src/components/job-assessment/InviteManager.tsx`
+  - `src/components/job-assessment/CandidateReport.tsx`
+  - `src/components/job-assessment/ResponseAnalysis.tsx`
+  - `src/components/job-assessment/ScoreAdjuster.tsx`
+  - `src/components/job-assessment/RecruiterDecision.tsx`
+  - `src/components/job-assessment/CandidateComparison.tsx`
+  - `src/components/job-assessment/ComparisonRadar.tsx`
+  - `src/components/job-assessment/index.ts`
+- Paginas:
+  - `src/pages/candidato/BehavioralTest.tsx`
+  - `src/pages/candidato/BehavioralTestResult.tsx`
+  - `src/pages/empresa/CreateJobTest.tsx`
+  - `src/pages/empresa/JobTestManager.tsx`
+  - `src/pages/empresa/CandidateTestReport.tsx`
+  - `src/pages/empresa/CompareCandidates.tsx`
+  - `src/pages/MagicLinkLanding.tsx`
+
+### Changed
+- `src/types/assessment.ts` - tipos para sessoes, respostas, resultados e ajustes
+- `src/components/assessment/index.ts` - exports dos novos componentes
+- `src/App.tsx` - rotas do teste candidato e empresa
+- `src/components/layout/DashboardLayout.tsx` - menu "Teste Comportamental"
+- `src/pages/empresa/Jobs.tsx` - botao de teste no menu de acoes
+
+---
+
+## [0.42.0] - 2026-01-20 (PRD-046)
+
+### Added
+- **Banco de Perguntas e Avaliacao Comportamental** - PRD-046
+  - Sistema completo de gerenciamento de perguntas Gauge-Pro 2.0
+  - 222 perguntas organizadas em 3 dimensoes e 20 categorias:
+    - Personalidade (Big Five): 60 perguntas em 5 categorias
+    - Carater: 48 perguntas em 5 categorias
+    - Competencias: 114 perguntas em 10 categorias
+  - Tipos de pergunta: Comportamental, Situacional, Autoavaliacao
+  - Niveis de complexidade: Basico, Intermediario, Avancado
+  - Pagina Admin de Categorias com visualizacao hierarquica (arvore)
+  - Pagina Admin de Perguntas com:
+    - Busca com debounce 300ms por codigo ou texto
+    - Filtros cumulativos: dimensao, categoria (cascata), tipo, nivel, status
+    - Paginacao de 50 itens por pagina
+    - CRUD completo: criar, editar, duplicar, ativar/desativar
+    - Estatisticas no topo da pagina
+  - Menu lateral Admin com itens "Categorias" e "Perguntas"
+
+### Added (Files)
+- `src/types/assessment.ts` - tipos para dimensoes, categorias, perguntas
+- `src/data/assessmentData.ts` - seed com 222 perguntas do framework RecrutaRS
+- `src/hooks/useAssessmentQuestions.ts` - hook CRUD de perguntas com filtros
+- `src/hooks/useAssessmentCategories.ts` - hook para categorias e dimensoes
+- `src/components/assessment/DimensionBadge.tsx` - badge colorido por dimensao
+- `src/components/assessment/QuestionCard.tsx` - card de pergunta com acoes
+- `src/components/assessment/QuestionFilters.tsx` - filtros de busca
+- `src/components/assessment/QuestionForm.tsx` - formulario criar/editar
+- `src/components/assessment/CategoryTree.tsx` - arvore hierarquica
+- `src/components/assessment/CategoryForm.tsx` - formulario de categoria
+- `src/components/assessment/index.ts` - barrel export
+- `src/pages/admin/AssessmentCategories.tsx` - pagina de categorias
+- `src/pages/admin/AssessmentQuestions.tsx` - pagina de perguntas
+
+### Changed
+- `src/types/index.ts` - export de assessment types
+- `src/App.tsx` - rotas `/admin/avaliacoes/categorias` e `/admin/avaliacoes/perguntas`
+- `src/components/layout/DashboardLayout.tsx` - itens de menu admin
+
+---
+
 ## [0.41.0] - 2026-01-18 (PRD-045)
 
 ### Added

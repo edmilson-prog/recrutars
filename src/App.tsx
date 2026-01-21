@@ -29,6 +29,8 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AdminCompanies from "./pages/admin/Companies";
 import AdminCandidates from "./pages/admin/Candidates";
 import AdminSettings from "./pages/admin/Settings";
+import AdminAssessmentCategories from "./pages/admin/AssessmentCategories";
+import AdminAssessmentQuestions from "./pages/admin/AssessmentQuestions";
 
 // Company pages
 import CompanyDashboard from "./pages/empresa/Dashboard";
@@ -59,6 +61,15 @@ import CandidateRecommendedJobs from "./pages/candidato/RecommendedJobs";
 import CandidateNotifications from "./pages/candidato/Notifications";
 import CandidateInterviews from "./pages/candidato/Interviews";
 import CandidateImportCV from "./pages/candidato/ImportCV";
+import CandidateBehavioralTest from "./pages/candidato/BehavioralTest";
+import CandidateBehavioralTestResult from "./pages/candidato/BehavioralTestResult";
+
+// PRD-048: Job Assessment pages
+import CreateJobTest from "./pages/empresa/CreateJobTest";
+import JobTestManager from "./pages/empresa/JobTestManager";
+import CandidateTestReport from "./pages/empresa/CandidateTestReport";
+import CompareCandidates from "./pages/empresa/CompareCandidates";
+import MagicLinkLanding from "./pages/MagicLinkLanding";
 
 // Help pages
 import HelpPage from "./pages/Help";
@@ -110,6 +121,9 @@ const App = () => (
             <Route path="/para-candidatos" element={<ForCandidates />} />
             <Route path="/testes-corporativos" element={<CorporateTests />} />
 
+            {/* PRD-048: Magic Link Route (public) */}
+            <Route path="/t/:token" element={<MagicLinkLanding />} />
+
             {/* Help Routes */}
             <Route path="/ajuda" element={<HelpPage />} />
             <Route path="/ajuda/tickets/:ticketId" element={
@@ -144,6 +158,16 @@ const App = () => (
             <Route path="/admin/configuracoes" element={
               <ProtectedRoute allowedTypes={['admin']}>
                 <AdminSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/avaliacoes/categorias" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminAssessmentCategories />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/avaliacoes/perguntas" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminAssessmentQuestions />
               </ProtectedRoute>
             } />
 
@@ -206,6 +230,28 @@ const App = () => (
             <Route path="/empresa/vagas/:id/candidatos-sugeridos" element={
               <ProtectedRoute allowedTypes={['company']}>
                 <CompanySuggestedCandidates />
+              </ProtectedRoute>
+            } />
+
+            {/* PRD-048: Job Assessment Routes */}
+            <Route path="/empresa/vagas/:jobId/criar-teste" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CreateJobTest />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/vagas/:jobId/teste" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <JobTestManager />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/vagas/:jobId/teste/comparar" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompareCandidates />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/vagas/:jobId/teste/:candidateId" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CandidateTestReport />
               </ProtectedRoute>
             } />
 
@@ -283,6 +329,16 @@ const App = () => (
             <Route path="/candidato/importar-cv" element={
               <ProtectedRoute allowedTypes={['candidate']}>
                 <CandidateImportCV />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/teste-comportamental" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateBehavioralTest />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/teste-comportamental/resultado" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateBehavioralTestResult />
               </ProtectedRoute>
             } />
 
