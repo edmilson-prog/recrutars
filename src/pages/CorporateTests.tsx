@@ -508,9 +508,8 @@ export default function CorporateTests() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className={`bg-card rounded-2xl shadow-soft p-6 relative ${
-                    plan.popular ? 'border-2 border-secondary ring-4 ring-secondary/10' : ''
-                  }`}
+                  className={`bg-card rounded-2xl shadow-soft p-6 relative ${plan.popular ? 'border-2 border-secondary ring-4 ring-secondary/10' : ''
+                    }`}
                 >
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-secondary text-secondary-foreground text-sm font-medium rounded-full flex items-center gap-1">
@@ -585,7 +584,7 @@ export default function CorporateTests() {
             <motion.div {...fadeInUp} className="text-center text-primary-foreground max-w-3xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Comece a avaliar com ciência</h2>
               <p className="text-xl text-primary-foreground/80 mb-8">
-                Junte-se a milhares de empresas que já utilizam o Gauge-Pro para contratações mais assertivas
+                Junte-se às empresas que já utilizam o Gauge-Pro para contratações mais assertivas
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" variant="secondary">
