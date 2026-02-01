@@ -34,7 +34,7 @@ import type {
 import type { Interview } from '@/types/interview';
 import type { FAQItem, Ticket, TicketMessage } from '@/types/help';
 import type {
-  DISCProfile,
+  BehavioralProfile,
   MatchResult,
   MatchCategory,
   MatchStrength,
@@ -3316,7 +3316,7 @@ export const mockFAQItems: FAQItem[] = [
   {
     id: 'faq-c-4',
     question: 'Como funciona o teste comportamental?',
-    answer: 'O teste DISC é um teste comportamental que avalia:\n\n• D (Dominância): Orientação para resultados\n• I (Influência): Orientação para pessoas\n• S (Estabilidade): Orientação para processos\n• C (Conformidade): Orientação para qualidade\n\nPara fazer o teste:\n1. Acesse "Meus Testes"\n2. Clique em "Fazer Teste DISC"\n3. Responda as 24 questões com sinceridade\n4. Veja seu perfil comportamental\n\n💡 Dica: Seja sincero nas respostas para obter um resultado preciso!',
+    answer: 'O teste comportamental avalia:\n\n• Dominância: Orientação para resultados\n• Sociabilidade: Orientação para pessoas\n• Ritmo: Orientação para processos\n• Conformidade: Orientação para qualidade\n\nPara fazer o teste:\n1. Acesse "Meus Testes"\n2. Clique em "Fazer Teste Comportamental"\n3. Responda as 24 questões com sinceridade\n4. Veja seu perfil comportamental\n\n💡 Dica: Seja sincero nas respostas para obter um resultado preciso!',
     category: 'Testes',
     area: 'candidate',
   },
@@ -3339,7 +3339,7 @@ export const mockFAQItems: FAQItem[] = [
   {
     id: 'faq-e-2',
     question: 'Como funciona o Banco de Talentos?',
-    answer: 'O Banco de Talentos permite:\n\n• Buscar candidatos ativos na plataforma\n• Filtrar por habilidades, localização e experiência\n• Ver perfis comportamentais (DISC)\n• Enviar convites diretos para candidatos\n\nPara usar:\n1. Acesse "Banco de Talentos"\n2. Use os filtros de busca\n3. Veja os perfis disponíveis\n4. Clique em "Ver Perfil" para mais detalhes\n5. Envie convite para candidatos interessantes',
+    answer: 'O Banco de Talentos permite:\n\n• Buscar candidatos ativos na plataforma\n• Filtrar por habilidades, localização e experiência\n• Ver perfis comportamentais\n• Enviar convites diretos para candidatos\n\nPara usar:\n1. Acesse "Banco de Talentos"\n2. Use os filtros de busca\n3. Veja os perfis disponíveis\n4. Clique em "Ver Perfil" para mais detalhes\n5. Envie convite para candidatos interessantes',
     category: 'Talentos',
     area: 'company',
   },
@@ -3393,13 +3393,13 @@ export const mockTickets: Ticket[] = [
       {
         id: 'msg-2-1',
         sender: 'user',
-        content: 'Gostaria de saber se posso refazer o teste DISC. Fiz há 3 meses e sinto que algumas respostas não refletem mais meu comportamento atual.',
+        content: 'Gostaria de saber se posso refazer o teste comportamental. Fiz há 3 meses e sinto que algumas respostas não refletem mais meu comportamento atual.',
         createdAt: '2026-01-10T09:00:00',
       },
       {
         id: 'msg-2-2',
         sender: 'support',
-        content: 'Olá João!\n\nSim, você pode refazer o teste DISC! Recomendamos esperar pelo menos 6 meses entre testes para que as mudanças comportamentais sejam mais significativas.\n\nComo você fez há 3 meses, sugerimos aguardar mais 3 meses para um resultado mais preciso. Mas se sentir que houve mudanças significativas, pode refazer quando quiser!\n\nQualquer dúvida, estamos à disposição.',
+        content: 'Olá João!\n\nSim, você pode refazer o teste comportamental! Recomendamos esperar pelo menos 6 meses entre testes para que as mudanças comportamentais sejam mais significativas.\n\nComo você fez há 3 meses, sugerimos aguardar mais 3 meses para um resultado mais preciso. Mas se sentir que houve mudanças significativas, pode refazer quando quiser!\n\nQualquer dúvida, estamos à disposição.',
         createdAt: '2026-01-10T11:30:00',
       },
     ],
@@ -3441,14 +3441,14 @@ export const mockTickets: Ticket[] = [
 ];
 
 // =============================================================================
-// PRD-002-dgn: DISC Profiles e Match Scores
+// PRD-002-dgn: Behavioral Profiles e Match Scores
 // =============================================================================
 
 /**
- * Perfis DISC ideais por vaga
+ * Perfis comportamentais ideais por vaga
  * Cada vaga tem um perfil comportamental ideal para o cargo
  */
-export const idealDISCProfiles: Record<string, DISCProfile> = {
+export const idealBehavioralProfiles: Record<string, BehavioralProfile> = {
   // Desenvolvedor Full Stack Senior - precisa de D alto (liderança) e C alto (qualidade)
   'job-1': { d: 75, i: 45, s: 40, c: 80 },
   // Product Manager - precisa de I alto (comunicação) e D moderado (decisão)
@@ -3459,7 +3459,7 @@ export const idealDISCProfiles: Record<string, DISCProfile> = {
   'job-4': { d: 35, i: 40, s: 65, c: 85 },
   // DevOps Engineer - precisa de C alto (precisão) e D moderado (resolver problemas)
   'job-5': { d: 60, i: 35, s: 55, c: 85 },
-  // PRD-036: Perfis DISC para novas vagas
+  // PRD-036: Perfis comportamentais para novas vagas
   // Desenvolvedor React Pleno - precisa de C alto (qualidade) e S moderado (trabalho em equipe)
   'job-6': { d: 50, i: 55, s: 60, c: 75 },
   // Backend Developer Node.js - precisa de C alto (precisão) e D moderado (resolver problemas)
@@ -3500,7 +3500,7 @@ export const mockMatchScores: Record<string, MatchResult> = {
         name: 'Perfil Comportamental',
         weight: 20,
         score: 78,
-        description: 'Alinhamento do seu perfil DISC com o perfil ideal',
+        description: 'Alinhamento do seu perfil comportamental com o perfil ideal',
       },
       {
         id: 'location',
@@ -3573,7 +3573,7 @@ export const mockMatchScores: Record<string, MatchResult> = {
         name: 'Perfil Comportamental',
         weight: 20,
         score: 58,
-        description: 'Alinhamento do seu perfil DISC com o perfil ideal',
+        description: 'Alinhamento do seu perfil comportamental com o perfil ideal',
       },
       {
         id: 'location',
@@ -3640,7 +3640,7 @@ export const mockMatchScores: Record<string, MatchResult> = {
         name: 'Perfil Comportamental',
         weight: 20,
         score: 95,
-        description: 'Alinhamento do seu perfil DISC com o perfil ideal',
+        description: 'Alinhamento do seu perfil comportamental com o perfil ideal',
       },
       {
         id: 'location',
@@ -3706,7 +3706,7 @@ export const mockMatchScores: Record<string, MatchResult> = {
         name: 'Perfil Comportamental',
         weight: 20,
         score: 98,
-        description: 'Alinhamento do seu perfil DISC com o perfil ideal',
+        description: 'Alinhamento do seu perfil comportamental com o perfil ideal',
       },
       {
         id: 'location',
@@ -3772,7 +3772,7 @@ export const mockMatchScores: Record<string, MatchResult> = {
         name: 'Perfil Comportamental',
         weight: 20,
         score: 55,
-        description: 'Alinhamento do seu perfil DISC com o perfil ideal',
+        description: 'Alinhamento do seu perfil comportamental com o perfil ideal',
       },
       {
         id: 'location',
@@ -3828,7 +3828,7 @@ export const mockCandidatesForComparison: CandidateForComparison[] = [
     name: 'João Santos',
     avatar: undefined,
     matchScore: 85,
-    discProfile: { d: 72, i: 45, s: 58, c: 65 },
+    behavioralProfile: { d: 72, i: 45, s: 58, c: 65 },
     metrics: {
       experienceYears: 6,
       hasReact: true,
@@ -3843,7 +3843,7 @@ export const mockCandidatesForComparison: CandidateForComparison[] = [
     name: 'Maria Oliveira',
     avatar: undefined,
     matchScore: 72,
-    discProfile: { d: 55, i: 78, s: 62, c: 48 },
+    behavioralProfile: { d: 55, i: 78, s: 62, c: 48 },
     metrics: {
       experienceYears: 5,
       hasReact: true,
@@ -3858,7 +3858,7 @@ export const mockCandidatesForComparison: CandidateForComparison[] = [
     name: 'Carla Mendes',
     avatar: undefined,
     matchScore: 68,
-    discProfile: { d: 35, i: 42, s: 75, c: 85 },
+    behavioralProfile: { d: 35, i: 42, s: 75, c: 85 },
     metrics: {
       experienceYears: 3,
       hasReact: false,
@@ -3879,16 +3879,16 @@ export function getMatchScore(candidateId: string, jobId: string): MatchResult |
 }
 
 /**
- * Função auxiliar para obter perfil DISC ideal de uma vaga
+ * Função auxiliar para obter perfil comportamental ideal de uma vaga
  */
-export function getIdealDISCProfile(jobId: string): DISCProfile | undefined {
-  return idealDISCProfiles[jobId];
+export function getIdealBehavioralProfile(jobId: string): BehavioralProfile | undefined {
+  return idealBehavioralProfiles[jobId];
 }
 
 /**
- * Função auxiliar para obter perfil DISC de um candidato pelo teste comportamental
+ * Função auxiliar para obter perfil comportamental de um candidato pelo teste comportamental
  */
-export function getCandidateDISCProfile(candidateId: string): DISCProfile | undefined {
+export function getCandidateBehavioralProfile(candidateId: string): BehavioralProfile | undefined {
   const test = mockBehavioralTests.find(
     (t) => t.candidateId === candidateId && t.status === 'completed' && t.result
   );

@@ -40,7 +40,7 @@ const features = [
   },
   {
     icon: Brain,
-    title: 'Teste DISC Gauge-Pro',
+    title: 'Teste Comportamental Gauge-Pro',
     description: 'Avaliação comportamental científica que revela o perfil dos candidatos, garantindo contratações mais assertivas.',
   },
   {
@@ -102,7 +102,7 @@ const steps = [
   { step: '01', title: 'Cadastre', description: 'Crie sua conta empresarial gratuitamente' },
   { step: '02', title: 'Publique', description: 'Adicione suas vagas com perfil comportamental' },
   { step: '03', title: 'Receba', description: 'Candidatos compatíveis se candidatam' },
-  { step: '04', title: 'Avalie', description: 'Analise resultados do teste DISC Gauge-Pro' },
+  { step: '04', title: 'Avalie', description: 'Analise resultados do teste comportamental Gauge-Pro' },
   { step: '05', title: 'Agende', description: 'Entrevistas integradas na plataforma' },
   { step: '06', title: 'Contrate', description: 'O candidato ideal para sua equipe' },
 ];
@@ -120,7 +120,7 @@ const plansPreview = [
     price: 'R$ 299',
     period: '/mês',
     highlight: '10 vagas + Testes ilimitados',
-    features: ['Até 10 vagas simultâneas', 'Candidatos ilimitados', 'Testes DISC ilimitados', 'Recomendação por IA', 'Suporte prioritário'],
+    features: ['Até 10 vagas simultâneas', 'Candidatos ilimitados', 'Testes comportamentais ilimitados', 'Recomendação por IA', 'Suporte prioritário'],
     popular: true,
   },
   {

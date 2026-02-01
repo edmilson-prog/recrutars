@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Calendar, Brain, Eye, Search, MessageSquare, ArrowRight, Clock, Building2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -8,15 +9,25 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { candidateStats, mockApplications, mockMessages, mockCandidates, getCandidateDISCProfile } from '@/data/mockData';
+import { candidateStats, mockApplications, mockMessages, mockCandidates } from '@/data/mockData';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { DISCRadarChartMini } from '@/components/disc/DISCRadarChart';
-import { DISCLegendCompact } from '@/components/disc/DISCLegend';
-// PRD-035: Banner de incentivo ao teste DISC
+import { GAUGE_PRO_CONFIG } from '@/data/gaugeProConfig';
+import { DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
+import type { GaugeProResult, GaugeProDimension } from '@/types/gaugePro';
+import { TEST_CONFIG } from '@/data/testConfig';
+// PRD-035: Banner de incentivo ao teste comportamental
 import { DiscIncentiveBanner } from '@/components/candidato/DiscIncentiveBanner';
 // PRD-036: Widget de vagas recomendadas
 import { RecommendedJobsWidget } from '@/components/candidato/RecommendedJobsWidget';
+
+const DIMENSION_COLORS: Record<GaugeProDimension, string> = {
+  D1: '#ef4444',
+  D2: '#f59e0b',
+  D3: '#22c55e',
+  D4: '#3b82f6',
+  D5: '#8b5cf6',
+};
 
 export default function CandidateDashboard() {
   const { currentCandidate } = useAuth();
@@ -25,8 +36,21 @@ export default function CandidateDashboard() {
   const candidateApplications = mockApplications.filter(app => app.candidateId === 'candidate-1');
   const unreadMessages = mockMessages.filter(m => m.receiverId === 'candidate-1' && !m.read);
 
-  // PRD-002-dgn: Perfil DISC do candidato
-  const discProfile = getCandidateDISCProfile('candidate-1');
+  // Gauge-Pro result from localStorage
+  const candidateId = candidate.id || 'candidate-1';
+  const [gaugeResult, setGaugeResult] = useState<GaugeProResult | null>(null);
+  const [hasOngoingAssessment, setHasOngoingAssessment] = useState(false);
+
+  useEffect(() => {
+    const resultKey = GAUGE_PRO_CONFIG.storageKeys.result(candidateId);
+    const assessmentKey = GAUGE_PRO_CONFIG.storageKeys.assessment(candidateId);
+    const savedResult = localStorage.getItem(resultKey);
+    if (savedResult) {
+      try { setGaugeResult(JSON.parse(savedResult)); } catch { /* ignore */ }
+    }
+    const savedAssessment = localStorage.getItem(assessmentKey);
+    if (savedAssessment && !savedResult) setHasOngoingAssessment(true);
+  }, [candidateId]);
 
   const stats = [
     { label: 'Candidaturas', value: candidateApplications.length, icon: FileText, tooltip: 'Total de candidaturas enviadas para vagas' },
@@ -52,7 +76,7 @@ export default function CandidateDashboard() {
           </Button>
         </div>
 
-        {/* PRD-035: Banner de incentivo ao teste DISC */}
+        {/* PRD-035: Banner de incentivo ao teste comportamental */}
         <DiscIncentiveBanner
           context="dashboard"
           profileCompletion={candidate.profileCompletion}
@@ -82,34 +106,72 @@ export default function CandidateDashboard() {
           </div>
         </motion.div>
 
-        {/* PRD-002-dgn: DISC Profile Card */}
-        {discProfile && (
+        {/* Gauge-Pro Behavioral Profile Card */}
+        {gaugeResult ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="bg-card rounded-2xl p-6 shadow-soft"
           >
-            <div className="flex flex-col md:flex-row md:items-center gap-6">
-              <div className="flex-1">
-                <h2 className="text-xl font-semibold text-foreground mb-2">Meu Perfil DISC</h2>
-                <p className="text-muted-foreground mb-4">
-                  Seu perfil comportamental baseado no teste Gauge-Pro
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">{TEST_CONFIG.profileLabel}</h2>
+                <p className="text-muted-foreground text-sm">
+                  Baseado na avaliação {TEST_CONFIG.name}
                 </p>
-                <DISCLegendCompact profile={discProfile} />
-                <Button asChild variant="outline" className="mt-4">
-                  <Link to="/candidato/testes">
-                    Ver resultado completo
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Link>
-                </Button>
               </div>
-              <div className="w-48 h-48 mx-auto md:mx-0">
-                <DISCRadarChartMini profile={discProfile} />
-              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/candidato/gauge-pro/resultado">
+                  Ver resultado completo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {(['D1', 'D2', 'D3', 'D4', 'D5'] as GaugeProDimension[]).map(dim => {
+                const score = gaugeResult.finalScores[dim];
+                return (
+                  <div key={dim} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-foreground">{DIMENSION_SHORT_NAMES[dim]}</span>
+                      <span className="font-semibold" style={{ color: DIMENSION_COLORS[dim] }}>{score}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className="h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${score}%`, backgroundColor: DIMENSION_COLORS[dim] }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </motion.div>
-        )}
+        ) : hasOngoingAssessment ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-card rounded-2xl p-6 shadow-soft"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                <Brain className="w-6 h-6 text-amber-500" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-semibold text-foreground">{TEST_CONFIG.profileLabel}</h2>
+                <p className="text-sm text-muted-foreground">Você tem uma avaliação em andamento</p>
+              </div>
+              <Button asChild>
+                <Link to="/candidato/gauge-pro">
+                  Continuar Avaliação
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+            </div>
+          </motion.div>
+        ) : null}
 
         {/* Stats Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">

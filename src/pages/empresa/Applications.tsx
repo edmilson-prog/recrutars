@@ -76,8 +76,8 @@ import {
   mockApplicationHistory,
   mockMessages,
   mockConversations,
-  getCandidateDISCProfile,
-  getIdealDISCProfile,
+  getCandidateBehavioralProfile,
+  getIdealBehavioralProfile,
 } from '@/data/mockData';
 import type { Application, ApplicationStatus, ApplicationNote, ApplicationHistory, TestRequestStatus, Message } from '@/types';
 import type { CandidateForComparison } from '@/types/disc';
@@ -128,7 +128,7 @@ const STATUS_CONFIG: Record<
   },
 };
 
-const DISC_PROFILES = ['Executor', 'Influenciador', 'Analítico', 'Estável'];
+const BEHAVIORAL_PROFILES = ['Executor', 'Influenciador', 'Analítico', 'Estável'];
 
 // PRD-016: Test request status configuration
 const TEST_STATUS_CONFIG: Record<TestRequestStatus, { label: string; icon: string; color: string }> = {
@@ -159,7 +159,7 @@ const calculateMatch = (candidateId: string): number => {
     mockJobs.find((j) => j.companyId === 'company-1' && j.status === 'active');
   if (!job) return 0;
 
-  const idealProfile = getIdealDISCProfile(job.id);
+  const idealProfile = getIdealBehavioralProfile(job.id);
   const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
   return matchResult.totalScore;
 };
@@ -506,8 +506,8 @@ export default function CompanyApplications() {
     const candidate = mockCandidates.find((c) => c.id === candidateId);
     if (!candidate) return null;
 
-    const discProfile = getCandidateDISCProfile(candidateId);
-    if (!discProfile) return null;
+    const behavioralProfile = getCandidateBehavioralProfile(candidateId);
+    if (!behavioralProfile) return null;
 
     // PRD-035: Usa cálculo dinâmico de match
     const matchScore = calculateMatch(candidateId);
@@ -517,7 +517,7 @@ export default function CompanyApplications() {
       name: candidate.name,
       avatar: candidate.avatar,
       matchScore,
-      discProfile,
+      behavioralProfile,
       metrics: {
         experience: candidate.experience,
         education: candidate.education,
@@ -579,11 +579,11 @@ export default function CompanyApplications() {
 
             <Select value={profileFilter} onValueChange={setProfileFilter}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Perfil DISC" />
+                <SelectValue placeholder="Perfil Comportamental" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os perfis</SelectItem>
-                {DISC_PROFILES.map((profile) => (
+                {BEHAVIORAL_PROFILES.map((profile) => (
                   <SelectItem key={profile} value={profile}>
                     {profile}
                   </SelectItem>
@@ -725,7 +725,7 @@ export default function CompanyApplications() {
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="text-muted-foreground">
-                      Sem teste DISC
+                      Sem teste comportamental
                     </Badge>
                   )}
                   <Badge

@@ -5,6 +5,54 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.45.0] - 2026-01-31 — "Oracle" (PRD-051)
+
+### Added
+- **Agente de Análise Comportamental por IA (PRD-051)**
+  - Integração com API Claude (Anthropic) via proxy Vite dev-only
+  - Geração de Análise Prática para recrutadores (linguagem simples, ações práticas)
+  - Geração de Análise Técnica para administradores (linguagem científica, fundamentação teórica)
+  - Configuração do agente no Painel Admin (IA > Agente de Análise)
+  - Persistência de análises em localStorage associadas ao resultado do teste
+  - Exibição de Análise Prática no perfil do candidato (Painel Empresa)
+  - Exibição de Análise Técnica no drawer do candidato (Painel Admin)
+  - Botão "Regenerar Análise" para administradores
+  - Indicador "Gerado por IA" em todas as análises exibidas
+  - Integração com export PDF (seção opcional "Análise IA")
+  - Tratamento de erros com fallback para relatório básico
+  - Retry com backoff exponencial para chamadas API (2 tentativas, timeout 30s)
+  - Loading states durante geração de análises
+  - Geração fire-and-forget em background após conclusão do Gauge-Pro
+
+## [0.44.0] - 2026-01-27 — "Archetype" (PRD-049 & PRD-050)
+
+### Added
+- **Gauge-Pro DISC — Parte 1: Seleção de Palavras (PRD-049)**
+  - Banco de 100 adjetivos mapeados em 5 dimensões (D1-D5)
+  - Interface de seleção com grid responsivo e embaralhamento Fisher-Yates
+  - Duas listas: Lista A (autopercepção) e Lista B (expectativa social)
+  - Validação de exatamente 5 seleções por lista
+  - Pontuação: (Soma_A × 1.0) + (Soma_B × 0.5) normalizada 0-100
+- **Gauge-Pro DISC — Parte 2: Cenários Situacionais (PRD-050)**
+  - 15 cenários profissionais com 4 opções (A/B/C/D) cada
+  - Navegação sequencial com possibilidade de voltar
+  - Mapeamento de cada opção para combinações de dimensões D1-D5
+  - Score combinado: Parte 1 (60%) + Parte 2 (40%)
+- **Sistema de Perfis Arquetípicos**
+  - 16 perfis comportamentais baseados nas combinações D1-D5
+  - Determinação automática de arquétipo com fallback
+  - Descrição, forças, áreas de desenvolvimento, carreiras por perfil
+- **Página de Resultado Gauge-Pro**
+  - Banner com nome do arquétipo e descrição
+  - Barras de progresso para cada dimensão com classificação (Baixo/Médio/Alto)
+  - Pontos fortes e áreas de desenvolvimento
+  - Estilo de trabalho e comunicação
+  - Carreiras recomendadas
+- Persistência via localStorage com auto-save por etapa
+- Badge "Mestre DISC" (épico) +150 XP
+- Rota `/candidato/gauge-pro` e `/candidato/gauge-pro/resultado`
+- Link "Gauge-Pro DISC" no sidebar do candidato
+
 ## [0.43.0] - 2026-01-20 (PRD-047 & PRD-048)
 
 ### Added

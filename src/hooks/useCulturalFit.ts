@@ -15,7 +15,7 @@ import type {
 import { mockCompanyCulturalProfiles } from '@/data/culturalDimensions';
 import {
   calculateCompatibility,
-  deriveCulturalProfileFromDisc,
+  deriveCulturalProfileFromBehavioral,
   getQuickCompatibilityScore,
 } from '@/lib/culturalFit';
 
@@ -36,13 +36,13 @@ interface UseCulturalFitReturn {
   // Candidate compatibility
   getCandidateCompatibility: (
     candidateId: string,
-    discProfile: string
+    behavioralProfile: string
   ) => CulturalCompatibility | null;
   getCandidateCulturalProfile: (
     candidateId: string,
-    discProfile: string
+    behavioralProfile: string
   ) => CandidateCulturalProfile;
-  getQuickScore: (discProfile: string) => number;
+  getQuickScore: (behavioralProfile: string) => number;
 
   // Form state
   formProfile: CulturalProfile;
@@ -181,20 +181,20 @@ export function useCulturalFit(
     setCompanyProfile(newProfile);
   }, [companyId, formProfile, formValues, formDescription]);
 
-  // Get candidate cultural profile from DISC
+  // Get candidate cultural profile from behavioral profile
   const getCandidateCulturalProfile = useCallback(
-    (candidateId: string, discProfile: string): CandidateCulturalProfile => {
-      return deriveCulturalProfileFromDisc(discProfile, candidateId);
+    (candidateId: string, behavioralProfile: string): CandidateCulturalProfile => {
+      return deriveCulturalProfileFromBehavioral(behavioralProfile, candidateId);
     },
     []
   );
 
   // Get compatibility between company and candidate
   const getCandidateCompatibility = useCallback(
-    (candidateId: string, discProfile: string): CulturalCompatibility | null => {
+    (candidateId: string, behavioralProfile: string): CulturalCompatibility | null => {
       if (!companyProfile) return null;
 
-      const candidateCultural = getCandidateCulturalProfile(candidateId, discProfile);
+      const candidateCultural = getCandidateCulturalProfile(candidateId, behavioralProfile);
       return calculateCompatibility(companyProfile, candidateCultural);
     },
     [companyProfile, getCandidateCulturalProfile]
@@ -202,10 +202,10 @@ export function useCulturalFit(
 
   // Get quick compatibility score
   const getQuickScore = useCallback(
-    (discProfile: string): number => {
+    (behavioralProfile: string): number => {
       if (!companyProfile) return 50;
 
-      const candidateCultural = deriveCulturalProfileFromDisc(discProfile, 'temp');
+      const candidateCultural = deriveCulturalProfileFromBehavioral(behavioralProfile, 'temp');
       return getQuickCompatibilityScore(companyProfile, candidateCultural);
     },
     [companyProfile]

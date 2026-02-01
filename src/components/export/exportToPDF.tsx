@@ -8,6 +8,7 @@ import type { Candidate } from '@/types';
 import type { ExportConfig, ExportContext, ExportSection, ExportOrder } from '@/types/export';
 import { generateFileName, getSourceLabel } from '@/types/export';
 import { isAnonymous, getDisplayName } from '@/utils/visibility';
+import { loadAnalysisResult } from '@/lib/aiAgent/storageService';
 
 // Cores do design system
 const colors = {
@@ -303,11 +304,11 @@ function CandidatesPDFDocument({
                   </View>
                 )}
 
-                {/* DISC */}
+                {/* Perfil Comportamental */}
                 {sections.includes('disc') && candidate.testResult?.result && (
                   <View style={styles.infoRow}>
                     <Text style={styles.infoItem}>
-                      <Text style={styles.infoLabel}>DISC: </Text>
+                      <Text style={styles.infoLabel}>Comportamental: </Text>
                       {candidate.testResult.result.profile}
                     </Text>
                   </View>
@@ -322,6 +323,20 @@ function CandidatesPDFDocument({
                     </Text>
                   </View>
                 )}
+
+                {/* Análise IA */}
+                {sections.includes('aiAnalysis') && (() => {
+                  const aiResult = loadAnalysisResult(candidate.id);
+                  const content = aiResult?.practical?.content;
+                  if (!content) return null;
+                  const truncated = content.length > 300 ? content.slice(0, 300) + '...' : content;
+                  return (
+                    <>
+                      <Text style={styles.sectionTitle}>Análise IA</Text>
+                      <Text style={styles.infoItem}>{truncated}</Text>
+                    </>
+                  );
+                })()}
 
                 {/* Habilidades */}
                 {sections.includes('skills') && candidate.skills.length > 0 && (

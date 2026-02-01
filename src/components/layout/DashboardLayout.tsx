@@ -38,6 +38,7 @@ import { CompanyNotificationBell } from '@/components/notifications/CompanyNotif
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { BottomNav } from '@/components/navigation';
 import { SkipLink, AccessibilityPanel } from '@/components/accessibility';
+import { TEST_CONFIG } from '@/data/testConfig';
 
 interface NavItem {
   href: string;
@@ -81,6 +82,7 @@ const candidateNav: NavItem[] = [
   { href: '/candidato/candidaturas', label: 'Candidaturas', icon: ClipboardList },
   { href: '/candidato/entrevistas', label: 'Entrevistas', icon: Calendar, countKey: 'interviews' },
   { href: '/candidato/teste-comportamental', label: 'Teste Comportamental', icon: Brain },
+  { href: '/candidato/gauge-pro', label: TEST_CONFIG.name, icon: Brain },
   { href: '/candidato/testes', label: 'Meus Testes', icon: Brain },
   { href: '/candidato/mensagens', label: 'Mensagens', icon: MessageSquare },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },

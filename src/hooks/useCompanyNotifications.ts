@@ -24,7 +24,7 @@ const mockCompanyNotifications: CompanyNotification[] = [
       jobId: 'job-001',
       jobTitle: 'Desenvolvedor React Senior',
       matchPercentage: 92,
-      discProfile: 'DI',
+      behavioralProfile: 'DI',
     },
   },
   {
@@ -41,7 +41,7 @@ const mockCompanyNotifications: CompanyNotification[] = [
       jobId: 'job-002',
       jobTitle: 'Product Manager',
       matchPercentage: 88,
-      discProfile: 'IS',
+      behavioralProfile: 'IS',
     },
   },
   {
@@ -87,7 +87,7 @@ const mockCompanyNotifications: CompanyNotification[] = [
       candidateName: 'Felipe Santos',
       jobTitle: 'Desenvolvedor Full Stack',
       testScore: 85,
-      discProfile: 'DC',
+      behavioralProfile: 'DC',
     },
   },
   {
@@ -176,7 +176,7 @@ const mockCompanyNotifications: CompanyNotification[] = [
       jobId: 'job-003',
       jobTitle: 'Analista de Dados',
       matchPercentage: 76,
-      discProfile: 'CS',
+      behavioralProfile: 'CS',
     },
   },
   {

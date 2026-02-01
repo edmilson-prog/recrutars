@@ -1,6 +1,6 @@
 /**
  * Match Progress Bar Component
- * PRD-002-dgn: Visualização DISC e Match Score
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  *
  * Barra de progresso para cada categoria do match
  * Com tooltip explicativo e cores semânticas

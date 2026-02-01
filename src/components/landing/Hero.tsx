@@ -261,7 +261,7 @@ export function Hero() {
                 <div className="text-xs text-muted-foreground mt-2">75% do processo concluído</div>
               </motion.div>
 
-              {/* Card 3: Gauge-Pro DISC */}
+              {/* Card 3: Gauge-Pro */}
               <motion.div
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}

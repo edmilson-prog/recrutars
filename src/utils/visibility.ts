@@ -60,7 +60,7 @@ export function createAnonymousProfile(candidate: Candidate): AnonymousProfile {
     experienceYears: candidate.experience,
     experienceAreas: [], // Sem nomes de empresas (seria extraído de experiences)
     education: candidate.education,
-    discProfile: candidate.testResult?.result.profile,
+    behavioralProfile: candidate.testResult?.result.profile,
     hasTest: candidate.hasTest,
   };
 }

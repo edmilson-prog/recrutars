@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Users, Briefcase, Brain, TrendingUp, ArrowUp, ArrowDown, ChevronRight, FileText, Target, AlertTriangle, Code2, GraduationCap, MapPin } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { adminStats, mockCompanies, mockCandidates, adminGrowthData, mockApplications, mockJobs, getIdealDISCProfile } from '@/data/mockData';
+import { adminStats, mockCompanies, mockCandidates, adminGrowthData, mockApplications, mockJobs, getIdealBehavioralProfile } from '@/data/mockData';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { calculateMatchBreakdown, calculateMatchStatistics } from '@/lib/matchCalculator';
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
       const job = mockJobs.find(j => j.id === application.jobId);
 
       if (candidate && job) {
-        const idealProfile = getIdealDISCProfile(job.id);
+        const idealProfile = getIdealBehavioralProfile(job.id);
         const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
         matchResults.push(matchResult);
       }
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
           jobMatchCounts[job.id] = { high: 0, total: 0, title: job.title };
         }
 
-        const idealProfile = getIdealDISCProfile(job.id);
+        const idealProfile = getIdealBehavioralProfile(job.id);
         const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
 
         jobMatchCounts[job.id].total++;

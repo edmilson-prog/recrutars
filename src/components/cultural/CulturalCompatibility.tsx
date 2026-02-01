@@ -58,7 +58,7 @@ export function CulturalCompatibility({
               <TooltipContent side="left" className="max-w-xs">
                 <p>
                   O fit cultural é calculado com base na compatibilidade entre o perfil
-                  comportamental DISC do candidato e o perfil cultural de {companyName}.
+                  comportamental do candidato e o perfil cultural de {companyName}.
                 </p>
               </TooltipContent>
             </Tooltip>

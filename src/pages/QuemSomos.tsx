@@ -126,7 +126,7 @@ export default function QuemSomos() {
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <Brain className="w-5 h-5 text-secondary mt-1 flex-shrink-0" />
-                    <span className="text-muted-foreground"><strong className="text-foreground">Ciência Psicométrica</strong> - Big Five, DISC e metodologias validadas</span>
+                    <span className="text-muted-foreground"><strong className="text-foreground">Ciência Psicométrica</strong> - Big Five e metodologias validadas</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <LineChart className="w-5 h-5 text-secondary mt-1 flex-shrink-0" />

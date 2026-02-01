@@ -35,7 +35,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { mockJobs, mockCandidates, getIdealDISCProfile } from '@/data/mockData';
+import { mockJobs, mockCandidates, getIdealBehavioralProfile } from '@/data/mockData';
 import type { Job } from '@/types';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -88,7 +88,7 @@ export default function CandidateJobSearch() {
     if (!currentCandidate) return {};
     const scores: Record<string, number> = {};
     for (const job of activeJobs) {
-      const idealProfile = getIdealDISCProfile(job.id);
+      const idealProfile = getIdealBehavioralProfile(job.id);
       const result = calculateMatchBreakdown(currentCandidate, job, idealProfile);
       scores[job.id] = result.totalScore;
     }

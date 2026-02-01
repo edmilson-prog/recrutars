@@ -87,7 +87,7 @@ export interface AnonymousProfile {
   experienceYears: number;
   experienceAreas: string[]; // sem nomes de empresas
   education: string;
-  discProfile?: string;
+  behavioralProfile?: string;
   hasTest: boolean;
   // NÃO inclui: name, avatar, email, phone, currentCompany, linkedin
 }

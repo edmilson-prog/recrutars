@@ -1,12 +1,12 @@
 /**
- * DISC Legend Component
- * PRD-002-dgn: Visualização DISC e Match Score
+ * Behavioral Profile Legend Component
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  *
- * Legenda explicativa das dimensões DISC com cores e descrições
+ * Legenda explicativa das dimensões comportamentais com cores e descrições
  */
 
 import { cn } from "@/lib/utils";
-import type { DISCProfile, DISCDimension, DISCDimensionInfo } from "@/types/disc";
+import type { BehavioralProfile, BehavioralDimension, BehavioralDimensionInfo } from "@/types/disc";
 import {
   Tooltip,
   TooltipContent,
@@ -14,8 +14,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Informações completas de cada dimensão DISC
-const DISC_DIMENSIONS: Record<DISCDimension, DISCDimensionInfo> = {
+// Informações completas de cada dimensão comportamental
+const BEHAVIORAL_DIMENSIONS: Record<BehavioralDimension, BehavioralDimensionInfo> = {
   d: {
     key: "d",
     name: "D",
@@ -55,7 +55,7 @@ const DISC_DIMENSIONS: Record<DISCDimension, DISCDimensionInfo> = {
 };
 
 interface DISCLegendProps {
-  profile?: DISCProfile;
+  profile?: BehavioralProfile;
   layout?: "horizontal" | "vertical" | "grid";
   showValues?: boolean;
   showTraits?: boolean;
@@ -76,11 +76,11 @@ export function DISCLegend({
   // Determinar dimensão dominante
   const dominantDimension = profile
     ? (Object.entries(profile).reduce((a, b) =>
-        profile[a[0] as DISCDimension] > profile[b[0] as DISCDimension] ? a : b
-      )[0] as DISCDimension)
+        profile[a[0] as BehavioralDimension] > profile[b[0] as BehavioralDimension] ? a : b
+      )[0] as BehavioralDimension)
     : null;
 
-  const dimensions = Object.values(DISC_DIMENSIONS);
+  const dimensions = Object.values(BEHAVIORAL_DIMENSIONS);
 
   const layoutClasses = {
     horizontal: "flex flex-wrap gap-4 justify-center",
@@ -186,12 +186,12 @@ export function DISCLegendCompact({
   profile,
   className,
 }: {
-  profile?: DISCProfile;
+  profile?: BehavioralProfile;
   className?: string;
 }) {
   return (
     <div className={cn("flex gap-3 text-xs", className)}>
-      {Object.values(DISC_DIMENSIONS).map((dim) => (
+      {Object.values(BEHAVIORAL_DIMENSIONS).map((dim) => (
         <div key={dim.key} className="flex items-center gap-1">
           <div className={cn("w-2 h-2 rounded-full", dim.color)} />
           <span className="text-muted-foreground">
@@ -210,7 +210,7 @@ export function DISCLegendCompact({
 
 // Card detalhado de uma dimensão específica
 interface DISCDimensionCardProps {
-  dimension: DISCDimension;
+  dimension: BehavioralDimension;
   value?: number;
   className?: string;
 }
@@ -220,7 +220,7 @@ export function DISCDimensionCard({
   value,
   className,
 }: DISCDimensionCardProps) {
-  const dim = DISC_DIMENSIONS[dimension];
+  const dim = BEHAVIORAL_DIMENSIONS[dimension];
 
   return (
     <div
@@ -254,4 +254,4 @@ export function DISCDimensionCard({
   );
 }
 
-export { DISC_DIMENSIONS };
+export { BEHAVIORAL_DIMENSIONS };

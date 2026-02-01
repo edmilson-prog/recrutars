@@ -165,14 +165,14 @@ export function CompanyNotificationItem({
               </Badge>
             )}
 
-            {/* DISC Profile */}
-            {metadata.discProfile && (
+            {/* Behavioral Profile */}
+            {metadata.behavioralProfile && (
               <Badge
                 variant="secondary"
                 className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
               >
                 <User className="w-3 h-3 mr-1" />
-                Perfil {metadata.discProfile}
+                Perfil {metadata.behavioralProfile}
               </Badge>
             )}
 

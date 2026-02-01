@@ -1,6 +1,6 @@
 /**
  * Match Breakdown Component
- * PRD-002-dgn: Visualização DISC e Match Score
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  *
  * Exibe o breakdown completo do match score por categorias
  * Inclui score total, categorias com pesos, e visualização detalhada
@@ -32,7 +32,7 @@ export const DEFAULT_MATCH_CATEGORIES = [
     id: "behavioral",
     name: "Perfil Comportamental",
     weight: 20,
-    description: "Alinhamento do seu perfil DISC com o perfil ideal da posição",
+    description: "Alinhamento do seu perfil comportamental com o perfil ideal da posição",
   },
   {
     id: "location",

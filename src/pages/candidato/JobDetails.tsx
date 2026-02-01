@@ -2,7 +2,7 @@
  * Job Details Page
  * PRD-006: Busca e Visualização de Vagas
  * PRD-007: Candidatura a Vagas
- * PRD-002-dgn: Match Score e visualização DISC
+ * PRD-002-dgn: Match Score e visualização Comportamental
  */
 
 import { useParams, useNavigate } from 'react-router-dom';
@@ -11,7 +11,7 @@ import { ArrowLeft, Building2, MapPin, DollarSign, Calendar, Briefcase, Heart, U
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { mockJobs, mockCandidates, getIdealDISCProfile } from '@/data/mockData';
+import { mockJobs, mockCandidates, getIdealBehavioralProfile } from '@/data/mockData';
 import { toast } from 'sonner';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
 import { useState } from 'react';
@@ -19,14 +19,14 @@ import { useApplications } from '@/hooks/useApplications';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
 import { ApplicationModal } from '@/components/candidato/ApplicationModal';
 import { ApplicationSuccessModal } from '@/components/candidato/ApplicationSuccessModal';
-// PRD-002-dgn: Componentes de Match e DISC
+// PRD-002-dgn: Componentes de Match e Comportamental
 import { MatchBreakdown } from '@/components/match/MatchBreakdown';
 import { MatchStrengths } from '@/components/match/MatchStrengths';
 import { MatchOpportunities } from '@/components/match/MatchOpportunities';
 import { MatchComparison } from '@/components/match/MatchComparison';
 // PRD-035: Modal de metodologia
 import { MatchMethodologyModal } from '@/components/match/MatchMethodologyModal';
-// PRD-035: Banner de incentivo ao teste DISC
+// PRD-035: Banner de incentivo ao teste comportamental
 import { DiscIncentiveBanner } from '@/components/candidato/DiscIncentiveBanner';
 
 export default function JobDetails() {
@@ -45,7 +45,7 @@ export default function JobDetails() {
 
   // PRD-035: Cálculo dinâmico de match
   const currentCandidate = mockCandidates.find(c => c.id === 'candidate-1');
-  const idealProfile = id ? getIdealDISCProfile(id) : undefined;
+  const idealProfile = id ? getIdealBehavioralProfile(id) : undefined;
   const matchResult = job && currentCandidate
     ? calculateMatchBreakdown(currentCandidate, job, idealProfile)
     : undefined;
@@ -230,7 +230,7 @@ export default function JobDetails() {
           </div>
         </div>
 
-        {/* PRD-035: Banner de incentivo ao teste DISC (quando match < 80%) */}
+        {/* PRD-035: Banner de incentivo ao teste comportamental (quando match < 80%) */}
         {matchResult && matchResult.totalScore < 80 && (
           <DiscIncentiveBanner
             context="job_low_match"
@@ -259,7 +259,7 @@ export default function JobDetails() {
           </motion.div>
         )}
 
-        {/* PRD-002-dgn: DISC Comparison */}
+        {/* PRD-002-dgn: Behavioral Comparison */}
         {matchResult?.candidateProfile && matchResult?.idealProfile && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -270,7 +270,7 @@ export default function JobDetails() {
               candidateProfile={matchResult.candidateProfile}
               idealProfile={matchResult.idealProfile}
               matchScore={matchResult.totalScore}
-              title="Comparação de Perfil DISC"
+              title="Comparação de Perfil Comportamental"
             />
           </motion.div>
         )}

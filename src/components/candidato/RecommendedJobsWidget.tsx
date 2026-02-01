@@ -149,7 +149,7 @@ function RecommendedJobsWidgetEmpty() {
         Nenhuma recomendação no momento
       </h3>
       <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
-        Complete seu perfil e faça o teste DISC para receber recomendações mais precisas.
+        Complete seu perfil e faça o teste comportamental para receber recomendações mais precisas.
       </p>
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <Button asChild variant="outline">

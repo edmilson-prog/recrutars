@@ -28,11 +28,11 @@ import {
 const benefits = [
   { value: '100%', label: 'Gratuito para candidatos', icon: Gift },
   { value: '+50.000', label: 'Vagas disponíveis', icon: Briefcase },
-  { value: '15min', label: 'Tempo do teste DISC', icon: Clock },
+  { value: '15min', label: 'Tempo do teste', icon: Clock },
   { value: 'Grátis', label: 'Resultado imediato', icon: Zap },
 ];
 
-const discDimensions = [
+const behavioralDimensions = [
   { letter: 'D', name: 'Dominância', color: 'bg-red-500', description: 'Foco em resultados e desafios' },
   { letter: 'I', name: 'Influência', color: 'bg-yellow-500', description: 'Comunicação e entusiasmo' },
   { letter: 'S', name: 'Estabilidade', color: 'bg-green-500', description: 'Cooperação e paciência' },
@@ -108,7 +108,7 @@ const gamification = [
 const steps = [
   { step: '01', title: 'Cadastre-se', description: 'Crie sua conta gratuita em minutos' },
   { step: '02', title: 'Complete', description: 'Preencha seu perfil profissional' },
-  { step: '03', title: 'Teste', description: 'Faça o Gauge-Pro DISC gratuitamente' },
+  { step: '03', title: 'Teste', description: 'Faça o Gauge-Pro gratuitamente' },
   { step: '04', title: 'Receba', description: 'Vagas recomendadas pelo seu perfil' },
   { step: '05', title: 'Candidate-se', description: 'Com apenas um clique' },
   { step: '06', title: 'Acompanhe', description: 'Status em tempo real' },
@@ -118,7 +118,7 @@ const testimonials = [
   {
     name: 'Lucas Fernandes',
     role: 'Desenvolvedor Full Stack',
-    content: 'O teste DISC me ajudou a entender melhor meu perfil profissional. Consegui meu emprego atual em menos de um mês usando a RecrutaRS!',
+    content: 'O teste comportamental me ajudou a entender melhor meu perfil profissional. Consegui meu emprego atual em menos de um mês usando a RecrutaRS!',
   },
   {
     name: 'Juliana Mendes',
@@ -177,7 +177,7 @@ export default function ForCandidates() {
                 <Link to="/cadastro">Criar Conta Grátis</Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                <Link to="/como-funciona">Conhecer Teste DISC</Link>
+                <Link to="/como-funciona">Conhecer Teste Comportamental</Link>
               </Button>
             </motion.div>
           </div>
@@ -207,13 +207,13 @@ export default function ForCandidates() {
           </div>
         </section>
 
-        {/* DISC Section */}
+        {/* Behavioral Section */}
         <section className="py-24">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-foreground mb-4">Descubra seu perfil com o Teste DISC</h2>
+              <h2 className="text-3xl font-bold text-foreground mb-4">Descubra seu perfil com o Teste Comportamental</h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                O Gauge-Pro DISC revela suas características comportamentais em 4 dimensões
+                O Gauge-Pro revela suas características comportamentais em 5 dimensões
               </p>
             </motion.div>
 
@@ -222,7 +222,7 @@ export default function ForCandidates() {
               className="max-w-4xl mx-auto bg-card rounded-2xl shadow-soft p-8 md:p-12"
             >
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-                {discDimensions.map((dim, index) => (
+                {behavioralDimensions.map((dim, index) => (
                   <motion.div
                     key={dim.letter}
                     initial={{ opacity: 0, scale: 0.8 }}

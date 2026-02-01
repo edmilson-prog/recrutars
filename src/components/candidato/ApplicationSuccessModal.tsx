@@ -2,7 +2,7 @@
  * Application Success Modal Component
  * PRD-007: Candidatura a Vagas
  * PRD-000-dgn: Design System e Microinterações
- * PRD-035: Banner de incentivo ao teste DISC
+ * PRD-035: Banner de incentivo ao teste comportamental
  */
 
 import { motion } from 'framer-motion';
@@ -92,7 +92,7 @@ export function ApplicationSuccessModal({
             </Button>
           </motion.div>
 
-          {/* PRD-035: Banner de incentivo ao teste DISC */}
+          {/* PRD-035: Banner de incentivo ao teste comportamental */}
           <DiscIncentiveBanner context="after_application" />
         </DialogContent>
       </Dialog>

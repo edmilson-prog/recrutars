@@ -1,5 +1,5 @@
 // PRD-025: Página completa de notificações do candidato
-// PRD-035: Banner de incentivo ao teste DISC
+// PRD-035: Banner de incentivo ao teste comportamental
 
 import { useState, useMemo } from 'react';
 import { Bell, CheckCheck, Filter } from 'lucide-react';
@@ -49,7 +49,7 @@ export default function Notifications() {
   return (
     <DashboardLayout userType="candidate">
       <div className="space-y-6">
-        {/* PRD-035: Banner de incentivo ao teste DISC (quando há convites) */}
+        {/* PRD-035: Banner de incentivo ao teste comportamental (quando há convites) */}
         {hasInviteNotifications && (
           <DiscIncentiveBanner context="invites_page" />
         )}

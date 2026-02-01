@@ -1,14 +1,14 @@
 /**
- * DISC Components Index
- * PRD-002-dgn: Visualização DISC e Match Score
+ * Behavioral Profile Components Index
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  */
 
 // Radar Chart
 export {
   DISCRadarChart,
   DISCRadarChartMini,
-  DISC_COLORS,
-  DISC_LABELS,
+  PROFILE_COLORS,
+  PROFILE_LABELS,
 } from "./DISCRadarChart";
 
 // Quadrant
@@ -19,5 +19,5 @@ export {
   DISCLegend,
   DISCLegendCompact,
   DISCDimensionCard,
-  DISC_DIMENSIONS,
+  BEHAVIORAL_DIMENSIONS,
 } from "./DISCLegend";

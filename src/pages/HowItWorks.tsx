@@ -67,7 +67,7 @@ const passosCandidatos = [
     numero: 2,
     titulo: 'Avaliação Comportamental',
     descricao:
-      'Complete nosso teste comportamental científico (15-20 minutos). Baseado em metodologias validadas como Big Five e DISC, ele revela seu perfil único.',
+      'Complete nosso teste comportamental científico (15-20 minutos). Baseado em metodologias validadas como Big Five e outras referências científicas, ele revela seu perfil único.',
   },
   {
     numero: 3,

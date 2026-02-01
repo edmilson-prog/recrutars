@@ -1,6 +1,6 @@
 /**
- * Hook para gerenciar dispensa de banners DISC
- * PRD-035: Banner de Incentivo ao Teste DISC
+ * Hook para gerenciar dispensa de banners de teste comportamental
+ * PRD-035: Banner de Incentivo ao Teste Comportamental
  *
  * Usa sessionStorage para manter o estado de dispensa apenas na sessão atual.
  * Ao fazer logout ou fechar o navegador, os banners voltam a aparecer.
@@ -8,7 +8,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-export type DiscBannerContext =
+export type IncentiveBannerContext =
   | 'dashboard'
   | 'job_low_match'
   | 'after_application'
@@ -21,7 +21,7 @@ interface DismissedState {
   invites_page: boolean;
 }
 
-const STORAGE_KEY = 'disc_banner_dismissed';
+const STORAGE_KEY = 'test_banner_dismissed';
 
 function loadDismissedState(): DismissedState {
   try {
@@ -30,7 +30,7 @@ function loadDismissedState(): DismissedState {
       return JSON.parse(stored);
     }
   } catch (error) {
-    console.error('Erro ao carregar estado de banners DISC:', error);
+    console.error('Erro ao carregar estado de banners:', error);
   }
   return {
     dashboard: false,
@@ -44,19 +44,19 @@ function saveDismissedState(state: DismissedState): void {
   try {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error('Erro ao salvar estado de banners DISC:', error);
+    console.error('Erro ao salvar estado de banners:', error);
   }
 }
 
-export function clearDiscBannerDismissState(): void {
+export function clearTestBannerDismissState(): void {
   try {
     sessionStorage.removeItem(STORAGE_KEY);
   } catch (error) {
-    console.error('Erro ao limpar estado de banners DISC:', error);
+    console.error('Erro ao limpar estado de banners:', error);
   }
 }
 
-export function useDiscBannerDismiss(context: DiscBannerContext) {
+export function useTestBannerDismiss(context: IncentiveBannerContext) {
   const [dismissedState, setDismissedState] = useState<DismissedState>(loadDismissedState);
 
   // Sincronizar com sessionStorage quando o estado muda
@@ -97,3 +97,6 @@ export function useDiscBannerDismiss(context: DiscBannerContext) {
     resetAll,
   };
 }
+
+// Backward-compatible aliases
+export { useTestBannerDismiss as useDiscBannerDismiss, clearTestBannerDismissState as clearDiscBannerDismissState, type IncentiveBannerContext as DiscBannerContext };

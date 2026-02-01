@@ -27,6 +27,7 @@ import {
   Linkedin,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { TechnicalAnalysisCard } from '@/components/aiAnalysis';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -110,7 +111,7 @@ const TEST_STATUS_OPTIONS = [
   { value: 'not_completed', label: 'Não Realizado' },
 ];
 
-const DISC_PROFILES = [
+const BEHAVIORAL_PROFILES = [
   'Executor',
   'Influenciador',
   'Cooperativo',
@@ -135,7 +136,7 @@ export default function AdminCandidates() {
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [testStatusFilter, setTestStatusFilter] = useState<string>('all');
-  const [discProfileFilter, setDiscProfileFilter] = useState<string>('all');
+  const [behavioralProfileFilter, setDiscProfileFilter] = useState<string>('all');
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -161,7 +162,7 @@ export default function AdminCandidates() {
   // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, statusFilter, testStatusFilter, discProfileFilter]);
+  }, [debouncedSearch, statusFilter, testStatusFilter, behavioralProfileFilter]);
 
   // Filter logic
   const filteredCandidates = candidates.filter((candidate) => {
@@ -180,8 +181,8 @@ export default function AdminCandidates() {
     }
 
     const matchesDiscProfile =
-      discProfileFilter === 'all' ||
-      (candidate.testResult?.result?.profile === discProfileFilter);
+      behavioralProfileFilter === 'all' ||
+      (candidate.testResult?.result?.profile === behavioralProfileFilter);
 
     return matchesSearch && matchesStatus && matchesTestStatus && matchesDiscProfile;
   });
@@ -373,14 +374,14 @@ export default function AdminCandidates() {
       </div>
 
       <div className="space-y-2">
-        <Label>Perfil DISC</Label>
-        <Select value={discProfileFilter} onValueChange={setDiscProfileFilter}>
+        <Label>Perfil Comportamental</Label>
+        <Select value={behavioralProfileFilter} onValueChange={setDiscProfileFilter}>
           <SelectTrigger>
             <SelectValue placeholder="Selecione" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
-            {DISC_PROFILES.map((profile) => (
+            {BEHAVIORAL_PROFILES.map((profile) => (
               <SelectItem key={profile} value={profile}>
                 {profile}
               </SelectItem>
@@ -673,7 +674,7 @@ export default function AdminCandidates() {
               {selectedCandidate.hasTest && selectedCandidate.testResult ? (
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-semibold mb-2">Resultado DISC</h3>
+                    <h3 className="font-semibold mb-2">Resultado Comportamental</h3>
                     <Badge variant="default" className="text-lg">
                       {selectedCandidate.testResult.result?.profile}
                     </Badge>
@@ -776,6 +777,13 @@ export default function AdminCandidates() {
                       {new Date(selectedCandidate.testResult.completedAt!).toLocaleDateString('pt-BR')}
                     </div>
                   </div>
+
+                  {/* AI Technical Analysis - PRD-051 */}
+                  <TechnicalAnalysisCard
+                    candidateId={selectedCandidate.id}
+                    candidateName={selectedCandidate.name}
+                    showRegenerate
+                  />
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">

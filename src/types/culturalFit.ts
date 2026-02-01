@@ -31,10 +31,10 @@ export interface CompanyCulturalProfile extends CulturalProfile {
   updatedAt: string;
 }
 
-// Perfil cultural derivado do DISC de um candidato
+// Perfil cultural derivado do perfil comportamental de um candidato
 export interface CandidateCulturalProfile extends CulturalProfile {
   candidateId: string;
-  discProfile?: string;
+  behavioralProfile?: string;
   derivedAt: string;
 }
 
@@ -82,7 +82,7 @@ export const DIMENSION_ICONS: Record<CulturalDimension, string> = {
   direction: '🎯',
 };
 
-// Mapeamento DISC -> Preferências culturais
+// Mapeamento Comportamental -> Preferências culturais
 export interface DiscCultureMapping {
   dominantProfile: string;
   preferredValues: Partial<CulturalProfile>;

@@ -1,6 +1,6 @@
 /**
  * Candidate Profile Page
- * PRD-014: Banco de Talentos - Perfil completo com DISC
+ * PRD-014: Banco de Talentos - Perfil completo com avaliação comportamental
  */
 
 import { useState } from 'react';
@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { PracticalAnalysisCard } from '@/components/aiAnalysis';
 import {
   Dialog,
   DialogContent,
@@ -43,7 +44,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
-import { mockCandidates, mockJobs, getIdealDISCProfile } from '@/data/mockData';
+import { mockCandidates, mockJobs, getIdealBehavioralProfile } from '@/data/mockData';
 import type { Job } from '@/types';
 import { toast } from 'sonner';
 import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
@@ -137,7 +138,7 @@ export default function CandidateProfile() {
 
   // PRD-035: Cálculo dinâmico de match
   const firstJob = companyJobs[0];
-  const idealProfile = firstJob ? getIdealDISCProfile(firstJob.id) : undefined;
+  const idealProfile = firstJob ? getIdealBehavioralProfile(firstJob.id) : undefined;
   const matchResult = firstJob
     ? calculateMatchBreakdown(candidate, firstJob, idealProfile)
     : null;
@@ -286,7 +287,7 @@ export default function CandidateProfile() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* DISC Profile */}
+            {/* Behavioral Profile */}
             {candidate.testResult ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -296,14 +297,14 @@ export default function CandidateProfile() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <span className="text-xl">Perfil Comportamental DISC</span>
+                      <span className="text-xl">Perfil Comportamental</span>
                       <Badge variant="secondary">
                         {candidate.testResult.result.profile}
                       </Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* DISC Chart */}
+                    {/* Behavioral Chart */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-3">
                         <div className="space-y-1">
@@ -403,7 +404,7 @@ export default function CandidateProfile() {
               >
                 <Card>
                   <CardHeader>
-                    <CardTitle>Perfil Comportamental DISC</CardTitle>
+                    <CardTitle>Perfil Comportamental</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-center py-6 text-muted-foreground">
@@ -412,6 +413,20 @@ export default function CandidateProfile() {
                     </div>
                   </CardContent>
                 </Card>
+              </motion.div>
+            )}
+
+            {/* AI Practical Analysis - PRD-051 */}
+            {candidate.hasTest && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+              >
+                <PracticalAnalysisCard
+                  candidateId={candidate.id}
+                  candidateName={candidate.name}
+                />
               </motion.div>
             )}
 

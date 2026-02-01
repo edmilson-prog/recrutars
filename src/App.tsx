@@ -64,6 +64,10 @@ import CandidateImportCV from "./pages/candidato/ImportCV";
 import CandidateBehavioralTest from "./pages/candidato/BehavioralTest";
 import CandidateBehavioralTestResult from "./pages/candidato/BehavioralTestResult";
 
+// PRD-049 & PRD-050: Gauge-Pro Assessment
+import CandidateGaugeProAssessment from "./pages/candidato/GaugeProAssessment";
+import CandidateGaugeProResult from "./pages/candidato/GaugeProResult";
+
 // PRD-048: Job Assessment pages
 import CreateJobTest from "./pages/empresa/CreateJobTest";
 import JobTestManager from "./pages/empresa/JobTestManager";
@@ -339,6 +343,18 @@ const App = () => (
             <Route path="/candidato/teste-comportamental/resultado" element={
               <ProtectedRoute allowedTypes={['candidate']}>
                 <CandidateBehavioralTestResult />
+              </ProtectedRoute>
+            } />
+
+            {/* PRD-049 & PRD-050: Gauge-Pro */}
+            <Route path="/candidato/gauge-pro" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateGaugeProAssessment />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/gauge-pro/resultado" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateGaugeProResult />
               </ProtectedRoute>
             } />
 

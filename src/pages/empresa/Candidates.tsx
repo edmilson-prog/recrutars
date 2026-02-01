@@ -65,7 +65,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { mockCandidates, mockJobs, getIdealDISCProfile, getCandidateDISCProfile } from '@/data/mockData';
+import { mockCandidates, mockJobs, getIdealBehavioralProfile, getCandidateBehavioralProfile } from '@/data/mockData';
 import type { Candidate, Job } from '@/types';
 import type { CandidateForComparison } from '@/types/disc';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
@@ -95,7 +95,7 @@ import type { ExportContext } from '@/types/export';
 
 // Filter options
 const locations = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 'Curitiba, PR', 'Porto Alegre, RS'];
-const discProfiles = ['Executor', 'Influenciador', 'Analítico', 'Estável'];
+const behavioralProfiles = ['Executor', 'Influenciador', 'Analítico', 'Estável'];
 const experienceRanges = [
   { value: '0-2', label: '0-2 anos' },
   { value: '3-5', label: '3-5 anos' },
@@ -124,7 +124,7 @@ const calculateMatch = (candidate: Candidate, jobs: Job[]): number => {
 
   // Calcula o match para a primeira vaga ativa (ou faz média de todas)
   const job = jobs[0];
-  const idealProfile = getIdealDISCProfile(job.id);
+  const idealProfile = getIdealBehavioralProfile(job.id);
   const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
 
   return matchResult.totalScore;
@@ -272,8 +272,8 @@ export default function CompanyCandidates() {
 
   // PRD-002-dgn: Converter candidato para formato de comparação
   const convertToComparisonCandidate = (candidate: Candidate): CandidateForComparison | null => {
-    const discProfile = getCandidateDISCProfile(candidate.id);
-    if (!discProfile) return null;
+    const behavioralProfile = getCandidateBehavioralProfile(candidate.id);
+    if (!behavioralProfile) return null;
 
     // PRD-035: Usa cálculo dinâmico de match
     const matchScore = calculateMatch(candidate, companyJobs);
@@ -283,7 +283,7 @@ export default function CompanyCandidates() {
       name: getDisplayName(candidate),
       avatar: getDisplayAvatar(candidate) || undefined,
       matchScore,
-      discProfile,
+      behavioralProfile,
       metrics: {
         experience: candidate.experience,
         education: candidate.education,
@@ -325,16 +325,16 @@ export default function CompanyCandidates() {
         </Select>
       </div>
 
-      {/* DISC Profile */}
+      {/* Behavioral Profile */}
       <div className="space-y-3">
-        <label className="text-sm font-medium text-foreground">Perfil DISC</label>
+        <label className="text-sm font-medium text-foreground">Perfil Comportamental</label>
         <Select value={profileFilter} onValueChange={setProfileFilter}>
           <SelectTrigger>
             <SelectValue placeholder="Todos os perfis" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os perfis</SelectItem>
-            {discProfiles.map((profile) => (
+            {behavioralProfiles.map((profile) => (
               <SelectItem key={profile} value={profile}>
                 {profile}
               </SelectItem>
@@ -667,7 +667,7 @@ export default function CompanyCandidates() {
                           </Badge>
                         ) : (
                           <Badge variant="outline" className="text-muted-foreground">
-                            Sem teste DISC
+                            Sem teste comportamental
                           </Badge>
                         )}
                         <span className="text-sm text-muted-foreground">

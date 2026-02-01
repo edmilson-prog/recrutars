@@ -1,19 +1,19 @@
 /**
- * DISC and Match Types
- * PRD-002-dgn: Visualização DISC e Match Score
+ * Behavioral and Match Types
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  */
 
-export interface DISCProfile {
+export interface BehavioralProfile {
   d: number; // Dominância (0-100)
   i: number; // Influência (0-100)
   s: number; // Estabilidade (0-100)
   c: number; // Conformidade (0-100)
 }
 
-export type DISCDimension = "d" | "i" | "s" | "c";
+export type BehavioralDimension = "d" | "i" | "s" | "c";
 
-export interface DISCDimensionInfo {
-  key: DISCDimension;
+export interface BehavioralDimensionInfo {
+  key: BehavioralDimension;
   name: string;
   fullName: string;
   description: string;
@@ -50,8 +50,8 @@ export interface MatchResult {
   categories: MatchCategory[];
   strengths: MatchStrength[];
   opportunities: MatchOpportunity[];
-  candidateProfile: DISCProfile;
-  idealProfile?: DISCProfile;
+  candidateProfile: BehavioralProfile;
+  idealProfile?: BehavioralProfile;
 }
 
 export interface CandidateForComparison {
@@ -59,7 +59,7 @@ export interface CandidateForComparison {
   name: string;
   avatar?: string;
   matchScore: number;
-  discProfile: DISCProfile;
+  behavioralProfile: BehavioralProfile;
   metrics: Record<string, string | number | boolean>;
   // PRD-031: Campos adicionais para comparação
   experienceYears?: number;

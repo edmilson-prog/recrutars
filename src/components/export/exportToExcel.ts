@@ -42,7 +42,7 @@ function getColumnsForSections(sections: ExportSection[]): ExcelColumn[] {
   }
 
   if (sections.includes('disc')) {
-    columns.push({ header: 'Perfil DISC', key: 'discProfile', width: 20 });
+    columns.push({ header: 'Perfil Comportamental', key: 'behavioralProfile', width: 20 });
   }
 
   if (sections.includes('match')) {
@@ -130,7 +130,7 @@ function candidateToRow(
   }
 
   if (sections.includes('disc')) {
-    row['discProfile'] = candidate.testResult?.result?.profile || 'Não avaliado';
+    row['behavioralProfile'] = candidate.testResult?.result?.profile || 'Não avaliado';
   }
 
   if (sections.includes('match')) {

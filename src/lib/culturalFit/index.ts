@@ -6,10 +6,10 @@
  */
 
 export {
-  deriveCulturalProfileFromDisc,
-  getDominantDiscLetter,
-  getDiscCultureDescription,
-  getDiscCultureStrengths,
+  deriveCulturalProfileFromBehavioral,
+  getDominantProfileLetter,
+  getBehavioralCultureDescription,
+  getBehavioralCultureStrengths,
 } from './discCultureMapping';
 
 export {
