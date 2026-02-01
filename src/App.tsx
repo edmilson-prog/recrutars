@@ -77,6 +77,15 @@ import CandidateTestReport from "./pages/empresa/CandidateTestReport";
 import CompareCandidates from "./pages/empresa/CompareCandidates";
 import MagicLinkLanding from "./pages/MagicLinkLanding";
 
+// PRD-052, 053, 054: Corporate Tests Hub
+import CorporateTestsHub from "./pages/empresa/CorporateTestsHub";
+import CorporateTestDetail from "./pages/empresa/CorporateTestDetail";
+import CorporateTestResult from "./pages/empresa/CorporateTestResult";
+import CorporateTestCompare from "./pages/empresa/CorporateTestCompare";
+import CorporateTestReports from "./pages/empresa/CorporateTestReports";
+import CorporateTestMetrics from "./pages/empresa/CorporateTestMetrics";
+import CorporateTestAudit from "./pages/empresa/CorporateTestAudit";
+
 // Help pages
 import HelpPage from "./pages/Help";
 import TicketDetailsPage from "./pages/TicketDetails";
@@ -208,9 +217,40 @@ const App = () => (
                 <CompanySavedCandidates />
               </ProtectedRoute>
             } />
+            {/* PRD-052, 053, 054: Corporate Tests Hub */}
             <Route path="/empresa/testes" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyDashboard />
+                <CorporateTestsHub />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/testes/metricas" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CorporateTestMetrics />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/testes/auditoria" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CorporateTestAudit />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/testes/:testId" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CorporateTestDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/testes/:testId/resultado/:candidateId" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CorporateTestResult />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/testes/:testId/comparar" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CorporateTestCompare />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/testes/:testId/relatorios" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CorporateTestReports />
               </ProtectedRoute>
             } />
             <Route path="/empresa/mensagens" element={

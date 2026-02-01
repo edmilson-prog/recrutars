@@ -5,6 +5,29 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.48.0] - 2026-02-01 — "Command" (PRD-052, PRD-053, PRD-054)
+
+### Added
+- **Hub de Testes Comportamentais** no Painel Empresa (`/empresa/testes`)
+  - Dashboard com KPIs, funil de conversão, alertas e feed de atividades
+  - Criação de testes com 7 templates (Padrão, Liderança, Operacional, Vendas, Técnico, Criativo, Personalizado)
+  - Customização de pesos por dimensão (D1-D5) com sliders e radar chart em tempo real
+  - Gestão de ciclo de vida: Rascunho → Ativo → Encerrado → Arquivado
+  - Sistema de convites: por email, link público, e seleção da base de candidatos
+- **Resultados e Comparativos** (PRD-053)
+  - Visualização individual rica: radar chart D1-D5, barras por dimensão, perfil arquetipal, análise IA
+  - Score de Fit (compatibilidade com vaga) com classificação Excelente/Bom/Regular/Baixo
+  - Comparativo lado a lado de 2-4 candidatos com radar sobreposto
+  - Ranking de compatibilidade ordenado por Fit Score
+  - Shortlist automática (Top 3) e manual com anotações
+- **Relatórios, Métricas e Auditoria** (PRD-054)
+  - Relatório PDF individual (3 páginas com radar chart e análise IA)
+  - Relatório PDF comparativo (2-4 candidatos)
+  - Relatório Excel consolidado com 4 abas (Resumo, Resultados, Estatísticas, Convites)
+  - Dashboard de métricas: gauges, distribuição de perfis, tendências temporais
+  - Sistema de auditoria com log imutável de todas as ações
+  - Relatório de conformidade LGPD (acesso a dados por candidato)
+
 ## [0.47.0] - 2026-02-01 — "Kanban" (PRD-015)
 
 ### Added
