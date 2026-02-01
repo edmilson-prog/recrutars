@@ -1,13 +1,62 @@
 {
   "versions": [
     {
+      "version": "0.45.0",
+      "codename": "Oracle",
+      "type": "minor",
+      "releaseDate": "2026-01-31",
+      "prd": "PRD-051",
+      "description": "Agente de Análise Comportamental por IA com integração Claude API",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Agente de Análise IA: integração com API Claude via proxy Vite",
+            "Análise Prática para recrutadores (linguagem simples, ações práticas)",
+            "Análise Técnica para administradores (linguagem científica, Big Five/DISC)",
+            "Configuração do agente no Admin (IA > Agente de Análise)",
+            "Geração automática em background após conclusão do Gauge-Pro",
+            "Botão Regenerar Análise para administradores",
+            "Indicador 'Gerado por IA' em todas as análises",
+            "Seção opcional Análise IA no export PDF",
+            "Fallback para relatório básico se IA indisponível",
+            "Retry com backoff exponencial (2 tentativas, timeout 30s)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.44.0",
+      "codename": "Archetype",
+      "type": "minor",
+      "releaseDate": "2026-01-27",
+      "prd": "PRD-049 & PRD-050",
+      "description": "Gauge-Pro DISC: Seleção de Palavras e Cenários Situacionais",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Gauge-Pro Parte 1: seleção de palavras com 100 adjetivos em 5 dimensões",
+            "Interface de seleção com grid responsivo e embaralhamento Fisher-Yates",
+            "Gauge-Pro Parte 2: 15 cenários situacionais com mapeamento dimensional",
+            "16 perfis arquetípicos comportamentais baseados nas combinações D1-D5",
+            "Página de resultado com scores, classificações e carreiras recomendadas",
+            "Persistência via localStorage com auto-save por etapa",
+            "Badge Mestre DISC (épico) +150 XP"
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.43.0",
       "codename": "Cheerful Chomsky",
       "type": "minor",
       "releaseDate": "2026-01-20",
       "prd": "PRD-047 & PRD-048",
       "description": "Sistema de Testes Comportamentais Gauge-Pro 2.0 para Candidatos e Empresas",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
