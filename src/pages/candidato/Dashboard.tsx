@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Calendar, Brain, Eye, Search, MessageSquare, ArrowRight, Clock, Building2 } from 'lucide-react';
+import { FileText, Calendar, Brain, Eye, Search, MessageSquare, ArrowRight, Clock, Building2, HelpCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -9,7 +9,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { candidateStats, mockApplications, mockMessages, mockCandidates } from '@/data/mockData';
+import { candidateStats, mockApplications, mockMessages, mockCandidates, mockCurriculums } from '@/data/mockData';
+import { calculateProfileCompletion } from '@/utils/profileCompleteness';
+import { calculateCompleteness } from '@/utils/curriculumCompleteness';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { GAUGE_PRO_CONFIG } from '@/data/gaugeProConfig';
@@ -52,6 +54,25 @@ export default function CandidateDashboard() {
     if (savedAssessment && !savedResult) setHasOngoingAssessment(true);
   }, [candidateId]);
 
+  // Completude do perfil pessoal (calculada dinamicamente)
+  const profileCompletion = calculateProfileCompletion({
+    name: candidate.name,
+    email: candidate.email,
+    title: candidate.title,
+    location: candidate.location,
+    phone: candidate.phone,
+    linkedin: candidate.linkedin,
+    about: candidate.about,
+  });
+
+  // Completude do currículo padrão
+  const defaultCurriculum = mockCurriculums.find(
+    c => c.candidateId === candidateId && c.isDefault && !c.isArchived
+  );
+  const curriculumCompletion = defaultCurriculum
+    ? calculateCompleteness(defaultCurriculum).percentage
+    : 0;
+
   const stats = [
     { label: 'Candidaturas', value: candidateApplications.length, icon: FileText, tooltip: 'Total de candidaturas enviadas para vagas' },
     { label: 'Entrevistas', value: candidateStats.interviews, icon: Calendar, tooltip: 'Entrevistas agendadas ou realizadas' },
@@ -79,7 +100,7 @@ export default function CandidateDashboard() {
         {/* PRD-035: Banner de incentivo ao teste comportamental */}
         <DiscIncentiveBanner
           context="dashboard"
-          profileCompletion={candidate.profileCompletion}
+          profileCompletion={profileCompletion}
         />
 
         {/* Profile Completion */}
@@ -90,7 +111,17 @@ export default function CandidateDashboard() {
         >
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <div>
-              <h2 className="text-xl font-semibold text-foreground">Completude do Perfil</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-foreground">Completude do Perfil</h2>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-4 h-4 text-muted-foreground/50 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p>Indica o preenchimento das suas informações pessoais. Perfis completos têm 3x mais chances de serem vistos por recrutadores.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <p className="text-muted-foreground">Perfis completos têm 3x mais chances de serem vistos</p>
             </div>
             <Button asChild variant="outline">
@@ -101,9 +132,50 @@ export default function CandidateDashboard() {
             </Button>
           </div>
           <div className="flex items-center gap-4">
-            <Progress value={candidate.profileCompletion} className="flex-1 h-3" />
-            <span className="text-2xl font-bold text-foreground">{candidate.profileCompletion}%</span>
+            <Progress value={profileCompletion} className="flex-1 h-3" />
+            <span className="text-2xl font-bold text-foreground">{profileCompletion}%</span>
           </div>
+        </motion.div>
+
+        {/* Curriculum Completion */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="bg-card rounded-2xl p-6 shadow-soft"
+        >
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-foreground">Completude do Currículo</h2>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-4 h-4 text-muted-foreground/50 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p>Mostra o progresso do seu currículo padrão. Currículos completos aumentam o interesse dos recrutadores.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <p className="text-muted-foreground">Currículos completos atraem mais recrutadores</p>
+            </div>
+            <Button asChild variant="outline">
+              <Link to="/candidato/curriculos">
+                Gerenciar Currículos
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
+          {defaultCurriculum ? (
+            <div className="flex items-center gap-4">
+              <Progress value={curriculumCompletion} className="flex-1 h-3" />
+              <span className="text-2xl font-bold text-foreground">{curriculumCompletion}%</span>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Crie seu primeiro currículo para começar a se candidatar às vagas.
+            </p>
+          )}
         </motion.div>
 
         {/* Gauge-Pro Behavioral Profile Card */}
@@ -116,7 +188,17 @@ export default function CandidateDashboard() {
           >
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-xl font-semibold text-foreground">{TEST_CONFIG.profileLabel}</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-semibold text-foreground">{TEST_CONFIG.profileLabel}</h2>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="w-4 h-4 text-muted-foreground/50 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs">
+                      <p>Resultado da sua avaliação comportamental. Cada dimensão reflete um aspecto do seu perfil profissional.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <p className="text-muted-foreground text-sm">
                   Baseado na avaliação {TEST_CONFIG.name}
                 </p>
@@ -208,7 +290,17 @@ export default function CandidateDashboard() {
             className="bg-card rounded-2xl p-6 shadow-soft"
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-foreground">Minhas Candidaturas</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-foreground">Minhas Candidaturas</h2>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-4 h-4 text-muted-foreground/50 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p>Histórico das suas candidaturas recentes e seus status atuais.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <Link to="/candidato/candidaturas" className="text-sm text-secondary font-medium hover:underline">
                 Ver todas
               </Link>
@@ -260,6 +352,14 @@ export default function CandidateDashboard() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-semibold text-foreground">Mensagens</h2>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-4 h-4 text-muted-foreground/50 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p>Mensagens recebidas de recrutadores e empresas.</p>
+                  </TooltipContent>
+                </Tooltip>
                 {unreadMessages.length > 0 && (
                   <span className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-full">
                     {unreadMessages.length} nova{unreadMessages.length > 1 ? 's' : ''}

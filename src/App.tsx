@@ -44,6 +44,7 @@ import CompanySettings from "./pages/empresa/Settings";
 import CompanyNotifications from "./pages/empresa/Notifications";
 import CompanyInterviews from "./pages/empresa/Interviews";
 import CompanySuggestedCandidates from "./pages/empresa/SuggestedCandidates";
+import CompanyPlans from "./pages/empresa/Plans";
 
 // Candidate pages
 import CandidateDashboard from "./pages/candidato/Dashboard";
@@ -63,6 +64,7 @@ import CandidateInterviews from "./pages/candidato/Interviews";
 import CandidateImportCV from "./pages/candidato/ImportCV";
 import CandidateBehavioralTest from "./pages/candidato/BehavioralTest";
 import CandidateBehavioralTestResult from "./pages/candidato/BehavioralTestResult";
+import CandidatePlans from "./pages/candidato/Plans";
 
 // PRD-049 & PRD-050: Gauge-Pro Assessment
 import CandidateGaugeProAssessment from "./pages/candidato/GaugeProAssessment";
@@ -237,6 +239,12 @@ const App = () => (
               </ProtectedRoute>
             } />
 
+            <Route path="/empresa/planos" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyPlans />
+              </ProtectedRoute>
+            } />
+
             {/* PRD-048: Job Assessment Routes */}
             <Route path="/empresa/vagas/:jobId/criar-teste" element={
               <ProtectedRoute allowedTypes={['company']}>
@@ -343,6 +351,12 @@ const App = () => (
             <Route path="/candidato/teste-comportamental/resultado" element={
               <ProtectedRoute allowedTypes={['candidate']}>
                 <CandidateBehavioralTestResult />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/candidato/planos" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidatePlans />
               </ProtectedRoute>
             } />
 

@@ -10,7 +10,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, Users, Settings, LogOut,
   Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart, Calendar, HelpCircle, Bell,
-  ChevronLeft, ChevronRight, Sparkles, Info, FolderTree, FileQuestion
+  ChevronLeft, ChevronRight, Sparkles, Info, FolderTree, FileQuestion, CreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -68,6 +68,7 @@ const companyNav: NavItem[] = [
   { href: '/empresa/testes', label: 'Testes', icon: Brain },
   { href: '/empresa/mensagens', label: 'Mensagens', icon: MessageSquare },
   { href: '/empresa/notificacoes', label: 'Notificações', icon: Bell },
+  { href: '/empresa/planos', label: 'Planos', icon: CreditCard },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/empresa/configuracoes', label: 'Configurações', icon: Settings },
   { href: '/sobre', label: 'Sobre', icon: Info },
@@ -85,6 +86,7 @@ const candidateNav: NavItem[] = [
   { href: '/candidato/gauge-pro', label: TEST_CONFIG.name, icon: Brain },
   { href: '/candidato/testes', label: 'Meus Testes', icon: Brain },
   { href: '/candidato/mensagens', label: 'Mensagens', icon: MessageSquare },
+  { href: '/candidato/planos', label: 'Planos', icon: CreditCard },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/candidato/configuracoes', label: 'Configurações', icon: Settings },
   { href: '/sobre', label: 'Sobre', icon: Info },
@@ -304,7 +306,29 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 pl-2 border-l border-border ml-2 hover:opacity-80 transition-opacity cursor-pointer">
                     <div className="hidden sm:block text-right">
-                      <div className="text-sm font-medium">{displayName}</div>
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <span className="text-sm font-medium">{displayName}</span>
+                        {userType === 'candidate' && currentCandidate?.plan && currentCandidate.plan !== 'Gratuito' && (
+                          <Badge className={cn(
+                            "text-[10px] px-1.5 py-0 h-4 font-semibold border-0",
+                            currentCandidate.plan === 'Premium'
+                              ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-white"
+                              : "bg-primary/15 text-primary"
+                          )}>
+                            {currentCandidate.plan}
+                          </Badge>
+                        )}
+                        {userType === 'company' && currentCompany?.plan && currentCompany.plan !== 'Básico' && (
+                          <Badge className={cn(
+                            "text-[10px] px-1.5 py-0 h-4 font-semibold border-0",
+                            currentCompany.plan === 'Enterprise'
+                              ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-white"
+                              : "bg-primary/15 text-primary"
+                          )}>
+                            {currentCompany.plan}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground">{roleLabel}</div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">

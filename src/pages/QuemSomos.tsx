@@ -72,7 +72,7 @@ export default function QuemSomos() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              Conectando Talentos, Construindo Futuros
+              Conectando Talentos às Oportunidades.
             </motion.p>
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function QuemSomos() {
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <Brain className="w-5 h-5 text-secondary mt-1 flex-shrink-0" />
-                    <span className="text-muted-foreground"><strong className="text-foreground">Ciência Psicométrica</strong> - Big Five e metodologias validadas</span>
+                    <span className="text-muted-foreground"><strong className="text-foreground">Ciência Psicométrica</strong> - Metodologias cientificamente validadas</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <LineChart className="w-5 h-5 text-secondary mt-1 flex-shrink-0" />
@@ -301,7 +301,7 @@ export default function QuemSomos() {
                   <h3 className="text-2xl font-bold text-foreground mb-2">Andréia Carina Marion Galdoni</h3>
                   <p className="text-secondary font-medium mb-4">CEO & Fundadora</p>
                   <p className="text-muted-foreground leading-relaxed">
-                    Especialista em Gestão de Pessoas e Recrutamento Estratégico, Andréia lidera a RecrutaRS com a visão de democratizar avaliações comportamentais científicas no mercado brasileiro. Sua experiência combina profundo conhecimento em psicologia organizacional com visão estratégica de negócios, tornando a RecrutaRS referência em recrutamento inteligente no Rio Grande do Sul.
+                    Especialista em Gestão de Pessoas e Recrutamento Estratégico, Andréia lidera a RecrutaRS com o propósito de tornar os processos de recrutamento mais acessíveis, estruturados e estratégicos para as empresas. Atua no desenvolvimento de soluções que fortalecem processos de contratação mais eficientes, éticos e alinhados às necessidades das empresas e valorizando o respeito, a escuta e a experiência dos candidatos em cada etapa da jornada profissional.
                   </p>
                 </div>
               </div>

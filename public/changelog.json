@@ -1,13 +1,51 @@
 {
   "versions": [
     {
+      "version": "0.46.0",
+      "codename": "Compass",
+      "type": "minor",
+      "releaseDate": "2026-01-31",
+      "prd": "",
+      "description": "Refatoração do perfil do candidato e páginas de planos de assinatura",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Perfil do candidato agora contém apenas informações pessoais",
+            "Dados profissionais gerenciados exclusivamente em currículos",
+            "Cálculo de completude baseado em 7 campos pessoais"
+          ]
+        },
+        {
+          "type": "added",
+          "items": [
+            "Widget de Completude do Currículo no Dashboard do candidato",
+            "Campo 'about' (bio) no tipo Candidate",
+            "Utilitário profileCompleteness.ts para cálculo centralizado",
+            "Páginas de Planos: /candidato/planos e /empresa/planos (3 tiers cada)",
+            "Tooltips HelpCircle em 5 seções do Dashboard do candidato",
+            "Badge de assinante (Premium/Pro) no header do dashboard",
+            "Tipo CandidatePlanType com campo plan no Candidate"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Texto da CEO atualizado na página Quem Somos",
+            "Referências a Big Five removidas das páginas públicas"
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.45.0",
       "codename": "Oracle",
       "type": "minor",
       "releaseDate": "2026-01-31",
       "prd": "PRD-051",
       "description": "Agente de Análise Comportamental por IA com integração Claude API",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

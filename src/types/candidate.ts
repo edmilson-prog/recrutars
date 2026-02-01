@@ -8,6 +8,9 @@
 import type { BehavioralTest } from './test';
 import type { SalaryRange } from './job';
 
+// Tipo de plano do candidato
+export type CandidatePlanType = 'Gratuito' | 'Pro' | 'Premium';
+
 // PRD-026: Modos de visibilidade do perfil
 export type VisibilityMode = 'public' | 'partial' | 'private';
 
@@ -73,6 +76,8 @@ export interface Candidate {
   deactivatedAt?: string;
   phone?: string;
   linkedin?: string;
+  about?: string;
+  plan?: CandidatePlanType; // Plano de assinatura
 
   // PRD-026: Visibilidade do perfil (opcional para compatibilidade com dados existentes)
   visibility?: VisibilitySettings;

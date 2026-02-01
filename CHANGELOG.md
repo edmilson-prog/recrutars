@@ -5,6 +5,28 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.46.0] - 2026-01-31 — "Compass"
+
+### Changed
+- **Perfil do Candidato refatorado**: separação entre perfil pessoal (plataforma) e perfil profissional (currículos)
+  - Página `/candidato/perfil` agora contém apenas informações pessoais (nome, email, cargo, localização, telefone, LinkedIn, bio)
+  - Seções profissionais (experiência, formação, habilidades, salário) removidas — gerenciadas exclusivamente em `/candidato/curriculos`
+  - Novo cálculo de completude baseado em 7 campos pessoais (peso total 100%)
+  - Card informativo direcionando para gerenciamento de currículos
+
+### Added
+- **Widget de Completude do Currículo no Dashboard**: exibe % do currículo padrão com link para gerenciar
+- **Campo `about` no tipo Candidate**: bio/descrição pessoal adicionada aos dados do candidato
+- **Utilitário `profileCompleteness.ts`**: cálculo centralizado de completude do perfil pessoal
+- **Páginas de Planos de Assinatura**: `/candidato/planos` e `/empresa/planos` com 3 tiers cada (1 grátis + 2 pagos)
+- **Tooltips HelpCircle no Dashboard**: ícones explicativos em 5 seções (Perfil, Currículo, Gauge-Pro, Candidaturas, Mensagens)
+- **Badge de assinante no header**: indicador Premium/Pro ao lado do nome do candidato e Profissional/Enterprise para empresas
+- **Tipo `CandidatePlanType`**: Gratuito | Pro | Premium com campo `plan` no Candidate
+
+### Fixed
+- Texto da CEO na página Quem Somos atualizado
+- Referências a "Big Five" removidas das páginas públicas (Quem Somos e Como Funciona)
+
 ## [0.45.0] - 2026-01-31 — "Oracle" (PRD-051)
 
 ### Added
