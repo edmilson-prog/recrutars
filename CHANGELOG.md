@@ -23,6 +23,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Changed
 - **Modal de detalhes do candidato** agora abre centralizado (Dialog) em vez de drawer lateral direito (Sheet)
 
+### Fixed
+- Texto da página Gauge-Pro Empresas ajustado ("Junte-se às empresas" em vez de "milhares de empresas")
+
 ## [0.46.0] - 2026-01-31 — "Compass"
 
 ### Changed

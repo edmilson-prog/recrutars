@@ -27,6 +27,12 @@
             "Modal de detalhes do candidato agora abre centralizado (Dialog) em vez de lateral (Sheet)",
             "Seção Reprovados do Kanban permanece sem drag-and-drop por design"
           ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Texto da página Gauge-Pro Empresas ajustado"
+          ]
         }
       ]
     },
