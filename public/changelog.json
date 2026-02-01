@@ -1,13 +1,43 @@
 {
   "versions": [
     {
+      "version": "0.47.0",
+      "codename": "Kanban",
+      "type": "minor",
+      "releaseDate": "2026-02-01",
+      "prd": "PRD-015",
+      "description": "Dashboard da empresa melhorado, drag-and-drop Kanban e modal centralizado de candidatos",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Dashboard Empresa: 5 mini-cards de status de vagas (Total, Ativas, Rascunhos, Pausadas, Finalizadas)",
+            "Dashboard Empresa: 3 cards de métricas operacionais (Testes do Plano, Avaliações do Mês, Candidatos Avaliados)",
+            "Dashboard Empresa: 3 cards de métricas de equipe (Contratações, Entrevistas Agendadas, Entrevistas Realizadas)",
+            "Kanban drag-and-drop com @dnd-kit na página de Candidaturas (PRD-015)",
+            "Suporte a arrastar cards entre colunas (Novos, Em Análise, Entrevista, Aprovados)",
+            "DragOverlay com feedback visual (sombra, rotação, escala) durante arraste",
+            "Acessibilidade: drag via teclado (Space + setas) com ARIA descriptions"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Modal de detalhes do candidato agora abre centralizado (Dialog) em vez de lateral (Sheet)",
+            "Seção Reprovados do Kanban permanece sem drag-and-drop por design"
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.46.0",
       "codename": "Compass",
       "type": "minor",
       "releaseDate": "2026-01-31",
       "prd": "",
       "description": "Refatoração do perfil do candidato e páginas de planos de assinatura",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "changed",

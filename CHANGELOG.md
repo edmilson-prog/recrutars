@@ -5,6 +5,24 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.47.0] - 2026-02-01 — "Kanban" (PRD-015)
+
+### Added
+- **Dashboard Empresa melhorado**: novos cards de métricas
+  - 5 mini-cards de status de vagas (Total, Ativas, Rascunhos, Pausadas, Finalizadas)
+  - 3 cards de métricas operacionais (Testes do Plano, Avaliações do Mês, Candidatos Avaliados)
+  - 3 cards de métricas de equipe (Contratações, Entrevistas Agendadas, Entrevistas Realizadas)
+- **Drag-and-drop Kanban** na página de Candidaturas (`/empresa/candidaturas`)
+  - Biblioteca `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities`
+  - Arrastar cards entre colunas (Novos, Em Análise, Entrevista, Aprovados)
+  - DragOverlay com feedback visual (sombra, rotação 2°, escala 105%)
+  - Diferenciação click vs. drag com `activationConstraint: { distance: 8 }`
+  - Acessibilidade: drag via teclado (Space + setas) com ARIA descriptions
+  - Seção Reprovados sem drag-and-drop por design
+
+### Changed
+- **Modal de detalhes do candidato** agora abre centralizado (Dialog) em vez de drawer lateral direito (Sheet)
+
 ## [0.46.0] - 2026-01-31 — "Compass"
 
 ### Changed

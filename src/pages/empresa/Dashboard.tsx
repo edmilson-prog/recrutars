@@ -1,5 +1,10 @@
 import { motion } from 'framer-motion';
-import { Briefcase, Users, UserPlus, Clock, Plus, ArrowUp, Eye, Search, MessageSquare, Brain, ChevronRight } from 'lucide-react';
+import {
+  Briefcase, Users, UserPlus, Clock, Plus, ArrowUp, Eye, Search, MessageSquare, Brain, ChevronRight,
+  LayoutGrid, CircleCheck, FileEdit, PauseCircle, CheckCircle2,
+  ClipboardCheck, TrendingUp, UsersRound,
+  UserCheck, CalendarClock, History, ArrowRight
+} from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import {
@@ -7,7 +12,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { companyStats, mockJobs, mockApplications, mockBehavioralTests } from '@/data/mockData';
+import { companyStats, mockJobs, mockApplications, mockBehavioralTests, mockInterviews } from '@/data/mockData';
+import { Progress } from '@/components/ui/progress';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { SuggestedCandidatesWidget } from '@/components/empresa/SuggestedCandidatesWidget';
@@ -37,6 +43,42 @@ export default function CompanyDashboard() {
   const inReviewCount = mockApplications.filter(app =>
     app.status === 'reviewing' && companyJobs.some(job => job.id === app.jobId)
   ).length;
+
+  // Novos cálculos para cards de referência
+  const totalJobsCount = companyJobs.length;
+  const pausedJobsCount = companyJobs.filter(j => j.status === 'paused').length;
+  const closedJobsCount = companyJobs.filter(j => j.status === 'closed').length;
+
+  const companyInterviews = mockInterviews.filter(i =>
+    companyJobs.some(j => j.id === i.jobId)
+  );
+  const scheduledInterviewsCount = companyInterviews.filter(
+    i => i.status === 'confirmed' || i.status === 'pending_candidate'
+  ).length;
+  const completedInterviewsCount = companyInterviews.filter(
+    i => i.status === 'completed'
+  ).length;
+
+  // Métricas mock locais
+  const dashboardMetrics = {
+    planName: 'Seleção Inteligente',
+    planTestsTotal: 5,
+    planTestsUsed: 0,
+    assessmentsThisMonth: 0,
+    assessmentsPending: 7,
+    candidatesEvaluated: 27,
+    avgAssessmentTime: 96,
+    activeEmployees: 0,
+  };
+
+  // Mini-cards de status de vagas
+  const jobStatusCards = [
+    { label: 'Total de Vagas', value: totalJobsCount, icon: LayoutGrid, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
+    { label: 'Vagas Ativas', value: activeJobsCount, icon: CircleCheck, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
+    { label: 'Rascunhos', value: 0, icon: FileEdit, iconBg: 'bg-slate-100', iconColor: 'text-slate-500' },
+    { label: 'Pausadas', value: pausedJobsCount, icon: PauseCircle, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
+    { label: 'Vagas Finalizadas', value: closedJobsCount, icon: CheckCircle2, iconBg: 'bg-sky-100', iconColor: 'text-sky-600' },
+  ];
 
   // RF-001 a RF-005: Cards clicáveis
   const stats = [
@@ -118,6 +160,206 @@ export default function CompanyDashboard() {
             </h1>
             <p className="text-muted-foreground">Acompanhe seus processos seletivos</p>
           </div>
+        </div>
+
+        {/* Seção 1: Mini-cards de Status de Vagas */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {jobStatusCards.map((card, index) => (
+            <motion.div
+              key={card.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="bg-card rounded-xl p-4 shadow-soft"
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg ${card.iconBg} flex items-center justify-center flex-shrink-0`}>
+                  <card.icon className={`w-5 h-5 ${card.iconColor}`} />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs text-muted-foreground truncate">{card.label}</div>
+                  <div className="text-2xl font-bold text-foreground">{card.value}</div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Seção 2: Métricas Operacionais */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Card: Testes do Plano */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-card rounded-2xl p-6 shadow-soft"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
+                <ClipboardCheck className="w-5 h-5 text-violet-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Testes do Plano</h3>
+                <p className="text-xs text-muted-foreground">{dashboardMetrics.planName}</p>
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-foreground mb-3">
+              {dashboardMetrics.planTestsTotal}
+            </div>
+            <div className="space-y-2 mb-4">
+              <Progress
+                value={(dashboardMetrics.planTestsUsed / dashboardMetrics.planTestsTotal) * 100}
+                className="h-2"
+              />
+              <p className="text-xs text-muted-foreground">
+                {dashboardMetrics.planTestsUsed} de {dashboardMetrics.planTestsTotal} usados este mês
+              </p>
+            </div>
+            <Link
+              to="/empresa/plano"
+              className="text-sm text-secondary font-medium hover:underline inline-flex items-center gap-1"
+            >
+              Ver meu plano <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </motion.div>
+
+          {/* Card: Avaliações do Mês */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-card rounded-2xl p-6 shadow-soft"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-5 h-5 text-cyan-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground">Avaliações do Mês</h3>
+            </div>
+            <div className="text-3xl font-bold text-foreground mb-1">
+              {dashboardMetrics.assessmentsThisMonth}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              {dashboardMetrics.assessmentsPending} pendentes
+            </p>
+            <Link
+              to="/empresa/testes"
+              className="text-sm text-secondary font-medium hover:underline inline-flex items-center gap-1"
+            >
+              Ver dashboard de testes <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </motion.div>
+
+          {/* Card: Candidatos Avaliados */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="bg-card rounded-2xl p-6 shadow-soft"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                <UsersRound className="w-5 h-5 text-indigo-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground">Candidatos Avaliados</h3>
+            </div>
+            <div className="text-3xl font-bold text-foreground mb-1">
+              {dashboardMetrics.candidatesEvaluated}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Tempo médio: {dashboardMetrics.avgAssessmentTime} min
+            </p>
+            <Link
+              to="/empresa/candidatos"
+              className="text-sm text-secondary font-medium hover:underline inline-flex items-center gap-1"
+            >
+              Ver gestão de equipes <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </motion.div>
+        </div>
+
+        {/* Seção 3: Métricas de Equipe */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Card: Contratações */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-card rounded-2xl p-6 shadow-soft"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <UserCheck className="w-5 h-5 text-emerald-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground">Contratações</h3>
+            </div>
+            <div className="text-3xl font-bold text-emerald-600 mb-1">
+              {companyStats.hiredThisMonth}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              {dashboardMetrics.activeEmployees} funcionários ativos
+            </p>
+            <Link
+              to="/empresa/candidatos"
+              className="text-sm text-secondary font-medium hover:underline inline-flex items-center gap-1"
+            >
+              Ver histórico completo <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </motion.div>
+
+          {/* Card: Entrevistas Agendadas */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="bg-card rounded-2xl p-6 shadow-soft"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+                <CalendarClock className="w-5 h-5 text-orange-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground">Entrevistas Agendadas</h3>
+            </div>
+            <div className="text-3xl font-bold text-foreground mb-1">
+              {scheduledInterviewsCount}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Próximas entrevistas
+            </p>
+            <Link
+              to="/empresa/entrevistas"
+              className="text-sm text-secondary font-medium hover:underline inline-flex items-center gap-1"
+            >
+              Ver agenda <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </motion.div>
+
+          {/* Card: Entrevistas Realizadas */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-card rounded-2xl p-6 shadow-soft"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <History className="w-5 h-5 text-blue-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground">Entrevistas Realizadas</h3>
+            </div>
+            <div className="text-3xl font-bold text-foreground mb-1">
+              {completedInterviewsCount}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Total de entrevistas concluídas
+            </p>
+            <Link
+              to="/empresa/entrevistas"
+              className="text-sm text-secondary font-medium hover:underline inline-flex items-center gap-1"
+            >
+              Ver histórico <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </motion.div>
         </div>
 
         {/* Stats Grid - RF-001 a RF-005 */}
