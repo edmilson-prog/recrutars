@@ -402,7 +402,7 @@ function EmptyState({ hasFilters, onClearFilters }: EmptyStateProps) {
             Nenhuma recomendação disponível
           </h3>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Complete seu perfil e faça o teste DISC para receber recomendações
+            Complete seu perfil e faça o teste comportamental para receber recomendações
             mais precisas e personalizadas.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -410,7 +410,7 @@ function EmptyState({ hasFilters, onClearFilters }: EmptyStateProps) {
               <Link to="/candidato/perfil">Completar perfil</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link to="/candidato/testes">Fazer teste DISC</Link>
+              <Link to="/candidato/testes">Fazer teste comportamental</Link>
             </Button>
             <Button asChild>
               <Link to="/candidato/vagas">Explorar todas as vagas</Link>

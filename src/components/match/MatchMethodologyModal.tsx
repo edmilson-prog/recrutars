@@ -55,7 +55,7 @@ const METHODOLOGY_CATEGORIES = [
     color: "text-cyan-600 dark:text-cyan-400",
     bgColor: "bg-cyan-100 dark:bg-cyan-950/30",
     description:
-      "Comparamos seu perfil DISC com o perfil ideal definido pela empresa para a posição.",
+      "Comparamos seu perfil comportamental com o perfil ideal definido pela empresa para a posição.",
     example: "Uma vaga de liderança pode buscar perfil alto em D (Dominância). Se seu perfil é compatível, o score aumenta.",
   },
   {
@@ -160,7 +160,7 @@ export function MatchMethodologyModal({
           <div className="border rounded-lg p-4 bg-muted/20">
             <h3 className="font-semibold text-foreground mb-2">Fórmula</h3>
             <code className="text-sm bg-muted px-2 py-1 rounded block">
-              Match = (Skills × 40%) + (Experiência × 30%) + (DISC × 20%) + (Localização × 10%)
+              Match = (Skills × 40%) + (Experiência × 30%) + (Comportamental × 20%) + (Localização × 10%)
             </code>
           </div>
 

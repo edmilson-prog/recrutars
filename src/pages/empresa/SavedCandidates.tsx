@@ -67,7 +67,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { useCandidateSelection, SelectionBar } from '@/components/compare/CandidateSelector';
 import { CandidateComparisonModal } from '@/components/compare/CandidateComparison';
-import { getCandidateDISCProfile } from '@/data/mockData';
+import { getCandidateBehavioralProfile } from '@/data/mockData';
 // PRD-032: Exportação de candidatos
 import { ExportCandidatesModal } from '@/components/export';
 import type { ExportContext } from '@/types/export';
@@ -168,7 +168,7 @@ export default function SavedCandidates() {
         const candidate = savedCandidates.find((c) => c.id === id);
         if (!candidate) return null;
 
-        const discProfile = getCandidateDISCProfile(candidate);
+        const behavioralProfile = getCandidateBehavioralProfile(candidate);
         const matchScore = calculateMatch(candidate.skills, companyJobs);
 
         return {
@@ -176,7 +176,7 @@ export default function SavedCandidates() {
           name: candidate.name,
           avatar: candidate.avatar,
           matchScore,
-          discProfile,
+          behavioralProfile,
           metrics: {},
           // PRD-031: Campos adicionais
           experienceYears: candidate.experience,
@@ -331,7 +331,7 @@ export default function SavedCandidates() {
               )}
             </div>
 
-            {/* DISC Profile & Saved info */}
+            {/* Behavioral Profile & Saved info */}
             <div className="flex flex-wrap items-center gap-4 mt-4">
               {candidate.testResult ? (
                 <Badge className="bg-secondary text-secondary-foreground">
@@ -339,7 +339,7 @@ export default function SavedCandidates() {
                 </Badge>
               ) : (
                 <Badge variant="outline" className="text-muted-foreground">
-                  Sem teste DISC
+                  Sem teste comportamental
                 </Badge>
               )}
               <span className="text-sm text-muted-foreground">

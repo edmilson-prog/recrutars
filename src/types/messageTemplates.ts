@@ -22,7 +22,7 @@ export type TemplateVariable =
   | 'empresa'        // Nome da empresa
   | 'skills'         // Skills do candidato
   | 'experiencia'    // Anos de experiência
-  | 'disc_perfil'    // Perfil DISC dominante
+  | 'disc_perfil'    // Perfil comportamental dominante
   | 'data'           // Data (ex: entrevista)
   | 'horario'        // Horário (ex: entrevista)
   | 'local';         // Local (ex: entrevista)
@@ -101,7 +101,7 @@ export const VARIABLE_LABELS: Record<TemplateVariable, string> = {
   empresa: 'Nome da empresa',
   skills: 'Skills do candidato',
   experiencia: 'Anos de experiência',
-  disc_perfil: 'Perfil DISC',
+  disc_perfil: 'Perfil Comportamental',
   data: 'Data',
   horario: 'Horário',
   local: 'Local',

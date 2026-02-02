@@ -20,7 +20,7 @@ export interface CompanyNotificationMetadata {
   jobTitle?: string;
   applicationId?: string;
   matchPercentage?: number;
-  discProfile?: string;
+  behavioralProfile?: string;
   interviewDate?: string;
   interviewTime?: string;
   suggestedDate?: string;

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Search, MoreVertical, Users, Eye, Pause, Play, Trash2, Edit, Copy, XCircle, X, Briefcase } from 'lucide-react';
+import { Plus, Search, MoreVertical, Users, Eye, Pause, Play, Trash2, Edit, Copy, XCircle, X, Briefcase, Brain } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,6 +73,7 @@ const INITIAL_FORM_STATE = {
 };
 
 export default function CompanyJobs() {
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<Job[]>(mockJobs.filter(j => j.companyId === 'company-1'));
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | JobStatus>('all');
@@ -378,6 +380,10 @@ export default function CompanyJobs() {
             <DropdownMenuItem onClick={() => openEditJobForm(job)}>
               <Edit className="w-4 h-4 mr-2" />
               Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(`/empresa/vagas/${job.id}/teste`)}>
+              <Brain className="w-4 h-4 mr-2" />
+              Teste Comportamental
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setJobToPause(job)}>
               <Pause className="w-4 h-4 mr-2" />

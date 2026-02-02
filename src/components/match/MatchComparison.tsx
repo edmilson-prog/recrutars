@@ -1,6 +1,6 @@
 /**
  * Match Comparison Component
- * PRD-002-dgn: Visualização DISC e Match Score
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  *
  * Comparação visual do perfil do candidato vs perfil ideal da vaga
  * Mostra radar chart com overlay e destaque de gaps
@@ -8,7 +8,7 @@
 
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import type { DISCProfile, MatchResult } from "@/types/disc";
+import type { BehavioralProfile, MatchResult } from "@/types/disc";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { DISCRadarChart } from "../disc/DISCRadarChart";
 import { DISCLegendCompact } from "../disc/DISCLegend";
@@ -18,8 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Target, User, AlertCircle } from "lucide-react";
 
 interface MatchComparisonProps {
-  candidateProfile: DISCProfile;
-  idealProfile?: DISCProfile;
+  candidateProfile: BehavioralProfile;
+  idealProfile?: BehavioralProfile;
   matchScore?: number;
   title?: string;
   showLegend?: boolean;
@@ -97,7 +97,7 @@ export function MatchComparison({
           </div>
         </div>
 
-        {/* Legenda DISC */}
+        {/* Legenda Comportamental */}
         {showLegend && (
           <div className="pt-2 border-t">
             <DISCLegendCompact profile={candidateProfile} />
@@ -126,9 +126,9 @@ export function MatchComparison({
                 }[dimension as keyof typeof gaps];
 
                 const candidateValue =
-                  candidateProfile[dimension as keyof DISCProfile];
+                  candidateProfile[dimension as keyof BehavioralProfile];
                 const idealValue =
-                  idealProfile![dimension as keyof DISCProfile];
+                  idealProfile![dimension as keyof BehavioralProfile];
                 const isHigher = candidateValue > idealValue;
 
                 return (
@@ -159,7 +159,7 @@ export function MatchComparison({
           <div className="text-center py-4 text-muted-foreground">
             <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">
-              Esta vaga não possui perfil DISC ideal definido.
+              Esta vaga não possui perfil comportamental ideal definido.
             </p>
             <p className="text-xs mt-1">
               Apenas o seu perfil está sendo exibido.
@@ -173,8 +173,8 @@ export function MatchComparison({
 
 // Comparação lado a lado simples (dois cards)
 interface MatchComparisonSideBySideProps {
-  candidateProfile: DISCProfile;
-  idealProfile: DISCProfile;
+  candidateProfile: BehavioralProfile;
+  idealProfile: BehavioralProfile;
   candidateName?: string;
   className?: string;
 }

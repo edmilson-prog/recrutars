@@ -5,7 +5,7 @@ const features = [
   {
     icon: Brain,
     title: 'Avaliação Gauge-Pro',
-    description: 'Teste comportamental científico que identifica o perfil DISC dos candidatos.',
+    description: 'Teste comportamental científico que identifica o perfil comportamental dos candidatos.',
   },
   {
     icon: Target,

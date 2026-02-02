@@ -1,6 +1,6 @@
 /**
  * Match Components Index
- * PRD-002-dgn: Visualização DISC e Match Score
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  */
 
 // Score Circle

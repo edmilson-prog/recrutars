@@ -97,7 +97,7 @@ export const CHATBOT_CATEGORIES = {
   general: 'Geral',
   candidate: 'Para Candidatos',
   company: 'Para Empresas',
-  tests: 'Testes DISC',
+  tests: 'Testes Comportamentais',
   account: 'Conta e Perfil',
   jobs: 'Vagas',
   technical: 'Problemas Técnicos',

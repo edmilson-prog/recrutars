@@ -59,8 +59,8 @@ export const culturalDimensions: CulturalDimensionDefinition[] = [
   },
 ];
 
-// Mapeamento de perfis DISC para preferências culturais
-export const discCultureMappings: DiscCultureMapping[] = [
+// Mapeamento de perfis comportamentais para preferências culturais
+export const cultureMappings: DiscCultureMapping[] = [
   {
     dominantProfile: 'D',
     preferredValues: {
@@ -204,13 +204,13 @@ export function getDimensionDefinition(id: CulturalDimension): CulturalDimension
   return culturalDimensions.find(d => d.id === id);
 }
 
-// Obter mapeamento DISC por perfil
-export function getDiscMapping(profile: string): DiscCultureMapping | undefined {
+// Obter mapeamento cultural por perfil
+export function getCultureMapping(profile: string): DiscCultureMapping | undefined {
   // Tenta encontrar match exato primeiro
-  const exactMatch = discCultureMappings.find(m => m.dominantProfile === profile);
+  const exactMatch = cultureMappings.find(m => m.dominantProfile === profile);
   if (exactMatch) return exactMatch;
 
   // Se não encontrar, tenta com a primeira letra do perfil
   const firstLetter = profile.charAt(0).toUpperCase();
-  return discCultureMappings.find(m => m.dominantProfile === firstLetter);
+  return cultureMappings.find(m => m.dominantProfile === firstLetter);
 }

@@ -1,6 +1,6 @@
 /**
  * Candidate Selector Component
- * PRD-002-dgn: Visualização DISC e Match Score
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  *
  * Permite selecionar até 3 candidatos para comparação
  * Usado na lista de candidatos da empresa

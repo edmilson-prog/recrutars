@@ -12,7 +12,8 @@ export type ExportSection =
   | 'skills'
   | 'disc'
   | 'match'
-  | 'salary';
+  | 'salary'
+  | 'aiAnalysis';
 
 export type ExportOrder =
   | 'match_desc'
@@ -69,7 +70,7 @@ export const EXPORT_SECTION_OPTIONS: ExportSectionOption[] = [
   },
   {
     key: 'disc',
-    label: 'Perfil DISC',
+    label: 'Perfil Comportamental',
     description: 'Perfil primário e características',
     defaultChecked: true,
   },
@@ -83,6 +84,12 @@ export const EXPORT_SECTION_OPTIONS: ExportSectionOption[] = [
     key: 'salary',
     label: 'Pretensão Salarial',
     description: 'Valor pretendido',
+    defaultChecked: false,
+  },
+  {
+    key: 'aiAnalysis',
+    label: 'Análise IA',
+    description: 'Análise comportamental gerada por IA',
     defaultChecked: false,
   },
 ];

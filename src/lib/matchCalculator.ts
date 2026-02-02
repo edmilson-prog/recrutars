@@ -3,11 +3,11 @@
  * PRD-035: Motor de cálculo dinâmico de match
  *
  * Calcula o score de compatibilidade entre candidato e vaga
- * com base em skills, experiência, perfil DISC e localização.
+ * com base em skills, experiência, perfil comportamental e localização.
  */
 
 import type {
-  DISCProfile,
+  BehavioralProfile,
   MatchResult,
   MatchCategory,
   MatchStrength,
@@ -125,12 +125,12 @@ export function calculateExperienceScore(
 }
 
 /**
- * Calcula o score DISC usando distância euclidiana normalizada
+ * Calcula o score comportamental usando distância euclidiana normalizada
  * entre o perfil do candidato e o perfil ideal da vaga
  */
-export function calculateDISCScore(
-  candidateProfile: DISCProfile,
-  idealProfile: DISCProfile
+export function calculateBehavioralScore(
+  candidateProfile: BehavioralProfile,
+  idealProfile: BehavioralProfile
 ): number {
   if (!candidateProfile || !idealProfile) {
     return 50; // Score neutro se não houver dados
@@ -237,7 +237,7 @@ export function generateStrengths(
   const behavioralCategory = categories.find(c => c.id === 'behavioral');
   if (behavioralCategory && behavioralCategory.score >= 70) {
     strengths.push({
-      id: 'str-disc-1',
+      id: 'str-behavioral-1',
       text: 'Seu perfil comportamental demonstra alinhamento com a cultura e as demandas da posição',
       category: 'behavioral',
       impact: behavioralCategory.score >= 85 ? 'high' : 'medium',
@@ -320,8 +320,8 @@ export function generateOpportunities(
   const behavioralCategory = categories.find(c => c.id === 'behavioral');
   if (behavioralCategory && behavioralCategory.score < 65) {
     opportunities.push({
-      id: 'opp-disc-1',
-      text: 'Refazer o teste DISC para um perfil mais atualizado e preciso',
+      id: 'opp-behavioral-1',
+      text: 'Refazer o teste comportamental para um perfil mais atualizado e preciso',
       category: 'behavioral',
       potentialIncrease: Math.min(12, Math.round((65 - behavioralCategory.score) * 0.4)),
       actionable: true,
@@ -363,10 +363,10 @@ export function generateOpportunities(
 export function calculateMatchBreakdown(
   candidate: Partial<Candidate>,
   job: Partial<Job>,
-  idealProfile?: DISCProfile
+  idealProfile?: BehavioralProfile
 ): MatchResult {
-  // Extrai perfil DISC do candidato
-  const candidateProfile: DISCProfile | undefined = candidate.testResult?.result
+  // Extrai perfil comportamental do candidato
+  const candidateProfile: BehavioralProfile | undefined = candidate.testResult?.result
     ? {
         d: candidate.testResult.result.dominance,
         i: candidate.testResult.result.influence,
@@ -386,9 +386,9 @@ export function calculateMatchBreakdown(
     job.level || 'Pleno'
   );
 
-  const discScore = candidateProfile && idealProfile
-    ? calculateDISCScore(candidateProfile, idealProfile)
-    : 50; // Score neutro se não houver perfil DISC
+  const behavioralScore = candidateProfile && idealProfile
+    ? calculateBehavioralScore(candidateProfile, idealProfile)
+    : 50; // Score neutro se não houver perfil comportamental
 
   const locationScore = calculateLocationScore(
     candidate.location || '',
@@ -416,7 +416,7 @@ export function calculateMatchBreakdown(
       id: 'behavioral',
       name: 'Perfil Comportamental',
       weight: CATEGORY_WEIGHTS.behavioral,
-      score: discScore,
+      score: behavioralScore,
       description: DEFAULT_MATCH_CATEGORIES[2].description,
     },
     {

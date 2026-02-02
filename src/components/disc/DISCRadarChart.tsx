@@ -1,6 +1,6 @@
 /**
- * DISC Radar Chart Component
- * PRD-002-dgn: Visualização DISC e Match Score
+ * Behavioral Radar Chart Component
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  *
  * Radar chart interativo com 4 eixos (D, I, S, C)
  * Suporta overlay de perfil ideal para comparação
@@ -15,19 +15,19 @@ import {
   Radar,
   Tooltip,
 } from "recharts";
-import type { DISCProfile } from "@/types/disc";
+import type { BehavioralProfile } from "@/types/disc";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 
-// Cores DISC conforme PRD
-const DISC_COLORS = {
+// Cores do perfil conforme PRD
+const PROFILE_COLORS = {
   d: "#EF4444", // Vermelho - Dominância
   i: "#F59E0B", // Amarelo - Influência
   s: "#22C55E", // Verde - Estabilidade
   c: "#3B82F6", // Azul - Conformidade
 };
 
-const DISC_LABELS = {
+const PROFILE_LABELS = {
   d: { short: "D", full: "Dominância", description: "Assertividade e orientação a resultados" },
   i: { short: "I", full: "Influência", description: "Sociabilidade e persuasão" },
   s: { short: "S", full: "Estabilidade", description: "Paciência e cooperação" },
@@ -35,8 +35,8 @@ const DISC_LABELS = {
 };
 
 interface DISCRadarChartProps {
-  profile: DISCProfile;
-  idealProfile?: DISCProfile;
+  profile: BehavioralProfile;
+  idealProfile?: BehavioralProfile;
   size?: "sm" | "md" | "lg";
   showLabels?: boolean;
   showGrid?: boolean;
@@ -104,35 +104,35 @@ export function DISCRadarChart({
   const chartData: ChartDataPoint[] = [
     {
       dimension: "D",
-      fullName: DISC_LABELS.d.full,
-      description: DISC_LABELS.d.description,
+      fullName: PROFILE_LABELS.d.full,
+      description: PROFILE_LABELS.d.description,
       value: profile.d,
       ideal: idealProfile?.d,
-      color: DISC_COLORS.d,
+      color: PROFILE_COLORS.d,
     },
     {
       dimension: "I",
-      fullName: DISC_LABELS.i.full,
-      description: DISC_LABELS.i.description,
+      fullName: PROFILE_LABELS.i.full,
+      description: PROFILE_LABELS.i.description,
       value: profile.i,
       ideal: idealProfile?.i,
-      color: DISC_COLORS.i,
+      color: PROFILE_COLORS.i,
     },
     {
       dimension: "S",
-      fullName: DISC_LABELS.s.full,
-      description: DISC_LABELS.s.description,
+      fullName: PROFILE_LABELS.s.full,
+      description: PROFILE_LABELS.s.description,
       value: profile.s,
       ideal: idealProfile?.s,
-      color: DISC_COLORS.s,
+      color: PROFILE_COLORS.s,
     },
     {
       dimension: "C",
-      fullName: DISC_LABELS.c.full,
-      description: DISC_LABELS.c.description,
+      fullName: PROFILE_LABELS.c.full,
+      description: PROFILE_LABELS.c.description,
       value: profile.c,
       ideal: idealProfile?.c,
-      color: DISC_COLORS.c,
+      color: PROFILE_COLORS.c,
     },
   ];
 
@@ -146,7 +146,7 @@ export function DISCRadarChart({
   const { height, outerRadius } = sizeConfig[size];
 
   // Aria label descritivo
-  const ariaLabel = `Perfil DISC: Dominância ${profile.d}%, Influência ${profile.i}%, Estabilidade ${profile.s}%, Conformidade ${profile.c}%${
+  const ariaLabel = `Perfil Comportamental: Dominância ${profile.d}%, Influência ${profile.i}%, Estabilidade ${profile.s}%, Conformidade ${profile.c}%${
     idealProfile
       ? `. Perfil ideal: D ${idealProfile.d}%, I ${idealProfile.i}%, S ${idealProfile.s}%, C ${idealProfile.c}%`
       : ""
@@ -223,7 +223,7 @@ export function DISCRadarChartMini({
   profile,
   className,
 }: {
-  profile: DISCProfile;
+  profile: BehavioralProfile;
   className?: string;
 }) {
   return (
@@ -237,4 +237,4 @@ export function DISCRadarChartMini({
   );
 }
 
-export { DISC_COLORS, DISC_LABELS };
+export { PROFILE_COLORS, PROFILE_LABELS };

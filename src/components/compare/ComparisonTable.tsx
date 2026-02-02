@@ -1,6 +1,6 @@
 /**
  * Comparison Table Component
- * PRD-002-dgn: Visualização DISC e Match Score
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  *
  * Tabela comparativa de métricas entre candidatos
  * Destaca melhor valor em cada métrica
@@ -37,11 +37,11 @@ export const DEFAULT_COMPARISON_METRICS: MetricDefinition[] = [
   { key: "availability", label: "Disponibilidade", type: "string", section: "Informações" },
   // Localização
   { key: "location", label: "Localização", type: "string", section: "Informações" },
-  // DISC
-  { key: "discD", label: "Dominância (D)", type: "number", section: "Perfil DISC" },
-  { key: "discI", label: "Influência (I)", type: "number", section: "Perfil DISC" },
-  { key: "discS", label: "Estabilidade (S)", type: "number", section: "Perfil DISC" },
-  { key: "discC", label: "Conformidade (C)", type: "number", section: "Perfil DISC" },
+  // Perfil Comportamental
+  { key: "discD", label: "Dominância (D)", type: "number", section: "Perfil Comportamental" },
+  { key: "discI", label: "Influência (I)", type: "number", section: "Perfil Comportamental" },
+  { key: "discS", label: "Estabilidade (S)", type: "number", section: "Perfil Comportamental" },
+  { key: "discC", label: "Conformidade (C)", type: "number", section: "Perfil Comportamental" },
 ];
 
 interface ComparisonTableProps {
@@ -80,10 +80,10 @@ export function ComparisonTable({
   ): string | number | boolean | undefined => {
     // Valores especiais mapeados
     if (metric.key === "matchScore") return candidate.matchScore;
-    if (metric.key === "discD") return candidate.discProfile.d;
-    if (metric.key === "discI") return candidate.discProfile.i;
-    if (metric.key === "discS") return candidate.discProfile.s;
-    if (metric.key === "discC") return candidate.discProfile.c;
+    if (metric.key === "discD") return candidate.behavioralProfile.d;
+    if (metric.key === "discI") return candidate.behavioralProfile.i;
+    if (metric.key === "discS") return candidate.behavioralProfile.s;
+    if (metric.key === "discC") return candidate.behavioralProfile.c;
     // PRD-031: Novos campos diretos
     if (metric.key === "experienceYears") return candidate.experienceYears;
     if (metric.key === "currentRole") return candidate.currentRole;
@@ -294,10 +294,10 @@ export function ComparisonTableCompact({
               {candidates.map((candidate) => {
                 let value: string | number | boolean | undefined;
                 if (metric.key === "matchScore") value = candidate.matchScore;
-                else if (metric.key === "discD") value = candidate.discProfile.d;
-                else if (metric.key === "discI") value = candidate.discProfile.i;
-                else if (metric.key === "discS") value = candidate.discProfile.s;
-                else if (metric.key === "discC") value = candidate.discProfile.c;
+                else if (metric.key === "discD") value = candidate.behavioralProfile.d;
+                else if (metric.key === "discI") value = candidate.behavioralProfile.i;
+                else if (metric.key === "discS") value = candidate.behavioralProfile.s;
+                else if (metric.key === "discC") value = candidate.behavioralProfile.c;
                 else value = candidate.metrics?.[metric.key];
 
                 return (

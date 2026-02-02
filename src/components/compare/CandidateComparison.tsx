@@ -1,6 +1,6 @@
 /**
  * Candidate Comparison Component
- * PRD-002-dgn: Visualização DISC e Match Score
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  *
  * Layout lado a lado para comparar até 3 candidatos
  * Inclui cards com radar mini, match score e tabela de métricas
@@ -186,31 +186,31 @@ export function CandidateComparison({
                     </div>
                   )}
 
-                  {/* Radar DISC mini */}
+                  {/* Radar comportamental mini */}
                   <div className="flex justify-center mb-4">
                     <DISCRadarChartMini
-                      profile={candidate.discProfile}
+                      profile={candidate.behavioralProfile}
                       className="w-40 h-40"
                     />
                   </div>
 
-                  {/* Scores DISC */}
+                  {/* Scores comportamentais */}
                   <div className="grid grid-cols-4 gap-2 text-center text-xs mb-4">
                     <div>
                       <div className="font-semibold text-red-600">D</div>
-                      <div>{candidate.discProfile.d}</div>
+                      <div>{candidate.behavioralProfile.d}</div>
                     </div>
                     <div>
                       <div className="font-semibold text-yellow-600">I</div>
-                      <div>{candidate.discProfile.i}</div>
+                      <div>{candidate.behavioralProfile.i}</div>
                     </div>
                     <div>
                       <div className="font-semibold text-green-600">S</div>
-                      <div>{candidate.discProfile.s}</div>
+                      <div>{candidate.behavioralProfile.s}</div>
                     </div>
                     <div>
                       <div className="font-semibold text-blue-600">C</div>
-                      <div>{candidate.discProfile.c}</div>
+                      <div>{candidate.behavioralProfile.c}</div>
                     </div>
                   </div>
 

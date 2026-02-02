@@ -5,6 +5,315 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.49.0] - 2026-02-01 — "Tribe" (PRD-055, PRD-056, PRD-057)
+
+### Added
+- **Gestão de Equipes** no Painel Empresa (`/empresa/equipes`)
+  - Dashboard com KPIs, alertas de mapeamento e distribuição de arquétipos
+  - CRUD de departamentos e cargos com níveis (operacional/tático/estratégico)
+  - Cadastro de colaboradores manual, importação de candidatos contratados e planilha CSV/Excel
+  - Perfil individual do colaborador com resultado Gauge-Pro completo
+  - Badge de status de mapeamento (sem teste, convite enviado, em andamento, mapeado, reteste pendente)
+- **Mapa Comportamental** (PRD-055)
+  - Radar chart coletivo com média da equipe e overlay por departamento
+  - Heatmap dimensional: departamentos x D1-D5 com código de cores
+  - Distribuição de arquétipos por departamento em barras empilhadas
+  - Filtros por departamento, cargo, nível e status
+- **Compatibilidade entre Membros** (PRD-056)
+  - Algoritmo de sinergia dimensional com score 0-100% e 5 faixas de classificação
+  - Matriz NxN com código de cores por departamento
+  - Top 5 melhores duplas e alertas de conflito potencial
+  - Modal de detalhes do par com radar sobreposto e breakdown dimensional
+- **Gap Analysis** (PRD-056)
+  - Radar com zona ideal sombreada, cards de lacunas e excessos
+  - Recomendação de perfil ideal para próxima contratação
+  - Botão "Criar Teste com Base no Gap" integrado ao Hub de Testes
+- **Team Builder** (PRD-056)
+  - Simulador drag-and-drop com @dnd-kit para montagem de equipes
+  - Cálculo em tempo real de equilíbrio, radar e conflitos por time
+  - Salvar/carregar cenários de reorganização
+- **Plano de Desenvolvimento Individual** (PRD-057)
+  - PDI auto-gerado baseado no perfil Gauge-Pro com sugestões por dimensão
+  - CRUD de objetivos com dimensão vinculada, prioridade e status
+  - Barra de progresso por plano
+- **Evolução Temporal** (PRD-057)
+  - Linha do tempo com gráfico de linhas D1-D5 por data de teste
+  - Cálculo de delta com indicadores visuais (evolução/estável/regressão)
+  - Anotações vinculadas à evolução (treinamentos, coaching)
+  - Agendamento de retestes periódicos (3/6/9/12 meses)
+- **Identificação de Talentos** (PRD-057)
+  - 6 perfis de potencial: Líder Natural, Especialista, Mediador, Inovador, Motor, Mentor
+  - Nine-Box Comportamental (Entrega x Potencial Relacional)
+- **Cultura Organizacional** (PRD-057)
+  - DNA Cultural: radar da média ponderada por nível hierárquico
+  - Manifesto Cultural gerado automaticamente
+  - Evolução cultural com comparação de snapshots mensais
+  - Score de Fit Cultural para candidatos (0-100%)
+- **Relatórios PDF** (PRD-057)
+  - Relatório de evolução por colaborador
+  - Relatório de cultura organizacional
+
+## [0.48.0] - 2026-02-01 — "Command" (PRD-052, PRD-053, PRD-054)
+
+### Added
+- **Hub de Testes Comportamentais** no Painel Empresa (`/empresa/testes`)
+  - Dashboard com KPIs, funil de conversão, alertas e feed de atividades
+  - Criação de testes com 7 templates (Padrão, Liderança, Operacional, Vendas, Técnico, Criativo, Personalizado)
+  - Customização de pesos por dimensão (D1-D5) com sliders e radar chart em tempo real
+  - Gestão de ciclo de vida: Rascunho → Ativo → Encerrado → Arquivado
+  - Sistema de convites: por email, link público, e seleção da base de candidatos
+- **Resultados e Comparativos** (PRD-053)
+  - Visualização individual rica: radar chart D1-D5, barras por dimensão, perfil arquetipal, análise IA
+  - Score de Fit (compatibilidade com vaga) com classificação Excelente/Bom/Regular/Baixo
+  - Comparativo lado a lado de 2-4 candidatos com radar sobreposto
+  - Ranking de compatibilidade ordenado por Fit Score
+  - Shortlist automática (Top 3) e manual com anotações
+- **Relatórios, Métricas e Auditoria** (PRD-054)
+  - Relatório PDF individual (3 páginas com radar chart e análise IA)
+  - Relatório PDF comparativo (2-4 candidatos)
+  - Relatório Excel consolidado com 4 abas (Resumo, Resultados, Estatísticas, Convites)
+  - Dashboard de métricas: gauges, distribuição de perfis, tendências temporais
+  - Sistema de auditoria com log imutável de todas as ações
+  - Relatório de conformidade LGPD (acesso a dados por candidato)
+
+## [0.47.0] - 2026-02-01 — "Kanban" (PRD-015)
+
+### Added
+- **Dashboard Empresa melhorado**: novos cards de métricas
+  - 5 mini-cards de status de vagas (Total, Ativas, Rascunhos, Pausadas, Finalizadas)
+  - 3 cards de métricas operacionais (Testes do Plano, Avaliações do Mês, Candidatos Avaliados)
+  - 3 cards de métricas de equipe (Contratações, Entrevistas Agendadas, Entrevistas Realizadas)
+- **Drag-and-drop Kanban** na página de Candidaturas (`/empresa/candidaturas`)
+  - Biblioteca `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities`
+  - Arrastar cards entre colunas (Novos, Em Análise, Entrevista, Aprovados)
+  - DragOverlay com feedback visual (sombra, rotação 2°, escala 105%)
+  - Diferenciação click vs. drag com `activationConstraint: { distance: 8 }`
+  - Acessibilidade: drag via teclado (Space + setas) com ARIA descriptions
+  - Seção Reprovados sem drag-and-drop por design
+
+### Changed
+- **Modal de detalhes do candidato** agora abre centralizado (Dialog) em vez de drawer lateral direito (Sheet)
+
+### Fixed
+- Texto da página Gauge-Pro Empresas ajustado ("Junte-se às empresas" em vez de "milhares de empresas")
+
+## [0.46.0] - 2026-01-31 — "Compass"
+
+### Changed
+- **Perfil do Candidato refatorado**: separação entre perfil pessoal (plataforma) e perfil profissional (currículos)
+  - Página `/candidato/perfil` agora contém apenas informações pessoais (nome, email, cargo, localização, telefone, LinkedIn, bio)
+  - Seções profissionais (experiência, formação, habilidades, salário) removidas — gerenciadas exclusivamente em `/candidato/curriculos`
+  - Novo cálculo de completude baseado em 7 campos pessoais (peso total 100%)
+  - Card informativo direcionando para gerenciamento de currículos
+
+### Added
+- **Widget de Completude do Currículo no Dashboard**: exibe % do currículo padrão com link para gerenciar
+- **Campo `about` no tipo Candidate**: bio/descrição pessoal adicionada aos dados do candidato
+- **Utilitário `profileCompleteness.ts`**: cálculo centralizado de completude do perfil pessoal
+- **Páginas de Planos de Assinatura**: `/candidato/planos` e `/empresa/planos` com 3 tiers cada (1 grátis + 2 pagos)
+- **Tooltips HelpCircle no Dashboard**: ícones explicativos em 5 seções (Perfil, Currículo, Gauge-Pro, Candidaturas, Mensagens)
+- **Badge de assinante no header**: indicador Premium/Pro ao lado do nome do candidato e Profissional/Enterprise para empresas
+- **Tipo `CandidatePlanType`**: Gratuito | Pro | Premium com campo `plan` no Candidate
+
+### Fixed
+- Texto da CEO na página Quem Somos atualizado
+- Referências a "Big Five" removidas das páginas públicas (Quem Somos e Como Funciona)
+
+## [0.45.0] - 2026-01-31 — "Oracle" (PRD-051)
+
+### Added
+- **Agente de Análise Comportamental por IA (PRD-051)**
+  - Integração com API Claude (Anthropic) via proxy Vite dev-only
+  - Geração de Análise Prática para recrutadores (linguagem simples, ações práticas)
+  - Geração de Análise Técnica para administradores (linguagem científica, fundamentação teórica)
+  - Configuração do agente no Painel Admin (IA > Agente de Análise)
+  - Persistência de análises em localStorage associadas ao resultado do teste
+  - Exibição de Análise Prática no perfil do candidato (Painel Empresa)
+  - Exibição de Análise Técnica no drawer do candidato (Painel Admin)
+  - Botão "Regenerar Análise" para administradores
+  - Indicador "Gerado por IA" em todas as análises exibidas
+  - Integração com export PDF (seção opcional "Análise IA")
+  - Tratamento de erros com fallback para relatório básico
+  - Retry com backoff exponencial para chamadas API (2 tentativas, timeout 30s)
+  - Loading states durante geração de análises
+  - Geração fire-and-forget em background após conclusão do Gauge-Pro
+
+## [0.44.0] - 2026-01-27 — "Archetype" (PRD-049 & PRD-050)
+
+### Added
+- **Gauge-Pro DISC — Parte 1: Seleção de Palavras (PRD-049)**
+  - Banco de 100 adjetivos mapeados em 5 dimensões (D1-D5)
+  - Interface de seleção com grid responsivo e embaralhamento Fisher-Yates
+  - Duas listas: Lista A (autopercepção) e Lista B (expectativa social)
+  - Validação de exatamente 5 seleções por lista
+  - Pontuação: (Soma_A × 1.0) + (Soma_B × 0.5) normalizada 0-100
+- **Gauge-Pro DISC — Parte 2: Cenários Situacionais (PRD-050)**
+  - 15 cenários profissionais com 4 opções (A/B/C/D) cada
+  - Navegação sequencial com possibilidade de voltar
+  - Mapeamento de cada opção para combinações de dimensões D1-D5
+  - Score combinado: Parte 1 (60%) + Parte 2 (40%)
+- **Sistema de Perfis Arquetípicos**
+  - 16 perfis comportamentais baseados nas combinações D1-D5
+  - Determinação automática de arquétipo com fallback
+  - Descrição, forças, áreas de desenvolvimento, carreiras por perfil
+- **Página de Resultado Gauge-Pro**
+  - Banner com nome do arquétipo e descrição
+  - Barras de progresso para cada dimensão com classificação (Baixo/Médio/Alto)
+  - Pontos fortes e áreas de desenvolvimento
+  - Estilo de trabalho e comunicação
+  - Carreiras recomendadas
+- Persistência via localStorage com auto-save por etapa
+- Badge "Mestre DISC" (épico) +150 XP
+- Rota `/candidato/gauge-pro` e `/candidato/gauge-pro/resultado`
+- Link "Gauge-Pro DISC" no sidebar do candidato
+
+## [0.43.0] - 2026-01-20 (PRD-047 & PRD-048)
+
+### Added
+- **Sistema de Testes Comportamentais Gauge-Pro 2.0** - PRD-047 & PRD-048
+
+#### PRD-047: Teste Geral do Candidato
+- Teste voluntario com 50-60 perguntas balanceadas
+- Tipos de pergunta: Likert (escala 1-5) e Situacional (A-D)
+- Algoritmo de selecao que balanceia:
+  - ~35% Personalidade, ~30% Carater, ~35% Competencias
+  - Minimo 2 perguntas por categoria
+  - Balanceamento de niveis (Basico/Intermediario/Avancado)
+- Salvamento automatico de respostas a cada pergunta
+- Sessao valida por 7 dias com possibilidade de pausar/retomar
+- Cooldown de 90 dias para refazer o teste
+- Pagina de resultado com:
+  - Grafico radar por dimensao (Recharts)
+  - Barras de progresso por categoria
+  - Insights personalizados por dimensao
+  - Recomendacoes de carreira
+- Gamificacao: +50 XP e badge "Perfil Completo"
+- Menu "Teste Comportamental" no dashboard do candidato
+
+#### PRD-048: Teste por Vaga (Empresa)
+- Wizard de 3 passos para criacao de teste:
+  1. Selecao de competencias (2-8) com prioridade (critica/importante)
+  2. Revisao de perguntas sugeridas (15-25)
+  3. Preview e publicacao
+- Sistema de convites:
+  - Lista de candidatos internos com status de convite
+  - Gerador de links magicos para candidatos externos
+  - Gestao de convites (reenviar, cancelar, visualizar)
+- Link magico publico (/t/:token):
+  - Landing page com informacoes do teste
+  - Formulario de dados basicos
+  - Expiracao configuravel (3-30 dias)
+  - Limite de 50 links por vaga
+- Relatorio do candidato:
+  - Score geral e por competencia
+  - Pontos fortes e areas de desenvolvimento
+  - Red flags com alertas visuais
+  - Analise detalhada por resposta
+  - Ajuste de score pelo recrutador
+  - Decisao: aprovar/avaliar depois/reprovar
+- Comparacao de candidatos:
+  - Selecao de ate 4 candidatos
+  - Tabela comparativa por competencia
+  - Grafico radar sobreposto
+- Botao "Teste Comportamental" no menu de acoes das vagas
+
+### Added (Files)
+- `src/data/behavioralAssessmentData.ts` - configuracoes e mock data
+- `src/hooks/useBehavioralAssessment.ts` - gerenciamento de sessao do teste
+- `src/hooks/useQuestionSelection.ts` - algoritmo de selecao balanceada
+- `src/hooks/useAssessmentAnalysis.ts` - analise com regras de fallback
+- `src/hooks/useJobAssessment.ts` - CRUD de testes por vaga
+- `src/hooks/useCompetencySelection.ts` - selecao de competencias e pesos
+- `src/hooks/useMagicLink.ts` - geracao e validacao de links magicos
+- `src/hooks/useRecruiterAnalysis.ts` - analise com ajustes do recrutador
+- Componentes do teste candidato:
+  - `src/components/assessment/TestIntro.tsx`
+  - `src/components/assessment/TestProgress.tsx`
+  - `src/components/assessment/LikertScale.tsx`
+  - `src/components/assessment/SituationalOptions.tsx`
+  - `src/components/assessment/QuestionDisplay.tsx`
+  - `src/components/assessment/TestNavigation.tsx`
+  - `src/components/assessment/AnalysisProgress.tsx`
+  - `src/components/assessment/ResultBanner.tsx`
+  - `src/components/assessment/DimensionRadar.tsx`
+  - `src/components/assessment/CategoryBars.tsx`
+  - `src/components/assessment/InsightsSection.tsx`
+  - `src/components/assessment/CareerRecommendations.tsx`
+- Componentes do teste por vaga:
+  - `src/components/job-assessment/CompetencySelector.tsx`
+  - `src/components/job-assessment/QuestionSuggestions.tsx`
+  - `src/components/job-assessment/TestPreview.tsx`
+  - `src/components/job-assessment/TestWizard.tsx`
+  - `src/components/job-assessment/InternalCandidateList.tsx`
+  - `src/components/job-assessment/MagicLinkGenerator.tsx`
+  - `src/components/job-assessment/InviteManager.tsx`
+  - `src/components/job-assessment/CandidateReport.tsx`
+  - `src/components/job-assessment/ResponseAnalysis.tsx`
+  - `src/components/job-assessment/ScoreAdjuster.tsx`
+  - `src/components/job-assessment/RecruiterDecision.tsx`
+  - `src/components/job-assessment/CandidateComparison.tsx`
+  - `src/components/job-assessment/ComparisonRadar.tsx`
+  - `src/components/job-assessment/index.ts`
+- Paginas:
+  - `src/pages/candidato/BehavioralTest.tsx`
+  - `src/pages/candidato/BehavioralTestResult.tsx`
+  - `src/pages/empresa/CreateJobTest.tsx`
+  - `src/pages/empresa/JobTestManager.tsx`
+  - `src/pages/empresa/CandidateTestReport.tsx`
+  - `src/pages/empresa/CompareCandidates.tsx`
+  - `src/pages/MagicLinkLanding.tsx`
+
+### Changed
+- `src/types/assessment.ts` - tipos para sessoes, respostas, resultados e ajustes
+- `src/components/assessment/index.ts` - exports dos novos componentes
+- `src/App.tsx` - rotas do teste candidato e empresa
+- `src/components/layout/DashboardLayout.tsx` - menu "Teste Comportamental"
+- `src/pages/empresa/Jobs.tsx` - botao de teste no menu de acoes
+
+---
+
+## [0.42.0] - 2026-01-20 (PRD-046)
+
+### Added
+- **Banco de Perguntas e Avaliacao Comportamental** - PRD-046
+  - Sistema completo de gerenciamento de perguntas Gauge-Pro 2.0
+  - 222 perguntas organizadas em 3 dimensoes e 20 categorias:
+    - Personalidade (Big Five): 60 perguntas em 5 categorias
+    - Carater: 48 perguntas em 5 categorias
+    - Competencias: 114 perguntas em 10 categorias
+  - Tipos de pergunta: Comportamental, Situacional, Autoavaliacao
+  - Niveis de complexidade: Basico, Intermediario, Avancado
+  - Pagina Admin de Categorias com visualizacao hierarquica (arvore)
+  - Pagina Admin de Perguntas com:
+    - Busca com debounce 300ms por codigo ou texto
+    - Filtros cumulativos: dimensao, categoria (cascata), tipo, nivel, status
+    - Paginacao de 50 itens por pagina
+    - CRUD completo: criar, editar, duplicar, ativar/desativar
+    - Estatisticas no topo da pagina
+  - Menu lateral Admin com itens "Categorias" e "Perguntas"
+
+### Added (Files)
+- `src/types/assessment.ts` - tipos para dimensoes, categorias, perguntas
+- `src/data/assessmentData.ts` - seed com 222 perguntas do framework RecrutaRS
+- `src/hooks/useAssessmentQuestions.ts` - hook CRUD de perguntas com filtros
+- `src/hooks/useAssessmentCategories.ts` - hook para categorias e dimensoes
+- `src/components/assessment/DimensionBadge.tsx` - badge colorido por dimensao
+- `src/components/assessment/QuestionCard.tsx` - card de pergunta com acoes
+- `src/components/assessment/QuestionFilters.tsx` - filtros de busca
+- `src/components/assessment/QuestionForm.tsx` - formulario criar/editar
+- `src/components/assessment/CategoryTree.tsx` - arvore hierarquica
+- `src/components/assessment/CategoryForm.tsx` - formulario de categoria
+- `src/components/assessment/index.ts` - barrel export
+- `src/pages/admin/AssessmentCategories.tsx` - pagina de categorias
+- `src/pages/admin/AssessmentQuestions.tsx` - pagina de perguntas
+
+### Changed
+- `src/types/index.ts` - export de assessment types
+- `src/App.tsx` - rotas `/admin/avaliacoes/categorias` e `/admin/avaliacoes/perguntas`
+- `src/components/layout/DashboardLayout.tsx` - itens de menu admin
+
+---
+
 ## [0.41.0] - 2026-01-18 (PRD-045)
 
 ### Added

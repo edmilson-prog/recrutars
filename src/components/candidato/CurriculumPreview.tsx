@@ -18,11 +18,11 @@ import {
 } from 'lucide-react';
 
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -136,16 +136,16 @@ export function CurriculumPreview({
   const sortedCourses = [...(curriculum.courses || [])].sort((a, b) => b.year - a.year);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[600px] p-0">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-0">
         <ScrollArea className="h-full">
           <div className="p-6 space-y-6">
-            <SheetHeader>
-              <SheetTitle className="flex items-center gap-2">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-cyan-500" />
                 Preview do Currículo
-              </SheetTitle>
-            </SheetHeader>
+              </DialogTitle>
+            </DialogHeader>
 
             {/* Aviso */}
             <Alert>
@@ -432,7 +432,7 @@ export function CurriculumPreview({
               )}
           </div>
         </ScrollArea>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

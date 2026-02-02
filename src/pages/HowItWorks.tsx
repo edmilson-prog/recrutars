@@ -67,13 +67,13 @@ const passosCandidatos = [
     numero: 2,
     titulo: 'Avaliação Comportamental',
     descricao:
-      'Complete nosso teste comportamental científico (15-20 minutos). Baseado em metodologias validadas como Big Five e DISC, ele revela seu perfil único.',
+      'Complete nosso teste comportamental científico (15-20 minutos). Baseado em metodologias cientificamente validadas, ele revela seu perfil único.',
   },
   {
     numero: 3,
     titulo: 'Receba seu Relatório',
     descricao:
-      'Obtenha um relatório detalhado sobre seu perfil comportamental, pontos fortes, áreas de desenvolvimento e ambientes de trabalho ideais para você.',
+      'Você pode obter um relatório detalhado sobre seu perfil comportamental, pontos fortes, áreas de desenvolvimento e ambientes de trabalho ideais para você.',
   },
   {
     numero: 4,
@@ -91,7 +91,7 @@ const passosCandidatos = [
     numero: 6,
     titulo: 'Acompanhamento e Feedback',
     descricao:
-      'Receba atualizações sobre suas candidaturas em tempo real. Obtenha feedback das empresas e aprimore seu perfil continuamente.',
+      ' Receba atualizações sobre suas candidaturas em tempo real com possibilidade de feedback das empresas e aprimoramento contínuo.',
   },
 ];
 
@@ -433,7 +433,7 @@ export default function HowItWorksPage() {
                 Pronto para Começar?
               </h2>
               <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Junte-se a milhares de empresas e candidatos que já transformaram seu processo de
+                Junte-se às empresas e candidatos que já transformaram seu processo de
                 recrutamento com a RecrutaRS.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

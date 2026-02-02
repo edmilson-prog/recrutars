@@ -1,9 +1,9 @@
 /**
- * DISC Incentive Banner Component
- * PRD-035: Banner de Incentivo ao Teste DISC
+ * Behavioral Test Incentive Banner Component
+ * PRD-035: Banner de Incentivo ao Teste Comportamental
  *
  * Exibe banners contextuais para incentivar candidatos a completarem
- * o teste comportamental DISC em múltiplos pontos da aplicação.
+ * o teste comportamental em múltiplos pontos da aplicação.
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,8 +13,9 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { TEST_CONFIG } from '@/data/testConfig';
 import { useDiscBannerDismiss, type DiscBannerContext } from '@/hooks/useDiscBannerDismiss';
-import { getCandidateDISCProfile } from '@/data/mockData';
+import { getCandidateBehavioralProfile } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Configurações de texto por contexto
@@ -30,29 +31,29 @@ const bannerConfig: Record<
   dashboard: {
     title: 'Descubra seu Perfil Comportamental',
     description:
-      'Complete o teste DISC Gauge-Pro e aumente suas chances de ser encontrado pelas empresas. Perfis completos recebem 3x mais visualizações!',
+      `Complete o ${TEST_CONFIG.incentiveText} ${TEST_CONFIG.name} e aumente suas chances de ser encontrado pelas empresas. Perfis completos recebem 3x mais visualizações!`,
     cta: 'Aumentar Minhas Chances',
     variant: 'default',
   },
   job_low_match: {
     title: 'Seu match pode aumentar!',
     description:
-      'Complete o teste DISC para que possamos calcular sua compatibilidade real com esta vaga.',
-    cta: 'Completar Teste DISC',
+      `Complete o ${TEST_CONFIG.incentiveText} para que possamos calcular sua compatibilidade real com esta vaga.`,
+    cta: 'Completar Teste',
     variant: 'contextual',
   },
   after_application: {
     title: 'Quer se destacar?',
     description:
-      'Candidatos com perfil DISC completo têm mais chances de avançar no processo seletivo.',
+      'Candidatos com perfil comportamental completo têm mais chances de avançar no processo seletivo.',
     cta: 'Completar Meu Perfil',
     variant: 'compact',
   },
   invites_page: {
     title: 'Empresas valorizam perfis completos!',
     description:
-      'Você tem convites pendentes. Complete seu perfil DISC para mostrar todo seu potencial.',
-    cta: 'Descobrir Meu Perfil DISC',
+      'Você tem convites pendentes. Complete seu perfil comportamental para mostrar todo seu potencial.',
+    cta: 'Descobrir Meu Perfil',
     variant: 'default',
   },
 };
@@ -78,13 +79,13 @@ export function DiscIncentiveBanner({
   const { currentCandidate } = useAuth();
   const { isDismissed, dismiss } = useDiscBannerDismiss(context);
 
-  // Verificar se o candidato já completou o DISC
+  // Verificar se o candidato já completou o teste
   const candidateId = currentCandidate?.id || 'candidate-1';
-  const discProfile = getCandidateDISCProfile(candidateId);
-  const hasCompletedDISC = !!discProfile;
+  const behavioralProfile = getCandidateBehavioralProfile(candidateId);
+  const hasCompletedTest = !!behavioralProfile;
 
-  // Não exibir se já completou o DISC ou se já foi dispensado
-  if (hasCompletedDISC || isDismissed) {
+  // Não exibir se já completou o teste ou se já foi dispensado
+  if (hasCompletedTest || isDismissed) {
     return null;
   }
 

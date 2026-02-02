@@ -5,16 +5,16 @@
  * Calcula recomendações personalizadas de candidatos para vagas considerando:
  * - Skills técnicas (35%)
  * - Experiência (20%)
- * - Perfil DISC (20%)
+ * - Perfil Comportamental (20%)
  * - Localização/modalidade (10%)
  * - Atividade do candidato (10%)
  * - Histórico de interações (5%)
  */
 
 import type { Candidate, Job } from '@/types';
-import type { MatchResult, DISCProfile } from '@/types/disc';
+import type { MatchResult, BehavioralProfile } from '@/types/disc';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
-import { mockJobs, mockCandidates, mockApplications, idealDISCProfiles } from '@/data/mockData';
+import { mockJobs, mockCandidates, mockApplications, idealBehavioralProfiles } from '@/data/mockData';
 
 // Tipos do motor de recomendação de candidatos
 export interface SuggestionReason {
@@ -153,9 +153,9 @@ export function generateSuggestionReasons(
     });
   }
 
-  // Perfil DISC - se score alto
-  const discCategory = matchResult.categories.find(c => c.id === 'behavioral');
-  if (discCategory && discCategory.score >= 70) {
+  // Perfil Comportamental - se score alto
+  const behavioralCategory = matchResult.categories.find(c => c.id === 'behavioral');
+  if (behavioralCategory && behavioralCategory.score >= 70) {
     reasons.push({
       id: 'reason-behavioral',
       text: 'Perfil comportamental alinhado com a cultura da vaga',
@@ -190,11 +190,11 @@ export function generateSuggestionReasons(
     });
   }
 
-  // Teste DISC realizado
+  // Teste comportamental realizado
   if (candidate.hasTest && reasons.length < 3) {
     reasons.push({
       id: 'reason-test',
-      text: 'Teste comportamental DISC realizado',
+      text: 'Teste comportamental realizado',
       category: 'behavioral',
     });
   }
@@ -311,7 +311,7 @@ export function getSuggestedCandidates(
 
   for (const candidate of eligibleCandidates) {
     // Calcular match usando o motor existente
-    const idealProfile = idealDISCProfiles[jobId];
+    const idealProfile = idealBehavioralProfiles[jobId];
     const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
 
     // Calcular boost de histórico

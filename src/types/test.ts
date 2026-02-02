@@ -1,5 +1,5 @@
 /**
- * Types for Behavioral Tests (Gauge-Pro DISC)
+ * Types for Behavioral Tests (Gauge-Pro)
  * PRD-004: Tipos e Interfaces TypeScript
  */
 

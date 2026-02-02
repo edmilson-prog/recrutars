@@ -1,13 +1,235 @@
 {
   "versions": [
     {
+      "version": "0.48.0",
+      "codename": "Command",
+      "type": "minor",
+      "releaseDate": "2026-02-01",
+      "prd": "PRD-052, PRD-053, PRD-054",
+      "description": "Hub de Testes Comportamentais com dashboard, criação de testes, resultados, comparativos, relatórios PDF/Excel, métricas e auditoria LGPD",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Hub de Testes Comportamentais no Painel Empresa (/empresa/testes)",
+            "Dashboard com KPIs, funil de conversão, alertas e feed de atividades",
+            "Criação de testes com 7 templates (Padrão, Liderança, Operacional, Vendas, Técnico, Criativo, Personalizado)",
+            "Customização de pesos por dimensão D1-D5 com sliders e radar chart em tempo real",
+            "Gestão de ciclo de vida: Rascunho, Ativo, Encerrado, Arquivado",
+            "Sistema de convites: por email, link público, e seleção da base de candidatos",
+            "Visualização individual: radar chart D1-D5, barras por dimensão, perfil arquetipal, análise IA",
+            "Score de Fit (compatibilidade com vaga) com classificação Excelente/Bom/Regular/Baixo",
+            "Comparativo lado a lado de 2-4 candidatos com radar sobreposto",
+            "Ranking de compatibilidade ordenado por Fit Score",
+            "Shortlist automática (Top 3) e manual com anotações",
+            "Relatório PDF individual (3 páginas com radar chart e análise IA)",
+            "Relatório PDF comparativo (2-4 candidatos)",
+            "Relatório Excel consolidado com 4 abas (Resumo, Resultados, Estatísticas, Convites)",
+            "Dashboard de métricas: gauges, distribuição de perfis, tendências temporais",
+            "Sistema de auditoria com log imutável de todas as ações",
+            "Relatório de conformidade LGPD (acesso a dados por candidato)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.47.0",
+      "codename": "Kanban",
+      "type": "minor",
+      "releaseDate": "2026-02-01",
+      "prd": "PRD-015",
+      "description": "Dashboard da empresa melhorado, drag-and-drop Kanban e modal centralizado de candidatos",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Dashboard Empresa: 5 mini-cards de status de vagas (Total, Ativas, Rascunhos, Pausadas, Finalizadas)",
+            "Dashboard Empresa: 3 cards de métricas operacionais (Testes do Plano, Avaliações do Mês, Candidatos Avaliados)",
+            "Dashboard Empresa: 3 cards de métricas de equipe (Contratações, Entrevistas Agendadas, Entrevistas Realizadas)",
+            "Kanban drag-and-drop com @dnd-kit na página de Candidaturas (PRD-015)",
+            "Suporte a arrastar cards entre colunas (Novos, Em Análise, Entrevista, Aprovados)",
+            "DragOverlay com feedback visual (sombra, rotação, escala) durante arraste",
+            "Acessibilidade: drag via teclado (Space + setas) com ARIA descriptions"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Modal de detalhes do candidato agora abre centralizado (Dialog) em vez de lateral (Sheet)",
+            "Seção Reprovados do Kanban permanece sem drag-and-drop por design"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Texto da página Gauge-Pro Empresas ajustado"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.46.0",
+      "codename": "Compass",
+      "type": "minor",
+      "releaseDate": "2026-01-31",
+      "prd": "",
+      "description": "Refatoração do perfil do candidato e páginas de planos de assinatura",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Perfil do candidato agora contém apenas informações pessoais",
+            "Dados profissionais gerenciados exclusivamente em currículos",
+            "Cálculo de completude baseado em 7 campos pessoais"
+          ]
+        },
+        {
+          "type": "added",
+          "items": [
+            "Widget de Completude do Currículo no Dashboard do candidato",
+            "Campo 'about' (bio) no tipo Candidate",
+            "Utilitário profileCompleteness.ts para cálculo centralizado",
+            "Páginas de Planos: /candidato/planos e /empresa/planos (3 tiers cada)",
+            "Tooltips HelpCircle em 5 seções do Dashboard do candidato",
+            "Badge de assinante (Premium/Pro) no header do dashboard",
+            "Tipo CandidatePlanType com campo plan no Candidate"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Texto da CEO atualizado na página Quem Somos",
+            "Referências a Big Five removidas das páginas públicas"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.45.0",
+      "codename": "Oracle",
+      "type": "minor",
+      "releaseDate": "2026-01-31",
+      "prd": "PRD-051",
+      "description": "Agente de Análise Comportamental por IA com integração Claude API",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Agente de Análise IA: integração com API Claude via proxy Vite",
+            "Análise Prática para recrutadores (linguagem simples, ações práticas)",
+            "Análise Técnica para administradores (linguagem científica, Big Five/DISC)",
+            "Configuração do agente no Admin (IA > Agente de Análise)",
+            "Geração automática em background após conclusão do Gauge-Pro",
+            "Botão Regenerar Análise para administradores",
+            "Indicador 'Gerado por IA' em todas as análises",
+            "Seção opcional Análise IA no export PDF",
+            "Fallback para relatório básico se IA indisponível",
+            "Retry com backoff exponencial (2 tentativas, timeout 30s)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.44.0",
+      "codename": "Archetype",
+      "type": "minor",
+      "releaseDate": "2026-01-27",
+      "prd": "PRD-049 & PRD-050",
+      "description": "Gauge-Pro DISC: Seleção de Palavras e Cenários Situacionais",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Gauge-Pro Parte 1: seleção de palavras com 100 adjetivos em 5 dimensões",
+            "Interface de seleção com grid responsivo e embaralhamento Fisher-Yates",
+            "Gauge-Pro Parte 2: 15 cenários situacionais com mapeamento dimensional",
+            "16 perfis arquetípicos comportamentais baseados nas combinações D1-D5",
+            "Página de resultado com scores, classificações e carreiras recomendadas",
+            "Persistência via localStorage com auto-save por etapa",
+            "Badge Mestre DISC (épico) +150 XP"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.43.0",
+      "codename": "Cheerful Chomsky",
+      "type": "minor",
+      "releaseDate": "2026-01-20",
+      "prd": "PRD-047 & PRD-048",
+      "description": "Sistema de Testes Comportamentais Gauge-Pro 2.0 para Candidatos e Empresas",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Teste Geral do Candidato (PRD-047): 50-60 perguntas balanceadas",
+            "Tipos de pergunta: Likert (1-5) e Situacional (A-D)",
+            "Salvamento automatico e sessao valida por 7 dias",
+            "Pagina de resultado com grafico radar e insights",
+            "Gamificacao: +50 XP e badge Perfil Completo",
+            "Teste por Vaga (PRD-048): Wizard de criacao em 3 passos",
+            "Selecao de competencias com prioridade critica/importante",
+            "Sistema de convites para candidatos internos",
+            "Links magicos para candidatos externos",
+            "Relatorio detalhado com ajuste de score pelo recrutador",
+            "Decisao de aprovar/avaliar depois/reprovar",
+            "Comparacao lado a lado de ate 4 candidatos"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Menu lateral candidato com Teste Comportamental",
+            "Menu de acoes das vagas com acesso ao teste"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.42.0",
+      "codename": "Cheerful Chomsky",
+      "type": "minor",
+      "releaseDate": "2026-01-20",
+      "prd": "PRD-046",
+      "description": "Banco de Perguntas e Avaliacao Comportamental Gauge-Pro 2.0",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Sistema de gerenciamento de perguntas Gauge-Pro 2.0",
+            "222 perguntas em 3 dimensoes e 20 categorias",
+            "Dimensoes: Personalidade (60), Carater (48), Competencias (114)",
+            "Tipos: Comportamental, Situacional, Autoavaliacao",
+            "Niveis: Basico, Intermediario, Avancado",
+            "Pagina Admin de Categorias com arvore hierarquica",
+            "Pagina Admin de Perguntas com busca, filtros e paginacao",
+            "CRUD completo: criar, editar, duplicar, ativar/desativar",
+            "Itens de menu 'Categorias' e 'Perguntas' no painel Admin"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Menu lateral Admin com novos itens de avaliacao"
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.41.0",
       "codename": "Cheerful Chomsky",
       "type": "minor",
       "releaseDate": "2026-01-18",
       "prd": "PRD-045",
       "description": "Pagina de Configuracoes Admin com layout duas colunas e busca global",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

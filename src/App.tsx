@@ -29,6 +29,8 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AdminCompanies from "./pages/admin/Companies";
 import AdminCandidates from "./pages/admin/Candidates";
 import AdminSettings from "./pages/admin/Settings";
+import AdminAssessmentCategories from "./pages/admin/AssessmentCategories";
+import AdminAssessmentQuestions from "./pages/admin/AssessmentQuestions";
 
 // Company pages
 import CompanyDashboard from "./pages/empresa/Dashboard";
@@ -42,6 +44,7 @@ import CompanySettings from "./pages/empresa/Settings";
 import CompanyNotifications from "./pages/empresa/Notifications";
 import CompanyInterviews from "./pages/empresa/Interviews";
 import CompanySuggestedCandidates from "./pages/empresa/SuggestedCandidates";
+import CompanyPlans from "./pages/empresa/Plans";
 
 // Candidate pages
 import CandidateDashboard from "./pages/candidato/Dashboard";
@@ -59,6 +62,41 @@ import CandidateRecommendedJobs from "./pages/candidato/RecommendedJobs";
 import CandidateNotifications from "./pages/candidato/Notifications";
 import CandidateInterviews from "./pages/candidato/Interviews";
 import CandidateImportCV from "./pages/candidato/ImportCV";
+import CandidateBehavioralTest from "./pages/candidato/BehavioralTest";
+import CandidateBehavioralTestResult from "./pages/candidato/BehavioralTestResult";
+import CandidatePlans from "./pages/candidato/Plans";
+
+// PRD-049 & PRD-050: Gauge-Pro Assessment
+import CandidateGaugeProAssessment from "./pages/candidato/GaugeProAssessment";
+import CandidateGaugeProResult from "./pages/candidato/GaugeProResult";
+
+// PRD-048: Job Assessment pages
+import CreateJobTest from "./pages/empresa/CreateJobTest";
+import JobTestManager from "./pages/empresa/JobTestManager";
+import CandidateTestReport from "./pages/empresa/CandidateTestReport";
+import CompareCandidates from "./pages/empresa/CompareCandidates";
+import MagicLinkLanding from "./pages/MagicLinkLanding";
+
+// PRD-052, 053, 054: Corporate Tests Hub
+import CorporateTestsHub from "./pages/empresa/CorporateTestsHub";
+import CorporateTestDetail from "./pages/empresa/CorporateTestDetail";
+import CorporateTestResult from "./pages/empresa/CorporateTestResult";
+import CorporateTestCompare from "./pages/empresa/CorporateTestCompare";
+import CorporateTestReports from "./pages/empresa/CorporateTestReports";
+import CorporateTestMetrics from "./pages/empresa/CorporateTestMetrics";
+import CorporateTestAudit from "./pages/empresa/CorporateTestAudit";
+
+// PRD-055, 056, 057: Team Management
+import TeamManagement from "./pages/empresa/TeamManagement";
+import TeamMemberProfile from "./pages/empresa/TeamMemberProfile";
+import TeamCompatibility from "./pages/empresa/TeamCompatibility";
+import TeamGapAnalysis from "./pages/empresa/TeamGapAnalysis";
+import TeamBuilder from "./pages/empresa/TeamBuilder";
+import TeamDevelopment from "./pages/empresa/TeamDevelopment";
+import TeamTalents from "./pages/empresa/TeamTalents";
+import TeamCulture from "./pages/empresa/TeamCulture";
+import TeamEvolution from "./pages/empresa/TeamEvolution";
+import TeamReports from "./pages/empresa/TeamReports";
 
 // Help pages
 import HelpPage from "./pages/Help";
@@ -110,6 +148,9 @@ const App = () => (
             <Route path="/para-candidatos" element={<ForCandidates />} />
             <Route path="/testes-corporativos" element={<CorporateTests />} />
 
+            {/* PRD-048: Magic Link Route (public) */}
+            <Route path="/t/:token" element={<MagicLinkLanding />} />
+
             {/* Help Routes */}
             <Route path="/ajuda" element={<HelpPage />} />
             <Route path="/ajuda/tickets/:ticketId" element={
@@ -146,6 +187,16 @@ const App = () => (
                 <AdminSettings />
               </ProtectedRoute>
             } />
+            <Route path="/admin/avaliacoes/categorias" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminAssessmentCategories />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/avaliacoes/perguntas" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminAssessmentQuestions />
+              </ProtectedRoute>
+            } />
 
             {/* Company Routes */}
             <Route path="/empresa" element={
@@ -178,9 +229,91 @@ const App = () => (
                 <CompanySavedCandidates />
               </ProtectedRoute>
             } />
+            {/* PRD-052, 053, 054: Corporate Tests Hub */}
             <Route path="/empresa/testes" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyDashboard />
+                <CorporateTestsHub />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/testes/metricas" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CorporateTestMetrics />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/testes/auditoria" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CorporateTestAudit />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/testes/:testId" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CorporateTestDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/testes/:testId/resultado/:candidateId" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CorporateTestResult />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/testes/:testId/comparar" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CorporateTestCompare />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/testes/:testId/relatorios" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CorporateTestReports />
+              </ProtectedRoute>
+            } />
+            {/* PRD-055, 056, 057: Team Management Routes */}
+            <Route path="/empresa/equipes" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/membro/:id" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamMemberProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/compatibilidade" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamCompatibility />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/gap-analysis" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamGapAnalysis />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/team-builder" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamBuilder />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/desenvolvimento/:id" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamDevelopment />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/talentos" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamTalents />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/cultura" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamCulture />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/evolucao/:id" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamEvolution />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/relatorios" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamReports />
               </ProtectedRoute>
             } />
             <Route path="/empresa/mensagens" element={
@@ -206,6 +339,34 @@ const App = () => (
             <Route path="/empresa/vagas/:id/candidatos-sugeridos" element={
               <ProtectedRoute allowedTypes={['company']}>
                 <CompanySuggestedCandidates />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/empresa/planos" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyPlans />
+              </ProtectedRoute>
+            } />
+
+            {/* PRD-048: Job Assessment Routes */}
+            <Route path="/empresa/vagas/:jobId/criar-teste" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CreateJobTest />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/vagas/:jobId/teste" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <JobTestManager />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/vagas/:jobId/teste/comparar" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompareCandidates />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/vagas/:jobId/teste/:candidateId" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CandidateTestReport />
               </ProtectedRoute>
             } />
 
@@ -283,6 +444,34 @@ const App = () => (
             <Route path="/candidato/importar-cv" element={
               <ProtectedRoute allowedTypes={['candidate']}>
                 <CandidateImportCV />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/teste-comportamental" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateBehavioralTest />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/teste-comportamental/resultado" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateBehavioralTestResult />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/candidato/planos" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidatePlans />
+              </ProtectedRoute>
+            } />
+
+            {/* PRD-049 & PRD-050: Gauge-Pro */}
+            <Route path="/candidato/gauge-pro" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateGaugeProAssessment />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/gauge-pro/resultado" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateGaugeProResult />
               </ProtectedRoute>
             } />
 

@@ -1,6 +1,6 @@
 /**
  * Match Strengths Component
- * PRD-002-dgn: Visualização DISC e Match Score
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  *
  * Seção "Por que você combina" com pontos fortes do match
  * Cada ponto tem ícone indicativo e categoria associada

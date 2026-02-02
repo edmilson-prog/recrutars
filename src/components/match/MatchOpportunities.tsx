@@ -1,6 +1,6 @@
 /**
  * Match Opportunities Component
- * PRD-002-dgn: Visualização DISC e Match Score
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  *
  * Seção "Oportunidades de melhoria" com sugestões construtivas
  * Indica impacto potencial em % e se é acionável

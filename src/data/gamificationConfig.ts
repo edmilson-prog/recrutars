@@ -4,6 +4,7 @@
  */
 
 import type { Level, Badge, XPAction } from "@/types/gamification";
+import { TEST_CONFIG } from '@/data/testConfig';
 
 // =============================================================================
 // LEVELS CONFIGURATION
@@ -147,6 +148,17 @@ export const BADGES: Badge[] = [
     category: "tests",
     criteria: { type: "test_complete" },
     xpReward: 200,
+  },
+
+  {
+    id: "gauge_pro_behavioral",
+    name: TEST_CONFIG.badgeName,
+    description: TEST_CONFIG.badgeDescription,
+    icon: "Brain",
+    rarity: "epic",
+    category: "tests",
+    criteria: { type: "gauge_pro_complete" },
+    xpReward: 150,
   },
 
   // Activity Badges

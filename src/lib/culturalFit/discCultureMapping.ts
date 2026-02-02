@@ -1,5 +1,5 @@
 /**
- * DISC to Cultural Profile Mapping
+ * Behavioral to Cultural Profile Mapping
  * PRD-042: Fit Cultural
  */
 
@@ -8,16 +8,16 @@ import type {
   CandidateCulturalProfile,
   DimensionValue,
 } from '@/types/culturalFit';
-import { getDiscMapping } from '@/data/culturalDimensions';
+import { getCultureMapping } from '@/data/culturalDimensions';
 
 /**
- * Deriva um perfil cultural a partir do perfil DISC do candidato
+ * Deriva um perfil cultural a partir do perfil comportamental do candidato
  */
-export function deriveCulturalProfileFromDisc(
-  discProfile: string,
+export function deriveCulturalProfileFromBehavioral(
+  behavioralProfile: string,
   candidateId: string
 ): CandidateCulturalProfile {
-  const mapping = getDiscMapping(discProfile);
+  const mapping = getCultureMapping(behavioralProfile);
 
   // Valores padrão (neutros) se não encontrar mapeamento
   const defaultProfile: CulturalProfile = {
@@ -32,7 +32,7 @@ export function deriveCulturalProfileFromDisc(
     return {
       ...defaultProfile,
       candidateId,
-      discProfile,
+      behavioralProfile,
       derivedAt: new Date().toISOString(),
     };
   }
@@ -49,41 +49,41 @@ export function deriveCulturalProfileFromDisc(
   return {
     ...profile,
     candidateId,
-    discProfile,
+    behavioralProfile,
     derivedAt: new Date().toISOString(),
   };
 }
 
 /**
- * Extrai a letra dominante do perfil DISC
+ * Extrai a letra dominante do perfil comportamental
  */
-export function getDominantDiscLetter(discProfile: string): string {
+export function getDominantProfileLetter(behavioralProfile: string): string {
   // Formatos possíveis: "D", "DI", "Dominante (D)", "DI - Executor"
-  const match = discProfile.match(/^([DISC]{1,2})/i);
+  const match = behavioralProfile.match(/^([DISC]{1,2})/i);
   if (match) return match[1].toUpperCase();
 
   // Tenta extrair de formato por extenso
-  if (discProfile.toLowerCase().includes('dominan')) return 'D';
-  if (discProfile.toLowerCase().includes('influen')) return 'I';
-  if (discProfile.toLowerCase().includes('estab') || discProfile.toLowerCase().includes('steady')) return 'S';
-  if (discProfile.toLowerCase().includes('conform') || discProfile.toLowerCase().includes('complian')) return 'C';
+  if (behavioralProfile.toLowerCase().includes('dominan')) return 'D';
+  if (behavioralProfile.toLowerCase().includes('influen')) return 'I';
+  if (behavioralProfile.toLowerCase().includes('estab') || behavioralProfile.toLowerCase().includes('steady')) return 'S';
+  if (behavioralProfile.toLowerCase().includes('conform') || behavioralProfile.toLowerCase().includes('complian')) return 'C';
 
   return 'S'; // Default para Estável se não conseguir identificar
 }
 
 /**
- * Retorna descrição do perfil cultural baseado no DISC
+ * Retorna descrição do perfil cultural baseado no perfil comportamental
  */
-export function getDiscCultureDescription(discProfile: string): string {
-  const mapping = getDiscMapping(discProfile);
+export function getBehavioralCultureDescription(behavioralProfile: string): string {
+  const mapping = getCultureMapping(behavioralProfile);
   return mapping?.description || 'Perfil balanceado com preferências equilibradas entre as dimensões culturais';
 }
 
 /**
- * Retorna pontos fortes culturais baseados no DISC
+ * Retorna pontos fortes culturais baseados no perfil comportamental
  */
-export function getDiscCultureStrengths(discProfile: string): string[] {
-  const dominant = getDominantDiscLetter(discProfile);
+export function getBehavioralCultureStrengths(behavioralProfile: string): string[] {
+  const dominant = getDominantProfileLetter(behavioralProfile);
 
   switch (dominant) {
     case 'D':

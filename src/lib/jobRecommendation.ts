@@ -5,15 +5,15 @@
  * Calcula recomendações personalizadas considerando:
  * - Skills técnicas (35%)
  * - Experiência (20%)
- * - Perfil DISC (20%)
+ * - Perfil Comportamental (20%)
  * - Localização/modalidade (15%)
  * - Histórico (views, aplicações) (10%)
  */
 
 import type { Candidate, Job } from '@/types';
-import type { MatchResult, DISCProfile } from '@/types/disc';
+import type { MatchResult, BehavioralProfile } from '@/types/disc';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
-import { mockJobs, mockCandidates, mockApplications, idealDISCProfiles } from '@/data/mockData';
+import { mockJobs, mockCandidates, mockApplications, idealBehavioralProfiles } from '@/data/mockData';
 
 // Tipos do motor de recomendação
 export interface RecommendationReason {
@@ -132,9 +132,9 @@ export function generateRecommendationReasons(
     });
   }
 
-  // Perfil DISC - se score alto
-  const discCategory = matchResult.categories.find(c => c.id === 'behavioral');
-  if (discCategory && discCategory.score >= 70) {
+  // Perfil Comportamental - se score alto
+  const behavioralCategory = matchResult.categories.find(c => c.id === 'behavioral');
+  if (behavioralCategory && behavioralCategory.score >= 70) {
     reasons.push({
       id: 'reason-behavioral',
       text: 'Seu perfil comportamental combina com a cultura da vaga',
@@ -266,7 +266,7 @@ export function getRecommendedJobs(
 
   for (const job of eligibleJobs) {
     // Calcular match usando o motor existente
-    const idealProfile = idealDISCProfiles[job.id];
+    const idealProfile = idealBehavioralProfiles[job.id];
     const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
 
     // Calcular boost de histórico

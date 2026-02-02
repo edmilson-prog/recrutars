@@ -1,6 +1,6 @@
 /**
- * DISC Quadrant Component
- * PRD-002-dgn: Visualização DISC e Match Score
+ * Behavioral Quadrant Component
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  *
  * Posicionamento visual do perfil em quadrante 2D
  * Eixo X: D-C (Dominância vs Conformidade)
@@ -10,7 +10,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import type { DISCProfile } from "@/types/disc";
+import type { BehavioralProfile } from "@/types/disc";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
   Tooltip,
@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Cores DISC
+// Cores do perfil
 const QUADRANT_COLORS = {
   d: { bg: "bg-red-100 dark:bg-red-950/30", border: "border-red-300 dark:border-red-800" },
   i: { bg: "bg-yellow-100 dark:bg-yellow-950/30", border: "border-yellow-300 dark:border-yellow-800" },
@@ -35,8 +35,8 @@ const QUADRANT_LABELS = {
 };
 
 interface DISCQuadrantProps {
-  profile: DISCProfile;
-  idealProfile?: DISCProfile;
+  profile: BehavioralProfile;
+  idealProfile?: BehavioralProfile;
   size?: "sm" | "md" | "lg";
   showLabels?: boolean;
   showAxes?: boolean;
@@ -82,7 +82,7 @@ export function DISCQuadrant({
   const { container, dot, label } = sizeConfig[size];
 
   // Aria label
-  const ariaLabel = `Quadrante DISC: posição em ${position.x.toFixed(0)}% horizontal, ${position.y.toFixed(0)}% vertical. Dominância ${profile.d}, Influência ${profile.i}, Estabilidade ${profile.s}, Conformidade ${profile.c}.`;
+  const ariaLabel = `Quadrante Comportamental: posição em ${position.x.toFixed(0)}% horizontal, ${position.y.toFixed(0)}% vertical. Dominância ${profile.d}, Influência ${profile.i}, Estabilidade ${profile.s}, Conformidade ${profile.c}.`;
 
   return (
     <TooltipProvider>
@@ -238,7 +238,7 @@ export function DISCQuadrant({
             />
           </TooltipTrigger>
           <TooltipContent>
-            <p className="font-semibold">Seu Perfil DISC</p>
+            <p className="font-semibold">Seu Perfil Comportamental</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mt-1">
               <span className="text-red-500">D: {profile.d}</span>
               <span className="text-yellow-500">I: {profile.i}</span>
@@ -274,7 +274,7 @@ export function DISCQuadrantMini({
   profile,
   className,
 }: {
-  profile: DISCProfile;
+  profile: BehavioralProfile;
   className?: string;
 }) {
   return (

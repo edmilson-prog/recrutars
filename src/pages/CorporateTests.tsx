@@ -44,7 +44,7 @@ const stats = [
   { value: '100%', label: 'Online e seguro', icon: Shield },
 ];
 
-const discDimensions = [
+const behavioralDimensions = [
   {
     letter: 'D',
     name: 'Dominância',
@@ -107,7 +107,7 @@ const useCases = [
 ];
 
 const differentials = [
-  { icon: Award, title: 'Base Científica', description: 'Metodologia DISC validada internacionalmente com mais de 50 anos de pesquisa.' },
+  { icon: Award, title: 'Base Científica', description: 'Metodologia validada internacionalmente com mais de 50 anos de pesquisa.' },
   { icon: Globe, title: 'Adaptado ao Brasil', description: 'Questões e interpretações calibradas para o contexto cultural brasileiro.' },
   { icon: Puzzle, title: 'Integração Total', description: 'Resultados integrados ao perfil do candidato na plataforma RecrutaRS.' },
 ];
@@ -120,8 +120,8 @@ const pricing = [
 
 const faqs = [
   {
-    question: 'O que é o teste DISC?',
-    answer: 'DISC é uma metodologia de avaliação comportamental que identifica 4 dimensões principais do comportamento humano: Dominância, Influência, Estabilidade e Conformidade. É uma das ferramentas mais utilizadas no mundo para compreender perfis comportamentais no ambiente corporativo.'
+    question: 'O que é o teste comportamental?',
+    answer: 'O Gauge-Pro é uma metodologia de avaliação comportamental que identifica 4 dimensões principais do comportamento humano: Dominância, Influência, Estabilidade e Conformidade. É uma das ferramentas mais utilizadas no mundo para compreender perfis comportamentais no ambiente corporativo.'
   },
   {
     question: 'Quanto tempo leva para fazer o teste?',
@@ -129,7 +129,7 @@ const faqs = [
   },
   {
     question: 'O resultado é confiável?',
-    answer: 'Sim, a metodologia DISC tem mais de 50 anos de validação científica e é utilizada por milhares de empresas em todo o mundo. Nossa versão Gauge-Pro foi adaptada e validada especificamente para o contexto brasileiro.'
+    answer: 'Sim, a metodologia comportamental tem mais de 50 anos de validação científica e é utilizada por milhares de empresas em todo o mundo. Nossa versão Gauge-Pro foi adaptada e validada especificamente para o contexto brasileiro.'
   },
   {
     question: 'Posso usar para colaboradores atuais?',
@@ -179,7 +179,7 @@ export default function CorporateTests() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              Gauge-Pro DISC: Avaliação comportamental científica para contratações mais assertivas
+              Gauge-Pro: Avaliação comportamental científica para contratações mais assertivas
             </motion.p>
             <motion.div
               className="flex flex-col sm:flex-row gap-4 justify-center"
@@ -221,21 +221,21 @@ export default function CorporateTests() {
           </div>
         </section>
 
-        {/* What is DISC */}
+        {/* What is the Behavioral Test */}
         <section className="py-24">
           <div className="container">
             <motion.div {...fadeInUp} className="max-w-4xl mx-auto">
               <div className="bg-card rounded-2xl shadow-soft p-8 md:p-12">
-                <h2 className="text-3xl font-bold text-foreground mb-6 text-center">O que é o Teste DISC?</h2>
+                <h2 className="text-3xl font-bold text-foreground mb-6 text-center">O que é o Teste Comportamental?</h2>
                 <div className="space-y-4 text-muted-foreground leading-relaxed">
                   <p>
-                    O teste DISC é uma metodologia de avaliação comportamental desenvolvida a partir dos estudos do psicólogo William Moulton Marston na década de 1920. A sigla DISC representa as quatro dimensões principais do comportamento humano: <strong className="text-foreground">Dominância</strong>, <strong className="text-foreground">Influência</strong>, <strong className="text-foreground">Estabilidade</strong> e <strong className="text-foreground">Conformidade</strong>.
+                    O teste comportamental é uma metodologia de avaliação desenvolvida a partir dos estudos do psicólogo William Moulton Marston na década de 1920. A avaliação mapeia as quatro dimensões principais do comportamento humano: <strong className="text-foreground">Dominância</strong>, <strong className="text-foreground">Influência</strong>, <strong className="text-foreground">Estabilidade</strong> e <strong className="text-foreground">Conformidade</strong>.
                   </p>
                   <p>
-                    Diferente de testes de personalidade, o DISC foca em comportamentos observáveis e como as pessoas tendem a agir em diferentes situações. Isso torna a metodologia extremamente útil para o ambiente corporativo, onde entender como uma pessoa se comporta é tão importante quanto suas habilidades técnicas.
+                    Diferente de testes de personalidade, a avaliação comportamental foca em comportamentos observáveis e como as pessoas tendem a agir em diferentes situações. Isso torna a metodologia extremamente útil para o ambiente corporativo, onde entender como uma pessoa se comporta é tão importante quanto suas habilidades técnicas.
                   </p>
                   <p>
-                    O <strong className="text-foreground">Gauge-Pro</strong> é nossa versão proprietária do teste DISC, desenvolvida especificamente para o mercado brasileiro, com questões adaptadas ao nosso contexto cultural e profissional.
+                    O <strong className="text-foreground">Gauge-Pro</strong> é nossa versão proprietária da avaliação comportamental, desenvolvida especificamente para o mercado brasileiro, com questões adaptadas ao nosso contexto cultural e profissional.
                   </p>
                 </div>
               </div>
@@ -243,18 +243,18 @@ export default function CorporateTests() {
           </div>
         </section>
 
-        {/* DISC Dimensions */}
+        {/* Behavioral Dimensions */}
         <section className="py-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-foreground mb-4">As 4 Dimensões DISC</h2>
+              <h2 className="text-3xl font-bold text-foreground mb-4">As 4 Dimensões Comportamentais</h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
                 Cada pessoa possui uma combinação única dessas dimensões comportamentais
               </p>
             </motion.div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-              {discDimensions.map((dimension, index) => (
+              {behavioralDimensions.map((dimension, index) => (
                 <motion.div
                   key={dimension.letter}
                   initial={{ opacity: 0, y: 20 }}
@@ -368,7 +368,7 @@ export default function CorporateTests() {
             >
               <div className="bg-card rounded-2xl shadow-soft overflow-hidden">
                 <div className="bg-gradient-to-r from-primary to-primary/80 p-6 text-primary-foreground">
-                  <h3 className="text-xl font-semibold mb-2">Exemplo de Relatório Gauge-Pro DISC</h3>
+                  <h3 className="text-xl font-semibold mb-2">Exemplo de Relatório Gauge-Pro</h3>
                   <p className="text-primary-foreground/80">Análise comportamental completa</p>
                 </div>
                 <div className="p-8">
@@ -377,7 +377,7 @@ export default function CorporateTests() {
                     <div>
                       <h4 className="font-semibold text-foreground mb-4">Perfil Comportamental</h4>
                       <div className="space-y-3">
-                        {discDimensions.map((dim) => (
+                        {behavioralDimensions.map((dim) => (
                           <div key={dim.letter} className="flex items-center gap-3">
                             <span className={`w-8 h-8 rounded ${dim.color} text-white flex items-center justify-center text-sm font-bold`}>
                               {dim.letter}
@@ -402,7 +402,7 @@ export default function CorporateTests() {
                       <h4 className="font-semibold text-foreground mb-4">O que você recebe</h4>
                       <ul className="space-y-3">
                         {[
-                          'Gráfico de perfil DISC',
+                          'Gráfico de perfil comportamental',
                           'Pontos fortes identificados',
                           'Áreas de desenvolvimento',
                           'Estilo de comunicação',
@@ -508,9 +508,8 @@ export default function CorporateTests() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className={`bg-card rounded-2xl shadow-soft p-6 relative ${
-                    plan.popular ? 'border-2 border-secondary ring-4 ring-secondary/10' : ''
-                  }`}
+                  className={`bg-card rounded-2xl shadow-soft p-6 relative ${plan.popular ? 'border-2 border-secondary ring-4 ring-secondary/10' : ''
+                    }`}
                 >
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-secondary text-secondary-foreground text-sm font-medium rounded-full flex items-center gap-1">
@@ -549,7 +548,7 @@ export default function CorporateTests() {
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Perguntas Frequentes</h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Tire suas dúvidas sobre o teste DISC Gauge-Pro
+                Tire suas dúvidas sobre o teste comportamental Gauge-Pro
               </p>
             </motion.div>
 
@@ -585,7 +584,7 @@ export default function CorporateTests() {
             <motion.div {...fadeInUp} className="text-center text-primary-foreground max-w-3xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Comece a avaliar com ciência</h2>
               <p className="text-xl text-primary-foreground/80 mb-8">
-                Junte-se a milhares de empresas que já utilizam o Gauge-Pro DISC para contratações mais assertivas
+                Junte-se às empresas que já utilizam o Gauge-Pro para contratações mais assertivas
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" variant="secondary">

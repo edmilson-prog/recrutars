@@ -1,6 +1,6 @@
 /**
  * Match Score Circle Component
- * PRD-002-dgn: Visualização DISC e Match Score
+ * PRD-002-dgn: Visualização Comportamental e Match Score
  *
  * Exibe o score total de compatibilidade em um círculo visual
  * Cores semânticas: ≥80% verde, 60-79% amarelo, <60% vermelho

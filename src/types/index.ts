@@ -20,3 +20,5 @@ export * from './messageTemplates';
 export * from './culturalFit';
 export * from './chatbot';
 export * from './changelog';
+export * from './assessment';
+export * from './teamManagement';

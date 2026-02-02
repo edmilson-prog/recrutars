@@ -337,7 +337,7 @@ export default function CandidateTests() {
             <Loader2 className="w-10 h-10 text-primary-foreground" />
           </motion.div>
           <h2 className="text-2xl font-bold text-foreground mb-2">Processando seu perfil...</h2>
-          <p className="text-muted-foreground">Analisando suas respostas para gerar seu perfil DISC</p>
+          <p className="text-muted-foreground">Analisando suas respostas para gerar seu perfil comportamental</p>
         </div>
       </DashboardLayout>
     );
@@ -358,7 +358,7 @@ export default function CandidateTests() {
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-4">Teste Gauge-Pro</h1>
             <p className="text-muted-foreground mb-8">
-              O teste comportamental Gauge-Pro identifica seu perfil DISC, ajudando empresas a
+              O teste comportamental Gauge-Pro identifica seu perfil comportamental, ajudando empresas a
               entenderem suas características e encontrarem a melhor posição para você.
             </p>
 
@@ -434,9 +434,9 @@ export default function CandidateTests() {
             transition={{ delay: 0.2 }}
             className="bg-card rounded-2xl p-8 shadow-soft"
           >
-            <h2 className="text-xl font-semibold text-foreground mb-6 text-center">Seu Perfil DISC</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-6 text-center">Seu Perfil Comportamental</h2>
 
-            {/* DISC Chart */}
+            {/* Behavioral Chart */}
             <div className="flex justify-center items-end gap-6 h-64 mb-8">
               {(Object.entries(scores) as [keyof typeof profilesData, number][]).map(([key, score], index) => (
                 <motion.div

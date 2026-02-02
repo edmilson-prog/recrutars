@@ -8,6 +8,20 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+} from '@dnd-kit/core';
+import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { cn } from '@/lib/utils';
+import {
   Users,
   ChevronDown,
   ChevronRight,
@@ -37,13 +51,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
@@ -76,8 +83,8 @@ import {
   mockApplicationHistory,
   mockMessages,
   mockConversations,
-  getCandidateDISCProfile,
-  getIdealDISCProfile,
+  getCandidateBehavioralProfile,
+  getIdealBehavioralProfile,
 } from '@/data/mockData';
 import type { Application, ApplicationStatus, ApplicationNote, ApplicationHistory, TestRequestStatus, Message } from '@/types';
 import type { CandidateForComparison } from '@/types/disc';
@@ -128,7 +135,7 @@ const STATUS_CONFIG: Record<
   },
 };
 
-const DISC_PROFILES = ['Executor', 'Influenciador', 'Analítico', 'Estável'];
+const BEHAVIORAL_PROFILES = ['Executor', 'Influenciador', 'Analítico', 'Estável'];
 
 // PRD-016: Test request status configuration
 const TEST_STATUS_CONFIG: Record<TestRequestStatus, { label: string; icon: string; color: string }> = {
@@ -159,7 +166,7 @@ const calculateMatch = (candidateId: string): number => {
     mockJobs.find((j) => j.companyId === 'company-1' && j.status === 'active');
   if (!job) return 0;
 
-  const idealProfile = getIdealDISCProfile(job.id);
+  const idealProfile = getIdealBehavioralProfile(job.id);
   const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
   return matchResult.totalScore;
 };
@@ -312,6 +319,54 @@ export default function CompanyApplications() {
     setSelectedApplication(app);
     setDrawerOpen(true);
   };
+
+  // --- Drag-and-Drop (dnd-kit) ---
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const findContainer = (id: string): ApplicationStatus | null => {
+    if (['pending', 'reviewing', 'interview', 'offer'].includes(id)) {
+      return id as ApplicationStatus;
+    }
+    const app = filteredApplications.find((a) => a.id === id);
+    return app?.status ?? null;
+  };
+
+  const activeApplication = activeId
+    ? filteredApplications.find((a) => a.id === activeId)
+    : null;
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over) return;
+
+    const activeContainer = findContainer(active.id as string);
+    const overContainer = findContainer(over.id as string);
+
+    if (!activeContainer || !overContainer) return;
+    if (activeContainer === overContainer) return;
+
+    handleMove(active.id as string, overContainer);
+  };
+
+  const handleDragCancel = () => {
+    setActiveId(null);
+  };
+  // --- Fim Drag-and-Drop ---
 
   const handleMove = (applicationId: string, newStatus: ApplicationStatus) => {
     const app = applications.find((a) => a.id === applicationId);
@@ -506,8 +561,8 @@ export default function CompanyApplications() {
     const candidate = mockCandidates.find((c) => c.id === candidateId);
     if (!candidate) return null;
 
-    const discProfile = getCandidateDISCProfile(candidateId);
-    if (!discProfile) return null;
+    const behavioralProfile = getCandidateBehavioralProfile(candidateId);
+    if (!behavioralProfile) return null;
 
     // PRD-035: Usa cálculo dinâmico de match
     const matchScore = calculateMatch(candidateId);
@@ -517,7 +572,7 @@ export default function CompanyApplications() {
       name: candidate.name,
       avatar: candidate.avatar,
       matchScore,
-      discProfile,
+      behavioralProfile,
       metrics: {
         experience: candidate.experience,
         education: candidate.education,
@@ -579,11 +634,11 @@ export default function CompanyApplications() {
 
             <Select value={profileFilter} onValueChange={setProfileFilter}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Perfil DISC" />
+                <SelectValue placeholder="Perfil Comportamental" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os perfis</SelectItem>
-                {DISC_PROFILES.map((profile) => (
+                {BEHAVIORAL_PROFILES.map((profile) => (
                   <SelectItem key={profile} value={profile}>
                     {profile}
                   </SelectItem>
@@ -619,18 +674,35 @@ export default function CompanyApplications() {
         {/* Kanban Board */}
         {selectedJobId ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto">
-              {(['pending', 'reviewing', 'interview', 'offer'] as const).map(
-                (status) => (
-                  <KanbanColumn
-                    key={status}
-                    status={status}
-                    applications={groupedApplications[status]}
-                    onCardClick={handleCardClick}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragCancel={handleDragCancel}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto">
+                {(['pending', 'reviewing', 'interview', 'offer'] as const).map(
+                  (status) => (
+                    <KanbanColumn
+                      key={status}
+                      status={status}
+                      applications={groupedApplications[status]}
+                      onCardClick={handleCardClick}
+                    />
+                  )
+                )}
+              </div>
+              <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }}>
+                {activeApplication ? (
+                  <ApplicationCard
+                    application={activeApplication}
+                    onClick={() => {}}
+                    isDragOverlay
                   />
-                )
-              )}
-            </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
 
             {/* Rejected Section */}
             {groupedApplications.rejected.length > 0 && (
@@ -682,12 +754,12 @@ export default function CompanyApplications() {
       </div>
 
       {/* Candidate Drawer */}
-      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+      <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           {selectedApplication && selectedCandidate && (
             <>
               {/* Header */}
-              <SheetHeader className="space-y-4">
+              <DialogHeader className="space-y-4">
                 <div className="flex items-start gap-4">
                   <Avatar className="w-16 h-16">
                     <AvatarImage src={selectedCandidate.avatar} />
@@ -700,9 +772,9 @@ export default function CompanyApplications() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <SheetTitle className="text-xl">
+                    <DialogTitle className="text-xl">
                       {selectedCandidate.name}
-                    </SheetTitle>
+                    </DialogTitle>
                     <p className="text-muted-foreground">
                       {selectedCandidate.title}
                     </p>
@@ -725,7 +797,7 @@ export default function CompanyApplications() {
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="text-muted-foreground">
-                      Sem teste DISC
+                      Sem teste comportamental
                     </Badge>
                   )}
                   <Badge
@@ -734,7 +806,7 @@ export default function CompanyApplications() {
                     {STATUS_CONFIG[selectedApplication.status]?.label}
                   </Badge>
                 </div>
-              </SheetHeader>
+              </DialogHeader>
 
               {/* Tabs */}
               <Tabs defaultValue="perfil" className="mt-6">
@@ -1079,7 +1151,7 @@ export default function CompanyApplications() {
               </div>
 
               {/* Actions */}
-              <SheetFooter className="mt-6 flex-col sm:flex-row gap-2">
+              <DialogFooter className="mt-6 flex-col sm:flex-row gap-2">
                 {/* PRD-034: Botão de agendar entrevista */}
                 {selectedApplication.status !== 'rejected' && (
                   <Button
@@ -1146,11 +1218,11 @@ export default function CompanyApplications() {
                     </Button>
                   </>
                 )}
-              </SheetFooter>
+              </DialogFooter>
             </>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       {/* Reject Dialog */}
       <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
@@ -1313,28 +1385,77 @@ interface KanbanColumnProps {
 
 function KanbanColumn({ status, applications, onCardClick }: KanbanColumnProps) {
   const config = STATUS_CONFIG[status];
+  const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
-    <div className={`rounded-xl border p-4 ${config.bgColor}`}>
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'rounded-xl border p-4 transition-colors duration-200',
+        config.bgColor,
+        isOver && 'ring-2 ring-primary/50 bg-primary/5',
+      )}
+    >
       <div className="flex items-center justify-between mb-4">
         <h3 className={`font-semibold ${config.color}`}>{config.label}</h3>
         <Badge variant="secondary">{applications.length}</Badge>
       </div>
-      <div className="space-y-3">
-        {applications.map((app, index) => (
-          <ApplicationCard
-            key={app.id}
-            application={app}
-            onClick={() => onCardClick(app)}
-            index={index}
-          />
-        ))}
-        {applications.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Nenhum candidato
-          </p>
-        )}
-      </div>
+      <SortableContext
+        items={applications.map((a) => a.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="space-y-3 min-h-[60px]">
+          {applications.map((app, index) => (
+            <SortableApplicationCard
+              key={app.id}
+              application={app}
+              onClick={() => onCardClick(app)}
+              index={index}
+            />
+          ))}
+          {applications.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Nenhum candidato
+            </p>
+          )}
+        </div>
+      </SortableContext>
+    </div>
+  );
+}
+
+// Sortable wrapper for ApplicationCard
+function SortableApplicationCard({
+  application,
+  onClick,
+  index,
+}: {
+  application: Application;
+  onClick: () => void;
+  index: number;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: application.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <ApplicationCard
+        application={application}
+        onClick={onClick}
+        index={index}
+        isDragging={isDragging}
+      />
     </div>
   );
 }
@@ -1345,6 +1466,8 @@ interface ApplicationCardProps {
   onClick: () => void;
   index?: number;
   compact?: boolean;
+  isDragging?: boolean;
+  isDragOverlay?: boolean;
 }
 
 function ApplicationCard({
@@ -1352,6 +1475,8 @@ function ApplicationCard({
   onClick,
   index = 0,
   compact = false,
+  isDragging = false,
+  isDragOverlay = false,
 }: ApplicationCardProps) {
   const candidate = mockCandidates.find(
     (c) => c.id === application.candidateId
@@ -1362,12 +1487,15 @@ function ApplicationCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className={`bg-card rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow border ${
-        compact ? 'min-w-[200px]' : ''
-      }`}
+      initial={isDragOverlay ? false : { opacity: 0, y: 10 }}
+      animate={{ opacity: isDragging ? 0.4 : 1, y: 0 }}
+      transition={{ delay: isDragOverlay ? 0 : index * 0.05 }}
+      className={cn(
+        'bg-card rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow border',
+        compact && 'min-w-[200px]',
+        isDragging && 'border-dashed border-primary/50',
+        isDragOverlay && 'shadow-xl ring-2 ring-primary/30 rotate-[2deg] scale-105',
+      )}
       onClick={onClick}
     >
       <div className="flex items-center gap-3">
