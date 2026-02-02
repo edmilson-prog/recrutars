@@ -153,7 +153,7 @@ export default function ScenarioManager({
                 </p>
               </div>
             ) : (
-              <ScrollArea className="max-h-[400px]">
+              <ScrollArea className="max-h-[360px] overflow-hidden">
                 <div className="space-y-2 pr-2">
                   {scenarios.map((scenario) => {
                     const totalMembers = scenario.teams.reduce(
