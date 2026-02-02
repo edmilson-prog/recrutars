@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, Search, MoreVertical, Users, Eye, Pause, Play, Trash2, Edit, Copy, XCircle, X, Briefcase, Brain } from 'lucide-react';
@@ -6,7 +6,6 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,13 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,46 +23,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { mockJobs } from '@/data/mockData';
 import { Job, JobStatus } from '@/types';
 import { toast } from 'sonner';
-import { useJobAnalyzer, createJobFormData } from '@/hooks/useJobAnalyzer';
-import { JobAssistant } from '@/components/empresa/JobAssistant';
-
-// Common benefits for checkboxes
-const COMMON_BENEFITS = [
-  'Vale Refeição',
-  'Plano de Saúde',
-  'Vale Transporte',
-  'Home Office',
-  'PLR',
-  'Gym Pass',
-  'Auxílio Creche',
-  'Seguro de Vida',
-];
-
-// Initial form state
-const INITIAL_FORM_STATE = {
-  title: '',
-  description: '',
-  location: '',
-  type: 'remote' as 'remote' | 'hybrid' | 'onsite',
-  level: '',
-  area: '',
-  salaryMin: '',
-  salaryMax: '',
-  salaryNegotiable: false,
-  requirements: '',
-};
 
 export default function CompanyJobs() {
   const navigate = useNavigate();
@@ -78,85 +33,12 @@ export default function CompanyJobs() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | JobStatus>('all');
 
-  // Form states
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingJob, setEditingJob] = useState<Job | null>(null);
-  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
-  const [selectedBenefits, setSelectedBenefits] = useState<string[]>([]);
-  const [otherBenefits, setOtherBenefits] = useState('');
-  const [skills, setSkills] = useState<string[]>([]);
-  const [newSkill, setNewSkill] = useState('');
-
   // Confirmation dialogs states
   const [jobToPause, setJobToPause] = useState<Job | null>(null);
   const [jobToReactivate, setJobToReactivate] = useState<Job | null>(null);
   const [jobToClose, setJobToClose] = useState<Job | null>(null);
   const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
-
-  // Character limits
-  const DESCRIPTION_LIMIT = 2000;
-  const REQUIREMENTS_LIMIT = 1500;
-
-  // Job analyzer - create form data for analysis
-  const jobFormData = useMemo(() => {
-    if (!isFormOpen) return null;
-    return createJobFormData(formData, selectedBenefits, skills);
-  }, [isFormOpen, formData, selectedBenefits, skills]);
-
-  const { analysis, isAnalyzing } = useJobAnalyzer(jobFormData, {
-    enabled: isFormOpen,
-  });
-
-  // Handle suggestion application
-  const handleApplySuggestion = (field: string, value: string) => {
-    switch (field) {
-      case 'title':
-        setFormData(prev => ({ ...prev, title: value }));
-        break;
-      case 'description':
-        setFormData(prev => ({ ...prev, description: value }));
-        break;
-      case 'requirements':
-        setFormData(prev => ({ ...prev, requirements: value }));
-        break;
-      case 'location':
-        setFormData(prev => ({ ...prev, location: value }));
-        break;
-      case 'salary': {
-        // Parse salary suggestion (e.g., "R$ 5.000 - R$ 9.000")
-        const salaryMatch = value.match(/R\$\s*([\d.]+)\s*-\s*R\$\s*([\d.]+)/);
-        if (salaryMatch) {
-          const min = salaryMatch[1].replace(/\./g, '');
-          const max = salaryMatch[2].replace(/\./g, '');
-          setFormData(prev => ({
-            ...prev,
-            salaryMin: min,
-            salaryMax: max,
-            salaryNegotiable: false,
-          }));
-        }
-        break;
-      }
-      case 'benefits': {
-        // Add suggested benefits
-        const suggestedBenefits = value.split(', ').map(b => b.trim());
-        setSelectedBenefits(prev => {
-          const newBenefits = [...prev];
-          suggestedBenefits.forEach(benefit => {
-            if (COMMON_BENEFITS.includes(benefit) && !newBenefits.includes(benefit)) {
-              newBenefits.push(benefit);
-            }
-          });
-          return newBenefits;
-        });
-        break;
-      }
-      default:
-        break;
-    }
-    toast.success('Sugestão aplicada!');
-  };
 
   // Filter jobs
   const filteredJobs = jobs.filter(job => {
@@ -171,154 +53,6 @@ export default function CompanyJobs() {
     active: jobs.filter(j => j.status === 'active').length,
     paused: jobs.filter(j => j.status === 'paused').length,
     closed: jobs.filter(j => j.status === 'closed').length,
-  };
-
-  // Reset form
-  const resetForm = () => {
-    setFormData(INITIAL_FORM_STATE);
-    setSelectedBenefits([]);
-    setOtherBenefits('');
-    setSkills([]);
-    setNewSkill('');
-    setEditingJob(null);
-  };
-
-  // Open form for new job
-  const openNewJobForm = () => {
-    resetForm();
-    setIsFormOpen(true);
-  };
-
-  // Open form for editing
-  const openEditJobForm = (job: Job) => {
-    setEditingJob(job);
-    setFormData({
-      title: job.title,
-      description: job.description,
-      location: job.location,
-      type: job.type,
-      level: job.level,
-      area: job.area,
-      salaryMin: job.salary.min.toString(),
-      salaryMax: job.salary.max.toString(),
-      salaryNegotiable: job.salary.min === 0 && job.salary.max === 0,
-      requirements: job.requirements.join('\n'),
-    });
-    // Separate common benefits from other benefits
-    const common = job.benefits.filter(b => COMMON_BENEFITS.includes(b));
-    const other = job.benefits.filter(b => !COMMON_BENEFITS.includes(b));
-    setSelectedBenefits(common);
-    setOtherBenefits(other.join('\n'));
-    setSkills([]); // Jobs don't have skills field yet
-    setIsFormOpen(true);
-  };
-
-  // Handle form close
-  const handleFormClose = () => {
-    setIsFormOpen(false);
-    resetForm();
-  };
-
-  // Toggle benefit checkbox
-  const toggleBenefit = (benefit: string) => {
-    setSelectedBenefits(prev =>
-      prev.includes(benefit)
-        ? prev.filter(b => b !== benefit)
-        : [...prev, benefit]
-    );
-  };
-
-  // Add skill
-  const addSkill = () => {
-    const trimmed = newSkill.trim();
-    if (!trimmed) return;
-    if (skills.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
-      toast.error('Skill já adicionada');
-      return;
-    }
-    setSkills([...skills, trimmed]);
-    setNewSkill('');
-  };
-
-  // Remove skill
-  const removeSkill = (skill: string) => {
-    setSkills(skills.filter(s => s !== skill));
-  };
-
-  // Handle skill input key press
-  const handleSkillKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addSkill();
-    }
-  };
-
-  // Save job (create or update)
-  const handleSaveJob = () => {
-    // Validation
-    if (!formData.title || !formData.description || !formData.location) {
-      toast.error('Preencha todos os campos obrigatórios');
-      return;
-    }
-    if (formData.requirements.trim().length === 0) {
-      toast.error('Informe os requisitos da vaga');
-      return;
-    }
-
-    // Combine benefits
-    const allBenefits = [
-      ...selectedBenefits,
-      ...otherBenefits.split('\n').filter(b => b.trim()),
-    ];
-
-    if (editingJob) {
-      // Update existing job
-      setJobs(jobs.map(job => {
-        if (job.id === editingJob.id) {
-          return {
-            ...job,
-            title: formData.title,
-            description: formData.description,
-            location: formData.location,
-            type: formData.type,
-            level: formData.level,
-            area: formData.area,
-            salary: formData.salaryNegotiable
-              ? { min: 0, max: 0 }
-              : { min: parseInt(formData.salaryMin) || 0, max: parseInt(formData.salaryMax) || 0 },
-            requirements: formData.requirements.split('\n').filter(r => r.trim()),
-            benefits: allBenefits,
-          };
-        }
-        return job;
-      }));
-      toast.success('Vaga atualizada com sucesso!');
-    } else {
-      // Create new job
-      const job: Job = {
-        id: `job-${Date.now()}`,
-        companyId: 'company-1',
-        companyName: 'Tech Solutions',
-        title: formData.title,
-        description: formData.description,
-        requirements: formData.requirements.split('\n').filter(r => r.trim()),
-        benefits: allBenefits,
-        location: formData.location,
-        type: formData.type,
-        level: formData.level,
-        salary: formData.salaryNegotiable
-          ? { min: 0, max: 0 }
-          : { min: parseInt(formData.salaryMin) || 0, max: parseInt(formData.salaryMax) || 0 },
-        status: 'active',
-        applicationsCount: 0,
-        createdAt: new Date().toISOString().split('T')[0],
-        area: formData.area,
-      };
-      setJobs([job, ...jobs]);
-      toast.success('Vaga publicada com sucesso!');
-    }
-
-    handleFormClose();
   };
 
   // Status actions
@@ -377,7 +111,7 @@ export default function CompanyJobs() {
       case 'active':
         return (
           <>
-            <DropdownMenuItem onClick={() => openEditJobForm(job)}>
+            <DropdownMenuItem onClick={() => navigate(`/empresa/vagas/${job.id}/editar`)}>
               <Edit className="w-4 h-4 mr-2" />
               Editar
             </DropdownMenuItem>
@@ -403,7 +137,7 @@ export default function CompanyJobs() {
       case 'paused':
         return (
           <>
-            <DropdownMenuItem onClick={() => openEditJobForm(job)}>
+            <DropdownMenuItem onClick={() => navigate(`/empresa/vagas/${job.id}/editar`)}>
               <Edit className="w-4 h-4 mr-2" />
               Editar
             </DropdownMenuItem>
@@ -444,7 +178,7 @@ export default function CompanyJobs() {
             <h1 className="text-3xl font-bold text-foreground">Minhas Vagas</h1>
             <p className="text-muted-foreground">Gerencie suas vagas e processos seletivos</p>
           </div>
-          <Button onClick={openNewJobForm}>
+          <Button onClick={() => navigate('/empresa/vagas/nova')}>
             <Plus className="w-5 h-5 mr-2" />
             Nova Vaga
           </Button>
@@ -524,7 +258,12 @@ export default function CompanyJobs() {
                       <Briefcase className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-foreground">{job.title}</h3>
+                      <h3
+                        className="text-xl font-semibold text-foreground hover:text-primary cursor-pointer transition-colors"
+                        onClick={() => navigate(`/empresa/vagas/${job.id}/editar`)}
+                      >
+                        {job.title}
+                      </h3>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant={
                           job.status === 'active' ? 'default' :
@@ -568,7 +307,7 @@ export default function CompanyJobs() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/empresa/vagas/${job.id}/editar`)}>
                         <Eye className="w-4 h-4 mr-2" />
                         Ver detalhes
                       </DropdownMenuItem>
@@ -604,236 +343,6 @@ export default function CompanyJobs() {
           )}
         </div>
       </div>
-
-      {/* Create/Edit Job Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={handleFormClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingJob ? 'Editar Vaga' : 'Nova Vaga'}</DialogTitle>
-            <DialogDescription>
-              {editingJob ? 'Atualize as informações da vaga.' : 'Preencha os dados para criar uma nova vaga.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6 py-4">
-            {/* Basic Info Section */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Informações Básicas</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="title">Título da vaga *</Label>
-                  <Input
-                    id="title"
-                    placeholder="Ex: Desenvolvedor Full Stack Senior"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Tipo de Contrato *</Label>
-                  <Select value={formData.area} onValueChange={(v) => setFormData({ ...formData, area: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="CLT">CLT</SelectItem>
-                      <SelectItem value="PJ">PJ</SelectItem>
-                      <SelectItem value="Estágio">Estágio</SelectItem>
-                      <SelectItem value="Freelancer">Freelancer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Modalidade *</Label>
-                  <Select value={formData.type} onValueChange={(v: 'remote' | 'hybrid' | 'onsite') => setFormData({ ...formData, type: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="remote">Remoto</SelectItem>
-                      <SelectItem value="hybrid">Híbrido</SelectItem>
-                      <SelectItem value="onsite">Presencial</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="location">Localização *</Label>
-                  <Input
-                    id="location"
-                    placeholder="Ex: São Paulo, SP"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Nível</Label>
-                  <Select value={formData.level} onValueChange={(v) => setFormData({ ...formData, level: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Estágio">Estágio</SelectItem>
-                      <SelectItem value="Junior">Júnior</SelectItem>
-                      <SelectItem value="Pleno">Pleno</SelectItem>
-                      <SelectItem value="Senior">Sênior</SelectItem>
-                      <SelectItem value="Especialista">Especialista</SelectItem>
-                      <SelectItem value="Gerente">Gerente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {/* Salary Section */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Remuneração</h3>
-              <div className="flex items-center gap-2 mb-4">
-                <Checkbox
-                  id="salaryNegotiable"
-                  checked={formData.salaryNegotiable}
-                  onCheckedChange={(checked) => setFormData({ ...formData, salaryNegotiable: checked as boolean })}
-                />
-                <Label htmlFor="salaryNegotiable" className="cursor-pointer">Salário a combinar</Label>
-              </div>
-              {!formData.salaryNegotiable && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="salaryMin">Salário mínimo (R$)</Label>
-                    <Input
-                      id="salaryMin"
-                      type="number"
-                      placeholder="8000"
-                      value={formData.salaryMin}
-                      onChange={(e) => setFormData({ ...formData, salaryMin: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="salaryMax">Salário máximo (R$)</Label>
-                    <Input
-                      id="salaryMax"
-                      type="number"
-                      placeholder="12000"
-                      value={formData.salaryMax}
-                      onChange={(e) => setFormData({ ...formData, salaryMax: e.target.value })}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Description Section */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Descrição da Vaga *</h3>
-              <div className="space-y-2">
-                <Textarea
-                  placeholder="Descreva as responsabilidades e atividades do cargo..."
-                  className="min-h-[120px]"
-                  maxLength={DESCRIPTION_LIMIT}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-                <div className="text-right text-sm text-muted-foreground">
-                  {formData.description.length}/{DESCRIPTION_LIMIT}
-                </div>
-              </div>
-            </div>
-
-            {/* Requirements Section */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Requisitos *</h3>
-              <div className="space-y-2">
-                <Textarea
-                  placeholder="5+ anos de experiência&#10;Conhecimento em React&#10;Inglês avançado"
-                  className="min-h-[100px]"
-                  maxLength={REQUIREMENTS_LIMIT}
-                  value={formData.requirements}
-                  onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
-                />
-                <div className="text-right text-sm text-muted-foreground">
-                  {formData.requirements.length}/{REQUIREMENTS_LIMIT}
-                </div>
-              </div>
-            </div>
-
-            {/* Benefits Section */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Benefícios</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {COMMON_BENEFITS.map(benefit => (
-                  <div key={benefit} className="flex items-center gap-2">
-                    <Checkbox
-                      id={`benefit-${benefit}`}
-                      checked={selectedBenefits.includes(benefit)}
-                      onCheckedChange={() => toggleBenefit(benefit)}
-                    />
-                    <Label htmlFor={`benefit-${benefit}`} className="text-sm cursor-pointer">
-                      {benefit}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-2">
-                <Label>Outros benefícios</Label>
-                <Textarea
-                  placeholder="Horário flexível&#10;Ambiente descontraído&#10;Cursos gratuitos"
-                  className="min-h-[60px]"
-                  value={otherBenefits}
-                  onChange={(e) => setOtherBenefits(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Skills Section */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Skills Desejadas</h3>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Digite uma skill e pressione Enter"
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                  onKeyDown={handleSkillKeyPress}
-                />
-                <Button type="button" variant="outline" onClick={addSkill}>
-                  Adicionar
-                </Button>
-              </div>
-              {skills.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {skills.map(skill => (
-                    <Badge key={skill} variant="secondary" className="gap-1 pr-1">
-                      {skill}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-4 w-4 hover:bg-transparent"
-                        onClick={() => removeSkill(skill)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Job Assistant */}
-            <JobAssistant
-              analysis={analysis}
-              isAnalyzing={isAnalyzing}
-              onApplySuggestion={handleApplySuggestion}
-            />
-
-            {/* Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={handleFormClose}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSaveJob}>
-                {editingJob ? 'Salvar Alterações' : 'Publicar Vaga'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Pause Confirmation */}
       <AlertDialog open={!!jobToPause} onOpenChange={() => setJobToPause(null)}>

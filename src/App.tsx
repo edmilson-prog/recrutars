@@ -35,6 +35,7 @@ import AdminAssessmentQuestions from "./pages/admin/AssessmentQuestions";
 // Company pages
 import CompanyDashboard from "./pages/empresa/Dashboard";
 import CompanyJobs from "./pages/empresa/Jobs";
+import CompanyJobForm from "./pages/empresa/JobForm";
 import CompanyApplications from "./pages/empresa/Applications";
 import CompanyCandidates from "./pages/empresa/Candidates";
 import CompanyCandidateProfile from "./pages/empresa/CandidateProfile";
@@ -207,6 +208,16 @@ const App = () => (
             <Route path="/empresa/vagas" element={
               <ProtectedRoute allowedTypes={['company']}>
                 <CompanyJobs />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/vagas/nova" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyJobForm />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/vagas/:id/editar" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyJobForm />
               </ProtectedRoute>
             } />
             <Route path="/empresa/candidaturas" element={

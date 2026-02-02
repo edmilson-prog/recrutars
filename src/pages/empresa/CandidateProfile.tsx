@@ -3,7 +3,7 @@
  * PRD-014: Banco de Talentos - Perfil completo com avaliação comportamental
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -20,6 +20,14 @@ import {
   CheckCircle,
   AlertCircle,
   Heart,
+  FileText,
+  MessageSquare,
+  ClipboardCheck,
+  StickyNote,
+  Download,
+  History,
+  ChevronDown,
+  User2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -29,6 +37,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { PracticalAnalysisCard } from '@/components/aiAnalysis';
+import { getProfileSummary } from '@/data/profileSummaries';
 import {
   Dialog,
   DialogContent,
@@ -44,8 +53,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
-import { mockCandidates, mockJobs, getIdealBehavioralProfile } from '@/data/mockData';
-import type { Job } from '@/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { ScheduleInterviewModal } from '@/components/empresa/ScheduleInterviewModal';
+import { useCompanyInterviews } from '@/hooks/useCompanyInterviews';
+import { useCandidateActivity, type ActivityType } from '@/hooks/useCandidateActivity';
+import {
+  mockCandidates,
+  mockJobs,
+  getIdealBehavioralProfile,
+  mockApplications,
+  mockApplicationNotes,
+} from '@/data/mockData';
+import type { Job, ApplicationNote } from '@/types';
 import { toast } from 'sonner';
 import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
@@ -54,6 +74,22 @@ import { MatchBreakdown } from '@/components/match/MatchBreakdown';
 import { MatchStrengths } from '@/components/match/MatchStrengths';
 import { MatchOpportunities } from '@/components/match/MatchOpportunities';
 import { MatchMethodologyModal } from '@/components/match/MatchMethodologyModal';
+import { cn } from '@/lib/utils';
+
+// Skill level colors for CandidateProfile
+type SkillLevel = 'Expert' | 'Avançado' | 'Intermediário';
+
+const skillLevelConfig: Record<SkillLevel, { bg: string; text: string }> = {
+  Expert: { bg: 'bg-green-100', text: 'text-green-700' },
+  Avançado: { bg: 'bg-purple-100', text: 'text-purple-700' },
+  Intermediário: { bg: 'bg-slate-100', text: 'text-slate-600' },
+};
+
+const getSkillLevel = (index: number): SkillLevel => {
+  if (index < 2) return 'Expert';
+  if (index < 4) return 'Avançado';
+  return 'Intermediário';
+};
 
 // Mock experience data based on candidate.experience field
 const generateMockExperiences = (candidateTitle: string, years: number) => {
@@ -100,6 +136,60 @@ const generateMockExperiences = (candidateTitle: string, years: number) => {
 
 // PRD-035: Cálculo dinâmico removido - agora usamos matchResult diretamente
 
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Novo',
+  reviewing: 'Em Análise',
+  interview: 'Entrevista',
+  offer: 'Aprovado',
+  rejected: 'Reprovado',
+  hired: 'Contratado',
+  withdrawn: 'Desistência',
+};
+
+const DEFAULT_TEST_MESSAGE = `Olá! Para darmos continuidade ao processo seletivo, gostaríamos que você realizasse nosso teste comportamental Gauge-Pro. O teste leva cerca de 15-20 minutos e nos ajuda a entender melhor seu perfil.`;
+
+const DEADLINE_OPTIONS = [
+  { value: '3', label: '3 dias' },
+  { value: '5', label: '5 dias' },
+  { value: '7', label: '7 dias' },
+  { value: '14', label: '14 dias' },
+  { value: 'none', label: 'Sem prazo' },
+];
+
+function getActivityDotColor(type: ActivityType): string {
+  switch (type) {
+    case 'application': return 'bg-blue-500';
+    case 'status_change': return 'bg-purple-500';
+    case 'note': return 'bg-yellow-500';
+    case 'message': return 'bg-green-500';
+    case 'test_request': return 'bg-cyan-500';
+    default: return 'bg-muted-foreground';
+  }
+}
+
+function getActivityIcon(type: ActivityType) {
+  switch (type) {
+    case 'application': return <Send className="w-3.5 h-3.5" />;
+    case 'status_change': return <CheckCircle className="w-3.5 h-3.5" />;
+    case 'note': return <StickyNote className="w-3.5 h-3.5" />;
+    case 'message': return <MessageSquare className="w-3.5 h-3.5" />;
+    case 'test_request': return <ClipboardCheck className="w-3.5 h-3.5" />;
+    default: return <History className="w-3.5 h-3.5" />;
+  }
+}
+
+function formatActivityTimestamp(timestamp: string): string {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Hoje';
+  if (diffDays === 1) return 'Ontem';
+  if (diffDays < 30) return `${diffDays} dias atrás`;
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+}
+
 export default function CandidateProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -108,8 +198,22 @@ export default function CandidateProfile() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [inviteMessage, setInviteMessage] = useState('');
 
+  // Actions card state
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string>('');
+  const [isTestRequestModalOpen, setIsTestRequestModalOpen] = useState(false);
+  const [testMessage, setTestMessage] = useState(DEFAULT_TEST_MESSAGE);
+  const [testDeadline, setTestDeadline] = useState('7');
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [noteText, setNoteText] = useState('');
+  const [showNoteInput, setShowNoteInput] = useState(false);
+  const [localNotes, setLocalNotes] = useState<ApplicationNote[]>([]);
+
   // PRD-030: Hook de candidatos favoritos
   const { isFavorite, toggleFavorite } = useFavoriteCandidates();
+
+  // Hooks
+  const { activities, hasMore, remaining, showMore, totalCount } = useCandidateActivity(id || '');
+  const { createInterview } = useCompanyInterviews('company-1');
 
   const candidate = mockCandidates.find((c) => c.id === id);
 
@@ -117,6 +221,26 @@ export default function CandidateProfile() {
   const companyJobs = mockJobs.filter(
     (job) => job.companyId === 'company-1' && job.status === 'active'
   );
+
+  // Candidate applications
+  const candidateApplications = useMemo(
+    () => mockApplications.filter((a) => a.candidateId === id),
+    [id]
+  );
+
+  const selectedApplication = useMemo(
+    () => candidateApplications.find((a) => a.id === selectedApplicationId) || candidateApplications[0] || null,
+    [candidateApplications, selectedApplicationId]
+  );
+
+  // Existing notes for this candidate's applications
+  const existingNotes = useMemo(() => {
+    const appIds = candidateApplications.map((a) => a.id);
+    return [
+      ...mockApplicationNotes.filter((n) => appIds.includes(n.applicationId)),
+      ...localNotes,
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [candidateApplications, localNotes]);
 
   if (!candidate) {
     return (
@@ -161,6 +285,43 @@ export default function CandidateProfile() {
     setIsInviteModalOpen(false);
     setSelectedJob(null);
     setInviteMessage('');
+  };
+
+  const handleSendMessage = () => {
+    navigate(`/empresa/mensagens?candidato=${id}`);
+  };
+
+  const handleRequestTest = () => {
+    if (!selectedApplication) return;
+    toast.success(`Solicitação de teste enviada para ${candidate.name}`);
+    setIsTestRequestModalOpen(false);
+    setTestMessage(DEFAULT_TEST_MESSAGE);
+    setTestDeadline('7');
+  };
+
+  const handleScheduleInterview = (data: Parameters<typeof createInterview>[0]) => {
+    createInterview(data);
+    toast.success(`Entrevista agendada com ${candidate.name}`);
+    setIsScheduleModalOpen(false);
+  };
+
+  const handleAddNote = () => {
+    if (!noteText.trim() || !selectedApplication) return;
+    const newNote: ApplicationNote = {
+      id: `note-local-${Date.now()}`,
+      applicationId: selectedApplication.id,
+      content: noteText.trim(),
+      author: 'Você',
+      createdAt: new Date().toISOString(),
+    };
+    setLocalNotes((prev) => [...prev, newNote]);
+    setNoteText('');
+    setShowNoteInput(false);
+    toast.success('Anotação adicionada');
+  };
+
+  const handleExportProfile = () => {
+    toast.success('Exportação do perfil iniciada. O arquivo será enviado por email.');
   };
 
   return (
@@ -362,37 +523,53 @@ export default function CandidateProfile() {
 
                     <Separator />
 
-                    {/* Strengths */}
-                    <div className="space-y-3">
-                      <h4 className="font-medium flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-success" />
-                        Pontos Fortes
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {candidate.testResult.result.strengths.map((strength) => (
-                          <Badge key={strength} variant="outline" className="text-success border-success/30">
-                            {strength}
-                          </Badge>
-                        ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Left column: Badges */}
+                      <div className="space-y-4">
+                        {/* Strengths */}
+                        <div className="space-y-2">
+                          <h4 className="font-medium flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-success" />
+                            Pontos Fortes
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            {candidate.testResult.result.strengths.map((strength) => (
+                              <Badge key={strength} variant="outline" className="text-success border-success/30">
+                                {strength}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Watch Points */}
+                        {candidate.testResult.result.watchPoints && (
+                          <div className="space-y-2">
+                            <h4 className="font-medium flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4 text-warning" />
+                              Pontos de Atenção
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              {candidate.testResult.result.watchPoints.map((point) => (
+                                <Badge key={point} variant="outline" className="text-warning border-warning/30">
+                                  {point}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right column: Assessment Summary */}
+                      <div className="space-y-2">
+                        <h4 className="font-medium flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-primary" />
+                          Resumo da Avaliação
+                        </h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {getProfileSummary(candidate.testResult.result.profile)}
+                        </p>
                       </div>
                     </div>
-
-                    {/* Watch Points */}
-                    {candidate.testResult.result.watchPoints && (
-                      <div className="space-y-3">
-                        <h4 className="font-medium flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4 text-warning" />
-                          Pontos de Atenção
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {candidate.testResult.result.watchPoints.map((point) => (
-                            <Badge key={point} variant="outline" className="text-warning border-warning/30">
-                              {point}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -498,6 +675,99 @@ export default function CandidateProfile() {
                 </CardContent>
               </Card>
             </motion.div>
+
+            {/* Activity History */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <History className="w-5 h-5" />
+                      Histórico de Atividades
+                    </span>
+                    {totalCount > 0 && (
+                      <Badge variant="secondary" className="text-xs font-normal">
+                        {totalCount} atividade{totalCount !== 1 ? 's' : ''}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {activities.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <History className="w-10 h-10 mx-auto mb-3 opacity-40" />
+                      <p className="text-sm">Nenhuma atividade registrada para este candidato.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-0">
+                      {activities.map((activity, index) => (
+                        <div
+                          key={activity.id}
+                          className={`relative pl-7 ${
+                            index !== activities.length - 1 ? 'border-l-2 border-muted ml-[7px] pb-5' : 'ml-[7px]'
+                          }`}
+                        >
+                          {/* Dot */}
+                          <div
+                            className={`absolute left-0 top-0.5 w-4 h-4 -translate-x-[9px] rounded-full ${getActivityDotColor(activity.type)} flex items-center justify-center text-white`}
+                          >
+                            {getActivityIcon(activity.type)}
+                          </div>
+
+                          <div className="min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-medium text-foreground leading-tight">
+                                {activity.title}
+                              </p>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
+                                {formatActivityTimestamp(activity.timestamp)}
+                              </span>
+                            </div>
+
+                            {activity.jobTitle && (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                Vaga: {activity.jobTitle}
+                              </p>
+                            )}
+
+                            {activity.description && (
+                              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                                "{activity.description}"
+                              </p>
+                            )}
+
+                            {activity.actor && (
+                              <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                                <User2 className="w-3 h-3" />
+                                {activity.actor}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+
+                      {hasMore && (
+                        <div className="pt-3 text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={showMore}
+                            className="text-muted-foreground"
+                          >
+                            <ChevronDown className="w-4 h-4 mr-1" />
+                            Mostrar mais ({remaining} restante{remaining !== 1 ? 's' : ''})
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
           {/* Sidebar */}
@@ -507,7 +777,7 @@ export default function CandidateProfile() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
+                transition={{ delay: 0.1 }}
                 className="space-y-2"
               >
                 <MatchBreakdown
@@ -526,7 +796,7 @@ export default function CandidateProfile() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+                transition={{ delay: 0.15 }}
               >
                 <MatchStrengths
                   strengths={matchResult.strengths}
@@ -540,7 +810,7 @@ export default function CandidateProfile() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
+                transition={{ delay: 0.2 }}
               >
                 <MatchOpportunities
                   opportunities={matchResult.opportunities}
@@ -548,6 +818,181 @@ export default function CandidateProfile() {
                 />
               </motion.div>
             )}
+
+            {/* Actions Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Ações
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {/* Application selector */}
+                  {candidateApplications.length > 1 && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Candidatura</Label>
+                      <Select
+                        value={selectedApplicationId || candidateApplications[0]?.id}
+                        onValueChange={setSelectedApplicationId}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Selecionar candidatura" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {candidateApplications.map((app) => (
+                            <SelectItem key={app.id} value={app.id} className="text-xs">
+                              {app.jobTitle} - {STATUS_LABELS[app.status] || app.status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Send Message */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={handleSendMessage}
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Enviar Mensagem
+                  </Button>
+
+                  {/* Invite to Job */}
+                  {companyJobs.length > 0 ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-full justify-start">
+                          <Send className="w-4 h-4 mr-2" />
+                          Convidar para Vaga
+                          <ChevronDown className="w-3 h-3 ml-auto" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-56">
+                        {companyJobs.map((job) => (
+                          <DropdownMenuItem
+                            key={job.id}
+                            onClick={() => handleOpenInviteModal(job)}
+                          >
+                            {job.title}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <Button variant="outline" size="sm" className="w-full justify-start" disabled>
+                      <Send className="w-4 h-4 mr-2" />
+                      Sem vagas ativas
+                    </Button>
+                  )}
+
+                  {/* Context-dependent actions */}
+                  {candidateApplications.length > 0 ? (
+                    <>
+                      {/* Request Test - only if candidate has no test */}
+                      {!candidate.hasTest && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start"
+                          onClick={() => setIsTestRequestModalOpen(true)}
+                        >
+                          <ClipboardCheck className="w-4 h-4 mr-2" />
+                          Solicitar Teste
+                        </Button>
+                      )}
+
+                      {/* Schedule Interview */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start"
+                        onClick={() => setIsScheduleModalOpen(true)}
+                      >
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Agendar Entrevista
+                      </Button>
+
+                      {/* Add Note */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start"
+                        onClick={() => setShowNoteInput(!showNoteInput)}
+                      >
+                        <StickyNote className="w-4 h-4 mr-2" />
+                        Adicionar Anotação
+                      </Button>
+
+                      {/* Inline note input */}
+                      {showNoteInput && (
+                        <div className="space-y-2">
+                          <Textarea
+                            placeholder="Escreva sua anotação..."
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            rows={3}
+                            className="text-xs resize-none"
+                          />
+                          <div className="flex gap-2">
+                            <Button size="sm" className="flex-1 h-7 text-xs" onClick={handleAddNote} disabled={!noteText.trim()}>
+                              Salvar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => { setShowNoteInput(false); setNoteText(''); }}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Recent notes preview */}
+                      {existingNotes.length > 0 && (
+                        <div className="space-y-2 pt-1">
+                          {existingNotes.slice(0, 2).map((note) => (
+                            <div key={note.id} className="bg-muted/50 rounded-md p-2 text-xs">
+                              <p className="text-muted-foreground line-clamp-2">{note.content}</p>
+                              <p className="text-muted-foreground/60 mt-1">
+                                {note.author} - {formatActivityTimestamp(note.createdAt)}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground py-2">
+                      Este candidato não possui candidaturas ativas. Algumas ações estão desabilitadas.
+                    </p>
+                  )}
+
+                  <Separator />
+
+                  {/* Export */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-muted-foreground"
+                    onClick={handleExportProfile}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar Perfil
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
 
             {/* Skills */}
             <motion.div
@@ -561,11 +1006,22 @@ export default function CandidateProfile() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {candidate.skills.map((skill) => (
-                      <Badge key={skill} variant="secondary">
-                        {skill}
-                      </Badge>
-                    ))}
+                    {candidate.skills.map((skill, index) => {
+                      const level = getSkillLevel(index);
+                      const config = skillLevelConfig[level];
+                      return (
+                        <span
+                          key={skill}
+                          className={cn(
+                            "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
+                            config.bg,
+                            config.text
+                          )}
+                        >
+                          {skill} <span className="ml-1 opacity-70">({level})</span>
+                        </span>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -662,6 +1118,97 @@ export default function CandidateProfile() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Test Request Modal */}
+      <Dialog open={isTestRequestModalOpen} onOpenChange={setIsTestRequestModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Solicitar Teste Comportamental</DialogTitle>
+            <DialogDescription>
+              Candidato: {candidate.name}
+              {selectedApplication && ` | Vaga: ${selectedApplication.jobTitle}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {candidateApplications.length > 1 && (
+              <div className="space-y-2">
+                <Label>Candidatura</Label>
+                <Select
+                  value={selectedApplicationId || candidateApplications[0]?.id}
+                  onValueChange={setSelectedApplicationId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar candidatura" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {candidateApplications.map((app) => (
+                      <SelectItem key={app.id} value={app.id}>
+                        {app.jobTitle}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="testMessageProfile">Mensagem para o candidato</Label>
+              <Textarea
+                id="testMessageProfile"
+                value={testMessage}
+                onChange={(e) => setTestMessage(e.target.value)}
+                maxLength={500}
+                className="resize-none"
+                rows={5}
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                {testMessage.length}/500 caracteres
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="testDeadlineProfile">Prazo para realização</Label>
+              <Select value={testDeadline} onValueChange={setTestDeadline}>
+                <SelectTrigger id="testDeadlineProfile">
+                  <SelectValue placeholder="Selecione o prazo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEADLINE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsTestRequestModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleRequestTest}>
+              <Send className="w-4 h-4 mr-2" />
+              Enviar Solicitação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Interview Modal */}
+      {selectedApplication && (
+        <ScheduleInterviewModal
+          open={isScheduleModalOpen}
+          onOpenChange={setIsScheduleModalOpen}
+          candidateId={candidate.id}
+          candidateName={candidate.name}
+          jobId={selectedApplication.jobId}
+          jobTitle={selectedApplication.jobTitle}
+          applicationId={selectedApplication.id}
+          onSchedule={handleScheduleInterview}
+        />
+      )}
     </DashboardLayout>
   );
 }

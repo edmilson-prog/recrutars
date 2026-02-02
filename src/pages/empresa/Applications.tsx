@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   DndContext,
@@ -34,6 +34,7 @@ import {
   Clock,
   FileDown,
   Calendar,
+  MoreVertical,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -315,9 +316,15 @@ export default function CompanyApplications() {
     .map((app) => mockCandidates.find((c) => c.id === app.candidateId))
     .filter((c): c is Candidate => c !== undefined);
 
+  const navigate = useNavigate();
+
   const handleCardClick = (app: Application) => {
     setSelectedApplication(app);
     setDrawerOpen(true);
+  };
+
+  const handleNavigateToProfile = (candidateId: string) => {
+    navigate(`/empresa/candidatos/${candidateId}`);
   };
 
   // --- Drag-and-Drop (dnd-kit) ---
@@ -689,6 +696,7 @@ export default function CompanyApplications() {
                       status={status}
                       applications={groupedApplications[status]}
                       onCardClick={handleCardClick}
+                      onNavigateToProfile={handleNavigateToProfile}
                     />
                   )
                 )}
@@ -697,7 +705,8 @@ export default function CompanyApplications() {
                 {activeApplication ? (
                   <ApplicationCard
                     application={activeApplication}
-                    onClick={() => {}}
+                    onManage={() => {}}
+                    onNavigate={() => {}}
                     isDragOverlay
                   />
                 ) : null}
@@ -729,7 +738,8 @@ export default function CompanyApplications() {
                       <ApplicationCard
                         key={app.id}
                         application={app}
-                        onClick={() => handleCardClick(app)}
+                        onManage={() => handleCardClick(app)}
+                        onNavigate={() => handleNavigateToProfile(app.candidateId)}
                         compact
                       />
                     ))}
@@ -1381,9 +1391,10 @@ interface KanbanColumnProps {
   status: 'pending' | 'reviewing' | 'interview' | 'offer';
   applications: Application[];
   onCardClick: (app: Application) => void;
+  onNavigateToProfile: (candidateId: string) => void;
 }
 
-function KanbanColumn({ status, applications, onCardClick }: KanbanColumnProps) {
+function KanbanColumn({ status, applications, onCardClick, onNavigateToProfile }: KanbanColumnProps) {
   const config = STATUS_CONFIG[status];
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
@@ -1409,7 +1420,8 @@ function KanbanColumn({ status, applications, onCardClick }: KanbanColumnProps) 
             <SortableApplicationCard
               key={app.id}
               application={app}
-              onClick={() => onCardClick(app)}
+              onManage={() => onCardClick(app)}
+              onNavigate={() => onNavigateToProfile(app.candidateId)}
               index={index}
             />
           ))}
@@ -1427,11 +1439,13 @@ function KanbanColumn({ status, applications, onCardClick }: KanbanColumnProps) 
 // Sortable wrapper for ApplicationCard
 function SortableApplicationCard({
   application,
-  onClick,
+  onManage,
+  onNavigate,
   index,
 }: {
   application: Application;
-  onClick: () => void;
+  onManage: () => void;
+  onNavigate: () => void;
   index: number;
 }) {
   const {
@@ -1452,7 +1466,8 @@ function SortableApplicationCard({
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <ApplicationCard
         application={application}
-        onClick={onClick}
+        onManage={onManage}
+        onNavigate={onNavigate}
         index={index}
         isDragging={isDragging}
       />
@@ -1463,7 +1478,8 @@ function SortableApplicationCard({
 // Application Card Component
 interface ApplicationCardProps {
   application: Application;
-  onClick: () => void;
+  onManage: () => void;
+  onNavigate: () => void;
   index?: number;
   compact?: boolean;
   isDragging?: boolean;
@@ -1472,7 +1488,8 @@ interface ApplicationCardProps {
 
 function ApplicationCard({
   application,
-  onClick,
+  onManage,
+  onNavigate,
   index = 0,
   compact = false,
   isDragging = false,
@@ -1491,30 +1508,45 @@ function ApplicationCard({
       animate={{ opacity: isDragging ? 0.4 : 1, y: 0 }}
       transition={{ delay: isDragOverlay ? 0 : index * 0.05 }}
       className={cn(
-        'bg-card rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow border',
+        'bg-card rounded-lg p-4 transition-shadow border',
         compact && 'min-w-[200px]',
         isDragging && 'border-dashed border-primary/50',
         isDragOverlay && 'shadow-xl ring-2 ring-primary/30 rotate-[2deg] scale-105',
       )}
-      onClick={onClick}
     >
       <div className="flex items-center gap-3">
-        <Avatar className="w-10 h-10">
-          <AvatarImage src={candidate.avatar} />
-          <AvatarFallback className="bg-primary/10 text-primary text-sm">
-            {candidate.name
-              .split(' ')
-              .map((n) => n[0])
-              .join('')
-              .slice(0, 2)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <p className="font-medium truncate">{candidate.name}</p>
-          <p className="text-sm text-muted-foreground truncate">
-            {candidate.title}
-          </p>
+        <div
+          className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={onNavigate}
+        >
+          <Avatar className="w-10 h-10">
+            <AvatarImage src={candidate.avatar} />
+            <AvatarFallback className="bg-primary/10 text-primary text-sm">
+              {candidate.name
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .slice(0, 2)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium truncate hover:text-primary transition-colors">{candidate.name}</p>
+            <p className="text-sm text-muted-foreground truncate">
+              {candidate.title}
+            </p>
+          </div>
         </div>
+        <button
+          type="button"
+          className="shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          title="Gerenciar candidatura"
+          onClick={(e) => {
+            e.stopPropagation();
+            onManage();
+          }}
+        >
+          <MoreVertical className="w-4 h-4" />
+        </button>
       </div>
       <div className="flex flex-wrap items-center gap-2 mt-3">
         <Badge

@@ -15,8 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Save, FolderOpen, Trash2, Calendar, Users, Layers } from 'lucide-react';
 import type { TeamBuilderScenario } from '@/types/teamManagement';
 
@@ -153,8 +151,8 @@ export default function ScenarioManager({
                 </p>
               </div>
             ) : (
-              <ScrollArea className="max-h-[400px]">
-                <div className="space-y-2 pr-2">
+              <div className="max-h-[350px] overflow-y-auto pr-1">
+                <div className="space-y-2">
                   {scenarios.map((scenario) => {
                     const totalMembers = scenario.teams.reduce(
                       (sum, t) => sum + t.memberIds.length,
@@ -220,7 +218,7 @@ export default function ScenarioManager({
                     );
                   })}
                 </div>
-              </ScrollArea>
+              </div>
             )}
           </TabsContent>
         </Tabs>
