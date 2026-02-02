@@ -10,7 +10,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, Users, Settings, LogOut,
   Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart, Calendar, HelpCircle, Bell,
-  ChevronLeft, ChevronRight, Sparkles, Info, FolderTree, FileQuestion, CreditCard
+  ChevronLeft, ChevronRight, Sparkles, Info, FolderTree, FileQuestion, CreditCard, UsersRound
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -66,6 +66,7 @@ const companyNav: NavItem[] = [
   { href: '/empresa/candidatos', label: 'Banco de Talentos', icon: Users },
   { href: '/empresa/candidatos-salvos', label: 'Candidatos Salvos', icon: Heart, countKey: 'savedCandidates' },
   { href: '/empresa/testes', label: 'Testes', icon: Brain },
+  { href: '/empresa/equipes', label: 'Gestão de Equipes', icon: UsersRound },
   { href: '/empresa/mensagens', label: 'Mensagens', icon: MessageSquare },
   { href: '/empresa/notificacoes', label: 'Notificações', icon: Bell },
   { href: '/empresa/planos', label: 'Planos', icon: CreditCard },

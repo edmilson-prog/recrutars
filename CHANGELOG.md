@@ -5,6 +5,54 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.49.0] - 2026-02-01 — "Tribe" (PRD-055, PRD-056, PRD-057)
+
+### Added
+- **Gestão de Equipes** no Painel Empresa (`/empresa/equipes`)
+  - Dashboard com KPIs, alertas de mapeamento e distribuição de arquétipos
+  - CRUD de departamentos e cargos com níveis (operacional/tático/estratégico)
+  - Cadastro de colaboradores manual, importação de candidatos contratados e planilha CSV/Excel
+  - Perfil individual do colaborador com resultado Gauge-Pro completo
+  - Badge de status de mapeamento (sem teste, convite enviado, em andamento, mapeado, reteste pendente)
+- **Mapa Comportamental** (PRD-055)
+  - Radar chart coletivo com média da equipe e overlay por departamento
+  - Heatmap dimensional: departamentos x D1-D5 com código de cores
+  - Distribuição de arquétipos por departamento em barras empilhadas
+  - Filtros por departamento, cargo, nível e status
+- **Compatibilidade entre Membros** (PRD-056)
+  - Algoritmo de sinergia dimensional com score 0-100% e 5 faixas de classificação
+  - Matriz NxN com código de cores por departamento
+  - Top 5 melhores duplas e alertas de conflito potencial
+  - Modal de detalhes do par com radar sobreposto e breakdown dimensional
+- **Gap Analysis** (PRD-056)
+  - Radar com zona ideal sombreada, cards de lacunas e excessos
+  - Recomendação de perfil ideal para próxima contratação
+  - Botão "Criar Teste com Base no Gap" integrado ao Hub de Testes
+- **Team Builder** (PRD-056)
+  - Simulador drag-and-drop com @dnd-kit para montagem de equipes
+  - Cálculo em tempo real de equilíbrio, radar e conflitos por time
+  - Salvar/carregar cenários de reorganização
+- **Plano de Desenvolvimento Individual** (PRD-057)
+  - PDI auto-gerado baseado no perfil Gauge-Pro com sugestões por dimensão
+  - CRUD de objetivos com dimensão vinculada, prioridade e status
+  - Barra de progresso por plano
+- **Evolução Temporal** (PRD-057)
+  - Linha do tempo com gráfico de linhas D1-D5 por data de teste
+  - Cálculo de delta com indicadores visuais (evolução/estável/regressão)
+  - Anotações vinculadas à evolução (treinamentos, coaching)
+  - Agendamento de retestes periódicos (3/6/9/12 meses)
+- **Identificação de Talentos** (PRD-057)
+  - 6 perfis de potencial: Líder Natural, Especialista, Mediador, Inovador, Motor, Mentor
+  - Nine-Box Comportamental (Entrega x Potencial Relacional)
+- **Cultura Organizacional** (PRD-057)
+  - DNA Cultural: radar da média ponderada por nível hierárquico
+  - Manifesto Cultural gerado automaticamente
+  - Evolução cultural com comparação de snapshots mensais
+  - Score de Fit Cultural para candidatos (0-100%)
+- **Relatórios PDF** (PRD-057)
+  - Relatório de evolução por colaborador
+  - Relatório de cultura organizacional
+
 ## [0.48.0] - 2026-02-01 — "Command" (PRD-052, PRD-053, PRD-054)
 
 ### Added

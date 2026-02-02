@@ -86,6 +86,18 @@ import CorporateTestReports from "./pages/empresa/CorporateTestReports";
 import CorporateTestMetrics from "./pages/empresa/CorporateTestMetrics";
 import CorporateTestAudit from "./pages/empresa/CorporateTestAudit";
 
+// PRD-055, 056, 057: Team Management
+import TeamManagement from "./pages/empresa/TeamManagement";
+import TeamMemberProfile from "./pages/empresa/TeamMemberProfile";
+import TeamCompatibility from "./pages/empresa/TeamCompatibility";
+import TeamGapAnalysis from "./pages/empresa/TeamGapAnalysis";
+import TeamBuilder from "./pages/empresa/TeamBuilder";
+import TeamDevelopment from "./pages/empresa/TeamDevelopment";
+import TeamTalents from "./pages/empresa/TeamTalents";
+import TeamCulture from "./pages/empresa/TeamCulture";
+import TeamEvolution from "./pages/empresa/TeamEvolution";
+import TeamReports from "./pages/empresa/TeamReports";
+
 // Help pages
 import HelpPage from "./pages/Help";
 import TicketDetailsPage from "./pages/TicketDetails";
@@ -251,6 +263,57 @@ const App = () => (
             <Route path="/empresa/testes/:testId/relatorios" element={
               <ProtectedRoute allowedTypes={['company']}>
                 <CorporateTestReports />
+              </ProtectedRoute>
+            } />
+            {/* PRD-055, 056, 057: Team Management Routes */}
+            <Route path="/empresa/equipes" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/membro/:id" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamMemberProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/compatibilidade" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamCompatibility />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/gap-analysis" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamGapAnalysis />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/team-builder" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamBuilder />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/desenvolvimento/:id" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamDevelopment />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/talentos" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamTalents />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/cultura" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamCulture />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/evolucao/:id" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamEvolution />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/equipes/relatorios" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <TeamReports />
               </ProtectedRoute>
             } />
             <Route path="/empresa/mensagens" element={

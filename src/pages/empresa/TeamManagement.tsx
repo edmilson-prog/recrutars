@@ -1,0 +1,300 @@
+/**
+ * Team Management Hub - Main Page
+ * PRD-055: Core & Mapa Comportamental
+ * PRD-056: Compatibilidade & Team Builder
+ * PRD-057: Desenvolvimento & Evolucao
+ */
+
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { pageTransition } from '@/lib/animations';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  GitCompareArrows,
+  Puzzle,
+  Target,
+  Award,
+  Heart,
+  FileText,
+  Users,
+  Building2,
+  Brain,
+  LayoutDashboard,
+} from 'lucide-react';
+
+import { mockDepartments, mockPositions, mockTeamMembers, mockTeamAlerts } from '@/data/teamManagementData';
+import TeamDashboard from '@/components/team-management/TeamDashboard';
+import TeamMemberList from '@/components/team-management/TeamMemberList';
+import DepartmentList from '@/components/team-management/DepartmentList';
+import DepartmentForm from '@/components/team-management/DepartmentForm';
+import PositionList from '@/components/team-management/PositionList';
+import PositionForm from '@/components/team-management/PositionForm';
+import TeamMemberForm from '@/components/team-management/TeamMemberForm';
+import CandidateImportModal from '@/components/team-management/CandidateImportModal';
+import SpreadsheetImport from '@/components/team-management/SpreadsheetImport';
+import CollectiveRadarChart from '@/components/team-management/CollectiveRadarChart';
+import DimensionHeatmap from '@/components/team-management/DimensionHeatmap';
+import DepartmentArchetypeChart from '@/components/team-management/DepartmentArchetypeChart';
+import type { Department, Position, TeamMember } from '@/types/teamManagement';
+
+const quickActions = [
+  { label: 'Compatibilidade', to: '/empresa/equipes/compatibilidade', icon: GitCompareArrows },
+  { label: 'Team Builder', to: '/empresa/equipes/team-builder', icon: Puzzle },
+  { label: 'Gap Analysis', to: '/empresa/equipes/gap-analysis', icon: Target },
+  { label: 'Talentos', to: '/empresa/equipes/talentos', icon: Award },
+  { label: 'Cultura', to: '/empresa/equipes/cultura', icon: Heart },
+  { label: 'Relatórios', to: '/empresa/equipes/relatorios', icon: FileText },
+] as const;
+
+export default function TeamManagement() {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // State for departments/positions/members
+  const [departments, setDepartments] = useState<Department[]>(mockDepartments);
+  const [positions, setPositions] = useState<Position[]>(mockPositions);
+  const [members, setMembers] = useState<TeamMember[]>(mockTeamMembers);
+
+  // Dialog states
+  const [deptFormOpen, setDeptFormOpen] = useState(false);
+  const [editingDept, setEditingDept] = useState<Department | null>(null);
+  const [posFormOpen, setPosFormOpen] = useState(false);
+  const [editingPos, setEditingPos] = useState<Position | null>(null);
+  const [memberFormOpen, setMemberFormOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [spreadsheetImportOpen, setSpreadsheetImportOpen] = useState(false);
+
+  // Behavioral map filter
+  const [mapDeptFilter, setMapDeptFilter] = useState<string | null>(null);
+
+  // Department handlers
+  const handleSaveDept = (data: Omit<Department, 'id' | 'createdAt'>) => {
+    if (editingDept) {
+      setDepartments(prev => prev.map(d => d.id === editingDept.id ? { ...d, ...data } : d));
+    } else {
+      const newDept: Department = { ...data, id: `dept-${Date.now()}`, createdAt: new Date().toISOString() };
+      setDepartments(prev => [...prev, newDept]);
+    }
+    setEditingDept(null);
+    setDeptFormOpen(false);
+  };
+
+  const handleToggleDept = (deptId: string) => {
+    setDepartments(prev => prev.map(d => d.id === deptId ? { ...d, isActive: !d.isActive } : d));
+  };
+
+  // Position handlers
+  const handleSavePos = (data: Omit<Position, 'id'>) => {
+    if (editingPos) {
+      setPositions(prev => prev.map(p => p.id === editingPos.id ? { ...p, ...data } : p));
+    } else {
+      const newPos: Position = { ...data, id: `pos-${Date.now()}` };
+      setPositions(prev => [...prev, newPos]);
+    }
+    setEditingPos(null);
+    setPosFormOpen(false);
+  };
+
+  const handleTogglePos = (posId: string) => {
+    setPositions(prev => prev.map(p => p.id === posId ? { ...p, isActive: !p.isActive } : p));
+  };
+
+  // Member handlers
+  const handleSaveMember = (data: Partial<TeamMember>) => {
+    if (editingMember) {
+      setMembers(prev => prev.map(m => m.id === editingMember.id ? { ...m, ...data } : m));
+    } else {
+      const newMember: TeamMember = {
+        id: `member-${Date.now()}`,
+        name: data.name || '',
+        email: data.email || '',
+        departmentId: data.departmentId || '',
+        positionId: data.positionId || '',
+        hireDate: data.hireDate || new Date().toISOString().split('T')[0],
+        gaugeStatus: 'unmapped',
+        isActive: true,
+        ...data,
+      };
+      setMembers(prev => [...prev, newMember]);
+    }
+    setEditingMember(null);
+    setMemberFormOpen(false);
+  };
+
+  const handleImportCandidate = (data: Partial<TeamMember>) => {
+    handleSaveMember({ ...data, gaugeStatus: data.gaugeScores ? 'mapped' : 'unmapped' });
+    setImportModalOpen(false);
+  };
+
+  return (
+    <DashboardLayout userType="company">
+      <motion.div
+        variants={pageTransition}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="space-y-6"
+      >
+        {/* Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Gestão de Equipes</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Mapeie perfis comportamentais, analise compatibilidade e desenvolva sua equipe
+            </p>
+          </div>
+        </div>
+
+        {/* Quick Action Buttons */}
+        <div className="flex flex-wrap gap-2">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link key={action.to} to={action.to}>
+                <Button variant="outline" size="sm">
+                  <Icon className="h-4 w-4 mr-2" />
+                  {action.label}
+                </Button>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">
+              <LayoutDashboard className="h-4 w-4 mr-2" />
+              Visão Geral
+            </TabsTrigger>
+            <TabsTrigger value="members">
+              <Users className="h-4 w-4 mr-2" />
+              Minha Equipe
+            </TabsTrigger>
+            <TabsTrigger value="departments">
+              <Building2 className="h-4 w-4 mr-2" />
+              Departamentos
+            </TabsTrigger>
+            <TabsTrigger value="behavioral-map">
+              <Brain className="h-4 w-4 mr-2" />
+              Mapa Comportamental
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="mt-6">
+            <TeamDashboard
+              members={members}
+              departments={departments}
+              alerts={mockTeamAlerts}
+            />
+          </TabsContent>
+
+          {/* Members Tab */}
+          <TabsContent value="members" className="mt-6 space-y-4">
+            <TeamMemberList
+              members={members}
+              departments={departments}
+              positions={positions}
+              onViewProfile={(memberId) => navigate(`/empresa/equipes/membro/${memberId}`)}
+              onEdit={(member) => { setEditingMember(member); setMemberFormOpen(true); }}
+              onCreate={() => { setEditingMember(null); setMemberFormOpen(true); }}
+            />
+            <TeamMemberForm
+              member={editingMember}
+              departments={departments}
+              positions={positions}
+              open={memberFormOpen}
+              onOpenChange={setMemberFormOpen}
+              onSave={handleSaveMember}
+            />
+            <CandidateImportModal
+              open={importModalOpen}
+              onOpenChange={setImportModalOpen}
+              onImport={handleImportCandidate}
+            />
+            <SpreadsheetImport
+              open={spreadsheetImportOpen}
+              onOpenChange={setSpreadsheetImportOpen}
+              onImport={(imported) => imported.forEach(m => handleSaveMember(m))}
+              departments={departments}
+              positions={positions}
+            />
+          </TabsContent>
+
+          {/* Departments Tab */}
+          <TabsContent value="departments" className="mt-6 space-y-6">
+            <DepartmentList
+              departments={departments}
+              positions={positions}
+              onEdit={(dept) => { setEditingDept(dept); setDeptFormOpen(true); }}
+              onToggleActive={handleToggleDept}
+              onCreate={() => { setEditingDept(null); setDeptFormOpen(true); }}
+            />
+            <PositionList
+              positions={positions}
+              departments={departments}
+              onEdit={(pos) => { setEditingPos(pos); setPosFormOpen(true); }}
+              onToggleActive={handleTogglePos}
+              onCreate={() => { setEditingPos(null); setPosFormOpen(true); }}
+            />
+            <DepartmentForm
+              department={editingDept}
+              open={deptFormOpen}
+              onOpenChange={setDeptFormOpen}
+              onSave={handleSaveDept}
+            />
+            <PositionForm
+              position={editingPos}
+              departments={departments}
+              open={posFormOpen}
+              onOpenChange={setPosFormOpen}
+              onSave={handleSavePos}
+            />
+          </TabsContent>
+
+          {/* Behavioral Map Tab */}
+          <TabsContent value="behavioral-map" className="mt-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Mapa Comportamental</h2>
+              <Select
+                value={mapDeptFilter || 'all'}
+                onValueChange={(v) => setMapDeptFilter(v === 'all' ? null : v)}
+              >
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue placeholder="Filtrar por departamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os departamentos</SelectItem>
+                  {departments.filter(d => d.isActive).map(d => (
+                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <CollectiveRadarChart
+                members={members}
+                departments={departments}
+                selectedDepartmentId={mapDeptFilter}
+              />
+              <DimensionHeatmap
+                members={members}
+                departments={departments}
+              />
+            </div>
+            <DepartmentArchetypeChart
+              members={members}
+              departments={departments}
+            />
+          </TabsContent>
+        </Tabs>
+      </motion.div>
+    </DashboardLayout>
+  );
+}
