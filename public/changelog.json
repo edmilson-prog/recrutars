@@ -1,13 +1,39 @@
 {
   "versions": [
     {
+      "version": "0.50.0",
+      "codename": "Workshop",
+      "type": "minor",
+      "releaseDate": "2026-02-02",
+      "prd": "",
+      "description": "Criação e edição de vagas convertida de modal para página dedicada com layout em abas e sidebar do Assistente IA",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Criação de vagas convertida de modal para página dedicada com layout em abas e sidebar do Assistente IA",
+            "Formulário de vaga dividido em 6 abas: Básico, Salário, Descrição, Requisitos, Benefícios, Competências",
+            "Barra de progresso no header indicando completude dos campos obrigatórios",
+            "Assistente IA posicionado em sidebar fixa ao lado do formulário",
+            "Rotas dedicadas: /empresa/vagas/nova e /empresa/vagas/:id/editar",
+            "Proteção contra saída acidental com beforeunload",
+            "Hook useJobForm extraído para reutilização e separação de responsabilidades",
+            "Jobs.tsx reduzido de ~926 para ~430 linhas",
+            "Kanban de Candidaturas: clique no nome/avatar navega para perfil completo do candidato",
+            "Kanban de Candidaturas: botão 'Gerenciar' (ícone ⋮) no card abre modal de gestão"
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.49.0",
       "codename": "Tribe",
       "type": "minor",
       "releaseDate": "2026-02-01",
       "prd": "PRD-055, PRD-056, PRD-057",
       "description": "Módulo completo de Gestão de Equipes com mapa comportamental, compatibilidade dimensional, Team Builder, PDI, evolução temporal, talentos, cultura organizacional e relatórios PDF",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
