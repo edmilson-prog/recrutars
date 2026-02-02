@@ -78,6 +78,7 @@ export interface Candidate {
   linkedin?: string;
   about?: string;
   plan?: CandidatePlanType; // Plano de assinatura
+  dateOfBirth?: string; // formato ISO: "1995-03-15"
 
   // PRD-026: Visibilidade do perfil (opcional para compatibilidade com dados existentes)
   visibility?: VisibilitySettings;

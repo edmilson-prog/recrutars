@@ -164,3 +164,60 @@ export interface ActivityItem {
 
 // --- Period Filter ---
 export type PeriodFilter = '7d' | '30d' | '90d' | 'custom';
+
+// --- Competency Radar ---
+export type CompetencyName = 'lideranca' | 'comunicacao' | 'organizacao' | 'inovacao' | 'trabalhoEquipe' | 'analiseCritica';
+export type CompetencyScores = Record<CompetencyName, number>;
+export const COMPETENCY_LABELS: Record<CompetencyName, string> = {
+  lideranca: 'Liderança',
+  comunicacao: 'Comunicação',
+  organizacao: 'Organização',
+  inovacao: 'Inovação',
+  trabalhoEquipe: 'Trabalho em Equipe',
+  analiseCritica: 'Análise Crítica',
+};
+
+// --- Emotional Factors ---
+export type EmotionalFactorName = 'empatia' | 'autocontrole' | 'sociabilidade' | 'resiliencia' | 'inteligenciaEmocional';
+export type EmotionalFactorScores = Record<EmotionalFactorName, number>;
+export const EMOTIONAL_FACTOR_LABELS: Record<EmotionalFactorName, string> = {
+  empatia: 'Empatia',
+  autocontrole: 'Autocontrole',
+  sociabilidade: 'Sociabilidade',
+  resiliencia: 'Resiliência',
+  inteligenciaEmocional: 'Inteligência Emocional',
+};
+
+// --- Risk Assessment ---
+export type RiskClassification = 'baixo' | 'moderado' | 'alto' | 'critico';
+export interface RiskFlag {
+  dimension: string;
+  type: string;
+  description: string;
+  severity: RiskClassification;
+}
+export interface RiskAssessment {
+  overallScore: number;
+  classification: RiskClassification;
+  flags: RiskFlag[];
+  instabilityGap: number;
+}
+
+// --- Mock Test Responses ---
+export interface MockWordSelection {
+  dimension: GaugeProDimension;
+  perspective: 'self' | 'others';
+  selectedWords: Array<{ id: number; text: string; polarity: 'high' | 'low' }>;
+}
+export interface MockScenarioResponse {
+  scenarioId: number;
+  scenarioTitle: string;
+  situation: string;
+  selectedOption: string;
+  selectedText: string;
+  allOptions: Array<{ key: string; text: string; isSelected: boolean }>;
+}
+export interface MockTestResponses {
+  wordSelections: MockWordSelection[];
+  scenarioResponses: MockScenarioResponse[];
+}

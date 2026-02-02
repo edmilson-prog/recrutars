@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { staggerContainer, staggerItem } from "@/lib/animations";
 import { TeamKPICards } from "./TeamKPICards";
 import { TeamAlertsList } from "./TeamAlertsList";
+import { ManagerRecommendations } from "./ManagerRecommendations";
 import ArchetypeDistributionChart from "./ArchetypeDistributionChart";
 import type { TeamMember, Department, TeamAlert } from "@/types/teamManagement";
 
@@ -92,6 +93,14 @@ export default function TeamDashboard({
         <div className="lg:col-span-2">
           <TeamAlertsList alerts={alerts} />
         </div>
+      </motion.div>
+
+      <motion.div variants={staggerItem}>
+        <ManagerRecommendations
+          members={members}
+          departments={departments}
+          alerts={alerts}
+        />
       </motion.div>
     </motion.div>
   );

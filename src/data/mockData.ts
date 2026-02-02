@@ -772,6 +772,7 @@ export const mockCandidates: Candidate[] = [
     linkedin: 'https://linkedin.com/in/joaosantos',
     about: 'Desenvolvedor Full Stack apaixonado por criar soluções escaláveis com 5 anos de experiência em projetos de alta complexidade.',
     plan: 'Premium',
+    dateOfBirth: '1995-03-15',
     visibility: { mode: 'public', anonymousId: '4721' } as VisibilitySettings,
   },
   {
@@ -811,6 +812,7 @@ export const mockCandidates: Candidate[] = [
     linkedin: 'https://linkedin.com/in/mariaoliveira',
     about: 'Product Manager com foco em metodologias ágeis e descoberta de produto, liderando equipes multidisciplinares.',
     plan: 'Pro',
+    dateOfBirth: '1992-08-22',
     visibility: { mode: 'partial', anonymousId: '3856' } as VisibilitySettings,
   },
   {
@@ -833,6 +835,7 @@ export const mockCandidates: Candidate[] = [
     linkedin: 'https://linkedin.com/in/pedrocosta',
     about: 'Designer UX/UI criativo com experiência em design systems e prototipagem de interfaces intuitivas.',
     plan: 'Gratuito',
+    dateOfBirth: '1998-11-30',
     visibility: { mode: 'private', anonymousId: '9214' } as VisibilitySettings,
   },
   {
@@ -872,6 +875,7 @@ export const mockCandidates: Candidate[] = [
     linkedin: 'https://linkedin.com/in/carlamendes',
     about: 'Analista de Dados especializada em transformar dados complexos em insights estratégicos para tomada de decisão.',
     plan: 'Premium',
+    dateOfBirth: '1990-01-10',
   },
   {
     id: 'candidate-5',
