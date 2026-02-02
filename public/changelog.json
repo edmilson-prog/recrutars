@@ -1,13 +1,55 @@
 {
   "versions": [
     {
+      "version": "0.49.0",
+      "codename": "Tribe",
+      "type": "minor",
+      "releaseDate": "2026-02-01",
+      "prd": "PRD-055, PRD-056, PRD-057",
+      "description": "Módulo completo de Gestão de Equipes com mapa comportamental, compatibilidade dimensional, Team Builder, PDI, evolução temporal, talentos, cultura organizacional e relatórios PDF",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Gestão de Equipes no Painel Empresa (/empresa/equipes)",
+            "Dashboard com KPIs, alertas de mapeamento e distribuição de arquétipos",
+            "CRUD de departamentos e cargos com níveis (operacional/tático/estratégico)",
+            "Cadastro de colaboradores manual, importação de candidatos contratados e planilha CSV/Excel",
+            "Perfil individual do colaborador com resultado Gauge-Pro completo",
+            "Badge de status de mapeamento (sem teste, convite enviado, em andamento, mapeado, reteste pendente)",
+            "Radar chart coletivo com média da equipe e overlay por departamento",
+            "Heatmap dimensional: departamentos x D1-D5 com código de cores",
+            "Distribuição de arquétipos por departamento em barras empilhadas",
+            "Algoritmo de sinergia dimensional com score 0-100% e 5 faixas de classificação",
+            "Matriz NxN de compatibilidade com código de cores",
+            "Top 5 melhores duplas e alertas de conflito potencial",
+            "Modal de detalhes do par com radar sobreposto e breakdown dimensional",
+            "Gap Analysis com radar de zona ideal, cards de lacunas/excessos e perfil ideal recomendado",
+            "Team Builder drag-and-drop com métricas em tempo real e cenários salvos",
+            "PDI auto-gerado baseado no perfil Gauge-Pro com sugestões por dimensão",
+            "Evolução temporal com gráfico D1-D5, delta e anotações vinculadas",
+            "Agendamento de retestes periódicos (3/6/9/12 meses)",
+            "6 perfis de potencial: Líder Natural, Especialista, Mediador, Inovador, Motor, Mentor",
+            "Nine-Box Comportamental (Entrega x Potencial Relacional)",
+            "DNA Cultural: radar da média ponderada por nível hierárquico",
+            "Manifesto Cultural gerado automaticamente",
+            "Evolução cultural com comparação de snapshots mensais",
+            "Score de Fit Cultural para candidatos (0-100%)",
+            "Relatório PDF de evolução por colaborador",
+            "Relatório PDF de cultura organizacional"
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.48.0",
       "codename": "Command",
       "type": "minor",
       "releaseDate": "2026-02-01",
       "prd": "PRD-052, PRD-053, PRD-054",
       "description": "Hub de Testes Comportamentais com dashboard, criação de testes, resultados, comparativos, relatórios PDF/Excel, métricas e auditoria LGPD",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
