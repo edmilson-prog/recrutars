@@ -21,7 +21,9 @@
             "Hook useJobForm extraído para reutilização e separação de responsabilidades",
             "Jobs.tsx reduzido de ~926 para ~430 linhas",
             "Kanban de Candidaturas: clique no nome/avatar navega para perfil completo do candidato",
-            "Kanban de Candidaturas: botão 'Gerenciar' (ícone ⋮) no card abre modal de gestão"
+            "Kanban de Candidaturas: botão 'Gerenciar' (ícone ⋮) no card abre modal de gestão",
+            "Perfil do candidato: card Ações com envio de mensagem, convite para vaga, solicitação de teste, agendamento de entrevista, anotações e exportação",
+            "Perfil do candidato: card Histórico de Atividades com timeline unificada de candidaturas, mudanças de status, anotações, mensagens e testes"
           ]
         }
       ]

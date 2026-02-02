@@ -154,7 +154,7 @@ export default function CompanyInterviews() {
         </div>
 
         {/* Stats Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-card rounded-xl p-4 shadow-soft">
             <div className="flex items-center gap-2 mb-1">
               <Clock className="h-4 w-4 text-blue-500" />
@@ -184,6 +184,23 @@ export default function CompanyInterviews() {
               <p className="text-sm text-muted-foreground">Realizadas</p>
             </div>
             <p className="text-2xl font-bold text-foreground">{completedInterviews.length}</p>
+          </div>
+          <div className="bg-card rounded-xl p-4 shadow-soft">
+            <h4 className="text-sm font-semibold text-foreground mb-2">Tipos de Entrevista</h4>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 text-sm">
+                <Video className="h-4 w-4 text-blue-500" />
+                <span className="text-muted-foreground">Videochamada</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Phone className="h-4 w-4 text-green-500" />
+                <span className="text-muted-foreground">Telefone</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <MapPin className="h-4 w-4 text-orange-500" />
+                <span className="text-muted-foreground">Presencial</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -390,27 +407,6 @@ export default function CompanyInterviews() {
             )}
           </TabsContent>
         </Tabs>
-      </div>
-
-      {/* Sidebar - Tipos de Entrevista (visivel apenas em desktop) */}
-      <div className="hidden xl:block fixed right-8 top-32 w-64">
-        <div className="bg-card rounded-2xl p-4 shadow-soft">
-          <h4 className="font-semibold mb-3">Tipos de Entrevista</h4>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm">
-              <Video className="h-4 w-4 text-blue-500" />
-              <span className="text-muted-foreground">Videochamada</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Phone className="h-4 w-4 text-green-500" />
-              <span className="text-muted-foreground">Telefone</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin className="h-4 w-4 text-orange-500" />
-              <span className="text-muted-foreground">Presencial</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Modals */}
