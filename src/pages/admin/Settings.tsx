@@ -8,6 +8,7 @@ import { ConfigLayout } from '@/components/settings/ConfigLayout';
 import { adminSettingsCategories } from '@/data/settingsConfig';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/contexts/AuthContext';
+import { AdminTabNav } from '@/components/admin/AdminTabNav';
 
 export default function AdminSettings() {
   const { user } = useAuth();
@@ -40,6 +41,7 @@ export default function AdminSettings() {
 
   return (
     <DashboardLayout userType="admin">
+      <AdminTabNav />
       <ConfigLayout
         title="Configuracoes"
         subtitle="Gerencie os parametros e preferencias do sistema"

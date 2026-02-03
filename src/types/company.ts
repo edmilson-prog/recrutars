@@ -9,7 +9,7 @@
 export type CompanyStatus = 'active' | 'pending' | 'inactive';
 
 // PRD-020: Tipo de plano
-export type CompanyPlanType = 'Básico' | 'Profissional' | 'Enterprise';
+export type CompanyPlanType = 'Essencial Empresas' | 'Seleção Inteligente' | 'Recrutamento Premium';
 
 export interface Company {
   id: string;

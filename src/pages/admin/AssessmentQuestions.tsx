@@ -55,6 +55,7 @@ import {
   QUESTION_TYPE_ICONS,
   QUESTION_LEVEL_LABELS,
 } from '@/types/assessment';
+import { AdminTabNav } from '@/components/admin/AdminTabNav';
 import { toast } from 'sonner';
 
 export default function AdminAssessmentQuestions() {
@@ -155,6 +156,7 @@ export default function AdminAssessmentQuestions() {
 
   return (
     <DashboardLayout userType="admin">
+      <AdminTabNav />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

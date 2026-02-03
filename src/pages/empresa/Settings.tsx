@@ -14,6 +14,8 @@ import {
   Mail,
   MoreHorizontal,
   Check,
+  X,
+  Star,
   Users,
   CreditCard,
   Heart,
@@ -102,6 +104,84 @@ const STATE_OPTIONS = [
   'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
   'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
 ];
+
+// Plan comparison data (migrated from Plans.tsx)
+interface PlanFeature {
+  label: string;
+  essencial: string | boolean;
+  selecao: string | boolean;
+  recrutamento: string | boolean;
+}
+
+const companyPlanFeatures: PlanFeature[] = [
+  { label: 'Vagas ativas', essencial: '2', selecao: '10', recrutamento: 'Ilimitadas' },
+  { label: 'Candidatos/mês', essencial: '10', selecao: '100', recrutamento: 'Ilimitados' },
+  { label: 'Testes Gauge-Pro', essencial: '5', selecao: 'Ilimitados', recrutamento: 'Ilimitados' },
+  { label: 'Banco de talentos', essencial: 'Básico', selecao: 'Completo', recrutamento: 'Completo + API' },
+  { label: 'Análise IA', essencial: false, selecao: true, recrutamento: true },
+  { label: 'Usuários na conta', essencial: '1', selecao: '5', recrutamento: 'Ilimitados' },
+  { label: 'Relatórios', essencial: 'Básico', selecao: 'Avançado', recrutamento: 'Personalizado' },
+  { label: 'Suporte', essencial: 'Email', selecao: 'Prioritário', recrutamento: 'Dedicado + SLA' },
+];
+
+const companyPlans = [
+  {
+    name: 'Essencial Empresas',
+    price: 'R$ 0',
+    period: '/mês',
+    description: 'Para empresas que estão começando a recrutar na plataforma.',
+    isCurrent: true,
+    isPopular: false,
+    featureKey: 'essencial' as const,
+  },
+  {
+    name: 'Seleção Inteligente',
+    price: 'R$ 299',
+    period: '/mês',
+    description: 'Para equipes de RH que precisam de mais recursos e escala.',
+    isCurrent: false,
+    isPopular: true,
+    featureKey: 'selecao' as const,
+  },
+  {
+    name: 'Recrutamento Premium',
+    price: 'R$ 799',
+    period: '/mês',
+    description: 'Solução completa para grandes operações de recrutamento.',
+    isCurrent: false,
+    isPopular: false,
+    featureKey: 'recrutamento' as const,
+  },
+];
+
+const companyFaq = [
+  {
+    question: 'Posso cancelar a assinatura a qualquer momento?',
+    answer: 'Sim, você pode cancelar sua assinatura a qualquer momento. O acesso continuará até o fim do período pago.',
+  },
+  {
+    question: 'Existe desconto para pagamento anual?',
+    answer: 'Sim, oferecemos 20% de desconto para planos anuais. Entre em contato com nosso time comercial.',
+  },
+  {
+    question: 'Como funciona o plano Enterprise?',
+    answer: 'O Enterprise inclui API de integração, suporte dedicado com SLA, relatórios personalizados e onboarding assistido.',
+  },
+  {
+    question: 'Posso adicionar mais usuários ao meu plano?',
+    answer: 'Nos planos Professional e Enterprise, você pode adicionar usuários extras. No Enterprise, o número é ilimitado.',
+  },
+];
+
+function FeatureValue({ value }: { value: string | boolean }) {
+  if (value === true) {
+    return <Check className="w-4 h-4 text-green-500" />;
+  }
+  if (value === false) {
+    return <X className="w-4 h-4 text-muted-foreground/40" />;
+  }
+  return <span className="text-sm">{value}</span>;
+}
 
 export default function CompanySettings() {
   const { user, logout } = useAuth();
@@ -781,19 +861,82 @@ export default function CompanySettings() {
               </CardContent>
             </Card>
 
-            {/* Ações do plano */}
-            <div className="flex flex-wrap gap-4">
-              <Button variant="outline" onClick={() => toast.info('Funcionalidade em breve')}>
-                Ver outros planos
-              </Button>
-              <Button variant="outline" onClick={() => toast.info('Funcionalidade em breve')}>
-                Gerenciar pagamento
-              </Button>
+            <Separator />
+
+            {/* Todos os Planos (migrado de Plans.tsx) */}
+            <div className="space-y-6">
+              <h2 className="text-lg font-semibold">Todos os Planos</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {companyPlans.map((p) => (
+                  <Card
+                    key={p.name}
+                    className={
+                      p.isPopular
+                        ? 'border-primary shadow-lg relative'
+                        : 'relative'
+                    }
+                  >
+                    {p.isPopular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <Badge className="gap-1">
+                          <Star className="w-3 h-3" />
+                          Mais popular
+                        </Badge>
+                      </div>
+                    )}
+                    <CardHeader className="text-center pb-2">
+                      <CardTitle className="text-lg">{p.name}</CardTitle>
+                      <div className="mt-2">
+                        <span className="text-3xl font-bold">{p.price}</span>
+                        <span className="text-muted-foreground text-sm">{p.period}</span>
+                      </div>
+                      <CardDescription className="mt-2">{p.description}</CardDescription>
+                    </CardHeader>
+                    <Separator />
+                    <CardContent className="pt-4">
+                      <ul className="space-y-3">
+                        {companyPlanFeatures.map((feature) => (
+                          <li key={feature.label} className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">{feature.label}</span>
+                            <FeatureValue value={feature[p.featureKey]} />
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-6">
+                        {p.isCurrent ? (
+                          <Button variant="outline" className="w-full" disabled>
+                            Plano Atual
+                          </Button>
+                        ) : (
+                          <Button
+                            className="w-full"
+                            variant={p.isPopular ? 'default' : 'outline'}
+                            onClick={() => toast.info(`A assinatura do plano ${p.name} estará disponível em breve.`)}
+                          >
+                            Assinar {p.name}
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
 
-            <p className="text-sm text-muted-foreground">
-              Nota: Funcionalidades de pagamento são mock nesta versão.
-            </p>
+            {/* Perguntas Frequentes */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Perguntas Frequentes</h2>
+              <div className="grid gap-4">
+                {companyFaq.map((item) => (
+                  <Card key={item.question}>
+                    <CardContent className="pt-4">
+                      <h3 className="font-medium text-sm">{item.question}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{item.answer}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

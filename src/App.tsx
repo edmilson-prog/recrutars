@@ -32,6 +32,43 @@ import AdminSettings from "./pages/admin/Settings";
 import AdminAssessmentCategories from "./pages/admin/AssessmentCategories";
 import AdminAssessmentQuestions from "./pages/admin/AssessmentQuestions";
 
+// PRD-061: Admin Users & RBAC pages
+import AdminUsers from "./pages/admin/Users";
+import AdminUserDetail from "./pages/admin/UserDetail";
+import AdminPermissionGroups from "./pages/admin/PermissionGroups";
+import AdminRolesPermissions from "./pages/admin/RolesPermissions";
+import AdminAuditLogs from "./pages/admin/AuditLogs";
+
+// PRD-059: Admin Reports & Analytics "Radar"
+import AdminReportsFinancial from "./pages/admin/ReportsFinancial";
+import AdminReportsGrowth from "./pages/admin/ReportsGrowth";
+import AdminReportsOperational from "./pages/admin/ReportsOperational";
+import AdminActivityFeed from "./pages/admin/ActivityFeed";
+import AdminReportsExport from "./pages/admin/ReportsExport";
+
+// PRD-060: Admin Plans & Subscriptions "Commerce"
+import AdminPlansManagement from "./pages/admin/PlansManagement";
+import AdminPlanCapabilities from "./pages/admin/PlanCapabilities";
+import AdminSubscriptions from "./pages/admin/Subscriptions";
+import AdminSubscriptionDashboard from "./pages/admin/SubscriptionDashboard";
+
+// PRD-058: Admin Jobs & Moderation "Sentinel"
+import AdminJobsDashboard from "./pages/admin/JobsDashboard";
+import AdminJobsList from "./pages/admin/JobsList";
+import AdminJobDetail from "./pages/admin/JobDetail";
+import AdminModerationQueue from "./pages/admin/ModerationQueue";
+import AdminFinalizedJobs from "./pages/admin/FinalizedJobs";
+import AdminHiresPage from "./pages/admin/AdminHires";
+import AdminInterviewsPage from "./pages/admin/AdminInterviews";
+import AdminModerationConfig from "./pages/admin/ModerationConfig";
+
+// PRD-062: Feature Flags "Switch"
+import AdminFeatureFlags from "./pages/admin/FeatureFlags";
+import AdminFeatureFlagEditor from "./pages/admin/FeatureFlagEditor";
+import AdminPlanSimulator from "./pages/admin/PlanSimulator";
+import AdminFlagAuditLog from "./pages/admin/FlagAuditLog";
+import { SimulationProvider } from "./contexts/SimulationContext";
+
 // Company pages
 import CompanyDashboard from "./pages/empresa/Dashboard";
 import CompanyJobs from "./pages/empresa/Jobs";
@@ -45,7 +82,7 @@ import CompanySettings from "./pages/empresa/Settings";
 import CompanyNotifications from "./pages/empresa/Notifications";
 import CompanyInterviews from "./pages/empresa/Interviews";
 import CompanySuggestedCandidates from "./pages/empresa/SuggestedCandidates";
-import CompanyPlans from "./pages/empresa/Plans";
+
 
 // Candidate pages
 import CandidateDashboard from "./pages/candidato/Dashboard";
@@ -65,7 +102,6 @@ import CandidateInterviews from "./pages/candidato/Interviews";
 import CandidateImportCV from "./pages/candidato/ImportCV";
 import CandidateBehavioralTest from "./pages/candidato/BehavioralTest";
 import CandidateBehavioralTestResult from "./pages/candidato/BehavioralTestResult";
-import CandidatePlans from "./pages/candidato/Plans";
 
 // PRD-049 & PRD-050: Gauge-Pro Assessment
 import CandidateGaugeProAssessment from "./pages/candidato/GaugeProAssessment";
@@ -196,6 +232,148 @@ const App = () => (
             <Route path="/admin/avaliacoes/perguntas" element={
               <ProtectedRoute allowedTypes={['admin']}>
                 <AdminAssessmentQuestions />
+              </ProtectedRoute>
+            } />
+
+            {/* PRD-061: Admin Users & RBAC Routes */}
+            <Route path="/admin/usuarios" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminUsers />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/usuarios/:id" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminUserDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/grupos-permissao" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminPermissionGroups />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/papeis-permissoes" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminRolesPermissions />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/auditoria" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminAuditLogs />
+              </ProtectedRoute>
+            } />
+
+            {/* PRD-059: Admin Reports & Analytics Routes */}
+            <Route path="/admin/relatorios/financeiro" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminReportsFinancial />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/relatorios/crescimento" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminReportsGrowth />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/relatorios/operacional" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminReportsOperational />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/relatorios/activity-feed" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminActivityFeed />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/relatorios/exportar" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminReportsExport />
+              </ProtectedRoute>
+            } />
+
+            {/* PRD-060: Admin Plans & Subscriptions Routes */}
+            <Route path="/admin/planos" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminPlansManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/planos/capabilities" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminPlanCapabilities />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/assinaturas" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminSubscriptions />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/assinaturas/dashboard" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminSubscriptionDashboard />
+              </ProtectedRoute>
+            } />
+
+            {/* PRD-058: Admin Jobs & Moderation "Sentinel" Routes */}
+            <Route path="/admin/vagas" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminJobsDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/vagas/lista" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminJobsList />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/vagas/moderacao" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminModerationQueue />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/vagas/finalizadas" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminFinalizedJobs />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/vagas/contratacoes" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminHiresPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/vagas/entrevistas" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminInterviewsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/vagas/configuracoes" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminModerationConfig />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/vagas/:id" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminJobDetail />
+              </ProtectedRoute>
+            } />
+
+            {/* PRD-062: Feature Flags "Switch" Routes */}
+            <Route path="/admin/feature-flags" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminFeatureFlags />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/feature-flags/simulador" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <SimulationProvider>
+                  <AdminPlanSimulator />
+                </SimulationProvider>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/feature-flags/auditoria" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminFlagAuditLog />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/feature-flags/:id" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminFeatureFlagEditor />
               </ProtectedRoute>
             } />
 
@@ -353,12 +531,6 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            <Route path="/empresa/planos" element={
-              <ProtectedRoute allowedTypes={['company']}>
-                <CompanyPlans />
-              </ProtectedRoute>
-            } />
-
             {/* PRD-048: Job Assessment Routes */}
             <Route path="/empresa/vagas/:jobId/criar-teste" element={
               <ProtectedRoute allowedTypes={['company']}>
@@ -465,12 +637,6 @@ const App = () => (
             <Route path="/candidato/teste-comportamental/resultado" element={
               <ProtectedRoute allowedTypes={['candidate']}>
                 <CandidateBehavioralTestResult />
-              </ProtectedRoute>
-            } />
-
-            <Route path="/candidato/planos" element={
-              <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidatePlans />
               </ProtectedRoute>
             } />
 

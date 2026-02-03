@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   User, MapPin, Save, Camera, FileText, ArrowRight,
-  Shield, Bell, AlertTriangle, CreditCard, Palette, Check, ExternalLink,
+  Shield, Bell, AlertTriangle, CreditCard, Palette, Check, X, Star,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -26,10 +26,84 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ThemeSettings } from '@/components/settings/ThemeSettings';
 import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import { mockCandidates } from '@/data/mockData';
 import type { CandidatePlanType } from '@/types/candidate';
 
 const MAX_ABOUT_LENGTH = 500;
+
+interface PlanFeature {
+  label: string;
+  essencial: string | boolean;
+  avancar: string | boolean;
+  destaque: string | boolean;
+}
+
+const planFeatures: PlanFeature[] = [
+  { label: 'Perfil básico', essencial: true, avancar: true, destaque: true },
+  { label: 'Candidaturas/mês', essencial: '5', avancar: '30', destaque: 'Ilimitadas' },
+  { label: 'Teste comportamental', essencial: '1', avancar: 'Ilimitados', destaque: 'Ilimitados' },
+  { label: 'Vagas recomendadas', essencial: false, avancar: true, destaque: true },
+  { label: 'Currículos', essencial: '1', avancar: '3', destaque: '10' },
+  { label: 'Destaque nas buscas', essencial: false, avancar: false, destaque: true },
+  { label: 'Análise IA do perfil', essencial: false, avancar: false, destaque: true },
+  { label: 'Suporte', essencial: 'Email', avancar: 'Prioritário', destaque: 'VIP' },
+];
+
+const allPlans = [
+  {
+    name: 'Essencial',
+    price: 'R$ 0',
+    period: '/mês',
+    description: 'Ideal para quem está começando a buscar oportunidades.',
+    isCurrent: true,
+    isPopular: false,
+    featureKey: 'essencial' as const,
+  },
+  {
+    name: 'Avançar',
+    price: 'R$ 29',
+    period: '/mês',
+    description: 'Para candidatos que querem se destacar e ter mais visibilidade.',
+    isCurrent: false,
+    isPopular: true,
+    featureKey: 'avancar' as const,
+  },
+  {
+    name: 'Destaque Máximo',
+    price: 'R$ 59',
+    period: '/mês',
+    description: 'Acesso completo com recursos exclusivos e suporte VIP.',
+    isCurrent: false,
+    isPopular: false,
+    featureKey: 'destaque' as const,
+  },
+];
+
+const faq = [
+  {
+    question: 'Posso cancelar a assinatura a qualquer momento?',
+    answer: 'Sim, você pode cancelar sua assinatura a qualquer momento sem multas ou taxas adicionais.',
+  },
+  {
+    question: 'Como funciona o período de teste?',
+    answer: 'Oferecemos 7 dias grátis para os planos Avançar e Destaque Máximo. Você pode cancelar antes do fim do período sem ser cobrado.',
+  },
+  {
+    question: 'Posso trocar de plano depois?',
+    answer: 'Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento. A diferença será calculada proporcionalmente.',
+  },
+];
+
+function FeatureValue({ value }: { value: string | boolean }) {
+  if (value === true) {
+    return <Check className="w-4 h-4 text-green-500" />;
+  }
+  if (value === false) {
+    return <X className="w-4 h-4 text-muted-foreground/40" />;
+  }
+  return <span className="text-sm">{value}</span>;
+}
 
 const candidatePlanData: Record<CandidatePlanType, {
   price: number;
@@ -37,19 +111,19 @@ const candidatePlanData: Record<CandidatePlanType, {
   maxApplications: number;
   maxResumes: number;
 }> = {
-  Gratuito: {
+  'Essencial': {
     price: 0,
     features: ['Perfil basico', '5 candidaturas/mes', '1 teste comportamental', '1 curriculo'],
     maxApplications: 5,
     maxResumes: 1,
   },
-  Pro: {
+  'Avançar': {
     price: 29,
     features: ['30 candidaturas/mes', 'Testes ilimitados', '3 curriculos', 'Vagas recomendadas'],
     maxApplications: 30,
     maxResumes: 3,
   },
-  Premium: {
+  'Destaque Máximo': {
     price: 59,
     features: ['Candidaturas ilimitadas', 'Testes ilimitados', '10 curriculos', 'Destaque nas buscas', 'Analise IA'],
     maxApplications: 999,
@@ -60,6 +134,7 @@ const candidatePlanData: Record<CandidatePlanType, {
 export default function CandidateProfile() {
   const candidate = mockCandidates[0];
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast: toastShadcn } = useToast();
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(candidate.avatar || null);
 
@@ -88,7 +163,7 @@ export default function CandidateProfile() {
     messages: true,
   });
 
-  const currentPlan: CandidatePlanType = candidate.plan || 'Gratuito';
+  const currentPlan: CandidatePlanType = candidate.plan || 'Essencial';
   const planData = candidatePlanData[currentPlan];
 
   // Mock usage data
@@ -470,7 +545,7 @@ export default function CandidateProfile() {
                     <CardTitle>Seu Plano</CardTitle>
                     <CardDescription>Detalhes da sua assinatura atual</CardDescription>
                   </div>
-                  <Badge variant={currentPlan === 'Premium' ? 'default' : currentPlan === 'Pro' ? 'secondary' : 'outline'}>
+                  <Badge variant={currentPlan === 'Destaque Máximo' ? 'default' : currentPlan === 'Avançar' ? 'secondary' : 'outline'}>
                     {currentPlan}
                   </Badge>
                 </div>
@@ -481,7 +556,7 @@ export default function CandidateProfile() {
                   <span className="text-muted-foreground">/mês</span>
                 </div>
 
-                {currentPlan !== 'Gratuito' && (
+                {currentPlan !== 'Essencial' && (
                   <p className="text-sm text-muted-foreground">
                     Próxima cobrança em 15/03/2026
                   </p>
@@ -538,14 +613,84 @@ export default function CandidateProfile() {
               </CardContent>
             </Card>
 
-            {/* Link para página de planos */}
-            <div className="flex justify-center">
-              <Button asChild variant="outline" size="lg">
-                <Link to="/candidato/planos">
-                  Ver todos os planos
-                  <ExternalLink className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
+            <Separator />
+
+            {/* Todos os Planos (migrado de Plans.tsx) */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Todos os Planos</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {allPlans.map((plan) => (
+                  <Card
+                    key={plan.name}
+                    className={
+                      plan.isPopular
+                        ? 'border-primary shadow-lg relative'
+                        : 'relative'
+                    }
+                  >
+                    {plan.isPopular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <Badge className="gap-1">
+                          <Star className="w-3 h-3" />
+                          Mais popular
+                        </Badge>
+                      </div>
+                    )}
+                    <CardHeader className="text-center pb-2">
+                      <CardTitle className="text-lg">{plan.name}</CardTitle>
+                      <div className="mt-2">
+                        <span className="text-3xl font-bold">{plan.price}</span>
+                        <span className="text-muted-foreground text-sm">{plan.period}</span>
+                      </div>
+                      <CardDescription className="mt-2">{plan.description}</CardDescription>
+                    </CardHeader>
+                    <Separator />
+                    <CardContent className="pt-4">
+                      <ul className="space-y-3">
+                        {planFeatures.map((feature) => (
+                          <li key={feature.label} className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">{feature.label}</span>
+                            <FeatureValue value={feature[plan.featureKey]} />
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-6">
+                        {plan.isCurrent ? (
+                          <Button variant="outline" className="w-full" disabled>
+                            Plano Atual
+                          </Button>
+                        ) : (
+                          <Button
+                            className="w-full"
+                            variant={plan.isPopular ? 'default' : 'outline'}
+                            onClick={() => toastShadcn({
+                              title: 'Funcionalidade em breve',
+                              description: `A assinatura do plano ${plan.name} estará disponível em breve.`,
+                            })}
+                          >
+                            Assinar {plan.name}
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Perguntas Frequentes */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Perguntas Frequentes</h2>
+              <div className="grid gap-4">
+                {faq.map((item) => (
+                  <Card key={item.question}>
+                    <CardContent className="pt-4">
+                      <h3 className="font-medium text-sm">{item.question}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{item.answer}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           </TabsContent>
         </Tabs>

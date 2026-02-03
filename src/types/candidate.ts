@@ -9,7 +9,7 @@ import type { BehavioralTest } from './test';
 import type { SalaryRange } from './job';
 
 // Tipo de plano do candidato
-export type CandidatePlanType = 'Gratuito' | 'Pro' | 'Premium';
+export type CandidatePlanType = 'Essencial' | 'Avançar' | 'Destaque Máximo';
 
 // PRD-026: Modos de visibilidade do perfil
 export type VisibilityMode = 'public' | 'partial' | 'private';

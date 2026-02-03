@@ -1,13 +1,44 @@
 {
   "versions": [
     {
+      "version": "0.53.0",
+      "codename": "Sentinel",
+      "type": "minor",
+      "releaseDate": "2026-02-03",
+      "prd": "PRD-058, PRD-059, PRD-060, PRD-061, PRD-062",
+      "description": "Painel Admin Avancado com 5 modulos: RBAC Guardian, Planos Commerce, Feature Flags Switch, Vagas Sentinel, Relatorios Radar. Sidebar admin convertido de submenus para tabs horizontais nas paginas",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "RBAC Guardian (PRD-061): listagem de usuarios com filtros, detalhe com override, grupos de permissao, 8 papeis com 34 permissoes, motor RBAC, auditoria, impersonacao",
+            "Planos Commerce (PRD-060): CRUD de 6 planos, matriz de 25 capabilities, gestao de assinaturas com upgrade/downgrade, dashboard com MRR e churn, compras avulsas",
+            "Feature Flags Switch (PRD-062): CRUD de 25 flags com condicoes compostas, kill switch, overrides, simulador de planos, motor de avaliacao com cadeia explicativa, auditoria",
+            "Vagas Sentinel (PRD-058): dashboard com KPIs e graficos, listagem com filtros, fila de moderacao, vagas finalizadas, entrevistas e contratacoes, configuracao de moderacao",
+            "Relatorios Radar (PRD-059): dashboard financeiro (MRR, ARR, churn, LTV), crescimento com cohort table, operacional com funil, activity feed, exportacao PDF/Excel"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Sidebar admin convertido de submenus colapsiveis para tabs horizontais nas paginas",
+            "5 grupos de tabs: Usuarios (4), Avaliacoes (2), Vagas (6), Relatorios (5), Configuracoes (7)",
+            "Componente AdminTabNav auto-detecta grupo pela URL com scroll horizontal em mobile",
+            "Nomes de planos migrados: Gratuito->Essencial, Pro->Avancar, Premium->Destaque Maximo",
+            "Tipo User enriquecido com campos RBAC: roleId, status, lastAccessAt, groupIds"
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.52.0",
       "codename": "Workshop",
       "type": "minor",
       "releaseDate": "2026-02-02",
       "prd": "PRD-053",
       "description": "Enriquecimento da visualizacao de resultados no Hub de Testes Comportamentais com sistema de abas, radar de competencias, score de risco, fatores emocionais, recomendacoes IA e respostas do teste",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "changed",
