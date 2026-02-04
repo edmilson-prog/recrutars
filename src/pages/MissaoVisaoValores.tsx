@@ -2,43 +2,38 @@ import { Header } from '@/components/landing/Header';
 import { Footer } from '@/components/landing/Footer';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { motion } from 'framer-motion';
-import { Target, Heart, Lightbulb, Lock, Award, Leaf, Handshake, Eye, Compass } from 'lucide-react';
+import { Target, Heart, Lightbulb, Lock, Award, Handshake } from 'lucide-react';
 
 const valores = [
   {
-    icon: Target,
-    titulo: 'Precisão Científica',
-    descricao: 'Baseamos nossas decisões em metodologias validadas e dados comportamentais concretos, não em intuição ou achismos. Cada recomendação é fundamentada em ciência psicométrica.',
-  },
-  {
-    icon: Handshake,
-    titulo: 'Humanização Tecnológica',
-    descricao: 'Acreditamos que tecnologia e IA devem potencializar - nunca substituir - a sensibilidade humana nos processos de recrutamento. O toque humano é inegociável.',
-  },
-  {
-    icon: Lightbulb,
-    titulo: 'Inovação Contínua',
-    descricao: 'Estamos sempre à frente, antecipando tendências, desenvolvendo soluções proprietárias e aprimorando nossos métodos para entregar vantagens competitivas reais.',
+    icon: Heart,
+    titulo: 'Valorização das pessoas',
+    descricao: 'Colocamos as pessoas no centro de tudo. Cada decisão é pensada para promover o bem-estar, o desenvolvimento e a realização profissional de candidatos e colaboradores.',
   },
   {
     icon: Lock,
-    titulo: 'Ética e Transparência',
-    descricao: 'Tratamos dados com máximo rigor (LGPD), mantemos confidencialidade absoluta e operamos com transparência total em nossos processos e metodologias.',
+    titulo: 'Ética e responsabilidade',
+    descricao: 'Atuamos com integridade, transparência e respeito à legislação. Tratamos dados com rigor (LGPD) e mantemos confidencialidade absoluta em todos os processos.',
+  },
+  {
+    icon: Lightbulb,
+    titulo: 'Inovação prática',
+    descricao: 'Buscamos soluções tecnológicas que resolvem problemas reais, simplificam processos e geram valor concreto para empresas e profissionais.',
+  },
+  {
+    icon: Target,
+    titulo: 'Compromisso com resultados',
+    descricao: 'Nosso sucesso é medido pelo sucesso dos nossos clientes. Assumimos responsabilidade pelos resultados e trabalhamos para superar expectativas.',
   },
   {
     icon: Award,
-    titulo: 'Excelência Profissional',
-    descricao: 'Não aceitamos mediocridade. Investimos continuamente em capacitação, aperfeiçoamento técnico e domínio das melhores práticas globais em gestão de pessoas.',
+    titulo: 'Conhecimento e atualização contínua',
+    descricao: 'Investimos continuamente em capacitação, aperfeiçoamento técnico e domínio das melhores práticas em gestão de pessoas, recrutamento e conformidade trabalhista.',
   },
   {
-    icon: Leaf,
-    titulo: 'Impacto Transformador',
-    descricao: 'Cada contratação bem-sucedida muda vidas - do profissional que encontra seu lugar ideal, da empresa que ganha um talento alinhado, e das equipes que se tornam mais coesas.',
-  },
-  {
-    icon: Heart,
-    titulo: 'Compromisso com Resultados',
-    descricao: 'Nosso sucesso é medido pelo sucesso dos nossos clientes. Assumimos responsabilidade pelos resultados e trabalhamos incansavelmente para superar expectativas.',
+    icon: Handshake,
+    titulo: 'Parceria com o cliente',
+    descricao: 'Construímos relações de confiança e colaboração de longo prazo, entendendo as necessidades de cada cliente para entregar soluções sob medida.',
   },
 ];
 
@@ -86,11 +81,11 @@ export default function MissaoVisaoValores() {
                 className="bg-card rounded-2xl shadow-soft p-8 md:p-10"
               >
                 <div className="w-14 h-14 rounded-xl bg-secondary/10 flex items-center justify-center mb-6">
-                  <Compass className="w-7 h-7 text-secondary" />
+                  <Target className="w-7 h-7 text-secondary" />
                 </div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Nossa Missão</h2>
                 <p className="text-muted-foreground leading-relaxed text-lg">
-                  Transformar o recrutamento em ciência aplicada, conectando empresas e profissionais através de processos seletivos inteligentes, humanizados e baseados em evidências comportamentais, que reduzem erros de contratação e potencializam o desenvolvimento de equipes de alta performance.
+                  Conectar empresas e pessoas por meio de soluções inteligentes em recrutamento, gestão de pessoas, qualificação profissional e apoio à conformidade trabalhista, promovendo ambientes de trabalho seguros, saudáveis e produtivos para todos.
                 </p>
               </motion.div>
 
@@ -100,11 +95,11 @@ export default function MissaoVisaoValores() {
                 className="bg-card rounded-2xl shadow-soft p-8 md:p-10"
               >
                 <div className="w-14 h-14 rounded-xl bg-secondary/10 flex items-center justify-center mb-6">
-                  <Eye className="w-7 h-7 text-secondary" />
+                  <Lightbulb className="w-7 h-7 text-secondary" />
                 </div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Nossa Visão</h2>
                 <p className="text-muted-foreground leading-relaxed text-lg">
-                  Ser referência nacional em recrutamento e seleção inteligente até 2028, reconhecida pela excelência na avaliação comportamental e por revolucionar a forma como empresas e candidatos se encontram, através da integração harmoniosa entre inteligência artificial e gestão humana especializada.
+                  Ser referência nacional em soluções digitais de RH, reconhecida pela inovação, ética e impacto positivo na gestão de pessoas e na prevenção de riscos organizacionais.
                 </p>
               </motion.div>
             </div>
@@ -139,40 +134,6 @@ export default function MissaoVisaoValores() {
                 </motion.div>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* Propósito */}
-        <section className="py-24">
-          <div className="container">
-            <motion.div {...fadeInUp} className="max-w-4xl mx-auto">
-              <h2 className="text-3xl font-bold text-foreground mb-8 text-center">Nosso Propósito</h2>
-              <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl p-8 md:p-12 text-center">
-                <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-6">
-                  Acreditamos que <strong className="text-foreground">pessoas certas nos lugares certos</strong> não apenas constroem empresas mais fortes - elas constroem carreiras mais realizadas, equipes mais felizes e uma sociedade mais produtiva e harmoniosa.
-                </p>
-                <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-                  Nossa razão de existir é <strong className="text-foreground">reduzir o desperdício de potencial humano</strong> causado por contratações inadequadas, criando matches verdadeiros entre talentos e oportunidades.
-                </p>
-              </div>
-
-              {/* Citação */}
-              <motion.div
-                {...fadeInUp}
-                className="mt-12 text-center"
-              >
-                <blockquote className="relative">
-                  <span className="text-6xl text-secondary/20 absolute -top-4 left-0">"</span>
-                  <p className="text-2xl md:text-3xl font-semibold text-foreground italic px-8">
-                    Não é sorte, é ciência.
-                  </p>
-                  <span className="text-6xl text-secondary/20 absolute -bottom-8 right-0">"</span>
-                </blockquote>
-                <p className="text-muted-foreground mt-8">
-                  — RecrutaRS Consultoria e Gestão
-                </p>
-              </motion.div>
-            </motion.div>
           </div>
         </section>
 

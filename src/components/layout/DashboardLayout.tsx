@@ -1,6 +1,7 @@
 /**
  * DashboardLayout Component
  * PRD-003-dgn: Mobile-First e Acessibilidade
+ * - Sidebar flat com tabs nas páginas (sem sub-itens colapsáveis)
  * - Sidebar oculta em mobile (<768px)
  * - Bottom Navigation Bar em mobile
  */
@@ -10,9 +11,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, Users, Settings, LogOut,
   Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart, Calendar, HelpCircle, Bell,
-  ChevronLeft, ChevronRight, Sparkles, Info, FolderTree, FileQuestion, CreditCard, UsersRound
+  ChevronLeft, ChevronRight, Sparkles, Info, UsersRound,
+  ShieldCheck, BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { isAdminNavItemActive, getTabLabelForPath } from '@/config/adminTabConfig';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -44,17 +47,19 @@ interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  countKey?: 'savedJobs' | 'interviews' | 'savedCandidates' | 'companyInterviews' | 'recommendations'; // Chave para contadores dinâmicos
+  countKey?: 'savedJobs' | 'interviews' | 'savedCandidates' | 'companyInterviews' | 'recommendations';
 }
 
 const adminNav: NavItem[] = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/empresas', label: 'Empresas', icon: Building2 },
   { href: '/admin/candidatos', label: 'Candidatos', icon: Users },
-  { href: '/admin/avaliacoes/categorias', label: 'Categorias', icon: FolderTree },
-  { href: '/admin/avaliacoes/perguntas', label: 'Perguntas', icon: FileQuestion },
-  { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
+  { href: '/admin/usuarios', label: 'Usuários & Permissões', icon: ShieldCheck },
+  { href: '/admin/avaliacoes/categorias', label: 'Avaliações', icon: Brain },
+  { href: '/admin/vagas', label: 'Vagas', icon: Briefcase },
+  { href: '/admin/relatorios/financeiro', label: 'Relatórios', icon: BarChart3 },
   { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
+  { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/sobre', label: 'Sobre', icon: Info },
 ];
 
@@ -69,7 +74,6 @@ const companyNav: NavItem[] = [
   { href: '/empresa/equipes', label: 'Gestão de Equipes', icon: UsersRound },
   { href: '/empresa/mensagens', label: 'Mensagens', icon: MessageSquare },
   { href: '/empresa/notificacoes', label: 'Notificações', icon: Bell },
-  { href: '/empresa/planos', label: 'Planos', icon: CreditCard },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/empresa/configuracoes', label: 'Configurações', icon: Settings },
   { href: '/sobre', label: 'Sobre', icon: Info },
@@ -87,11 +91,23 @@ const candidateNav: NavItem[] = [
   { href: '/candidato/gauge-pro', label: TEST_CONFIG.name, icon: Brain },
   { href: '/candidato/testes', label: 'Meus Testes', icon: Brain },
   { href: '/candidato/mensagens', label: 'Mensagens', icon: MessageSquare },
-  { href: '/candidato/planos', label: 'Planos', icon: CreditCard },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/candidato/configuracoes', label: 'Configurações', icon: Settings },
   { href: '/sobre', label: 'Sobre', icon: Info },
 ];
+
+/** Encontra label do item ativo (incluindo tabs admin) */
+function findActiveLabel(items: NavItem[], pathname: string, userType: string): string | undefined {
+  for (const item of items) {
+    if (item.href === pathname) return item.label;
+  }
+  // Para admin, verificar tabs
+  if (userType === 'admin') {
+    const tabLabel = getTabLabelForPath(pathname);
+    if (tabLabel) return tabLabel;
+  }
+  return undefined;
+}
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -154,8 +170,8 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
     navigate('/');
   };
 
-  const displayName = userType === 'company' 
-    ? currentCompany?.name 
+  const displayName = userType === 'company'
+    ? currentCompany?.name
     : userType === 'candidate'
       ? currentCandidate?.name
       : user?.name;
@@ -172,6 +188,46 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
       case 'company': return '/empresa/configuracoes';
       case 'admin': return '/admin/configuracoes';
     }
+  };
+
+  /** Renderiza um item de navegação */
+  const renderNavItem = (item: NavItem) => {
+    const isActive = userType === 'admin'
+      ? isAdminNavItemActive(item.href, location.pathname)
+      : location.pathname === item.href;
+    const count = getItemCount(item.countKey);
+
+    return (
+      <Link
+        key={item.href}
+        to={item.href}
+        className={cn(
+          "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+          isCollapsed && "justify-center px-2",
+          isActive
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "hover:bg-sidebar-accent/50"
+        )}
+        title={isCollapsed ? item.label : undefined}
+      >
+        <item.icon className={cn(
+          "w-5 h-5 flex-shrink-0",
+          isActive && "text-sidebar-primary"
+        )} />
+        {!isCollapsed && <span className="font-medium flex-1">{item.label}</span>}
+        {!isCollapsed && count !== null && count > 0 && (
+          <Badge
+            variant="secondary"
+            className={cn(
+              "h-5 min-w-5 px-1.5 text-xs",
+              isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : ""
+            )}
+          >
+            {count}
+          </Badge>
+        )}
+      </Link>
+    );
   };
 
   return (
@@ -216,41 +272,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.href;
-            const count = getItemCount(item.countKey);
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-                  isCollapsed && "justify-center px-2",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "hover:bg-sidebar-accent/50"
-                )}
-                title={isCollapsed ? item.label : undefined}
-              >
-                <item.icon className={cn(
-                  "w-5 h-5 flex-shrink-0",
-                  isActive && "text-sidebar-primary"
-                )} />
-                {!isCollapsed && <span className="font-medium flex-1">{item.label}</span>}
-                {!isCollapsed && count !== null && count > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className={cn(
-                      "h-5 min-w-5 px-1.5 text-xs",
-                      isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : ""
-                    )}
-                  >
-                    {count}
-                  </Badge>
-                )}
-              </Link>
-            );
-          })}
+          {navItems.map(renderNavItem)}
         </nav>
 
         {/* User section - apenas botão de sair */}
@@ -287,7 +309,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
               <span className="text-lg font-semibold text-foreground">
-                {navItems.find(item => item.href === location.pathname)?.label || 'Dashboard'}
+                {findActiveLabel(navItems, location.pathname, userType) || 'Dashboard'}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -309,20 +331,20 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                     <div className="hidden sm:block text-right">
                       <div className="flex items-center gap-1.5 justify-end">
                         <span className="text-sm font-medium">{displayName}</span>
-                        {userType === 'candidate' && currentCandidate?.plan && currentCandidate.plan !== 'Gratuito' && (
+                        {userType === 'candidate' && currentCandidate?.plan && currentCandidate.plan !== 'Essencial' && (
                           <Badge className={cn(
                             "text-[10px] px-1.5 py-0 h-4 font-semibold border-0",
-                            currentCandidate.plan === 'Premium'
+                            currentCandidate.plan === 'Destaque Máximo'
                               ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-white"
                               : "bg-primary/15 text-primary"
                           )}>
                             {currentCandidate.plan}
                           </Badge>
                         )}
-                        {userType === 'company' && currentCompany?.plan && currentCompany.plan !== 'Básico' && (
+                        {userType === 'company' && currentCompany?.plan && currentCompany.plan !== 'Essencial Empresas' && (
                           <Badge className={cn(
                             "text-[10px] px-1.5 py-0 h-4 font-semibold border-0",
-                            currentCompany.plan === 'Enterprise'
+                            currentCompany.plan === 'Recrutamento Premium'
                               ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-white"
                               : "bg-primary/15 text-primary"
                           )}>

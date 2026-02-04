@@ -1,13 +1,105 @@
 {
   "versions": [
     {
+      "version": "0.53.0",
+      "codename": "Sentinel",
+      "type": "minor",
+      "releaseDate": "2026-02-03",
+      "prd": "PRD-058, PRD-059, PRD-060, PRD-061, PRD-062",
+      "description": "Painel Admin Avancado com 5 modulos: RBAC Guardian, Planos Commerce, Feature Flags Switch, Vagas Sentinel, Relatorios Radar. Sidebar admin convertido de submenus para tabs horizontais nas paginas",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "RBAC Guardian (PRD-061): listagem de usuarios com filtros, detalhe com override, grupos de permissao, 8 papeis com 34 permissoes, motor RBAC, auditoria, impersonacao",
+            "Planos Commerce (PRD-060): CRUD de 6 planos, matriz de 25 capabilities, gestao de assinaturas com upgrade/downgrade, dashboard com MRR e churn, compras avulsas",
+            "Feature Flags Switch (PRD-062): CRUD de 25 flags com condicoes compostas, kill switch, overrides, simulador de planos, motor de avaliacao com cadeia explicativa, auditoria",
+            "Vagas Sentinel (PRD-058): dashboard com KPIs e graficos, listagem com filtros, fila de moderacao, vagas finalizadas, entrevistas e contratacoes, configuracao de moderacao",
+            "Relatorios Radar (PRD-059): dashboard financeiro (MRR, ARR, churn, LTV), crescimento com cohort table, operacional com funil, activity feed, exportacao PDF/Excel"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Sidebar admin convertido de submenus colapsiveis para tabs horizontais nas paginas",
+            "5 grupos de tabs: Usuarios (4), Avaliacoes (2), Vagas (6), Relatorios (5), Configuracoes (7)",
+            "Componente AdminTabNav auto-detecta grupo pela URL com scroll horizontal em mobile",
+            "Nomes de planos migrados: Gratuito->Essencial, Pro->Avancar, Premium->Destaque Maximo",
+            "Tipo User enriquecido com campos RBAC: roleId, status, lastAccessAt, groupIds"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.52.0",
+      "codename": "Workshop",
+      "type": "minor",
+      "releaseDate": "2026-02-02",
+      "prd": "PRD-053",
+      "description": "Enriquecimento da visualizacao de resultados no Hub de Testes Comportamentais com sistema de abas, radar de competencias, score de risco, fatores emocionais, recomendacoes IA e respostas do teste",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "CandidateResultView reestruturado com 4 abas: Visao Geral, Competencias, IA & Recomendacoes, Respostas",
+            "Header do candidato e FitScore persistem acima das abas",
+            "Aba Visao Geral: radar D1-D5, barras por dimensao, archetype, forcas/areas de desenvolvimento",
+            "KPIs na pagina de detalhe do teste agora exibem cards dinamicos para status abandoned e expired"
+          ]
+        },
+        {
+          "type": "added",
+          "items": [
+            "Aba Competencias: radar de 6 eixos (Lideranca, Comunicacao, Organizacao, Inovacao, Trabalho em Equipe, Analise Critica)",
+            "Aba Competencias: card de Fatores Emocionais com 5 barras (Empatia, Autocontrole, Sociabilidade, Resiliencia, IE)",
+            "Aba Competencias: card de Avaliacao de Risco com classificacao Baixo/Moderado/Alto/Critico e flags",
+            "Aba IA & Recomendacoes: analise IA expandida, recomendacao de contratacao, plano de desenvolvimento, posicionamento em equipe, mitigacao de riscos",
+            "Aba Respostas: reconstrucao mock das selecoes de palavras por dimensao e 15 cenarios situacionais",
+            "Utilitarios: competencyRadar.ts, emotionalFactors.ts, riskScore.ts, mockResponseGenerator.ts",
+            "Tipos: CompetencyScores, EmotionalFactorScores, RiskAssessment, MockTestResponses em companyTest.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.51.0",
+      "codename": "Workshop",
+      "type": "minor",
+      "releaseDate": "2026-02-02",
+      "prd": "",
+      "description": "Redesign da pagina de perfil do candidato com sistema de abas e novas funcionalidades",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Perfil do candidato reestruturado com 4 abas: Perfil, Conta, Aparencia, Plano",
+            "Aba Perfil: formulario pessoal com novo campo Data de Nascimento",
+            "Aba Conta: seguranca (alterar email/senha), notificacoes e zona de perigo",
+            "Aba Aparencia: selecao de tema (claro/escuro/sistema) via ThemeSettings",
+            "Aba Plano: resumo do plano atual, uso de recursos e link para pagina de planos",
+            "Card de completude do perfil removido da pagina de perfil",
+            "Tabs responsivas: apenas icones em telas pequenas, icones + texto em telas maiores"
+          ]
+        },
+        {
+          "type": "added",
+          "items": [
+            "Campo dateOfBirth no tipo Candidate e nos dados mock"
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.50.0",
       "codename": "Workshop",
       "type": "minor",
       "releaseDate": "2026-02-02",
       "prd": "",
       "description": "Criação e edição de vagas convertida de modal para página dedicada com layout em abas e sidebar do Assistente IA",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "changed",
@@ -23,7 +115,9 @@
             "Kanban de Candidaturas: clique no nome/avatar navega para perfil completo do candidato",
             "Kanban de Candidaturas: botão 'Gerenciar' (ícone ⋮) no card abre modal de gestão",
             "Perfil do candidato: card Ações com envio de mensagem, convite para vaga, solicitação de teste, agendamento de entrevista, anotações e exportação",
-            "Perfil do candidato: card Histórico de Atividades com timeline unificada de candidaturas, mudanças de status, anotações, mensagens e testes"
+            "Perfil do candidato: card Histórico de Atividades com timeline unificada de candidaturas, mudanças de status, anotações, mensagens e testes",
+            "Perfil do candidato: skills com badges coloridos por nível de proficiência (Expert, Avançado, Intermediário)",
+            "Gestão de Equipes: card 'Recomendações para Gestores' com insights dinâmicos na Visão Geral"
           ]
         }
       ]
@@ -66,6 +160,13 @@
             "Score de Fit Cultural para candidatos (0-100%)",
             "Relatório PDF de evolução por colaborador",
             "Relatório PDF de cultura organizacional"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Scrollbar adicionada na aba de carregar cenarios do ScenarioManager",
+            "ScrollArea Radix substituida por overflow-y-auto nativo no ScenarioManager"
           ]
         }
       ]
@@ -367,6 +468,52 @@
           "items": [
             "DashboardLayout.tsx - integracao do GlassFooter",
             "Padding bottom do conteudo ajustado para evitar sobreposicao"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.38.0",
+      "codename": "Awesome Ada",
+      "type": "minor",
+      "releaseDate": "2026-01-17",
+      "prd": "PRD-034 a PRD-042",
+      "description": "Features IA, agendamento de entrevistas empresariais, transparencia de match, chatbot, templates de mensagem, fit cultural, paginas institucionais e melhorias UX",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Agendamento de entrevistas pela empresa com calendario e horarios (PRD-034)",
+            "Banners de incentivo ao teste DISC para candidatos (PRD-035)",
+            "Transparencia de match com breakdown e explicabilidade para candidatos (PRD-035)",
+            "Sugestoes IA para descricao de vagas (PRD-036)",
+            "Auto-preenchimento inteligente de formularios (PRD-037)",
+            "Analise IA de compatibilidade candidato-vaga (PRD-038)",
+            "Insights IA no dashboard da empresa (PRD-039)",
+            "Chatbot de atendimento ao candidato (PRD-040)",
+            "Templates de mensagem para recrutadores (PRD-041)",
+            "Score de fit cultural candidato-empresa (PRD-042)",
+            "Hero com efeito parallax e carousel de imagens",
+            "Pagina Como Funciona com etapas ilustradas",
+            "Paginas institucionais (Quem Somos, Termos, Privacidade)",
+            "Menu dropdown do usuario no header de areas autenticadas"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Login e registro com melhorias visuais e UX",
+            "Navegacao institucional reorganizada"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Labels e grid no mini radar chart DISC",
+            "DialogDescription ausente na pagina Jobs",
+            "forwardRef no componente Badge",
+            "SelectionBar props em SavedCandidates"
           ]
         }
       ]

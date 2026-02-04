@@ -170,6 +170,67 @@ export default function AdminDashboard() {
           ))}
         </div>
 
+        {/* Match Rate */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-card rounded-2xl p-6 shadow-soft"
+        >
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-success" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-foreground">Taxa de Match</h3>
+              <p className="text-muted-foreground">Percentual de contratações bem-sucedidas</p>
+            </div>
+          </div>
+          <div className="flex items-end gap-4">
+            <div className="text-5xl font-bold text-foreground">{adminStats.matchRate}%</div>
+            <div className="flex items-center gap-1 text-success text-sm mb-2">
+              <ArrowUp className="w-4 h-4" />
+              +5% este mês
+            </div>
+          </div>
+          <div className="mt-4 w-full bg-muted rounded-full h-3">
+            <div
+              className="bg-gradient-to-r from-primary to-secondary h-3 rounded-full transition-all duration-500"
+              style={{ width: `${adminStats.matchRate}%` }}
+            />
+          </div>
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="bg-card rounded-2xl p-6 shadow-soft"
+        >
+          <h2 className="text-xl font-semibold text-foreground mb-6">Ações Rápidas</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: 'Empresas', icon: Building2, href: '/admin/empresas', color: 'primary' },
+              { label: 'Candidatos', icon: Users, href: '/admin/candidatos', color: 'secondary' },
+              { label: 'Vagas', icon: Briefcase, href: '/admin/vagas', color: 'success' },
+              { label: 'Relatórios', icon: FileText, href: '/admin/relatorios', color: 'warning' },
+            ].map((action) => (
+              <Link
+                key={action.label}
+                to={action.href}
+                className="flex items-center gap-3 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors group"
+              >
+                <div className={`w-10 h-10 rounded-lg bg-${action.color}/10 flex items-center justify-center`}>
+                  <action.icon className={`w-5 h-5 text-${action.color}`} />
+                </div>
+                <span className="font-medium text-foreground">{action.label}</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
+            ))}
+          </div>
+        </motion.div>
+
         {/* Content Grid - Row 1: Growth Chart + Recent Companies */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Growth Chart - 2 columns */}
@@ -236,7 +297,7 @@ export default function AdminDashboard() {
               </Link>
             </div>
             <div className="space-y-4">
-              {mockCompanies.map((company) => (
+              {mockCompanies.slice(0, 4).map((company) => (
                 <div key={company.id} className="flex items-center gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                     <Building2 className="w-6 h-6 text-primary" />
@@ -341,67 +402,6 @@ export default function AdminDashboard() {
             </div>
           </motion.div>
         </div>
-
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="bg-card rounded-2xl p-6 shadow-soft"
-        >
-          <h2 className="text-xl font-semibold text-foreground mb-6">Ações Rápidas</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: 'Empresas', icon: Building2, href: '/admin/empresas', color: 'primary' },
-              { label: 'Candidatos', icon: Users, href: '/admin/candidatos', color: 'secondary' },
-              { label: 'Vagas', icon: Briefcase, href: '/admin/vagas', color: 'success' },
-              { label: 'Relatórios', icon: FileText, href: '/admin/relatorios', color: 'warning' },
-            ].map((action) => (
-              <Link
-                key={action.label}
-                to={action.href}
-                className="flex items-center gap-3 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors group"
-              >
-                <div className={`w-10 h-10 rounded-lg bg-${action.color}/10 flex items-center justify-center`}>
-                  <action.icon className={`w-5 h-5 text-${action.color}`} />
-                </div>
-                <span className="font-medium text-foreground">{action.label}</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Link>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Match Rate */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="bg-card rounded-2xl p-6 shadow-soft"
-        >
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-success" />
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-foreground">Taxa de Match</h3>
-              <p className="text-muted-foreground">Percentual de contratações bem-sucedidas</p>
-            </div>
-          </div>
-          <div className="flex items-end gap-4">
-            <div className="text-5xl font-bold text-foreground">{adminStats.matchRate}%</div>
-            <div className="flex items-center gap-1 text-success text-sm mb-2">
-              <ArrowUp className="w-4 h-4" />
-              +5% este mês
-            </div>
-          </div>
-          <div className="mt-4 w-full bg-muted rounded-full h-3">
-            <div
-              className="bg-gradient-to-r from-primary to-secondary h-3 rounded-full transition-all duration-500"
-              style={{ width: `${adminStats.matchRate}%` }}
-            />
-          </div>
-        </motion.div>
 
         {/* PRD-035: Match Statistics Widget */}
         <div className="grid lg:grid-cols-2 gap-6">

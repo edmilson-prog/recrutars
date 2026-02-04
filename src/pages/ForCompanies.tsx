@@ -109,14 +109,14 @@ const steps = [
 
 const plansPreview = [
   {
-    name: 'Starter',
+    name: 'Essencial Empresas',
     price: 'Grátis',
     highlight: '2 vagas ativas',
     features: ['Até 2 vagas simultâneas', '50 candidatos/mês', 'Dashboard básico', 'Suporte por email'],
     popular: false,
   },
   {
-    name: 'Professional',
+    name: 'Seleção Inteligente',
     price: 'R$ 299',
     period: '/mês',
     highlight: '10 vagas + Testes ilimitados',
@@ -124,7 +124,7 @@ const plansPreview = [
     popular: true,
   },
   {
-    name: 'Enterprise',
+    name: 'Recrutamento Premium',
     price: 'Personalizado',
     highlight: 'Vagas ilimitadas + API',
     features: ['Vagas ilimitadas', 'API de integração', 'Gerente de conta dedicado', 'SLA garantido', 'Treinamento personalizado'],

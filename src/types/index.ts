@@ -22,3 +22,8 @@ export * from './chatbot';
 export * from './changelog';
 export * from './assessment';
 export * from './teamManagement';
+export * from './rbac';
+export * from './plans';
+export * from './featureFlags';
+export * from './adminJobs';
+export * from './reports';

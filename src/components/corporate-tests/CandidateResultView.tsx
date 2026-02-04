@@ -1,17 +1,23 @@
 /**
  * Candidate Result View
- * PRD-053: Visualização completa do resultado
+ * PRD-053: Visualização completa do resultado com 4 abas
  */
 
+import { BarChart3, Radar, Sparkles, ClipboardList } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GaugeProRadarChart } from './GaugeProRadarChart';
 import { DimensionBarsGaugePro } from './DimensionBarsGaugePro';
 import { ArchetypeCard } from './ArchetypeCard';
-import { AIAnalysisSection } from './AIAnalysisSection';
 import { TopStrengthsDev } from './TopStrengthsDev';
 import { FitScoreDisplay } from './FitScoreDisplay';
+import { CompetencyRadarChart } from './CompetencyRadarChart';
+import { EmotionalFactorsCard } from './EmotionalFactorsCard';
+import { RiskScoreCard } from './RiskScoreCard';
+import { AIRecommendationsTab } from './AIRecommendationsTab';
+import { TestResponsesTab } from './TestResponsesTab';
 import { DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 import type { CompanyTestResult, CompanyTest } from '@/types/companyTest';
 
@@ -29,7 +35,7 @@ export function CandidateResultView({ result, test }: CandidateResultViewProps) 
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header — persistent above tabs */}
       <Card>
         <CardContent className="pt-4 pb-4">
           <div className="flex items-center gap-4">
@@ -57,50 +63,87 @@ export function CandidateResultView({ result, test }: CandidateResultViewProps) 
         </CardContent>
       </Card>
 
-      {/* Fit Score */}
+      {/* Fit Score — persistent above tabs */}
       {result.fitScore !== undefined && result.fitClassification && (
         <FitScoreDisplay score={result.fitScore} classification={result.fitClassification} />
       )}
 
-      {/* Radar + Bars */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Perfil Gauge-Pro D1-D5</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <GaugeProRadarChart
-              scores={result.scores}
-              idealWeights={test.weights}
-              candidateName={result.candidateName}
-              size="lg"
-            />
-          </CardContent>
-        </Card>
+      {/* Tabs */}
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            <span className="hidden sm:inline">Visão Geral</span>
+          </TabsTrigger>
+          <TabsTrigger value="competencias" className="flex items-center gap-2">
+            <Radar className="w-4 h-4" />
+            <span className="hidden sm:inline">Competências</span>
+          </TabsTrigger>
+          <TabsTrigger value="ia" className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline">IA</span>
+          </TabsTrigger>
+          <TabsTrigger value="respostas" className="flex items-center gap-2">
+            <ClipboardList className="w-4 h-4" />
+            <span className="hidden sm:inline">Respostas</span>
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Scores por Dimensão</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DimensionBarsGaugePro scores={result.scores} />
-          </CardContent>
-        </Card>
-      </div>
+        {/* Tab 1: Visão Geral */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Perfil Gauge-Pro D1-D5</CardTitle>
+              </CardHeader>
+              <CardContent className="flex justify-center">
+                <GaugeProRadarChart
+                  scores={result.scores}
+                  idealWeights={test.weights}
+                  candidateName={result.candidateName}
+                  size="lg"
+                />
+              </CardContent>
+            </Card>
 
-      {/* Archetype */}
-      <ArchetypeCard archetype={result.archetype} />
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Scores por Dimensão</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DimensionBarsGaugePro scores={result.scores} />
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* Strengths & Dev Areas */}
-      <TopStrengthsDev
-        strengths={result.strengths}
-        developmentAreas={result.developmentAreas}
-      />
+          <ArchetypeCard archetype={result.archetype} />
 
-      {/* AI Analysis */}
-      {result.aiAnalysis && (
-        <AIAnalysisSection analysis={result.aiAnalysis} defaultExpanded />
-      )}
+          <TopStrengthsDev
+            strengths={result.strengths}
+            developmentAreas={result.developmentAreas}
+          />
+        </TabsContent>
+
+        {/* Tab 2: Competências */}
+        <TabsContent value="competencias" className="space-y-6">
+          <CompetencyRadarChart scores={result.scores} />
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <EmotionalFactorsCard scores={result.scores} />
+            <RiskScoreCard scores={result.scores} fitScore={result.fitScore} />
+          </div>
+        </TabsContent>
+
+        {/* Tab 3: IA & Recomendações */}
+        <TabsContent value="ia">
+          <AIRecommendationsTab result={result} />
+        </TabsContent>
+
+        {/* Tab 4: Respostas */}
+        <TabsContent value="respostas">
+          <TestResponsesTab candidateId={result.candidateId} scores={result.scores} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

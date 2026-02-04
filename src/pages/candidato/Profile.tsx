@@ -1,7 +1,10 @@
 import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, MapPin, Save, Camera, FileText, ArrowRight } from 'lucide-react';
+import {
+  User, MapPin, Save, Camera, FileText, ArrowRight,
+  Shield, Bell, AlertTriangle, CreditCard, Palette, Check, X, Star,
+} from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,15 +12,129 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { ThemeSettings } from '@/components/settings/ThemeSettings';
 import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import { mockCandidates } from '@/data/mockData';
-import { calculateProfileCompletion } from '@/utils/profileCompleteness';
+import type { CandidatePlanType } from '@/types/candidate';
 
 const MAX_ABOUT_LENGTH = 500;
+
+interface PlanFeature {
+  label: string;
+  essencial: string | boolean;
+  avancar: string | boolean;
+  destaque: string | boolean;
+}
+
+const planFeatures: PlanFeature[] = [
+  { label: 'Perfil básico', essencial: true, avancar: true, destaque: true },
+  { label: 'Candidaturas/mês', essencial: '5', avancar: '30', destaque: 'Ilimitadas' },
+  { label: 'Teste comportamental', essencial: '1', avancar: 'Ilimitados', destaque: 'Ilimitados' },
+  { label: 'Vagas recomendadas', essencial: false, avancar: true, destaque: true },
+  { label: 'Currículos', essencial: '1', avancar: '3', destaque: '10' },
+  { label: 'Destaque nas buscas', essencial: false, avancar: false, destaque: true },
+  { label: 'Análise IA do perfil', essencial: false, avancar: false, destaque: true },
+  { label: 'Suporte', essencial: 'Email', avancar: 'Prioritário', destaque: 'VIP' },
+];
+
+const allPlans = [
+  {
+    name: 'Essencial',
+    price: 'R$ 0',
+    period: '/mês',
+    description: 'Ideal para quem está começando a buscar oportunidades.',
+    isCurrent: true,
+    isPopular: false,
+    featureKey: 'essencial' as const,
+  },
+  {
+    name: 'Avançar',
+    price: 'R$ 29',
+    period: '/mês',
+    description: 'Para candidatos que querem se destacar e ter mais visibilidade.',
+    isCurrent: false,
+    isPopular: true,
+    featureKey: 'avancar' as const,
+  },
+  {
+    name: 'Destaque Máximo',
+    price: 'R$ 59',
+    period: '/mês',
+    description: 'Acesso completo com recursos exclusivos e suporte VIP.',
+    isCurrent: false,
+    isPopular: false,
+    featureKey: 'destaque' as const,
+  },
+];
+
+const faq = [
+  {
+    question: 'Posso cancelar a assinatura a qualquer momento?',
+    answer: 'Sim, você pode cancelar sua assinatura a qualquer momento sem multas ou taxas adicionais.',
+  },
+  {
+    question: 'Como funciona o período de teste?',
+    answer: 'Oferecemos 7 dias grátis para os planos Avançar e Destaque Máximo. Você pode cancelar antes do fim do período sem ser cobrado.',
+  },
+  {
+    question: 'Posso trocar de plano depois?',
+    answer: 'Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento. A diferença será calculada proporcionalmente.',
+  },
+];
+
+function FeatureValue({ value }: { value: string | boolean }) {
+  if (value === true) {
+    return <Check className="w-4 h-4 text-green-500" />;
+  }
+  if (value === false) {
+    return <X className="w-4 h-4 text-muted-foreground/40" />;
+  }
+  return <span className="text-sm">{value}</span>;
+}
+
+const candidatePlanData: Record<CandidatePlanType, {
+  price: number;
+  features: string[];
+  maxApplications: number;
+  maxResumes: number;
+}> = {
+  'Essencial': {
+    price: 0,
+    features: ['Perfil basico', '5 candidaturas/mes', '1 teste comportamental', '1 curriculo'],
+    maxApplications: 5,
+    maxResumes: 1,
+  },
+  'Avançar': {
+    price: 29,
+    features: ['30 candidaturas/mes', 'Testes ilimitados', '3 curriculos', 'Vagas recomendadas'],
+    maxApplications: 30,
+    maxResumes: 3,
+  },
+  'Destaque Máximo': {
+    price: 59,
+    features: ['Candidaturas ilimitadas', 'Testes ilimitados', '10 curriculos', 'Destaque nas buscas', 'Analise IA'],
+    maxApplications: 999,
+    maxResumes: 10,
+  },
+};
 
 export default function CandidateProfile() {
   const candidate = mockCandidates[0];
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast: toastShadcn } = useToast();
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(candidate.avatar || null);
 
@@ -29,9 +146,29 @@ export default function CandidateProfile() {
     phone: candidate.phone || '(11) 99999-9999',
     linkedin: candidate.linkedin || 'linkedin.com/in/joaosantos',
     about: candidate.about || 'Desenvolvedor Full Stack apaixonado por criar soluções inovadoras. Com 5 anos de experiência, tenho trabalhado em projetos de grande escala utilizando tecnologias modernas.',
+    dateOfBirth: candidate.dateOfBirth || '',
   });
 
-  const completion = calculateProfileCompletion(profile);
+  // Conta tab — modais
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  // Notificacoes
+  const [notifications, setNotifications] = useState({
+    newJobs: true,
+    applicationUpdates: true,
+    messages: true,
+  });
+
+  const currentPlan: CandidatePlanType = candidate.plan || 'Essencial';
+  const planData = candidatePlanData[currentPlan];
+
+  // Mock usage data
+  const usedApplications = 3;
+  const usedResumes = 1;
 
   const getInitials = (name: string) => {
     return name
@@ -65,200 +202,628 @@ export default function CandidateProfile() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Meu Perfil</h1>
-            <p className="text-muted-foreground">Mantenha suas informações pessoais atualizadas</p>
+            <p className="text-muted-foreground">Gerencie suas informações, conta e preferências</p>
           </div>
-          <Button onClick={handleSave}>
-            <Save className="w-5 h-5 mr-2" />
-            Salvar Alterações
-          </Button>
         </div>
 
-        {/* Profile Completion */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-card rounded-2xl p-6 shadow-soft"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Completude do Perfil</h2>
-            <span className="text-2xl font-bold text-foreground">{completion}%</span>
-          </div>
-          <Progress value={completion} className="h-3" />
-          <p className="text-sm text-muted-foreground mt-2">
-            {completion < 100
-              ? 'Complete seu perfil para aumentar suas chances de ser encontrado'
-              : 'Parabéns! Seu perfil está completo!'}
-          </p>
-        </motion.div>
+        <Tabs defaultValue="perfil" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="perfil" className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              <span className="hidden sm:inline">Perfil</span>
+            </TabsTrigger>
+            <TabsTrigger value="conta" className="flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              <span className="hidden sm:inline">Conta</span>
+            </TabsTrigger>
+            <TabsTrigger value="aparencia" className="flex items-center gap-2">
+              <Palette className="w-4 h-4" />
+              <span className="hidden sm:inline">Aparência</span>
+            </TabsTrigger>
+            <TabsTrigger value="plano" className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4" />
+              <span className="hidden sm:inline">Plano</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Avatar Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="bg-card rounded-2xl p-6 shadow-soft"
-        >
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <Avatar className="w-24 h-24">
-                <AvatarImage src={avatarPreview || undefined} alt={profile.name} />
-                <AvatarFallback className="text-2xl gradient-primary text-primary-foreground">
-                  {getInitials(profile.name)}
-                </AvatarFallback>
-              </Avatar>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarChange}
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute -bottom-1 -right-1 rounded-full w-8 h-8"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Camera className="w-4 h-4" />
+          {/* ============ TAB PERFIL ============ */}
+          <TabsContent value="perfil" className="space-y-6">
+            {/* Avatar Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-card rounded-2xl p-6 shadow-soft"
+            >
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <Avatar className="w-24 h-24">
+                    <AvatarImage src={avatarPreview || undefined} alt={profile.name} />
+                    <AvatarFallback className="text-2xl gradient-primary text-primary-foreground">
+                      {getInitials(profile.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute -bottom-1 -right-1 rounded-full w-8 h-8"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Camera className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">{profile.name}</h2>
+                  <p className="text-muted-foreground">{profile.title}</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-sm"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Trocar foto
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Personal Info */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="bg-card rounded-2xl p-6 shadow-soft"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+                  <User className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <h2 className="text-xl font-semibold text-foreground">Informações Pessoais</h2>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome completo</Label>
+                  <Input
+                    id="name"
+                    value={profile.name}
+                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={profile.email}
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground">O e-mail não pode ser alterado aqui</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="title">Cargo/Título</Label>
+                  <Input
+                    id="title"
+                    value={profile.title}
+                    onChange={(e) => setProfile({ ...profile, title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Localização</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="location"
+                      className="pl-9"
+                      value={profile.location}
+                      onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefone</Label>
+                  <Input
+                    id="phone"
+                    value={profile.phone}
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="linkedin">LinkedIn</Label>
+                  <Input
+                    id="linkedin"
+                    value={profile.linkedin}
+                    onChange={(e) => setProfile({ ...profile, linkedin: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dateOfBirth">Data de Nascimento</Label>
+                  <Input
+                    id="dateOfBirth"
+                    type="date"
+                    value={profile.dateOfBirth}
+                    onChange={(e) => setProfile({ ...profile, dateOfBirth: e.target.value })}
+                  />
+                </div>
+                <div /> {/* spacer para manter grid alinhado */}
+                <div className="md:col-span-2 space-y-2">
+                  <Label htmlFor="about">Sobre mim</Label>
+                  <Textarea
+                    id="about"
+                    placeholder="Conte um pouco sobre você, sua carreira e objetivos..."
+                    className="min-h-[120px]"
+                    maxLength={MAX_ABOUT_LENGTH}
+                    value={profile.about}
+                    onChange={(e) => setProfile({ ...profile, about: e.target.value })}
+                  />
+                  <p className="text-sm text-muted-foreground text-right">
+                    {profile.about.length}/{MAX_ABOUT_LENGTH} caracteres
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Curriculum Info Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-card rounded-2xl p-6 shadow-soft border border-border"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-foreground">Dados Profissionais</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Experiência, formação, habilidades e pretensão salarial são gerenciados nos seus currículos.
+                    </p>
+                  </div>
+                </div>
+                <Button asChild variant="outline" className="shrink-0">
+                  <Link to="/candidato/curriculos">
+                    Ir para Currículos
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+
+            {/* Save Button */}
+            <div className="flex justify-end pb-8">
+              <Button size="lg" onClick={handleSave}>
+                <Save className="w-5 h-5 mr-2" />
+                Salvar Alterações
               </Button>
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-foreground">{profile.name}</h2>
-              <p className="text-muted-foreground">{profile.title}</p>
-              <Button
-                variant="link"
-                className="p-0 h-auto text-sm"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                Trocar foto
-              </Button>
-            </div>
-          </div>
-        </motion.div>
+          </TabsContent>
 
-        {/* Personal Info */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-card rounded-2xl p-6 shadow-soft"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-              <User className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <h2 className="text-xl font-semibold text-foreground">Informações Pessoais</h2>
-          </div>
+          {/* ============ TAB CONTA ============ */}
+          <TabsContent value="conta" className="space-y-6">
+            {/* Segurança */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle>Segurança</CardTitle>
+                    <CardDescription>Gerencie seu e-mail e senha de acesso</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">E-mail</p>
+                    <p className="text-sm text-muted-foreground">{profile.email}</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setShowEmailModal(true)}>
+                    Alterar e-mail
+                  </Button>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Senha</p>
+                    <p className="text-sm text-muted-foreground">••••••••••</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setShowPasswordModal(true)}>
+                    Alterar senha
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome completo</Label>
-              <Input
-                id="name"
-                value={profile.name}
-                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                value={profile.email}
-                disabled
-                className="bg-muted cursor-not-allowed"
-              />
-              <p className="text-xs text-muted-foreground">O e-mail não pode ser alterado</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="title">Cargo/Título</Label>
-              <Input
-                id="title"
-                value={profile.title}
-                onChange={(e) => setProfile({ ...profile, title: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="location">Localização</Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="location"
-                  className="pl-9"
-                  value={profile.location}
-                  onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                />
+            {/* Notificações */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                    <Bell className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle>Notificações</CardTitle>
+                    <CardDescription>Escolha quais notificações deseja receber</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Novas vagas compatíveis</p>
+                    <p className="text-xs text-muted-foreground">Receba alertas quando novas vagas combinarem com seu perfil</p>
+                  </div>
+                  <Switch
+                    checked={notifications.newJobs}
+                    onCheckedChange={(checked) => setNotifications({ ...notifications, newJobs: checked })}
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Atualizações de candidaturas</p>
+                    <p className="text-xs text-muted-foreground">Saiba quando o status de suas candidaturas mudar</p>
+                  </div>
+                  <Switch
+                    checked={notifications.applicationUpdates}
+                    onCheckedChange={(checked) => setNotifications({ ...notifications, applicationUpdates: checked })}
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Mensagens de empresas</p>
+                    <p className="text-xs text-muted-foreground">Receba notificações quando uma empresa enviar uma mensagem</p>
+                  </div>
+                  <Switch
+                    checked={notifications.messages}
+                    onCheckedChange={(checked) => setNotifications({ ...notifications, messages: checked })}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Zona de Perigo */}
+            <Card className="border-destructive/50">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-destructive" />
+                  </div>
+                  <div>
+                    <CardTitle>Zona de Perigo</CardTitle>
+                    <CardDescription>Ações irreversíveis na sua conta</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Desativar conta</p>
+                    <p className="text-xs text-muted-foreground">Sua conta ficará invisível, mas seus dados serão preservados</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setShowDeactivateModal(true)}>
+                    Desativar
+                  </Button>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Excluir conta permanentemente</p>
+                    <p className="text-xs text-muted-foreground">Todos os seus dados serão removidos permanentemente</p>
+                  </div>
+                  <Button variant="destructive" size="sm" onClick={() => setShowDeleteModal(true)}>
+                    Excluir conta
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ============ TAB APARÊNCIA ============ */}
+          <TabsContent value="aparencia" className="space-y-6">
+            <ThemeSettings />
+          </TabsContent>
+
+          {/* ============ TAB PLANO ============ */}
+          <TabsContent value="plano" className="space-y-6">
+            {/* Seu Plano */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Seu Plano</CardTitle>
+                    <CardDescription>Detalhes da sua assinatura atual</CardDescription>
+                  </div>
+                  <Badge variant={currentPlan === 'Destaque Máximo' ? 'default' : currentPlan === 'Avançar' ? 'secondary' : 'outline'}>
+                    {currentPlan}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold">R$ {planData.price}</span>
+                  <span className="text-muted-foreground">/mês</span>
+                </div>
+
+                {currentPlan !== 'Essencial' && (
+                  <p className="text-sm text-muted-foreground">
+                    Próxima cobrança em 15/03/2026
+                  </p>
+                )}
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Recursos inclusos:</p>
+                  <ul className="space-y-2">
+                    {planData.features.map((feature, index) => (
+                      <li key={index} className="flex items-center gap-2 text-sm">
+                        <Check className="w-4 h-4 text-green-500 shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Uso do Plano */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Uso do Plano</CardTitle>
+                <CardDescription>Acompanhe o consumo dos recursos do seu plano</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Candidaturas este mês</span>
+                    <span className="font-medium">
+                      {usedApplications}/{planData.maxApplications === 999 ? '∞' : planData.maxApplications}
+                    </span>
+                  </div>
+                  <Progress
+                    value={planData.maxApplications === 999 ? 5 : (usedApplications / planData.maxApplications) * 100}
+                    className="h-2"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Currículos criados</span>
+                    <span className="font-medium">
+                      {usedResumes}/{planData.maxResumes}
+                    </span>
+                  </div>
+                  <Progress
+                    value={(usedResumes / planData.maxResumes) * 100}
+                    className="h-2"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Separator />
+
+            {/* Todos os Planos (migrado de Plans.tsx) */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Todos os Planos</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {allPlans.map((plan) => (
+                  <Card
+                    key={plan.name}
+                    className={
+                      plan.isPopular
+                        ? 'border-primary shadow-lg relative'
+                        : 'relative'
+                    }
+                  >
+                    {plan.isPopular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <Badge className="gap-1">
+                          <Star className="w-3 h-3" />
+                          Mais popular
+                        </Badge>
+                      </div>
+                    )}
+                    <CardHeader className="text-center pb-2">
+                      <CardTitle className="text-lg">{plan.name}</CardTitle>
+                      <div className="mt-2">
+                        <span className="text-3xl font-bold">{plan.price}</span>
+                        <span className="text-muted-foreground text-sm">{plan.period}</span>
+                      </div>
+                      <CardDescription className="mt-2">{plan.description}</CardDescription>
+                    </CardHeader>
+                    <Separator />
+                    <CardContent className="pt-4">
+                      <ul className="space-y-3">
+                        {planFeatures.map((feature) => (
+                          <li key={feature.label} className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">{feature.label}</span>
+                            <FeatureValue value={feature[plan.featureKey]} />
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-6">
+                        {plan.isCurrent ? (
+                          <Button variant="outline" className="w-full" disabled>
+                            Plano Atual
+                          </Button>
+                        ) : (
+                          <Button
+                            className="w-full"
+                            variant={plan.isPopular ? 'default' : 'outline'}
+                            onClick={() => toastShadcn({
+                              title: 'Funcionalidade em breve',
+                              description: `A assinatura do plano ${plan.name} estará disponível em breve.`,
+                            })}
+                          >
+                            Assinar {plan.name}
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input
-                id="phone"
-                value={profile.phone}
-                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="linkedin">LinkedIn</Label>
-              <Input
-                id="linkedin"
-                value={profile.linkedin}
-                onChange={(e) => setProfile({ ...profile, linkedin: e.target.value })}
-              />
-            </div>
-            <div className="md:col-span-2 space-y-2">
-              <Label htmlFor="about">Sobre mim</Label>
-              <Textarea
-                id="about"
-                placeholder="Conte um pouco sobre você, sua carreira e objetivos..."
-                className="min-h-[120px]"
-                maxLength={MAX_ABOUT_LENGTH}
-                value={profile.about}
-                onChange={(e) => setProfile({ ...profile, about: e.target.value })}
-              />
-              <p className="text-sm text-muted-foreground text-right">
-                {profile.about.length}/{MAX_ABOUT_LENGTH} caracteres
-              </p>
-            </div>
-          </div>
-        </motion.div>
 
-        {/* Curriculum Info Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-card rounded-2xl p-6 shadow-soft border border-border"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-                <FileText className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <div>
-                <h3 className="font-medium text-foreground">Dados Profissionais</h3>
-                <p className="text-sm text-muted-foreground">
-                  Experiência, formação, habilidades e pretensão salarial são gerenciados nos seus currículos.
-                </p>
+            {/* Perguntas Frequentes */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Perguntas Frequentes</h2>
+              <div className="grid gap-4">
+                {faq.map((item) => (
+                  <Card key={item.question}>
+                    <CardContent className="pt-4">
+                      <h3 className="font-medium text-sm">{item.question}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{item.answer}</p>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
-            <Button asChild variant="outline" className="shrink-0">
-              <Link to="/candidato/curriculos">
-                Ir para Currículos
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
-            </Button>
-          </div>
-        </motion.div>
-
-        {/* Save Button */}
-        <div className="flex justify-end pb-8">
-          <Button size="lg" onClick={handleSave}>
-            <Save className="w-5 h-5 mr-2" />
-            Salvar Alterações
-          </Button>
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {/* ============ MODAIS ============ */}
+
+      {/* Modal Alterar E-mail */}
+      <Dialog open={showEmailModal} onOpenChange={setShowEmailModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alterar e-mail</DialogTitle>
+            <DialogDescription>
+              Digite seu novo endereço de e-mail. Você receberá um link de confirmação.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="current-email">E-mail atual</Label>
+              <Input id="current-email" value={profile.email} disabled className="bg-muted" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-email">Novo e-mail</Label>
+              <Input id="new-email" type="email" placeholder="novo@email.com" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEmailModal(false)}>Cancelar</Button>
+            <Button onClick={() => {
+              toast.success('Link de confirmação enviado para o novo e-mail!');
+              setShowEmailModal(false);
+            }}>
+              Enviar confirmação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Alterar Senha */}
+      <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alterar senha</DialogTitle>
+            <DialogDescription>
+              Digite sua senha atual e a nova senha desejada.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="current-password">Senha atual</Label>
+              <Input id="current-password" type="password" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-password">Nova senha</Label>
+              <Input id="new-password" type="password" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirmar nova senha</Label>
+              <Input id="confirm-password" type="password" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPasswordModal(false)}>Cancelar</Button>
+            <Button onClick={() => {
+              toast.success('Senha alterada com sucesso!');
+              setShowPasswordModal(false);
+            }}>
+              Alterar senha
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Desativar Conta */}
+      <AlertDialog open={showDeactivateModal} onOpenChange={setShowDeactivateModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar conta</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sua conta ficará invisível para empresas e recrutadores. Seus dados serão preservados e você poderá reativar a conta a qualquer momento.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              toast.success('Conta desativada. Você pode reativá-la a qualquer momento.');
+              setShowDeactivateModal(false);
+            }}>
+              Desativar conta
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal Excluir Conta */}
+      <AlertDialog open={showDeleteModal} onOpenChange={(open) => {
+        setShowDeleteModal(open);
+        if (!open) setDeleteConfirmText('');
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conta permanentemente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é irreversível. Todos os seus dados, candidaturas, currículos e resultados de testes serão permanentemente excluídos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4 space-y-2">
+            <Label htmlFor="delete-confirm">
+              Digite <strong>EXCLUIR</strong> para confirmar:
+            </Label>
+            <Input
+              id="delete-confirm"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="EXCLUIR"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteConfirmText !== 'EXCLUIR'}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                toast.success('Conta excluída permanentemente.');
+                setShowDeleteModal(false);
+                setDeleteConfirmText('');
+              }}
+            >
+              Excluir conta
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

@@ -106,7 +106,7 @@ const STATUS_CONFIG = {
   },
 };
 
-const PLANS = ['Básico', 'Profissional', 'Enterprise'];
+const PLANS = ['Essencial Empresas', 'Seleção Inteligente', 'Recrutamento Premium'];
 const INDUSTRIES = [
   'Tecnologia',
   'Saúde',
@@ -155,7 +155,7 @@ export default function AdminCompanies() {
 
   // Form state
   const [deactivateReason, setDeactivateReason] = useState('');
-  const [newPlan, setNewPlan] = useState<CompanyPlanType>('Básico');
+  const [newPlan, setNewPlan] = useState<CompanyPlanType>('Essencial Empresas');
   const [notificationMessage, setNotificationMessage] = useState('');
 
   // Local state for companies (to allow status/plan changes)
@@ -297,7 +297,7 @@ export default function AdminCompanies() {
 
     toast.success(`Plano alterado para ${newPlan}`);
     setChangePlanModalOpen(false);
-    setNewPlan('Básico');
+    setNewPlan('Essencial Empresas');
   };
 
   const handleSendNotification = () => {
@@ -601,7 +601,7 @@ export default function AdminCompanies() {
         onDeactivate={() => setDeactivateDialogOpen(true)}
         onReactivate={() => setReactivateDialogOpen(true)}
         onChangePlan={() => {
-          setNewPlan(selectedCompany?.plan || 'Básico');
+          setNewPlan(selectedCompany?.plan || 'Essencial Empresas');
           setChangePlanModalOpen(true);
         }}
         onNotify={() => setNotifyModalOpen(true)}

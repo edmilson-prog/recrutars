@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 
 const plans = [
   {
-    name: 'Starter',
+    name: 'Essencial Empresas',
     price: 'Grátis',
     description: 'Para empresas que estão começando',
     features: [
@@ -20,7 +20,7 @@ const plans = [
     popular: false,
   },
   {
-    name: 'Professional',
+    name: 'Seleção Inteligente',
     price: 'R$ 299',
     period: '/mês',
     description: 'Para empresas em crescimento',
@@ -36,7 +36,7 @@ const plans = [
     popular: true,
   },
   {
-    name: 'Enterprise',
+    name: 'Recrutamento Premium',
     price: 'Personalizado',
     description: 'Para grandes empresas',
     features: [

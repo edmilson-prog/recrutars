@@ -5,6 +5,55 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.53.0] - 2026-02-03 — "Sentinel" (PRD-058, PRD-059, PRD-060, PRD-061, PRD-062)
+
+### Added
+- **Painel Admin Avançado** com 5 novos módulos e ~96 arquivos novos
+- **RBAC "Guardian"** (PRD-061): Gestão de Usuários e Permissões
+  - Listagem unificada com filtros, busca e ações em lote
+  - Detalhe do usuário com override de permissões individual
+  - Grupos de permissão com CRUD e atribuição de papéis
+  - 8 papéis pré-definidos com 34 permissões granulares
+  - Motor RBAC com resolução: override → grupo → papel → negar
+  - Auditoria completa com filtros e timeline
+  - Impersonação de usuário com banner de sessão
+- **Planos & Assinaturas "Commerce"** (PRD-060): Gestão de Planos
+  - CRUD de 6 planos (3 candidato + 3 empresa) com preço de lançamento
+  - Matriz de 25 capabilities com atribuição por plano
+  - Gestão de assinaturas com upgrade/downgrade e regras de negócio
+  - Dashboard de assinaturas com MRR, churn e métricas financeiras
+  - Compras avulsas (one-time purchases)
+- **Feature Flags "Switch"** (PRD-062): Sistema de Feature Flags
+  - CRUD de 25 flags com condições compostas (plano, role, capability, rollout %)
+  - Kill switch com razão e timestamp
+  - Overrides por usuário/empresa
+  - Simulador de planos com painel lateral e contexto de avaliação
+  - Motor de avaliação com cadeia explicativa (kill → override → condições → rollout → default)
+  - Auditoria de flags com timeline
+- **Vagas & Moderação "Sentinel"** (PRD-058): Gestão de Vagas Admin
+  - Dashboard com KPIs, gráficos (pie, bar, area, funnel) e alertas
+  - Listagem de vagas com filtros por status, empresa, área
+  - Fila de moderação com aprovação/rejeição/correção
+  - Vagas finalizadas com razão (preenchida/cancelada/expirada)
+  - Entrevistas e contratações com timeline
+  - Configuração de moderação: regras de auto-flag e templates de email
+- **Relatórios "Radar"** (PRD-059): Analytics e Relatórios
+  - Dashboard Financeiro com MRR, ARR, churn rate, LTV e gráficos
+  - Dashboard de Crescimento com métricas de aquisição e cohort table
+  - Dashboard Operacional com funil de recrutamento e tempo médio
+  - Activity Feed em tempo real com filtros por tipo de evento
+  - Exportação para PDF/Excel com agendamento de relatórios
+
+### Changed
+- **Sidebar admin convertido de submenus colapsáveis para tabs horizontais nas páginas**
+  - 5 grupos de tabs: Usuários (4), Avaliações (2), Vagas (6), Relatórios (5), Configurações (7)
+  - Sidebar flat sem setas de expansão
+  - Tab ativa destacada com estilo shadcn TabsTrigger
+  - Scroll horizontal em mobile para grupos com muitas tabs
+  - Páginas de detalhe (UserDetail, JobDetail, FlagEditor) não exibem tabs
+- Nomes de planos migrados: Gratuito→Essencial, Pro→Avançar, Premium→Destaque Máximo, Básico Empresas→Essencial Empresas, Profissional→Seleção Inteligente, Enterprise→Recrutamento Premium
+- Tipo User enriquecido com campos RBAC: roleId, status, lastAccessAt, groupIds
+
 ## [0.49.0] - 2026-02-01 — "Tribe" (PRD-055, PRD-056, PRD-057)
 
 ### Added

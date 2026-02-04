@@ -9,7 +9,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Users, Clock, CalendarDays, Link2, Send, FileText, GitCompare } from 'lucide-react';
+import { ArrowLeft, Users, Clock, CalendarDays, Link2, Send, FileText, GitCompare, AlertTriangle, TimerOff } from 'lucide-react';
 import { mockCompanyTests, mockTestInvitations, mockTestResults } from '@/data/companyTestData';
 import { DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 import {
@@ -47,6 +47,8 @@ export default function CorporateTestDetail() {
 
   const completedCount = invitations.filter(i => i.status === 'completed').length;
   const startedCount = invitations.filter(i => i.status === 'started').length;
+  const abandonedCount = invitations.filter(i => i.status === 'abandoned').length;
+  const expiredCount = invitations.filter(i => i.status === 'expired').length;
 
   const handleStatusChange = (newStatus: typeof test.status) => {
     setTest(prev => prev ? { ...prev, status: newStatus, updatedAt: new Date().toISOString() } : prev);
@@ -114,6 +116,32 @@ export default function CorporateTestDetail() {
               </div>
             </CardContent>
           </Card>
+          {abandonedCount > 0 && (
+            <Card>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                  <div>
+                    <p className="text-2xl font-bold">{abandonedCount}</p>
+                    <p className="text-xs text-muted-foreground">Abandonado{abandonedCount > 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {expiredCount > 0 && (
+            <Card>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center gap-2">
+                  <TimerOff className="h-4 w-4 text-red-400" />
+                  <div>
+                    <p className="text-2xl font-bold">{expiredCount}</p>
+                    <p className="text-xs text-muted-foreground">Expirado{expiredCount > 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center gap-2">
