@@ -5,6 +5,16 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2026-02-05
+
+### Fixed
+- **Login "Lembrar-me"** — Checkbox agora funciona corretamente
+  - Default corrigido para desmarcado (era sempre marcado por erro de logica `null !== 'false'` -> `true`)
+  - Preferencia do usuario preservada entre ciclos de login/logout
+  - Storage adapter com null check explicito para maior robustez
+
+---
+
 ## [1.3.2] - 2026-02-05
 
 ### Fixed

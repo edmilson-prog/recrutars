@@ -20,6 +20,7 @@ export default function Login() {
   const [resetSent, setResetSent] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('rememberMe') === 'true');
   const { login, loginWithMagicLink, resetPassword } = useAuth();
   const navigate = useNavigate();
 
@@ -29,6 +30,7 @@ export default function Login() {
     setSubmitting(true);
 
     try {
+      localStorage.setItem('rememberMe', String(rememberMe));
       await login(email, password);
       // Redirect handled by AuthContext + RedirectIfAuthenticated
     } catch {
@@ -179,7 +181,11 @@ export default function Login() {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="remember" name="remember" />
+                    <Checkbox
+                      id="remember"
+                      checked={rememberMe}
+                      onCheckedChange={(v) => setRememberMe(!!v)}
+                    />
                     <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
                       Lembrar-me
                     </Label>

@@ -17,10 +17,35 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// Custom storage: delegates to localStorage or sessionStorage based on "rememberMe" flag.
+// Default is localStorage (remember), preserving existing behavior.
+const rememberMeStorage = {
+  getItem: (key: string) => {
+    const value = localStorage.getItem(key);
+    if (value !== null) return value;
+    return sessionStorage.getItem(key);
+  },
+  setItem: (key: string, value: string) => {
+    const remember = localStorage.getItem('rememberMe') !== 'false';
+    if (remember) {
+      localStorage.setItem(key, value);
+      sessionStorage.removeItem(key);
+    } else {
+      sessionStorage.setItem(key, value);
+      localStorage.removeItem(key);
+    }
+  },
+  removeItem: (key: string) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  },
+};
+
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    storage: rememberMeStorage,
   },
 });
