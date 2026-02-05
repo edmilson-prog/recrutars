@@ -5,6 +5,25 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-02-05
+
+### Removed
+- **Tab "Dados Pessoais"** — Removida da página de Configurações do candidato (`/candidato/configuracoes`)
+  - Avatar upload e crop modal
+  - Formulário de informações pessoais (nome, email, CPF, cargo, telefone, LinkedIn, etc.)
+  - Seção de localização (cidade, estado, disponibilidade para mudança)
+  - **Os dados pessoais continuam disponíveis em `/candidato/perfil`**
+
+### Changed
+- **Settings.tsx** — Página simplificada (968 → 416 linhas)
+  - Removido wrapper de Tabs (agora exibe ConfigLayout diretamente)
+  - Removidos 13 estados React não utilizados
+  - Removidos hooks `useCandidateByProfile` e `useUpdateCandidate`
+  - Removidas dependências: `react-easy-crop`, `Cropper`, `Avatar`, `Switch`, `Select`, `Textarea`, `Tabs`
+  - Mantidos: ConfigLayout de preferências, Ações de Segurança, Zona de Perigo, 4 modals
+
+---
+
 ## [1.2.0] - 2026-02-05 — "Profile Consolidation"
 
 ### Added

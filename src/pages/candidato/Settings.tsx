@@ -1,11 +1,13 @@
 /**
  * Candidate Settings Page
  * PRD-045: Página de Configurações do Candidato
+ * Preferências, Segurança e Conta
+ * Dados pessoais disponíveis em /candidato/perfil
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Download, Mail, KeyRound } from 'lucide-react';
+import { AlertTriangle, Download, Mail, KeyRound, Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ConfigLayout } from '@/components/settings/ConfigLayout';
 import { candidateSettingsCategories } from '@/data/settingsConfig';
@@ -42,20 +44,25 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
+// Filtra categorias que serão gerenciadas pelo ConfigLayout (exclui "Meu Perfil")
+const filteredCategories = candidateSettingsCategories.filter(
+  (cat) => cat.key !== 'profile'
+);
+
 export default function CandidateSettings() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Settings hook
+  // Settings hook (para categorias de preferências)
   const {
     values,
     history,
     updateValue,
     saveSection,
     restoreDefaults,
-    isLoading,
+    isLoading: settingsLoading,
   } = useSettings({
-    categories: candidateSettingsCategories,
+    categories: filteredCategories,
     panel: 'candidate',
     userId: user?.id || '',
     userName: user?.name || 'Candidato',
@@ -134,11 +141,12 @@ export default function CandidateSettings() {
     toast.success('Conta excluída com sucesso');
   };
 
-  if (isLoading) {
+  if (settingsLoading) {
     return (
       <DashboardLayout userType="candidate">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-pulse text-muted-foreground">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
             Carregando configurações...
           </div>
         </div>
@@ -149,11 +157,17 @@ export default function CandidateSettings() {
   return (
     <DashboardLayout userType="candidate">
       <div className="space-y-8">
-        {/* Main Config Layout */}
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Configurações</h1>
+          <p className="text-muted-foreground">Gerencie suas preferências e dados da conta</p>
+        </div>
+
+        {/* ConfigLayout for preferences */}
         <ConfigLayout
-          title="Configurações"
-          subtitle="Gerencie suas preferências e dados da conta"
-          categories={candidateSettingsCategories}
+          title="Preferências"
+          subtitle="Configure suas preferências de vagas, notificações, privacidade e aparência"
+          categories={filteredCategories}
           values={values}
           history={history}
           onValueChange={updateValue}
@@ -161,7 +175,7 @@ export default function CandidateSettings() {
           onRestoreDefaults={restoreDefaults}
         />
 
-        {/* Security Actions Card - Separate from ConfigLayout */}
+        {/* Security Actions Card */}
         <Card className="max-w-3xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -181,7 +195,7 @@ export default function CandidateSettings() {
                   Email
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {maskEmail(user?.email || 'joao.santos@email.com')}
+                  {maskEmail(user?.email || 'email@exemplo.com')}
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={() => setShowEmailModal(true)}>
@@ -259,6 +273,8 @@ export default function CandidateSettings() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ============ MODALS ============ */}
 
       {/* Change Email Modal */}
       <Dialog open={showEmailModal} onOpenChange={setShowEmailModal}>
