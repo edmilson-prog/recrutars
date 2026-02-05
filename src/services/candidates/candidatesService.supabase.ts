@@ -180,6 +180,15 @@ export class CandidatesServiceSupabase implements ICandidatesService {
     if (updates.city !== undefined) dbUpdates.city = updates.city;
     if (updates.state !== undefined) dbUpdates.state = updates.state;
     if (updates.openToRelocation !== undefined) dbUpdates.open_to_relocation = updates.openToRelocation;
+    // Preferências de Vagas
+    if (updates.preferredSectors !== undefined) dbUpdates.preferred_sectors = updates.preferredSectors;
+    if (updates.preferredRoles !== undefined) dbUpdates.preferred_roles = updates.preferredRoles;
+    if (updates.workModel !== undefined) dbUpdates.work_model = updates.workModel;
+    if (updates.contractType !== undefined) dbUpdates.contract_type = updates.contractType;
+    if (updates.salaryNegotiable !== undefined) dbUpdates.salary_negotiable = updates.salaryNegotiable;
+    // Privacidade
+    if (updates.showSalaryExpectation !== undefined) dbUpdates.show_salary_expectation = updates.showSalaryExpectation;
+    if (updates.resumeVisibility !== undefined) dbUpdates.resume_visibility = updates.resumeVisibility;
 
     const { data, error } = await supabase
       .from('candidates')

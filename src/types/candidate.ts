@@ -89,6 +89,17 @@ export interface Candidate {
   city?: string;
   state?: string;
   openToRelocation?: boolean;
+
+  // Preferências de Vagas
+  preferredSectors?: string[];
+  preferredRoles?: string[];
+  workModel?: string[];
+  contractType?: string[];
+  salaryNegotiable?: boolean;
+
+  // Privacidade
+  showSalaryExpectation?: boolean;
+  resumeVisibility?: string;
 }
 
 // PRD-026: Perfil anônimo para empresas (modo partial)

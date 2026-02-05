@@ -959,6 +959,59 @@ export const adminSettingsCategories: ConfigCategory[] = [
   },
 ];
 
+// Opções de preferências de vagas (exportado para reutilização em Profile.tsx)
+export const jobSectorOptions = [
+  { value: 'technology', label: 'Tecnologia' },
+  { value: 'finance', label: 'Finanças' },
+  { value: 'health', label: 'Saúde' },
+  { value: 'education', label: 'Educação' },
+  { value: 'retail', label: 'Varejo' },
+  { value: 'industry', label: 'Indústria' },
+  { value: 'services', label: 'Serviços' },
+  { value: 'logistics', label: 'Logística' },
+  { value: 'marketing', label: 'Marketing' },
+  { value: 'hr', label: 'Recursos Humanos' },
+];
+
+export const jobRoleOptions = [
+  { value: 'developer', label: 'Desenvolvedor' },
+  { value: 'analyst', label: 'Analista' },
+  { value: 'manager', label: 'Gerente' },
+  { value: 'coordinator', label: 'Coordenador' },
+  { value: 'specialist', label: 'Especialista' },
+  { value: 'consultant', label: 'Consultor' },
+  { value: 'assistant', label: 'Assistente' },
+  { value: 'intern', label: 'Estagiário' },
+  { value: 'trainee', label: 'Trainee' },
+  { value: 'director', label: 'Diretor' },
+];
+
+export const workModelOptions = [
+  { value: 'presencial', label: 'Presencial' },
+  { value: 'hibrido', label: 'Híbrido' },
+  { value: 'remoto', label: 'Remoto' },
+];
+
+export const contractTypeOptions = [
+  { value: 'clt', label: 'CLT' },
+  { value: 'pj', label: 'PJ' },
+  { value: 'temporario', label: 'Temporário' },
+  { value: 'estagio', label: 'Estágio' },
+  { value: 'freelancer', label: 'Freelancer' },
+];
+
+export const profileVisibilityOptions = [
+  { value: 'public', label: 'Público - Visível para todas as empresas' },
+  { value: 'partial', label: 'Parcial - Anônimo até você se candidatar' },
+  { value: 'private', label: 'Privado - Só você pode ver' },
+];
+
+export const resumeVisibilityOptions = [
+  { value: 'all', label: 'Todos - Qualquer visitante' },
+  { value: 'companies', label: 'Empresas - Apenas empresas verificadas' },
+  { value: 'applied', label: 'Candidaturas - Só empresas que me candidatei' },
+];
+
 // Estados brasileiros para select (exportado para reutilização em Profile.tsx)
 export const brazilianStates = [
   { value: '__none__', label: 'Selecione...' },
@@ -1058,23 +1111,23 @@ export const candidateSettingsCategories: ConfigCategory[] = [
         order: 2,
         fields: [
           {
-            id: 'location-city',
-            key: 'city',
-            name: 'Cidade',
-            description: 'Sua cidade atual',
-            type: 'text',
-            defaultValue: '',
-            validation: { maxLength: 100 },
-            order: 1,
-          },
-          {
             id: 'location-state',
             key: 'state',
             name: 'Estado',
             description: 'Seu estado de residência',
             type: 'select',
-            defaultValue: '',
+            defaultValue: 'RS',
             options: brazilianStates,
+            order: 1,
+          },
+          {
+            id: 'location-city',
+            key: 'city',
+            name: 'Cidade',
+            description: 'Sua cidade atual',
+            type: 'select',
+            defaultValue: 'Frederico Westphalen',
+            validation: { maxLength: 100 },
             order: 2,
           },
           {
@@ -1084,145 +1137,6 @@ export const candidateSettingsCategories: ConfigCategory[] = [
             description: 'Indicar se você aceitaria mudar de cidade/estado',
             type: 'boolean',
             defaultValue: false,
-            order: 3,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'candidate-job-preferences',
-    key: 'jobPreferences',
-    name: 'Preferências de Vagas',
-    icon: 'Briefcase',
-    description: 'Áreas de interesse e modelo de trabalho',
-    panel: 'candidate',
-    order: 2,
-    subcategories: [
-      {
-        id: 'candidate-job-areas',
-        key: 'areas',
-        name: 'Áreas de Interesse',
-        description: 'Setores e funções desejadas',
-        order: 1,
-        fields: [
-          {
-            id: 'areas-preferred-sectors',
-            key: 'preferredSectors',
-            name: 'Setores Preferidos',
-            description: 'Áreas de atuação que você tem interesse',
-            type: 'multiselect',
-            defaultValue: [],
-            options: [
-              { value: 'technology', label: 'Tecnologia' },
-              { value: 'finance', label: 'Finanças' },
-              { value: 'health', label: 'Saúde' },
-              { value: 'education', label: 'Educação' },
-              { value: 'retail', label: 'Varejo' },
-              { value: 'industry', label: 'Indústria' },
-              { value: 'services', label: 'Serviços' },
-              { value: 'logistics', label: 'Logística' },
-              { value: 'marketing', label: 'Marketing' },
-              { value: 'hr', label: 'Recursos Humanos' },
-            ],
-            order: 1,
-          },
-          {
-            id: 'areas-preferred-roles',
-            key: 'preferredRoles',
-            name: 'Funções Desejadas',
-            description: 'Tipos de cargo que você busca',
-            type: 'multiselect',
-            defaultValue: [],
-            options: [
-              { value: 'developer', label: 'Desenvolvedor' },
-              { value: 'analyst', label: 'Analista' },
-              { value: 'manager', label: 'Gerente' },
-              { value: 'coordinator', label: 'Coordenador' },
-              { value: 'specialist', label: 'Especialista' },
-              { value: 'consultant', label: 'Consultor' },
-              { value: 'assistant', label: 'Assistente' },
-              { value: 'intern', label: 'Estagiário' },
-              { value: 'trainee', label: 'Trainee' },
-              { value: 'director', label: 'Diretor' },
-            ],
-            order: 2,
-          },
-        ],
-      },
-      {
-        id: 'candidate-job-model',
-        key: 'model',
-        name: 'Modelo de Trabalho',
-        description: 'Formato e tipo de contrato',
-        order: 2,
-        fields: [
-          {
-            id: 'model-work-model',
-            key: 'workModel',
-            name: 'Modalidade',
-            description: 'Formatos de trabalho aceitos',
-            type: 'multiselect',
-            defaultValue: ['presencial'],
-            options: [
-              { value: 'presencial', label: 'Presencial' },
-              { value: 'hibrido', label: 'Híbrido' },
-              { value: 'remoto', label: 'Remoto' },
-            ],
-            order: 1,
-          },
-          {
-            id: 'model-contract-type',
-            key: 'contractType',
-            name: 'Tipo de Contrato',
-            description: 'Regimes de contratação aceitos',
-            type: 'multiselect',
-            defaultValue: ['clt'],
-            options: [
-              { value: 'clt', label: 'CLT' },
-              { value: 'pj', label: 'PJ' },
-              { value: 'temporario', label: 'Temporário' },
-              { value: 'estagio', label: 'Estágio' },
-              { value: 'freelancer', label: 'Freelancer' },
-            ],
-            order: 2,
-          },
-        ],
-      },
-      {
-        id: 'candidate-job-salary',
-        key: 'salary',
-        name: 'Salário',
-        description: 'Expectativa salarial',
-        order: 3,
-        fields: [
-          {
-            id: 'salary-min',
-            key: 'salaryMin',
-            name: 'Salário Mínimo (R$)',
-            description: 'Valor mínimo pretendido',
-            type: 'number',
-            defaultValue: 0,
-            validation: { min: 0, max: 100000 },
-            order: 1,
-          },
-          {
-            id: 'salary-max',
-            key: 'salaryMax',
-            name: 'Salário Máximo (R$)',
-            description: 'Valor máximo pretendido',
-            type: 'number',
-            defaultValue: 0,
-            validation: { min: 0, max: 100000 },
-            order: 2,
-          },
-          {
-            id: 'salary-negotiable',
-            key: 'salaryNegotiable',
-            name: 'Aceita Negociar',
-            description: 'Indicar se você está aberto a negociação',
-            type: 'boolean',
-            defaultValue: true,
             order: 3,
           },
         ],
@@ -1301,72 +1215,6 @@ export const candidateSettingsCategories: ConfigCategory[] = [
               { value: 'immediate', label: 'Imediato' },
               { value: 'daily', label: 'Resumo Diário' },
               { value: 'weekly', label: 'Resumo Semanal' },
-            ],
-            order: 1,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'candidate-privacy',
-    key: 'privacy',
-    name: 'Privacidade',
-    icon: 'Eye',
-    description: 'Visibilidade do perfil e dados',
-    panel: 'candidate',
-    order: 4,
-    subcategories: [
-      {
-        id: 'candidate-privacy-visibility',
-        key: 'visibility',
-        name: 'Visibilidade do Perfil',
-        description: 'Quem pode ver suas informações',
-        order: 1,
-        fields: [
-          {
-            id: 'visibility-profile',
-            key: 'profileVisibility',
-            name: 'Visibilidade do Perfil',
-            description: 'Controle quem pode ver seu perfil completo',
-            type: 'select',
-            defaultValue: 'public',
-            options: [
-              { value: 'public', label: 'Público - Visível para todas as empresas' },
-              { value: 'partial', label: 'Parcial - Anônimo até você se candidatar' },
-              { value: 'private', label: 'Privado - Só você pode ver' },
-            ],
-            order: 1,
-          },
-          {
-            id: 'visibility-salary',
-            key: 'showSalaryExpectation',
-            name: 'Exibir Expectativa Salarial',
-            description: 'Mostrar sua faixa salarial pretendida para empresas',
-            type: 'boolean',
-            defaultValue: false,
-            order: 2,
-          },
-        ],
-      },
-      {
-        id: 'candidate-privacy-data',
-        key: 'data',
-        name: 'Dados Pessoais',
-        description: 'Controle de acesso ao currículo',
-        order: 2,
-        fields: [
-          {
-            id: 'data-resume-visibility',
-            key: 'resumeVisibility',
-            name: 'Visibilidade do Currículo',
-            description: 'Quem pode visualizar seu currículo completo',
-            type: 'select',
-            defaultValue: 'companies',
-            options: [
-              { value: 'all', label: 'Todos - Qualquer visitante' },
-              { value: 'companies', label: 'Empresas - Apenas empresas verificadas' },
-              { value: 'applied', label: 'Candidaturas - Só empresas que me candidatei' },
             ],
             order: 1,
           },

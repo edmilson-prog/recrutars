@@ -12,6 +12,7 @@ import {
 import { useApplicationsByCandidate } from '@/hooks/useApplicationsQuery';
 import { useUnreadCount } from '@/hooks/useMessagesQuery';
 import { useCurriculums } from '@/hooks/useCurriculumsQuery';
+import { useUpdateCandidate } from '@/hooks/useCandidatesQuery';
 import { calculateProfileCompletion } from '@/utils/profileCompleteness';
 import { calculateCompleteness } from '@/utils/curriculumCompleteness';
 import { Link } from 'react-router-dom';
@@ -44,6 +45,7 @@ export default function CandidateDashboard() {
   const { data: candidateApplications = [], isLoading: isLoadingApps } = useApplicationsByCandidate(candidateId);
   const { data: unreadCount = 0 } = useUnreadCount(userId);
   const { data: curriculums = [], isLoading: isLoadingCurriculums } = useCurriculums(candidateId);
+  const updateCandidateMutation = useUpdateCandidate();
 
   // Gauge-Pro result from localStorage
   const [gaugeResult, setGaugeResult] = useState<GaugeProResult | null>(null);
@@ -72,15 +74,32 @@ export default function CandidateDashboard() {
   }
 
   // Completude do perfil pessoal (calculada dinamicamente)
+  // Usa location ou compõe a partir de city+state se location estiver vazio
+  const effectiveLocation = candidate.location || [candidate.city, candidate.state].filter(Boolean).join(', ');
   const profileCompletion = calculateProfileCompletion({
     name: candidate.name,
     email: candidate.email,
     title: candidate.title,
-    location: candidate.location,
+    location: effectiveLocation,
     phone: candidate.phone,
     linkedin: candidate.linkedin,
     about: candidate.about,
   });
+
+  // Sync silencioso: se o valor calculado difere do DB, atualiza o banco
+  useEffect(() => {
+    if (
+      candidate &&
+      candidateId &&
+      profileCompletion !== candidate.profileCompletion &&
+      !updateCandidateMutation.isPending
+    ) {
+      updateCandidateMutation.mutate({
+        id: candidateId,
+        updates: { profileCompletion },
+      });
+    }
+  }, [candidateId, profileCompletion, candidate?.profileCompletion]);
 
   // Completude do currículo padrão
   const defaultCurriculum = curriculums.find(

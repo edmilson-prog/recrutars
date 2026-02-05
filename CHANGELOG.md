@@ -5,6 +5,59 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-02-05
+
+### Changed
+- **Tab "Localização"** — Campo "Cidade" convertido de input livre para combobox pesquisável
+  - Cidades filtradas automaticamente pelo estado selecionado
+  - Ordem invertida: Estado primeiro, Cidade depois
+  - Padrão: Rio Grande do Sul / Frederico Westphalen
+  - Dados de ~5.570 municípios brasileiros (fonte: IBGE)
+- **Novo arquivo de dados** — `src/data/brazilianCities.ts` com todas as cidades agrupadas por UF
+
+---
+
+## [1.3.0] - 2026-02-05 — "Job Preferences in Profile"
+
+### Added
+- **Tab "Interesses"** — Nova aba em `candidato/perfil` com preferências de vagas
+  - **Áreas de Interesse**: Setores preferidos (multiselect com 10 opções) e Funções desejadas (multiselect com 10 opções)
+  - **Modelo de Trabalho**: Modalidade (Presencial/Híbrido/Remoto) e Tipo de contrato (CLT/PJ/Temporário/Estágio/Freelancer)
+  - Persistido no Supabase (colunas `preferred_sectors`, `preferred_roles`, `work_model`, `contract_type`)
+
+- **Tab "Salário"** — Nova aba em `candidato/perfil` com expectativa salarial
+  - Faixa salarial: mínimo e máximo (R$)
+  - Toggle "Aceita Negociar"
+  - Persistido no Supabase (colunas `salary_min`, `salary_max`, `salary_negotiable`)
+
+- **Migration 023** — `sql/migrations/023_candidate_job_preferences.sql`
+  - Adiciona 5 colunas à tabela `candidates`: `preferred_sectors`, `preferred_roles`, `work_model`, `contract_type`, `salary_negotiable`
+  - Index GIN em `work_model` para filtros
+
+- **Constantes exportadas** — `jobSectorOptions`, `jobRoleOptions`, `workModelOptions`, `contractTypeOptions`, `profileVisibilityOptions`, `resumeVisibilityOptions` em `settingsConfig.ts`
+
+- **Tab "Privacidade"** — Nova aba em `candidato/perfil` com controle de visibilidade
+  - **Visibilidade do Perfil**: Select (Público/Parcial/Privado), persistido via `visibility_mode`
+  - **Exibir Expectativa Salarial**: Toggle boolean, persistido via `show_salary_expectation`
+  - **Visibilidade do Currículo**: Select (Todos/Empresas/Candidaturas), persistido via `resume_visibility`
+
+- **Migration 024** — `candidate_privacy_columns`
+  - Adiciona 2 colunas: `show_salary_expectation`, `resume_visibility`
+
+### Changed
+- **Profile.tsx** — Expandido de 5 para 8 tabs (layout `grid-cols-4 sm:grid-cols-8`)
+- **Candidate interface** — 7 novos campos opcionais: `preferredSectors`, `preferredRoles`, `workModel`, `contractType`, `salaryNegotiable`, `showSalaryExpectation`, `resumeVisibility`
+- **supabaseConverters.ts** — 7 novos mapeamentos snake_case → camelCase
+- **candidatesService.supabase.ts** — 7 novos mapeamentos no `updateCandidate()`
+
+### Removed
+- **Seção "Preferências de Vagas"** — Removida da página de Configurações (`/candidato/configuracoes`)
+  - Agora disponível diretamente em `/candidato/perfil` nas tabs Interesses e Salário
+- **Seção "Privacidade"** — Removida da página de Configurações (`/candidato/configuracoes`)
+  - Agora disponível diretamente em `/candidato/perfil` na tab Privacidade
+
+---
+
 ## [1.2.1] - 2026-02-05
 
 ### Removed

@@ -75,6 +75,15 @@ export function candidateRowToCandidate(row: CandidateRow): Candidate {
     city: row.city ?? undefined,
     state: row.state ?? undefined,
     openToRelocation: row.open_to_relocation ?? false,
+    // Preferências de Vagas
+    preferredSectors: (row as CandidateRow & { preferred_sectors?: string[] }).preferred_sectors ?? [],
+    preferredRoles: (row as CandidateRow & { preferred_roles?: string[] }).preferred_roles ?? [],
+    workModel: (row as CandidateRow & { work_model?: string[] }).work_model ?? ['presencial'],
+    contractType: (row as CandidateRow & { contract_type?: string[] }).contract_type ?? ['clt'],
+    salaryNegotiable: (row as CandidateRow & { salary_negotiable?: boolean }).salary_negotiable ?? true,
+    // Privacidade
+    showSalaryExpectation: (row as CandidateRow & { show_salary_expectation?: boolean }).show_salary_expectation ?? false,
+    resumeVisibility: (row as CandidateRow & { resume_visibility?: string }).resume_visibility ?? 'companies',
   };
 }
 

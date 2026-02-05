@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import {
   User, MapPin, Save, Camera, FileText, ArrowRight,
   Shield, Bell, AlertTriangle, CreditCard, Palette, Check, X, Star, Loader2,
+  Briefcase, DollarSign, Eye, ChevronsUpDown,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -28,13 +29,19 @@ import { ThemeSettings } from '@/components/settings/ThemeSettings';
 import { toast } from 'sonner';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { calculateProfileCompletion } from '@/utils/profileCompleteness';
 import { useCandidateByProfile, useUpdateCandidate } from '@/hooks/useCandidatesQuery';
 import { supabase } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { brazilianStates } from '@/data/settingsConfig';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { brazilianStates, jobSectorOptions, jobRoleOptions, workModelOptions, contractTypeOptions, profileVisibilityOptions, resumeVisibilityOptions } from '@/data/settingsConfig';
+import { brazilianCitiesByState } from '@/data/brazilianCities';
+import { Checkbox } from '@/components/ui/checkbox';
 import Cropper from 'react-easy-crop';
 import type { Area, Point } from 'react-easy-crop';
-import type { CandidatePlanType } from '@/types/candidate';
+import type { CandidatePlanType, VisibilityMode } from '@/types/candidate';
 
 const MAX_ABOUT_LENGTH = 500;
 
@@ -213,6 +220,7 @@ export default function CandidateProfile() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [cityOpen, setCityOpen] = useState(false);
 
   // Estados do Image Cropper
   const [showCropModal, setShowCropModal] = useState(false);
@@ -226,15 +234,27 @@ export default function CandidateProfile() {
     email: '',
     cpf: '',
     title: '',
-    phone: '(11) 99999-9999',
-    linkedin: 'linkedin.com/in/joaosantos',
-    about: 'Desenvolvedor Full Stack apaixonado por criar soluções inovadoras. Com 5 anos de experiência, tenho trabalhado em projetos de grande escala utilizando tecnologias modernas.',
+    phone: '',
+    linkedin: '',
+    about: '',
     dateOfBirth: '',
     // Campos de perfil consolidado
     displayName: '',
-    city: '',
-    state: '',
+    city: 'Frederico Westphalen',
+    state: 'RS',
     openToRelocation: false,
+    // Preferências de Vagas
+    preferredSectors: [] as string[],
+    preferredRoles: [] as string[],
+    workModel: ['presencial'] as string[],
+    contractType: ['clt'] as string[],
+    salaryMin: 0,
+    salaryMax: 0,
+    salaryNegotiable: true,
+    // Privacidade
+    profileVisibility: 'public' as string,
+    showSalaryExpectation: false,
+    resumeVisibility: 'companies' as string,
   });
 
   // Hydrate form when candidate loads
@@ -246,15 +266,27 @@ export default function CandidateProfile() {
         email: candidate.email,
         cpf: candidate.cpf || '',
         title: candidate.title,
-        phone: candidate.phone || '(11) 99999-9999',
-        linkedin: candidate.linkedin || 'linkedin.com/in/joaosantos',
-        about: candidate.about || 'Desenvolvedor Full Stack apaixonado por criar soluções inovadoras. Com 5 anos de experiência, tenho trabalhado em projetos de grande escala utilizando tecnologias modernas.',
+        phone: candidate.phone || '',
+        linkedin: candidate.linkedin || '',
+        about: candidate.about || '',
         dateOfBirth: candidate.dateOfBirth || '',
         // Campos de perfil consolidado
         displayName: candidate.displayName || '',
-        city: candidate.city || '',
-        state: candidate.state || '',
+        city: candidate.city || 'Frederico Westphalen',
+        state: candidate.state || 'RS',
         openToRelocation: candidate.openToRelocation || false,
+        // Preferências de Vagas
+        preferredSectors: candidate.preferredSectors || [],
+        preferredRoles: candidate.preferredRoles || [],
+        workModel: candidate.workModel || ['presencial'],
+        contractType: candidate.contractType || ['clt'],
+        salaryMin: candidate.salary?.min || 0,
+        salaryMax: candidate.salary?.max || 0,
+        salaryNegotiable: candidate.salaryNegotiable ?? true,
+        // Privacidade
+        profileVisibility: candidate.visibility?.mode || 'public',
+        showSalaryExpectation: candidate.showSalaryExpectation ?? false,
+        resumeVisibility: candidate.resumeVisibility || 'companies',
       });
     }
   }, [candidate]);
@@ -382,6 +414,20 @@ export default function CandidateProfile() {
 
     setIsSaving(true);
 
+    // Compor location a partir de city + state
+    const composedLocation = [profile.city, profile.state].filter(Boolean).join(', ');
+
+    // Calcular profileCompletion com os dados atuais
+    const newProfileCompletion = calculateProfileCompletion({
+      name: profile.name,
+      email: profile.email,
+      title: profile.title,
+      location: composedLocation,
+      phone: profile.phone,
+      linkedin: profile.linkedin,
+      about: profile.about,
+    });
+
     try {
       await updateCandidateMutation.mutateAsync({
         id: candidate.id,
@@ -396,7 +442,21 @@ export default function CandidateProfile() {
           displayName: profile.displayName || null,
           city: profile.city || null,
           state: profile.state || null,
+          location: composedLocation || candidate.location,
           openToRelocation: profile.openToRelocation,
+          // Completude do perfil (sincroniza com o banco)
+          profileCompletion: newProfileCompletion,
+          // Preferências de Vagas
+          preferredSectors: profile.preferredSectors,
+          preferredRoles: profile.preferredRoles,
+          workModel: profile.workModel,
+          contractType: profile.contractType,
+          salary: { min: profile.salaryMin, max: profile.salaryMax },
+          salaryNegotiable: profile.salaryNegotiable,
+          // Privacidade
+          visibility: { mode: profile.profileVisibility as VisibilityMode, anonymousId: candidate.visibility?.anonymousId || '' },
+          showSalaryExpectation: profile.showSalaryExpectation,
+          resumeVisibility: profile.resumeVisibility,
         },
       });
 
@@ -422,7 +482,7 @@ export default function CandidateProfile() {
         </div>
 
         <Tabs defaultValue="perfil" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8">
             <TabsTrigger value="perfil" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Perfil</span>
@@ -430,6 +490,18 @@ export default function CandidateProfile() {
             <TabsTrigger value="localizacao" className="flex items-center gap-2">
               <MapPin className="w-4 h-4" />
               <span className="hidden sm:inline">Localização</span>
+            </TabsTrigger>
+            <TabsTrigger value="interesses" className="flex items-center gap-2">
+              <Briefcase className="w-4 h-4" />
+              <span className="hidden sm:inline">Interesses</span>
+            </TabsTrigger>
+            <TabsTrigger value="salario" className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              <span className="hidden sm:inline">Salário</span>
+            </TabsTrigger>
+            <TabsTrigger value="privacidade" className="flex items-center gap-2">
+              <Eye className="w-4 h-4" />
+              <span className="hidden sm:inline">Privacidade</span>
             </TabsTrigger>
             <TabsTrigger value="conta" className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
@@ -569,6 +641,7 @@ export default function CandidateProfile() {
                   <Label htmlFor="linkedin">LinkedIn</Label>
                   <Input
                     id="linkedin"
+                    placeholder="linkedin.com/in/seuperfil"
                     value={profile.linkedin}
                     onChange={(e) => setProfile({ ...profile, linkedin: e.target.value })}
                   />
@@ -665,19 +738,13 @@ export default function CandidateProfile() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="city">Cidade</Label>
-                  <Input
-                    id="city"
-                    placeholder="Sua cidade atual"
-                    value={profile.city}
-                    onChange={(e) => setProfile({ ...profile, city: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="state">Estado</Label>
                   <Select
                     value={profile.state || '__none__'}
-                    onValueChange={(value) => setProfile({ ...profile, state: value === '__none__' ? '' : value })}
+                    onValueChange={(value) => {
+                      const newState = value === '__none__' ? '' : value;
+                      setProfile({ ...profile, state: newState, city: '' });
+                    }}
                   >
                     <SelectTrigger id="state">
                       <SelectValue placeholder="Selecione o estado" />
@@ -690,6 +757,55 @@ export default function CandidateProfile() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="city">Cidade</Label>
+                  <Popover open={cityOpen} onOpenChange={setCityOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="city"
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={cityOpen}
+                        className="w-full justify-between font-normal"
+                        disabled={!profile.state}
+                      >
+                        {profile.city || 'Selecione a cidade...'}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar cidade..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
+                          <CommandGroup>
+                            {(brazilianCitiesByState[profile.state] || []).map((city) => (
+                              <CommandItem
+                                key={city}
+                                value={city}
+                                onSelect={() => {
+                                  setProfile({ ...profile, city });
+                                  setCityOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    profile.city === city ? 'opacity-100' : 'opacity-0'
+                                  )}
+                                />
+                                {city}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {!profile.state && (
+                    <p className="text-xs text-muted-foreground">Selecione um estado primeiro</p>
+                  )}
                 </div>
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
@@ -705,6 +821,367 @@ export default function CandidateProfile() {
                     />
                   </div>
                 </div>
+              </div>
+            </motion.div>
+
+            {/* Save Button */}
+            <div className="flex justify-end pb-8">
+              <Button size="lg" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5 mr-2" />
+                    Salvar Alterações
+                  </>
+                )}
+              </Button>
+            </div>
+          </TabsContent>
+
+          {/* ============ TAB INTERESSES ============ */}
+          <TabsContent value="interesses" className="space-y-6">
+            {/* Áreas de Interesse */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-card rounded-2xl p-6 shadow-soft"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+                  <Briefcase className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Áreas de Interesse</h2>
+                  <p className="text-sm text-muted-foreground">Setores e funções que você busca</p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {/* Setores Preferidos */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">Setores Preferidos</Label>
+                  <p className="text-sm text-muted-foreground">Áreas de atuação que você tem interesse</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {jobSectorOptions.map((option) => (
+                      <label
+                        key={option.value}
+                        className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
+                      >
+                        <Checkbox
+                          checked={profile.preferredSectors.includes(option.value)}
+                          onCheckedChange={(checked) => {
+                            setProfile({
+                              ...profile,
+                              preferredSectors: checked
+                                ? [...profile.preferredSectors, option.value]
+                                : profile.preferredSectors.filter((v) => v !== option.value),
+                            });
+                          }}
+                        />
+                        <span className="text-sm">{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Funções Desejadas */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">Funções Desejadas</Label>
+                  <p className="text-sm text-muted-foreground">Tipos de cargo que você busca</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {jobRoleOptions.map((option) => (
+                      <label
+                        key={option.value}
+                        className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
+                      >
+                        <Checkbox
+                          checked={profile.preferredRoles.includes(option.value)}
+                          onCheckedChange={(checked) => {
+                            setProfile({
+                              ...profile,
+                              preferredRoles: checked
+                                ? [...profile.preferredRoles, option.value]
+                                : profile.preferredRoles.filter((v) => v !== option.value),
+                            });
+                          }}
+                        />
+                        <span className="text-sm">{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Modelo de Trabalho */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-card rounded-2xl p-6 shadow-soft"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-cyan-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Modelo de Trabalho</h2>
+                  <p className="text-sm text-muted-foreground">Formato e tipo de contrato aceitos</p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {/* Modalidade */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">Modalidade</Label>
+                  <p className="text-sm text-muted-foreground">Formatos de trabalho aceitos</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {workModelOptions.map((option) => (
+                      <label
+                        key={option.value}
+                        className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
+                      >
+                        <Checkbox
+                          checked={profile.workModel.includes(option.value)}
+                          onCheckedChange={(checked) => {
+                            setProfile({
+                              ...profile,
+                              workModel: checked
+                                ? [...profile.workModel, option.value]
+                                : profile.workModel.filter((v) => v !== option.value),
+                            });
+                          }}
+                        />
+                        <span className="text-sm">{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Tipo de Contrato */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">Tipo de Contrato</Label>
+                  <p className="text-sm text-muted-foreground">Regimes de contratação aceitos</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {contractTypeOptions.map((option) => (
+                      <label
+                        key={option.value}
+                        className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
+                      >
+                        <Checkbox
+                          checked={profile.contractType.includes(option.value)}
+                          onCheckedChange={(checked) => {
+                            setProfile({
+                              ...profile,
+                              contractType: checked
+                                ? [...profile.contractType, option.value]
+                                : profile.contractType.filter((v) => v !== option.value),
+                            });
+                          }}
+                        />
+                        <span className="text-sm">{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Save Button */}
+            <div className="flex justify-end pb-8">
+              <Button size="lg" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5 mr-2" />
+                    Salvar Alterações
+                  </>
+                )}
+              </Button>
+            </div>
+          </TabsContent>
+
+          {/* ============ TAB SALÁRIO ============ */}
+          <TabsContent value="salario" className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-card rounded-2xl p-6 shadow-soft"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Expectativa Salarial</h2>
+                  <p className="text-sm text-muted-foreground">Faixa salarial pretendida</p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="salaryMin">Salário Mínimo (R$)</Label>
+                    <Input
+                      id="salaryMin"
+                      type="number"
+                      min={0}
+                      max={100000}
+                      placeholder="Ex: 3000"
+                      value={profile.salaryMin > 0 ? profile.salaryMin : ''}
+                      onChange={(e) => setProfile({ ...profile, salaryMin: Number(e.target.value) || 0 })}
+                    />
+                    <p className="text-xs text-muted-foreground">Valor mínimo pretendido</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="salaryMax">Salário Máximo (R$)</Label>
+                    <Input
+                      id="salaryMax"
+                      type="number"
+                      min={0}
+                      max={100000}
+                      placeholder="Ex: 8000"
+                      value={profile.salaryMax > 0 ? profile.salaryMax : ''}
+                      onChange={(e) => setProfile({ ...profile, salaryMax: Number(e.target.value) || 0 })}
+                    />
+                    <p className="text-xs text-muted-foreground">Valor máximo pretendido</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
+                  <div>
+                    <Label className="font-medium">Aceita Negociar</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Indicar se você está aberto a negociação salarial
+                    </p>
+                  </div>
+                  <Switch
+                    checked={profile.salaryNegotiable}
+                    onCheckedChange={(checked) => setProfile({ ...profile, salaryNegotiable: checked })}
+                  />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Save Button */}
+            <div className="flex justify-end pb-8">
+              <Button size="lg" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5 mr-2" />
+                    Salvar Alterações
+                  </>
+                )}
+              </Button>
+            </div>
+          </TabsContent>
+
+          {/* ============ TAB PRIVACIDADE ============ */}
+          <TabsContent value="privacidade" className="space-y-6">
+            {/* Visibilidade do Perfil */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-card rounded-2xl p-6 shadow-soft"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+                  <Eye className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Visibilidade do Perfil</h2>
+                  <p className="text-sm text-muted-foreground">Controle quem pode ver suas informações</p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="profileVisibility">Visibilidade do Perfil</Label>
+                  <Select
+                    value={profile.profileVisibility}
+                    onValueChange={(value) => setProfile({ ...profile, profileVisibility: value })}
+                  >
+                    <SelectTrigger id="profileVisibility">
+                      <SelectValue placeholder="Selecione a visibilidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {profileVisibilityOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Controle quem pode ver seu perfil completo</p>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
+                  <div>
+                    <Label className="font-medium">Exibir Expectativa Salarial</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Mostrar sua faixa salarial pretendida para empresas
+                    </p>
+                  </div>
+                  <Switch
+                    checked={profile.showSalaryExpectation}
+                    onCheckedChange={(checked) => setProfile({ ...profile, showSalaryExpectation: checked })}
+                  />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Dados Pessoais */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-card rounded-2xl p-6 shadow-soft"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-cyan-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Dados Pessoais</h2>
+                  <p className="text-sm text-muted-foreground">Controle de acesso ao currículo</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="resumeVisibility">Visibilidade do Currículo</Label>
+                <Select
+                  value={profile.resumeVisibility}
+                  onValueChange={(value) => setProfile({ ...profile, resumeVisibility: value })}
+                >
+                  <SelectTrigger id="resumeVisibility">
+                    <SelectValue placeholder="Selecione a visibilidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {resumeVisibilityOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Quem pode visualizar seu currículo completo</p>
               </div>
             </motion.div>
 
