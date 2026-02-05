@@ -65,7 +65,7 @@ const LOCATIONS = [
 
 export default function RecommendedJobs() {
   const { currentCandidate } = useAuth();
-  const candidateId = currentCandidate?.id || 'candidate-1';
+  const candidateId = currentCandidate?.id || '';
 
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);

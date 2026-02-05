@@ -56,7 +56,9 @@ import {
 } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { useFavoriteCandidates, formatCandidateSavedAt } from '@/hooks/useFavoriteCandidates';
-import { mockJobs } from '@/data/mockData';
+import { getCandidateBehavioralProfile } from '@/lib/behavioralProfiles';
+import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
+import { useJobs } from '@/hooks/useJobsQuery';
 import type { Candidate, Job } from '@/types';
 import type { CandidateForComparison } from '@/types/disc';
 import {
@@ -67,10 +69,10 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { useCandidateSelection, SelectionBar } from '@/components/compare/CandidateSelector';
 import { CandidateComparisonModal } from '@/components/compare/CandidateComparison';
-import { getCandidateBehavioralProfile } from '@/data/mockData';
 // PRD-032: Exportação de candidatos
 import { ExportCandidatesModal } from '@/components/export';
 import type { ExportContext } from '@/types/export';
+import { useAuth } from '@/contexts/AuthContext';
 
 type SortOption = 'recent' | 'match' | 'experience';
 
@@ -102,6 +104,8 @@ const calculateMatch = (candidateSkills: string[], jobs: Job[]): number => {
 
 export default function SavedCandidates() {
   const navigate = useNavigate();
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
   const { getFavoriteCandidates, removeFavorite, toggleFavorite } = useFavoriteCandidates();
 
   const [sortBy, setSortBy] = useState<SortOption>('recent');
@@ -121,9 +125,15 @@ export default function SavedCandidates() {
   // PRD-032: Estado do modal de exportação
   const [showExportModal, setShowExportModal] = useState(false);
 
-  // Get company jobs (mock: company-1)
-  const companyJobs = mockJobs.filter(
-    (job) => job.companyId === 'company-1' && job.status === 'active'
+  // Fetch data from service layer
+  const { data: jobsResult } = useJobs();
+  const allJobs = jobsResult?.data ?? [];
+  const { data: behavioralTests = [] } = useBehavioralTests();
+
+  // Get company jobs
+  const companyJobs = useMemo(() =>
+    allJobs.filter((job) => job.companyId === companyId && job.status === 'active'),
+    [allJobs]
   );
 
   // Obter candidatos salvos com dados
@@ -168,7 +178,7 @@ export default function SavedCandidates() {
         const candidate = savedCandidates.find((c) => c.id === id);
         if (!candidate) return null;
 
-        const behavioralProfile = getCandidateBehavioralProfile(candidate);
+        const behavioralProfile = getCandidateBehavioralProfile(candidate.id, behavioralTests);
         const matchScore = calculateMatch(candidate.skills, companyJobs);
 
         return {

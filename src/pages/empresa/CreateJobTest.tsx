@@ -12,7 +12,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { TestWizard } from '@/components/job-assessment';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockJobs } from '@/data/mockData';
+import { useJob } from '@/hooks/useJobsQuery';
 import type { JobAssessment } from '@/types/assessment';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,8 +22,8 @@ export default function CreateJobTest() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Buscar dados da vaga
-  const job = mockJobs.find((j) => j.id === jobId);
+  // Fetch data from service layer
+  const { data: job } = useJob(jobId || '');
 
   if (!job) {
     return (

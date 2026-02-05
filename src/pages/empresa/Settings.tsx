@@ -73,7 +73,50 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { TeamMember, PendingInvite, CompanyPlan, CompanyNotificationPreferences } from '@/types/company';
-import { mockCompanies, mockTeamMembers, mockPendingInvites, mockCompanyPlan } from '@/data/mockData';
+// TODO: Replace with team/plan service hooks when available
+const initialTeamMembers: TeamMember[] = [
+  {
+    id: 'member-1',
+    name: 'Maria Silva',
+    email: 'maria@techsolutions.com.br',
+    role: 'admin',
+    lastAccess: 'Hoje às 14:30',
+    isCurrentUser: true,
+  },
+  {
+    id: 'member-2',
+    name: 'João Santos',
+    email: 'joao@techsolutions.com.br',
+    role: 'member',
+    lastAccess: 'Ontem às 18:00',
+  },
+];
+
+const initialPendingInvites: PendingInvite[] = [
+  {
+    id: 'invite-1',
+    email: 'ana@techsolutions.com.br',
+    sentAt: '10/01/2026',
+  },
+];
+
+const initialCompanyPlan: CompanyPlan = {
+  name: 'Seleção Inteligente',
+  maxJobs: 10,
+  maxUsers: 5,
+  currentJobs: 8,
+  currentUsers: 2,
+  nextBillingDate: '01/02/2026',
+  price: 299,
+  features: [
+    'Até 10 vagas ativas',
+    'Banco de talentos ilimitado',
+    '5 usuários na conta',
+    'Suporte prioritário',
+    'Relatórios avançados',
+  ],
+};
+import { useCompanies } from '@/hooks/useCompaniesQuery';
 import { useCulturalFit } from '@/hooks/useCulturalFit';
 import { CultureProfileForm } from '@/components/cultural';
 
@@ -184,29 +227,27 @@ function FeatureValue({ value }: { value: string | boolean }) {
 }
 
 export default function CompanySettings() {
-  const { user, logout } = useAuth();
+  const { user, logout, currentCompany } = useAuth();
   const navigate = useNavigate();
-
-  // Get current company data
-  const currentCompany = mockCompanies.find(c => c.id === 'company-1') || mockCompanies[0];
+  const companyId = currentCompany?.id ?? '';
 
   // Company profile state
   const [companyProfile, setCompanyProfile] = useState({
-    name: currentCompany.name,
-    industry: currentCompany.industry,
-    size: currentCompany.size,
-    website: currentCompany.website || '',
-    linkedin: currentCompany.linkedin || '',
-    description: currentCompany.description,
-    city: currentCompany.city,
-    state: currentCompany.state,
-    address: currentCompany.address || '',
+    name: currentCompany?.name ?? '',
+    industry: currentCompany?.industry ?? '',
+    size: currentCompany?.size ?? '',
+    website: currentCompany?.website || '',
+    linkedin: currentCompany?.linkedin || '',
+    description: currentCompany?.description ?? '',
+    city: currentCompany?.city ?? '',
+    state: currentCompany?.state ?? '',
+    address: currentCompany?.address || '',
   });
-  const [logoPreview, setLogoPreview] = useState<string | null>(currentCompany.logo || null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(currentCompany?.logo || null);
 
   // Team state
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(mockTeamMembers);
-  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>(mockPendingInvites);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
+  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>(initialPendingInvites);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
 
@@ -234,7 +275,7 @@ export default function CompanySettings() {
   });
 
   // Plan data
-  const [plan] = useState<CompanyPlan>(mockCompanyPlan);
+  const [plan] = useState<CompanyPlan>(initialCompanyPlan);
 
   // PRD-042: Cultural Fit
   const {
@@ -246,7 +287,7 @@ export default function CompanySettings() {
     resetForm: resetCulturalForm,
     isModified: isCulturalModified,
     companyProfile: culturalCompanyProfile,
-  } = useCulturalFit({ companyId: 'company-1' });
+  } = useCulturalFit({ companyId });
   const [culturalValues, setCulturalValuesState] = useState<string[]>(culturalCompanyProfile?.values || []);
   const [culturalDescription, setCulturalDescriptionState] = useState<string>(culturalCompanyProfile?.description || '');
 

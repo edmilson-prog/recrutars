@@ -26,8 +26,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { formatRelativeDate } from '@/lib/formatters';
-import { mockRoles } from '@/data/rbacData';
+import { useRoles } from '@/hooks/useRBACQuery';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { User } from '@/types';
+import type { Role } from '@/types/rbac';
 
 interface UserTableProps {
   users: User[];
@@ -50,9 +52,9 @@ const statusLabels: Record<string, { label: string; className: string }> = {
   pending: { label: 'Pendente', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
 };
 
-function getRoleName(roleId?: string): string {
+function getRoleName(roleId: string | undefined, roles: Role[]): string {
   if (!roleId) return '-';
-  const role = mockRoles.find(r => r.id === roleId);
+  const role = roles.find(r => r.id === roleId);
   return role?.name || '-';
 }
 
@@ -72,6 +74,7 @@ export function UserTable({
   onToggleAll,
   onStatusChange,
 }: UserTableProps) {
+  const { data: roles = [], isLoading: rolesLoading } = useRoles();
   const allSelected = users.length > 0 && selectedIds.length === users.length;
 
   return (
@@ -139,7 +142,11 @@ export function UserTable({
                 </Badge>
               </TableCell>
               <TableCell className="hidden lg:table-cell">
-                <span className="text-sm text-muted-foreground">{getRoleName(user.roleId)}</span>
+                {rolesLoading ? (
+                  <Skeleton className="h-4 w-20" />
+                ) : (
+                  <span className="text-sm text-muted-foreground">{getRoleName(user.roleId, roles)}</span>
+                )}
               </TableCell>
               <TableCell className="hidden md:table-cell">
                 <Badge variant="outline" className={cn('text-xs font-medium border-0', statusInfo.className)}>

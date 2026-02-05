@@ -8,11 +8,11 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Save, User, Shield, Clock, CreditCard, StickyNote,
-  Plus, Trash2,
+  Plus, Trash2, Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { mockUsers } from '@/data/mockData';
-import { mockRoles, mockAuditLogs, mockGroups } from '@/data/rbacData';
+import { useUser } from '@/hooks/useUsersQuery';
+import { useRoles, useAuditLogs, usePermissionGroups } from '@/hooks/useRBACQuery';
 import { formatRelativeDate } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -32,30 +32,6 @@ import {
 } from '@/components/ui/select';
 import { PermissionsTab } from '@/components/admin/users/PermissionsTab';
 import type { UserStatus, AuditAction } from '@/types/rbac';
-
-// Enriched users for demo
-const enrichedUsers = mockUsers.map(user => ({
-  ...user,
-  status: (
-    user.id === 'candidate-3' ? 'inactive' :
-    user.id === 'company-3' ? 'suspended' :
-    user.id === 'candidate-5' ? 'pending' :
-    'active'
-  ) as UserStatus,
-  roleId:
-    user.type === 'admin' ? 'role-super-admin' :
-    user.id === 'company-1' ? 'role-owner' :
-    user.id === 'company-2' ? 'role-manager' :
-    user.id === 'company-3' ? 'role-recruiter' :
-    undefined,
-  lastAccessAt:
-    user.id === 'admin-1' ? '2026-02-03T10:30:00Z' :
-    user.id === 'company-1' ? '2026-02-02T14:00:00Z' :
-    user.id === 'candidate-1' ? '2026-01-30T09:00:00Z' :
-    undefined,
-  groupIds:
-    user.id === 'admin-1' ? ['group-moderadores'] : [],
-}));
 
 const typeOptions = [
   { value: 'admin', label: 'Administrador' },
@@ -123,12 +99,15 @@ interface AdminNote {
 
 export default function AdminUserDetail() {
   const { id } = useParams<{ id: string }>();
-  const originalUser = enrichedUsers.find(u => u.id === id);
+  const { data: originalUser, isLoading: isLoadingUser } = useUser(id || '');
+  const { data: rolesData } = useRoles();
+  const { data: auditLogsData } = useAuditLogs();
+  const { data: groupsData } = usePermissionGroups();
 
-  const [name, setName] = useState(originalUser?.name || '');
-  const [email, setEmail] = useState(originalUser?.email || '');
-  const [type, setType] = useState(originalUser?.type || 'candidate');
-  const [status, setStatus] = useState(originalUser?.status || 'active');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [type, setType] = useState<string>('candidate');
+  const [status, setStatus] = useState<UserStatus>('active');
   const [noteText, setNoteText] = useState('');
   const [notes, setNotes] = useState<AdminNote[]>([
     {
@@ -138,14 +117,37 @@ export default function AdminUserDetail() {
       createdAt: '2026-01-15T10:00:00Z',
     },
   ]);
+  const [formInitialized, setFormInitialized] = useState(false);
+
+  // Hydrate form when user data loads
+  useMemo(() => {
+    if (originalUser && !formInitialized) {
+      setName(originalUser.name || '');
+      setEmail(originalUser.email || '');
+      setType(originalUser.type || 'candidate');
+      setStatus((originalUser.status as UserStatus) || 'active');
+      setFormInitialized(true);
+    }
+  }, [originalUser, formInitialized]);
 
   // Timeline: filter audit logs for this user
   const userTimeline = useMemo(() => {
-    return mockAuditLogs
+    if (!auditLogsData) return [];
+    return auditLogsData
       .filter(log => log.targetUserId === id || log.performedBy === id)
       .sort((a, b) => new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime())
       .slice(0, 50);
-  }, [id]);
+  }, [auditLogsData, id]);
+
+  if (isLoadingUser) {
+    return (
+      <DashboardLayout userType="admin">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!originalUser) {
     return (

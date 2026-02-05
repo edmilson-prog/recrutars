@@ -959,9 +959,9 @@ export const adminSettingsCategories: ConfigCategory[] = [
   },
 ];
 
-// Estados brasileiros para select
-const brazilianStates = [
-  { value: '', label: 'Selecione...' },
+// Estados brasileiros para select (exportado para reutilização em Profile.tsx)
+export const brazilianStates = [
+  { value: '__none__', label: 'Selecione...' },
   { value: 'AC', label: 'Acre' },
   { value: 'AL', label: 'Alagoas' },
   { value: 'AP', label: 'Amapá' },

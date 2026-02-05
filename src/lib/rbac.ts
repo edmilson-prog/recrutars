@@ -9,20 +9,60 @@
  *   4. Negado por padrao
  *
  * Cache interno: Map<userId, Map<permissionCode, boolean>>
+ *
+ * Uso: chame configureRBAC(data) para injetar dados antes de usar hasPermission().
  */
 
-import { mockUsers } from '@/data/mockData';
-import {
-  mockRoles,
-  mockRolePermissions,
-  mockGroups,
-  mockOverrides,
-} from '@/data/rbacData';
 import type {
+  Role,
+  PermissionGroup,
+  UserPermissionOverride,
   PermissionResolution,
   PermissionExplanation,
   PermissionChainStep,
 } from '@/types/rbac';
+
+// ---------------------------------------------------------------------------
+// Data store injetavel (substitui imports diretos de mock)
+// ---------------------------------------------------------------------------
+
+interface RBACUser {
+  id: string;
+  roleId?: string;
+  groupIds?: string[];
+}
+
+interface RBACDataStore {
+  users: RBACUser[];
+  roles: Role[];
+  rolePermissions: Record<string, string[]>;
+  groups: PermissionGroup[];
+  overrides: UserPermissionOverride[];
+}
+
+let _store: RBACDataStore = {
+  users: [],
+  roles: [],
+  rolePermissions: {},
+  groups: [],
+  overrides: [],
+};
+
+/**
+ * Injeta dados no RBAC engine. Deve ser chamado antes de usar hasPermission().
+ * Invalida o cache automaticamente.
+ */
+export function configureRBAC(data: Partial<RBACDataStore>): void {
+  _store = { ..._store, ...data };
+  cache.clear();
+}
+
+/**
+ * Retorna se o RBAC engine ja foi configurado com dados.
+ */
+export function isRBACConfigured(): boolean {
+  return _store.roles.length > 0;
+}
 
 // ---------------------------------------------------------------------------
 // Cache interno: userId -> (permissionCode -> resultado booleano)
@@ -39,10 +79,10 @@ const cache = new Map<string, Map<string, boolean>>();
  * a propriedade `groupIds` do User com a lista `memberUserIds` de cada grupo.
  */
 function getUserGroupIds(userId: string): string[] {
-  const user = mockUsers.find((u) => u.id === userId);
+  const user = _store.users.find((u) => u.id === userId);
   const fromUser = new Set<string>(user?.groupIds ?? []);
 
-  for (const group of mockGroups) {
+  for (const group of _store.groups) {
     if (group.memberUserIds.includes(userId)) {
       fromUser.add(group.id);
     }
@@ -55,10 +95,10 @@ function getUserGroupIds(userId: string): string[] {
  * Retorna o slug da role do usuario, ou undefined se nao houver.
  */
 function getUserRoleSlug(userId: string): string | undefined {
-  const user = mockUsers.find((u) => u.id === userId);
+  const user = _store.users.find((u) => u.id === userId);
   if (!user?.roleId) return undefined;
 
-  const role = mockRoles.find((r) => r.id === user.roleId);
+  const role = _store.roles.find((r) => r.id === user.roleId);
   return role?.slug;
 }
 
@@ -76,7 +116,7 @@ function codesInclude(codes: string[], permissionCode: string): boolean {
 function collectGroupPermissions(groupIds: string[]): string[] {
   const codes = new Set<string>();
   for (const gid of groupIds) {
-    const group = mockGroups.find((g) => g.id === gid);
+    const group = _store.groups.find((g) => g.id === gid);
     if (group) {
       for (const code of group.permissionCodes) {
         codes.add(code);
@@ -122,7 +162,7 @@ export function hasPermission(userId: string, permissionCode: string): boolean {
  */
 function resolvePermission(userId: string, permissionCode: string): boolean {
   // 1. Overrides
-  const override = mockOverrides.find(
+  const override = _store.overrides.find(
     (o) => o.userId === userId && o.permissionCode === permissionCode,
   );
   if (override) {
@@ -141,7 +181,7 @@ function resolvePermission(userId: string, permissionCode: string): boolean {
   // 3. Role
   const roleSlug = getUserRoleSlug(userId);
   if (roleSlug) {
-    const roleCodes = mockRolePermissions[roleSlug] ?? [];
+    const roleCodes = _store.rolePermissions[roleSlug] ?? [];
     if (codesInclude(roleCodes, permissionCode)) {
       return true;
     }
@@ -163,21 +203,21 @@ export function getEffectivePermissions(userId: string): PermissionResolution[] 
   const allCodes = new Set<string>();
 
   // Dos mapeamentos de role
-  for (const codes of Object.values(mockRolePermissions)) {
+  for (const codes of Object.values(_store.rolePermissions)) {
     for (const code of codes) {
       if (code !== '*') allCodes.add(code);
     }
   }
 
   // Dos grupos
-  for (const group of mockGroups) {
+  for (const group of _store.groups) {
     for (const code of group.permissionCodes) {
       allCodes.add(code);
     }
   }
 
   // Dos overrides
-  for (const override of mockOverrides) {
+  for (const override of _store.overrides) {
     allCodes.add(override.permissionCode);
   }
 
@@ -215,7 +255,7 @@ export function getPermissionExplanation(
   code: string,
 ): PermissionExplanation {
   const chain: PermissionChainStep[] = [];
-  const user = mockUsers.find((u) => u.id === userId);
+  const user = _store.users.find((u) => u.id === userId);
 
   if (!user) {
     chain.push({
@@ -228,7 +268,7 @@ export function getPermissionExplanation(
   }
 
   // ----- 1. Override -----
-  const override = mockOverrides.find(
+  const override = _store.overrides.find(
     (o) => o.userId === userId && o.permissionCode === code,
   );
 
@@ -259,7 +299,7 @@ export function getPermissionExplanation(
     const matchingGroups: string[] = [];
 
     for (const gid of groupIds) {
-      const group = mockGroups.find((g) => g.id === gid);
+      const group = _store.groups.find((g) => g.id === gid);
       if (group && group.permissionCodes.includes(code)) {
         matchingGroups.push(group.name);
       }
@@ -294,8 +334,8 @@ export function getPermissionExplanation(
   const roleSlug = getUserRoleSlug(userId);
 
   if (roleSlug) {
-    const roleCodes = mockRolePermissions[roleSlug] ?? [];
-    const role = mockRoles.find((r) => r.slug === roleSlug);
+    const roleCodes = _store.rolePermissions[roleSlug] ?? [];
+    const role = _store.roles.find((r) => r.slug === roleSlug);
     const roleName = role?.name ?? roleSlug;
 
     if (codesInclude(roleCodes, code)) {

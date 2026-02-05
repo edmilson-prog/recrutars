@@ -9,6 +9,7 @@ import { TestFunnel } from './TestFunnel';
 import { AlertsList } from './AlertsList';
 import { ActivityFeed } from './ActivityFeed';
 import { PeriodFilter } from './PeriodFilter';
+// TODO: PRD-072 — migrate to service layer
 import { mockCompanyTests, mockTestInvitations, mockTestResults, mockHubAlerts, mockActivityFeed } from '@/data/companyTestData';
 import type { PeriodFilter as PeriodFilterType, HubDashboardKPIs, FunnelData } from '@/types/companyTest';
 

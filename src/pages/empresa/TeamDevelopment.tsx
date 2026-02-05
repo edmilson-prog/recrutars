@@ -16,13 +16,17 @@ import { useToast } from '@/hooks/use-toast';
 import DevelopmentPlanView from '@/components/team-management/DevelopmentPlanView';
 import RetestScheduleForm from '@/components/team-management/RetestScheduleForm';
 import ObjectiveForm from '@/components/team-management/ObjectiveForm';
+import { useAuth } from '@/contexts/AuthContext';
 import {
-  mockTeamMembers,
-  mockDevelopmentPlans,
-  mockRetestSchedules,
-  mockDepartments,
-  mockPositions,
-} from '@/data/teamManagementData';
+  useTeamMember,
+  useDepartments,
+  usePositions,
+  useDevelopmentPlan,
+  useRetestSchedules,
+  useSaveDevelopmentPlan,
+  useSaveRetestSchedule,
+} from '@/hooks/useTeamsQuery';
+import { Loader2 } from 'lucide-react';
 import type {
   DevelopmentPlan,
   DevelopmentObjective,
@@ -33,33 +37,48 @@ import type {
 export default function TeamDevelopment() {
   const { id } = useParams();
   const { toast } = useToast();
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
 
-  // Find member
-  const member = useMemo(
-    () => mockTeamMembers.find((m) => m.id === id),
-    [id],
-  );
+  // Service layer hooks
+  const { data: member, isLoading: memberLoading } = useTeamMember(id ?? '');
+  const { data: departments = [] } = useDepartments(companyId);
+  const { data: positions = [] } = usePositions('all');
+  const { data: fetchedPlan, isLoading: planLoading } = useDevelopmentPlan(id ?? '');
+  const { data: retestSchedules = [] } = useRetestSchedules(companyId);
+
+  const savePlanMutation = useSaveDevelopmentPlan();
+  const saveRetestMutation = useSaveRetestSchedule();
 
   const department = useMemo(
-    () => mockDepartments.find((d) => d.id === member?.departmentId),
-    [member],
+    () => departments.find((d) => d.id === member?.departmentId),
+    [member, departments],
   );
 
   const position = useMemo(
-    () => mockPositions.find((p) => p.id === member?.positionId),
-    [member],
+    () => positions.find((p) => p.id === member?.positionId),
+    [member, positions],
   );
 
-  // Development plan state
-  const [plan, setPlan] = useState<DevelopmentPlan | null>(() => {
-    const found = mockDevelopmentPlans.find((p) => p.memberId === id);
-    return found ? { ...found, objectives: [...found.objectives] } : null;
-  });
+  // Development plan state (initialized from service layer)
+  const [plan, setPlan] = useState<DevelopmentPlan | null>(null);
+  const [planInitialized, setPlanInitialized] = useState(false);
+  if (!planInitialized && !planLoading) {
+    setPlan(fetchedPlan ? { ...fetchedPlan, objectives: [...fetchedPlan.objectives] } : null);
+    setPlanInitialized(true);
+  }
 
   // Retest schedule state
-  const [retestSchedule, setRetestSchedule] = useState<RetestSchedule | null>(
-    () => mockRetestSchedules.find((s) => s.memberId === id) || null,
-  );
+  const [retestSchedule, setRetestSchedule] = useState<RetestSchedule | null>(null);
+  const [retestInitialized, setRetestInitialized] = useState(false);
+  if (!retestInitialized && retestSchedules.length > 0) {
+    setRetestSchedule(retestSchedules.find((s) => s.memberId === id) || null);
+    setRetestInitialized(true);
+  } else if (!retestInitialized && !memberLoading) {
+    setRetestInitialized(true);
+  }
+
+  const isLoading = memberLoading || planLoading;
 
   // Objective form dialog state
   const [objectiveFormOpen, setObjectiveFormOpen] = useState(false);
@@ -198,6 +217,16 @@ export default function TeamDevelopment() {
     },
     [retestSchedule, id, toast],
   );
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!member) {
     return (

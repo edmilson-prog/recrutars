@@ -1,7 +1,10 @@
 // PRD-030: Hook para gerenciamento de candidatos favoritos (Empresa)
+// PRD-069: Migrated from mockData to service layer hooks
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { mockCandidates } from '@/data/mockData';
+import { useCallback, useMemo } from 'react';
+import { useFavorites, useToggleFavorite } from '@/hooks/useFavoritesQuery';
+import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Candidate } from '@/types';
 
 export interface FavoriteCandidate {
@@ -9,102 +12,78 @@ export interface FavoriteCandidate {
   savedAt: string; // ISO date
 }
 
-const STORAGE_KEY = 'recrutars_favorite_candidates';
-
-// Helper para carregar favoritos do localStorage
-function loadFavorites(): FavoriteCandidate[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    console.error('Erro ao carregar candidatos favoritos:', error);
-  }
-  return [];
-}
-
-// Helper para salvar favoritos no localStorage
-function saveFavorites(favorites: FavoriteCandidate[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
-  } catch (error) {
-    console.error('Erro ao salvar candidatos favoritos:', error);
-  }
-}
-
 export function useFavoriteCandidates() {
-  const [favorites, setFavorites] = useState<FavoriteCandidate[]>(loadFavorites);
+  const { user } = useAuth();
+  const userId = user?.id ?? '';
 
-  // Sincronizar com localStorage quando favorites muda
-  useEffect(() => {
-    saveFavorites(favorites);
-  }, [favorites]);
+  const { data: favoriteIds = [] } = useFavorites(userId, 'candidate');
+  const toggleMutation = useToggleFavorite();
+
+  // Also fetch all candidates to support getFavoriteCandidates enrichment
+  const { data: candidatesResult } = useCandidates();
+  const allCandidates = useMemo(() => candidatesResult?.data ?? [], [candidatesResult]);
 
   // Verificar se um candidato está nos favoritos
   const isFavorite = useCallback(
     (candidateId: string): boolean => {
-      return favorites.some((fav) => fav.candidateId === candidateId);
+      return favoriteIds.includes(candidateId);
     },
-    [favorites]
+    [favoriteIds]
   );
 
   // Toggle favorito (adicionar/remover)
   const toggleFavorite = useCallback((candidateId: string): boolean => {
-    let isNowFavorite = false;
-
-    setFavorites((current) => {
-      const exists = current.some((fav) => fav.candidateId === candidateId);
-
-      if (exists) {
-        // Remover
-        isNowFavorite = false;
-        return current.filter((fav) => fav.candidateId !== candidateId);
-      } else {
-        // Adicionar
-        isNowFavorite = true;
-        return [
-          ...current,
-          {
-            candidateId,
-            savedAt: new Date().toISOString(),
-          },
-        ];
-      }
+    const currentlyFavorited = favoriteIds.includes(candidateId);
+    toggleMutation.mutate({
+      userId,
+      resourceType: 'candidate',
+      resourceId: candidateId,
+      currentlyFavorited,
     });
-
-    return isNowFavorite;
-  }, []);
+    return !currentlyFavorited;
+  }, [favoriteIds, userId, toggleMutation]);
 
   // Remover favorito
   const removeFavorite = useCallback((candidateId: string): void => {
-    setFavorites((current) => current.filter((fav) => fav.candidateId !== candidateId));
-  }, []);
+    if (favoriteIds.includes(candidateId)) {
+      toggleMutation.mutate({
+        userId,
+        resourceType: 'candidate',
+        resourceId: candidateId,
+        currentlyFavorited: true,
+      });
+    }
+  }, [favoriteIds, userId, toggleMutation]);
 
   // Obter candidatos favoritos com dados completos
   const getFavoriteCandidates = useCallback((): (Candidate & { savedAt: string })[] => {
-    return favorites
-      .map((fav) => {
-        const candidate = mockCandidates.find((c) => c.id === fav.candidateId);
+    return favoriteIds
+      .map((candidateId) => {
+        const candidate = allCandidates.find((c) => c.id === candidateId);
         if (candidate) {
-          return { ...candidate, savedAt: fav.savedAt };
+          return { ...candidate, savedAt: new Date().toISOString() };
         }
         return null;
       })
       .filter((candidate): candidate is Candidate & { savedAt: string } => candidate !== null);
-  }, [favorites]);
+  }, [favoriteIds, allCandidates]);
 
-  // Obter data de quando foi salvo
+  // Obter data de quando foi salvo (approximate since service doesn't store savedAt)
   const getSavedAt = useCallback(
-    (candidateId: string): string | null => {
-      const fav = favorites.find((f) => f.candidateId === candidateId);
-      return fav ? fav.savedAt : null;
+    (_candidateId: string): string | null => {
+      return favoriteIds.includes(_candidateId) ? new Date().toISOString() : null;
     },
-    [favorites]
+    [favoriteIds]
+  );
+
+  // Convert to FavoriteCandidate format for backward compatibility
+  const favorites: FavoriteCandidate[] = useMemo(
+    () => favoriteIds.map((candidateId) => ({ candidateId, savedAt: new Date().toISOString() })),
+    [favoriteIds]
   );
 
   // Contador de favoritos
-  const favoritesCount = useMemo(() => favorites.length, [favorites]);
+  const favoritesCount = useMemo(() => favoriteIds.length, [favoriteIds]);
 
   return {
     favorites,

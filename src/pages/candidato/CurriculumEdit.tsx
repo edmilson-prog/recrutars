@@ -55,7 +55,8 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 
-import { mockCurriculums } from '@/data/mockData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCurriculum, useUpdateCurriculum, useCreateCurriculum } from '@/hooks/useCurriculumsQuery';
 import type {
   Curriculum,
   ExperienceWithCurrent,
@@ -161,6 +162,15 @@ export default function CurriculumEdit() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isNewCurriculum = id === 'novo';
+  const { currentCandidate } = useAuth();
+  const candidateId = currentCandidate?.id ?? '';
+
+  // Service layer hooks
+  const { data: fetchedCurriculum, isLoading: fetchLoading } = useCurriculum(
+    isNewCurriculum ? '' : (id ?? '')
+  );
+  const updateMutation = useUpdateCurriculum();
+  const createMutation = useCreateCurriculum();
 
   // Estado do currículo
   const [curriculum, setCurriculum] = useState<Curriculum | null>(null);
@@ -188,17 +198,16 @@ export default function CurriculumEdit() {
       setCurriculum({
         ...newCurriculumTemplate,
         id: `curriculum-${Date.now()}`,
-        candidateId: 'candidate-1',
+        candidateId,
       } as Curriculum);
       setLoading(false);
-    } else {
-      const found = mockCurriculums.find((c) => c.id === id);
-      if (found) {
-        setCurriculum({ ...found });
+    } else if (!fetchLoading) {
+      if (fetchedCurriculum) {
+        setCurriculum({ ...fetchedCurriculum });
       }
       setLoading(false);
     }
-  }, [id, isNewCurriculum]);
+  }, [id, isNewCurriculum, fetchLoading, fetchedCurriculum, candidateId]);
 
   // Handler genérico para atualizar campos
   const updateField = useCallback(
@@ -341,10 +350,19 @@ export default function CurriculumEdit() {
     if (!curriculum) return;
 
     setSaving(true);
-    // Simular salvamento
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setSaving(false);
-    toast.success('Currículo salvo com sucesso!');
+    try {
+      if (isNewCurriculum) {
+        const { id: _id, createdAt: _ca, updatedAt: _ua, ...rest } = curriculum;
+        await createMutation.mutateAsync(rest);
+      } else {
+        await updateMutation.mutateAsync({ id: curriculum.id, updates: curriculum });
+      }
+      toast.success('Currículo salvo com sucesso!');
+    } catch {
+      toast.error('Erro ao salvar currículo.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {

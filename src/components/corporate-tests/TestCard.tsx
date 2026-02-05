@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Users, CalendarDays, ChevronRight } from 'lucide-react';
 import { TestStatusBadge } from './TestStatusBadge';
+// TODO: PRD-072 — migrate to service layer
 import { mockTestInvitations, mockTestResults } from '@/data/companyTestData';
 import type { CompanyTest } from '@/types/companyTest';
 

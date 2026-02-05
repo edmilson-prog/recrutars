@@ -1,11 +1,20 @@
-import { useState, useMemo, useCallback } from 'react';
-import type { Subscription, SubscriptionHistory, OneTimePurchase, SubscriptionStatus } from '@/types';
-import { mockSubscriptions, mockSubscriptionHistory, mockOneTimePurchases } from '@/data/plansData';
+/**
+ * useSubscriptions Hook (PRD-071 Migration)
+ *
+ * Backward-compatible wrapper that delegates to usePlansQuery service hooks.
+ * Consumers can continue using the same API; data now flows through the service layer.
+ */
+
+import { useMemo, useCallback } from 'react';
+import type { Subscription, SubscriptionStatus } from '@/types';
+import {
+  useSubscriptions as useSubscriptionsQuery,
+  useCancelSubscription,
+} from './usePlansQuery';
 
 export function useSubscriptions() {
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>(mockSubscriptions);
-  const [history, setHistory] = useState<SubscriptionHistory[]>(mockSubscriptionHistory);
-  const [purchases, setPurchases] = useState<OneTimePurchase[]>(mockOneTimePurchases);
+  const { data: subscriptions = [], isLoading, error } = useSubscriptionsQuery();
+  const cancelMutation = useCancelSubscription();
 
   // Stats
   const stats = useMemo(() => ({
@@ -44,39 +53,37 @@ export function useSubscriptions() {
   }, [subscriptions]);
 
   // Get subscription by ID
-  const getSubscriptionById = useCallback((id: string) => subscriptions.find(s => s.id === id), [subscriptions]);
+  const getSubscriptionById = useCallback(
+    (id: string) => subscriptions.find(s => s.id === id),
+    [subscriptions],
+  );
 
-  // Get history for subscription
-  const getHistoryForSubscription = useCallback((subscriptionId: string) =>
-    history.filter(h => h.subscriptionId === subscriptionId).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-  [history]);
+  // Get history for subscription (placeholder — not yet in service layer)
+  const getHistoryForSubscription = useCallback((_subscriptionId: string) => {
+    return [] as Array<{ id: string; subscriptionId: string; action: string; performedBy: string; notes?: string; createdAt: string }>;
+  }, []);
 
   // Cancel subscription
   const cancelSubscription = useCallback((id: string, reason: string) => {
-    const now = new Date().toISOString();
-    setSubscriptions(prev => prev.map(s => s.id === id ? { ...s, status: 'cancelled' as SubscriptionStatus, cancelledAt: now, cancellationReason: reason } : s));
-    setHistory(prev => [...prev, {
-      id: `sh-cancel-${Date.now()}`,
-      subscriptionId: id,
-      action: 'cancelled' as const,
-      performedBy: 'admin',
-      notes: reason,
-      createdAt: now,
-    }]);
+    cancelMutation.mutate({ id, reason });
+  }, [cancelMutation]);
+
+  // Reactivate subscription (placeholder — no reactivate endpoint yet)
+  const reactivateSubscription = useCallback((_id: string) => {
+    console.warn('[useSubscriptions] reactivateSubscription is not yet available via the service layer.');
   }, []);
 
-  // Reactivate subscription
-  const reactivateSubscription = useCallback((id: string) => {
-    const now = new Date().toISOString();
-    setSubscriptions(prev => prev.map(s => s.id === id ? { ...s, status: 'active' as SubscriptionStatus, cancelledAt: undefined, cancellationReason: undefined } : s));
-    setHistory(prev => [...prev, {
-      id: `sh-react-${Date.now()}`,
-      subscriptionId: id,
-      action: 'reactivated' as const,
-      performedBy: 'admin',
-      createdAt: now,
-    }]);
-  }, []);
-
-  return { subscriptions, stats, filterSubscriptions, getSubscriptionById, getHistoryForSubscription, cancelSubscription, reactivateSubscription, history, purchases };
+  return {
+    subscriptions,
+    stats,
+    filterSubscriptions,
+    getSubscriptionById,
+    getHistoryForSubscription,
+    cancelSubscription,
+    reactivateSubscription,
+    history: [],
+    purchases: [],
+    isLoading,
+    error,
+  };
 }

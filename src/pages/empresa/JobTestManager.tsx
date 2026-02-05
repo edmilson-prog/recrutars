@@ -30,7 +30,7 @@ import {
   InviteManager,
 } from '@/components/job-assessment';
 import type { InternalCandidate } from '@/components/job-assessment';
-import { mockJobs } from '@/data/mockData';
+import { useJob } from '@/hooks/useJobsQuery';
 import { mockJobAssessments, mockJobAssessmentInvites } from '@/data/behavioralAssessmentData';
 import { JOB_TEST_CONFIG } from '@/data/behavioralAssessmentData';
 import { useToast } from '@/hooks/use-toast';
@@ -74,8 +74,10 @@ export default function JobTestManager() {
   const [activeTab, setActiveTab] = useState('invites');
   const [invites, setInvites] = useState(mockJobAssessmentInvites);
 
-  // Buscar dados da vaga e assessment
-  const job = mockJobs.find((j) => j.id === jobId);
+  // Fetch data from service layer
+  const { data: job } = useJob(jobId || '');
+
+  // Buscar dados do assessment
   const assessment = mockJobAssessments.find((a) => a.jobId === jobId);
 
   if (!job) {

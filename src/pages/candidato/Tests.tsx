@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { mockBehavioralTests } from '@/data/mockData';
+import { useCreateBehavioralTest } from '@/hooks/useBehavioralTestsQuery';
 
 const STORAGE_KEY = 'gauge-pro-progress';
 
@@ -178,6 +178,7 @@ const profilesData = {
 };
 
 export default function CandidateTests() {
+  const createTest = useCreateBehavioralTest();
   const [testStarted, setTestStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -283,10 +284,9 @@ export default function CandidateTests() {
 
       setScores(newScores);
 
-      // Save result to mock data
+      // Save result via service layer
       const dominantKey = getDominantProfileKey(newScores);
       const newTest = {
-        id: `test-${Date.now()}`,
         candidateId: 'candidate-1',
         candidateName: 'Candidato Atual',
         status: 'completed' as const,
@@ -302,7 +302,7 @@ export default function CandidateTests() {
           watchPoints: ['Ponto de atenção 1', 'Ponto de atenção 2'],
         },
       };
-      mockBehavioralTests.push(newTest);
+      createTest.mutate(newTest);
 
       setIsProcessing(false);
       setTestCompleted(true);

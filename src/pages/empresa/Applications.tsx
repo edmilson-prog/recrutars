@@ -4,7 +4,7 @@
  * PRD-016: Envio de Testes
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -35,6 +35,7 @@ import {
   FileDown,
   Calendar,
   MoreVertical,
+  Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -76,17 +77,20 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { useJobsByCompany } from '@/hooks/useJobsQuery';
 import {
-  mockJobs,
-  mockApplications,
-  mockCandidates,
-  mockApplicationNotes,
-  mockApplicationHistory,
-  mockMessages,
-  mockConversations,
+  useApplications as useApplicationsQuery,
+  useUpdateApplicationStatus,
+  useAddApplicationNote,
+} from '@/hooks/useApplicationsQuery';
+import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
+import { useAuth } from '@/contexts/AuthContext';
+import {
   getCandidateBehavioralProfile,
   getIdealBehavioralProfile,
-} from '@/data/mockData';
+} from '@/lib/behavioralProfiles';
+import type { Conversation } from '@/types/message';
 import type { Application, ApplicationStatus, ApplicationNote, ApplicationHistory, TestRequestStatus, Message } from '@/types';
 import type { CandidateForComparison } from '@/types/disc';
 import { toast } from 'sonner';
@@ -156,15 +160,18 @@ const DEADLINE_OPTIONS = [
 const DEFAULT_TEST_MESSAGE = `Olá! Para darmos continuidade ao processo seletivo, gostaríamos que você realizasse nosso teste comportamental Gauge-Pro. O teste leva cerca de 15-20 minutos e nos ajuda a entender melhor seu perfil.`;
 
 // PRD-035: Cálculo dinâmico de match - esta função é usada em múltiplos lugares
-// selectedJobId é usado para determinar qual vaga usar no cálculo
+// NOTE: This uses candidatesMap and companyJobs from the component scope
+// via closures, set during render
+let _candidatesMap: Record<string, import('@/types').Candidate> = {};
+let _companyJobs: import('@/types').Job[] = [];
 let currentSelectedJobId = '';
 const calculateMatch = (candidateId: string): number => {
-  const candidate = mockCandidates.find((c) => c.id === candidateId);
+  const candidate = _candidatesMap[candidateId];
   if (!candidate) return 0;
 
   // Usa a vaga selecionada atualmente ou a primeira vaga da empresa
-  const job = mockJobs.find((j) => j.id === currentSelectedJobId) ||
-    mockJobs.find((j) => j.companyId === 'company-1' && j.status === 'active');
+  const job = _companyJobs.find((j) => j.id === currentSelectedJobId) ||
+    _companyJobs.find((j) => j.status === 'active');
   if (!job) return 0;
 
   const idealProfile = getIdealBehavioralProfile(job.id);
@@ -204,6 +211,33 @@ const generateMockExperiences = (candidateTitle: string, years: number) => {
 };
 
 export default function CompanyApplications() {
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
+
+  // Fetch data from service layer
+  const { data: fetchedCompanyJobs = [], isLoading: isLoadingJobs } = useJobsByCompany(companyId);
+  const { data: applicationsResult, isLoading: isLoadingApps } = useApplicationsQuery({ companyId });
+  const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates();
+  const { data: behavioralTests = [] } = useBehavioralTests();
+
+  const candidatesMap = useMemo(() => {
+    const candidates = candidatesResult?.data ?? [];
+    const map: Record<string, import('@/types').Candidate> = {};
+    candidates.forEach(c => { map[c.id] = c; });
+    return map;
+  }, [candidatesResult]);
+
+  // Update module-level refs for calculateMatch
+  _candidatesMap = candidatesMap;
+  _companyJobs = fetchedCompanyJobs;
+
+  const applications_ = useMemo(() => applicationsResult?.data ?? [], [applicationsResult]);
+  const isLoading = isLoadingJobs || isLoadingApps || isLoadingCandidates;
+
+  // Mutations
+  const updateStatusMutation = useUpdateApplicationStatus();
+  const addNoteMutation = useAddApplicationNote();
+
   // State
   const [selectedJobId, setSelectedJobId] = useState<string>('');
   const [selectedApplication, setSelectedApplication] =
@@ -217,22 +251,33 @@ export default function CompanyApplications() {
   const [requestTestModalOpen, setRequestTestModalOpen] = useState(false);
   const [testMessage, setTestMessage] = useState(DEFAULT_TEST_MESSAGE);
   const [testDeadline, setTestDeadline] = useState('7');
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
+  // TODO: Replace with messages service hook when available
+  const [messages, setMessages] = useState<Message[]>([]);
 
   // Filters
   const [matchFilter, setMatchFilter] = useState<string>('all');
   const [profileFilter, setProfileFilter] = useState<string>('all');
   const [testFilter, setTestFilter] = useState<string>('all');
 
-  // Local state for applications (to allow status changes)
-  const [applications, setApplications] = useState<Application[]>(mockApplications);
+  // Local state for applications (to allow status changes within the session)
+  const [localStatusOverrides, setLocalStatusOverrides] = useState<Record<string, Partial<Application>>>({});
 
-  // Notes state (local)
-  const [notes, setNotes] = useState<ApplicationNote[]>(mockApplicationNotes);
+  // Merge fetched applications with local overrides
+  const applications = useMemo(() =>
+    applications_.map(app =>
+      localStatusOverrides[app.id] ? { ...app, ...localStatusOverrides[app.id] } : app
+    ),
+    [applications_, localStatusOverrides]
+  );
+
+  // Notes state (local + fetched)
+  const [localNotes, setLocalNotes] = useState<ApplicationNote[]>([]);
+  const notes = localNotes; // Will be populated from fetched + local
   const [newNote, setNewNote] = useState('');
 
   // History state (local)
-  const [history, setHistory] = useState<ApplicationHistory[]>(mockApplicationHistory);
+  const [localHistory, setLocalHistory] = useState<ApplicationHistory[]>([]);
+  const history = localHistory;
 
   // PRD-002-dgn: Seleção de candidatos para comparação
   const {
@@ -249,13 +294,14 @@ export default function CompanyApplications() {
 
   // PRD-034: Agendamento de entrevistas
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const { createInterview } = useCompanyInterviews('company-1');
+  const { createInterview } = useCompanyInterviews(companyId);
 
-  // Get company jobs (mock: company-1)
-  const companyJobs = mockJobs.filter(
-    (job) =>
-      job.companyId === 'company-1' &&
-      (job.status === 'active' || job.status === 'paused')
+  // Get company jobs (active or paused)
+  const companyJobs = useMemo(() =>
+    fetchedCompanyJobs.filter(
+      (job) => job.status === 'active' || job.status === 'paused'
+    ),
+    [fetchedCompanyJobs]
   );
 
   // Set default job on load
@@ -277,7 +323,7 @@ export default function CompanyApplications() {
 
   // Apply filters
   const filteredApplications = jobApplications.filter((app) => {
-    const candidate = mockCandidates.find((c) => c.id === app.candidateId);
+    const candidate = candidatesMap[app.candidateId];
     if (!candidate) return false;
 
     const match = calculateMatch(app.candidateId);
@@ -313,7 +359,7 @@ export default function CompanyApplications() {
 
   // PRD-032: Candidatos para exportação
   const candidatesForExport: Candidate[] = filteredApplications
-    .map((app) => mockCandidates.find((c) => c.id === app.candidateId))
+    .map((app) => candidatesMap[app.candidateId])
     .filter((c): c is Candidate => c !== undefined);
 
   const navigate = useNavigate();
@@ -381,14 +427,14 @@ export default function CompanyApplications() {
 
     const oldStatus = app.status;
 
-    // Update application
-    setApplications((prev) =>
-      prev.map((a) =>
-        a.id === applicationId
-          ? { ...a, status: newStatus, updatedAt: new Date().toISOString().split('T')[0] }
-          : a
-      )
-    );
+    // Optimistic local update
+    setLocalStatusOverrides((prev) => ({
+      ...prev,
+      [applicationId]: { status: newStatus, updatedAt: new Date().toISOString().split('T')[0] },
+    }));
+
+    // Fire mutation
+    updateStatusMutation.mutate({ id: applicationId, status: newStatus });
 
     // Update selected application if it's the one being moved
     if (selectedApplication?.id === applicationId) {
@@ -406,7 +452,7 @@ export default function CompanyApplications() {
       changedBy: 'Você',
       changedAt: new Date().toISOString(),
     };
-    setHistory((prev) => [...prev, newHistoryEntry]);
+    setLocalHistory((prev) => [...prev, newHistoryEntry]);
 
     toast.success(
       `Candidato movido para ${STATUS_CONFIG[newStatus]?.label || newStatus}`
@@ -418,14 +464,18 @@ export default function CompanyApplications() {
 
     const oldStatus = selectedApplication.status;
 
-    // Update application
-    setApplications((prev) =>
-      prev.map((a) =>
-        a.id === selectedApplication.id
-          ? { ...a, status: 'rejected' as ApplicationStatus, updatedAt: new Date().toISOString().split('T')[0] }
-          : a
-      )
-    );
+    // Optimistic local update
+    setLocalStatusOverrides((prev) => ({
+      ...prev,
+      [selectedApplication.id]: { status: 'rejected' as ApplicationStatus, updatedAt: new Date().toISOString().split('T')[0] },
+    }));
+
+    // Fire mutation
+    updateStatusMutation.mutate({
+      id: selectedApplication.id,
+      status: 'rejected',
+      reason: rejectReason || undefined,
+    });
 
     // Add history entry
     const newHistoryEntry: ApplicationHistory = {
@@ -437,7 +487,7 @@ export default function CompanyApplications() {
       changedAt: new Date().toISOString(),
       reason: rejectReason || undefined,
     };
-    setHistory((prev) => [...prev, newHistoryEntry]);
+    setLocalHistory((prev) => [...prev, newHistoryEntry]);
 
     toast.success('Candidato reprovado');
     setRejectDialogOpen(false);
@@ -456,7 +506,11 @@ export default function CompanyApplications() {
       author: 'Você',
       createdAt: new Date().toISOString(),
     };
-    setNotes((prev) => [...prev, newNoteEntry]);
+    setLocalNotes((prev) => [...prev, newNoteEntry]);
+    addNoteMutation.mutate({
+      applicationId: selectedApplication.id,
+      content: newNote.trim(),
+    });
     setNewNote('');
     toast.success('Anotação adicionada');
   };
@@ -470,20 +524,17 @@ export default function CompanyApplications() {
       ? new Date(Date.now() + parseInt(testDeadline) * 24 * 60 * 60 * 1000).toISOString()
       : undefined;
 
-    // Update application testStatus
-    setApplications((prev) =>
-      prev.map((a) =>
-        a.id === selectedApplication.id
-          ? {
-              ...a,
-              testStatus: 'solicitado' as TestRequestStatus,
-              testRequestedAt: new Date().toISOString(),
-              testDeadline: deadlineDate,
-              updatedAt: new Date().toISOString().split('T')[0],
-            }
-          : a
-      )
-    );
+    // Optimistic local update for testStatus
+    setLocalStatusOverrides((prev) => ({
+      ...prev,
+      [selectedApplication.id]: {
+        ...(prev[selectedApplication.id] || {}),
+        testStatus: 'solicitado' as TestRequestStatus,
+        testRequestedAt: new Date().toISOString(),
+        testDeadline: deadlineDate,
+        updatedAt: new Date().toISOString().split('T')[0],
+      },
+    }));
 
     // Update selected application
     setSelectedApplication((prev) =>
@@ -497,10 +548,8 @@ export default function CompanyApplications() {
         : prev
     );
 
-    // Find or create conversation
-    let conversation = mockConversations.find(
-      (c) => c.candidateId === selectedApplication.candidateId && c.jobId === selectedApplication.jobId
-    );
+    // TODO: Replace with conversations service hook when available
+    const conversation: Conversation | undefined = undefined;
 
     const conversationId = conversation?.id || `conv-${Date.now()}`;
 
@@ -508,7 +557,7 @@ export default function CompanyApplications() {
     const newMessage: Message = {
       id: `msg-${Date.now()}`,
       conversationId,
-      senderId: 'company-1',
+      senderId: companyId,
       senderName: 'Tech Solutions',
       senderType: 'company',
       receiverId: selectedApplication.candidateId,
@@ -547,7 +596,7 @@ export default function CompanyApplications() {
 
   // Get candidate for selected application
   const selectedCandidate = selectedApplication
-    ? mockCandidates.find((c) => c.id === selectedApplication.candidateId)
+    ? candidatesMap[selectedApplication.candidateId] ?? null
     : null;
 
   const selectedMatch = selectedApplication
@@ -565,10 +614,10 @@ export default function CompanyApplications() {
 
   // PRD-002-dgn: Converter candidato para formato de comparação
   const convertToComparisonCandidate = (candidateId: string): CandidateForComparison | null => {
-    const candidate = mockCandidates.find((c) => c.id === candidateId);
+    const candidate = candidatesMap[candidateId];
     if (!candidate) return null;
 
-    const behavioralProfile = getCandidateBehavioralProfile(candidateId);
+    const behavioralProfile = getCandidateBehavioralProfile(candidateId, behavioralTests);
     if (!behavioralProfile) return null;
 
     // PRD-035: Usa cálculo dinâmico de match
@@ -678,8 +727,15 @@ export default function CompanyApplications() {
           </div>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
+
         {/* Kanban Board */}
-        {selectedJobId ? (
+        {!isLoading && selectedJobId ? (
           <>
             <DndContext
               sensors={sensors}
@@ -1332,7 +1388,7 @@ export default function CompanyApplications() {
         onOpenChange={setShowComparisonModal}
         candidates={selectedCandidatesForComparison}
         onInviteToInterview={(candidateId) => {
-          const candidate = mockCandidates.find((c) => c.id === candidateId);
+          const candidate = candidatesMap[candidateId];
           if (candidate) {
             toast.success(`Candidato ${candidate.name} movido para Entrevista`);
             // Encontrar a candidatura e mover para entrevista
@@ -1495,9 +1551,7 @@ function ApplicationCard({
   isDragging = false,
   isDragOverlay = false,
 }: ApplicationCardProps) {
-  const candidate = mockCandidates.find(
-    (c) => c.id === application.candidateId
-  );
+  const candidate = _candidatesMap[application.candidateId];
   const match = calculateMatch(application.candidateId);
 
   if (!candidate) return null;

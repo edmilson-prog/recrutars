@@ -42,6 +42,7 @@ import {
 import { toast } from 'sonner';
 import { useFavoriteJobs, formatSavedAt, getDaysUntilDeadline } from '@/hooks/useFavoriteJobs';
 import { useApplications } from '@/hooks/useApplications';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Job } from '@/types';
 
 type SortOption = 'recent' | 'match' | 'deadline';
@@ -49,7 +50,9 @@ type SortOption = 'recent' | 'match' | 'deadline';
 export default function SavedJobs() {
   const navigate = useNavigate();
   const { getFavoriteJobs, removeFavorite, toggleFavorite } = useFavoriteJobs();
-  const { hasApplied } = useApplications('candidate-1');
+  const { currentCandidate } = useAuth();
+  const candidateId = currentCandidate?.id ?? '';
+  const { hasApplied } = useApplications(candidateId);
 
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [jobToRemove, setJobToRemove] = useState<string | null>(null);

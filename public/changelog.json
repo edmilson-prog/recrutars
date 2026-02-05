@@ -1,13 +1,188 @@
 {
   "versions": [
     {
+      "version": "1.2.0",
+      "codename": "Profile Consolidation",
+      "type": "minor",
+      "releaseDate": "2026-02-05",
+      "prd": "",
+      "description": "Consolidacao do perfil do candidato: campo Nome de Exibicao e nova aba Localizacao com cidade, estado e disponibilidade para mudanca.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Campo 'Nome de Exibicao' na tab Perfil para candidatos definirem como querem ser chamados",
+            "Nova aba 'Localizacao' com campos: Cidade, Estado (select 27 UFs), Disponivel para Mudanca (toggle)",
+            "Migration SQL com 4 novas colunas na tabela candidates + indice para buscas por localizacao",
+            "Image Cropper para avatar: modal de recorte com zoom e posicionamento antes do upload"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Grid de abas em Profile.tsx expandido de 4 para 5 colunas",
+            "brazilianStates exportado de settingsConfig.ts para reutilizacao",
+            "Interface Candidate estendida com displayName, city, state, openToRelocation",
+            "Header e avatar agora exibem Nome de Exibicao (com fallback para nome completo)"
+          ]
+        },
+        {
+          "type": "removed",
+          "items": [
+            "Campo 'Localizacao' redundante da tab Perfil (substituido pela aba dedicada com campos estruturados)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.1.0",
+      "codename": "Stability",
+      "type": "minor",
+      "releaseDate": "2026-02-05",
+      "prd": "",
+      "description": "Correcoes de persistencia de dados do perfil do candidato, IDs mock hardcoded em 26 arquivos, e erro de Select.Item com value vazio.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Perfil do Candidato: dados agora persistem corretamente no Supabase (handleSave chama mutateAsync)",
+            "dateOfBirth: string vazia convertida para null (tipo DATE do PostgreSQL)",
+            "26 arquivos com IDs mock hardcoded ('candidate-1', 'company-1') corrigidos para '' (desabilita queries)",
+            "Select.Item com value vazio em brazilianStates corrigido para value: '__none__'"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Import de useAuth adicionado em 5 arquivos que precisavam de currentCompany/currentCandidate"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "codename": "Genesis",
+      "type": "major",
+      "releaseDate": "2026-02-04",
+      "prd": "PRD-072",
+      "description": "Limpeza final — mockData.ts deletado, 20 .mock.ts removidos, service factories simplificadas. Todos os modulos apontam para Supabase.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "removed",
+          "items": [
+            "mockData.ts (~4.000 linhas de dados simulados)",
+            "20 arquivos .mock.ts de servicos",
+            "5 arquivos de dados mock-only (featureFlagsData, plansData, rbacData, reportsData, mockData)",
+            "DATA_SOURCE toggle e logica condicional mock/supabase"
+          ]
+        },
+        {
+          "type": "added",
+          "items": [
+            "src/lib/behavioralProfiles.ts (helpers de perfil comportamental extraidos do mockData)"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "20 service factories simplificadas para importacao direta do supabase (sem branch condicional)",
+            "14 paginas e hooks migrados para consumir service layer ao inves de imports mock"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.60.0",
+      "codename": "Migration",
+      "type": "minor",
+      "releaseDate": "2026-02-04",
+      "prd": "PRD-064, PRD-065, PRD-066, PRD-067, PRD-068, PRD-069, PRD-070, PRD-071",
+      "description": "Migracao completa mock→Supabase: 21 migrations SQL, 64+ tabelas com RLS, service layer com 62 arquivos, React Query hooks, UI migrada.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "21 migrations SQL com 64+ tabelas, RLS policies, triggers e FTS",
+            "Seeds de desenvolvimento e dados de referencia permanentes",
+            "62 arquivos de service layer (interfaces, factories, implementacoes Supabase)",
+            "18 React Query hooks com query key factories, paginacao, mutations e cache invalidation",
+            "DATA_SOURCE toggle para migracao incremental por modulo"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "UI migrada de imports mock diretos para service hooks via React Query",
+            "RBAC engine refatorado com data store injetavel via configureRBAC()",
+            "Recommendation engines parametrizados (aceitam dados como argumento)",
+            "getCandidateBehavioralProfile() recebe array de testes como parametro"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.55.0",
+      "codename": "Keystone",
+      "type": "minor",
+      "releaseDate": "2026-02-04",
+      "prd": "PRD-063",
+      "description": "Magic Link login, tela 'Verifique seu email' pos-registro, trigger expandido handle_new_user() para criar profiles+candidates/companies atomicamente.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Magic Link via supabase.auth.signInWithOtp()",
+            "Tela de verificacao de email pos-registro",
+            "Trigger expandido handle_new_user() para criacao atomica de profiles+candidates/companies"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "signUp() simplificado, retorna needsEmailConfirmation ao inves de login automatico"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.54.0",
+      "codename": "Foundation",
+      "type": "minor",
+      "releaseDate": "2026-02-04",
+      "prd": "PRD-063",
+      "description": "Integracao Supabase como backend. Auth real com login/registro/reset, schema SQL com RLS, seed de desenvolvimento.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Client Supabase tipado (src/lib/supabase.ts)",
+            "Schema SQL com RLS policies e triggers (sql/migrations/)",
+            "AuthContext real com Supabase Auth (login, registro, reset de senha)",
+            "Seed de desenvolvimento com 9 usuarios de teste (sql/seeds/)"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "AuthContext migrado de mock hardcoded para Supabase Auth real"
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.53.0",
       "codename": "Sentinel",
       "type": "minor",
       "releaseDate": "2026-02-03",
       "prd": "PRD-058, PRD-059, PRD-060, PRD-061, PRD-062",
       "description": "Painel Admin Avancado com 5 modulos: RBAC Guardian, Planos Commerce, Feature Flags Switch, Vagas Sentinel, Relatorios Radar. Sidebar admin convertido de submenus para tabs horizontais nas paginas",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

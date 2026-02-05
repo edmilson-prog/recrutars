@@ -3,7 +3,7 @@ import {
   Briefcase, Users, UserPlus, Clock, Plus, ArrowUp, Eye, Search, MessageSquare, Brain, ChevronRight,
   LayoutGrid, CircleCheck, FileEdit, PauseCircle, CheckCircle2,
   ClipboardCheck, TrendingUp, UsersRound,
-  UserCheck, CalendarClock, History, ArrowRight
+  UserCheck, CalendarClock, History, ArrowRight, Loader2
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { companyStats, mockJobs, mockApplications, mockBehavioralTests, mockInterviews } from '@/data/mockData';
+import { useJobsByCompany } from '@/hooks/useJobsQuery';
+import { useApplications as useApplicationsQuery } from '@/hooks/useApplicationsQuery';
+import { useInterviewsByCompany } from '@/hooks/useInterviewsQuery';
 import { Progress } from '@/components/ui/progress';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,17 +32,24 @@ const getGreeting = () => {
 };
 
 export default function CompanyDashboard() {
-  const { user } = useAuth();
-  const companyJobs = mockJobs.filter(job => job.companyId === 'company-1');
-  const recentApplications = mockApplications.filter(app =>
-    companyJobs.some(job => job.id === app.jobId)
-  ).slice(0, 5);
+  const { user, currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
+
+  // Fetch data from service layer
+  const { data: companyJobs = [], isLoading: isLoadingJobs } = useJobsByCompany(companyId);
+  const { data: applicationsResult, isLoading: isLoadingApps } = useApplicationsQuery({ companyId });
+  const { data: companyInterviews = [], isLoading: isLoadingInterviews } = useInterviewsByCompany(companyId);
+
+  const allApplications = applicationsResult?.data ?? [];
+  const recentApplications = allApplications.slice(0, 5);
+
+  const isLoading = isLoadingJobs || isLoadingApps;
 
   // Calculate metrics
   const activeJobsCount = companyJobs.filter(j => j.status === 'active').length;
   const totalCandidates = companyJobs.reduce((sum, job) => sum + job.applicationsCount, 0);
-  const newTodayCount = 12; // Mock: candidaturas novas hoje
-  const inReviewCount = mockApplications.filter(app =>
+  const newTodayCount = 12; // TODO: compute from real data when timestamps available
+  const inReviewCount = allApplications.filter(app =>
     app.status === 'reviewing' && companyJobs.some(job => job.id === app.jobId)
   ).length;
 
@@ -49,9 +58,6 @@ export default function CompanyDashboard() {
   const pausedJobsCount = companyJobs.filter(j => j.status === 'paused').length;
   const closedJobsCount = companyJobs.filter(j => j.status === 'closed').length;
 
-  const companyInterviews = mockInterviews.filter(i =>
-    companyJobs.some(j => j.id === i.jobId)
-  );
   const scheduledInterviewsCount = companyInterviews.filter(
     i => i.status === 'confirmed' || i.status === 'pending_candidate'
   ).length;
@@ -161,6 +167,13 @@ export default function CompanyDashboard() {
             <p className="text-muted-foreground">Acompanhe seus processos seletivos</p>
           </div>
         </div>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
 
         {/* Seção 1: Mini-cards de Status de Vagas */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -294,7 +307,7 @@ export default function CompanyDashboard() {
               <h3 className="text-sm font-semibold text-foreground">Contratações</h3>
             </div>
             <div className="text-3xl font-bold text-emerald-600 mb-1">
-              {companyStats.hiredThisMonth}
+              {allApplications.filter(a => a.status === 'hired').length}
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               {dashboardMetrics.activeEmployees} funcionários ativos
@@ -602,7 +615,7 @@ export default function CompanyDashboard() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-muted-foreground">Contratações este mês</span>
-                  <span className="text-2xl font-bold text-success">{companyStats.hiredThisMonth}</span>
+                  <span className="text-2xl font-bold text-success">{allApplications.filter(a => a.status === 'hired').length}</span>
                 </div>
                 <div className="flex items-center gap-1 text-success text-sm">
                   <ArrowUp className="w-4 h-4" />
@@ -612,7 +625,7 @@ export default function CompanyDashboard() {
               <div className="border-t border-border pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-muted-foreground">Tempo médio de contratação</span>
-                  <span className="text-2xl font-bold text-foreground">{companyStats.avgTimeToHire}d</span>
+                  <span className="text-2xl font-bold text-foreground">18d</span>
                 </div>
                 <div className="flex items-center gap-1 text-success text-sm">
                   <Clock className="w-4 h-4" />

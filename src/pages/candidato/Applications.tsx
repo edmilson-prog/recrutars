@@ -17,6 +17,7 @@ import {
   Award,
   Ban,
   ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useApplications } from '@/hooks/useApplications';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { ApplicationStatus } from '@/types';
 
@@ -57,7 +59,9 @@ const filterOptions = [
 
 export default function CandidateApplications() {
   const navigate = useNavigate();
-  const { applications, cancelApplication } = useApplications('candidate-1');
+  const { currentCandidate } = useAuth();
+  const candidateId = currentCandidate?.id ?? '';
+  const { applications, isLoading, cancelApplication } = useApplications(candidateId);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
@@ -156,6 +160,13 @@ export default function CandidateApplications() {
             ))}
           </div>
         </div>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
 
         {/* Applications List */}
         <div className="space-y-4">

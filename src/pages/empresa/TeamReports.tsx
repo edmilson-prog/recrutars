@@ -16,14 +16,14 @@ import { Link } from 'react-router-dom';
 import { pdf } from '@react-pdf/renderer';
 import { EvolutionPDFReport } from '@/components/team-management/pdf/EvolutionPDFReport';
 import { CulturePDFReport } from '@/components/team-management/pdf/CulturePDFReport';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTeamMembers, useDepartments, usePositions } from '@/hooks/useTeamsQuery';
 import {
-  mockTeamMembers,
-  mockDepartments,
-  mockPositions,
   mockTestHistory,
   mockEvolutionAnnotations,
   mockCultureSnapshots,
 } from '@/data/teamManagementData';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 /** Download a @react-pdf/renderer document as a PDF file. */
@@ -37,9 +37,6 @@ async function downloadPDF(doc: React.ReactElement, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-/** Members that have at least one test history entry. */
-const mappedMembers = mockTeamMembers.filter((m) => m.gaugeStatus === 'mapped');
-
 /** Latest culture snapshot for current DNA scores and manifesto. */
 const latestSnapshot = [...mockCultureSnapshots].sort(
   (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
@@ -47,6 +44,18 @@ const latestSnapshot = [...mockCultureSnapshots].sort(
 
 export default function TeamReports() {
   const { toast } = useToast();
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
+
+  const { data: allMembers = [], isLoading: membersLoading } = useTeamMembers({ companyId });
+  const { data: allDepartments = [], isLoading: deptsLoading } = useDepartments(companyId);
+  const { data: allPositions = [], isLoading: positionsLoading } = usePositions('all');
+
+  const isLoading = membersLoading || deptsLoading || positionsLoading;
+
+  /** Members that have at least one test history entry. */
+  const mappedMembers = allMembers.filter((m) => m.gaugeStatus === 'mapped');
+
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
   const [generatingEvolution, setGeneratingEvolution] = useState(false);
   const [generatingCulture, setGeneratingCulture] = useState(false);
@@ -60,9 +69,9 @@ export default function TeamReports() {
     setGeneratingEvolution(true);
 
     try {
-      const member = mockTeamMembers.find((m) => m.id === selectedMemberId)!;
-      const dept = mockDepartments.find((d) => d.id === member.departmentId);
-      const position = mockPositions.find((p) => p.id === member.positionId);
+      const member = allMembers.find((m) => m.id === selectedMemberId)!;
+      const dept = allDepartments.find((d) => d.id === member.departmentId);
+      const position = allPositions.find((p) => p.id === member.positionId);
       const history = mockTestHistory
         .filter((h) => h.memberId === member.id)
         .sort((a, b) => new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime());
@@ -123,6 +132,16 @@ export default function TeamReports() {
       setGeneratingCulture(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="company">

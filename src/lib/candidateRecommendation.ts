@@ -14,7 +14,6 @@
 import type { Candidate, Job } from '@/types';
 import type { MatchResult, BehavioralProfile } from '@/types/disc';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
-import { mockJobs, mockCandidates, mockApplications, idealBehavioralProfiles } from '@/data/mockData';
 
 // Tipos do motor de recomendação de candidatos
 export interface SuggestionReason {
@@ -67,6 +66,14 @@ const RECOMMENDATION_WEIGHTS = {
   history: 5,
 };
 
+/** Data bundle for the candidate recommendation engine. */
+export interface CandidateRecommendationData {
+  jobs: Job[];
+  candidates: Candidate[];
+  applications: Array<{ candidateId: string; jobId: string }>;
+  idealProfiles: Record<string, BehavioralProfile>;
+}
+
 // Score mínimo para aparecer nas recomendações
 const MIN_RECOMMENDATION_SCORE = 60;
 
@@ -76,11 +83,12 @@ const MIN_RECOMMENDATION_SCORE = 60;
 export function applyExclusionFilters(
   candidates: Candidate[],
   signals: CandidateSignals,
-  jobId: string
+  jobId: string,
+  applications: Array<{ candidateId: string; jobId: string }> = [],
 ): Candidate[] {
   // IDs de candidatos que já aplicaram para a vaga
   const appliedCandidateIds = new Set(
-    mockApplications
+    applications
       .filter(app => app.jobId === jobId)
       .map(app => app.candidateId)
   );
@@ -284,11 +292,13 @@ export function calculateCandidateScore(
 }
 
 /**
- * Obtém candidatos sugeridos para uma vaga
+ * Obtém candidatos sugeridos para uma vaga.
+ * @param data - bundle de dados (jobs, candidates, applications, idealProfiles)
  */
 export function getSuggestedCandidates(
   jobId: string,
   signals: CandidateSignals,
+  data: CandidateRecommendationData,
   options?: {
     limit?: number;
     minScore?: number;
@@ -298,20 +308,20 @@ export function getSuggestedCandidates(
   const { limit = 10, minScore = MIN_RECOMMENDATION_SCORE, lastCheckDate } = options || {};
 
   // Encontrar vaga
-  const job = mockJobs.find(j => j.id === jobId);
+  const job = data.jobs.find(j => j.id === jobId);
   if (!job) {
     return [];
   }
 
   // Filtrar candidatos
-  const eligibleCandidates = applyExclusionFilters(mockCandidates, signals, jobId);
+  const eligibleCandidates = applyExclusionFilters(data.candidates, signals, jobId, data.applications);
 
   // Calcular scores para cada candidato
   const recommendations: CandidateRecommendation[] = [];
 
   for (const candidate of eligibleCandidates) {
     // Calcular match usando o motor existente
-    const idealProfile = idealBehavioralProfiles[jobId];
+    const idealProfile = data.idealProfiles[jobId];
     const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
 
     // Calcular boost de histórico
@@ -358,9 +368,10 @@ export function getSuggestedCandidates(
 export function countNewCandidateRecommendations(
   jobId: string,
   signals: CandidateSignals,
+  data: CandidateRecommendationData,
   lastCheckDate: string
 ): number {
-  const recommendations = getSuggestedCandidates(jobId, signals, {
+  const recommendations = getSuggestedCandidates(jobId, signals, data, {
     lastCheckDate,
     limit: 50, // Buscar mais para contar
   });
@@ -410,11 +421,13 @@ export function getCandidateScoreBadgeClasses(score: number): string {
 }
 
 /**
- * Obtém candidatos sugeridos consolidados para todas as vagas ativas de uma empresa
+ * Obtém candidatos sugeridos consolidados para todas as vagas ativas de uma empresa.
+ * @param data - bundle de dados (jobs, candidates, applications, idealProfiles)
  */
 export function getSuggestedCandidatesForCompany(
   companyId: string,
   signals: CandidateSignals,
+  data: CandidateRecommendationData,
   options?: {
     limit?: number;
     minScore?: number;
@@ -423,12 +436,12 @@ export function getSuggestedCandidatesForCompany(
   const { limit = 3, minScore = 60 } = options || {};
 
   // Encontrar vagas ativas da empresa
-  const activeJobs = mockJobs.filter(j => j.companyId === companyId && j.status === 'active');
+  const activeJobs = data.jobs.filter(j => j.companyId === companyId && j.status === 'active');
 
   const results: { jobId: string; jobTitle: string; candidates: CandidateRecommendation[] }[] = [];
 
   for (const job of activeJobs) {
-    const candidates = getSuggestedCandidates(job.id, signals, { limit, minScore });
+    const candidates = getSuggestedCandidates(job.id, signals, data, { limit, minScore });
     if (candidates.length > 0) {
       results.push({
         jobId: job.id,

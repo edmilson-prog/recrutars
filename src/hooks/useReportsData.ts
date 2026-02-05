@@ -1,20 +1,21 @@
 /**
- * Hook: useReportsData
- * PRD-059: Relatorios "Radar"
+ * Hook: useReportsData (PRD-071 Migration)
  *
- * Central hook that provides filtered metrics, financial/growth/operational KPIs,
- * weekly/monthly aggregations, cohort data, and period comparisons.
+ * Backward-compatible wrapper that delegates to useReportsQuery service hooks.
+ * Preserves the same API surface: time filter, KPI computations, aggregations.
+ *
+ * Data now flows through the service layer (useDailyMetrics) instead of
+ * importing mockDailyMetrics directly.
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import type {
   TimeFilter,
-  PlatformMetricsDaily,
   WeeklyAggregate,
   MonthlyAggregate,
   CohortRow,
 } from '@/types';
-import { mockDailyMetrics } from '@/data/reportsData';
+import { useDailyMetrics } from './useReportsQuery';
 import {
   filterMetricsByPeriod,
   calculateMRR,
@@ -26,16 +27,75 @@ import {
   aggregateByWeek,
   aggregateByMonth,
   buildCohortTable,
-  buildFunnel,
   comparePeriods,
 } from '@/lib/analytics';
 
 // ---------------------------------------------------------------------------
-// Helper: compute the "previous" period of the same length
+// Helper: compute date range from a TimeFilter preset
 // ---------------------------------------------------------------------------
 
-function getPreviousPeriodFilter(filter: TimeFilter): TimeFilter {
+function getDateRange(filter: TimeFilter): { dateFrom: string; dateTo: string } {
   const now = new Date();
+  const formatDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  if (filter.preset === 'custom' && filter.startDate && filter.endDate) {
+    return { dateFrom: filter.startDate, dateTo: filter.endDate };
+  }
+
+  const dateTo = formatDate(now);
+  let dateFrom: string;
+
+  switch (filter.preset) {
+    case '7d': {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 6);
+      dateFrom = formatDate(start);
+      break;
+    }
+    case '30d': {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 29);
+      dateFrom = formatDate(start);
+      break;
+    }
+    case 'month': {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      dateFrom = formatDate(start);
+      break;
+    }
+    case 'quarter': {
+      const quarterStart = Math.floor(now.getMonth() / 3) * 3;
+      const start = new Date(now.getFullYear(), quarterStart, 1);
+      dateFrom = formatDate(start);
+      break;
+    }
+    case 'year': {
+      dateFrom = `${now.getFullYear()}-01-01`;
+      break;
+    }
+    default: {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 29);
+      dateFrom = formatDate(start);
+    }
+  }
+
+  return { dateFrom, dateTo };
+}
+
+function getPreviousDateRange(filter: TimeFilter): { dateFrom: string; dateTo: string } {
+  const now = new Date();
+  const formatDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
 
   switch (filter.preset) {
     case '7d': {
@@ -43,73 +103,47 @@ function getPreviousPeriodFilter(filter: TimeFilter): TimeFilter {
       end.setDate(end.getDate() - 7);
       const start = new Date(end);
       start.setDate(start.getDate() - 6);
-      return {
-        preset: 'custom',
-        startDate: formatDate(start),
-        endDate: formatDate(end),
-      };
+      return { dateFrom: formatDate(start), dateTo: formatDate(end) };
     }
     case '30d': {
       const end = new Date(now);
       end.setDate(end.getDate() - 30);
       const start = new Date(end);
       start.setDate(start.getDate() - 29);
-      return {
-        preset: 'custom',
-        startDate: formatDate(start),
-        endDate: formatDate(end),
-      };
+      return { dateFrom: formatDate(start), dateTo: formatDate(end) };
     }
     case 'month': {
-      const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-      const prevMonthStart = new Date(prevMonthEnd.getFullYear(), prevMonthEnd.getMonth(), 1);
-      return {
-        preset: 'custom',
-        startDate: formatDate(prevMonthStart),
-        endDate: formatDate(prevMonthEnd),
-      };
+      const prevEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+      const prevStart = new Date(prevEnd.getFullYear(), prevEnd.getMonth(), 1);
+      return { dateFrom: formatDate(prevStart), dateTo: formatDate(prevEnd) };
     }
     case 'quarter': {
-      const currentQuarterStart = Math.floor(now.getMonth() / 3) * 3;
-      const prevQuarterEnd = new Date(now.getFullYear(), currentQuarterStart, 0);
-      const prevQuarterStartMonth = Math.floor(prevQuarterEnd.getMonth() / 3) * 3;
-      const prevQuarterStart = new Date(prevQuarterEnd.getFullYear(), prevQuarterStartMonth, 1);
-      return {
-        preset: 'custom',
-        startDate: formatDate(prevQuarterStart),
-        endDate: formatDate(prevQuarterEnd),
-      };
+      const currentQStart = Math.floor(now.getMonth() / 3) * 3;
+      const prevEnd = new Date(now.getFullYear(), currentQStart, 0);
+      const prevQStart = Math.floor(prevEnd.getMonth() / 3) * 3;
+      const prevStart = new Date(prevEnd.getFullYear(), prevQStart, 1);
+      return { dateFrom: formatDate(prevStart), dateTo: formatDate(prevEnd) };
     }
     case 'year': {
       return {
-        preset: 'custom',
-        startDate: `${now.getFullYear() - 1}-01-01`,
-        endDate: `${now.getFullYear() - 1}-12-31`,
+        dateFrom: `${now.getFullYear() - 1}-01-01`,
+        dateTo: `${now.getFullYear() - 1}-12-31`,
       };
     }
     case 'custom': {
-      if (!filter.startDate || !filter.endDate) return filter;
+      if (!filter.startDate || !filter.endDate) {
+        return getDateRange(filter);
+      }
       const start = new Date(filter.startDate);
       const end = new Date(filter.endDate);
       const durationMs = end.getTime() - start.getTime();
-      const prevEnd = new Date(start.getTime() - 86400000); // day before start
+      const prevEnd = new Date(start.getTime() - 86400000);
       const prevStart = new Date(prevEnd.getTime() - durationMs);
-      return {
-        preset: 'custom',
-        startDate: formatDate(prevStart),
-        endDate: formatDate(prevEnd),
-      };
+      return { dateFrom: formatDate(prevStart), dateTo: formatDate(prevEnd) };
     }
     default:
-      return filter;
+      return getDateRange(filter);
   }
-}
-
-function formatDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -119,17 +153,43 @@ function formatDate(date: Date): string {
 export function useReportsData() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>({ preset: '30d' });
 
-  // Filtered metrics for the selected period
+  // Compute date ranges for current and previous periods
+  const currentRange = useMemo(() => getDateRange(timeFilter), [timeFilter]);
+  const previousRange = useMemo(() => getPreviousDateRange(timeFilter), [timeFilter]);
+
+  // Fetch metrics via service layer
+  const {
+    data: allMetrics = [],
+    isLoading: metricsLoading,
+    error: metricsError,
+  } = useDailyMetrics(currentRange.dateFrom, currentRange.dateTo);
+
+  const {
+    data: allPreviousMetrics = [],
+    isLoading: prevLoading,
+  } = useDailyMetrics(previousRange.dateFrom, previousRange.dateTo);
+
+  const isLoading = metricsLoading || prevLoading;
+  const error = metricsError;
+
+  // Filter metrics for the selected period (service may return broader range)
   const filteredMetrics = useMemo(
-    () => filterMetricsByPeriod(mockDailyMetrics, timeFilter),
-    [timeFilter],
+    () => filterMetricsByPeriod(allMetrics, timeFilter),
+    [allMetrics, timeFilter],
   );
 
-  // Previous period metrics for comparison
-  const previousPeriodFilter = useMemo(() => getPreviousPeriodFilter(timeFilter), [timeFilter]);
+  const previousPeriodFilter = useMemo<TimeFilter>(
+    () => ({
+      preset: 'custom',
+      startDate: previousRange.dateFrom,
+      endDate: previousRange.dateTo,
+    }),
+    [previousRange],
+  );
+
   const previousMetrics = useMemo(
-    () => filterMetricsByPeriod(mockDailyMetrics, previousPeriodFilter),
-    [previousPeriodFilter],
+    () => filterMetricsByPeriod(allPreviousMetrics, previousPeriodFilter),
+    [allPreviousMetrics, previousPeriodFilter],
   );
 
   // ---------------------------------------------------------------------------
@@ -144,7 +204,6 @@ export function useReportsData() {
     const churnRate = calculateChurnRate(filteredMetrics);
     const ltv = calculateLTV(ticketMedio > 0 ? ticketMedio : mrr * 0.8, churnRate);
 
-    // Free vs paid: estimate ~70% of companies are free tier
     const totalCompanies = filteredMetrics.length > 0
       ? filteredMetrics[filteredMetrics.length - 1].totalCompanies
       : 0;
@@ -177,7 +236,6 @@ export function useReportsData() {
     const newCompanies = filteredMetrics.reduce((s, m) => s + m.newCompanies, 0);
     const newJobs = filteredMetrics.reduce((s, m) => s + m.newJobs, 0);
 
-    // Previous period values for growth calculation
     const prevCandidates = previousMetrics.reduce((s, m) => s + m.newCandidates, 0);
     const prevCompanies = previousMetrics.reduce((s, m) => s + m.newCompanies, 0);
 
@@ -254,5 +312,7 @@ export function useReportsData() {
     monthlyData,
     cohortData,
     comparison,
+    isLoading,
+    error,
   };
 }

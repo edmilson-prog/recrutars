@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Search, MoreVertical, Users, Eye, Pause, Play, Trash2, Edit, Copy, XCircle, X, Briefcase, Brain } from 'lucide-react';
+import { Plus, Search, MoreVertical, Users, Eye, Pause, Play, Trash2, Edit, Copy, XCircle, X, Briefcase, Brain, Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,13 +23,33 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { mockJobs } from '@/data/mockData';
+import { useJobsByCompany, useUpdateJob, useDeleteJob, useCreateJob } from '@/hooks/useJobsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import { Job, JobStatus } from '@/types';
 import { toast } from 'sonner';
 
 export default function CompanyJobs() {
   const navigate = useNavigate();
-  const [jobs, setJobs] = useState<Job[]>(mockJobs.filter(j => j.companyId === 'company-1'));
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
+  const { data: fetchedJobs = [], isLoading } = useJobsByCompany(companyId);
+  const updateJobMutation = useUpdateJob();
+  const deleteJobMutation = useDeleteJob();
+  const createJobMutation = useCreateJob();
+
+  // Local override state for optimistic updates (jobs modified this session)
+  const [localOverrides, setLocalOverrides] = useState<Record<string, Partial<Job>>>({});
+  const [localDeleted, setLocalDeleted] = useState<Set<string>>(new Set());
+  const [localAdded, setLocalAdded] = useState<Job[]>([]);
+
+  // Merge fetched jobs with local optimistic state
+  const jobs = useMemo(() => {
+    const merged = fetchedJobs
+      .filter(j => !localDeleted.has(j.id))
+      .map(j => localOverrides[j.id] ? { ...j, ...localOverrides[j.id] } : j);
+    return [...localAdded, ...merged];
+  }, [fetchedJobs, localOverrides, localDeleted, localAdded]);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | JobStatus>('all');
 
@@ -58,34 +78,32 @@ export default function CompanyJobs() {
   // Status actions
   const handlePauseJob = () => {
     if (!jobToPause) return;
-    setJobs(jobs.map(job =>
-      job.id === jobToPause.id ? { ...job, status: 'paused' as JobStatus } : job
-    ));
+    setLocalOverrides(prev => ({ ...prev, [jobToPause.id]: { status: 'paused' as JobStatus } }));
+    updateJobMutation.mutate({ id: jobToPause.id, updates: { status: 'paused' as JobStatus } });
     toast.success('Vaga pausada. Ela não aparecerá mais para candidatos.');
     setJobToPause(null);
   };
 
   const handleReactivateJob = () => {
     if (!jobToReactivate) return;
-    setJobs(jobs.map(job =>
-      job.id === jobToReactivate.id ? { ...job, status: 'active' as JobStatus } : job
-    ));
+    setLocalOverrides(prev => ({ ...prev, [jobToReactivate.id]: { status: 'active' as JobStatus } }));
+    updateJobMutation.mutate({ id: jobToReactivate.id, updates: { status: 'active' as JobStatus } });
     toast.success('Vaga reativada com sucesso!');
     setJobToReactivate(null);
   };
 
   const handleCloseJob = () => {
     if (!jobToClose) return;
-    setJobs(jobs.map(job =>
-      job.id === jobToClose.id ? { ...job, status: 'closed' as JobStatus } : job
-    ));
+    setLocalOverrides(prev => ({ ...prev, [jobToClose.id]: { status: 'closed' as JobStatus } }));
+    updateJobMutation.mutate({ id: jobToClose.id, updates: { status: 'closed' as JobStatus } });
     toast.success('Vaga encerrada. Não receberá mais candidaturas.');
     setJobToClose(null);
   };
 
   const handleDeleteJob = () => {
     if (!jobToDelete || deleteConfirmText !== 'EXCLUIR') return;
-    setJobs(jobs.filter(job => job.id !== jobToDelete.id));
+    setLocalDeleted(prev => new Set(prev).add(jobToDelete.id));
+    deleteJobMutation.mutate(jobToDelete.id);
     toast.success('Vaga excluída permanentemente.');
     setJobToDelete(null);
     setDeleteConfirmText('');
@@ -101,7 +119,8 @@ export default function CompanyJobs() {
       applicationsCount: 0,
       createdAt: new Date().toISOString().split('T')[0],
     };
-    setJobs([duplicated, ...jobs]);
+    setLocalAdded(prev => [duplicated, ...prev]);
+    createJobMutation.mutate(duplicated);
     toast.success('Vaga duplicada! A cópia foi criada como ativa.');
   };
 
@@ -242,6 +261,11 @@ export default function CompanyJobs() {
         </div>
 
         {/* Jobs List */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
         <div className="space-y-4">
           {filteredJobs.map((job, index) => (
             <motion.div
@@ -342,6 +366,7 @@ export default function CompanyJobs() {
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Pause Confirmation */}

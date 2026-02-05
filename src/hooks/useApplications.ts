@@ -2,16 +2,24 @@
  * useApplications hook
  * PRD-007: Candidatura a Vagas
  * PRD-009: Adicionado cancelApplication para desistência
+ * PRD-069: Migrated from mockData to service layer hooks
+ *
+ * This hook wraps the new React Query hooks from useApplicationsQuery
+ * while maintaining backward compatibility with existing consumers.
  */
 
-import { useState, useCallback } from 'react';
-import { mockApplications } from '@/data/mockData';
+import { useCallback, useMemo } from 'react';
+import {
+  useApplicationsByCandidate,
+  useCreateApplication,
+  useUpdateApplicationStatus,
+} from '@/hooks/useApplicationsQuery';
 import type { Application } from '@/types';
 
 export function useApplications(candidateId: string) {
-  const [applications, setApplications] = useState<Application[]>(() =>
-    mockApplications.filter(app => app.candidateId === candidateId)
-  );
+  const { data: applications = [], isLoading } = useApplicationsByCandidate(candidateId);
+  const createMutation = useCreateApplication();
+  const updateStatusMutation = useUpdateApplicationStatus();
 
   const hasApplied = useCallback((jobId: string) => {
     return applications.some(app => app.jobId === jobId);
@@ -41,29 +49,29 @@ export function useApplications(candidateId: string) {
       updatedAt: new Date().toISOString().split('T')[0],
     };
 
-    setApplications(prev => [...prev, newApp]);
-    mockApplications.push(newApp);
+    // Fire the mutation (async, but we return optimistically)
+    createMutation.mutate({
+      jobId,
+      candidateId,
+      candidateName,
+      jobTitle,
+      companyName,
+      message,
+    });
+
     return newApp;
-  }, [candidateId]);
+  }, [candidateId, createMutation]);
 
   const cancelApplication = useCallback((applicationId: string) => {
-    setApplications(prev =>
-      prev.map(app =>
-        app.id === applicationId
-          ? { ...app, status: 'withdrawn' as const, updatedAt: new Date().toISOString().split('T')[0] }
-          : app
-      )
-    );
-    // Atualizar no mockApplications também
-    const appIndex = mockApplications.findIndex(a => a.id === applicationId);
-    if (appIndex !== -1) {
-      mockApplications[appIndex].status = 'withdrawn';
-      mockApplications[appIndex].updatedAt = new Date().toISOString().split('T')[0];
-    }
-  }, []);
+    updateStatusMutation.mutate({
+      id: applicationId,
+      status: 'withdrawn',
+    });
+  }, [updateStatusMutation]);
 
   return {
     applications,
+    isLoading,
     hasApplied,
     getApplication,
     createApplication,

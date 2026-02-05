@@ -18,7 +18,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { mockRoles, mockGroups, mockOverrides, mockPermissions } from '@/data/rbacData';
+import { useRoles, usePermissions, usePermissionGroups, useUserPermissionOverrides } from '@/hooks/useRBACQuery';
+import { Skeleton } from '@/components/ui/skeleton';
 import { EffectivePermissions } from './EffectivePermissions';
 import type { User } from '@/types';
 
@@ -32,8 +33,14 @@ export function PermissionsTab({ user, onSave }: PermissionsTabProps) {
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>(user.groupIds || []);
   const [showEffective, setShowEffective] = useState(false);
 
-  const userOverrides = mockOverrides.filter(o => o.userId === user.id);
-  const selectedRole = mockRoles.find(r => r.id === selectedRoleId);
+  const { data: roles = [], isLoading: rolesLoading } = useRoles();
+  const { data: groups = [], isLoading: groupsLoading } = usePermissionGroups();
+  const { data: userOverrides = [], isLoading: overridesLoading } = useUserPermissionOverrides(user.id);
+  const { data: permissions = [], isLoading: permsLoading } = usePermissions();
+
+  const isLoading = rolesLoading || groupsLoading || overridesLoading || permsLoading;
+
+  const selectedRole = roles.find(r => r.id === selectedRoleId);
 
   const toggleGroup = (groupId: string) => {
     setSelectedGroupIds(prev =>
@@ -49,6 +56,18 @@ export function PermissionsTab({ user, onSave }: PermissionsTabProps) {
       groupIds: selectedGroupIds,
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-10 w-full max-w-md" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -68,7 +87,7 @@ export function PermissionsTab({ user, onSave }: PermissionsTabProps) {
               <SelectValue placeholder="Selecione um papel" />
             </SelectTrigger>
             <SelectContent>
-              {mockRoles.map(role => (
+              {roles.map(role => (
                 <SelectItem key={role.id} value={role.id}>
                   <div className="flex items-center gap-2">
                     <span>{role.name}</span>
@@ -124,7 +143,7 @@ export function PermissionsTab({ user, onSave }: PermissionsTabProps) {
         </div>
 
         <div className="space-y-3">
-          {mockGroups.map(group => {
+          {groups.map(group => {
             const isSelected = selectedGroupIds.includes(group.id);
             return (
               <div
@@ -190,7 +209,7 @@ export function PermissionsTab({ user, onSave }: PermissionsTabProps) {
         ) : (
           <div className="space-y-2">
             {userOverrides.map(override => {
-              const perm = mockPermissions.find(p => p.code === override.permissionCode);
+              const perm = permissions.find(p => p.code === override.permissionCode);
               return (
                 <div
                   key={override.id}

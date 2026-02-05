@@ -2,7 +2,56 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Users, Briefcase, Brain, TrendingUp, ArrowUp, ArrowDown, ChevronRight, FileText, Target, AlertTriangle, Code2, GraduationCap, MapPin } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { adminStats, mockCompanies, mockCandidates, adminGrowthData, mockApplications, mockJobs, getIdealBehavioralProfile } from '@/data/mockData';
+import { getIdealBehavioralProfile } from '@/lib/behavioralProfiles';
+
+// TODO: Replace with data from admin reports service/API
+const adminStats = {
+  totalCompanies: 47,
+  totalCandidates: 1284,
+  activeJobs: 156,
+  testsCompleted: 892,
+  newCompaniesThisMonth: 8,
+  newCandidatesThisMonth: 156,
+  matchRate: 78,
+};
+
+// TODO: Replace with data from admin reports service/API
+const adminGrowthData = [
+  { date: '15/12', companies: 39, candidates: 1095 },
+  { date: '16/12', companies: 39, candidates: 1102 },
+  { date: '17/12', companies: 40, candidates: 1108 },
+  { date: '18/12', companies: 40, candidates: 1115 },
+  { date: '19/12', companies: 40, candidates: 1123 },
+  { date: '20/12', companies: 41, candidates: 1129 },
+  { date: '21/12', companies: 41, candidates: 1136 },
+  { date: '22/12', companies: 41, candidates: 1142 },
+  { date: '23/12', companies: 42, candidates: 1150 },
+  { date: '24/12', companies: 42, candidates: 1156 },
+  { date: '25/12', companies: 42, candidates: 1163 },
+  { date: '26/12', companies: 43, candidates: 1170 },
+  { date: '27/12', companies: 43, candidates: 1178 },
+  { date: '28/12', companies: 43, candidates: 1185 },
+  { date: '29/12', companies: 44, candidates: 1192 },
+  { date: '30/12', companies: 44, candidates: 1199 },
+  { date: '31/12', companies: 44, candidates: 1206 },
+  { date: '01/01', companies: 44, candidates: 1213 },
+  { date: '02/01', companies: 45, candidates: 1220 },
+  { date: '03/01', companies: 45, candidates: 1228 },
+  { date: '04/01', companies: 45, candidates: 1235 },
+  { date: '05/01', companies: 45, candidates: 1242 },
+  { date: '06/01', companies: 46, candidates: 1249 },
+  { date: '07/01', companies: 46, candidates: 1256 },
+  { date: '08/01', companies: 46, candidates: 1262 },
+  { date: '09/01', companies: 46, candidates: 1269 },
+  { date: '10/01', companies: 47, candidates: 1274 },
+  { date: '11/01', companies: 47, candidates: 1278 },
+  { date: '12/01', companies: 47, candidates: 1281 },
+  { date: '13/01', companies: 47, candidates: 1284 },
+];
+import { useJobs } from '@/hooks/useJobsQuery';
+import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useCompanies } from '@/hooks/useCompaniesQuery';
+import { useApplications } from '@/hooks/useApplicationsQuery';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { calculateMatchBreakdown, calculateMatchStatistics } from '@/lib/matchCalculator';
@@ -70,14 +119,25 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default function AdminDashboard() {
+  // Fetch data via React Query hooks
+  const { data: jobsResult } = useJobs();
+  const { data: candidatesResult } = useCandidates();
+  const { data: companiesResult } = useCompanies();
+  const { data: applicationsResult } = useApplications();
+
+  const jobs = jobsResult?.data ?? [];
+  const candidates = candidatesResult?.data ?? [];
+  const companies = companiesResult?.data ?? [];
+  const applications = applicationsResult?.data ?? [];
+
   // PRD-035: Calcular estatísticas de match para todas as candidaturas
   const matchStatistics = useMemo(() => {
     // Calcular match para cada candidatura
     const matchResults: MatchResult[] = [];
 
-    for (const application of mockApplications) {
-      const candidate = mockCandidates.find(c => c.id === application.candidateId);
-      const job = mockJobs.find(j => j.id === application.jobId);
+    for (const application of applications) {
+      const candidate = candidates.find(c => c.id === application.candidateId);
+      const job = jobs.find(j => j.id === application.jobId);
 
       if (candidate && job) {
         const idealProfile = getIdealBehavioralProfile(job.id);
@@ -87,15 +147,15 @@ export default function AdminDashboard() {
     }
 
     return calculateMatchStatistics(matchResults);
-  }, []);
+  }, [applications, candidates, jobs]);
 
   // PRD-035: Vagas com poucos candidatos de alto match
   const lowMatchJobs = useMemo(() => {
     const jobMatchCounts: Record<string, { high: number; total: number; title: string }> = {};
 
-    for (const application of mockApplications) {
-      const candidate = mockCandidates.find(c => c.id === application.candidateId);
-      const job = mockJobs.find(j => j.id === application.jobId);
+    for (const application of applications) {
+      const candidate = candidates.find(c => c.id === application.candidateId);
+      const job = jobs.find(j => j.id === application.jobId);
 
       if (candidate && job) {
         if (!jobMatchCounts[job.id]) {
@@ -123,7 +183,7 @@ export default function AdminDashboard() {
         totalCount: data.total,
       }))
       .slice(0, 3);
-  }, []);
+  }, [applications, candidates, jobs]);
 
   return (
     <DashboardLayout userType="admin">
@@ -297,7 +357,7 @@ export default function AdminDashboard() {
               </Link>
             </div>
             <div className="space-y-4">
-              {mockCompanies.slice(0, 4).map((company) => (
+              {companies.slice(0, 4).map((company) => (
                 <div key={company.id} className="flex items-center gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                     <Building2 className="w-6 h-6 text-primary" />
@@ -330,11 +390,11 @@ export default function AdminDashboard() {
               {(() => {
                 // Calcular contagens por status
                 const statusCounts = {
-                  pending: mockApplications.filter(a => a.status === 'pending').length,
-                  reviewing: mockApplications.filter(a => a.status === 'reviewing').length,
-                  interview: mockApplications.filter(a => a.status === 'interview').length,
-                  offer: mockApplications.filter(a => a.status === 'offer').length,
-                  rejected: mockApplications.filter(a => a.status === 'rejected').length,
+                  pending: applications.filter(a => a.status === 'pending').length,
+                  reviewing: applications.filter(a => a.status === 'reviewing').length,
+                  interview: applications.filter(a => a.status === 'interview').length,
+                  offer: applications.filter(a => a.status === 'offer').length,
+                  rejected: applications.filter(a => a.status === 'rejected').length,
                 };
                 const maxCount = Math.max(...Object.values(statusCounts), 1);
 
@@ -378,7 +438,7 @@ export default function AdminDashboard() {
               </Link>
             </div>
             <div className="space-y-4">
-              {[...mockCompanies]
+              {[...companies]
                 .sort((a, b) => b.activeJobs - a.activeJobs)
                 .slice(0, 5)
                 .map((company, index) => (

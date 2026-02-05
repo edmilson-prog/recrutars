@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search } from 'lucide-react';
 import { TestCard } from './TestCard';
+// TODO: PRD-072 — migrate to service layer
 import { mockCompanyTests } from '@/data/companyTestData';
 import type { CompanyTestStatus } from '@/types/companyTest';
 

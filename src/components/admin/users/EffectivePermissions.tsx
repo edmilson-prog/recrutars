@@ -3,11 +3,12 @@
  * PRD-061: Visualizacao da cadeia de resolucao de permissoes
  */
 
-import { Shield, ShieldCheck, ShieldX, ArrowRight, Users, UserCog, ShieldAlert } from 'lucide-react';
+import { Shield, ShieldCheck, ShieldX, ArrowRight, Users, UserCog, ShieldAlert, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { mockRoles, mockGroups, mockOverrides, mockPermissions } from '@/data/rbacData';
+import { useRoles, usePermissions, usePermissionGroups, useUserPermissionOverrides } from '@/hooks/useRBACQuery';
 import type { User } from '@/types';
+import type { Role, Permission, PermissionGroup, UserPermissionOverride } from '@/types/rbac';
 
 interface EffectivePermissionsProps {
   user: User;
@@ -22,18 +23,24 @@ interface ResolvedPermission {
   sourceName: string;
 }
 
-function resolvePermissions(user: User): ResolvedPermission[] {
+function resolvePermissions(
+  user: User,
+  roles: Role[],
+  allPermissions: Permission[],
+  groups: PermissionGroup[],
+  overrides: UserPermissionOverride[],
+): ResolvedPermission[] {
   const resolved: Map<string, ResolvedPermission> = new Map();
 
   // 1. Role permissions (base)
-  const role = mockRoles.find(r => r.id === user.roleId);
+  const role = roles.find(r => r.id === user.roleId);
   if (role) {
     const rolePerms = role.permissions.includes('*')
-      ? mockPermissions.map(p => p.code)
+      ? allPermissions.map(p => p.code)
       : role.permissions;
 
     for (const code of rolePerms) {
-      const perm = mockPermissions.find(p => p.code === code);
+      const perm = allPermissions.find(p => p.code === code);
       if (perm) {
         resolved.set(code, {
           code,
@@ -48,10 +55,10 @@ function resolvePermissions(user: User): ResolvedPermission[] {
   }
 
   // 2. Group permissions (additive)
-  const userGroups = mockGroups.filter(g => g.memberUserIds.includes(user.id));
+  const userGroups = groups.filter(g => g.memberUserIds.includes(user.id));
   for (const group of userGroups) {
     for (const code of group.permissionCodes) {
-      const perm = mockPermissions.find(p => p.code === code);
+      const perm = allPermissions.find(p => p.code === code);
       if (perm && !resolved.has(code)) {
         resolved.set(code, {
           code,
@@ -66,9 +73,8 @@ function resolvePermissions(user: User): ResolvedPermission[] {
   }
 
   // 3. Overrides (highest priority)
-  const userOverrides = mockOverrides.filter(o => o.userId === user.id);
-  for (const override of userOverrides) {
-    const perm = mockPermissions.find(p => p.code === override.permissionCode);
+  for (const override of overrides) {
+    const perm = allPermissions.find(p => p.code === override.permissionCode);
     if (perm) {
       resolved.set(override.permissionCode, {
         code: override.permissionCode,
@@ -94,7 +100,23 @@ function getSourceIcon(source: string) {
 }
 
 export function EffectivePermissions({ user }: EffectivePermissionsProps) {
-  const permissions = resolvePermissions(user);
+  const { data: roles = [], isLoading: rolesLoading } = useRoles();
+  const { data: allPermissions = [], isLoading: permsLoading } = usePermissions();
+  const { data: groups = [], isLoading: groupsLoading } = usePermissionGroups();
+  const { data: overrides = [], isLoading: overridesLoading } = useUserPermissionOverrides(user.id);
+
+  const isLoading = rolesLoading || permsLoading || groupsLoading || overridesLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-3 py-8 justify-center text-muted-foreground">
+        <Loader2 className="w-5 h-5 animate-spin" />
+        <span>Calculando permissoes efetivas...</span>
+      </div>
+    );
+  }
+
+  const permissions = resolvePermissions(user, roles, allPermissions, groups, overrides);
 
   // Group by category
   const byCategory = permissions.reduce((acc, perm) => {

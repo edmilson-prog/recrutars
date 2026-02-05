@@ -50,7 +50,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
-import { mockCurriculums } from '@/data/mockData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCurriculums, useDeleteCurriculum, useUpdateCurriculum, useSetDefaultCurriculum, useCreateCurriculum } from '@/hooks/useCurriculumsQuery';
+import { Loader2 } from 'lucide-react';
 import type { Curriculum, CompletenessSection } from '@/types';
 import {
   calculateCompleteness,
@@ -283,11 +285,22 @@ function CompleteSectionsList({ sections }: { sections: CompletenessSection[] })
 
 export default function Curriculums() {
   const navigate = useNavigate();
+  const { currentCandidate } = useAuth();
+  const candidateId = currentCandidate?.id ?? '';
 
-  // Estado dos currículos (simulando candidato logado = candidate-1)
-  const [curriculums, setCurriculums] = useState<Curriculum[]>(
-    mockCurriculums.filter((c) => c.candidateId === 'candidate-1')
-  );
+  const { data: fetchedCurriculums = [], isLoading } = useCurriculums(candidateId);
+  const deleteMutation = useDeleteCurriculum();
+  const updateMutation = useUpdateCurriculum();
+  const setDefaultMutation = useSetDefaultCurriculum();
+  const createMutation = useCreateCurriculum();
+
+  // Local state synced from service layer
+  const [curriculums, setCurriculums] = useState<Curriculum[]>([]);
+  const [initialized, setInitialized] = useState(false);
+  if (!initialized && !isLoading && fetchedCurriculums.length >= 0) {
+    setCurriculums(fetchedCurriculums);
+    setInitialized(true);
+  }
 
   // Estados de UI
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
@@ -309,8 +322,19 @@ export default function Curriculums() {
   const activeCurriculumsCount = curriculums.filter((c) => !c.isArchived).length;
   const archivedCurriculumsCount = curriculums.filter((c) => c.isArchived).length;
 
+  if (isLoading && !initialized) {
+    return (
+      <DashboardLayout userType="candidate">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   // Handlers
   const handleDuplicate = (curriculum: Curriculum) => {
+    const { id: _id, createdAt: _ca, updatedAt: _ua, ...rest } = curriculum;
     const newCurriculum: Curriculum = {
       ...curriculum,
       id: `curriculum-${Date.now()}`,
@@ -321,6 +345,12 @@ export default function Curriculums() {
       updatedAt: new Date().toISOString(),
     };
     setCurriculums([...curriculums, newCurriculum]);
+    createMutation.mutate({
+      ...rest,
+      name: `${curriculum.name} - Cópia`,
+      isDefault: false,
+      isArchived: false,
+    });
     toast.success('Currículo duplicado com sucesso!');
   };
 
@@ -332,6 +362,7 @@ export default function Curriculums() {
           : c
       )
     );
+    updateMutation.mutate({ id: curriculum.id, updates: { isArchived: true, isDefault: false } });
     toast.success('Currículo arquivado.');
   };
 
@@ -341,6 +372,7 @@ export default function Curriculums() {
         c.id === curriculum.id ? { ...c, isArchived: false } : c
       )
     );
+    updateMutation.mutate({ id: curriculum.id, updates: { isArchived: false } });
     setActiveTab('active');
     toast.success('Currículo desarquivado.');
   };
@@ -352,6 +384,7 @@ export default function Curriculums() {
         isDefault: c.id === curriculum.id,
       }))
     );
+    setDefaultMutation.mutate({ candidateId, curriculumId: curriculum.id });
     toast.success(`"${curriculum.name}" definido como currículo padrão.`);
   };
 
@@ -363,6 +396,7 @@ export default function Curriculums() {
   const confirmDelete = () => {
     if (curriculumToDelete) {
       setCurriculums(curriculums.filter((c) => c.id !== curriculumToDelete.id));
+      deleteMutation.mutate(curriculumToDelete.id);
       toast.success('Currículo excluído.');
       setCurriculumToDelete(null);
     }

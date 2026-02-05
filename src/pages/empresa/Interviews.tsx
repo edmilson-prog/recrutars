@@ -16,6 +16,7 @@ import {
   CalendarX,
   Info,
   AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -33,7 +34,9 @@ import { AcceptSuggestionModal } from '@/components/empresa/AcceptSuggestionModa
 import { CompanyCancelInterviewModal } from '@/components/empresa/CompanyCancelInterviewModal';
 import { WeeklyCalendar } from '@/components/empresa/WeeklyCalendar';
 import { useCompanyInterviews, type CompanyCancellationReason } from '@/hooks/useCompanyInterviews';
-import { mockJobs, mockCandidates } from '@/data/mockData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useJobsByCompany } from '@/hooks/useJobsQuery';
+import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { toast } from 'sonner';
 import type { Interview } from '@/types/interview';
 
@@ -41,6 +44,9 @@ type TabValue = 'pending' | 'confirmed' | 'completed';
 
 export default function CompanyInterviews() {
   const navigate = useNavigate();
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
+
   const {
     waitingInterviews,
     pendingCompanyInterviews,
@@ -51,7 +57,11 @@ export default function CompanyInterviews() {
     cancelInterview,
     markAsCompleted,
     getInterviewsByJob,
-  } = useCompanyInterviews('company-1');
+    isLoading: interviewsLoading,
+  } = useCompanyInterviews(companyId);
+
+  const { data: jobsData, isLoading: jobsLoading } = useJobsByCompany(companyId);
+  const { data: candidatesData } = useCandidates();
 
   const [activeTab, setActiveTab] = useState<TabValue>('pending');
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
@@ -60,9 +70,24 @@ export default function CompanyInterviews() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [jobFilter, setJobFilter] = useState<string>('all');
 
+  const isLoading = interviewsLoading || jobsLoading;
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const allJobs = jobsData ?? [];
+  const allCandidates = candidatesData?.data ?? [];
+
   // Vagas da empresa para filtro
-  const companyJobs = mockJobs.filter(
-    (job) => job.companyId === 'company-1' && (job.status === 'active' || job.status === 'paused')
+  const companyJobs = allJobs.filter(
+    (job) => job.status === 'active' || job.status === 'paused'
   );
 
   // Filtrar entrevistas por vaga na aba de realizadas
@@ -130,7 +155,7 @@ export default function CompanyInterviews() {
 
   // Helper para obter avatar do candidato
   const getCandidateAvatar = (candidateId: string) => {
-    const candidate = mockCandidates.find((c) => c.id === candidateId);
+    const candidate = allCandidates.find((c) => c.id === candidateId);
     return candidate?.avatar;
   };
 

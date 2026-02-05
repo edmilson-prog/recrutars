@@ -25,6 +25,7 @@ import {
   Mail,
   Phone,
   Linkedin,
+  Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { TechnicalAnalysisCard } from '@/components/aiAnalysis';
@@ -81,8 +82,147 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { mockCandidates, mockApplications, mockCandidateAdminActions } from '@/data/mockData';
-import type { Candidate, CandidateStatus, CandidateAdminAction, Application } from '@/types';
+// TODO: Replace with audit log service/API when available
+const initialCandidateAdminActions: CandidateAdminAction[] = [
+  {
+    id: 'cand-action-1',
+    candidateId: 'candidate-1',
+    candidateName: 'João Santos',
+    action: 'test_reset',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2025-12-10T14:30:00',
+    details: 'Teste comportamental resetado para nova tentativa após falha técnica',
+  },
+  {
+    id: 'cand-action-2',
+    candidateId: 'candidate-21',
+    candidateName: 'Henrique Pereira',
+    action: 'deactivated',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-07-10T16:00:00',
+    details: 'Candidato desativado por solicitação própria - encontrou emprego',
+  },
+  {
+    id: 'cand-action-3',
+    candidateId: 'candidate-6',
+    candidateName: 'Ana Beatriz Lima',
+    action: 'notification_sent',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-07-15T10:00:00',
+    details: 'Notificação enviada: oportunidades compatíveis com perfil disponíveis',
+  },
+  {
+    id: 'cand-action-4',
+    candidateId: 'candidate-14',
+    candidateName: 'Gabriela Ferreira',
+    action: 'test_reset',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-07-05T09:30:00',
+    details: 'Teste comportamental resetado a pedido do candidato',
+  },
+  {
+    id: 'cand-action-5',
+    candidateId: 'candidate-29',
+    candidateName: 'Rafael Almeida',
+    action: 'deactivated',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-07-15T11:20:00',
+    details: 'Candidato desativado por inatividade prolongada (6 meses sem acesso)',
+  },
+  {
+    id: 'cand-action-6',
+    candidateId: 'candidate-16',
+    candidateName: 'Camila Rodrigues',
+    action: 'notification_sent',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-07-20T14:00:00',
+    details: 'Notificação enviada: convite para programa de mentoria da plataforma',
+  },
+  {
+    id: 'cand-action-7',
+    candidateId: 'candidate-33',
+    candidateName: 'William Santos',
+    action: 'deactivated',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-07-20T15:45:00',
+    details: 'Candidato desativado por violação dos termos de uso',
+  },
+  {
+    id: 'cand-action-8',
+    candidateId: 'candidate-7',
+    candidateName: 'Roberto Silva',
+    action: 'notification_sent',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-06-20T09:00:00',
+    details: 'Notificação enviada: lembrete para completar perfil (falta experiência profissional)',
+  },
+  {
+    id: 'cand-action-9',
+    candidateId: 'candidate-12',
+    candidateName: 'Mariana Costa',
+    action: 'test_reset',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-07-01T10:15:00',
+    details: 'Teste resetado após reclamação sobre tempo de resposta insuficiente',
+  },
+  {
+    id: 'cand-action-10',
+    candidateId: 'candidate-22',
+    candidateName: 'Isabela Martins',
+    action: 'notification_sent',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-07-18T11:30:00',
+    details: 'Notificação enviada: parabéns por atingir 100% de perfil completo',
+  },
+  {
+    id: 'cand-action-11',
+    candidateId: 'candidate-26',
+    candidateName: 'Natália Carvalho',
+    action: 'notification_sent',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-07-22T13:00:00',
+    details: 'Notificação enviada: destaque na busca de recrutadores por 30 dias como benefício',
+  },
+  {
+    id: 'cand-action-12',
+    candidateId: 'candidate-11',
+    candidateName: 'Carlos Eduardo Souza',
+    action: 'activated',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-06-05T10:00:00',
+    details: 'Candidato ativado após aprovação do cadastro',
+  },
+  {
+    id: 'cand-action-13',
+    candidateId: 'candidate-3',
+    candidateName: 'Pedro Costa',
+    action: 'notification_sent',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-05-15T14:45:00',
+    details: 'Notificação enviada: recomendação para realizar teste comportamental',
+  },
+  {
+    id: 'cand-action-14',
+    candidateId: 'candidate-28',
+    candidateName: 'Paula Gomes',
+    action: 'test_reset',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-07-20T16:00:00',
+    details: 'Teste resetado após atualização do sistema de avaliação comportamental',
+  },
+  {
+    id: 'cand-action-15',
+    candidateId: 'candidate-20',
+    candidateName: 'Giovana Alves',
+    action: 'notification_sent',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2024-07-25T09:30:00',
+    details: 'Notificação enviada: workshop gratuito sobre elaboração de currículo',
+  },
+];
+import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useApplications } from '@/hooks/useApplicationsQuery';
+import type { Candidate, CandidateStatus, CandidateAdminAction } from '@/types';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
@@ -129,6 +269,9 @@ const BEHAVIORAL_PROFILES = [
 ];
 
 export default function AdminCandidates() {
+  // Fetch candidates via service layer
+  const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates();
+
   // Search with debounce
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 300);
@@ -155,9 +298,17 @@ export default function AdminCandidates() {
   const [notificationMessage, setNotificationMessage] = useState('');
 
   // Data
-  const [candidates, setCandidates] = useState<Candidate[]>(mockCandidates);
-  const [actions, setActions] = useState<CandidateAdminAction[]>(mockCandidateAdminActions);
-  const [applications] = useState<Application[]>(mockApplications);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [actions, setActions] = useState<CandidateAdminAction[]>(initialCandidateAdminActions);
+  const { data: applicationsResult } = useApplications();
+  const applications = applicationsResult?.data ?? [];
+
+  // Sync service data to local state
+  useEffect(() => {
+    if (candidatesResult?.data) {
+      setCandidates(candidatesResult.data);
+    }
+  }, [candidatesResult]);
 
   // Reset page on filter change
   useEffect(() => {
@@ -875,6 +1026,16 @@ export default function AdminCandidates() {
       </Sheet>
     );
   };
+
+  if (isLoadingCandidates) {
+    return (
+      <DashboardLayout userType="admin">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="admin">

@@ -12,7 +12,7 @@ import { ArrowLeft, Briefcase, FileQuestion, User } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { CandidateReport } from '@/components/job-assessment';
-import { mockJobs } from '@/data/mockData';
+import { useJobs } from '@/hooks/useJobsQuery';
 import {
   mockJobAssessments,
   mockJobAssessmentResults,
@@ -61,8 +61,12 @@ export default function CandidateTestReport() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Fetch data from service layer
+  const { data: jobsResult } = useJobs();
+  const allJobs = jobsResult?.data ?? [];
+
   // Buscar dados
-  const job = mockJobs.find((j) => j.id === jobId);
+  const job = allJobs.find((j) => j.id === jobId);
   const assessment = mockJobAssessments.find((a) => a.jobId === jobId);
   const result = mockJobAssessmentResults.find(
     (r) => r.candidateId === candidateId

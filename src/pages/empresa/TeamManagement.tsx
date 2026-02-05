@@ -24,9 +24,12 @@ import {
   Building2,
   Brain,
   LayoutDashboard,
+  Loader2,
 } from 'lucide-react';
 
-import { mockDepartments, mockPositions, mockTeamMembers, mockTeamAlerts } from '@/data/teamManagementData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useDepartments, useTeamMembers, usePositions } from '@/hooks/useTeamsQuery';
+import { mockTeamAlerts } from '@/data/teamManagementData';
 import TeamDashboard from '@/components/team-management/TeamDashboard';
 import TeamMemberList from '@/components/team-management/TeamMemberList';
 import DepartmentList from '@/components/team-management/DepartmentList';
@@ -52,12 +55,41 @@ const quickActions = [
 
 export default function TeamManagement() {
   const navigate = useNavigate();
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
+
+  const { data: fetchedDepartments = [], isLoading: deptsLoading } = useDepartments(companyId);
+  const { data: fetchedMembers = [], isLoading: membersLoading } = useTeamMembers({ companyId });
+  // Fetch all positions (using 'all' as departmentId to load all)
+  const { data: fetchedPositions = [], isLoading: positionsLoading } = usePositions('all');
+
   const [activeTab, setActiveTab] = useState('overview');
 
-  // State for departments/positions/members
-  const [departments, setDepartments] = useState<Department[]>(mockDepartments);
-  const [positions, setPositions] = useState<Position[]>(mockPositions);
-  const [members, setMembers] = useState<TeamMember[]>(mockTeamMembers);
+  // Local state initialized from service layer data
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
+
+  // Sync fetched data into local state when it arrives
+  const [initialized, setInitialized] = useState(false);
+  if (!initialized && !deptsLoading && !membersLoading && !positionsLoading) {
+    setDepartments(fetchedDepartments);
+    setPositions(fetchedPositions);
+    setMembers(fetchedMembers);
+    setInitialized(true);
+  }
+
+  const isLoading = deptsLoading || membersLoading || positionsLoading;
+
+  if (isLoading && !initialized) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   // Dialog states
   const [deptFormOpen, setDeptFormOpen] = useState(false);

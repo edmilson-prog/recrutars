@@ -6,12 +6,17 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useJobFeedback, NotInterestedReason } from './useJobFeedback';
 import { useFavoriteJobs } from './useFavoriteJobs';
+import { useJobs } from './useJobsQuery';
+import { useCandidates } from './useCandidatesQuery';
+import { useApplicationsByCandidate } from './useApplicationsQuery';
 import {
   getRecommendedJobs,
   countNewRecommendations,
   JobRecommendation,
   RecommendationSignals,
+  RecommendationData,
 } from '@/lib/jobRecommendation';
+import { idealBehavioralProfiles } from '@/lib/behavioralProfiles';
 
 export interface UseJobRecommendationsOptions {
   candidateId: string;
@@ -52,28 +57,47 @@ export function useJobRecommendations(
 
   const { favorites } = useFavoriteJobs();
 
+  // Buscar dados via service layer
+  const { data: jobsResult } = useJobs();
+  const jobs = jobsResult?.data ?? [];
+  const { data: candidatesResult } = useCandidates();
+  const candidates = candidatesResult?.data ?? [];
+  const { data: applications = [] } = useApplicationsByCandidate(candidateId);
+
   // Estado local
   const [recommendations, setRecommendations] = useState<JobRecommendation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Bundle de dados para o motor de recomendação
+  const recData = useMemo<RecommendationData>(() => ({
+    jobs,
+    candidates,
+    applications: applications.map(a => ({ candidateId: a.candidateId, jobId: a.jobId })),
+    idealProfiles: idealBehavioralProfiles,
+  }), [jobs, candidates, applications]);
+
   // Montar sinais de recomendação
   const signals = useMemo<RecommendationSignals>(() => ({
     viewedJobs,
-    appliedJobs: [], // Será carregado do mock pelo motor
+    appliedJobs: [],
     notInterestedJobs: notInterestedJobIds,
     savedJobs: favorites.map(f => f.jobId),
     searchTerms: [],
     lastRecommendationsCheck: lastRecommendationsCheck || undefined,
   }), [viewedJobs, notInterestedJobIds, favorites, lastRecommendationsCheck]);
 
-  // Carregar recomendações
+  // Carregar recomendações quando dados estiverem prontos
   useEffect(() => {
+    if (recData.jobs.length === 0 || recData.candidates.length === 0) {
+      setIsLoading(true);
+      return;
+    }
+
     setIsLoading(true);
 
-    // Simular delay de API
     const timer = setTimeout(() => {
-      const result = getRecommendedJobs(candidateId, signals, {
+      const result = getRecommendedJobs(candidateId, signals, recData, {
         limit,
         minScore,
         lastCheckDate: lastRecommendationsCheck || undefined,
@@ -81,16 +105,16 @@ export function useJobRecommendations(
 
       setRecommendations(result);
       setIsLoading(false);
-    }, 300);
+    }, 100);
 
     return () => clearTimeout(timer);
-  }, [candidateId, signals, limit, minScore, lastRecommendationsCheck, refreshTrigger]);
+  }, [candidateId, signals, recData, limit, minScore, lastRecommendationsCheck, refreshTrigger]);
 
   // Contar novas recomendações
   const newCount = useMemo(() => {
-    if (!lastRecommendationsCheck) return 0;
-    return countNewRecommendations(candidateId, signals, lastRecommendationsCheck);
-  }, [candidateId, signals, lastRecommendationsCheck]);
+    if (!lastRecommendationsCheck || recData.jobs.length === 0) return 0;
+    return countNewRecommendations(candidateId, signals, recData, lastRecommendationsCheck);
+  }, [candidateId, signals, recData, lastRecommendationsCheck]);
 
   // Marcar como não interessado e atualizar lista
   const handleMarkNotInterested = useCallback((jobId: string, reason?: NotInterestedReason) => {

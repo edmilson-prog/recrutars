@@ -10,25 +10,38 @@ import { pageTransition } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { MemberProfile } from '@/components/team-management/MemberProfile';
-import {
-  mockTeamMembers,
-  mockDepartments,
-  mockPositions,
-  mockTestHistory,
-} from '@/data/teamManagementData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTeamMember, useDepartments, usePositions } from '@/hooks/useTeamsQuery';
+import { mockTestHistory } from '@/data/teamManagementData';
+import { Loader2 } from 'lucide-react';
 
 export default function TeamMemberProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
 
-  const member = mockTeamMembers.find((m) => m.id === id);
+  const { data: member, isLoading: memberLoading } = useTeamMember(id ?? '');
+  const { data: departments = [] } = useDepartments(companyId);
+  const { data: positions = [] } = usePositions('all');
+
   const department = member
-    ? mockDepartments.find((d) => d.id === member.departmentId)
+    ? departments.find((d) => d.id === member.departmentId)
     : undefined;
   const position = member
-    ? mockPositions.find((p) => p.id === member.positionId)
+    ? positions.find((p) => p.id === member.positionId)
     : undefined;
   const memberTestHistory = mockTestHistory.filter((t) => t.memberId === id);
+
+  if (memberLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!member) {
     return (

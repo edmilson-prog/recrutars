@@ -58,16 +58,14 @@ import { Label } from '@/components/ui/label';
 import { ScheduleInterviewModal } from '@/components/empresa/ScheduleInterviewModal';
 import { useCompanyInterviews } from '@/hooks/useCompanyInterviews';
 import { useCandidateActivity, type ActivityType } from '@/hooks/useCandidateActivity';
-import {
-  mockCandidates,
-  mockJobs,
-  getIdealBehavioralProfile,
-  mockApplications,
-  mockApplicationNotes,
-} from '@/data/mockData';
+import { getIdealBehavioralProfile } from '@/lib/behavioralProfiles';
+import { useJobs } from '@/hooks/useJobsQuery';
+import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useApplications } from '@/hooks/useApplicationsQuery';
 import type { Job, ApplicationNote } from '@/types';
 import { toast } from 'sonner';
 import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
+import { useAuth } from '@/contexts/AuthContext';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
 import { getMatchScoreColor } from '@/types/disc';
 import { MatchBreakdown } from '@/components/match/MatchBreakdown';
@@ -193,6 +191,8 @@ function formatActivityTimestamp(timestamp: string): string {
 export default function CandidateProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -213,19 +213,28 @@ export default function CandidateProfile() {
 
   // Hooks
   const { activities, hasMore, remaining, showMore, totalCount } = useCandidateActivity(id || '');
-  const { createInterview } = useCompanyInterviews('company-1');
+  const { createInterview } = useCompanyInterviews(companyId);
 
-  const candidate = mockCandidates.find((c) => c.id === id);
+  // Fetch data from service layer
+  const { data: jobsResult } = useJobs();
+  const allJobs = jobsResult?.data ?? [];
+  const { data: candidatesResult } = useCandidates();
+  const allCandidates = candidatesResult?.data ?? [];
+  const { data: applicationsResult } = useApplications();
+  const allApplications = applicationsResult?.data ?? [];
 
-  // Get company jobs (mock: company-1)
-  const companyJobs = mockJobs.filter(
-    (job) => job.companyId === 'company-1' && job.status === 'active'
+  const candidate = allCandidates.find((c) => c.id === id);
+
+  // Get company jobs (company-1)
+  const companyJobs = useMemo(
+    () => allJobs.filter((job) => job.companyId === companyId && job.status === 'active'),
+    [allJobs]
   );
 
   // Candidate applications
   const candidateApplications = useMemo(
-    () => mockApplications.filter((a) => a.candidateId === id),
-    [id]
+    () => allApplications.filter((a) => a.candidateId === id),
+    [allApplications, id]
   );
 
   const selectedApplication = useMemo(
@@ -237,7 +246,7 @@ export default function CandidateProfile() {
   const existingNotes = useMemo(() => {
     const appIds = candidateApplications.map((a) => a.id);
     return [
-      ...mockApplicationNotes.filter((n) => appIds.includes(n.applicationId)),
+      ...([] as ApplicationNote[]).filter((n) => appIds.includes(n.applicationId)),
       ...localNotes,
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [candidateApplications, localNotes]);

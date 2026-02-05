@@ -10,6 +10,7 @@ import { ProfileDistributionChart } from './ProfileDistributionChart';
 import { DimensionDistributionChart } from './DimensionDistributionChart';
 import { TrendsChart } from './TrendsChart';
 import { MetricsPerJobTable } from './MetricsPerJobTable';
+// TODO: PRD-072 — migrate to service layer
 import { mockTestInvitations, mockTestResults } from '@/data/companyTestData';
 import type { PeriodFilter as PeriodFilterType } from '@/types/companyTest';
 

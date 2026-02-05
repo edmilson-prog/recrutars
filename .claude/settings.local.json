@@ -51,7 +51,21 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(node -e:*)",
       "Bash(cmd /c \"taskkill /PID 53684 /F\")",
-      "Bash(npx vite --port 3000)"
+      "Bash(npx vite --port 3000)",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__get_advisors",
+      "mcp__supabase__search_docs",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__get_logs",
+      "mcp__chrome-devtools__fill_form",
+      "mcp__chrome-devtools__list_network_requests",
+      "Bash(python -c:*)",
+      "mcp__supabase__generate_typescript_types",
+      "mcp__chrome-devtools__get_network_request",
+      "Bash(npm version:*)",
+      "Bash(wc:*)"
     ]
   }
 }

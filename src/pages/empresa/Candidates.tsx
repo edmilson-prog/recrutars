@@ -4,7 +4,7 @@
  * PRD-026: Respeita visibilidade do perfil
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -65,7 +65,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { mockCandidates, mockJobs, getIdealBehavioralProfile, getCandidateBehavioralProfile } from '@/data/mockData';
+import { getIdealBehavioralProfile, getCandidateBehavioralProfile } from '@/lib/behavioralProfiles';
+import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
+import { useJobs } from '@/hooks/useJobsQuery';
+import { useCandidates } from '@/hooks/useCandidatesQuery';
 import type { Candidate, Job } from '@/types';
 import type { CandidateForComparison } from '@/types/disc';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
@@ -92,6 +95,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 // PRD-032: Exportação de candidatos
 import { ExportCandidatesModal } from '@/components/export';
 import type { ExportContext } from '@/types/export';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Filter options
 const locations = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 'Curitiba, PR', 'Porto Alegre, RS'];
@@ -105,10 +109,7 @@ const experienceRanges = [
 
 const ITEMS_PER_PAGE = 10;
 
-// Helper to extract all unique skills from candidates
-const allSkills = Array.from(
-  new Set(mockCandidates.flatMap((c) => c.skills))
-).sort();
+// Helper to extract all unique skills from candidates (will be computed inside component)
 
 // Helper to get experience range string
 const getExperienceRange = (years: number): string => {
@@ -131,6 +132,22 @@ const calculateMatch = (candidate: Candidate, jobs: Job[]): number => {
 };
 
 export default function CompanyCandidates() {
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
+
+  // Fetch data from service layer
+  const { data: jobsResult } = useJobs();
+  const jobs = jobsResult?.data ?? [];
+  const { data: candidatesResult } = useCandidates();
+  const allCandidates = candidatesResult?.data ?? [];
+  const { data: behavioralTests = [] } = useBehavioralTests();
+
+  // Helper to extract all unique skills from candidates
+  const allSkills = useMemo(() =>
+    Array.from(new Set(allCandidates.flatMap((c) => c.skills))).sort(),
+    [allCandidates]
+  );
+
   // Search with debounce
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 300);
@@ -167,13 +184,14 @@ export default function CompanyCandidates() {
   // PRD-030: Hook de candidatos favoritos
   const { isFavorite, toggleFavorite } = useFavoriteCandidates();
 
-  // Get company jobs (mock: company-1)
-  const companyJobs = mockJobs.filter(
-    (job) => job.companyId === 'company-1' && job.status === 'active'
+  // Get company jobs
+  const companyJobs = useMemo(() =>
+    jobs.filter((job) => job.companyId === companyId && job.status === 'active'),
+    [jobs]
   );
 
   // Filter candidates (PRD-026: respeita visibilidade)
-  const filteredCandidates = mockCandidates.filter((candidate) => {
+  const filteredCandidates = allCandidates.filter((candidate) => {
     // PRD-026: Primeiro verificar se o candidato é visível nas buscas
     if (!isVisibleInSearch(candidate)) {
       return false;
@@ -272,7 +290,7 @@ export default function CompanyCandidates() {
 
   // PRD-002-dgn: Converter candidato para formato de comparação
   const convertToComparisonCandidate = (candidate: Candidate): CandidateForComparison | null => {
-    const behavioralProfile = getCandidateBehavioralProfile(candidate.id);
+    const behavioralProfile = getCandidateBehavioralProfile(candidate.id, behavioralTests);
     if (!behavioralProfile) return null;
 
     // PRD-035: Usa cálculo dinâmico de match
@@ -299,7 +317,7 @@ export default function CompanyCandidates() {
   // PRD-002-dgn: Candidatos selecionados convertidos para comparação
   const selectedCandidatesForComparison = selectedIds
     .map((id) => {
-      const candidate = mockCandidates.find((c) => c.id === id);
+      const candidate = allCandidates.find((c) => c.id === id);
       if (!candidate) return null;
       return convertToComparisonCandidate(candidate);
     })
@@ -839,7 +857,7 @@ export default function CompanyCandidates() {
         onOpenChange={setShowComparisonModal}
         candidates={selectedCandidatesForComparison}
         onInviteToInterview={(candidateId) => {
-          const candidate = mockCandidates.find((c) => c.id === candidateId);
+          const candidate = allCandidates.find((c) => c.id === candidateId);
           if (candidate && companyJobs.length > 0) {
             handleOpenInviteModal(candidate, companyJobs[0]);
           }

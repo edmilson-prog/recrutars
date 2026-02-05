@@ -10,15 +10,19 @@ import { pageTransition } from '@/lib/animations';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FolderOpen } from 'lucide-react';
-import {
-  mockTeamMembers,
-  mockTeamBuilderScenarios,
-} from '@/data/teamManagementData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTeamMembers } from '@/hooks/useTeamsQuery';
+import { mockTeamBuilderScenarios } from '@/data/teamManagementData';
+import { Loader2 } from 'lucide-react';
 import type { TeamBuilderScenario } from '@/types/teamManagement';
 import TeamBuilderLayout from '@/components/team-management/TeamBuilderLayout';
 import ScenarioManager from '@/components/team-management/ScenarioManager';
 
 export default function TeamBuilder() {
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
+  const { data: allMembers = [], isLoading } = useTeamMembers({ companyId });
+
   const [scenarios, setScenarios] = useState<TeamBuilderScenario[]>([
     ...mockTeamBuilderScenarios,
   ]);
@@ -64,9 +68,19 @@ export default function TeamBuilder() {
   );
 
   // Only pass mapped members to the builder
-  const mappedMembers = mockTeamMembers.filter(
+  const mappedMembers = allMembers.filter(
     (m) => m.gaugeStatus === 'mapped' && m.gaugeScores && m.isActive,
   );
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="company">

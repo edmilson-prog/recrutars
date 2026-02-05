@@ -21,7 +21,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
       <main
         id="main-content"
         tabIndex={-1}
-        className="focus:outline-none"
+        className="relative focus:outline-none"
         role="main"
         aria-label="Conteúdo principal"
       >

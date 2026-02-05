@@ -6,12 +6,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  UsersRound, Plus, Edit, Trash2, Search, Shield, Users,
+  UsersRound, Plus, Edit, Trash2, Search, Shield, Users, Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
-import { mockUsers } from '@/data/mockData';
-import { mockGroups, mockPermissions } from '@/data/rbacData';
+import { useUsers } from '@/hooks/useUsersQuery';
+import { usePermissionGroups, usePermissions } from '@/hooks/useRBACQuery';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,15 +28,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import type { PermissionGroup } from '@/types/rbac';
+import type { Permission, PermissionGroup } from '@/types/rbac';
 
 // Group permissions by category
-function getPermissionsByCategory() {
-  return mockPermissions.reduce((acc, perm) => {
+function getPermissionsByCategory(permissions: Permission[]) {
+  return permissions.reduce((acc, perm) => {
     if (!acc[perm.category]) acc[perm.category] = [];
     acc[perm.category].push(perm);
     return acc;
-  }, {} as Record<string, typeof mockPermissions>);
+  }, {} as Record<string, Permission[]>);
 }
 
 interface GroupFormData {
@@ -54,13 +54,28 @@ const emptyForm: GroupFormData = {
 };
 
 export default function AdminPermissionGroups() {
-  const [groups, setGroups] = useState<PermissionGroup[]>([...mockGroups]);
+  // Fetch data via service layer
+  const { data: usersResult, isLoading: isLoadingUsers } = useUsers();
+  const { data: groupsData, isLoading: isLoadingGroups } = usePermissionGroups();
+  const { data: permissionsData, isLoading: isLoadingPermissions } = usePermissions();
+
+  const allUsers = usersResult?.data ?? [];
+  const allPermissions = permissionsData ?? [];
+
+  const [groups, setGroups] = useState<PermissionGroup[]>([]);
+  const [groupsInitialized, setGroupsInitialized] = useState(false);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<GroupFormData>(emptyForm);
 
-  const permsByCategory = getPermissionsByCategory();
+  // Sync groups data from service to local state (once)
+  if (groupsData && !groupsInitialized) {
+    setGroups([...groupsData]);
+    setGroupsInitialized(true);
+  }
+
+  const permsByCategory = getPermissionsByCategory(allPermissions);
 
   const filteredGroups = groups.filter(g => {
     if (!search) return true;
@@ -131,9 +146,20 @@ export default function AdminPermissionGroups() {
   };
 
   const getUserName = (userId: string) => {
-    const user = mockUsers.find(u => u.id === userId);
+    const user = allUsers.find(u => u.id === userId);
     return user?.name || userId;
   };
+
+  if (isLoadingUsers || isLoadingGroups || isLoadingPermissions) {
+    return (
+      <DashboardLayout userType="admin">
+        <AdminTabNav />
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="admin">
@@ -325,7 +351,7 @@ export default function AdminPermissionGroups() {
                 </p>
 
                 <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {mockUsers.map(user => (
+                  {allUsers.map(user => (
                     <div key={user.id} className="flex items-center gap-2">
                       <Checkbox
                         id={`member-${user.id}`}

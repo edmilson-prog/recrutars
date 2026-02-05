@@ -18,12 +18,10 @@ import {
 } from '@/components/ui/select';
 import { ArrowLeft, FlaskConical, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import {
-  mockTeamMembers,
-  mockDepartments,
-  mockPositions,
-  mockCultureSnapshots,
-} from '@/data/teamManagementData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTeamMembers, usePositions } from '@/hooks/useTeamsQuery';
+import { mockCultureSnapshots } from '@/data/teamManagementData';
+import { Loader2 } from 'lucide-react';
 import { calculateCompanyDNA, generateManifesto, calculateCulturalFit } from '@/utils/culturalFit';
 import CultureDNARadar from '@/components/team-management/CultureDNARadar';
 import CultureManifesto from '@/components/team-management/CultureManifesto';
@@ -33,28 +31,35 @@ import type { HierarchyLevel } from '@/types/teamManagement';
 import type { DimensionScores } from '@/types/gaugePro';
 
 export default function TeamCulture() {
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
+  const { data: allMembers = [], isLoading: membersLoading } = useTeamMembers({ companyId });
+  const { data: allPositions = [], isLoading: positionsLoading } = usePositions('all');
+
   const [selectedCandidateId, setSelectedCandidateId] = useState<string>('');
+
+  const isLoading = membersLoading || positionsLoading;
 
   // Calculate company DNA from all mapped members
   const dnaInput = useMemo(() => {
-    return mockTeamMembers
+    return allMembers
       .filter((m) => m.gaugeStatus === 'mapped' && m.gaugeScores)
       .map((m) => {
-        const pos = mockPositions.find((p) => p.id === m.positionId);
+        const pos = allPositions.find((p) => p.id === m.positionId);
         return {
           scores: m.gaugeScores as DimensionScores,
           level: (pos?.level ?? 'operational') as HierarchyLevel,
         };
       });
-  }, []);
+  }, [allMembers, allPositions]);
 
   const companyDNA = useMemo(() => calculateCompanyDNA(dnaInput), [dnaInput]);
   const manifesto = useMemo(() => generateManifesto(companyDNA), [companyDNA]);
 
   // Mapped members for the fit simulator
   const mappedMembers = useMemo(
-    () => mockTeamMembers.filter((m) => m.gaugeStatus === 'mapped' && m.gaugeScores),
-    [],
+    () => allMembers.filter((m) => m.gaugeStatus === 'mapped' && m.gaugeScores),
+    [allMembers],
   );
 
   // Calculate fit for selected "test candidate"
@@ -64,6 +69,16 @@ export default function TeamCulture() {
     if (!member || !member.gaugeScores) return null;
     return calculateCulturalFit(member.gaugeScores, companyDNA);
   }, [selectedCandidateId, companyDNA, mappedMembers]);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="company">

@@ -57,7 +57,7 @@ export default function CandidateSettings() {
   } = useSettings({
     categories: candidateSettingsCategories,
     panel: 'candidate',
-    userId: user?.id || 'candidate-1',
+    userId: user?.id || '',
     userName: user?.name || 'Candidato',
     entityId: user?.id,
   });

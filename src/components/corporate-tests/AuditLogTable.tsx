@@ -12,6 +12,7 @@ import { ScrollText, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { AuditLogFilters } from './AuditLogFilters';
 import { LGPDReport } from './LGPDReport';
+// TODO: PRD-072 — migrate to service layer
 import { mockAuditLogs } from '@/data/companyTestData';
 import { getActionLabel } from '@/utils/auditLog';
 import { useToast } from '@/hooks/use-toast';

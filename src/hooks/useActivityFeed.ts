@@ -1,14 +1,15 @@
 /**
- * Hook: useActivityFeed
- * PRD-059: Relatorios "Radar"
+ * Hook: useActivityFeed (PRD-071 Migration)
  *
- * Provides a real-time-simulated activity feed with filtering,
- * polling for new events, and a daily summary.
+ * Backward-compatible wrapper that delegates to useReportsQuery (useActivityFeed).
+ * Preserves filtering, polling simulation, and daily summary API.
+ *
+ * Data now flows through the service layer instead of importing mockActivityFeed.
  */
 
 import { useState, useEffect, useMemo } from 'react';
 import type { ActivityFeedEvent, ActivityEventType } from '@/types';
-import { mockActivityFeed } from '@/data/reportsData';
+import { useActivityFeed as useActivityFeedQuery } from './useReportsQuery';
 
 // ---------------------------------------------------------------------------
 // Event generation helpers for simulated polling
@@ -121,14 +122,21 @@ const MAX_EVENTS = 200;
 const POLL_INTERVAL_MS = 30000; // 30 seconds
 
 export function useActivityFeed() {
-  const [events, setEvents] = useState<ActivityFeedEvent[]>(mockActivityFeed);
+  const { data: initialEvents = [], isLoading, error } = useActivityFeedQuery(MAX_EVENTS);
+  const [liveEvents, setLiveEvents] = useState<ActivityFeedEvent[]>([]);
   const [filterTypes, setFilterTypes] = useState<ActivityEventType[]>([]);
+
+  // Merge initial (service) events with live events
+  const events = useMemo(
+    () => [...liveEvents, ...initialEvents].slice(0, MAX_EVENTS),
+    [liveEvents, initialEvents],
+  );
 
   // Simulate polling: occasionally add a new event
   useEffect(() => {
     const interval = setInterval(() => {
       const newEvent = createRandomEvent();
-      setEvents((prev) => [newEvent, ...prev].slice(0, MAX_EVENTS));
+      setLiveEvents((prev) => [newEvent, ...prev].slice(0, 50));
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
@@ -161,5 +169,7 @@ export function useActivityFeed() {
     filterTypes,
     setFilterTypes,
     todaySummary,
+    isLoading,
+    error,
   };
 }

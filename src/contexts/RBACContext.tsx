@@ -3,10 +3,11 @@
  * PRD-061: Sistema RBAC "Guardian"
  */
 
-import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { hasPermission, getEffectivePermissions } from '@/lib/rbac';
+import { hasPermission, getEffectivePermissions, configureRBAC } from '@/lib/rbac';
 import { useImpersonation } from '@/hooks/useImpersonation';
+import { useRoles, usePermissionGroups, useUserPermissionOverrides } from '@/hooks/useRBACQuery';
 import type { PermissionResolution, ImpersonationSession } from '@/types/rbac';
 
 interface RBACContextType {
@@ -34,6 +35,29 @@ export function RBACProvider({ children }: { children: ReactNode }) {
     remainingTime: impersonationRemainingTime,
   } = useImpersonation(userId);
 
+  // Fetch RBAC data via service layer
+  const { data: roles = [] } = useRoles();
+  const { data: groups = [] } = usePermissionGroups();
+  const { data: overrides = [] } = useUserPermissionOverrides(userId);
+
+  // Configure RBAC engine when data is available
+  useEffect(() => {
+    if (roles.length === 0) return;
+
+    const rolePermissions: Record<string, string[]> = {};
+    for (const role of roles) {
+      rolePermissions[role.slug] = role.permissions ?? [];
+    }
+
+    configureRBAC({
+      users: user ? [{ id: user.id, roleId: user.roleId, groupIds: user.groupIds }] : [],
+      roles,
+      rolePermissions,
+      groups,
+      overrides,
+    });
+  }, [user, roles, groups, overrides]);
+
   const can = (code: string): boolean => {
     if (!userId) return false;
     return hasPermission(userId, code);
@@ -45,9 +69,9 @@ export function RBACProvider({ children }: { children: ReactNode }) {
   };
 
   const effectivePermissions = useMemo(() => {
-    if (!userId) return [];
+    if (!userId || roles.length === 0) return [];
     return getEffectivePermissions(userId);
-  }, [userId]);
+  }, [userId, roles, groups, overrides]);
 
   return (
     <RBACContext.Provider value={{

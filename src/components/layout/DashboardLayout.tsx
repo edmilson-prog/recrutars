@@ -36,6 +36,7 @@ import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 import { GlassHeader } from '@/components/layout/GlassHeader';
 import { GlassFooter } from '@/components/layout/GlassFooter';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { NotificationBell } from '@/components/notifications';
 import { CompanyNotificationBell } from '@/components/notifications/CompanyNotificationBell';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
@@ -132,14 +133,14 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const { favoritesCount: savedCandidatesCount } = useFavoriteCandidates();
 
   // Hook de entrevistas para contador (PRD-027)
-  const { pendingCount: interviewsPendingCount } = useInterviews('candidate-1');
+  const { pendingCount: interviewsPendingCount } = useInterviews(currentCandidate?.id ?? '');
 
   // PRD-034: Hook de entrevistas da empresa para contador
-  const { pendingCount: companyInterviewsPendingCount } = useCompanyInterviews('company-1');
+  const { pendingCount: companyInterviewsPendingCount } = useCompanyInterviews(currentCompany?.id ?? '');
 
   // PRD-036: Hook de recomendações para contador de novas vagas
   const { newCount: recommendationsNewCount } = useTopRecommendations(
-    currentCandidate?.id || 'candidate-1',
+    currentCandidate?.id ?? '',
     5
   );
 
@@ -173,8 +174,14 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const displayName = userType === 'company'
     ? currentCompany?.name
     : userType === 'candidate'
-      ? currentCandidate?.name
+      ? (currentCandidate?.displayName || currentCandidate?.name)
       : user?.name;
+
+  const avatarUrl = userType === 'company'
+    ? currentCompany?.logo
+    : userType === 'candidate'
+      ? currentCandidate?.avatar
+      : null;
 
   const roleLabel = userType === 'admin'
     ? 'Administrador'
@@ -354,11 +361,12 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                       </div>
                       <div className="text-xs text-muted-foreground">{roleLabel}</div>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-semibold text-primary">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={avatarUrl || undefined} alt={displayName || ''} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
                         {displayName?.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
+                      </AvatarFallback>
+                    </Avatar>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">

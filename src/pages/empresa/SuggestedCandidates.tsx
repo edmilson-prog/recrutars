@@ -40,7 +40,7 @@ import { Label } from '@/components/ui/label';
 import { useCandidateRecommendations } from '@/hooks/useCandidateRecommendations';
 import { SuggestedCandidateCard } from '@/components/empresa/SuggestedCandidateCard';
 import { InviteCandidateModal } from '@/components/empresa/InviteCandidateModal';
-import { mockJobs } from '@/data/mockData';
+import { useJob } from '@/hooks/useJobsQuery';
 import type { Candidate, Job } from '@/types';
 
 // Tipos de filtro
@@ -81,8 +81,8 @@ const AVAILABILITY_OPTIONS = [
 export default function SuggestedCandidates() {
   const { id: jobId } = useParams<{ id: string }>();
 
-  // Buscar informações da vaga
-  const job = mockJobs.find(j => j.id === jobId);
+  // Fetch data from service layer
+  const { data: job } = useJob(jobId || '');
 
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);

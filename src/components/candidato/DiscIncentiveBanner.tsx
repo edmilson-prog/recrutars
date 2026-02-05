@@ -15,7 +15,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { TEST_CONFIG } from '@/data/testConfig';
 import { useDiscBannerDismiss, type DiscBannerContext } from '@/hooks/useDiscBannerDismiss';
-import { getCandidateBehavioralProfile } from '@/data/mockData';
+import { getCandidateBehavioralProfile } from '@/lib/behavioralProfiles';
+import { useBehavioralTestsByCandidate } from '@/hooks/useBehavioralTestsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Configurações de texto por contexto
@@ -80,8 +81,9 @@ export function DiscIncentiveBanner({
   const { isDismissed, dismiss } = useDiscBannerDismiss(context);
 
   // Verificar se o candidato já completou o teste
-  const candidateId = currentCandidate?.id || 'candidate-1';
-  const behavioralProfile = getCandidateBehavioralProfile(candidateId);
+  const candidateId = currentCandidate?.id || '';
+  const { data: candidateTests = [] } = useBehavioralTestsByCandidate(candidateId);
+  const behavioralProfile = getCandidateBehavioralProfile(candidateId, candidateTests);
   const hasCompletedTest = !!behavioralProfile;
 
   // Não exibir se já completou o teste ou se já foi dispensado

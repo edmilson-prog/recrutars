@@ -10,11 +10,11 @@ import { Link } from 'react-router-dom';
 import {
   Users, ShieldCheck, Building2, UserCheck, UserX, Search,
   SlidersHorizontal, CheckCircle, Ban, ChevronLeft, ChevronRight,
-  Download, Crown,
+  Download, Crown, Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { mockUsers } from '@/data/mockData';
-import { mockRoles } from '@/data/rbacData';
+import { useUsers, useUpdateUserStatus } from '@/hooks/useUsersQuery';
+import { useRoles } from '@/hooks/useRBACQuery';
 import { formatRelativeDate } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -37,34 +37,6 @@ import type { UserStatus } from '@/types/rbac';
 
 const ITEMS_PER_PAGE = 50;
 
-// Enrich mock users with RBAC fields for demonstration
-const enrichedUsers: User[] = mockUsers.map(user => ({
-  ...user,
-  status: (
-    user.id === 'candidate-3' ? 'inactive' :
-    user.id === 'company-3' ? 'suspended' :
-    user.id === 'candidate-5' ? 'pending' :
-    'active'
-  ) as UserStatus,
-  roleId:
-    user.type === 'admin' ? 'role-super-admin' :
-    user.id === 'company-1' ? 'role-owner' :
-    user.id === 'company-2' ? 'role-manager' :
-    user.id === 'company-3' ? 'role-recruiter' :
-    undefined,
-  lastAccessAt:
-    user.id === 'admin-1' ? '2026-02-03T10:30:00Z' :
-    user.id === 'company-1' ? '2026-02-02T14:00:00Z' :
-    user.id === 'candidate-1' ? '2026-01-30T09:00:00Z' :
-    user.id === 'candidate-2' ? '2026-02-01T16:20:00Z' :
-    user.id === 'company-2' ? '2026-01-28T11:00:00Z' :
-    user.id === 'candidate-4' ? '2026-02-01T13:10:00Z' :
-    user.id === 'candidate-5' ? '2026-01-25T08:00:00Z' :
-    undefined,
-  groupIds:
-    user.id === 'admin-1' ? ['group-moderadores'] : [],
-}));
-
 const emptyFilters: UserFiltersState = {
   types: [],
   statuses: [],
@@ -81,7 +53,23 @@ export default function AdminUsers() {
   const [filters, setFilters] = useState<UserFiltersState>(emptyFilters);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [page, setPage] = useState(1);
-  const [users, setUsers] = useState<User[]>(enrichedUsers);
+
+  // Fetch users via service layer
+  const { data: usersResult, isLoading: isLoadingUsers } = useUsers();
+  const { data: rolesData } = useRoles();
+  const updateStatusMutation = useUpdateUserStatus();
+
+  // Users with RBAC enrichment from service
+  const [localUsers, setLocalUsers] = useState<User[]>([]);
+
+  // Sync service data to local state (for local mutations like status changes)
+  useEffect(() => {
+    if (usersResult?.data) {
+      setLocalUsers(usersResult.data);
+    }
+  }, [usersResult]);
+
+  const users = localUsers;
 
   // Debounce search
   useEffect(() => {
@@ -163,19 +151,33 @@ export default function AdminUsers() {
 
   // Status change
   const handleStatusChange = useCallback((userId: string, status: 'active' | 'inactive' | 'suspended') => {
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, status } : u));
-  }, []);
+    setLocalUsers(prev => prev.map(u => u.id === userId ? { ...u, status } : u));
+    updateStatusMutation.mutate({ id: userId, status });
+  }, [updateStatusMutation]);
 
   // Bulk actions
   const bulkActivate = () => {
-    setUsers(prev => prev.map(u => selectedIds.includes(u.id) ? { ...u, status: 'active' as UserStatus } : u));
+    setLocalUsers(prev => prev.map(u => selectedIds.includes(u.id) ? { ...u, status: 'active' as UserStatus } : u));
+    selectedIds.forEach(id => updateStatusMutation.mutate({ id, status: 'active' }));
     setSelectedIds([]);
   };
 
   const bulkDeactivate = () => {
-    setUsers(prev => prev.map(u => selectedIds.includes(u.id) ? { ...u, status: 'inactive' as UserStatus } : u));
+    setLocalUsers(prev => prev.map(u => selectedIds.includes(u.id) ? { ...u, status: 'inactive' as UserStatus } : u));
+    selectedIds.forEach(id => updateStatusMutation.mutate({ id, status: 'inactive' }));
     setSelectedIds([]);
   };
+
+  if (isLoadingUsers) {
+    return (
+      <DashboardLayout userType="admin">
+        <AdminTabNav />
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   const filtersContent = (
     <UserFilters

@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CandidateComparison } from '@/components/job-assessment';
-import { mockJobs } from '@/data/mockData';
+import { useJobs } from '@/hooks/useJobsQuery';
 import {
   mockJobAssessments,
   mockJobAssessmentResults,
@@ -86,8 +86,12 @@ export default function CompareCandidates() {
   const navigate = useNavigate();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  // Fetch data from service layer
+  const { data: jobsResult } = useJobs();
+  const allJobs = jobsResult?.data ?? [];
+
   // Buscar dados
-  const job = mockJobs.find((j) => j.id === jobId);
+  const job = allJobs.find((j) => j.id === jobId);
   const assessment = mockJobAssessments.find((a) => a.jobId === jobId);
 
   // Competências do teste

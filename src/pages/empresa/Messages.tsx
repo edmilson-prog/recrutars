@@ -44,6 +44,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useMessages } from '@/hooks/useMessages';
 import { useMessageTemplates } from '@/hooks/useMessageTemplates';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   TemplateSelector,
   ToneSelector,
@@ -54,6 +55,7 @@ import { toast } from 'sonner';
 import type { TemplateVariableData } from '@/types/messageTemplates';
 
 export default function CompanyMessages() {
+  const { currentCompany } = useAuth();
   const {
     conversations,
     getConversationMessages,
@@ -61,7 +63,7 @@ export default function CompanyMessages() {
     markAsRead,
     sendMessage,
     totalUnreadCount,
-  } = useMessages({ userId: 'company-1', userType: 'company' });
+  } = useMessages({ userId: currentCompany?.id ?? '', userType: 'company' });
 
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -83,7 +85,7 @@ export default function CompanyMessages() {
     getPreview,
     saveCustomTemplate,
     deleteCustomTemplate,
-  } = useMessageTemplates({ companyId: 'company-1' });
+  } = useMessageTemplates({ companyId: currentCompany?.id ?? '' });
 
   // Get unique jobs from conversations for filter
   const jobOptions = useMemo(() => {

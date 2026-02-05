@@ -7,12 +7,12 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   ScrollText, Search, SlidersHorizontal, Calendar, User, Shield,
-  ChevronLeft, ChevronRight, Download, X,
+  ChevronLeft, ChevronRight, Download, X, Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
-import { mockUsers } from '@/data/mockData';
-import { mockAuditLogs } from '@/data/rbacData';
+import { useUsers } from '@/hooks/useUsersQuery';
+import { useAuditLogs } from '@/hooks/useRBACQuery';
 import { formatRelativeDate } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -106,6 +106,13 @@ const actionOptions: { value: AuditAction; label: string }[] = [
 ];
 
 export default function AdminAuditLogs() {
+  // Fetch data via service layer
+  const { data: usersResult, isLoading: isLoadingUsers } = useUsers();
+  const { data: auditLogsData, isLoading: isLoadingLogs } = useAuditLogs();
+
+  const allUsers = usersResult?.data ?? [];
+  const allAuditLogs = auditLogsData ?? [];
+
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('');
@@ -128,10 +135,10 @@ export default function AdminAuditLogs() {
 
   // Sort by date desc
   const sortedLogs = useMemo(() => {
-    return [...mockAuditLogs].sort(
+    return [...allAuditLogs].sort(
       (a, b) => new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime()
     );
-  }, []);
+  }, [allAuditLogs]);
 
   // Filter
   const filteredLogs = useMemo(() => {
@@ -184,8 +191,8 @@ export default function AdminAuditLogs() {
       if (log.performedBy) userIds.add(log.performedBy);
       if (log.targetUserId) userIds.add(log.targetUserId);
     });
-    return mockUsers.filter(u => userIds.has(u.id));
-  }, [sortedLogs]);
+    return allUsers.filter(u => userIds.has(u.id));
+  }, [sortedLogs, allUsers]);
 
   // KPI counts
   const kpis = useMemo(() => {
@@ -202,6 +209,17 @@ export default function AdminAuditLogs() {
       { label: 'Alteracoes de Permissao', value: permChanges, icon: Shield },
     ];
   }, [sortedLogs]);
+
+  if (isLoadingLogs || isLoadingUsers) {
+    return (
+      <DashboardLayout userType="admin">
+        <AdminTabNav />
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="admin">

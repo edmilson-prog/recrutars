@@ -16,7 +16,8 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { mockRoles } from '@/data/rbacData';
+import { useRoles } from '@/hooks/useRBACQuery';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { UserStatus } from '@/types/rbac';
 import type { UserType } from '@/types/user';
 
@@ -58,6 +59,8 @@ const planOptions = [
 ];
 
 export function UserFilters({ filters, onChange, onClear }: UserFiltersProps) {
+  const { data: roles = [], isLoading: rolesLoading } = useRoles();
+
   const toggleType = (type: UserType) => {
     const updated = filters.types.includes(type)
       ? filters.types.filter(t => t !== type)
@@ -142,11 +145,15 @@ export function UserFilters({ filters, onChange, onClear }: UserFiltersProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="_all">Todos os papeis</SelectItem>
-            {mockRoles.map(role => (
-              <SelectItem key={role.id} value={role.id}>
-                {role.name}
-              </SelectItem>
-            ))}
+            {rolesLoading ? (
+              <div className="px-2 py-1.5"><Skeleton className="h-4 w-full" /></div>
+            ) : (
+              roles.map(role => (
+                <SelectItem key={role.id} value={role.id}>
+                  {role.name}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       </div>

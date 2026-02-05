@@ -31,7 +31,7 @@ export default function BehavioralTestResult() {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentCandidate } = useAuth();
-  const candidateId = currentCandidate?.id || 'candidate-1';
+  const candidateId = currentCandidate?.id || '';
 
   const [result, setResult] = useState<BehavioralResult | null>(null);
   const [loading, setLoading] = useState(true);

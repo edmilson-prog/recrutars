@@ -27,7 +27,8 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { UserPlus, CheckCircle2, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { mockDepartments, mockPositions } from '@/data/teamManagementData';
+import { useDepartments, usePositions } from '@/hooks/useTeamsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import { DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 import type { GaugeProDimension, DimensionScores } from '@/types/gaugePro';
 import type { TeamMember } from '@/types/teamManagement';
@@ -97,6 +98,12 @@ export default function CandidateImportModal({
   onOpenChange,
   onImport,
 }: CandidateImportModalProps) {
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
+
+  const { data: departments = [] } = useDepartments(companyId);
+  const { data: allPositions = [] } = usePositions('all');
+
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [departmentId, setDepartmentId] = useState('');
   const [positionId, setPositionId] = useState('');
@@ -107,8 +114,8 @@ export default function CandidateImportModal({
   );
 
   const filteredPositions = useMemo(
-    () => mockPositions.filter((p) => p.departmentId === departmentId && p.isActive),
-    [departmentId],
+    () => allPositions.filter((p) => p.departmentId === departmentId && p.isActive),
+    [allPositions, departmentId],
   );
 
   const canImport = selectedCandidate !== null && departmentId !== '' && positionId !== '';
@@ -267,7 +274,7 @@ export default function CandidateImportModal({
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockDepartments
+                      {departments
                         .filter((d) => d.isActive)
                         .map((dept) => (
                           <SelectItem key={dept.id} value={dept.id}>

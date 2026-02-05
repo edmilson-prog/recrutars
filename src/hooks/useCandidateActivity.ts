@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
-import {
-  mockApplications,
-  mockApplicationNotes,
-  mockApplicationHistory,
-  mockConversations,
-  mockMessages,
-} from '@/data/mockData';
+import { useApplications } from '@/hooks/useApplicationsQuery';
+import type { ApplicationNote, ApplicationHistory } from '@/types/application';
+import type { Conversation, Message } from '@/types/message';
+
+// TODO: Replace with service API -- these require per-application queries
+const mockApplicationNotes: ApplicationNote[] = [];
+const mockApplicationHistory: ApplicationHistory[] = [];
+const mockConversations: Conversation[] = [];
+const mockMessages: Message[] = [];
 
 export type ActivityType = 'application' | 'status_change' | 'note' | 'message' | 'test_request';
 
@@ -31,12 +33,14 @@ const STATUS_LABELS: Record<string, string> = {
 
 export function useCandidateActivity(candidateId: string, pageSize = 5) {
   const [visibleCount, setVisibleCount] = useState(pageSize);
+  const { data: applicationsResult } = useApplications();
+  const allApplications = applicationsResult?.data ?? [];
 
   const allActivities = useMemo(() => {
     const activities: CandidateActivity[] = [];
 
     // Get all applications for this candidate
-    const candidateApps = mockApplications.filter(
+    const candidateApps = allApplications.filter(
       (a) => a.candidateId === candidateId
     );
     const appIds = candidateApps.map((a) => a.id);
@@ -129,7 +133,7 @@ export function useCandidateActivity(candidateId: string, pageSize = 5) {
     );
 
     return activities;
-  }, [candidateId]);
+  }, [candidateId, allApplications]);
 
   const activities = allActivities.slice(0, visibleCount);
   const hasMore = visibleCount < allActivities.length;

@@ -10,10 +10,9 @@
  * - Histórico (views, aplicações) (10%)
  */
 
-import type { Candidate, Job } from '@/types';
+import type { Candidate, Job, Application } from '@/types';
 import type { MatchResult, BehavioralProfile } from '@/types/disc';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
-import { mockJobs, mockCandidates, mockApplications, idealBehavioralProfiles } from '@/data/mockData';
 
 // Tipos do motor de recomendação
 export interface RecommendationReason {
@@ -49,6 +48,14 @@ const RECOMMENDATION_WEIGHTS = {
   history: 10,
 };
 
+/** Data bundle for the recommendation engine. */
+export interface RecommendationData {
+  jobs: Job[];
+  candidates: Candidate[];
+  applications: Array<{ candidateId: string; jobId: string }>;
+  idealProfiles: Record<string, BehavioralProfile>;
+}
+
 // Score mínimo para aparecer nas recomendações
 const MIN_RECOMMENDATION_SCORE = 50;
 
@@ -58,11 +65,12 @@ const MIN_RECOMMENDATION_SCORE = 50;
 export function applyExclusionFilters(
   jobs: Job[],
   signals: RecommendationSignals,
-  candidateId: string
+  candidateId: string,
+  applications: Array<{ candidateId: string; jobId: string }> = [],
 ): Job[] {
   // IDs de vagas já candidatadas
   const appliedJobIds = new Set(
-    mockApplications
+    applications
       .filter(app => app.candidateId === candidateId)
       .map(app => app.jobId)
   );
@@ -239,11 +247,13 @@ export function calculateRecommendationScore(
 }
 
 /**
- * Obtém recomendações de vagas para um candidato
+ * Obtém recomendações de vagas para um candidato.
+ * @param data - bundle de dados (jobs, candidates, applications, idealProfiles)
  */
 export function getRecommendedJobs(
   candidateId: string,
   signals: RecommendationSignals,
+  data: RecommendationData,
   options?: {
     limit?: number;
     minScore?: number;
@@ -253,20 +263,20 @@ export function getRecommendedJobs(
   const { limit = 10, minScore = MIN_RECOMMENDATION_SCORE, lastCheckDate } = options || {};
 
   // Encontrar candidato
-  const candidate = mockCandidates.find(c => c.id === candidateId);
+  const candidate = data.candidates.find(c => c.id === candidateId);
   if (!candidate) {
     return [];
   }
 
   // Filtrar vagas
-  const eligibleJobs = applyExclusionFilters(mockJobs, signals, candidateId);
+  const eligibleJobs = applyExclusionFilters(data.jobs, signals, candidateId, data.applications);
 
   // Calcular scores para cada vaga
   const recommendations: JobRecommendation[] = [];
 
   for (const job of eligibleJobs) {
     // Calcular match usando o motor existente
-    const idealProfile = idealBehavioralProfiles[job.id];
+    const idealProfile = data.idealProfiles[job.id];
     const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
 
     // Calcular boost de histórico
@@ -310,9 +320,10 @@ export function getRecommendedJobs(
 export function countNewRecommendations(
   candidateId: string,
   signals: RecommendationSignals,
+  data: RecommendationData,
   lastCheckDate: string
 ): number {
-  const recommendations = getRecommendedJobs(candidateId, signals, {
+  const recommendations = getRecommendedJobs(candidateId, signals, data, {
     lastCheckDate,
     limit: 50, // Buscar mais para contar
   });

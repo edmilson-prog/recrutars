@@ -3,15 +3,16 @@
  * PRD-061: Matriz visual de permissoes por papel
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Fragment } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Shield, Plus, Edit, Trash2, Lock, Save, X, Check,
+  Shield, Plus, Edit, Trash2, Lock, Save, X, Check, Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
-import { mockRoles, mockPermissions } from '@/data/rbacData';
+import { useRoles, usePermissions } from '@/hooks/useRBACQuery';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,8 +45,8 @@ import {
 import type { Role, Permission } from '@/types/rbac';
 
 // Group permissions by category
-function getPermsByCategory(): Record<string, Permission[]> {
-  return mockPermissions.reduce((acc, perm) => {
+function getPermsByCategory(permissions: Permission[]): Record<string, Permission[]> {
+  return permissions.reduce((acc, perm) => {
     if (!acc[perm.category]) acc[perm.category] = [];
     acc[perm.category].push(perm);
     return acc;
@@ -76,12 +77,25 @@ const emptyRoleForm: RoleFormData = {
 };
 
 export default function AdminRolesPermissions() {
-  const [roles, setRoles] = useState<Role[]>([...mockRoles]);
+  const { data: fetchedRoles = [], isLoading: rolesLoading, error: rolesError } = useRoles();
+  const { data: fetchedPermissions = [], isLoading: permsLoading, error: permsError } = usePermissions();
+
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [rolesInitialized, setRolesInitialized] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<RoleFormData>(emptyRoleForm);
 
-  const permsByCategory = getPermsByCategory();
+  // Sync fetched roles into local state once loaded
+  if (!rolesInitialized && fetchedRoles.length > 0) {
+    setRoles([...fetchedRoles]);
+    setRolesInitialized(true);
+  }
+
+  const isLoading = rolesLoading || permsLoading;
+  const error = rolesError || permsError;
+
+  const permsByCategory = getPermsByCategory(fetchedPermissions);
 
   // Separate system vs custom
   const systemRoles = roles.filter(r => r.isSystem);
@@ -175,6 +189,23 @@ export default function AdminRolesPermissions() {
   return (
     <DashboardLayout userType="admin">
       <AdminTabNav />
+      {isLoading ? (
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 py-12 justify-center text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span>Carregando papeis e permissoes...</span>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-40 rounded-xl" />
+            ))}
+          </div>
+        </div>
+      ) : error ? (
+        <div className="text-center py-12 text-destructive">
+          <p>Erro ao carregar dados: {(error as Error).message}</p>
+        </div>
+      ) : (
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -276,9 +307,9 @@ export default function AdminRolesPermissions() {
               </TableHeader>
               <TableBody>
                 {Object.entries(permsByCategory).map(([category, perms]) => (
-                  <>
+                  <Fragment key={category}>
                     {/* Category header row */}
-                    <TableRow key={`cat-${category}`}>
+                    <TableRow>
                       <TableCell
                         colSpan={matrixRoles.length + 1}
                         className="bg-muted/50 font-semibold text-sm sticky left-0"
@@ -312,7 +343,7 @@ export default function AdminRolesPermissions() {
                         })}
                       </TableRow>
                     ))}
-                  </>
+                  </Fragment>
                 ))}
               </TableBody>
             </Table>
@@ -433,6 +464,7 @@ export default function AdminRolesPermissions() {
           </DialogContent>
         </Dialog>
       </div>
+      )}
     </DashboardLayout>
   );
 }

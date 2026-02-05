@@ -75,6 +75,7 @@ export interface Candidate {
   createdAt: string;
   deactivatedAt?: string;
   phone?: string;
+  cpf?: string;
   linkedin?: string;
   about?: string;
   plan?: CandidatePlanType; // Plano de assinatura
@@ -82,6 +83,12 @@ export interface Candidate {
 
   // PRD-026: Visibilidade do perfil (opcional para compatibilidade com dados existentes)
   visibility?: VisibilitySettings;
+
+  // Campos de perfil consolidado (Nome de Exibição + Localização detalhada)
+  displayName?: string;
+  city?: string;
+  state?: string;
+  openToRelocation?: boolean;
 }
 
 // PRD-026: Perfil anônimo para empresas (modo partial)

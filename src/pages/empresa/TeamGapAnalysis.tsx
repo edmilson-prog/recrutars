@@ -17,7 +17,9 @@ import {
 } from '@/components/ui/select';
 import { ArrowLeft, SearchCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { mockTeamMembers, mockDepartments } from '@/data/teamManagementData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTeamMembers, useDepartments } from '@/hooks/useTeamsQuery';
+import { Loader2 } from 'lucide-react';
 import { performGapAnalysis } from '@/utils/gapAnalysis';
 import GapAnalysisRadar from '@/components/team-management/GapAnalysisRadar';
 import GapCardsPanel from '@/components/team-management/GapCardsPanel';
@@ -25,14 +27,21 @@ import GapRecommendation from '@/components/team-management/GapRecommendation';
 import type { DimensionScores } from '@/types/gaugePro';
 
 export default function TeamGapAnalysis() {
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
+  const { data: allMembers = [], isLoading: membersLoading } = useTeamMembers({ companyId });
+  const { data: allDepartments = [], isLoading: deptsLoading } = useDepartments(companyId);
+
   const [selectedDept, setSelectedDept] = useState<string>('all');
+
+  const isLoading = membersLoading || deptsLoading;
 
   const filteredMembers = useMemo(() => {
     const base = selectedDept === 'all'
-      ? mockTeamMembers
-      : mockTeamMembers.filter((m) => m.departmentId === selectedDept);
+      ? allMembers
+      : allMembers.filter((m) => m.departmentId === selectedDept);
     return base.filter((m) => m.gaugeStatus === 'mapped' && m.gaugeScores);
-  }, [selectedDept]);
+  }, [selectedDept, allMembers]);
 
   const gapResult = useMemo(() => {
     const scores: DimensionScores[] = filteredMembers
@@ -46,8 +55,18 @@ export default function TeamGapAnalysis() {
 
   const deptLabel = useMemo(() => {
     if (selectedDept === 'all') return 'Toda a empresa';
-    return mockDepartments.find((d) => d.id === selectedDept)?.name ?? 'Departamento';
-  }, [selectedDept]);
+    return allDepartments.find((d) => d.id === selectedDept)?.name ?? 'Departamento';
+  }, [selectedDept, allDepartments]);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="company">
@@ -82,7 +101,7 @@ export default function TeamGapAnalysis() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os departamentos</SelectItem>
-                {mockDepartments
+                {allDepartments
                   .filter((d) => d.isActive)
                   .map((dept) => (
                     <SelectItem key={dept.id} value={dept.id}>

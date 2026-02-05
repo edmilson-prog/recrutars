@@ -1,9 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   User, MapPin, Save, Camera, FileText, ArrowRight,
-  Shield, Bell, AlertTriangle, CreditCard, Palette, Check, X, Star,
+  Shield, Bell, AlertTriangle, CreditCard, Palette, Check, X, Star, Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,13 @@ import {
 import { ThemeSettings } from '@/components/settings/ThemeSettings';
 import { toast } from 'sonner';
 import { useToast } from '@/hooks/use-toast';
-import { mockCandidates } from '@/data/mockData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCandidateByProfile, useUpdateCandidate } from '@/hooks/useCandidatesQuery';
+import { supabase } from '@/lib/supabase';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { brazilianStates } from '@/data/settingsConfig';
+import Cropper from 'react-easy-crop';
+import type { Area, Point } from 'react-easy-crop';
 import type { CandidatePlanType } from '@/types/candidate';
 
 const MAX_ABOUT_LENGTH = 500;
@@ -95,6 +101,48 @@ const faq = [
   },
 ];
 
+// Helper functions for image cropping
+function createImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', reject);
+    image.src = url;
+  });
+}
+
+async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+
+  ctx?.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  );
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('Canvas is empty'));
+      },
+      'image/jpeg',
+      0.9
+    );
+  });
+}
+
 function FeatureValue({ value }: { value: string | boolean }) {
   if (value === true) {
     return <Check className="w-4 h-4 text-green-500" />;
@@ -103,6 +151,15 @@ function FeatureValue({ value }: { value: string | boolean }) {
     return <X className="w-4 h-4 text-muted-foreground/40" />;
   }
   return <span className="text-sm">{value}</span>;
+}
+
+// Formata CPF: 000.000.000-00
+function formatCPF(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  return digits
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
 const candidatePlanData: Record<CandidatePlanType, {
@@ -132,22 +189,60 @@ const candidatePlanData: Record<CandidatePlanType, {
 };
 
 export default function CandidateProfile() {
-  const candidate = mockCandidates[0];
+  const { user, refreshCurrentCandidate } = useAuth();
+  const { data: candidate, isLoading } = useCandidateByProfile(user?.id || '');
+  const updateCandidateMutation = useUpdateCandidate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast: toastShadcn } = useToast();
 
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(candidate.avatar || null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Estados do Image Cropper
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropperImage, setCropperImage] = useState<string | null>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
 
   const [profile, setProfile] = useState({
-    name: candidate.name,
-    email: candidate.email,
-    title: candidate.title,
-    location: candidate.location,
-    phone: candidate.phone || '(11) 99999-9999',
-    linkedin: candidate.linkedin || 'linkedin.com/in/joaosantos',
-    about: candidate.about || 'Desenvolvedor Full Stack apaixonado por criar soluções inovadoras. Com 5 anos de experiência, tenho trabalhado em projetos de grande escala utilizando tecnologias modernas.',
-    dateOfBirth: candidate.dateOfBirth || '',
+    name: '',
+    email: '',
+    cpf: '',
+    title: '',
+    phone: '(11) 99999-9999',
+    linkedin: 'linkedin.com/in/joaosantos',
+    about: 'Desenvolvedor Full Stack apaixonado por criar soluções inovadoras. Com 5 anos de experiência, tenho trabalhado em projetos de grande escala utilizando tecnologias modernas.',
+    dateOfBirth: '',
+    // Campos de perfil consolidado
+    displayName: '',
+    city: '',
+    state: '',
+    openToRelocation: false,
   });
+
+  // Hydrate form when candidate loads
+  useEffect(() => {
+    if (candidate) {
+      setAvatarPreview(candidate.avatar || null);
+      setProfile({
+        name: candidate.name,
+        email: candidate.email,
+        cpf: candidate.cpf || '',
+        title: candidate.title,
+        phone: candidate.phone || '(11) 99999-9999',
+        linkedin: candidate.linkedin || 'linkedin.com/in/joaosantos',
+        about: candidate.about || 'Desenvolvedor Full Stack apaixonado por criar soluções inovadoras. Com 5 anos de experiência, tenho trabalhado em projetos de grande escala utilizando tecnologias modernas.',
+        dateOfBirth: candidate.dateOfBirth || '',
+        // Campos de perfil consolidado
+        displayName: candidate.displayName || '',
+        city: candidate.city || '',
+        state: candidate.state || '',
+        openToRelocation: candidate.openToRelocation || false,
+      });
+    }
+  }, [candidate]);
 
   // Conta tab — modais
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -163,8 +258,18 @@ export default function CandidateProfile() {
     messages: true,
   });
 
-  const currentPlan: CandidatePlanType = candidate.plan || 'Essencial';
+  const currentPlan: CandidatePlanType = candidate?.plan || 'Essencial';
   const planData = candidatePlanData[currentPlan];
+
+  if (isLoading || !candidate) {
+    return (
+      <DashboardLayout userType="candidate">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   // Mock usage data
   const usedApplications = 3;
@@ -179,20 +284,115 @@ export default function CandidateProfile() {
       .slice(0, 2);
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-        toast.success('Foto atualizada!');
-      };
-      reader.readAsDataURL(file);
+    if (!file || !user || !candidate) return;
+
+    // Validação de tamanho (máximo 2MB)
+    const MAX_SIZE = 2 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      toast.error('A imagem deve ter no máximo 2MB');
+      return;
+    }
+
+    // Validação de tipo
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Formato inválido. Use JPG, PNG ou WebP');
+      return;
+    }
+
+    // Ler arquivo e abrir modal de crop
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropperImage(reader.result as string);
+      setShowCropModal(true);
+    };
+    reader.readAsDataURL(file);
+
+    // Limpar input para permitir selecionar o mesmo arquivo novamente
+    e.target.value = '';
+  };
+
+  const handleCropConfirm = async () => {
+    if (!cropperImage || !croppedAreaPixels || !user || !candidate) return;
+
+    setIsUploading(true);
+    setShowCropModal(false);
+
+    try {
+      // Recortar imagem
+      const croppedBlob = await getCroppedImg(cropperImage, croppedAreaPixels);
+
+      // Upload para Supabase Storage
+      const fileName = `${user.id}/${Date.now()}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, croppedBlob, {
+          upsert: true,
+          contentType: 'image/jpeg',
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Obter URL pública
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      const publicUrl = urlData.publicUrl;
+
+      // Atualizar candidato no banco
+      await updateCandidateMutation.mutateAsync({
+        id: candidate.id,
+        updates: { avatar: publicUrl },
+      });
+
+      await refreshCurrentCandidate();
+      setAvatarPreview(publicUrl);
+      toast.success('Foto atualizada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      toast.error('Erro ao atualizar foto. Tente novamente.');
+    } finally {
+      setIsUploading(false);
+      setCropperImage(null);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
     }
   };
 
-  const handleSave = () => {
-    toast.success('Perfil atualizado com sucesso!');
+  const handleSave = async () => {
+    if (!candidate) return;
+
+    setIsSaving(true);
+
+    try {
+      await updateCandidateMutation.mutateAsync({
+        id: candidate.id,
+        updates: {
+          name: profile.name,
+          title: profile.title,
+          phone: profile.phone,
+          linkedin: profile.linkedin,
+          about: profile.about,
+          dateOfBirth: profile.dateOfBirth || null,
+          // Campos de perfil consolidado
+          displayName: profile.displayName || null,
+          city: profile.city || null,
+          state: profile.state || null,
+          openToRelocation: profile.openToRelocation,
+        },
+      });
+
+      await refreshCurrentCandidate();
+      toast.success('Perfil atualizado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar perfil:', error);
+      toast.error('Erro ao salvar perfil. Tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -207,10 +407,14 @@ export default function CandidateProfile() {
         </div>
 
         <Tabs defaultValue="perfil" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="perfil" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Perfil</span>
+            </TabsTrigger>
+            <TabsTrigger value="localizacao" className="flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              <span className="hidden sm:inline">Localização</span>
             </TabsTrigger>
             <TabsTrigger value="conta" className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
@@ -254,19 +458,21 @@ export default function CandidateProfile() {
                     size="icon"
                     className="absolute -bottom-1 -right-1 rounded-full w-8 h-8"
                     onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
                   >
-                    <Camera className="w-4 h-4" />
+                    {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
                   </Button>
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-foreground">{profile.name}</h2>
+                  <h2 className="text-xl font-semibold text-foreground">{profile.displayName || profile.name}</h2>
                   <p className="text-muted-foreground">{profile.title}</p>
                   <Button
                     variant="link"
                     className="p-0 h-auto text-sm"
                     onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
                   >
-                    Trocar foto
+                    {isUploading ? 'Enviando...' : 'Trocar foto'}
                   </Button>
                 </div>
               </div>
@@ -288,6 +494,16 @@ export default function CandidateProfile() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label htmlFor="displayName">Nome de Exibição</Label>
+                  <Input
+                    id="displayName"
+                    placeholder="Como você gosta de ser chamado"
+                    value={profile.displayName}
+                    onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">Como você será identificado na plataforma</p>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="name">Nome completo</Label>
                   <Input
                     id="name"
@@ -307,24 +523,23 @@ export default function CandidateProfile() {
                   <p className="text-xs text-muted-foreground">O e-mail não pode ser alterado aqui</p>
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="cpf">CPF</Label>
+                  <Input
+                    id="cpf"
+                    value={formatCPF(profile.cpf)}
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                    placeholder="000.000.000-00"
+                  />
+                  <p className="text-xs text-muted-foreground">O CPF não pode ser alterado</p>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="title">Cargo/Título</Label>
                   <Input
                     id="title"
                     value={profile.title}
                     onChange={(e) => setProfile({ ...profile, title: e.target.value })}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Localização</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="location"
-                      className="pl-9"
-                      value={profile.location}
-                      onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                    />
-                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Telefone</Label>
@@ -399,9 +614,98 @@ export default function CandidateProfile() {
 
             {/* Save Button */}
             <div className="flex justify-end pb-8">
-              <Button size="lg" onClick={handleSave}>
-                <Save className="w-5 h-5 mr-2" />
-                Salvar Alterações
+              <Button size="lg" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5 mr-2" />
+                    Salvar Alterações
+                  </>
+                )}
+              </Button>
+            </div>
+          </TabsContent>
+
+          {/* ============ TAB LOCALIZAÇÃO ============ */}
+          <TabsContent value="localizacao" className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-card rounded-2xl p-6 shadow-soft"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Localização</h2>
+                  <p className="text-sm text-muted-foreground">Cidade e disponibilidade para mudança</p>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">Cidade</Label>
+                  <Input
+                    id="city"
+                    placeholder="Sua cidade atual"
+                    value={profile.city}
+                    onChange={(e) => setProfile({ ...profile, city: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="state">Estado</Label>
+                  <Select
+                    value={profile.state || '__none__'}
+                    onValueChange={(value) => setProfile({ ...profile, state: value === '__none__' ? '' : value })}
+                  >
+                    <SelectTrigger id="state">
+                      <SelectValue placeholder="Selecione o estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {brazilianStates.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2">
+                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
+                    <div>
+                      <Label className="font-medium">Disponível para Mudança</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Indica se você aceitaria mudar de cidade/estado para uma oportunidade
+                      </p>
+                    </div>
+                    <Switch
+                      checked={profile.openToRelocation}
+                      onCheckedChange={(checked) => setProfile({ ...profile, openToRelocation: checked })}
+                    />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Save Button */}
+            <div className="flex justify-end pb-8">
+              <Button size="lg" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5 mr-2" />
+                    Salvar Alterações
+                  </>
+                )}
               </Button>
             </div>
           </TabsContent>
@@ -824,6 +1128,63 @@ export default function CandidateProfile() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de Crop de Avatar */}
+      <Dialog open={showCropModal} onOpenChange={setShowCropModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Ajustar foto</DialogTitle>
+            <DialogDescription>
+              Arraste para posicionar e use o zoom para enquadrar seu rosto.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="relative h-64 w-full bg-muted rounded-lg overflow-hidden">
+            {cropperImage && (
+              <Cropper
+                image={cropperImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(_, croppedAreaPixels) => setCroppedAreaPixels(croppedAreaPixels)}
+              />
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Zoom</Label>
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-full accent-primary"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCropModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCropConfirm} disabled={isUploading}>
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                'Confirmar'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

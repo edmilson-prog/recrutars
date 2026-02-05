@@ -1,110 +1,90 @@
 // PRD-024: Hook para gerenciamento de vagas favoritas
+// PRD-069: Migrated from mockData to service layer hooks
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { mockJobs } from '@/data/mockData';
+import { useCallback, useMemo } from 'react';
+import { useFavorites, useToggleFavorite } from '@/hooks/useFavoritesQuery';
+import { useJobs } from '@/hooks/useJobsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Job } from '@/types';
+
 
 export interface FavoriteJob {
   jobId: string;
   savedAt: string; // ISO date
 }
 
-const STORAGE_KEY = 'recrutars_favorite_jobs';
-
-// Helper para carregar favoritos do localStorage
-function loadFavorites(): FavoriteJob[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    console.error('Erro ao carregar favoritos:', error);
-  }
-  return [];
-}
-
-// Helper para salvar favoritos no localStorage
-function saveFavorites(favorites: FavoriteJob[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
-  } catch (error) {
-    console.error('Erro ao salvar favoritos:', error);
-  }
-}
-
 export function useFavoriteJobs() {
-  const [favorites, setFavorites] = useState<FavoriteJob[]>(loadFavorites);
+  const { user } = useAuth();
+  const userId = user?.id ?? '';
 
-  // Sincronizar com localStorage quando favorites muda
-  useEffect(() => {
-    saveFavorites(favorites);
-  }, [favorites]);
+  const { data: favoriteIds = [] } = useFavorites(userId, 'job');
+  const toggleMutation = useToggleFavorite();
+
+  // Also fetch all jobs to support getFavoriteJobs enrichment
+  const { data: jobsResult } = useJobs();
+  const allJobs = useMemo(() => jobsResult?.data ?? [], [jobsResult]);
 
   // Verificar se uma vaga está nos favoritos
   const isFavorite = useCallback(
     (jobId: string): boolean => {
-      return favorites.some((fav) => fav.jobId === jobId);
+      return favoriteIds.includes(jobId);
     },
-    [favorites]
+    [favoriteIds]
   );
 
   // Toggle favorito (adicionar/remover)
   const toggleFavorite = useCallback((jobId: string): boolean => {
-    let isNowFavorite = false;
-
-    setFavorites((current) => {
-      const exists = current.some((fav) => fav.jobId === jobId);
-
-      if (exists) {
-        // Remover
-        isNowFavorite = false;
-        return current.filter((fav) => fav.jobId !== jobId);
-      } else {
-        // Adicionar
-        isNowFavorite = true;
-        return [
-          ...current,
-          {
-            jobId,
-            savedAt: new Date().toISOString(),
-          },
-        ];
-      }
+    const currentlyFavorited = favoriteIds.includes(jobId);
+    toggleMutation.mutate({
+      userId,
+      resourceType: 'job',
+      resourceId: jobId,
+      currentlyFavorited,
     });
-
-    return isNowFavorite;
-  }, []);
+    return !currentlyFavorited;
+  }, [favoriteIds, userId, toggleMutation]);
 
   // Remover favorito
   const removeFavorite = useCallback((jobId: string): void => {
-    setFavorites((current) => current.filter((fav) => fav.jobId !== jobId));
-  }, []);
+    if (favoriteIds.includes(jobId)) {
+      toggleMutation.mutate({
+        userId,
+        resourceType: 'job',
+        resourceId: jobId,
+        currentlyFavorited: true,
+      });
+    }
+  }, [favoriteIds, userId, toggleMutation]);
 
   // Obter vagas favoritas com dados completos
   const getFavoriteJobs = useCallback((): (Job & { savedAt: string })[] => {
-    return favorites
-      .map((fav) => {
-        const job = mockJobs.find((j) => j.id === fav.jobId);
+    return favoriteIds
+      .map((jobId) => {
+        const job = allJobs.find((j) => j.id === jobId);
         if (job) {
-          return { ...job, savedAt: fav.savedAt };
+          return { ...job, savedAt: new Date().toISOString() };
         }
         return null;
       })
       .filter((job): job is Job & { savedAt: string } => job !== null);
-  }, [favorites]);
+  }, [favoriteIds, allJobs]);
 
-  // Obter data de quando foi salva
+  // Obter data de quando foi salva (approximate since service doesn't store savedAt)
   const getSavedAt = useCallback(
-    (jobId: string): string | null => {
-      const fav = favorites.find((f) => f.jobId === jobId);
-      return fav ? fav.savedAt : null;
+    (_jobId: string): string | null => {
+      return favoriteIds.includes(_jobId) ? new Date().toISOString() : null;
     },
-    [favorites]
+    [favoriteIds]
+  );
+
+  // Convert to FavoriteJob format for backward compatibility
+  const favorites: FavoriteJob[] = useMemo(
+    () => favoriteIds.map((jobId) => ({ jobId, savedAt: new Date().toISOString() })),
+    [favoriteIds]
   );
 
   // Contador de favoritos
-  const favoritesCount = useMemo(() => favorites.length, [favorites]);
+  const favoritesCount = useMemo(() => favoriteIds.length, [favoriteIds]);
 
   return {
     favorites,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Calendar, Brain, Eye, Search, MessageSquare, ArrowRight, Clock, Building2, HelpCircle } from 'lucide-react';
+import { FileText, Calendar, Brain, Eye, Search, MessageSquare, ArrowRight, Clock, Building2, HelpCircle, Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -9,7 +9,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { candidateStats, mockApplications, mockMessages, mockCandidates, mockCurriculums } from '@/data/mockData';
+import { useApplicationsByCandidate } from '@/hooks/useApplicationsQuery';
+import { useUnreadCount } from '@/hooks/useMessagesQuery';
+import { useCurriculums } from '@/hooks/useCurriculumsQuery';
 import { calculateProfileCompletion } from '@/utils/profileCompleteness';
 import { calculateCompleteness } from '@/utils/curriculumCompleteness';
 import { Link } from 'react-router-dom';
@@ -32,14 +34,18 @@ const DIMENSION_COLORS: Record<GaugeProDimension, string> = {
 };
 
 export default function CandidateDashboard() {
-  const { currentCandidate } = useAuth();
-  const candidate = currentCandidate || mockCandidates[0];
+  const { currentCandidate, user } = useAuth();
+  const candidate = currentCandidate;
 
-  const candidateApplications = mockApplications.filter(app => app.candidateId === 'candidate-1');
-  const unreadMessages = mockMessages.filter(m => m.receiverId === 'candidate-1' && !m.read);
+  const candidateId = candidate?.id ?? '';
+  const userId = user?.id ?? candidateId;
+
+  // Fetch data from service layer
+  const { data: candidateApplications = [], isLoading: isLoadingApps } = useApplicationsByCandidate(candidateId);
+  const { data: unreadCount = 0 } = useUnreadCount(userId);
+  const { data: curriculums = [], isLoading: isLoadingCurriculums } = useCurriculums(candidateId);
 
   // Gauge-Pro result from localStorage
-  const candidateId = candidate.id || 'candidate-1';
   const [gaugeResult, setGaugeResult] = useState<GaugeProResult | null>(null);
   const [hasOngoingAssessment, setHasOngoingAssessment] = useState(false);
 
@@ -54,6 +60,17 @@ export default function CandidateDashboard() {
     if (savedAssessment && !savedResult) setHasOngoingAssessment(true);
   }, [candidateId]);
 
+  // Loading state while candidate loads
+  if (!candidate) {
+    return (
+      <DashboardLayout userType="candidate">
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   // Completude do perfil pessoal (calculada dinamicamente)
   const profileCompletion = calculateProfileCompletion({
     name: candidate.name,
@@ -66,18 +83,20 @@ export default function CandidateDashboard() {
   });
 
   // Completude do currículo padrão
-  const defaultCurriculum = mockCurriculums.find(
+  const defaultCurriculum = curriculums.find(
     c => c.candidateId === candidateId && c.isDefault && !c.isArchived
   );
   const curriculumCompletion = defaultCurriculum
     ? calculateCompleteness(defaultCurriculum).percentage
     : 0;
 
+  // Compute stats from fetched data
+  const interviewCount = candidateApplications.filter(a => a.status === 'interview').length;
   const stats = [
     { label: 'Candidaturas', value: candidateApplications.length, icon: FileText, tooltip: 'Total de candidaturas enviadas para vagas' },
-    { label: 'Entrevistas', value: candidateStats.interviews, icon: Calendar, tooltip: 'Entrevistas agendadas ou realizadas' },
-    { label: 'Testes', value: candidateStats.testsCompleted, icon: Brain, tooltip: 'Testes comportamentais completados' },
-    { label: 'Visualizações', value: candidateStats.profileViews, icon: Eye, tooltip: 'Vezes que empresas visualizaram seu perfil' },
+    { label: 'Entrevistas', value: interviewCount, icon: Calendar, tooltip: 'Entrevistas agendadas ou realizadas' },
+    { label: 'Testes', value: gaugeResult ? 1 : 0, icon: Brain, tooltip: 'Testes comportamentais completados' },
+    { label: 'Visualizações', value: 0, icon: Eye, tooltip: 'Vezes que empresas visualizaram seu perfil' },
   ];
 
   return (
@@ -360,9 +379,9 @@ export default function CandidateDashboard() {
                     <p>Mensagens recebidas de recrutadores e empresas.</p>
                   </TooltipContent>
                 </Tooltip>
-                {unreadMessages.length > 0 && (
+                {unreadCount > 0 && (
                   <span className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-full">
-                    {unreadMessages.length} nova{unreadMessages.length > 1 ? 's' : ''}
+                    {unreadCount} nova{unreadCount > 1 ? 's' : ''}
                   </span>
                 )}
               </div>
@@ -371,26 +390,34 @@ export default function CandidateDashboard() {
               </Link>
             </div>
             <div className="space-y-4">
-              {mockMessages.filter(m => m.receiverId === 'candidate-1').slice(0, 3).map((msg) => (
-                <div key={msg.id} className={`flex items-start gap-4 p-4 rounded-xl transition-colors ${
-                  !msg.read ? 'bg-secondary/5 border border-secondary/20' : 'bg-muted/50 hover:bg-muted'
-                }`}>
+              {unreadCount > 0 ? (
+                <div className="flex items-start gap-4 p-4 rounded-xl transition-colors bg-secondary/5 border border-secondary/20">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-5 h-5 text-primary" />
+                    <MessageSquare className="w-5 h-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-foreground">{msg.senderName}</span>
-                      {!msg.read && <span className="w-2 h-2 rounded-full bg-secondary" />}
+                      <span className="font-medium text-foreground">Mensagens pendentes</span>
+                      <span className="w-2 h-2 rounded-full bg-secondary" />
                     </div>
-                    <div className="text-sm text-foreground truncate">{msg.subject}</div>
+                    <div className="text-sm text-foreground">
+                      Você tem {unreadCount} mensagen{unreadCount > 1 ? 's' : ''} não lida{unreadCount > 1 ? 's' : ''}
+                    </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                       <Clock className="w-3 h-3" />
-                      {new Date(msg.createdAt).toLocaleDateString('pt-BR')}
+                      Verifique suas mensagens
                     </div>
                   </div>
                 </div>
-              ))}
+              ) : (
+                <div className="text-center py-8">
+                  <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-muted-foreground">Nenhuma mensagem nova</p>
+                  <Button asChild variant="link" className="mt-2">
+                    <Link to="/candidato/mensagens">Ver mensagens</Link>
+                  </Button>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

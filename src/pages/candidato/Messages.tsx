@@ -27,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useMessages } from '@/hooks/useMessages';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Message } from '@/types';
 
 // PRD-016: Check if message is test request
@@ -34,13 +35,14 @@ const isTestRequestMessage = (msg: Message): boolean =>
   msg.type === 'solicitacao_teste';
 
 export default function CandidateMessages() {
+  const { user } = useAuth();
   const {
     conversations,
     getConversationMessages,
     getLastMessage,
     markAsRead,
     sendMessage,
-  } = useMessages({ userId: 'candidate-1', userType: 'candidate' });
+  } = useMessages({ userId: user?.id ?? '', userType: 'candidate' });
 
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');

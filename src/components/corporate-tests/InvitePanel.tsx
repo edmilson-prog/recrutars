@@ -12,6 +12,7 @@ import { Mail, Link2, Users } from 'lucide-react';
 import { EmailInviteForm } from './EmailInviteForm';
 import { PublicLinkManager } from './PublicLinkManager';
 import { InternalCandidateInvite } from './InternalCandidateInvite';
+// TODO: PRD-072 — migrate to service layer
 import { mockCompanyTests, mockTestInvitations } from '@/data/companyTestData';
 
 export function InvitePanel() {

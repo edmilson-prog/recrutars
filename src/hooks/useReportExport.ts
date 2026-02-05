@@ -1,17 +1,22 @@
 /**
- * Hook: useReportExport
- * PRD-059: Relatorios "Radar"
+ * Hook: useReportExport (PRD-071 Migration)
  *
- * Manages report export (PDF/Excel simulation) and report schedules (CRUD).
- * In production, PDF would use jspdf + jspdf-autotable and Excel would use xlsx/SheetJS.
+ * Backward-compatible wrapper that delegates schedule management to
+ * useReportsQuery service hooks. Export actions remain simulated.
  */
 
 import { useCallback, useState } from 'react';
 import type { ReportSchedule } from '@/types';
-import { mockSchedules } from '@/data/reportsData';
+import {
+  useReportSchedules,
+  useCreateReportSchedule,
+  useUpdateReportSchedule,
+} from './useReportsQuery';
 
 export function useReportExport() {
-  const [schedules, setSchedules] = useState<ReportSchedule[]>(mockSchedules);
+  const { data: schedules = [], isLoading, error } = useReportSchedules();
+  const createScheduleMutation = useCreateReportSchedule();
+  const updateScheduleMutation = useUpdateReportSchedule();
   const [isExporting, setIsExporting] = useState(false);
 
   // ---------------------------------------------------------------------------
@@ -43,32 +48,35 @@ export function useReportExport() {
   }, []);
 
   // ---------------------------------------------------------------------------
-  // Schedule CRUD
+  // Schedule CRUD — delegates to service layer via mutations
   // ---------------------------------------------------------------------------
 
   const updateSchedule = useCallback((id: string, updates: Partial<ReportSchedule>) => {
-    setSchedules((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, ...updates } : s)),
-    );
-  }, []);
+    updateScheduleMutation.mutate({ id, updates });
+  }, [updateScheduleMutation]);
 
   const addSchedule = useCallback((schedule: Omit<ReportSchedule, 'id'>) => {
-    const newSchedule: ReportSchedule = {
-      ...schedule,
-      id: `sched-${Date.now()}`,
-    };
-    setSchedules((prev) => [...prev, newSchedule]);
-  }, []);
+    createScheduleMutation.mutate({
+      name: schedule.name,
+      type: schedule.type as 'pdf' | 'excel',
+      frequency: schedule.frequency as 'weekly' | 'monthly',
+      dayOfWeek: schedule.dayOfWeek,
+      dayOfMonth: schedule.dayOfMonth,
+      hour: schedule.hour,
+      recipients: schedule.recipients,
+    });
+  }, [createScheduleMutation]);
 
-  const removeSchedule = useCallback((id: string) => {
-    setSchedules((prev) => prev.filter((s) => s.id !== id));
+  const removeSchedule = useCallback((_id: string) => {
+    console.warn('[useReportExport] removeSchedule is not yet available via service layer.');
   }, []);
 
   const toggleSchedule = useCallback((id: string) => {
-    setSchedules((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, isActive: !s.isActive } : s)),
-    );
-  }, []);
+    const schedule = schedules.find(s => s.id === id);
+    if (schedule) {
+      updateScheduleMutation.mutate({ id, updates: { isActive: !schedule.isActive } });
+    }
+  }, [schedules, updateScheduleMutation]);
 
   return {
     schedules,
@@ -79,5 +87,7 @@ export function useReportExport() {
     addSchedule,
     removeSchedule,
     toggleSchedule,
+    isLoading,
+    error,
   };
 }

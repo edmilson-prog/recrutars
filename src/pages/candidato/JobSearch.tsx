@@ -35,7 +35,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { mockJobs, mockCandidates, getIdealBehavioralProfile } from '@/data/mockData';
+import { useJobs } from '@/hooks/useJobsQuery';
+import { useAuth } from '@/contexts/AuthContext';
+import { getIdealBehavioralProfile } from '@/lib/behavioralProfiles';
 import type { Job } from '@/types';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -44,6 +46,7 @@ import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
 import { useMemo } from 'react';
 import { getMatchScoreColor } from '@/types/disc';
+import { Loader2 } from 'lucide-react';
 
 const locations = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 'Curitiba, PR', 'Porto Alegre, RS'];
 const areas = ['Tecnologia', 'Produto', 'Design', 'Dados', 'Marketing', 'Comercial', 'RH', 'Financeiro'];
@@ -55,9 +58,15 @@ type SortOption = 'recent' | 'salary-high' | 'salary-low' | 'match-high';
 
 export default function CandidateJobSearch() {
   const navigate = useNavigate();
+  const { currentCandidate } = useAuth();
+  const candidateId = currentCandidate?.id ?? '';
+
+  // Fetch all jobs from service layer
+  const { data: jobsResult, isLoading: isLoadingJobs } = useJobs({ status: 'active' });
+  const allJobs = jobsResult?.data ?? [];
 
   // Applications hook for checking applied status
-  const { hasApplied } = useApplications('candidate-1');
+  const { hasApplied } = useApplications(candidateId);
 
   // Favorites hook (PRD-024)
   const { isFavorite, toggleFavorite } = useFavoriteJobs();
@@ -80,10 +89,9 @@ export default function CandidateJobSearch() {
   // UI state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const activeJobs = mockJobs.filter(job => job.status === 'active');
+  const activeJobs = allJobs;
 
   // PRD-035: Cache de match scores calculados dinamicamente
-  const currentCandidate = mockCandidates.find(c => c.id === 'candidate-1');
   const matchScores = useMemo(() => {
     if (!currentCandidate) return {};
     const scores: Record<string, number> = {};
@@ -351,6 +359,13 @@ export default function CandidateJobSearch() {
 
           {/* Jobs List */}
           <div className="flex-1 space-y-4">
+            {/* Loading */}
+            {isLoadingJobs && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            )}
+
             {/* Results count and sorting */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <p className="text-muted-foreground">

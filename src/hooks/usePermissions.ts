@@ -1,11 +1,13 @@
 /**
  * Hook de Permissões RBAC
  * PRD-061: Sistema RBAC "Guardian"
+ *
+ * Depende do RBACProvider ter configurado o engine via configureRBAC().
  */
 
 import { useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { hasPermission, getEffectivePermissions } from '@/lib/rbac';
+import { hasPermission, getEffectivePermissions, isRBACConfigured } from '@/lib/rbac';
 import type { PermissionResolution } from '@/types/rbac';
 
 export function usePermissions() {
@@ -13,22 +15,22 @@ export function usePermissions() {
   const userId = user?.id || '';
 
   const can = (code: string): boolean => {
-    if (!userId) return false;
+    if (!userId || !isRBACConfigured()) return false;
     return hasPermission(userId, code);
   };
 
   const canAny = (codes: string[]): boolean => {
-    if (!userId) return false;
+    if (!userId || !isRBACConfigured()) return false;
     return codes.some(code => hasPermission(userId, code));
   };
 
   const canAll = (codes: string[]): boolean => {
-    if (!userId) return false;
+    if (!userId || !isRBACConfigured()) return false;
     return codes.every(code => hasPermission(userId, code));
   };
 
   const effectivePermissions: PermissionResolution[] = useMemo(() => {
-    if (!userId) return [];
+    if (!userId || !isRBACConfigured()) return [];
     return getEffectivePermissions(userId);
   }, [userId]);
 

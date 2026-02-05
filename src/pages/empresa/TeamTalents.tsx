@@ -17,21 +17,40 @@ import {
 } from '@/components/ui/select';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { mockTeamMembers, mockDepartments } from '@/data/teamManagementData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTeamMembers, useDepartments } from '@/hooks/useTeamsQuery';
+import { Loader2 } from 'lucide-react';
 import TalentProfileCards from '@/components/team-management/TalentProfileCards';
 import NineBoxChart from '@/components/team-management/NineBoxChart';
 
 export default function TeamTalents() {
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
+  const { data: allMembers = [], isLoading: membersLoading } = useTeamMembers({ companyId });
+  const { data: allDepartments = [], isLoading: deptsLoading } = useDepartments(companyId);
+
   const [selectedDept, setSelectedDept] = useState<string>('all');
 
+  const isLoading = membersLoading || deptsLoading;
+
   const filteredMembers = useMemo(() => {
-    if (selectedDept === 'all') return mockTeamMembers;
-    return mockTeamMembers.filter((m) => m.departmentId === selectedDept);
-  }, [selectedDept]);
+    if (selectedDept === 'all') return allMembers;
+    return allMembers.filter((m) => m.departmentId === selectedDept);
+  }, [selectedDept, allMembers]);
 
   const mappedCount = filteredMembers.filter(
     (m) => m.gaugeStatus === 'mapped' && m.gaugeScores,
   ).length;
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="company">
@@ -63,7 +82,7 @@ export default function TeamTalents() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os departamentos</SelectItem>
-                {mockDepartments
+                {allDepartments
                   .filter((d) => d.isActive)
                   .map((dept) => (
                     <SelectItem key={dept.id} value={dept.id}>

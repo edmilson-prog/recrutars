@@ -6,6 +6,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+// TODO: PRD-072 — migrate to service layer
 import { mockCompanyTests, mockTestInvitations, mockTestResults } from '@/data/companyTestData';
 
 export function MetricsPerJobTable() {

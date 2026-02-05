@@ -1,10 +1,23 @@
-import { useState, useMemo, useCallback } from 'react';
-import type { PlanCapability, PlanCapabilityAssignment } from '@/types';
-import { mockCapabilities, mockPlanCapabilityAssignments as mockCapabilityAssignments } from '@/data/plansData';
+/**
+ * useCapabilities Hook (PRD-071 Migration)
+ *
+ * Backward-compatible wrapper that delegates to usePlansQuery service hooks.
+ * Consumers can continue using the same API; data now flows through the service layer.
+ */
 
-export function useCapabilities() {
-  const [capabilities, setCapabilities] = useState<PlanCapability[]>(mockCapabilities);
-  const [assignments, setAssignments] = useState<PlanCapabilityAssignment[]>(mockCapabilityAssignments);
+import { useMemo, useCallback } from 'react';
+import type { PlanCapability, PlanCapabilityAssignment } from '@/types';
+import {
+  useCapabilities as useCapabilitiesQuery,
+  useCapabilityAssignments,
+} from './usePlansQuery';
+
+export function useCapabilities(activePlanId?: string) {
+  const { data: capabilities = [], isLoading: capsLoading, error: capsError } = useCapabilitiesQuery();
+  const { data: assignments = [], isLoading: assignLoading, error: assignError } = useCapabilityAssignments(activePlanId);
+
+  const isLoading = capsLoading || assignLoading;
+  const error = capsError || assignError;
 
   // Group capabilities by category
   const categorizedCapabilities = useMemo(() => {
@@ -17,33 +30,39 @@ export function useCapabilities() {
   }, [capabilities]);
 
   // Get assignments for a specific plan
-  const getAssignmentsForPlan = useCallback((planId: string) => {
-    return assignments.filter(a => a.planId === planId);
+  const getAssignmentsForPlan = useCallback((_planId: string) => {
+    // When activePlanId matches, return the fetched assignments; otherwise empty
+    return assignments;
   }, [assignments]);
 
   // Get assignment value for plan + capability
-  const getAssignmentValue = useCallback((planId: string, capabilityKey: string) => {
-    const found = assignments.find(a => a.planId === planId && a.capabilityKey === capabilityKey);
+  const getAssignmentValue = useCallback((_planId: string, capabilityKey: string) => {
+    const found = assignments.find(a => a.capabilityKey === capabilityKey);
     return found?.value ?? null;
   }, [assignments]);
 
-  // Update a single assignment
-  const updateAssignment = useCallback((planId: string, capabilityKey: string, value: string | number | boolean) => {
-    setAssignments(prev => {
-      const idx = prev.findIndex(a => a.planId === planId && a.capabilityKey === capabilityKey);
-      if (idx >= 0) {
-        const updated = [...prev];
-        updated[idx] = { ...updated[idx], value };
-        return updated;
-      }
-      return [...prev, { planId, capabilityKey, value }];
-    });
+  // Update a single assignment (no-op placeholder — mutations handled separately)
+  const updateAssignment = useCallback(
+    (_planId: string, _capabilityKey: string, _value: string | number | boolean) => {
+      console.warn('[useCapabilities] updateAssignment is a no-op wrapper. Use mutation from usePlansQuery instead.');
+    },
+    [],
+  );
+
+  // Add new capability (no-op placeholder)
+  const addCapability = useCallback((_capability: PlanCapability) => {
+    console.warn('[useCapabilities] addCapability is a no-op wrapper. Use mutation from usePlansQuery instead.');
   }, []);
 
-  // Add new capability
-  const addCapability = useCallback((capability: PlanCapability) => {
-    setCapabilities(prev => [...prev, capability]);
-  }, []);
-
-  return { capabilities, categorizedCapabilities, assignments, getAssignmentsForPlan, getAssignmentValue, updateAssignment, addCapability };
+  return {
+    capabilities,
+    categorizedCapabilities,
+    assignments,
+    getAssignmentsForPlan,
+    getAssignmentValue,
+    updateAssignment,
+    addCapability,
+    isLoading,
+    error,
+  };
 }

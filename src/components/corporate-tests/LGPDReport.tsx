@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Shield, Search, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { addAuditLog, getActionLabel } from '@/utils/auditLog';
+// TODO: PRD-072 — migrate to service layer
 import { mockAuditLogs } from '@/data/companyTestData';
 import type { AuditLog } from '@/types/companyTest';
 

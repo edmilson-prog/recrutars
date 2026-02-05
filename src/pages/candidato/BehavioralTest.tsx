@@ -25,7 +25,7 @@ import type { BehavioralResult } from '@/types/assessment';
 export default function BehavioralTest() {
   const navigate = useNavigate();
   const { currentCandidate } = useAuth();
-  const candidateId = currentCandidate?.id || 'candidate-1';
+  const candidateId = currentCandidate?.id || '';
 
   // Callbacks para gamificação
   const handleComplete = (result: BehavioralResult) => {

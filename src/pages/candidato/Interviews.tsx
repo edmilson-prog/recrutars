@@ -26,6 +26,7 @@ import { SuggestAlternativeModal } from '@/components/candidato/SuggestAlternati
 import { CancelInterviewModal } from '@/components/candidato/CancelInterviewModal';
 import { MiniCalendar } from '@/components/candidato/MiniCalendar';
 import { useInterviews } from '@/hooks/useInterviews';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { Interview, CancellationReason } from '@/types/interview';
 
@@ -33,6 +34,7 @@ type TabValue = 'pending' | 'confirmed' | 'completed';
 
 export default function CandidateInterviews() {
   const navigate = useNavigate();
+  const { currentCandidate } = useAuth();
   const {
     pendingInterviews,
     confirmedInterviews,
@@ -42,7 +44,7 @@ export default function CandidateInterviews() {
     suggestAlternative,
     cancelInterview,
     interviewDates,
-  } = useInterviews('candidate-1');
+  } = useInterviews(currentCandidate?.id ?? '');
 
   const [activeTab, setActiveTab] = useState<TabValue>('pending');
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);

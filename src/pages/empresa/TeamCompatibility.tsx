@@ -17,10 +17,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ArrowLeft, Filter } from 'lucide-react';
-import {
-  mockTeamMembers,
-  mockDepartments,
-} from '@/data/teamManagementData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTeamMembers, useDepartments } from '@/hooks/useTeamsQuery';
+import { Loader2 } from 'lucide-react';
 import type { TeamMember } from '@/types/teamManagement';
 import CompatibilityMatrix from '@/components/team-management/CompatibilityMatrix';
 import TopPairsList from '@/components/team-management/TopPairsList';
@@ -28,6 +27,11 @@ import ConflictAlertsList from '@/components/team-management/ConflictAlertsList'
 import PairDetailModal from '@/components/team-management/PairDetailModal';
 
 export default function TeamCompatibility() {
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
+  const { data: allMembers = [], isLoading: membersLoading } = useTeamMembers({ companyId });
+  const { data: allDepartments = [], isLoading: deptsLoading } = useDepartments(companyId);
+
   const [selectedDeptId, setSelectedDeptId] = useState<string>('all');
   const [selectedPair, setSelectedPair] = useState<{
     member1Id: string;
@@ -35,19 +39,21 @@ export default function TeamCompatibility() {
   } | null>(null);
   const [pairModalOpen, setPairModalOpen] = useState(false);
 
+  const isLoading = membersLoading || deptsLoading;
+
   // Filter members by department
   const filteredMembers = useMemo(() => {
-    const active = mockTeamMembers.filter((m) => m.isActive);
+    const active = allMembers.filter((m) => m.isActive);
     if (selectedDeptId === 'all') return active;
     return active.filter((m) => m.departmentId === selectedDeptId);
-  }, [selectedDeptId]);
+  }, [selectedDeptId, allMembers]);
 
   // Look up members for pair detail
   const memberMap = useMemo(() => {
     const map = new Map<string, TeamMember>();
-    mockTeamMembers.forEach((m) => map.set(m.id, m));
+    allMembers.forEach((m) => map.set(m.id, m));
     return map;
-  }, []);
+  }, [allMembers]);
 
   const pairMember1 = selectedPair ? memberMap.get(selectedPair.member1Id) ?? null : null;
   const pairMember2 = selectedPair ? memberMap.get(selectedPair.member2Id) ?? null : null;
@@ -56,6 +62,16 @@ export default function TeamCompatibility() {
     setSelectedPair({ member1Id, member2Id });
     setPairModalOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="company">
@@ -87,7 +103,7 @@ export default function TeamCompatibility() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os departamentos</SelectItem>
-                {mockDepartments.map((dept) => (
+                {allDepartments.map((dept) => (
                   <SelectItem key={dept.id} value={dept.id}>
                     {dept.name}
                   </SelectItem>

@@ -6,13 +6,18 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useCandidateFeedback } from './useCandidateFeedback';
 import { useFavoriteCandidates } from './useFavoriteCandidates';
+import { useJobs } from './useJobsQuery';
+import { useCandidates } from './useCandidatesQuery';
+import { useApplications } from './useApplicationsQuery';
 import {
   getSuggestedCandidates,
   countNewCandidateRecommendations,
   CandidateRecommendation,
+  CandidateRecommendationData,
   CandidateSignals,
   NotSuitableReason,
 } from '@/lib/candidateRecommendation';
+import { idealBehavioralProfiles } from '@/lib/behavioralProfiles';
 
 export interface UseCandidateRecommendationsOptions {
   jobId: string;
@@ -53,6 +58,11 @@ export function useCandidateRecommendations(
 
   const { favorites } = useFavoriteCandidates();
 
+  // Buscar dados via service layer
+  const { data: jobs = [] } = useJobs();
+  const { data: candidates = [] } = useCandidates();
+  const { data: applications = [] } = useApplications();
+
   // Estado local
   const [recommendations, setRecommendations] = useState<CandidateRecommendation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,16 +71,24 @@ export function useCandidateRecommendations(
   // Obter última verificação para a vaga atual
   const lastCheck = getLastCheck(jobId);
 
+  // Bundle de dados para o motor de recomendação
+  const recData = useMemo<CandidateRecommendationData>(() => ({
+    jobs,
+    candidates,
+    applications: applications.map(a => ({ candidateId: a.candidateId, jobId: a.jobId })),
+    idealProfiles: idealBehavioralProfiles,
+  }), [jobs, candidates, applications]);
+
   // Montar sinais de recomendação
   const signals = useMemo<CandidateSignals>(() => ({
     viewedCandidates: { [jobId]: viewedCandidates },
-    invitedCandidates: [], // TODO: integrar com sistema de convites
+    invitedCandidates: [],
     notSuitableCandidates: notSuitableCandidateIds,
     savedCandidates: favorites.map(f => f.candidateId),
     lastRecommendationsCheck: lastCheck || undefined,
   }), [jobId, viewedCandidates, notSuitableCandidateIds, favorites, lastCheck]);
 
-  // Carregar recomendações
+  // Carregar recomendações quando dados estiverem prontos
   useEffect(() => {
     if (!jobId) {
       setRecommendations([]);
@@ -78,11 +96,15 @@ export function useCandidateRecommendations(
       return;
     }
 
+    if (recData.jobs.length === 0 || recData.candidates.length === 0) {
+      setIsLoading(true);
+      return;
+    }
+
     setIsLoading(true);
 
-    // Simular delay de API
     const timer = setTimeout(() => {
-      const result = getSuggestedCandidates(jobId, signals, {
+      const result = getSuggestedCandidates(jobId, signals, recData, {
         limit,
         minScore,
         lastCheckDate: lastCheck || undefined,
@@ -90,16 +112,16 @@ export function useCandidateRecommendations(
 
       setRecommendations(result);
       setIsLoading(false);
-    }, 300);
+    }, 100);
 
     return () => clearTimeout(timer);
-  }, [jobId, signals, limit, minScore, lastCheck, refreshTrigger]);
+  }, [jobId, signals, recData, limit, minScore, lastCheck, refreshTrigger]);
 
   // Contar novas recomendações
   const newCount = useMemo(() => {
-    if (!lastCheck || !jobId) return 0;
-    return countNewCandidateRecommendations(jobId, signals, lastCheck);
-  }, [jobId, signals, lastCheck]);
+    if (!lastCheck || !jobId || recData.jobs.length === 0) return 0;
+    return countNewCandidateRecommendations(jobId, signals, recData, lastCheck);
+  }, [jobId, signals, recData, lastCheck]);
 
   // Marcar como não adequado e atualizar lista
   const handleMarkNotSuitable = useCallback((candidateId: string, reason?: NotSuitableReason) => {

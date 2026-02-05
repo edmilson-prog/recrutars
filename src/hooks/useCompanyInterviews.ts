@@ -1,11 +1,19 @@
 /**
  * useCompanyInterviews hook
  * PRD-034: Agendamento de Entrevistas (Empresa)
+ *
+ * Delegates to useInterviewsQuery hooks (PRD-070 migration).
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import { mockInterviews } from '@/data/mockData';
-import type { Interview, InterviewStatus, InterviewType, ProposedSlot } from '@/types/interview';
+import { useCallback, useMemo } from 'react';
+import {
+  useInterviewsByCompany,
+  useCreateInterview,
+  useConfirmInterview,
+  useUpdateInterview,
+  useCancelInterview,
+} from '@/hooks/useInterviewsQuery';
+import type { Interview, InterviewType, ProposedSlot } from '@/types/interview';
 
 export interface CreateInterviewData {
   applicationId: string;
@@ -44,9 +52,15 @@ export const companyCancellationReasonLabels: Record<CompanyCancellationReason, 
 };
 
 export function useCompanyInterviews(companyId: string) {
-  const [interviews, setInterviews] = useState<Interview[]>(() =>
-    mockInterviews.filter(interview => interview.companyId === companyId)
-  );
+  const {
+    data: interviews = [],
+    isLoading,
+  } = useInterviewsByCompany(companyId);
+
+  const createMutation = useCreateInterview();
+  const confirmMutation = useConfirmInterview();
+  const updateMutation = useUpdateInterview();
+  const cancelMutation = useCancelInterview();
 
   // Entrevistas aguardando resposta do candidato
   const pendingCandidateInterviews = useMemo(() =>
@@ -90,13 +104,11 @@ export function useCompanyInterviews(companyId: string) {
 
   // Criar nova entrevista (propor horários)
   const createInterview = useCallback((data: CreateInterviewData) => {
-    const newInterview: Interview = {
-      id: `interview-${Date.now()}`,
+    const newData: Partial<Interview> = {
       applicationId: data.applicationId,
       jobId: data.jobId,
       jobTitle: data.jobTitle,
       companyId,
-      companyName: 'Tech Solutions', // TODO: Obter do contexto
       candidateId: data.candidateId,
       title: data.title,
       type: data.type,
@@ -111,50 +123,24 @@ export function useCompanyInterviews(companyId: string) {
       interviewerRole: data.interviewerRole,
       notes: data.notes,
       responseDeadline: data.responseDeadline,
-      createdAt: new Date().toISOString(),
     };
 
-    setInterviews(prev => [...prev, newInterview]);
+    createMutation.mutate(newData);
 
-    // Adicionar ao mock também
-    mockInterviews.push(newInterview);
-
-    console.log('Entrevista criada:', newInterview);
-
-    return newInterview;
-  }, [companyId]);
+    // Return optimistic result for immediate UI feedback
+    return { ...newData, id: `interview-${Date.now()}`, createdAt: new Date().toISOString() } as Interview;
+  }, [companyId, createMutation]);
 
   // Aceitar sugestão de horário do candidato
   const acceptSuggestedSlot = useCallback((
     interviewId: string,
     slotIndex: number
   ) => {
-    setInterviews(prev =>
-      prev.map(interview => {
-        if (interview.id !== interviewId) return interview;
-        if (!interview.suggestedSlots?.[slotIndex]) return interview;
-
-        const confirmedDatetime = interview.suggestedSlots[slotIndex];
-
-        return {
-          ...interview,
-          status: 'confirmed' as InterviewStatus,
-          confirmedDatetime,
-          confirmedAt: new Date().toISOString(),
-        };
-      })
-    );
-
-    // Atualizar no mock também
-    const idx = mockInterviews.findIndex(i => i.id === interviewId);
-    if (idx !== -1 && mockInterviews[idx].suggestedSlots?.[slotIndex]) {
-      mockInterviews[idx].status = 'confirmed';
-      mockInterviews[idx].confirmedDatetime = mockInterviews[idx].suggestedSlots![slotIndex];
-      mockInterviews[idx].confirmedAt = new Date().toISOString();
-    }
-
-    console.log('Sugestão aceita:', { interviewId, slotIndex });
-  }, []);
+    const interview = interviews.find(i => i.id === interviewId);
+    if (!interview?.suggestedSlots?.[slotIndex]) return;
+    const datetime = interview.suggestedSlots[slotIndex];
+    confirmMutation.mutate({ id: interviewId, datetime });
+  }, [interviews, confirmMutation]);
 
   // Propor novos horários (quando candidato sugere e empresa não aceita)
   const proposeNewSlots = useCallback((
@@ -162,33 +148,17 @@ export function useCompanyInterviews(companyId: string) {
     newSlots: ProposedSlot[],
     newDeadline?: string
   ) => {
-    setInterviews(prev =>
-      prev.map(interview => {
-        if (interview.id !== interviewId) return interview;
-
-        return {
-          ...interview,
-          status: 'pending_candidate' as InterviewStatus,
-          proposedSlots: newSlots,
-          suggestedSlots: undefined,
-          suggestionReason: undefined,
-          responseDeadline: newDeadline,
-        };
-      })
-    );
-
-    // Atualizar no mock também
-    const idx = mockInterviews.findIndex(i => i.id === interviewId);
-    if (idx !== -1) {
-      mockInterviews[idx].status = 'pending_candidate';
-      mockInterviews[idx].proposedSlots = newSlots;
-      mockInterviews[idx].suggestedSlots = undefined;
-      mockInterviews[idx].suggestionReason = undefined;
-      mockInterviews[idx].responseDeadline = newDeadline;
-    }
-
-    console.log('Novos horários propostos:', { interviewId, newSlots });
-  }, []);
+    updateMutation.mutate({
+      id: interviewId,
+      updates: {
+        status: 'pending_candidate',
+        proposedSlots: newSlots,
+        suggestedSlots: undefined,
+        suggestionReason: undefined,
+        responseDeadline: newDeadline,
+      } as Partial<Interview>,
+    });
+  }, [updateMutation]);
 
   // Cancelar entrevista
   const cancelInterview = useCallback((
@@ -196,55 +166,19 @@ export function useCompanyInterviews(companyId: string) {
     reason: CompanyCancellationReason,
     details?: string
   ) => {
-    setInterviews(prev =>
-      prev.map(interview => {
-        if (interview.id !== interviewId) return interview;
-
-        return {
-          ...interview,
-          status: 'cancelled_by_company' as InterviewStatus,
-          cancelledAt: new Date().toISOString(),
-          cancellationReason: reason,
-          cancellationDetails: details,
-        };
-      })
-    );
-
-    // Atualizar no mock também
-    const idx = mockInterviews.findIndex(i => i.id === interviewId);
-    if (idx !== -1) {
-      mockInterviews[idx].status = 'cancelled_by_company';
-      mockInterviews[idx].cancelledAt = new Date().toISOString();
-      mockInterviews[idx].cancellationReason = reason;
-      mockInterviews[idx].cancellationDetails = details;
-    }
-
-    console.log('Entrevista cancelada:', { interviewId, reason, details });
-  }, []);
+    cancelMutation.mutate({ id: interviewId, reason, details });
+  }, [cancelMutation]);
 
   // Marcar entrevista como realizada
   const markAsCompleted = useCallback((interviewId: string) => {
-    setInterviews(prev =>
-      prev.map(interview => {
-        if (interview.id !== interviewId) return interview;
-
-        return {
-          ...interview,
-          status: 'completed' as InterviewStatus,
-          completedAt: new Date().toISOString(),
-        };
-      })
-    );
-
-    // Atualizar no mock também
-    const idx = mockInterviews.findIndex(i => i.id === interviewId);
-    if (idx !== -1) {
-      mockInterviews[idx].status = 'completed';
-      mockInterviews[idx].completedAt = new Date().toISOString();
-    }
-
-    console.log('Entrevista marcada como realizada:', interviewId);
-  }, []);
+    updateMutation.mutate({
+      id: interviewId,
+      updates: {
+        status: 'completed',
+        completedAt: new Date().toISOString(),
+      } as Partial<Interview>,
+    });
+  }, [updateMutation]);
 
   // Buscar entrevista por ID
   const getInterview = useCallback((interviewId: string) => {
@@ -297,6 +231,7 @@ export function useCompanyInterviews(companyId: string) {
 
   return {
     interviews,
+    isLoading,
     pendingCandidateInterviews,
     pendingCompanyInterviews,
     waitingInterviews,

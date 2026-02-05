@@ -5,6 +5,181 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-02-05 — "Profile Consolidation"
+
+### Added
+- **Campo "Nome de Exibição"** — Novo campo em `candidato/perfil` para o candidato definir como quer ser chamado
+  - Posição: primeiro campo da seção "Informações Pessoais"
+  - Persistido no Supabase (coluna `display_name`)
+
+- **Aba "Localização"** — Nova aba em `candidato/perfil` com campos detalhados de localização
+  - **Cidade** — Campo de texto livre
+  - **Estado** — Select com 27 estados brasileiros (UF)
+  - **Disponível para Mudança** — Toggle boolean
+  - Dados persistidos no Supabase (colunas `city`, `state`, `open_to_relocation`)
+
+- **Image Cropper para Avatar** — Modal de recorte ao selecionar foto de perfil
+  - Arrastar para posicionar a imagem
+  - Slider de zoom (1x a 3x)
+  - Crop circular para enquadrar o rosto
+  - Biblioteca: `react-easy-crop`
+
+- **Campo CPF** — Novo campo em `candidato/perfil` para exibir CPF com máscara
+  - Formato: `000.000.000-00`
+  - Campo readonly (não editável)
+  - Persistido no Supabase (coluna `cpf`)
+
+- **Avatar no Header** — Foto do candidato no menu do header (canto superior direito)
+  - Substituiu a inicial do nome pelo avatar real
+  - Fallback para inicial se não houver foto
+  - Usa componente Avatar do shadcn/ui
+
+### Fixed
+- **Atualização da UI após salvar** — Header e avatar atualizam imediatamente sem F5
+  - Novo método `refreshCurrentCandidate()` no AuthContext
+  - Chamado após `handleSave()` e `handleCropConfirm()` em Profile.tsx
+  - React Query invalidation otimizada (removida condicional userId)
+
+### Changed
+- **Profile.tsx** — Grid de abas expandido de 4 para 5 colunas
+- **settingsConfig.ts** — `brazilianStates` exportado para reutilização
+- **Candidate types** — Interface estendida com `displayName`, `city`, `state`, `openToRelocation`
+- **Exibição do nome** — Header e avatar agora mostram Nome de Exibição (com fallback para nome completo)
+  - DashboardLayout: header usa `displayName || name`
+  - Profile.tsx: seção do avatar usa `displayName || name`
+
+### Removed
+- **Campo "Localização" redundante** — Removido da tab "perfil" (agora existe a aba dedicada "Localização")
+  - O campo antigo exibia uma string única (ex: "São Paulo, SP")
+  - Substituído pela aba com campos estruturados: Cidade, Estado, Disponibilidade para Mudança
+
+### Database
+- **Migration** — `add_candidate_profile_fields`: adiciona 4 colunas + índice `idx_candidates_city_state`
+- **Migration** — `add_candidate_cpf`: adiciona coluna `cpf` (VARCHAR 14, UNIQUE) + índice `idx_candidates_cpf`
+- **Constraint** — `chk_candidates_state_length` garante estado com 2 caracteres (sigla UF)
+
+### Notes
+- Campos continuam existindo em Settings (localStorage) para redundância temporária conforme solicitado
+- Campo `location` mantido no banco/model para compatibilidade com dados legados (apenas UI removida)
+
+## [1.1.0] - 2026-02-05 — "Stability"
+
+### Fixed
+- **Perfil do Candidato** — Dados do perfil agora persistem corretamente no Supabase
+  - `handleSave()` em Profile.tsx agora chama `updateCandidateMutation.mutateAsync()` ao invés de apenas exibir toast
+  - `dateOfBirth` tratado corretamente: string vazia convertida para `null` (tipo DATE do PostgreSQL)
+  - Campos persistidos: name, title, location, phone, linkedin, about, dateOfBirth
+
+- **IDs Mock Hardcoded** — 26 arquivos corrigidos que usavam fallbacks `'candidate-1'` ou `'company-1'`
+  - Esses IDs causavam erros 400 no Supabase (`invalid input syntax for type uuid`)
+  - Substituídos por `''` (string vazia) que desabilita queries via `enabled: !!id` no React Query
+  - Arquivos afetados: 12 páginas candidato, 13 páginas empresa, 2 componentes
+
+- **Select.Item com Value Vazio** — Corrigido erro do Radix UI Select
+  - `brazilianStates` em settingsConfig.ts tinha opção com `value: ''`
+  - Radix UI não permite value vazio em SelectItem
+  - Alterado para `value: '__none__'` como placeholder válido
+
+### Changed
+- Adicionado import de `useAuth` em 5 arquivos que não tinham acesso a `currentCompany`/`currentCandidate`
+
+## [1.0.0] - 2026-02-04 — "Genesis" (PRD-072: Limpeza Final)
+
+### Removed
+- **mockData.ts** — Arquivo principal de mocks transacionais (~4.000 linhas) deletado
+- **20 arquivos .mock.ts** — Implementacoes mock de todos os service modules removidas
+- **5 arquivos de dados mock-only** — featureFlagsData, plansData, rbacData, reportsData, mockData deletados
+- **DATA_SOURCE toggle** — Todos os modulos agora apontam diretamente para Supabase (sem branch mock)
+
+### Added
+- **src/lib/behavioralProfiles.ts** — Helpers de perfil comportamental extraidos de mockData.ts
+  - `idealBehavioralProfiles` (constante de referencia)
+  - `getIdealBehavioralProfile(jobId)` (lookup helper)
+  - `getCandidateBehavioralProfile(candidateId, tests)` (desacoplado de mocks, aceita dados como parametro)
+
+### Changed
+- **Service Factories** — 20 factories simplificadas: importam diretamente `*ServiceSupabase` sem branch condicional
+- **14 paginas/hooks** migrados de mockData imports para lib/behavioralProfiles + dados inline + service hooks
+- **Build** — Zero erros TypeScript com `strict: false`
+
+### Technical Details
+- 17 arquivos de referencia permanecem em src/data/ (assessmentData, gaugeProConfig, gamificationConfig, etc.)
+- Estes sao dados de configuracao bundled (nao transacionais), usados por 74 arquivos de UI
+- Dados admin (stats, actions) inlined como constantes locais com TODO para futura API
+- useCandidateActivity usa arrays vazios como placeholder (TODO: API de timeline)
+
+## [0.60.0] - 2026-02-04 — "Migration" (PRD-064 a PRD-071)
+
+### Added
+- **Database Schema** (PRD-064/065) — 21 PostgreSQL migrations criando 64+ tabelas com RLS, triggers, FTS
+- **Seed Data** — Seeds transacionais (jobs, applications, interviews) e permanentes (plans, roles, permissions, feature flags, gamification)
+- **Service Layer** (PRD-066/067) — 62 arquivos em src/services/ com padrao Interface + Factory + Mock/Supabase implementations
+- **React Query Hooks** — 18 hooks em src/hooks/use*Query.ts com query key factories para cache management
+- **DATA_SOURCE Toggle** — src/services/config.ts permite flip por modulo entre mock e supabase
+
+### Changed
+- **UI Migration** (PRD-068-071) — Pages e hooks migrados de imports diretos de mock para React Query service hooks
+- **RBAC Engine** — Refatorado src/lib/rbac.ts para usar data store injetavel via `configureRBAC()`
+- **Recommendation Engines** — jobRecommendation.ts e candidateRecommendation.ts aceitam dados como parametros
+- **RBACContext** — Busca dados via useRoles/usePermissionGroups hooks e injeta no engine
+- **Build** — Zero erros TypeScript apos todas as migracoes
+
+## [0.55.0] - 2026-02-04 — "Keystone" (PRD-063 consolidado)
+
+### Added
+- **Magic Link** — login por OTP/email sem senha
+  - `loginWithMagicLink(email)` no AuthContext via `supabase.auth.signInWithOtp()`
+  - `shouldCreateUser: false` impede criacao acidental de conta via magic link
+  - Nova view `magic-link` no Login.tsx com formulario, feedback de envio e tratamento de erros
+  - Divisor "ou" + botao "Entrar com link magico" na tela de login principal
+  - Callback automatico via `detectSessionInUrl: true` no Supabase client
+- **Tela "Verifique seu email"** pos-registro
+  - Exibida quando `signUp` retorna `needsEmailConfirmation: true` (session === null)
+  - Mostra email cadastrado, botao "Reenviar email" via `supabase.auth.resend()`, link para login
+  - Botao "Voltar ao cadastro" caso usuario tenha errado o email
+  - Com confirmacao desabilitada (dev mode), redireciona direto ao dashboard
+- **Trigger expandido** `handle_new_user()` (`sql/migrations/002_expand_handle_new_user.sql`)
+  - Cria profiles + candidates/companies atomicamente no banco durante signup
+  - Le `name`, `type`, `phone` do `raw_user_meta_data`
+  - Frontend nao faz mais INSERT manual em candidates/companies
+
+### Changed
+- `signUp()` simplificado: removido INSERT manual de candidates/companies (trigger faz tudo)
+- `signUp()` agora inclui `phone` no `options.data` para o trigger usar
+- `signUp()` retorna `{ needsEmailConfirmation: boolean }` em vez de `void`
+- `loginWithMagicLink` adicionado ao Provider value do AuthContext
+
+## [0.54.0] - 2026-02-04 — "Foundation" (PRD-063)
+
+### Added
+- **Integração Supabase** — Conexão real com Supabase como backend-as-a-service
+  - Client singleton tipado (`src/lib/supabase.ts`) com `persistSession`, `autoRefreshToken`, `detectSessionInUrl`
+  - Tipos TypeScript do schema do banco (`src/types/database.ts`) com Row/Insert/Update generics
+  - Conversores snake_case (DB) ↔ camelCase (TS) para profiles, candidates e companies
+  - Variáveis de ambiente via `.env` com template `.env.example`
+- **Schema de Identidade SQL** (`sql/migrations/001_identity_schema.sql`)
+  - Tabelas `profiles`, `candidates`, `companies` com indexes e constraints
+  - Trigger `handle_new_user()` cria profile automaticamente no signup via `auth.users`
+  - Trigger `update_updated_at()` em todas as tabelas
+  - Helper `get_user_type()` com `SECURITY DEFINER` para avaliação de políticas RLS
+  - 13 políticas RLS cobrindo SELECT/INSERT/UPDATE por tipo de usuário
+- **AuthContext Supabase** — Reescrita completa do contexto de autenticação
+  - `login(email, password)` via `supabase.auth.signInWithPassword()`
+  - `signUp({ email, password, name, phone, type })` com criação automática de profile + candidate/company
+  - `resetPassword(email)` via `supabase.auth.resetPasswordForEmail()`
+  - `onAuthStateChange` listener para persistência de sessão e refresh automático
+  - Loading state com spinner em `ProtectedRoute` e `RedirectIfAuthenticated`
+  - Retrocompatibilidade total com os 25+ consumidores de `useAuth()`
+- **Login real** (`src/pages/Login.tsx`) com email+senha, mensagens de erro e fluxo de recuperação de senha
+- **Registro real** (`src/pages/Register.tsx`) com validação client-side, confirmação de senha e criação de conta
+- **Seed de desenvolvimento** (`sql/seeds/001_dev_users.sql`) com 9 usuários (1 admin, 3 empresas, 5 candidatos)
+
+### Changed
+- AuthContext migrado de mock (`mockUsers.find`) para Supabase Auth real
+- Login.tsx removido seletor de tipo e valores demo, substituído por formulário de credenciais
+- Register.tsx adicionado campo de confirmação de senha e validações
+- ProtectedRoute e RedirectIfAuthenticated agora verificam `loading` antes de redirecionar
+
 ## [0.53.0] - 2026-02-03 — "Sentinel" (PRD-058, PRD-059, PRD-060, PRD-061, PRD-062)
 
 ### Added

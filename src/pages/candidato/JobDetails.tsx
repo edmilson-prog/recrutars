@@ -7,11 +7,13 @@
 
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Building2, MapPin, DollarSign, Calendar, Briefcase, Heart, Users, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Building2, MapPin, DollarSign, Calendar, Briefcase, Heart, Users, CheckCircle, Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { mockJobs, mockCandidates, getIdealBehavioralProfile } from '@/data/mockData';
+import { useJob } from '@/hooks/useJobsQuery';
+import { useAuth } from '@/contexts/AuthContext';
+import { getIdealBehavioralProfile } from '@/lib/behavioralProfiles';
 import { toast } from 'sonner';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
 import { useState } from 'react';
@@ -32,23 +34,36 @@ import { DiscIncentiveBanner } from '@/components/candidato/DiscIncentiveBanner'
 export default function JobDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { currentCandidate } = useAuth();
+
+  // Fetch job from service layer
+  const { data: job, isLoading: isLoadingJob } = useJob(id ?? '');
 
   // Favorites hook (PRD-024)
   const { isFavorite, toggleFavorite } = useFavoriteJobs();
 
   // Application state
-  const { hasApplied, createApplication } = useApplications('candidate-1');
+  const candidateId = currentCandidate?.id ?? '';
+  const { hasApplied, createApplication } = useApplications(candidateId);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const job = mockJobs.find(j => j.id === id);
-
   // PRD-035: Cálculo dinâmico de match
-  const currentCandidate = mockCandidates.find(c => c.id === 'candidate-1');
   const idealProfile = id ? getIdealBehavioralProfile(id) : undefined;
   const matchResult = job && currentCandidate
     ? calculateMatchBreakdown(currentCandidate, job, idealProfile)
     : undefined;
+
+  // Loading state
+  if (isLoadingJob) {
+    return (
+      <DashboardLayout userType="candidate">
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!job) {
     return (

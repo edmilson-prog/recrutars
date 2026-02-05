@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockJobs } from '@/data/mockData';
 import { Job } from '@/types';
+import { useJob, useCreateJob, useUpdateJob } from '@/hooks/useJobsQuery';
 import { useJobAnalyzer, createJobFormData } from '@/hooks/useJobAnalyzer';
 import { toast } from 'sonner';
 
@@ -41,6 +41,11 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
   const navigate = useNavigate();
   const isEditing = !!jobId;
 
+  // React Query hooks for CRUD
+  const { data: jobResult } = useJob(jobId ?? '');
+  const createJobMutation = useCreateJob();
+  const updateJobMutation = useUpdateJob();
+
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [selectedBenefits, setSelectedBenefits] = useState<string[]>([]);
   const [otherBenefits, setOtherBenefits] = useState('');
@@ -49,32 +54,34 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
   const [notFound, setNotFound] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
-  // Load job for editing
+  // Load job for editing via React Query
   useEffect(() => {
     if (!jobId) return;
-    const job = mockJobs.find(j => j.id === jobId);
-    if (!job) {
+    // jobResult comes from useJob hook
+    const job = jobResult?.data ?? jobResult ?? null;
+    if (jobResult === null) {
       setNotFound(true);
       return;
     }
+    if (!job) return; // still loading
     setFormData({
-      title: job.title,
-      description: job.description,
-      location: job.location,
-      type: job.type,
-      level: job.level,
-      area: job.area,
-      salaryMin: job.salary.min.toString(),
-      salaryMax: job.salary.max.toString(),
-      salaryNegotiable: job.salary.min === 0 && job.salary.max === 0,
-      requirements: job.requirements.join('\n'),
+      title: (job as Job).title,
+      description: (job as Job).description,
+      location: (job as Job).location,
+      type: (job as Job).type,
+      level: (job as Job).level,
+      area: (job as Job).area,
+      salaryMin: (job as Job).salary.min.toString(),
+      salaryMax: (job as Job).salary.max.toString(),
+      salaryNegotiable: (job as Job).salary.min === 0 && (job as Job).salary.max === 0,
+      requirements: (job as Job).requirements.join('\n'),
     });
-    const common = job.benefits.filter(b => COMMON_BENEFITS.includes(b));
-    const other = job.benefits.filter(b => !COMMON_BENEFITS.includes(b));
+    const common = (job as Job).benefits.filter(b => COMMON_BENEFITS.includes(b));
+    const other = (job as Job).benefits.filter(b => !COMMON_BENEFITS.includes(b));
     setSelectedBenefits(common);
     setOtherBenefits(other.join('\n'));
     setSkills([]);
-  }, [jobId]);
+  }, [jobId, jobResult]);
 
   // Mark as dirty on any change after initial load
   const updateFormData = useCallback((updates: Partial<typeof INITIAL_FORM_STATE>) => {
@@ -203,56 +210,56 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       ...otherBenefits.split('\n').filter(b => b.trim()),
     ];
 
-    if (isEditing && jobId) {
-      const idx = mockJobs.findIndex(j => j.id === jobId);
-      if (idx !== -1) {
-        mockJobs[idx] = {
-          ...mockJobs[idx],
-          title: formData.title,
-          description: formData.description,
-          location: formData.location,
-          type: formData.type,
-          level: formData.level,
-          area: formData.area,
-          salary: formData.salaryNegotiable
-            ? { min: 0, max: 0 }
-            : { min: parseInt(formData.salaryMin) || 0, max: parseInt(formData.salaryMax) || 0 },
-          requirements: formData.requirements.split('\n').filter(r => r.trim()),
-          benefits: allBenefits,
-        };
+    const jobData: Partial<Job> = {
+      title: formData.title,
+      description: formData.description,
+      location: formData.location,
+      type: formData.type,
+      level: formData.level,
+      area: formData.area,
+      salary: formData.salaryNegotiable
+        ? { min: 0, max: 0 }
+        : { min: parseInt(formData.salaryMin) || 0, max: parseInt(formData.salaryMax) || 0 },
+      requirements: formData.requirements.split('\n').filter(r => r.trim()),
+      benefits: allBenefits,
+    };
+
+    const handleSuccess = () => {
+      setIsDirty(false);
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate('/empresa/vagas');
       }
-      toast.success('Vaga atualizada com sucesso!');
+    };
+
+    if (isEditing && jobId) {
+      updateJobMutation.mutate(
+        { id: jobId, updates: jobData },
+        {
+          onSuccess: () => {
+            toast.success('Vaga atualizada com sucesso!');
+            handleSuccess();
+          },
+        }
+      );
     } else {
-      const job: Job = {
-        id: `job-${Date.now()}`,
+      const newJob: Partial<Job> = {
+        ...jobData,
         companyId: 'company-1',
         companyName: 'Tech Solutions',
-        title: formData.title,
-        description: formData.description,
-        requirements: formData.requirements.split('\n').filter(r => r.trim()),
-        benefits: allBenefits,
-        location: formData.location,
-        type: formData.type,
-        level: formData.level,
-        salary: formData.salaryNegotiable
-          ? { min: 0, max: 0 }
-          : { min: parseInt(formData.salaryMin) || 0, max: parseInt(formData.salaryMax) || 0 },
         status: 'active',
         applicationsCount: 0,
         createdAt: new Date().toISOString().split('T')[0],
-        area: formData.area,
       };
-      mockJobs.unshift(job);
-      toast.success('Vaga publicada com sucesso!');
+      createJobMutation.mutate(newJob, {
+        onSuccess: () => {
+          toast.success('Vaga publicada com sucesso!');
+          handleSuccess();
+        },
+      });
     }
-
-    setIsDirty(false);
-    if (onSuccess) {
-      onSuccess();
-    } else {
-      navigate('/empresa/vagas');
-    }
-  }, [formData, selectedBenefits, otherBenefits, skills, isEditing, jobId, validate, navigate, onSuccess]);
+  }, [formData, selectedBenefits, otherBenefits, skills, isEditing, jobId, validate, navigate, onSuccess, createJobMutation, updateJobMutation]);
 
   return {
     // State

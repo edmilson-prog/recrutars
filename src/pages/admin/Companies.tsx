@@ -22,6 +22,7 @@ import {
   PowerOff,
   Bell,
   CreditCard,
+  Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,156 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { mockCompanies, mockJobs, mockAdminActions } from '@/data/mockData';
+// TODO: Replace with audit log service/API when available
+const initialAdminActions: AdminAction[] = [
+  {
+    id: 'action-1',
+    companyId: 'company-1',
+    companyName: 'Tech Solutions',
+    action: 'plan_changed',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2025-12-15T10:30:00',
+    details: 'Plano alterado de Essencial Empresas para Seleção Inteligente',
+    previousValue: 'Essencial Empresas',
+    newValue: 'Seleção Inteligente',
+  },
+  {
+    id: 'action-2',
+    companyId: 'company-7',
+    companyName: 'VelhaCorp Ltda',
+    action: 'deactivated',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2025-11-30T14:00:00',
+    details: 'Empresa desativada por inadimplência',
+  },
+  {
+    id: 'action-3',
+    companyId: 'company-10',
+    companyName: 'TurismoVip',
+    action: 'notification_sent',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2026-01-05T09:00:00',
+    details: 'Notificação enviada: lembrete de pagamento pendente',
+  },
+  {
+    id: 'action-4',
+    companyId: 'company-4',
+    companyName: 'Saúde em Foco',
+    action: 'plan_changed',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2025-10-10T11:15:00',
+    details: 'Plano alterado de Seleção Inteligente para Recrutamento Premium',
+    previousValue: 'Seleção Inteligente',
+    newValue: 'Recrutamento Premium',
+  },
+  {
+    id: 'action-5',
+    companyId: 'company-33',
+    companyName: 'StartupHub Incubadora',
+    action: 'deactivated',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2025-12-20T16:30:00',
+    details: 'Empresa desativada a pedido do proprietário',
+  },
+  {
+    id: 'action-6',
+    companyId: 'company-15',
+    companyName: 'MobiLink',
+    action: 'notification_sent',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2025-12-28T10:00:00',
+    details: 'Notificação enviada: confirmar cadastro e realizar primeiro pagamento',
+  },
+  {
+    id: 'action-7',
+    companyId: 'company-6',
+    companyName: 'LogíFast',
+    action: 'plan_changed',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2025-08-20T14:45:00',
+    details: 'Plano alterado de Seleção Inteligente para Recrutamento Premium',
+    previousValue: 'Seleção Inteligente',
+    newValue: 'Recrutamento Premium',
+  },
+  {
+    id: 'action-8',
+    companyId: 'company-2',
+    companyName: 'Inovação Digital',
+    action: 'notification_sent',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2025-11-12T09:30:00',
+    details: 'Notificação enviada: oportunidade de upgrade para plano Seleção Inteligente',
+  },
+  {
+    id: 'action-9',
+    companyId: 'company-28',
+    companyName: 'Banco Digital Neo',
+    action: 'activated',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2022-10-05T10:00:00',
+    details: 'Empresa ativada após aprovação do cadastro',
+  },
+  {
+    id: 'action-10',
+    companyId: 'company-18',
+    companyName: 'DataScience Pro',
+    action: 'plan_changed',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2025-09-15T15:00:00',
+    details: 'Plano alterado de Seleção Inteligente para Recrutamento Premium por necessidade de mais vagas',
+    previousValue: 'Seleção Inteligente',
+    newValue: 'Recrutamento Premium',
+  },
+  {
+    id: 'action-11',
+    companyId: 'company-31',
+    companyName: 'Revista InfoMundo',
+    action: 'notification_sent',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2026-01-10T11:00:00',
+    details: 'Notificação enviada: lembrete de pagamento pendente - prazo final',
+  },
+  {
+    id: 'action-12',
+    companyId: 'company-25',
+    companyName: 'CloudServe',
+    action: 'notification_sent',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2025-07-20T10:30:00',
+    details: 'Notificação enviada: parabéns por atingir 200 candidatos no banco de talentos',
+  },
+  {
+    id: 'action-13',
+    companyId: 'company-3',
+    companyName: 'StartUp Brasil',
+    action: 'notification_sent',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2026-01-12T09:00:00',
+    details: 'Notificação enviada: confirmação de pagamento pendente',
+  },
+  {
+    id: 'action-14',
+    companyId: 'company-14',
+    companyName: 'SuperMercado Bom Preço',
+    action: 'plan_changed',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2025-06-10T13:30:00',
+    details: 'Plano alterado de Seleção Inteligente para Recrutamento Premium devido ao crescimento',
+    previousValue: 'Seleção Inteligente',
+    newValue: 'Recrutamento Premium',
+  },
+  {
+    id: 'action-15',
+    companyId: 'company-9',
+    companyName: 'Construtora XYZ',
+    action: 'activated',
+    performedBy: 'Ana Silva (Admin)',
+    performedAt: '2022-03-22T10:15:00',
+    details: 'Empresa ativada com plano Recrutamento Premium',
+  },
+];
+import { useCompanies } from '@/hooks/useCompaniesQuery';
+import { useJobs } from '@/hooks/useJobsQuery';
 import type { Company, CompanyStatus, CompanyPlanType, AdminAction, Job } from '@/types';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -130,6 +280,11 @@ const INDUSTRIES = [
 ];
 
 export default function AdminCompanies() {
+  // Fetch companies via service layer
+  const { data: companiesResult, isLoading: isLoadingCompanies } = useCompanies();
+  const { data: jobsResult } = useJobs();
+  const allJobs = jobsResult?.data ?? [];
+
   // Search with debounce
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 300);
@@ -159,10 +314,17 @@ export default function AdminCompanies() {
   const [notificationMessage, setNotificationMessage] = useState('');
 
   // Local state for companies (to allow status/plan changes)
-  const [companies, setCompanies] = useState<Company[]>(mockCompanies);
+  const [companies, setCompanies] = useState<Company[]>([]);
 
   // Local state for admin actions
-  const [actions, setActions] = useState<AdminAction[]>(mockAdminActions);
+  const [actions, setActions] = useState<AdminAction[]>(initialAdminActions);
+
+  // Sync service data to local state
+  useEffect(() => {
+    if (companiesResult?.data) {
+      setCompanies(companiesResult.data);
+    }
+  }, [companiesResult]);
 
   // Filter companies
   const filteredCompanies = companies.filter((company) => {
@@ -321,7 +483,7 @@ export default function AdminCompanies() {
 
   // Get data for selected company
   const companyJobs = selectedCompany
-    ? mockJobs.filter((job) => job.companyId === selectedCompany.id)
+    ? allJobs.filter((job) => job.companyId === selectedCompany.id)
     : [];
 
   const companyActions = selectedCompany
@@ -428,6 +590,16 @@ export default function AdminCompanies() {
 
     return pages;
   };
+
+  if (isLoadingCompanies) {
+    return (
+      <DashboardLayout userType="admin">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="admin">

@@ -16,45 +16,56 @@ import { useToast } from '@/hooks/use-toast';
 import EvolutionTimeline from '@/components/team-management/EvolutionTimeline';
 import DeltaEvolutionTable from '@/components/team-management/DeltaEvolutionTable';
 import EvolutionAnnotationForm from '@/components/team-management/EvolutionAnnotationForm';
+import { useAuth } from '@/contexts/AuthContext';
 import {
-  mockTeamMembers,
-  mockTestHistory,
-  mockEvolutionAnnotations,
-  mockDepartments,
-  mockPositions,
-} from '@/data/teamManagementData';
+  useTeamMember,
+  useDepartments,
+  usePositions,
+  useAnnotations,
+  useCreateAnnotation,
+} from '@/hooks/useTeamsQuery';
+import { mockTestHistory } from '@/data/teamManagementData';
+import { Loader2 } from 'lucide-react';
 import type { EvolutionAnnotation } from '@/types/teamManagement';
 
 export default function TeamEvolution() {
   const { id } = useParams();
   const { toast } = useToast();
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id ?? '';
 
-  // Find member
-  const member = useMemo(
-    () => mockTeamMembers.find((m) => m.id === id),
-    [id],
-  );
+  // Service layer hooks
+  const { data: member, isLoading: memberLoading } = useTeamMember(id ?? '');
+  const { data: departments = [] } = useDepartments(companyId);
+  const { data: positions = [] } = usePositions('all');
+  const { data: fetchedAnnotations = [], isLoading: annotationsLoading } = useAnnotations(id ?? '');
+  const createAnnotationMutation = useCreateAnnotation();
 
   const department = useMemo(
-    () => mockDepartments.find((d) => d.id === member?.departmentId),
-    [member],
+    () => departments.find((d) => d.id === member?.departmentId),
+    [member, departments],
   );
 
   const position = useMemo(
-    () => mockPositions.find((p) => p.id === member?.positionId),
-    [member],
+    () => positions.find((p) => p.id === member?.positionId),
+    [member, positions],
   );
 
-  // Filter test history for this member
+  // Filter test history for this member (still from mock — no service yet)
   const memberHistory = useMemo(
     () => mockTestHistory.filter((h) => h.memberId === id),
     [id],
   );
 
-  // Annotations state
-  const [annotations, setAnnotations] = useState<EvolutionAnnotation[]>(() =>
-    mockEvolutionAnnotations.filter((a) => a.memberId === id),
-  );
+  // Annotations state (initialized from service layer)
+  const [annotations, setAnnotations] = useState<EvolutionAnnotation[]>([]);
+  const [annotationsInitialized, setAnnotationsInitialized] = useState(false);
+  if (!annotationsInitialized && !annotationsLoading) {
+    setAnnotations(fetchedAnnotations);
+    setAnnotationsInitialized(true);
+  }
+
+  const isLoading = memberLoading || annotationsLoading;
 
   // Initials for avatar
   const initials = member
@@ -78,13 +89,29 @@ export default function TeamEvolution() {
         createdAt: new Date().toISOString(),
       };
       setAnnotations((prev) => [...prev, newAnnotation]);
+      createAnnotationMutation.mutate({
+        memberId: id || '',
+        text: data.text,
+        type: data.type,
+        date: data.date,
+      });
       toast({
         title: 'Anotação adicionada',
         description: 'A anotação de evolução foi registrada com sucesso.',
       });
     },
-    [id, toast],
+    [id, toast, createAnnotationMutation],
   );
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!member) {
     return (
