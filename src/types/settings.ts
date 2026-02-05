@@ -11,6 +11,7 @@ export type ConfigFieldType =
   | 'boolean'
   | 'select'
   | 'multiselect'
+  | 'model-select'
   | 'color'
   | 'image'
   | 'password';

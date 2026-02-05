@@ -4,10 +4,10 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import type { AIAnalysis, AIAnalysisResult, AnalysisType } from '@/types/aiAnalysis';
+import type { AIAgentSettings, AIAnalysis, AIAnalysisResult, AnalysisType } from '@/types/aiAnalysis';
 import type { GaugeProResult } from '@/types/gaugePro';
 import { loadAnalysisResult, saveAnalysisResult } from '@/lib/aiAgent/storageService';
-import { loadAgentSettings } from '@/lib/aiAgent/settingsLoader';
+import { loadAgentSettingsAsync } from '@/lib/aiAgent/settingsLoader';
 import { generateSingleAnalysis, generateBothAnalyses } from '@/lib/aiAgent/analysisGenerator';
 
 interface UseAIAnalysisOptions {
@@ -36,8 +36,12 @@ export function useAIAnalysis({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [settings, setSettings] = useState<AIAgentSettings | null>(null);
 
-  const settings = loadAgentSettings();
+  // Load settings from Supabase (async, with localStorage fallback)
+  useEffect(() => {
+    loadAgentSettingsAsync().then(setSettings);
+  }, []);
 
   useEffect(() => {
     if (candidateId) {
@@ -50,7 +54,8 @@ export function useAIAnalysis({
 
   const generateAnalyses = useCallback(
     async (result: GaugeProResult) => {
-      if (!settings.agentEnabled) return;
+      const currentSettings = settings ?? (await loadAgentSettingsAsync());
+      if (!currentSettings.agentEnabled) return;
 
       setIsGenerating(true);
       setError(null);
@@ -59,7 +64,7 @@ export function useAIAnalysis({
         const analyses = await generateBothAnalyses(
           result,
           candidateName,
-          settings,
+          currentSettings,
           jobTitle,
         );
         saveAnalysisResult(analyses);
@@ -75,6 +80,8 @@ export function useAIAnalysis({
 
   const regenerateAnalysis = useCallback(
     async (type: AnalysisType, result: GaugeProResult) => {
+      const currentSettings = settings ?? (await loadAgentSettingsAsync());
+
       setIsRegenerating(true);
       setError(null);
 
@@ -83,7 +90,7 @@ export function useAIAnalysis({
           type,
           result,
           candidateName,
-          settings,
+          currentSettings,
           jobTitle,
         );
 
@@ -122,7 +129,7 @@ export function useAIAnalysis({
     isGenerating,
     isRegenerating,
     error,
-    agentEnabled: settings.agentEnabled,
+    agentEnabled: settings?.agentEnabled ?? false,
     generateAnalyses,
     regenerateAnalysis,
   };

@@ -6,6 +6,7 @@
 import { ConfigTextField } from './fields/ConfigTextField';
 import { ConfigToggle } from './fields/ConfigToggle';
 import { ConfigSelect } from './fields/ConfigSelect';
+import { ConfigModelSelect } from './fields/ConfigModelSelect';
 import { ConfigImageUpload } from './fields/ConfigImageUpload';
 import type { ConfigField } from '@/types/settings';
 
@@ -60,6 +61,15 @@ export function ConfigSection({ field, value, onChange }: ConfigSectionProps) {
     case 'select':
       return (
         <ConfigSelect
+          field={field}
+          value={value as string}
+          onChange={onChange}
+        />
+      );
+
+    case 'model-select':
+      return (
+        <ConfigModelSelect
           field={field}
           value={value as string}
           onChange={onChange}

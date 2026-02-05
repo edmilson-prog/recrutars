@@ -1,6 +1,6 @@
 /**
- * AI Agent Settings Loader (PRD-051)
- * Lê configurações do agente do localStorage
+ * AI Agent Settings Loader (PRD-051 + Supabase migration)
+ * Lê configurações do agente do Supabase (com fallback localStorage)
  */
 
 import type { AIAgentSettings } from '@/types/aiAnalysis';
@@ -17,6 +17,26 @@ const DEFAULT_SETTINGS: AIAgentSettings = {
   maxTokens: 2000,
 };
 
+function parseAgentSettings(agentSettings: Record<string, unknown>): AIAgentSettings {
+  return {
+    agentEnabled: (agentSettings.agentEnabled as boolean) ?? DEFAULT_SETTINGS.agentEnabled,
+    claudeModel: (agentSettings.claudeModel as string) ?? DEFAULT_SETTINGS.claudeModel,
+    apiKey: (agentSettings.apiKey as string) ?? DEFAULT_SETTINGS.apiKey,
+    practicalAnalysisEnabled:
+      (agentSettings.practicalAnalysisEnabled as boolean) ??
+      DEFAULT_SETTINGS.practicalAnalysisEnabled,
+    technicalAnalysisEnabled:
+      (agentSettings.technicalAnalysisEnabled as boolean) ??
+      DEFAULT_SETTINGS.technicalAnalysisEnabled,
+    temperature: (agentSettings.temperature as number) ?? DEFAULT_SETTINGS.temperature,
+    maxTokens: (agentSettings.maxTokens as number) ?? DEFAULT_SETTINGS.maxTokens,
+  };
+}
+
+/**
+ * Sync loader — reads from localStorage (legacy fallback).
+ * Used as a quick fallback when async is not feasible.
+ */
 export function loadAgentSettings(): AIAgentSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
@@ -26,20 +46,31 @@ export function loadAgentSettings(): AIAgentSettings {
     const agentSettings = allSettings?.ai?.analysisAgent;
     if (!agentSettings) return DEFAULT_SETTINGS;
 
-    return {
-      agentEnabled: agentSettings.agentEnabled ?? DEFAULT_SETTINGS.agentEnabled,
-      claudeModel: agentSettings.claudeModel ?? DEFAULT_SETTINGS.claudeModel,
-      apiKey: agentSettings.apiKey ?? DEFAULT_SETTINGS.apiKey,
-      practicalAnalysisEnabled:
-        agentSettings.practicalAnalysisEnabled ??
-        DEFAULT_SETTINGS.practicalAnalysisEnabled,
-      technicalAnalysisEnabled:
-        agentSettings.technicalAnalysisEnabled ??
-        DEFAULT_SETTINGS.technicalAnalysisEnabled,
-      temperature: agentSettings.temperature ?? DEFAULT_SETTINGS.temperature,
-      maxTokens: agentSettings.maxTokens ?? DEFAULT_SETTINGS.maxTokens,
-    };
+    return parseAgentSettings(agentSettings);
   } catch {
     return DEFAULT_SETTINGS;
+  }
+}
+
+/**
+ * Async loader — reads from Supabase (unmasked, protected by RLS).
+ * Used by AI analysis generation where the real API key is needed.
+ */
+export async function loadAgentSettingsAsync(): Promise<AIAgentSettings> {
+  try {
+    const { SettingsServiceSupabase } = await import(
+      '@/services/settings/settingsService.supabase'
+    );
+    const service = new SettingsServiceSupabase();
+    const rawValues = await service.getSettingsRaw('admin', 'ai');
+
+    if (!rawValues) return loadAgentSettings();
+
+    const agentSettings = rawValues.analysisAgent;
+    if (!agentSettings) return loadAgentSettings();
+
+    return parseAgentSettings(agentSettings as Record<string, unknown>);
+  } catch {
+    return loadAgentSettings();
   }
 }

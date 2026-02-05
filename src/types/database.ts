@@ -2646,6 +2646,84 @@ export type Database = {
         }
         Relationships: []
       }
+      settings_history: {
+        Row: {
+          id: string
+          panel: string
+          category_key: string
+          subcategory_key: string
+          field_key: string
+          field_name: string
+          previous_value: Json | null
+          new_value: Json | null
+          entity_id: string | null
+          changed_by: string | null
+          changed_by_name: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          panel: string
+          category_key: string
+          subcategory_key: string
+          field_key: string
+          field_name: string
+          previous_value?: Json | null
+          new_value?: Json | null
+          entity_id?: string | null
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          panel?: string
+          category_key?: string
+          subcategory_key?: string
+          field_key?: string
+          field_name?: string
+          previous_value?: Json | null
+          new_value?: Json | null
+          entity_id?: string | null
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          id: string
+          panel: string
+          category: string
+          entity_id: string | null
+          values: Json
+          updated_by: string | null
+          updated_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          panel: string
+          category: string
+          entity_id?: string | null
+          values?: Json
+          updated_by?: string | null
+          updated_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          panel?: string
+          category?: string
+          entity_id?: string | null
+          values?: Json
+          updated_by?: string | null
+          updated_at?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       subscription_history: {
         Row: {
           action: string

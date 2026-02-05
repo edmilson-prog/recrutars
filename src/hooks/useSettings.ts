@@ -1,9 +1,10 @@
 /**
- * useSettings Hook
+ * useSettings Hook (v2 — Supabase-backed)
  * PRD-045: Gerenciamento de estado e persistência de configurações
+ * Migrado de localStorage para Supabase com migração automática de dados legados
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import type {
   ConfigCategory,
@@ -12,8 +13,14 @@ import type {
   ConfigPanel,
 } from '@/types/settings';
 import { getDefaultValues } from '@/data/settingsConfig';
+import {
+  useSettingsData,
+  useSettingsHistory,
+  useSaveSection,
+  useMigrateSettings,
+} from './useSettingsQuery';
 
-const MAX_HISTORY_ENTRIES = 100;
+const MIGRATED_KEY_PREFIX = 'recrutars-settings-migrated-';
 
 interface UseSettingsOptions {
   categories: ConfigCategory[];
@@ -37,30 +44,36 @@ interface UseSettingsReturn {
   isLoading: boolean;
 }
 
-function getStorageKey(panel: ConfigPanel, entityId?: string): string {
+/** Legacy localStorage key for backward compat / migration */
+function getLegacyStorageKey(panel: ConfigPanel, entityId?: string): string {
   const base = `recrutars-settings-${panel}`;
   return entityId ? `${base}-${entityId}` : base;
 }
 
-function getHistoryKey(panel: ConfigPanel, entityId?: string): string {
-  const base = `recrutars-settings-history-${panel}`;
-  return entityId ? `${base}-${entityId}` : base;
-}
-
-function loadFromStorage<T>(key: string, defaultValue: T): T {
-  try {
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : defaultValue;
-  } catch {
-    return defaultValue;
+/** Deep-merge stored values onto defaults so new fields get their defaults */
+function mergeWithDefaults(
+  defaults: ConfigState,
+  stored: ConfigState,
+): ConfigState {
+  const merged = structuredClone(defaults);
+  for (const catKey of Object.keys(stored)) {
+    if (!merged[catKey]) merged[catKey] = {};
+    for (const subKey of Object.keys(stored[catKey] ?? {})) {
+      merged[catKey][subKey] = {
+        ...(merged[catKey][subKey] ?? {}),
+        ...(stored[catKey]?.[subKey] ?? {}),
+      };
+    }
   }
+  return merged;
 }
 
-function saveToStorage<T>(key: string, value: T): void {
+function loadLegacyStorage(key: string): ConfigState | null {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (error) {
-    console.error('Erro ao salvar no localStorage:', error);
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
   }
 }
 
@@ -71,51 +84,72 @@ export function useSettings({
   userName = 'Sistema',
   entityId,
 }: UseSettingsOptions): UseSettingsReturn {
-  const [isLoading, setIsLoading] = useState(true);
-
-  const storageKey = getStorageKey(panel, entityId);
-  const historyKey = getHistoryKey(panel, entityId);
-
-  // Valores padrão (memoizado para evitar recálculo)
   const defaultValues = useMemo(
     () => getDefaultValues(categories),
-    [categories]
+    [categories],
   );
 
-  // Estado dos valores
-  const [values, setValues] = useState<ConfigState>(() =>
-    loadFromStorage(storageKey, defaultValues)
+  // Supabase data
+  const { data: remoteValues, isLoading: isLoadingRemote } = useSettingsData(
+    panel,
+    entityId,
   );
+  const { data: remoteHistory = [] } = useSettingsHistory(panel, entityId);
+  const saveMutation = useSaveSection();
+  const migrateMutation = useMigrateSettings();
 
-  // Estado do histórico
-  const [history, setHistory] = useState<ConfigHistoryEntry[]>(() =>
-    loadFromStorage(historyKey, [])
-  );
+  // Refs to avoid stale closures and prevent re-renders from resetting state
+  const saveMutationRef = useRef(saveMutation);
+  saveMutationRef.current = saveMutation;
+  const migrateMutationRef = useRef(migrateMutation);
+  migrateMutationRef.current = migrateMutation;
 
-  // Carregar dados iniciais
+  // Local optimistic state (for in-flight edits before save)
+  const [localValues, setLocalValues] = useState<ConfigState>(defaultValues);
+  const [isReady, setIsReady] = useState(false);
+  const migrationAttempted = useRef(false);
+
+  // Sync remote values to local state when they arrive
   useEffect(() => {
-    const storedValues = loadFromStorage(storageKey, defaultValues);
-    const storedHistory = loadFromStorage<ConfigHistoryEntry[]>(historyKey, []);
+    if (isLoadingRemote) return;
 
-    // Mesclar valores armazenados com padrões (para novos campos)
-    const mergedValues = { ...defaultValues };
-    for (const catKey of Object.keys(storedValues)) {
-      if (mergedValues[catKey]) {
-        for (const subKey of Object.keys(storedValues[catKey])) {
-          if (mergedValues[catKey][subKey]) {
-            mergedValues[catKey][subKey] = {
-              ...mergedValues[catKey][subKey],
-              ...storedValues[catKey][subKey],
-            };
-          }
-        }
+    const hasRemoteData =
+      remoteValues && Object.keys(remoteValues).length > 0;
+
+    const legacyKey = getLegacyStorageKey(panel, entityId);
+    const migratedKey = MIGRATED_KEY_PREFIX + legacyKey;
+    const alreadyMigrated = localStorage.getItem(migratedKey) === 'true';
+
+    if (!hasRemoteData && !alreadyMigrated && !migrationAttempted.current) {
+      migrationAttempted.current = true;
+      // Try to migrate from localStorage
+      const legacy = loadLegacyStorage(legacyKey);
+      if (legacy && Object.keys(legacy).length > 0) {
+        const merged = mergeWithDefaults(defaultValues, legacy);
+        setLocalValues(merged);
+        setIsReady(true);
+
+        migrateMutationRef.current.mutate(
+          { panel, values: merged, entityId, userId },
+          {
+            onSuccess: () => {
+              localStorage.setItem(migratedKey, 'true');
+            },
+          },
+        );
+        return;
       }
     }
 
-    setValues(mergedValues);
-    setHistory(storedHistory);
-    setIsLoading(false);
-  }, [storageKey, historyKey, defaultValues]);
+    // Normal path: merge remote with defaults
+    const merged = mergeWithDefaults(
+      defaultValues,
+      remoteValues ?? {},
+    );
+    setLocalValues(merged);
+    setIsReady(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remoteValues, isLoadingRemote, defaultValues, panel, entityId, userId]);
 
   // Atualizar valor (sem salvar)
   const updateValue = useCallback(
@@ -123,9 +157,9 @@ export function useSettings({
       categoryKey: string,
       subcategoryKey: string,
       fieldKey: string,
-      value: unknown
+      value: unknown,
     ) => {
-      setValues((prev) => ({
+      setLocalValues((prev) => ({
         ...prev,
         [categoryKey]: {
           ...prev[categoryKey],
@@ -136,89 +170,33 @@ export function useSettings({
         },
       }));
     },
-    []
+    [],
   );
 
-  // Adicionar entrada ao histórico
-  const addHistoryEntry = useCallback(
-    (
-      categoryKey: string,
-      subcategoryKey: string,
-      fieldKey: string,
-      fieldName: string,
-      previousValue: unknown,
-      newValue: unknown
-    ) => {
-      const category = categories.find((c) => c.key === categoryKey);
-      const subcategory = category?.subcategories.find(
-        (s) => s.key === subcategoryKey
-      );
-
-      const entry: ConfigHistoryEntry = {
-        id: `history-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: new Date().toISOString(),
-        userId,
-        userName,
-        categoryKey,
-        categoryName: category?.name || categoryKey,
-        subcategoryKey,
-        subcategoryName: subcategory?.name || subcategoryKey,
-        fieldKey,
-        fieldName,
-        previousValue,
-        newValue,
-        panel,
-        ...(panel === 'company' && entityId && { companyId: entityId }),
-        ...(panel === 'candidate' && entityId && { candidateId: entityId }),
-      };
-
-      setHistory((prev) => {
-        const updated = [entry, ...prev].slice(0, MAX_HISTORY_ENTRIES);
-        saveToStorage(historyKey, updated);
-        return updated;
-      });
-    },
-    [categories, panel, userId, userName, entityId, historyKey]
-  );
-
-  // Salvar seção
+  // Salvar seção no Supabase
   const saveSection = useCallback(
     (categoryKey: string, subcategoryKey: string) => {
-      const category = categories.find((c) => c.key === categoryKey);
-      const subcategory = category?.subcategories.find(
-        (s) => s.key === subcategoryKey
+      saveMutationRef.current.mutate(
+        {
+          panel,
+          categoryKey,
+          subcategoryKey,
+          values: localValues,
+          categories,
+          userId,
+          userName,
+          entityId,
+        },
+        {
+          onSuccess: () => toast.success('Configurações salvas com sucesso!'),
+          onError: (err) =>
+            toast.error(
+              `Erro ao salvar: ${(err as Error).message}`,
+            ),
+        },
       );
-
-      if (!subcategory) return;
-
-      // Obter valores anteriores
-      const storedValues = loadFromStorage<ConfigState>(storageKey, defaultValues);
-      const previousSectionValues =
-        storedValues[categoryKey]?.[subcategoryKey] || {};
-      const currentSectionValues = values[categoryKey]?.[subcategoryKey] || {};
-
-      // Registrar alterações no histórico
-      for (const field of subcategory.fields) {
-        const previousValue = previousSectionValues[field.key] ?? field.defaultValue;
-        const newValue = currentSectionValues[field.key] ?? field.defaultValue;
-
-        if (JSON.stringify(previousValue) !== JSON.stringify(newValue)) {
-          addHistoryEntry(
-            categoryKey,
-            subcategoryKey,
-            field.key,
-            field.name,
-            previousValue,
-            newValue
-          );
-        }
-      }
-
-      // Salvar no storage
-      saveToStorage(storageKey, values);
-      toast.success('Configuracoes salvas com sucesso!');
     },
-    [categories, values, storageKey, defaultValues, addHistoryEntry]
+    [panel, localValues, categories, userId, userName, entityId],
   );
 
   // Restaurar padrões de uma seção
@@ -226,19 +204,17 @@ export function useSettings({
     (categoryKey: string, subcategoryKey: string) => {
       const category = categories.find((c) => c.key === categoryKey);
       const subcategory = category?.subcategories.find(
-        (s) => s.key === subcategoryKey
+        (s) => s.key === subcategoryKey,
       );
 
       if (!subcategory) return;
 
-      // Obter valores padrão da seção
       const sectionDefaults: Record<string, unknown> = {};
       for (const field of subcategory.fields) {
         sectionDefaults[field.key] = field.defaultValue;
       }
 
-      // Atualizar valores
-      setValues((prev) => ({
+      setLocalValues((prev) => ({
         ...prev,
         [categoryKey]: {
           ...prev[categoryKey],
@@ -246,17 +222,17 @@ export function useSettings({
         },
       }));
 
-      toast.success('Valores padrao restaurados!');
+      toast.success('Valores padrão restaurados!');
     },
-    [categories]
+    [categories],
   );
 
   return {
-    values,
-    history,
+    values: localValues,
+    history: remoteHistory,
     updateValue,
     saveSection,
     restoreDefaults,
-    isLoading,
+    isLoading: isLoadingRemote && !isReady,
   };
 }

@@ -5,6 +5,26 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-02-05
+
+### Added
+- **Settings Supabase Migration** — Configuracoes do admin migradas de localStorage para Supabase
+  - Tabelas `system_settings` e `settings_history` com RLS, triggers e mascaramento de campos sensiveis
+  - Service layer (`settingsService.supabase.ts`) com upsert, historico de alteracoes e protecao de API keys
+  - React Query hooks (`useSettingsQuery.ts`) com cache invalidation automatico
+  - Migracao automatica de dados legados do localStorage na primeira carga
+- **Dropdown dinamico de modelos Claude** — Lista todos os modelos disponiveis da API Anthropic
+  - Novo tipo de campo `model-select` no sistema de configuracoes
+  - Componente `ConfigModelSelect` com loading state e fallback para opcoes estaticas
+  - Busca modelos via `GET /v1/models` com cache React Query de 30 minutos
+
+### Fixed
+- **useSettings reseta edicoes locais** — Corrigido bug onde alteracoes do usuario eram sobrescritas a cada re-render
+  - `useMutation()` retornava nova referencia a cada render, disparando useEffect continuamente
+  - Corrigido com `useRef` pattern para mutations, removendo-as dos arrays de dependencias
+
+---
+
 ## [1.3.3] - 2026-02-05
 
 ### Fixed

@@ -413,13 +413,14 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
       onComplete?.(gaugeResult);
 
       // Fire-and-forget: gerar análises IA em background (PRD-051)
-      import('@/lib/aiAgent').then(({ loadAgentSettings, generateBothAnalyses, saveAnalysisResult }) => {
-        const agentSettings = loadAgentSettings();
-        if (agentSettings.agentEnabled) {
-          generateBothAnalyses(gaugeResult, 'Candidato', agentSettings)
-            .then((analysisResult) => saveAnalysisResult(analysisResult))
-            .catch(() => { /* fallback: relatório básico sem IA */ });
-        }
+      import('@/lib/aiAgent').then(({ loadAgentSettingsAsync, generateBothAnalyses, saveAnalysisResult }) => {
+        loadAgentSettingsAsync().then((agentSettings) => {
+          if (agentSettings.agentEnabled) {
+            generateBothAnalyses(gaugeResult, 'Candidato', agentSettings)
+              .then((analysisResult) => saveAnalysisResult(analysisResult))
+              .catch(() => { /* fallback: relatório básico sem IA */ });
+          }
+        });
       }).catch(() => { /* módulo IA indisponível */ });
     }, 2500);
   }, [scenarioResponses, wordStepResponses, assessment, candidateId, resultKey, lastCompletedKey, storageKey, saveSession, onComplete, onXPAwarded, onBadgeAwarded]);
