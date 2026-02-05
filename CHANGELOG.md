@@ -13,6 +13,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - Service layer (`settingsService.supabase.ts`) com upsert, historico de alteracoes e protecao de API keys
   - React Query hooks (`useSettingsQuery.ts`) com cache invalidation automatico
   - Migracao automatica de dados legados do localStorage na primeira carga
+- **Seed de configuracoes admin** — 8 categorias (88 campos) com valores padrao no Supabase
+  - Migration idempotente com `WHERE NOT EXISTS` (nao sobrescreve dados existentes)
+  - Garante que instalacoes novas tenham baseline de configuracoes sem depender de localStorage
 - **Dropdown dinamico de modelos Claude** — Lista todos os modelos disponiveis da API Anthropic
   - Novo tipo de campo `model-select` no sistema de configuracoes
   - Componente `ConfigModelSelect` com loading state e fallback para opcoes estaticas
