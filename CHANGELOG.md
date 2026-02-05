@@ -5,6 +5,15 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2026-02-05
+
+### Fixed
+- **Tabela `permission_audit_logs` criada** — Migration aplicada para tabela de auditoria RBAC (PRD-061)
+  - Resolvia erro 404 ao acessar Usuarios & Permissoes > Auditoria
+  - Inclui indexes para filtros e RLS para acesso somente admin
+
+---
+
 ## [1.4.1] - 2026-02-05
 
 ### Fixed
