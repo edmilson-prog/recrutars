@@ -21,7 +21,7 @@ import type {
 
 export class SupabasePlansService implements IPlansService {
   async getPlans(type?: 'candidate' | 'company'): Promise<Plan[]> {
-    let query = supabase.from('plans').select('*').order('order', { ascending: true });
+    let query = supabase.from('plans').select('*').order('sort_order', { ascending: true });
 
     if (type) {
       query = query.eq('type', type);

@@ -5,6 +5,16 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-02-05
+
+### Fixed
+- **Queries Supabase `order` → `sort_order`** — Corrigido nome de coluna em 3 servicos
+  - `plansService.supabase.ts` — query `.order('order')` causava erro 400 (coluna inexistente)
+  - `gaugeProService.supabase.ts` — query e mapeamento de cenarios
+  - `assessmentsService.supabase.ts` — queries de dimensoes/categorias e mapeamentos row→domain
+
+---
+
 ## [1.4.0] - 2026-02-05
 
 ### Added

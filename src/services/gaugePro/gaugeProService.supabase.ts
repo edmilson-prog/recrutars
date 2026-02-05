@@ -158,12 +158,12 @@ export class SupabaseGaugeProService implements IGaugeProService {
       const { data, error } = await supabase
         .from('gauge_pro_scenarios')
         .select('*')
-        .order('order');
+        .order('sort_order');
       if (error) throw error;
       if (data && data.length > 0) {
         return data.map((r: Record<string, unknown>) => ({
           id: r.id as number,
-          order: r.order as number,
+          order: r.sort_order as number,
           title: r.title as string,
           situation: r.situation as string,
           options: r.options as ScenarioOption[],

@@ -35,7 +35,7 @@ function rowToDimension(r: Record<string, unknown>): AssessmentDimension {
     description: r.description as string,
     icon: r.icon as string,
     color: r.color as string,
-    order: r.order as number,
+    order: r.sort_order as number,
     isActive: r.is_active as boolean,
     questionCount: r.question_count as number | undefined,
   };
@@ -48,7 +48,7 @@ function rowToCategory(r: Record<string, unknown>): AssessmentCategory {
     name: r.name as string,
     slug: r.slug as string,
     description: r.description as string,
-    order: r.order as number,
+    order: r.sort_order as number,
     isActive: r.is_active as boolean,
     questionCount: r.question_count as number | undefined,
     createdAt: r.created_at as string,
@@ -137,13 +137,13 @@ export class SupabaseAssessmentsService implements IAssessmentsService {
     const { data, error } = await supabase
       .from('assessment_dimensions')
       .select('*')
-      .order('order');
+      .order('sort_order');
     if (error) throw error;
     return (data as Record<string, unknown>[]).map(rowToDimension);
   }
 
   async getCategories(dimensionId?: string): Promise<AssessmentCategory[]> {
-    let query = supabase.from('assessment_categories').select('*').order('order');
+    let query = supabase.from('assessment_categories').select('*').order('sort_order');
     if (dimensionId) query = query.eq('dimension_id', dimensionId);
 
     const { data, error } = await query;
