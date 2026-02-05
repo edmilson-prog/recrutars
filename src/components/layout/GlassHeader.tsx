@@ -10,8 +10,11 @@ export function GlassHeader({ children, className }: GlassHeaderProps) {
   return (
     <header
       className={cn(
-        // Glassmorphism effect
-        "glass",
+        // Glassmorphism (igual ao GlassFooter)
+        "bg-white/10 dark:bg-black/20",
+        "backdrop-blur-xl",
+        "border-b border-white/20 dark:border-white/10",
+        "shadow-[0_4px_30px_rgba(0,0,0,0.1)]",
         // Positioning - sticky at top of content area
         "sticky top-0 z-50",
         // Dimensions
@@ -19,8 +22,6 @@ export function GlassHeader({ children, className }: GlassHeaderProps) {
         // Layout
         "flex items-center",
         "px-4 md:px-8",
-        // Border
-        "border-b border-white/10",
         className
       )}
     >
