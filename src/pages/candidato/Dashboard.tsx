@@ -62,29 +62,22 @@ export default function CandidateDashboard() {
     if (savedAssessment && !savedResult) setHasOngoingAssessment(true);
   }, [candidateId]);
 
-  // Loading state while candidate loads
-  if (!candidate) {
-    return (
-      <DashboardLayout userType="candidate">
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   // Completude do perfil pessoal (calculada dinamicamente)
-  // Usa location ou compõe a partir de city+state se location estiver vazio
-  const effectiveLocation = candidate.location || [candidate.city, candidate.state].filter(Boolean).join(', ');
-  const profileCompletion = calculateProfileCompletion({
-    name: candidate.name,
-    email: candidate.email,
-    title: candidate.title,
-    location: effectiveLocation,
-    phone: candidate.phone,
-    linkedin: candidate.linkedin,
-    about: candidate.about,
-  });
+  // Movido para antes do early return para respeitar as regras de Hooks do React
+  const effectiveLocation = candidate
+    ? (candidate.location || [candidate.city, candidate.state].filter(Boolean).join(', '))
+    : '';
+  const profileCompletion = candidate
+    ? calculateProfileCompletion({
+        name: candidate.name,
+        email: candidate.email,
+        title: candidate.title,
+        location: effectiveLocation,
+        phone: candidate.phone,
+        linkedin: candidate.linkedin,
+        about: candidate.about,
+      })
+    : 0;
 
   // Sync silencioso: se o valor calculado difere do DB, atualiza o banco
   useEffect(() => {
@@ -100,6 +93,17 @@ export default function CandidateDashboard() {
       });
     }
   }, [candidateId, profileCompletion, candidate?.profileCompletion]);
+
+  // Loading state while candidate loads
+  if (!candidate) {
+    return (
+      <DashboardLayout userType="candidate">
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   // Completude do currículo padrão
   const defaultCurriculum = curriculums.find(

@@ -1,13 +1,100 @@
 {
   "versions": [
     {
+      "version": "1.3.2",
+      "codename": "Hooks Fix",
+      "type": "patch",
+      "releaseDate": "2026-02-05",
+      "prd": "",
+      "description": "Correcao de tela branca apos login de candidato: useEffect chamado apos early return violava regras de Hooks do React.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "CandidateDashboard: tela branca apos login com erro 'Rendered more hooks than during the previous render'",
+            "useEffect de sync do profileCompletion movido para antes do guard condicional"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.1",
+      "codename": "City Combobox",
+      "type": "patch",
+      "releaseDate": "2026-02-05",
+      "prd": "",
+      "description": "Campo Cidade convertido para combobox pesquisavel com ~5.570 municipios brasileiros filtrados por estado.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Tab Localizacao: campo Cidade convertido de input livre para combobox pesquisavel",
+            "Cidades filtradas automaticamente pelo estado selecionado",
+            "Novo arquivo src/data/brazilianCities.ts com dados de ~5.570 municipios (IBGE)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.0",
+      "codename": "Job Preferences",
+      "type": "minor",
+      "releaseDate": "2026-02-05",
+      "prd": "",
+      "description": "Novas abas Interesses, Salario e Privacidade no perfil do candidato com preferencias de vagas e controle de visibilidade.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Tab Interesses: areas de interesse (setores e funcoes) e modelo de trabalho (modalidade e contrato)",
+            "Tab Salario: faixa salarial minimo/maximo e toggle Aceita Negociar",
+            "Tab Privacidade: visibilidade do perfil, exibicao de salario e visibilidade do curriculo",
+            "Migration 023 e 024: colunas de preferencias e privacidade na tabela candidates"
+          ]
+        },
+        {
+          "type": "removed",
+          "items": [
+            "Secoes Preferencias de Vagas e Privacidade removidas da pagina Configuracoes (agora em Perfil)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.2.1",
+      "codename": "Settings Cleanup",
+      "type": "patch",
+      "releaseDate": "2026-02-05",
+      "prd": "",
+      "description": "Simplificacao da pagina de Configuracoes: tab Dados Pessoais removida (disponivel em Perfil) e formatacao de telefone adicionada.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "removed",
+          "items": [
+            "Tab Dados Pessoais removida de Configuracoes (dados continuam em /candidato/perfil)"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Settings.tsx simplificado de 968 para 416 linhas",
+            "Formatacao automatica de telefone no perfil do candidato"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.2.0",
       "codename": "Profile Consolidation",
       "type": "minor",
       "releaseDate": "2026-02-05",
       "prd": "",
       "description": "Consolidacao do perfil do candidato: campo Nome de Exibicao e nova aba Localizacao com cidade, estado e disponibilidade para mudanca.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
