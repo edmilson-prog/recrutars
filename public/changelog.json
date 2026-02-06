@@ -1,13 +1,48 @@
 {
   "versions": [
     {
+      "version": "1.5.0",
+      "codename": "Persistence",
+      "type": "minor",
+      "releaseDate": "2026-02-06",
+      "prd": "",
+      "description": "Persistencia Supabase para resultados Gauge-Pro e analises IA com dual-write localStorage + Supabase, lazy sync retroativo e deteccao cross-browser.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Persistencia Supabase para analises IA com dual-write localStorage + Supabase (tabela ai_analyses)",
+            "Lazy sync retroativo: dados pre-existentes no localStorage sincronizados automaticamente",
+            "Persistencia Supabase para resultados Gauge-Pro entre navegadores",
+            "Botao 'Gerar agora' para analise IA com indicador de 3 estados",
+            "Cards de analise IA (PracticalAnalysisCard e TechnicalAnalysisCard) na pagina de resultado"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "CORS Anthropic API: header anthropic-dangerous-direct-browser-access adicionado",
+            "Erro IA cacheado no localStorage: validacao para nao salvar analises com status error",
+            "candidateId incorreto unificado para usar currentCandidate.id do AuthContext"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "BehavioralTest.tsx: pagina 'Teste Comportamental' agora executa Gauge-Pro inline"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.3.2",
       "codename": "Hooks Fix",
       "type": "patch",
       "releaseDate": "2026-02-05",
       "prd": "",
       "description": "Correcao de tela branca apos login de candidato: useEffect chamado apos early return violava regras de Hooks do React.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
@@ -554,7 +589,7 @@
           "items": [
             "Agente de Análise IA: integração com API Claude via proxy Vite",
             "Análise Prática para recrutadores (linguagem simples, ações práticas)",
-            "Análise Técnica para administradores (linguagem científica, Big Five/DISC)",
+            "Análise Técnica para administradores (linguagem científica, Predictive Index/Big Five)",
             "Configuração do agente no Admin (IA > Agente de Análise)",
             "Geração automática em background após conclusão do Gauge-Pro",
             "Botão Regenerar Análise para administradores",
@@ -572,7 +607,7 @@
       "type": "minor",
       "releaseDate": "2026-01-27",
       "prd": "PRD-049 & PRD-050",
-      "description": "Gauge-Pro DISC: Seleção de Palavras e Cenários Situacionais",
+      "description": "Gauge-Pro: Selecao de Palavras e Cenarios Situacionais",
       "isCurrent": false,
       "changes": [
         {
@@ -584,7 +619,7 @@
             "16 perfis arquetípicos comportamentais baseados nas combinações D1-D5",
             "Página de resultado com scores, classificações e carreiras recomendadas",
             "Persistência via localStorage com auto-save por etapa",
-            "Badge Mestre DISC (épico) +150 XP"
+            "Badge Mestre Comportamental (epico) +150 XP"
           ]
         }
       ]
@@ -747,7 +782,7 @@
           "type": "added",
           "items": [
             "Agendamento de entrevistas pela empresa com calendario e horarios (PRD-034)",
-            "Banners de incentivo ao teste DISC para candidatos (PRD-035)",
+            "Banners de incentivo ao teste comportamental para candidatos (PRD-035)",
             "Transparencia de match com breakdown e explicabilidade para candidatos (PRD-035)",
             "Sugestoes IA para descricao de vagas (PRD-036)",
             "Auto-preenchimento inteligente de formularios (PRD-037)",
@@ -772,7 +807,7 @@
         {
           "type": "fixed",
           "items": [
-            "Labels e grid no mini radar chart DISC",
+            "Labels e grid no mini radar chart comportamental",
             "DialogDescription ausente na pagina Jobs",
             "forwardRef no componente Badge",
             "SelectionBar props em SavedCandidates"
@@ -849,7 +884,7 @@
             "Barra flutuante de selecao com contador",
             "Modal de comparacao lado a lado",
             "Metricas expandidas: Match Score, Experiencia, Formacao, Salario",
-            "Perfil DISC com grafico radar mini",
+            "Perfil comportamental com grafico radar mini",
             "Toggle 'Mostrar apenas diferencas'"
           ]
         }
@@ -909,13 +944,13 @@
       "codename": "Vibrant Viterbi",
       "type": "minor",
       "releaseDate": "2026-01-15",
-      "description": "Visualizacao interativa de perfil DISC e Match Score",
+      "description": "Visualizacao interativa de perfil comportamental e Match Score",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Radar chart interativo para perfil DISC",
+            "Radar chart interativo para perfil comportamental",
             "Match Score com breakdown transparente por categorias",
             "Secao 'Por que voce combina' com pontos fortes",
             "Comparacao visual candidato vs perfil ideal da vaga",
@@ -1154,9 +1189,9 @@
           "type": "added",
           "items": [
             "Listagem de candidatos com busca por nome ou email",
-            "Filtros: status, teste comportamental, perfil DISC",
+            "Filtros: status, teste comportamental, perfil Gauge-Pro",
             "Drawer de detalhes com 4 tabs",
-            "Tab Teste: resultado DISC completo com grafico",
+            "Tab Teste: resultado comportamental completo com grafico",
             "Acoes administrativas: desativar, reativar, resetar teste"
           ]
         }
@@ -1272,7 +1307,7 @@
           "type": "added",
           "items": [
             "Pipeline visual (Kanban) com colunas de status",
-            "Cards de candidato com match e perfil DISC",
+            "Cards de candidato com match e perfil comportamental",
             "Drawer com detalhes do candidato (5 tabs)",
             "Movimentacao de candidatos entre etapas",
             "Modal de reprovacao com motivo opcional",

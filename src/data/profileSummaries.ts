@@ -1,6 +1,6 @@
 /**
  * Profile Summaries for Behavioral Assessment
- * Maps DISC profile names to recruiter-facing summary paragraphs.
+ * Maps behavioral profile names to recruiter-facing summary paragraphs.
  */
 
 export const PROFILE_SUMMARIES: Record<string, string> = {
@@ -82,7 +82,7 @@ export const PROFILE_SUMMARIES: Record<string, string> = {
 export function getProfileSummary(profileName: string): string {
   return (
     PROFILE_SUMMARIES[profileName] ??
-    'Perfil comportamental identificado através da avaliação Gauge-Pro DISC. ' +
+    'Perfil comportamental identificado através da avaliação Gauge-Pro. ' +
       'Consulte os pontos fortes e de atenção para uma análise detalhada das características deste candidato.'
   );
 }

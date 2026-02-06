@@ -5,6 +5,29 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-02-06
+
+### Added
+- **Persistencia Supabase para analises IA** — Dual-write localStorage + Supabase (tabela `ai_analyses`)
+  - Lazy sync retroativo: dados pre-existentes no localStorage sao sincronizados automaticamente
+  - Carregamento: localStorage primeiro (rapido), Supabase fallback (persistente)
+- **Persistencia Supabase para resultados Gauge-Pro** — Testes agora persistem entre navegadores
+  - Fix: `supabaseAssessmentIdRef` perdido no refresh causava skip do save no Supabase
+  - Lazy sync: resultados locais sincronizados automaticamente ao Supabase
+  - Novo navegador detecta teste concluido via Supabase (nao mostra teste como disponivel)
+- **Botao "Gerar agora" para analise IA** — Indicador com 3 estados (gerando/gerado/disponivel)
+- **Cards de analise IA na pagina de resultado** — PracticalAnalysisCard e TechnicalAnalysisCard
+
+### Fixed
+- **CORS Anthropic API** — Header `anthropic-dangerous-direct-browser-access` adicionado
+- **Erro IA cacheado no localStorage** — Validacao adicionada para nao salvar analises com status error
+- **candidateId incorreto** — Unificado para usar `currentCandidate.id` do AuthContext
+
+### Changed
+- **BehavioralTest.tsx** — Pagina "Teste Comportamental" agora executa Gauge-Pro inline
+
+---
+
 ## [1.4.2] - 2026-02-05
 
 ### Fixed
@@ -499,13 +522,13 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [0.44.0] - 2026-01-27 — "Archetype" (PRD-049 & PRD-050)
 
 ### Added
-- **Gauge-Pro DISC — Parte 1: Seleção de Palavras (PRD-049)**
+- **Gauge-Pro — Parte 1: Selecao de Palavras (PRD-049)**
   - Banco de 100 adjetivos mapeados em 5 dimensões (D1-D5)
   - Interface de seleção com grid responsivo e embaralhamento Fisher-Yates
   - Duas listas: Lista A (autopercepção) e Lista B (expectativa social)
   - Validação de exatamente 5 seleções por lista
   - Pontuação: (Soma_A × 1.0) + (Soma_B × 0.5) normalizada 0-100
-- **Gauge-Pro DISC — Parte 2: Cenários Situacionais (PRD-050)**
+- **Gauge-Pro — Parte 2: Cenarios Situacionais (PRD-050)**
   - 15 cenários profissionais com 4 opções (A/B/C/D) cada
   - Navegação sequencial com possibilidade de voltar
   - Mapeamento de cada opção para combinações de dimensões D1-D5
@@ -521,9 +544,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - Estilo de trabalho e comunicação
   - Carreiras recomendadas
 - Persistência via localStorage com auto-save por etapa
-- Badge "Mestre DISC" (épico) +150 XP
+- Badge "Mestre Comportamental" (epico) +150 XP
 - Rota `/candidato/gauge-pro` e `/candidato/gauge-pro/resultado`
-- Link "Gauge-Pro DISC" no sidebar do candidato
+- Link "Gauge-Pro" no sidebar do candidato
 
 ## [0.43.0] - 2026-01-20 (PRD-047 & PRD-048)
 
@@ -800,7 +823,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - Filtros: Todas, Candidaturas, Entrevistas, Mensagens, Vagas
   - Agrupamento por data: Hoje, Ontem, Esta semana, Este mês, Anteriores
   - Persistência de estado de leitura em localStorage
-  - Metadados contextuais: match %, perfil DISC, datas de entrevista, etc.
+  - Metadados contextuais: match %, perfil comportamental, datas de entrevista, etc.
   - Item "Notificações" no menu lateral da empresa
 
 ### Added (Components)
@@ -826,7 +849,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Exportar Candidatos (Empresa)** - PRD-032
   - Modal de exportação com seleção de formato (XLSX/PDF)
   - Checkboxes para seleção de campos a incluir
-  - Seções: Info Básica, Experiência, Formação, Habilidades, DISC, Match, Salário
+  - Secoes: Info Basica, Experiencia, Formacao, Habilidades, Perfil Comportamental, Match, Salario
   - Ordenação configurável (match, nome, experiência, recentes)
   - Aviso sobre candidatos em modo anônimo
   - Exportação Excel via biblioteca `xlsx`
@@ -863,7 +886,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - Barra flutuante de seleção com contador
   - Modal de comparação lado a lado
   - Métricas expandidas: Match Score, Experiência, Formação, Salário, Disponibilidade, Localização
-  - Perfil DISC com gráfico radar mini
+  - Perfil comportamental com grafico radar mini
   - Habilidades top 5 com badges
   - Destaque visual (troféu) para melhor valor em cada categoria
   - Toggle "Mostrar apenas diferenças"
@@ -958,7 +981,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [0.32.0] - 2026-01-15 (Radar)
 
 ### Added
-- Visualização interativa de perfil DISC com radar chart e quadrante 2D (PRD-002-dgn)
+- Visualizacao interativa de perfil comportamental com radar chart e quadrante 2D (PRD-002-dgn)
 - Match Score com breakdown transparente por categorias:
   - Skills Técnicas (40%), Experiência (30%), Perfil Comportamental (20%), Localização (10%)
 - Seção "Por que você combina" com pontos fortes específicos
@@ -970,7 +993,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - Tabela comparativa com destaque do melhor valor
   - Toggle "Mostrar apenas diferenças"
 
-### Added (Componentes DISC)
+### Added (Componentes Comportamentais)
 - `DISCRadarChart` e `DISCRadarChartMini` - radar chart com Recharts
 - `DISCQuadrant` e `DISCQuadrantMini` - quadrante 2D interativo
 - `DISCLegend`, `DISCLegendCompact`, `DISCDimensionCard` - legendas explicativas
@@ -993,7 +1016,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Technical
 - Tipos TypeScript: `DISCProfile`, `DISCDimension`, `MatchCategory`, `MatchStrength`, `MatchOpportunity`, `MatchResult`, `CandidateForComparison`
 - Funções utilitárias: `getMatchScoreLevel`, `getMatchScoreColor`
-- Cores DISC padronizadas: D=#EF4444 (vermelho), I=#F59E0B (amarelo), S=#22C55E (verde), C=#3B82F6 (azul)
+- Cores dimensionais padronizadas: D=#EF4444 (vermelho), I=#F59E0B (amarelo), S=#22C55E (verde), C=#3B82F6 (azul)
 - Cores semânticas de match: ≥80% verde, 60-79% amarelo, <60% vermelho
 - Tooltips explicativos em todas as métricas
 - Acessibilidade: aria-labels descritivos, valores sempre textuais (não apenas cor)
@@ -1339,12 +1362,12 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 - Gestão de candidatos para administrador (PRD-021)
 - Listagem de candidatos com busca por nome ou email
-- Filtros combináveis: status (ativo, inativo), teste comportamental (realizado/não realizado), perfil DISC
-- Paginação de 20 candidatos por página
-- Cards com resumo: avatar, nome, email, título, localização, status teste, perfil DISC
-- Drawer de detalhes com 4 tabs: Perfil, Teste, Candidaturas, Histórico
-- Tab Perfil: informações básicas (email, telefone, LinkedIn), experiência, formação, habilidades, pretensão salarial, métricas
-- Tab Teste: resultado DISC completo com gráfico de barras (dominância, influência, estabilidade, conformidade), pontos fortes e pontos de atenção
+- Filtros combinaveis: status (ativo, inativo), teste comportamental (realizado/nao realizado), perfil comportamental
+- Paginacao de 20 candidatos por pagina
+- Cards com resumo: avatar, nome, email, titulo, localizacao, status teste, perfil comportamental
+- Drawer de detalhes com 4 tabs: Perfil, Teste, Candidaturas, Historico
+- Tab Perfil: informacoes basicas (email, telefone, LinkedIn), experiencia, formacao, habilidades, pretensao salarial, metricas
+- Tab Teste: resultado comportamental completo com grafico de barras (dominancia, influencia, estabilidade, conformidade), pontos fortes e pontos de atencao
 - Tab Candidaturas: lista de candidaturas do candidato com status, empresa e match percentage
 - Tab Histórico: log de ações administrativas ordenadas por data
 - Ações administrativas: desativar candidato (com modal de confirmação e motivo opcional)
@@ -1354,9 +1377,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Tipos administrativos: CandidateStatus ('active' | 'inactive')
 - Interface CandidateAdminAction para histórico de ações (activated, deactivated, test_reset, notification_sent)
 - Campos adicionais em Candidate: status, createdAt, deactivatedAt, phone, linkedin
-- Mock data expandido: 33 candidatos (5 existentes + 28 novos) com diversidade de títulos, localizações e perfis DISC
-- Mock data: mockCandidateAdminActions com 15 ações históricas de exemplo
-- Visualização de resultado DISC com badges de cores para cada dimensão (vermelho=dominância, amarelo=influência, verde=estabilidade, azul=conformidade)
+- Mock data expandido: 33 candidatos (5 existentes + 28 novos) com diversidade de titulos, localizacoes e perfis comportamentais
+- Mock data: mockCandidateAdminActions com 15 acoes historicas de exemplo
+- Visualizacao de resultado comportamental com badges de cores para cada dimensao (vermelho=dominancia, amarelo=influencia, verde=estabilidade, azul=conformidade)
 - Estado vazio personalizado quando não há resultados na busca
 - Filtros responsivos: sidebar desktop (288px) e sheet mobile
 - Avatar com fallback para inicial do nome do candidato
@@ -1365,7 +1388,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Rota /admin/candidatos agora aponta para componente Candidates ao invés de AdminDashboard
 - Interface Candidate expandida com campos administrativos obrigatórios
 - mockCandidates atualizado com novos campos: status, createdAt, phone, linkedin
-- Candidatos agora incluem variedade de 14 perfis DISC diferentes
+- Candidatos agora incluem variedade de 14 perfis comportamentais diferentes
 
 ## [0.20.0] - 2026-01-15
 
@@ -1475,13 +1498,13 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Gestão de Candidaturas completa (PRD-015)
 - Pipeline visual (Kanban) com colunas de status (Novos, Em Análise, Entrevista, Aprovados)
 - Seletor de vaga para visualizar candidaturas
-- Cards de candidato com match, perfil DISC e indicador de teste
+- Cards de candidato com match, perfil comportamental e indicador de teste
 - Drawer com detalhes do candidato (5 tabs: Perfil, Experiência, Teste, Mensagem, Histórico)
 - Movimentação de candidatos entre etapas
 - Modal de reprovação com motivo opcional
 - Anotações internas por candidato
 - Histórico de movimentações
-- Filtros por match, perfil DISC e status de teste
+- Filtros por match, perfil comportamental e status de teste
 - Seção colapsável para candidatos reprovados
 - Tipos ApplicationNote e ApplicationHistory
 
@@ -1493,13 +1516,13 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 - Banco de Talentos completo (PRD-014)
-- Listagem de candidatos com busca e filtros (localização, perfil DISC, experiência, skills)
+- Listagem de candidatos com busca e filtros (localizacao, perfil comportamental, experiencia, skills)
 - Busca com debounce de 300ms
 - Filtro de skills como tags clicáveis
 - Cards de candidato com avatar, informações e indicador de match
 - Paginação de resultados (10 por página)
 - Página de perfil completo do candidato
-- Visualização do perfil comportamental DISC com barras de progresso
+- Visualizacao do perfil comportamental com barras de progresso
 - Seção de pontos fortes e pontos de atenção
 - Experiência profissional mockada
 - Dropdown para convidar candidato para vagas ativas
@@ -1599,7 +1622,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Salvamento do resultado no mockData
 
 ### Changed
-- Dados de perfil DISC expandidos com características e ambientes
+- Dados de perfil comportamental expandidos com caracteristicas e ambientes
 - Mensagem de aviso atualizada sobre salvamento automático
 
 ## [0.7.0] - 2026-01-11
