@@ -5,6 +5,13 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-02-06
+
+### Added
+- **ID do candidato na aba Conta** — Card "Informacoes da Conta" exibe UUID com botao copiar e data de criacao da conta
+
+---
+
 ## [1.5.0] - 2026-02-06
 
 ### Added

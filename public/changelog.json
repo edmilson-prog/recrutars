@@ -1,13 +1,31 @@
 {
   "versions": [
     {
+      "version": "1.5.1",
+      "codename": "Account Info",
+      "type": "patch",
+      "releaseDate": "2026-02-06",
+      "prd": "",
+      "description": "Card 'Informacoes da Conta' na aba Conta do perfil do candidato, exibindo UUID com botao copiar e data de criacao.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "ID do candidato (UUID) visivel na aba Conta do perfil com botao copiar",
+            "Data 'Membro desde' exibida no card de informacoes da conta"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.5.0",
       "codename": "Persistence",
       "type": "minor",
       "releaseDate": "2026-02-06",
       "prd": "",
       "description": "Persistencia Supabase para resultados Gauge-Pro e analises IA com dual-write localStorage + Supabase, lazy sync retroativo e deteccao cross-browser.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
