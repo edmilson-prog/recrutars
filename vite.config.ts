@@ -13,8 +13,9 @@ export default defineConfig(() => ({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/anthropic/, ''),
         headers: {
-          'x-api-key': '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',
+          'x-api-key': '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',
           'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
         },
       },
     },

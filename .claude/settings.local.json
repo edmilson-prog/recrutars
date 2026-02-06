@@ -65,7 +65,16 @@
       "mcp__supabase__generate_typescript_types",
       "mcp__chrome-devtools__get_network_request",
       "Bash(npm version:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "mcp__plugin_firebase_firebase__firebase_get_environment",
+      "Bash(npx supabase:*)",
+      "WebFetch(domain:servicodados.ibge.gov.br)",
+      "Bash(test:*)",
+      "Bash(done)",
+      "mcp__supabase__list_extensions",
+      "mcp__chrome-devtools__fill",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(cmd //c \"taskkill /PID 16540 /F /T\")"
     ]
   }
 }

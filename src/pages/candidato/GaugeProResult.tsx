@@ -20,12 +20,17 @@ import {
   MessageSquare,
   Users,
   Sparkles,
+  RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import { GAUGE_PRO_CONFIG } from '@/data/gaugeProConfig';
 import { TEST_CONFIG } from '@/data/testConfig';
 import { DIMENSION_NAMES, DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 import type { GaugeProResult as GaugeProResultType, GaugeProDimension } from '@/types/gaugePro';
 import { useEffect, useState } from 'react';
+import { useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
+import { useAIAnalysis } from '@/hooks/useAIAnalysis';
+import { PracticalAnalysisCard, TechnicalAnalysisCard } from '@/components/aiAnalysis';
 
 const DIMENSION_COLORS: Record<GaugeProDimension, string> = {
   D1: '#ef4444',
@@ -48,21 +53,37 @@ const CLASSIFICATION_COLORS: Record<string, string> = {
 };
 
 export default function GaugeProResult() {
-  const { user } = useAuth();
+  const { user, currentCandidate } = useAuth();
   const navigate = useNavigate();
   const [result, setResult] = useState<GaugeProResultType | null>(null);
 
-  const candidateId = user?.id || 'mock-candidate-1';
+  const candidateId = currentCandidate?.id || user?.id || '';
   const resultKey = GAUGE_PRO_CONFIG.storageKeys.result(candidateId);
 
+  // Try Supabase first
+  const { data: supabaseResult } = useGaugeProResultByCandidate(candidateId);
+
+  const aiAnalysis = useAIAnalysis({
+    candidateId,
+    candidateName: currentCandidate?.name || user?.email || 'Candidato',
+  });
+
+  const hasAnalysis = !!(aiAnalysis.practicalAnalysis || aiAnalysis.technicalAnalysis);
+
   useEffect(() => {
+    // Supabase result takes priority
+    if (supabaseResult) {
+      setResult(supabaseResult);
+      return;
+    }
+    // Fallback to localStorage
     const saved = localStorage.getItem(resultKey);
     if (saved) {
       try {
         setResult(JSON.parse(saved));
       } catch { /* ignore */ }
     }
-  }, [resultKey]);
+  }, [supabaseResult, resultKey]);
 
   if (!result) {
     return (
@@ -260,11 +281,45 @@ export default function GaugeProResult() {
           </CardContent>
         </Card>
 
-        {/* AI Analysis Indicator - PRD-051 */}
-        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/60 py-2">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Análise inteligente sendo gerada em segundo plano</span>
-        </div>
+        {/* AI Analysis Cards - PRD-051 (rendered only when analysis exists so hooks load fresh data) */}
+        {hasAnalysis && (
+          <>
+            <PracticalAnalysisCard
+              candidateId={candidateId}
+              candidateName={currentCandidate?.name || user?.email || 'Candidato'}
+            />
+            <TechnicalAnalysisCard
+              candidateId={candidateId}
+              candidateName={currentCandidate?.name || user?.email || 'Candidato'}
+              gaugeProResult={result}
+              showRegenerate
+            />
+          </>
+        )}
+
+        {/* AI Analysis Indicator */}
+        {!hasAnalysis && (
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/60 py-2">
+            {aiAnalysis.isGenerating ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Gerando análise inteligente...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Análise inteligente</span>
+                <button
+                  onClick={() => result && aiAnalysis.generateAnalyses(result)}
+                  className="inline-flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-700 hover:underline transition-colors"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Gerar agora
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex justify-center gap-3 pt-2 pb-6">

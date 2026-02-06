@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { AIAgentSettings, AIAnalysis, AIAnalysisResult, AnalysisType } from '@/types/aiAnalysis';
 import type { GaugeProResult } from '@/types/gaugePro';
-import { loadAnalysisResult, saveAnalysisResult } from '@/lib/aiAgent/storageService';
+import { loadAnalysisResult, saveAnalysisResult, loadAnalysisFromSupabase } from '@/lib/aiAgent/storageService';
 import { loadAgentSettingsAsync } from '@/lib/aiAgent/settingsLoader';
 import { generateSingleAnalysis, generateBothAnalyses } from '@/lib/aiAgent/analysisGenerator';
 
@@ -43,13 +43,30 @@ export function useAIAnalysis({
     loadAgentSettingsAsync().then(setSettings);
   }, []);
 
+  // Load: localStorage first (sync/fast), then Supabase fallback (async)
   useEffect(() => {
-    if (candidateId) {
-      const stored = loadAnalysisResult(candidateId);
-      if (stored) {
-        setAnalysisResult(stored);
-      }
+    if (!candidateId) return;
+
+    const stored = loadAnalysisResult(candidateId);
+    if (stored) {
+      setAnalysisResult(stored);
     }
+
+    // Async: try Supabase — if it has data, update state + refresh localStorage cache
+    loadAnalysisFromSupabase(candidateId).then((remote) => {
+      if (remote) {
+        setAnalysisResult(remote);
+        saveAnalysisResult(remote); // update localStorage cache
+      } else if (stored) {
+        // Lazy sync: localStorage has data but Supabase doesn't — push retroactively
+        const hasCompleted =
+          (stored.practical?.status === 'completed') ||
+          (stored.technical?.status === 'completed');
+        if (hasCompleted) {
+          saveAnalysisResult(stored); // dual-write pushes to Supabase
+        }
+      }
+    }).catch(() => { /* Supabase offline — localStorage data is sufficient */ });
   }, [candidateId]);
 
   const generateAnalyses = useCallback(

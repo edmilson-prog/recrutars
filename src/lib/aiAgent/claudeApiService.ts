@@ -67,6 +67,7 @@ export async function callClaudeApi(
           headers: {
             'Content-Type': 'application/json',
             'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true',
           },
           body: JSON.stringify(request),
         },

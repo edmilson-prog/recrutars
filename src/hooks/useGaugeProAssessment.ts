@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { getGaugeProService } from '@/services/gaugePro/gaugeProService';
 import type {
   GaugeProPhase,
   GaugeProAssessment,
@@ -67,6 +68,9 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Supabase persistence — UUID do assessment row no banco
+  const supabaseAssessmentIdRef = useRef<string | null>(null);
+
   const storageKey = GAUGE_PRO_CONFIG.storageKeys.assessment(candidateId);
   const resultKey = GAUGE_PRO_CONFIG.storageKeys.result(candidateId);
   const lastCompletedKey = GAUGE_PRO_CONFIG.storageKeys.lastCompleted(candidateId);
@@ -93,9 +97,9 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
     return daysSince < GAUGE_PRO_CONFIG.cooldownDays;
   }, [lastCompletedKey]);
 
-  // Load existing session
+  // Load existing session (localStorage sync, then Supabase async)
   useEffect(() => {
-    // Check for existing result
+    // 1. Sync: Check localStorage for existing result (fast)
     const savedResult = localStorage.getItem(resultKey);
     if (savedResult) {
       try {
@@ -103,13 +107,13 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
       } catch { /* ignore */ }
     }
 
-    // Check cooldown
+    // 2. Sync: Check cooldown from localStorage
     if (isInCooldown()) {
       setPhase('completed');
-      return;
+      // Don't return — still run Supabase checks below for lazy sync
     }
 
-    // Check for existing session
+    // 3. Sync: Check for existing in-progress session in localStorage
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
@@ -136,7 +140,45 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
         if (session.currentScenarioIndex !== undefined) setCurrentScenarioIndex(session.currentScenarioIndex);
       } catch { /* ignore */ }
     }
-  }, [storageKey, resultKey, isInCooldown]);
+
+    // 4. Async: Supabase checks (restore ref, detect completion, lazy sync)
+    getGaugeProService().then(async svc => {
+      // Restore supabaseAssessmentIdRef (lost on page refresh)
+      const existingAssessment = await svc.getAssessmentByCandidate(candidateId);
+      if (existingAssessment) {
+        supabaseAssessmentIdRef.current = existingAssessment.id;
+      }
+
+      // Check if result exists in Supabase (new browser scenario)
+      const existingResult = await svc.getResultByCandidate(candidateId);
+      if (existingResult) {
+        setResult(existingResult);
+        setPhase('completed');
+        // Update localStorage cache for future fast loads
+        localStorage.setItem(resultKey, JSON.stringify(existingResult));
+        localStorage.setItem(lastCompletedKey, existingResult.generatedAt);
+        return;
+      }
+
+      // Lazy sync: localStorage has result but Supabase doesn't
+      if (savedResult && !existingResult) {
+        try {
+          const localResult = JSON.parse(savedResult) as GaugeProResult;
+          const assessmentId = existingAssessment?.id || localResult.assessmentId;
+
+          await svc.saveResult({ ...localResult, assessmentId });
+
+          // Update assessment status to completed
+          if (existingAssessment && existingAssessment.phase !== 'completed') {
+            await svc.updateAssessment(existingAssessment.id, {
+              phase: 'completed',
+              completedAt: localResult.generatedAt,
+            });
+          }
+        } catch { /* Supabase offline — localStorage is sufficient */ }
+      }
+    }).catch(() => { /* Supabase offline */ });
+  }, [storageKey, resultKey, lastCompletedKey, isInCooldown, candidateId]);
 
   // Timer
   useEffect(() => {
@@ -210,7 +252,14 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
       currentWordStep: 0,
       wordStepResponses: [],
     });
-  }, [saveSession]);
+
+    // Fire-and-forget: create assessment row in Supabase
+    getGaugeProService().then(svc =>
+      svc.startAssessment(candidateId).then(row => {
+        supabaseAssessmentIdRef.current = row.id;
+      })
+    ).catch(() => { /* Supabase unavailable — localStorage continues */ });
+  }, [saveSession, candidateId]);
 
   // Toggle word selection for current step
   const toggleWord = useCallback((wordId: number) => {
@@ -400,12 +449,43 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
       setResult(gaugeResult);
       setPhase('completed');
 
-      // Persist
+      // Persist to localStorage
       localStorage.setItem(resultKey, JSON.stringify(gaugeResult));
       localStorage.setItem(lastCompletedKey, new Date().toISOString());
       localStorage.removeItem(storageKey);
 
       saveSession({ phase: 'completed', completedAt: new Date().toISOString(), part2CompletedAt: new Date().toISOString() });
+
+      // Fire-and-forget: persist result to Supabase
+      getGaugeProService().then(async svc => {
+        let sbId = supabaseAssessmentIdRef.current;
+
+        // Fallback: fetch assessment ID if ref was lost (e.g. page refresh)
+        if (!sbId) {
+          const existing = await svc.getAssessmentByCandidate(candidateId);
+          if (existing) sbId = existing.id;
+        }
+
+        if (sbId) {
+          // Update assessment to completed
+          await svc.updateAssessment(sbId, {
+            phase: 'completed',
+            completedAt: new Date().toISOString(),
+            part1CompletedAt: assessment?.part1CompletedAt,
+            part2CompletedAt: new Date().toISOString(),
+            wordStepResponses,
+            scenarioResponses,
+            shuffledWordOrders,
+            currentWordStep: TOTAL_WORD_STEPS,
+            currentScenarioIndex: GAUGE_PRO_SCENARIOS.length - 1,
+          });
+          // Save result
+          await svc.saveResult({
+            ...gaugeResult,
+            assessmentId: sbId,
+          });
+        }
+      }).catch(() => { /* Supabase unavailable — localStorage has the data */ });
 
       // Gamification callbacks
       onXPAwarded?.(GAUGE_PRO_CONFIG.rewards.xpReward);
@@ -417,13 +497,18 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
         loadAgentSettingsAsync().then((agentSettings) => {
           if (agentSettings.agentEnabled) {
             generateBothAnalyses(gaugeResult, 'Candidato', agentSettings)
-              .then((analysisResult) => saveAnalysisResult(analysisResult))
+              .then((analysisResult) => {
+                const hasValidAnalysis =
+                  (analysisResult.practical && analysisResult.practical.status !== 'error') ||
+                  (analysisResult.technical && analysisResult.technical.status !== 'error');
+                if (hasValidAnalysis) saveAnalysisResult(analysisResult);
+              })
               .catch(() => { /* fallback: relatório básico sem IA */ });
           }
         });
       }).catch(() => { /* módulo IA indisponível */ });
     }, 2500);
-  }, [scenarioResponses, wordStepResponses, assessment, candidateId, resultKey, lastCompletedKey, storageKey, saveSession, onComplete, onXPAwarded, onBadgeAwarded]);
+  }, [scenarioResponses, wordStepResponses, shuffledWordOrders, assessment, candidateId, resultKey, lastCompletedKey, storageKey, saveSession, onComplete, onXPAwarded, onBadgeAwarded]);
 
   // Get current scenario's existing response
   const currentScenarioResponse = scenarioResponses.find(

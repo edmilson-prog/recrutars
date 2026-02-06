@@ -91,6 +91,7 @@ const candidateNav: NavItem[] = [
   { href: '/candidato/teste-comportamental', label: 'Teste Comportamental', icon: Brain },
   { href: '/candidato/gauge-pro', label: TEST_CONFIG.name, icon: Brain },
   { href: '/candidato/testes', label: 'Meus Testes', icon: Brain },
+
   { href: '/candidato/mensagens', label: 'Mensagens', icon: MessageSquare },
   { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
   { href: '/candidato/configuracoes', label: 'Configurações', icon: Settings },

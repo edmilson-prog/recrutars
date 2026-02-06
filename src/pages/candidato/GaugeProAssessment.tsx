@@ -23,11 +23,11 @@ import { ArrowRight, ArrowLeft, Clock } from 'lucide-react';
 import { TEST_CONFIG } from '@/data/testConfig';
 
 export default function GaugeProAssessment() {
-  const { user } = useAuth();
+  const { user, currentCandidate } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const candidateId = user?.id || 'mock-candidate-1';
+  const candidateId = currentCandidate?.id || user?.id || '';
 
   const gaugePro = useGaugeProAssessment({
     candidateId,
