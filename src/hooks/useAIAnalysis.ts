@@ -1,14 +1,17 @@
 /**
  * useAIAnalysis Hook (PRD-051)
  * Gerencia carregamento, geração e regeneração de análises IA
+ * Integrado com React Query para reatividade automática
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AIAgentSettings, AIAnalysis, AIAnalysisResult, AnalysisType } from '@/types/aiAnalysis';
 import type { GaugeProResult } from '@/types/gaugePro';
 import { loadAnalysisResult, saveAnalysisResult, loadAnalysisFromSupabase } from '@/lib/aiAgent/storageService';
 import { loadAgentSettingsAsync } from '@/lib/aiAgent/settingsLoader';
 import { generateSingleAnalysis, generateBothAnalyses } from '@/lib/aiAgent/analysisGenerator';
+import { gaugeProKeys } from './useGaugeProQuery';
 
 interface UseAIAnalysisOptions {
   candidateId: string;
@@ -32,7 +35,7 @@ export function useAIAnalysis({
   candidateName = 'Candidato',
   jobTitle,
 }: UseAIAnalysisOptions): UseAIAnalysisReturn {
-  const [analysisResult, setAnalysisResult] = useState<AIAnalysisResult | null>(null);
+  const queryClient = useQueryClient();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,31 +46,34 @@ export function useAIAnalysis({
     loadAgentSettingsAsync().then(setSettings);
   }, []);
 
-  // Load: localStorage first (sync/fast), then Supabase fallback (async)
-  useEffect(() => {
-    if (!candidateId) return;
-
-    const stored = loadAnalysisResult(candidateId);
-    if (stored) {
-      setAnalysisResult(stored);
-    }
-
-    // Async: try Supabase — if it has data, update state + refresh localStorage cache
-    loadAnalysisFromSupabase(candidateId).then((remote) => {
+  // React Query: fetch AI analysis from Supabase with localStorage as initialData
+  const { data: analysisResult } = useQuery<AIAnalysisResult | null>({
+    queryKey: gaugeProKeys.aiAnalysisByCandidate(candidateId),
+    queryFn: async () => {
+      const remote = await loadAnalysisFromSupabase(candidateId);
       if (remote) {
-        setAnalysisResult(remote);
-        saveAnalysisResult(remote); // update localStorage cache
-      } else if (stored) {
-        // Lazy sync: localStorage has data but Supabase doesn't — push retroactively
+        // Update localStorage cache with latest Supabase data
+        saveAnalysisResult(remote);
+        return remote;
+      }
+      // Fallback: if Supabase has nothing, check localStorage
+      const stored = loadAnalysisResult(candidateId);
+      if (stored) {
+        // Lazy sync: push localStorage data to Supabase
         const hasCompleted =
           (stored.practical?.status === 'completed') ||
           (stored.technical?.status === 'completed');
         if (hasCompleted) {
-          saveAnalysisResult(stored); // dual-write pushes to Supabase
+          saveAnalysisResult(stored);
         }
+        return stored;
       }
-    }).catch(() => { /* Supabase offline — localStorage data is sufficient */ });
-  }, [candidateId]);
+      return null;
+    },
+    enabled: !!candidateId,
+    // Use localStorage as instant placeholder while Supabase loads
+    placeholderData: () => candidateId ? loadAnalysisResult(candidateId) : null,
+  });
 
   const generateAnalyses = useCallback(
     async (result: GaugeProResult) => {
@@ -85,14 +91,17 @@ export function useAIAnalysis({
           jobTitle,
         );
         saveAnalysisResult(analyses);
-        setAnalysisResult(analyses);
+        // Invalidate React Query cache so UI updates automatically
+        queryClient.invalidateQueries({
+          queryKey: gaugeProKeys.aiAnalysisByCandidate(candidateId),
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro ao gerar análises');
       } finally {
         setIsGenerating(false);
       }
     },
-    [candidateName, jobTitle, settings],
+    [candidateId, candidateName, jobTitle, settings, queryClient],
   );
 
   const regenerateAnalysis = useCallback(
@@ -128,7 +137,10 @@ export function useAIAnalysis({
         };
 
         saveAnalysisResult(updated);
-        setAnalysisResult(updated);
+        // Invalidate React Query cache so UI updates automatically
+        queryClient.invalidateQueries({
+          queryKey: gaugeProKeys.aiAnalysisByCandidate(candidateId),
+        });
       } catch (err) {
         setError(
           err instanceof Error ? err.message : 'Erro ao regenerar análise',
@@ -137,7 +149,7 @@ export function useAIAnalysis({
         setIsRegenerating(false);
       }
     },
-    [candidateId, candidateName, jobTitle, settings, analysisResult],
+    [candidateId, candidateName, jobTitle, settings, analysisResult, queryClient],
   );
 
   return {

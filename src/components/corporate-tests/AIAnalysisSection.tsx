@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { renderAnalysisContent } from '@/lib/renderAnalysisContent';
 
 interface AIAnalysisSectionProps {
   analysis: string;
@@ -43,9 +44,9 @@ export function AIAnalysisSection({ analysis, defaultExpanded = false }: AIAnaly
       </CardHeader>
       {expanded && (
         <CardContent>
-          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-            {analysis}
-          </p>
+          <div className="prose prose-sm max-w-none">
+            {renderAnalysisContent(analysis)}
+          </div>
         </CardContent>
       )}
     </Card>

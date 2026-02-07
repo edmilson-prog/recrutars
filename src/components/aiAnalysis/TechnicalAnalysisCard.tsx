@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useAIAnalysis } from '@/hooks/useAIAnalysis';
 import { AnalysisLoadingState } from './AnalysisLoadingState';
 import { AnalysisErrorState } from './AnalysisErrorState';
+import { renderAnalysisContent } from '@/lib/renderAnalysisContent';
 import type { GaugeProResult } from '@/types/gaugePro';
 
 interface TechnicalAnalysisCardProps {
@@ -15,75 +16,6 @@ interface TechnicalAnalysisCardProps {
   candidateName?: string;
   gaugeProResult?: GaugeProResult | null;
   showRegenerate?: boolean;
-}
-
-function renderAnalysisContent(content: string) {
-  const lines = content.split('\n');
-
-  return lines.map((line, i) => {
-    const trimmed = line.trim();
-    if (!trimmed) return <br key={i} />;
-
-    if (trimmed.startsWith('## ') || trimmed.startsWith('### ')) {
-      const text = trimmed.replace(/^#+\s*/, '');
-      return (
-        <h4 key={i} className="font-semibold text-sm mt-4 mb-1">
-          {text}
-        </h4>
-      );
-    }
-
-    const numberedMatch = trimmed.match(/^(\d+)\.\s*\*\*(.*?)\*\*(.*)/);
-    if (numberedMatch) {
-      return (
-        <h4 key={i} className="font-semibold text-sm mt-4 mb-1">
-          {numberedMatch[1]}. {numberedMatch[2]}
-          {numberedMatch[3] && (
-            <span className="font-normal text-muted-foreground">
-              {numberedMatch[3]}
-            </span>
-          )}
-        </h4>
-      );
-    }
-
-    if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('✅') || trimmed.startsWith('⚠️') || trimmed.startsWith('🔴')) {
-      const text = trimmed.replace(/^[-*]\s*/, '');
-      return (
-        <li key={i} className="text-sm text-muted-foreground ml-4 mb-1 list-none">
-          {text}
-        </li>
-      );
-    }
-
-    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
-      const cells = trimmed.split('|').filter(Boolean).map((c) => c.trim());
-      if (cells.every((c) => /^[-:]+$/.test(c))) return null;
-      return (
-        <div key={i} className="flex gap-4 text-xs text-muted-foreground py-0.5">
-          {cells.map((cell, j) => (
-            <span key={j} className="flex-1">
-              {cell}
-            </span>
-          ))}
-        </div>
-      );
-    }
-
-    if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
-      return (
-        <p key={i} className="text-sm font-medium mt-2">
-          {trimmed.replace(/\*\*/g, '')}
-        </p>
-      );
-    }
-
-    return (
-      <p key={i} className="text-sm text-muted-foreground mb-1">
-        {trimmed}
-      </p>
-    );
-  });
 }
 
 export function TechnicalAnalysisCard({

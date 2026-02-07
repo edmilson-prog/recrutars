@@ -1,6 +1,6 @@
 // PRD-022: Página de Listagem de Currículos
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -294,13 +294,12 @@ export default function Curriculums() {
   const setDefaultMutation = useSetDefaultCurriculum();
   const createMutation = useCreateCurriculum();
 
-  // Local state synced from service layer
+  // Local state synced from service layer on every RQ refetch
   const [curriculums, setCurriculums] = useState<Curriculum[]>([]);
-  const [initialized, setInitialized] = useState(false);
-  if (!initialized && !isLoading && fetchedCurriculums.length >= 0) {
+
+  useEffect(() => {
     setCurriculums(fetchedCurriculums);
-    setInitialized(true);
-  }
+  }, [fetchedCurriculums]);
 
   // Estados de UI
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
@@ -322,7 +321,7 @@ export default function Curriculums() {
   const activeCurriculumsCount = curriculums.filter((c) => !c.isArchived).length;
   const archivedCurriculumsCount = curriculums.filter((c) => c.isArchived).length;
 
-  if (isLoading && !initialized) {
+  if (isLoading && curriculums.length === 0) {
     return (
       <DashboardLayout userType="candidate">
         <div className="flex items-center justify-center py-12">

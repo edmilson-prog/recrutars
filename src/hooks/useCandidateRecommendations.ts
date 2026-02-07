@@ -58,10 +58,13 @@ export function useCandidateRecommendations(
 
   const { favorites } = useFavoriteCandidates();
 
-  // Buscar dados via service layer
-  const { data: jobs = [] } = useJobs();
-  const { data: candidates = [] } = useCandidates();
-  const { data: applications = [] } = useApplications();
+  // Buscar dados via service layer (extrair .data do PaginatedResult)
+  const { data: jobsResult } = useJobs();
+  const jobs = jobsResult?.data ?? [];
+  const { data: candidatesResult } = useCandidates();
+  const candidates = candidatesResult?.data ?? [];
+  const { data: applicationsResult } = useApplications();
+  const applications = applicationsResult?.data ?? [];
 
   // Estado local
   const [recommendations, setRecommendations] = useState<CandidateRecommendation[]>([]);

@@ -5,7 +5,7 @@
  * PRD-057: Desenvolvimento & Evolucao
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { pageTransition } from '@/lib/animations';
@@ -70,18 +70,22 @@ export default function TeamManagement() {
   const [positions, setPositions] = useState<Position[]>([]);
   const [members, setMembers] = useState<TeamMember[]>([]);
 
-  // Sync fetched data into local state when it arrives
-  const [initialized, setInitialized] = useState(false);
-  if (!initialized && !deptsLoading && !membersLoading && !positionsLoading) {
+  // Sync fetched data into local state on every RQ refetch
+  useEffect(() => {
     setDepartments(fetchedDepartments);
+  }, [fetchedDepartments]);
+
+  useEffect(() => {
     setPositions(fetchedPositions);
+  }, [fetchedPositions]);
+
+  useEffect(() => {
     setMembers(fetchedMembers);
-    setInitialized(true);
-  }
+  }, [fetchedMembers]);
 
   const isLoading = deptsLoading || membersLoading || positionsLoading;
 
-  if (isLoading && !initialized) {
+  if (isLoading && departments.length === 0 && members.length === 0) {
     return (
       <DashboardLayout userType="company">
         <div className="flex items-center justify-center py-12">

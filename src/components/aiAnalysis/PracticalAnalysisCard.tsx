@@ -5,71 +5,12 @@ import { Separator } from '@/components/ui/separator';
 import { useAIAnalysis } from '@/hooks/useAIAnalysis';
 import { AnalysisLoadingState } from './AnalysisLoadingState';
 import { AnalysisErrorState } from './AnalysisErrorState';
+import { renderAnalysisContent } from '@/lib/renderAnalysisContent';
 
 interface PracticalAnalysisCardProps {
   candidateId: string;
   candidateName?: string;
   jobTitle?: string;
-}
-
-function renderAnalysisContent(content: string) {
-  const lines = content.split('\n');
-
-  return lines.map((line, i) => {
-    const trimmed = line.trim();
-    if (!trimmed) return <br key={i} />;
-
-    // Headers (## or bold **text**)
-    if (trimmed.startsWith('## ') || trimmed.startsWith('### ')) {
-      const text = trimmed.replace(/^#+\s*/, '');
-      return (
-        <h4 key={i} className="font-semibold text-sm mt-4 mb-1">
-          {text}
-        </h4>
-      );
-    }
-
-    // Numbered sections (1. 2. etc)
-    const numberedMatch = trimmed.match(/^(\d+)\.\s*\*\*(.*?)\*\*(.*)/);
-    if (numberedMatch) {
-      return (
-        <h4 key={i} className="font-semibold text-sm mt-4 mb-1">
-          {numberedMatch[1]}. {numberedMatch[2]}
-          {numberedMatch[3] && (
-            <span className="font-normal text-muted-foreground">
-              {numberedMatch[3]}
-            </span>
-          )}
-        </h4>
-      );
-    }
-
-    // Bullet points
-    if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('✅') || trimmed.startsWith('⚠️')) {
-      const text = trimmed.replace(/^[-*]\s*/, '');
-      return (
-        <li key={i} className="text-sm text-muted-foreground ml-4 mb-1 list-none">
-          {text}
-        </li>
-      );
-    }
-
-    // Bold text
-    if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
-      return (
-        <p key={i} className="text-sm font-medium mt-2">
-          {trimmed.replace(/\*\*/g, '')}
-        </p>
-      );
-    }
-
-    // Regular paragraph
-    return (
-      <p key={i} className="text-sm text-muted-foreground mb-1">
-        {trimmed}
-      </p>
-    );
-  });
 }
 
 export function PracticalAnalysisCard({

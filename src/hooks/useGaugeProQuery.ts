@@ -32,6 +32,11 @@ export const gaugeProKeys = {
     [...gaugeProKeys.results(), assessmentId] as const,
   resultByCandidate: (candidateId: string) =>
     [...gaugeProKeys.results(), 'candidate', candidateId] as const,
+
+  // AI Analysis
+  aiAnalysis: () => [...gaugeProKeys.all, 'aiAnalysis'] as const,
+  aiAnalysisByCandidate: (candidateId: string) =>
+    [...gaugeProKeys.aiAnalysis(), 'candidate', candidateId] as const,
 };
 
 // ---------------------------------------------------------------------------

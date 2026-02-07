@@ -6,7 +6,9 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { getGaugeProService } from '@/services/gaugePro/gaugeProService';
+import { gaugeProKeys } from './useGaugeProQuery';
 import type {
   GaugeProPhase,
   GaugeProAssessment,
@@ -42,6 +44,7 @@ export interface UseGaugeProOptions {
 
 export function useGaugeProAssessment(options: UseGaugeProOptions) {
   const { candidateId, onComplete, onXPAwarded, onBadgeAwarded } = options;
+  const queryClient = useQueryClient();
 
   const [phase, setPhase] = useState<GaugeProPhase>('intro');
   const [assessment, setAssessment] = useState<GaugeProAssessment | null>(null);
@@ -501,14 +504,20 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
                 const hasValidAnalysis =
                   (analysisResult.practical && analysisResult.practical.status !== 'error') ||
                   (analysisResult.technical && analysisResult.technical.status !== 'error');
-                if (hasValidAnalysis) saveAnalysisResult(analysisResult);
+                if (hasValidAnalysis) {
+                  saveAnalysisResult(analysisResult);
+                  // Invalidate React Query cache so AI analysis shows without F5
+                  queryClient.invalidateQueries({
+                    queryKey: gaugeProKeys.aiAnalysisByCandidate(candidateId),
+                  });
+                }
               })
               .catch(() => { /* fallback: relatório básico sem IA */ });
           }
         });
       }).catch(() => { /* módulo IA indisponível */ });
     }, 2500);
-  }, [scenarioResponses, wordStepResponses, shuffledWordOrders, assessment, candidateId, resultKey, lastCompletedKey, storageKey, saveSession, onComplete, onXPAwarded, onBadgeAwarded]);
+  }, [scenarioResponses, wordStepResponses, shuffledWordOrders, assessment, candidateId, resultKey, lastCompletedKey, storageKey, saveSession, onComplete, onXPAwarded, onBadgeAwarded, queryClient]);
 
   // Get current scenario's existing response
   const currentScenarioResponse = scenarioResponses.find(

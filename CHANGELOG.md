@@ -5,6 +5,28 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-02-06
+
+### Fixed
+- **Dados nao atualizavam sem F5** — Corrigido problema geral de cache/reatividade nos 3 perfis (admin, empresa, candidato)
+  - QueryClient configurado com `staleTime: 30s`, `refetchOnWindowFocus`, `refetchOnMount`, `retry: 1`
+  - `useAIAnalysis` migrado para React Query (antes usava useState + localStorage isolado)
+  - Fire-and-forget de geracao IA agora invalida cache React Query automaticamente
+  - Corrigido anti-pattern "init gate" em 4 paginas: admin/PermissionGroups, admin/RolesPermissions, empresa/TeamManagement, candidato/Curriculums
+  - Corrigido `useCandidateRecommendations` para extrair `.data` de `PaginatedResult` (3 erros runtime eliminados)
+
+---
+
+## [1.5.2] - 2026-02-06
+
+### Fixed
+- **Formatacao markdown nos resultados da IA** — Texto bold inline (`**texto**`) agora renderiza corretamente nos cards de analise
+  - Helper `parseInlineMarkdown` processa `**bold**` em `<strong>` via regex
+  - `renderAnalysisContent` extraido para modulo compartilhado (eliminando duplicacao)
+  - Corrigido em PracticalAnalysisCard, TechnicalAnalysisCard e AIAnalysisSection
+
+---
+
 ## [1.5.1] - 2026-02-06
 
 ### Added

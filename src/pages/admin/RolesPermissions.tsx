@@ -3,7 +3,7 @@
  * PRD-061: Matriz visual de permissoes por papel
  */
 
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useEffect, useMemo, Fragment } from 'react';
 import { motion } from 'framer-motion';
 import {
   Shield, Plus, Edit, Trash2, Lock, Save, X, Check, Loader2,
@@ -81,16 +81,16 @@ export default function AdminRolesPermissions() {
   const { data: fetchedPermissions = [], isLoading: permsLoading, error: permsError } = usePermissions();
 
   const [roles, setRoles] = useState<Role[]>([]);
-  const [rolesInitialized, setRolesInitialized] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<RoleFormData>(emptyRoleForm);
 
-  // Sync fetched roles into local state once loaded
-  if (!rolesInitialized && fetchedRoles.length > 0) {
-    setRoles([...fetchedRoles]);
-    setRolesInitialized(true);
-  }
+  // Sync fetched roles into local state on every RQ refetch
+  useEffect(() => {
+    if (fetchedRoles.length > 0) {
+      setRoles([...fetchedRoles]);
+    }
+  }, [fetchedRoles]);
 
   const isLoading = rolesLoading || permsLoading;
   const error = rolesError || permsError;

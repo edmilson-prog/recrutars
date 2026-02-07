@@ -3,7 +3,7 @@
  * PRD-061: Gestao de Grupos de Permissao
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   UsersRound, Plus, Edit, Trash2, Search, Shield, Users, Loader2,
@@ -63,17 +63,17 @@ export default function AdminPermissionGroups() {
   const allPermissions = permissionsData ?? [];
 
   const [groups, setGroups] = useState<PermissionGroup[]>([]);
-  const [groupsInitialized, setGroupsInitialized] = useState(false);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<GroupFormData>(emptyForm);
 
-  // Sync groups data from service to local state (once)
-  if (groupsData && !groupsInitialized) {
-    setGroups([...groupsData]);
-    setGroupsInitialized(true);
-  }
+  // Sync groups data from service to local state on every RQ refetch
+  useEffect(() => {
+    if (groupsData) {
+      setGroups([...groupsData]);
+    }
+  }, [groupsData]);
 
   const permsByCategory = getPermissionsByCategory(allPermissions);
 

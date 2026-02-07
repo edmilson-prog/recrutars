@@ -1,13 +1,53 @@
 {
   "versions": [
     {
+      "version": "1.6.0",
+      "codename": "Live Refresh",
+      "type": "minor",
+      "releaseDate": "2026-02-06",
+      "prd": "",
+      "description": "Correcao geral de cache e reatividade — dados agora atualizam em tempo real sem necessidade de F5 nos 3 perfis (admin, empresa, candidato).",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "QueryClient configurado com staleTime, refetchOnWindowFocus, refetchOnMount e retry",
+            "useAIAnalysis migrado para React Query — analise IA aparece sem F5",
+            "Fire-and-forget de geracao IA agora invalida cache automaticamente",
+            "Anti-pattern 'init gate' corrigido em PermissionGroups, RolesPermissions, TeamManagement e Curriculums",
+            "useCandidateRecommendations extrai .data de PaginatedResult (3 erros runtime eliminados)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.5.2",
+      "codename": "Markdown Fix",
+      "type": "patch",
+      "releaseDate": "2026-02-06",
+      "prd": "",
+      "description": "Correcao de formatacao markdown inline nos cards de analise IA. Texto bold (**texto**) agora renderiza corretamente. renderAnalysisContent extraido para modulo compartilhado.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Formatacao markdown inline (**bold**) nos cards de analise IA agora renderiza corretamente",
+            "renderAnalysisContent extraido para modulo compartilhado eliminando duplicacao",
+            "AIAnalysisSection agora usa renderAnalysisContent ao inves de texto cru"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.5.1",
       "codename": "Account Info",
       "type": "patch",
       "releaseDate": "2026-02-06",
       "prd": "",
       "description": "Card 'Informacoes da Conta' na aba Conta do perfil do candidato, exibindo UUID com botao copiar e data de criacao.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
