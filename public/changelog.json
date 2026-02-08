@@ -1,13 +1,43 @@
 {
   "versions": [
     {
+      "version": "1.7.0",
+      "codename": "Gauge-Pro Visibility",
+      "type": "minor",
+      "releaseDate": "2026-02-06",
+      "prd": "",
+      "description": "Perfil comportamental Gauge-Pro agora visivel na visao da empresa. Barras de 5 dimensoes, archetype, pontos fortes e areas de desenvolvimento exibidos no perfil do candidato e no Banco de Talentos.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Perfil comportamental nao aparecia na visao da empresa (candidate.testResult nunca populado)",
+            "Secao Perfil Comportamental agora busca de gauge_pro_results via useGaugeProResultByCandidate",
+            "Barras DISC legadas substituidas por 5 dimensoes Gauge-Pro com classificacao",
+            "Badge no Banco de Talentos mostra archetype Gauge-Pro",
+            "Filtro de perfil comportamental usa archetypes dinamicos",
+            "RLS policy adicionada em ai_analyses para leitura por empresas",
+            "Corrigido 403 em POST ai_analyses quando empresa visualiza analise IA"
+          ]
+        },
+        {
+          "type": "added",
+          "items": [
+            "getAllResults() no GaugePro service para busca bulk",
+            "Hook useAllGaugeProResults() para lookup eficiente candidateId → archetype"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.6.0",
       "codename": "Live Refresh",
       "type": "minor",
       "releaseDate": "2026-02-06",
       "prd": "",
       "description": "Correcao geral de cache e reatividade — dados agora atualizam em tempo real sem necessidade de F5 nos 3 perfis (admin, empresa, candidato).",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

@@ -5,6 +5,24 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-02-06
+
+### Fixed
+- **Perfil comportamental nao aparecia na visao da empresa** — Candidatos que completaram o Gauge-Pro apareciam como "sem teste" no Banco de Talentos e no perfil individual
+  - Causa raiz: `candidate.testResult` nunca era populado pelo conversor Supabase (campo gerenciado separadamente)
+  - Secao "Perfil Comportamental" agora busca direto de `gauge_pro_results` via `useGaugeProResultByCandidate`
+  - Barras DISC legadas (D/I/S/C) substituidas por 5 dimensoes Gauge-Pro (D1-D5) com classificacao
+  - Badge no Banco de Talentos mostra nome do archetype Gauge-Pro em vez de perfil DISC
+  - Filtro de perfil comportamental atualizado para usar archetypes Gauge-Pro dinamicos
+  - RLS policy adicionada em `ai_analyses` para permitir leitura por empresas (antes so candidato/admin)
+  - Corrigido 403 em POST `ai_analyses` quando empresa visualiza analise IA (upsert circular no caminho de leitura)
+
+### Added
+- `getAllResults()` no GaugePro service para busca bulk de resultados (usado na listagem)
+- Hook `useAllGaugeProResults()` para lookup eficiente candidateId -> archetype
+
+---
+
 ## [1.6.0] - 2026-02-06
 
 ### Fixed

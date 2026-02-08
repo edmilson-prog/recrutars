@@ -52,20 +52,15 @@ export function useAIAnalysis({
     queryFn: async () => {
       const remote = await loadAnalysisFromSupabase(candidateId);
       if (remote) {
-        // Update localStorage cache with latest Supabase data
-        saveAnalysisResult(remote);
+        // Update localStorage cache only (no Supabase write — may be read by company user)
+        saveAnalysisResult(remote, true);
         return remote;
       }
       // Fallback: if Supabase has nothing, check localStorage
       const stored = loadAnalysisResult(candidateId);
       if (stored) {
-        // Lazy sync: push localStorage data to Supabase
-        const hasCompleted =
-          (stored.practical?.status === 'completed') ||
-          (stored.technical?.status === 'completed');
-        if (hasCompleted) {
-          saveAnalysisResult(stored);
-        }
+        // Cache to localStorage only (Supabase write happens on generate/regenerate)
+        saveAnalysisResult(stored, true);
         return stored;
       }
       return null;

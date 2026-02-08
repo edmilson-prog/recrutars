@@ -70,6 +70,19 @@ export default function TeamManagement() {
   const [positions, setPositions] = useState<Position[]>([]);
   const [members, setMembers] = useState<TeamMember[]>([]);
 
+  // Dialog states
+  const [deptFormOpen, setDeptFormOpen] = useState(false);
+  const [editingDept, setEditingDept] = useState<Department | null>(null);
+  const [posFormOpen, setPosFormOpen] = useState(false);
+  const [editingPos, setEditingPos] = useState<Position | null>(null);
+  const [memberFormOpen, setMemberFormOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [spreadsheetImportOpen, setSpreadsheetImportOpen] = useState(false);
+
+  // Behavioral map filter
+  const [mapDeptFilter, setMapDeptFilter] = useState<string | null>(null);
+
   // Sync fetched data into local state on every RQ refetch
   useEffect(() => {
     setDepartments(fetchedDepartments);
@@ -94,19 +107,6 @@ export default function TeamManagement() {
       </DashboardLayout>
     );
   }
-
-  // Dialog states
-  const [deptFormOpen, setDeptFormOpen] = useState(false);
-  const [editingDept, setEditingDept] = useState<Department | null>(null);
-  const [posFormOpen, setPosFormOpen] = useState(false);
-  const [editingPos, setEditingPos] = useState<Position | null>(null);
-  const [memberFormOpen, setMemberFormOpen] = useState(false);
-  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
-  const [importModalOpen, setImportModalOpen] = useState(false);
-  const [spreadsheetImportOpen, setSpreadsheetImportOpen] = useState(false);
-
-  // Behavioral map filter
-  const [mapDeptFilter, setMapDeptFilter] = useState<string | null>(null);
 
   // Department handlers
   const handleSaveDept = (data: Omit<Department, 'id' | 'createdAt'>) => {

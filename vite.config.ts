@@ -6,7 +6,7 @@ import path from "path";
 export default defineConfig(() => ({
   server: {
     host: "::",
-    port: 3001,
+    port: 3000,
     proxy: {
       '/api/anthropic': {
         target: 'https://api.anthropic.com',

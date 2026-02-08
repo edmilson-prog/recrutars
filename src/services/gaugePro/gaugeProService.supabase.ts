@@ -305,4 +305,13 @@ export class SupabaseGaugeProService implements IGaugeProService {
     if (error) throw error;
     return data ? rowToResult(data as Record<string, unknown>) : null;
   }
+
+  async getAllResults(): Promise<GaugeProResult[]> {
+    const { data, error } = await supabase
+      .from('gauge_pro_results')
+      .select('*')
+      .order('generated_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((r: Record<string, unknown>) => rowToResult(r));
+  }
 }

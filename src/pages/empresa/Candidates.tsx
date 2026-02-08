@@ -69,6 +69,8 @@ import { getIdealBehavioralProfile, getCandidateBehavioralProfile } from '@/lib/
 import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
 import { useJobs } from '@/hooks/useJobsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useAllGaugeProResults } from '@/hooks/useGaugeProQuery';
+import type { GaugeProResult } from '@/types/gaugePro';
 import type { Candidate, Job } from '@/types';
 import type { CandidateForComparison } from '@/types/disc';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
@@ -99,7 +101,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 // Filter options
 const locations = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 'Curitiba, PR', 'Porto Alegre, RS'];
-const behavioralProfiles = ['Executor', 'Influenciador', 'Analítico', 'Estável'];
+const legacyBehavioralProfiles = ['Executor', 'Influenciador', 'Analítico', 'Estável'];
 const experienceRanges = [
   { value: '0-2', label: '0-2 anos' },
   { value: '3-5', label: '3-5 anos' },
@@ -141,6 +143,25 @@ export default function CompanyCandidates() {
   const { data: candidatesResult } = useCandidates();
   const allCandidates = candidatesResult?.data ?? [];
   const { data: behavioralTests = [] } = useBehavioralTests();
+  const { data: allGaugeResults = [] } = useAllGaugeProResults();
+
+  // Lookup: candidateId → GaugeProResult (latest)
+  const gaugeResultsByCandidate = useMemo(() => {
+    const map = new Map<string, GaugeProResult>();
+    allGaugeResults.forEach(r => {
+      if (!map.has(r.candidateId)) map.set(r.candidateId, r);
+    });
+    return map;
+  }, [allGaugeResults]);
+
+  // Dynamic behavioral profile options from real Gauge-Pro results
+  const behavioralProfiles = useMemo(() => {
+    const names = new Set<string>();
+    allGaugeResults.forEach(r => names.add(r.archetype.name));
+    // Also include legacy profiles for candidates with old-style tests
+    legacyBehavioralProfiles.forEach(p => names.add(p));
+    return Array.from(names).sort();
+  }, [allGaugeResults]);
 
   // Helper to extract all unique skills from candidates
   const allSkills = useMemo(() =>
@@ -208,11 +229,12 @@ export default function CompanyCandidates() {
     const matchesLocation =
       locationFilter === 'all' || candidate.location.includes(locationFilter);
 
+    const gaugeResult = gaugeResultsByCandidate.get(candidate.id);
+    const candidateProfile = gaugeResult?.archetype.name
+      ?? candidate.testResult?.result.profile;
     const matchesProfile =
       profileFilter === 'all' ||
-      (candidate.testResult?.result.profile
-        .toLowerCase()
-        .includes(profileFilter.toLowerCase()) ?? false);
+      (candidateProfile?.toLowerCase().includes(profileFilter.toLowerCase()) ?? false);
 
     const matchesExperience =
       experienceFilter === 'all' ||
@@ -681,15 +703,28 @@ export default function CompanyCandidates() {
 
                       {/* Profile & Test Status */}
                       <div className="flex flex-wrap items-center gap-4 mt-4">
-                        {candidate.testResult ? (
-                          <Badge className="bg-secondary text-secondary-foreground">
-                            {candidate.testResult.result.profile}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-muted-foreground">
-                            Sem teste comportamental
-                          </Badge>
-                        )}
+                        {(() => {
+                          const gr = gaugeResultsByCandidate.get(candidate.id);
+                          if (gr) {
+                            return (
+                              <Badge className="bg-secondary text-secondary-foreground">
+                                {gr.archetype.name}
+                              </Badge>
+                            );
+                          }
+                          if (candidate.testResult) {
+                            return (
+                              <Badge className="bg-secondary text-secondary-foreground">
+                                {candidate.testResult.result.profile}
+                              </Badge>
+                            );
+                          }
+                          return (
+                            <Badge variant="outline" className="text-muted-foreground">
+                              Sem teste comportamental
+                            </Badge>
+                          );
+                        })()}
                         <span className="text-sm text-muted-foreground">
                           Disponibilidade: {candidate.availability}
                         </span>

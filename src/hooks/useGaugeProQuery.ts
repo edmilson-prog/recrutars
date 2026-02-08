@@ -32,6 +32,7 @@ export const gaugeProKeys = {
     [...gaugeProKeys.results(), assessmentId] as const,
   resultByCandidate: (candidateId: string) =>
     [...gaugeProKeys.results(), 'candidate', candidateId] as const,
+  allResults: () => [...gaugeProKeys.results(), 'all'] as const,
 
   // AI Analysis
   aiAnalysis: () => [...gaugeProKeys.all, 'aiAnalysis'] as const,
@@ -137,6 +138,16 @@ export function useGaugeProResultByCandidate(candidateId: string) {
       return svc.getResultByCandidate(candidateId);
     },
     enabled: !!candidateId,
+  });
+}
+
+export function useAllGaugeProResults() {
+  return useQuery({
+    queryKey: gaugeProKeys.allResults(),
+    queryFn: async () => {
+      const svc = await getGaugeProService();
+      return svc.getAllResults();
+    },
   });
 }
 

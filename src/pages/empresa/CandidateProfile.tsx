@@ -37,7 +37,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { PracticalAnalysisCard } from '@/components/aiAnalysis';
-import { getProfileSummary } from '@/data/profileSummaries';
 import {
   Dialog,
   DialogContent,
@@ -62,6 +61,9 @@ import { getIdealBehavioralProfile } from '@/lib/behavioralProfiles';
 import { useJobs } from '@/hooks/useJobsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useApplications } from '@/hooks/useApplicationsQuery';
+import { useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
+import { DIMENSION_NAMES, DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
+import type { GaugeProDimension } from '@/types/gaugePro';
 import type { Job, ApplicationNote } from '@/types';
 import { toast } from 'sonner';
 import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
@@ -224,6 +226,9 @@ export default function CandidateProfile() {
   const allApplications = applicationsResult?.data ?? [];
 
   const candidate = allCandidates.find((c) => c.id === id);
+
+  // Fetch Gauge-Pro result for this candidate
+  const { data: gaugeProResult } = useGaugeProResultByCandidate(candidate?.id || '');
 
   // Get company jobs (company-1)
   const companyJobs = useMemo(
@@ -457,8 +462,8 @@ export default function CandidateProfile() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Behavioral Profile */}
-            {candidate.testResult ? (
+            {/* Behavioral Profile — Gauge-Pro 5 Dimensions */}
+            {gaugeProResult ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -469,80 +474,63 @@ export default function CandidateProfile() {
                     <CardTitle className="flex items-center gap-2">
                       <span className="text-xl">Perfil Comportamental</span>
                       <Badge variant="secondary">
-                        {candidate.testResult.result.profile}
+                        {gaugeProResult.archetype.name}
                       </Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Behavioral Chart */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span className="font-medium">Dominância (D)</span>
-                            <span className="text-muted-foreground">
-                              {candidate.testResult.result.dominance}%
-                            </span>
+                    {/* 5 Dimension Bars */}
+                    <div className="space-y-3">
+                      {(['D1', 'D2', 'D3', 'D4', 'D5'] as GaugeProDimension[]).map((dim) => {
+                        const score = gaugeProResult.finalScores[dim];
+                        const classification = gaugeProResult.classifications[dim];
+                        const classColors: Record<string, string> = {
+                          low: 'bg-blue-100 text-blue-700',
+                          medium: 'bg-amber-100 text-amber-700',
+                          high: 'bg-green-100 text-green-700',
+                        };
+                        const barColors: Record<string, string> = {
+                          D1: '#ef4444', D2: '#f59e0b', D3: '#22c55e', D4: '#3b82f6', D5: '#8b5cf6',
+                        };
+                        return (
+                          <div key={dim} className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">{DIMENSION_SHORT_NAMES[dim]}</span>
+                                <span className="text-xs text-muted-foreground">{DIMENSION_NAMES[dim]}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold" style={{ color: barColors[dim] }}>
+                                  {score}%
+                                </span>
+                                <Badge variant="secondary" className={cn('text-xs', classColors[classification])}>
+                                  {classification === 'low' ? 'Baixo' : classification === 'medium' ? 'Médio' : 'Alto'}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-2.5">
+                              <div
+                                className="h-2.5 rounded-full transition-all duration-500"
+                                style={{ width: `${score}%`, backgroundColor: barColors[dim] }}
+                              />
+                            </div>
                           </div>
-                          <Progress
-                            value={candidate.testResult.result.dominance}
-                            className="h-3"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span className="font-medium">Influência (I)</span>
-                            <span className="text-muted-foreground">
-                              {candidate.testResult.result.influence}%
-                            </span>
-                          </div>
-                          <Progress
-                            value={candidate.testResult.result.influence}
-                            className="h-3"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span className="font-medium">Estabilidade (S)</span>
-                            <span className="text-muted-foreground">
-                              {candidate.testResult.result.steadiness}%
-                            </span>
-                          </div>
-                          <Progress
-                            value={candidate.testResult.result.steadiness}
-                            className="h-3"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span className="font-medium">Conformidade (C)</span>
-                            <span className="text-muted-foreground">
-                              {candidate.testResult.result.compliance}%
-                            </span>
-                          </div>
-                          <Progress
-                            value={candidate.testResult.result.compliance}
-                            className="h-3"
-                          />
-                        </div>
-                      </div>
+                        );
+                      })}
                     </div>
 
                     <Separator />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Left column: Badges */}
+                      {/* Left column: Strengths & Development */}
                       <div className="space-y-4">
-                        {/* Strengths */}
                         <div className="space-y-2">
                           <h4 className="font-medium flex items-center gap-2">
                             <CheckCircle className="w-4 h-4 text-success" />
                             Pontos Fortes
                           </h4>
                           <div className="flex flex-wrap gap-2">
-                            {candidate.testResult.result.strengths.map((strength) => (
+                            {gaugeProResult.strengths.map((strength) => (
                               <Badge key={strength} variant="outline" className="text-success border-success/30">
                                 {strength}
                               </Badge>
@@ -550,17 +538,16 @@ export default function CandidateProfile() {
                           </div>
                         </div>
 
-                        {/* Watch Points */}
-                        {candidate.testResult.result.watchPoints && (
+                        {gaugeProResult.developmentAreas.length > 0 && (
                           <div className="space-y-2">
                             <h4 className="font-medium flex items-center gap-2">
                               <AlertCircle className="w-4 h-4 text-warning" />
-                              Pontos de Atenção
+                              Áreas de Desenvolvimento
                             </h4>
                             <div className="flex flex-wrap gap-2">
-                              {candidate.testResult.result.watchPoints.map((point) => (
-                                <Badge key={point} variant="outline" className="text-warning border-warning/30">
-                                  {point}
+                              {gaugeProResult.developmentAreas.map((area) => (
+                                <Badge key={area} variant="outline" className="text-warning border-warning/30">
+                                  {area}
                                 </Badge>
                               ))}
                             </div>
@@ -568,14 +555,14 @@ export default function CandidateProfile() {
                         )}
                       </div>
 
-                      {/* Right column: Assessment Summary */}
+                      {/* Right column: Archetype Summary */}
                       <div className="space-y-2">
                         <h4 className="font-medium flex items-center gap-2">
                           <FileText className="w-4 h-4 text-primary" />
                           Resumo da Avaliação
                         </h4>
                         <p className="text-sm text-muted-foreground leading-relaxed">
-                          {getProfileSummary(candidate.testResult.result.profile)}
+                          {gaugeProResult.archetype.description}
                         </p>
                       </div>
                     </div>
@@ -603,7 +590,7 @@ export default function CandidateProfile() {
             )}
 
             {/* AI Practical Analysis - PRD-051 */}
-            {candidate.hasTest && (
+            {(gaugeProResult || candidate.hasTest) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

@@ -122,9 +122,11 @@ export async function loadAnalysisFromSupabase(
 
 // --- Public API (dual-write) ---
 
-export function saveAnalysisResult(result: AIAnalysisResult): void {
+export function saveAnalysisResult(result: AIAnalysisResult, localOnly = false): void {
   // 1. Always save to localStorage (sync, fast)
   saveToLocalStorage(result);
+
+  if (localOnly) return;
 
   // 2. Fire-and-forget save to Supabase
   const analyses: AIAnalysis[] = [];

@@ -78,12 +78,17 @@ export class TeamsServiceSupabase implements ITeamsService {
   // ---------------------------------------------------------------------------
 
   async getPositions(departmentId: string): Promise<Position[]> {
-    const { data, error } = await supabase
+    let query = supabase
       .from('positions')
       .select('*')
-      .eq('department_id', departmentId)
       .eq('is_active', true)
       .order('title', { ascending: true });
+
+    if (departmentId && departmentId !== 'all') {
+      query = query.eq('department_id', departmentId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw new Error(`Failed to fetch positions: ${error.message}`);
 

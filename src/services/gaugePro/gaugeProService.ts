@@ -59,6 +59,9 @@ export interface IGaugeProService {
 
   /** Get the latest result for a candidate */
   getResultByCandidate(candidateId: string): Promise<GaugeProResult | null>;
+
+  /** Get all results (RLS-filtered) */
+  getAllResults(): Promise<GaugeProResult[]>;
 }
 
 // ---------------------------------------------------------------------------
