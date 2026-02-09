@@ -19,7 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { CompanyNotification, CompanyNotificationType } from '@/types/companyNotifications';
-import { formatCompanyTimeAgo } from '@/hooks/useCompanyNotifications';
+import { formatTimeAgo } from '@/lib/notificationHelpers';
 
 interface CompanyNotificationItemProps {
   notification: CompanyNotification;
@@ -139,7 +139,7 @@ export function CompanyNotificationItem({
               {notification.title}
             </p>
             <span className="text-xs text-muted-foreground flex-shrink-0">
-              {formatCompanyTimeAgo(notification.createdAt)}
+              {formatTimeAgo(notification.createdAt)}
             </span>
           </div>
 

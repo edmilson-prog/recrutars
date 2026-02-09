@@ -12,7 +12,14 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { useCompanyNotifications } from '@/hooks/useCompanyNotifications';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  useNotifications,
+  useNotificationUnreadCount,
+  useMarkNotificationAsRead,
+  useMarkAllNotificationsAsRead,
+} from '@/hooks/useNotificationsQuery';
+import type { CompanyNotification } from '@/types/companyNotifications';
 import { CompanyNotificationItem } from './CompanyNotificationItem';
 import { cn } from '@/lib/utils';
 
@@ -22,19 +29,25 @@ interface CompanyNotificationBellProps {
 
 export function CompanyNotificationBell({ className }: CompanyNotificationBellProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const userId = user?.id ?? '';
   const [open, setOpen] = useState(false);
-  const { unreadCount, getLatestNotifications, markAsRead, markAllAsRead } =
-    useCompanyNotifications();
 
-  const latestNotifications = getLatestNotifications(5);
+  const { data: rawNotifications = [] } = useNotifications(userId);
+  const notifications = rawNotifications as unknown as CompanyNotification[];
+  const { data: unreadCount = 0 } = useNotificationUnreadCount(userId);
+  const markAsReadMutation = useMarkNotificationAsRead();
+  const markAllMutation = useMarkAllNotificationsAsRead();
+
+  const latestNotifications = notifications.slice(0, 5);
 
   const handleNotificationClick = (id: string) => {
-    markAsRead(id);
+    markAsReadMutation.mutate({ id, userId });
     setOpen(false);
   };
 
   const handleMarkAllAsRead = () => {
-    markAllAsRead();
+    markAllMutation.mutate(userId);
   };
 
   const handleViewAll = () => {

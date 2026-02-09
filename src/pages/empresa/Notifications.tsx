@@ -14,27 +14,40 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CompanyNotificationItem } from '@/components/notifications/CompanyNotificationItem';
+import { useAuth } from '@/contexts/AuthContext';
 import {
-  useCompanyNotifications,
-  groupCompanyNotificationsByDate,
-} from '@/hooks/useCompanyNotifications';
+  useNotifications,
+  useNotificationUnreadCount,
+  useMarkNotificationAsRead,
+  useMarkAllNotificationsAsRead,
+} from '@/hooks/useNotificationsQuery';
+import { groupNotificationsByDate } from '@/lib/notificationHelpers';
+import type { CompanyNotification } from '@/types/companyNotifications';
 import type { CompanyNotificationFilter } from '@/types/companyNotifications';
-import { companyFilterLabels } from '@/types/companyNotifications';
+import { companyFilterLabels, companyFilterToTypes } from '@/types/companyNotifications';
 
 export default function Notifications() {
+  const { user } = useAuth();
+  const userId = user?.id ?? '';
   const [filter, setFilter] = useState<CompanyNotificationFilter>('all');
-  const {
-    unreadCount,
-    markAsRead,
-    markAllAsRead,
-    getFilteredNotifications,
-  } = useCompanyNotifications();
 
-  const filteredNotifications = getFilteredNotifications(filter);
-  const groupedNotifications = groupCompanyNotificationsByDate(filteredNotifications);
+  const { data: rawNotifications = [] } = useNotifications(userId);
+  const notifications = rawNotifications as unknown as CompanyNotification[];
+  const { data: unreadCount = 0 } = useNotificationUnreadCount(userId);
+  const markAsReadMutation = useMarkNotificationAsRead();
+  const markAllMutation = useMarkAllNotificationsAsRead();
+
+  const filteredNotifications = filter === 'all'
+    ? notifications
+    : notifications.filter(n => companyFilterToTypes[filter]?.includes(n.type));
+  const groupedNotifications = groupNotificationsByDate(filteredNotifications);
 
   const handleMarkAsRead = (id: string) => {
-    markAsRead(id);
+    markAsReadMutation.mutate({ id, userId });
+  };
+
+  const handleMarkAllAsRead = () => {
+    markAllMutation.mutate(userId);
   };
 
   return (
@@ -77,7 +90,7 @@ export default function Notifications() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={markAllAsRead}
+                onClick={handleMarkAllAsRead}
                 className="whitespace-nowrap"
               >
                 <CheckCheck className="h-4 w-4 mr-2" />

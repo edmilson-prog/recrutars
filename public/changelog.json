@@ -1,13 +1,43 @@
 {
   "versions": [
     {
+      "version": "1.8.0",
+      "codename": "Live Notifications",
+      "type": "minor",
+      "releaseDate": "2026-02-08",
+      "prd": "PRD-025/PRD-033",
+      "description": "Sistema de notificacoes migrado de mock/localStorage para Supabase. Candidato e empresa agora consomem notificacoes reais do banco com polling a cada 30s, filtros, agrupamento por data e mark-as-read.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "6 componentes de notificacao migrados para React Query + Supabase",
+            "Polling a cada 30s para atualizacoes em tempo real",
+            "Helpers compartilhados extraidos para notificationHelpers.ts",
+            "Filtros client-side preservados (candidato: 5, empresa: 5)",
+            "Agrupamento por data (Hoje/Ontem/Esta semana/Este mes/Anteriores)",
+            "Mark as read individual e bulk via Supabase mutations",
+            "20 notificacoes seed inseridas (8 candidato + 12 empresa)"
+          ]
+        },
+        {
+          "type": "removed",
+          "items": [
+            "useNotifications.ts (hook mock com localStorage)",
+            "useCompanyNotifications.ts (hook mock com localStorage)"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.7.0",
       "codename": "Gauge-Pro Visibility",
       "type": "minor",
       "releaseDate": "2026-02-06",
       "prd": "",
       "description": "Perfil comportamental Gauge-Pro agora visivel na visao da empresa. Barras de 5 dimensoes, archetype, pontos fortes e areas de desenvolvimento exibidos no perfil do candidato e no Banco de Talentos.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

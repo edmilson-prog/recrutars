@@ -14,7 +14,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { Notification, NotificationType } from '@/types/notifications';
-import { formatTimeAgo } from '@/hooks/useNotifications';
+import { formatTimeAgo } from '@/lib/notificationHelpers';
 
 interface NotificationItemProps {
   notification: Notification;

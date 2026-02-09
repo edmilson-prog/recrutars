@@ -5,6 +5,24 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-02-08
+
+### Changed
+- **Sistema de notificacoes migrado de mock/localStorage para Supabase** — Candidato e empresa agora consomem notificacoes reais do banco de dados
+  - 6 componentes migrados: NotificationBell, CompanyNotificationBell, NotificationItem, CompanyNotificationItem, candidato/Notifications, empresa/Notifications
+  - React Query hooks (`useNotificationsQuery.ts`) com polling a cada 30s para atualizacoes em tempo real
+  - Helpers compartilhados extraidos para `src/lib/notificationHelpers.ts` (formatTimeAgo, groupNotificationsByDate generico)
+  - Filtros client-side preservados (candidato: 5 filtros, empresa: 5 filtros)
+  - Agrupamento por data (Hoje/Ontem/Esta semana/Este mes/Anteriores)
+  - Mark as read individual e bulk via Supabase mutations
+  - 20 notificacoes seed inseridas (8 candidato + 12 empresa)
+
+### Removed
+- `useNotifications.ts` — Hook mock com 8 notificacoes hardcoded + localStorage
+- `useCompanyNotifications.ts` — Hook mock com 12 notificacoes hardcoded + localStorage
+
+---
+
 ## [1.7.0] - 2026-02-06
 
 ### Fixed

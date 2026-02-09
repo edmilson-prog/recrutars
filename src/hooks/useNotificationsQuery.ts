@@ -30,6 +30,7 @@ export function useNotifications(userId: string) {
       return service.getNotifications(userId);
     },
     enabled: !!userId,
+    refetchInterval: 30_000, // poll every 30s
   });
 }
 

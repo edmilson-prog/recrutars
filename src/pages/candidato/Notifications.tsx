@@ -15,26 +15,31 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NotificationItem } from '@/components/notifications';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   useNotifications,
-  groupNotificationsByDate,
-} from '@/hooks/useNotifications';
+  useNotificationUnreadCount,
+  useMarkNotificationAsRead,
+  useMarkAllNotificationsAsRead,
+} from '@/hooks/useNotificationsQuery';
+import { groupNotificationsByDate } from '@/lib/notificationHelpers';
 import type { NotificationFilter } from '@/types/notifications';
-import { filterLabels } from '@/types/notifications';
-import { cn } from '@/lib/utils';
+import { filterLabels, filterToTypes } from '@/types/notifications';
 import { DiscIncentiveBanner } from '@/components/candidato/DiscIncentiveBanner';
 
 export default function Notifications() {
+  const { user } = useAuth();
+  const userId = user?.id ?? '';
   const [filter, setFilter] = useState<NotificationFilter>('all');
-  const {
-    notifications,
-    unreadCount,
-    markAsRead,
-    markAllAsRead,
-    getFilteredNotifications,
-  } = useNotifications();
 
-  const filteredNotifications = getFilteredNotifications(filter);
+  const { data: notifications = [] } = useNotifications(userId);
+  const { data: unreadCount = 0 } = useNotificationUnreadCount(userId);
+  const markAsReadMutation = useMarkNotificationAsRead();
+  const markAllMutation = useMarkAllNotificationsAsRead();
+
+  const filteredNotifications = filter === 'all'
+    ? notifications
+    : notifications.filter(n => filterToTypes[filter]?.includes(n.type));
   const groupedNotifications = groupNotificationsByDate(filteredNotifications);
 
   // PRD-035: Verificar se há notificações de convites/solicitações de teste
@@ -43,7 +48,11 @@ export default function Notifications() {
   }, [notifications]);
 
   const handleMarkAsRead = (id: string) => {
-    markAsRead(id);
+    markAsReadMutation.mutate({ id, userId });
+  };
+
+  const handleMarkAllAsRead = () => {
+    markAllMutation.mutate(userId);
   };
 
   return (
@@ -91,7 +100,7 @@ export default function Notifications() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={markAllAsRead}
+                onClick={handleMarkAllAsRead}
                 className="whitespace-nowrap"
               >
                 <CheckCheck className="h-4 w-4 mr-2" />
