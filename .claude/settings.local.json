@@ -74,7 +74,15 @@
       "mcp__supabase__list_extensions",
       "mcp__chrome-devtools__fill",
       "WebFetch(domain:docs.anthropic.com)",
-      "Bash(cmd //c \"taskkill /PID 16540 /F /T\")"
+      "Bash(cmd //c \"taskkill /PID 16540 /F /T\")",
+      "mcp__supabase__get_project_url",
+      "mcp__supabase__get_publishable_keys",
+      "mcp__supabase__deploy_edge_function",
+      "Bash(copy \"docs\\\\prds\\\\PRD-075-integracao-stripe.md\" \"docs\\\\prds\\\\PRD-075-integracao-stripe_DONE.md\")",
+      "Bash(copy \"docs\\\\prds\\\\PRD-076-regras-billing-upgrade.md\" \"docs\\\\prds\\\\PRD-076-regras-billing-upgrade_DONE.md\")",
+      "mcp__supabase__list_edge_functions",
+      "mcp__supabase__get_edge_function",
+      "Bash(del \"D:\\\\claude\\\\recrutars-maike\\\\src\\\\components\\\\admin\\\\plans\\\\PlanEditor.tsx\")"
     ]
   }
 }
