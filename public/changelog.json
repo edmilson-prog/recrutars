@@ -1,13 +1,86 @@
 {
   "versions": [
     {
+      "version": "1.10.0",
+      "codename": "Consolidation",
+      "type": "minor",
+      "releaseDate": "2026-02-10",
+      "prd": "PRD-073",
+      "description": "Campos de Localizacao, Salario e Interesses movidos de Minha Conta para Perfil Profissional. Calculo de completude reorganizado de 5 secoes para 7 secoes alinhadas com as tabs do perfil.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Tab Localizacao (Estado, Cidade, Disponivel para Mudanca) movida para Perfil Profissional",
+            "Tab Salario (Min, Max, Aceita Negociar) movida para Perfil Profissional",
+            "Tab Interesses (Setores, Funcoes, Modalidade, Contrato) movida para Perfil Profissional",
+            "Campos duplicados removidos de Minha Conta (Cargo/Titulo, LinkedIn, Sobre mim)",
+            "Migration: colunas preferred_sectors, preferred_roles, work_model, contract_type adicionadas a curriculums",
+            "Sincronizacao bidirecional: ao salvar Perfil Profissional, tabela candidates e atualizada",
+            "Perfil Profissional: 8 tabs (Informacoes, Localizacao, Salario, Interesses, Experiencia, Formacao, Habilidades, Cursos)",
+            "Minha Conta: 5 tabs (Perfil, Privacidade, Conta, Aparencia, Plano)",
+            "Completude reorganizada de 5 secoes (20% cada) para 7 secoes (~14.3% cada)",
+            "Secao Informacoes basicas desmembrada em: Informacoes pessoais, Localizacao, Disponibilidade e Salario",
+            "Nova secao Interesses profissionais (opcional) contabilizada na completude",
+            "Secao Cursos/Certificacoes removida do calculo de completude",
+            "Limiares de cor atualizados: verde >=86%, amarelo >=57%, laranja >=29%, vermelho <29%"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.9.0",
+      "codename": "Monolith",
+      "type": "minor",
+      "releaseDate": "2026-02-10",
+      "prd": "PRD-073",
+      "description": "Perfil Profissional Unificado: modelo de multiplos curriculos (1:N) substituido por perfil unico (1:1) por candidato. Inclui sistema de destaques por candidatura e visao real do perfil pela empresa.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Modelo multi-curriculo substituido por perfil unico (1:1) por candidato",
+            "Migration: consolidacao de curriculos + constraint UNIQUE em candidate_id",
+            "Service layer refatorado: getProfile(), ensureProfile() substituem operacoes multi-curriculo",
+            "React Query hooks simplificados: useProfile(), useEnsureProfile()",
+            "CurriculumEdit.tsx renomeada para ProfessionalProfile.tsx",
+            "Rota /candidato/perfil aponta para perfil profissional; /candidato/conta para configuracoes",
+            "Sidebar: Curriculos renomeado para Meu Perfil"
+          ]
+        },
+        {
+          "type": "added",
+          "items": [
+            "Sistema de destaques de candidatura (highlights) — candidatos destacam itens do perfil ao se candidatar",
+            "Highlights service com interface + implementacao Supabase",
+            "Componente HighlightsSelector com secoes colapsaveis",
+            "ApplicationModal com step 2 para selecao de destaques",
+            "Visao da empresa com perfil real: experiencias, formacao, habilidades com dados reais",
+            "HighlightBadge dourado nos itens destacados pelo candidato",
+            "Rota /candidato/conta para pagina de configuracoes"
+          ]
+        },
+        {
+          "type": "removed",
+          "items": [
+            "getCurriculums(), deleteCurriculum(), setDefault(), createCurriculum() do service",
+            "useCurriculums(), useDeleteCurriculum(), useSetDefaultCurriculum(), useCreateCurriculum() dos hooks",
+            "Campo Nome do Curriculo do formulario de edicao",
+            "generateMockExperiences() e getSkillLevel() com niveis hardcoded"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.8.0",
       "codename": "Live Notifications",
       "type": "minor",
       "releaseDate": "2026-02-08",
       "prd": "PRD-025/PRD-033",
       "description": "Sistema de notificacoes migrado de mock/localStorage para Supabase. Candidato e empresa agora consomem notificacoes reais do banco com polling a cada 30s, filtros, agrupamento por data e mark-as-read.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "changed",
@@ -149,6 +222,86 @@
           "type": "changed",
           "items": [
             "BehavioralTest.tsx: pagina 'Teste Comportamental' agora executa Gauge-Pro inline"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.4.2",
+      "codename": "Audit Table",
+      "type": "patch",
+      "releaseDate": "2026-02-05",
+      "prd": "PRD-061",
+      "description": "Tabela permission_audit_logs criada para auditoria RBAC. Resolvia erro 404 ao acessar Usuarios & Permissoes > Auditoria.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Tabela permission_audit_logs criada com indexes para filtros e RLS admin-only",
+            "Corrigido erro 404 ao acessar Usuarios & Permissoes > Auditoria"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.4.1",
+      "codename": "Column Fix",
+      "type": "patch",
+      "releaseDate": "2026-02-05",
+      "prd": "",
+      "description": "Corrigido nome de coluna 'order' para 'sort_order' em 3 servicos Supabase que causava erro 400.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "plansService.supabase.ts: query .order('order') corrigida para sort_order",
+            "gaugeProService.supabase.ts: query e mapeamento de cenarios corrigidos",
+            "assessmentsService.supabase.ts: queries de dimensoes/categorias corrigidas"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.4.0",
+      "codename": "Admin Settings",
+      "type": "minor",
+      "releaseDate": "2026-02-05",
+      "prd": "",
+      "description": "Configuracoes do admin migradas de localStorage para Supabase. Tabelas system_settings e settings_history com RLS, triggers e mascaramento de campos sensiveis.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Tabelas system_settings e settings_history com RLS e triggers",
+            "Mascaramento automatico de campos sensiveis no historico",
+            "Dropdown dinamico de modelos IA via API Anthropic"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Configuracoes do admin migradas de localStorage para Supabase"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.3",
+      "codename": "Remember Me",
+      "type": "patch",
+      "releaseDate": "2026-02-05",
+      "prd": "",
+      "description": "Checkbox Lembrar-me no login agora funcional. Persiste sessao por 30 dias ou encerra ao fechar navegador.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Checkbox Lembrar-me implementado com persistSession do Supabase Auth",
+            "Sessao persiste por 30 dias (marcado) ou encerra ao fechar navegador (desmarcado)"
           ]
         }
       ]
