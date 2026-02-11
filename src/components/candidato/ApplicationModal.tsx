@@ -1,10 +1,11 @@
 /**
  * Application Modal Component
  * PRD-007: Candidatura a Vagas
+ * PRD-073: Destaques de candidatura customizável (step 2)
  */
 
 import { useState } from 'react';
-import { Building2 } from 'lucide-react';
+import { Building2, ArrowLeft } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -17,92 +18,150 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { HighlightsSelector } from '@/components/candidato/HighlightsSelector';
 import type { Job } from '@/types';
+import type { Curriculum } from '@/types/curriculum';
+import type { ApplicationHighlights } from '@/types/applicationHighlight';
 
 const MAX_MESSAGE_LENGTH = 500;
+
+type Step = 'message' | 'highlights';
 
 interface ApplicationModalProps {
   job: Job;
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (message?: string) => void;
+  onConfirm: (message?: string, highlights?: ApplicationHighlights) => void;
+  curriculum?: Curriculum | null;
 }
 
-export function ApplicationModal({ job, isOpen, onClose, onConfirm }: ApplicationModalProps) {
+export function ApplicationModal({ job, isOpen, onClose, onConfirm, curriculum }: ApplicationModalProps) {
   const [includeMessage, setIncludeMessage] = useState(false);
   const [message, setMessage] = useState('');
+  const [step, setStep] = useState<Step>('message');
 
-  const handleConfirm = () => {
-    onConfirm(includeMessage && message.trim() ? message.trim() : undefined);
-    setMessage('');
-    setIncludeMessage(false);
+  const hasProfileItems = curriculum &&
+    (curriculum.experiences.length > 0 ||
+     curriculum.education.length > 0 ||
+     curriculum.skills.length > 0 ||
+     curriculum.courses.length > 0);
+
+  const handleNext = () => {
+    if (hasProfileItems) {
+      setStep('highlights');
+    } else {
+      // No profile items — confirm without highlights
+      handleFinalConfirm();
+    }
+  };
+
+  const handleFinalConfirm = (highlights?: ApplicationHighlights) => {
+    const msg = includeMessage && message.trim() ? message.trim() : undefined;
+    onConfirm(msg, highlights);
+    resetState();
+  };
+
+  const handleSkipHighlights = () => {
+    handleFinalConfirm();
   };
 
   const handleClose = () => {
+    resetState();
+    onClose();
+  };
+
+  const resetState = () => {
     setMessage('');
     setIncludeMessage(false);
-    onClose();
+    setStep('message');
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Confirmar Candidatura</DialogTitle>
+          <DialogTitle>
+            {step === 'message' ? 'Confirmar Candidatura' : 'Destacar Itens do Perfil'}
+          </DialogTitle>
           <DialogDescription>
-            Seu perfil será enviado para análise pela empresa.
+            {step === 'message'
+              ? 'Seu perfil será enviado para análise pela empresa.'
+              : 'Escolha os itens mais relevantes para esta vaga.'}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* Job Summary */}
-          <div className="flex items-center gap-4 p-4 bg-muted rounded-xl">
-            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Building2 className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">{job.title}</h3>
-              <p className="text-sm text-muted-foreground">{job.companyName}</p>
-            </div>
-          </div>
+        {step === 'message' && (
+          <>
+            <div className="space-y-4 py-4">
+              {/* Job Summary */}
+              <div className="flex items-center gap-4 p-4 bg-muted rounded-xl">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">{job.title}</h3>
+                  <p className="text-sm text-muted-foreground">{job.companyName}</p>
+                </div>
+              </div>
 
-          {/* Optional Message Checkbox */}
-          <div className="flex items-center gap-3">
-            <Checkbox
-              id="include-message"
-              checked={includeMessage}
-              onCheckedChange={(checked) => setIncludeMessage(checked === true)}
+              {/* Optional Message Checkbox */}
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  id="include-message"
+                  checked={includeMessage}
+                  onCheckedChange={(checked) => setIncludeMessage(checked === true)}
+                />
+                <Label htmlFor="include-message" className="cursor-pointer">
+                  Adicionar mensagem ao recrutador
+                </Label>
+              </div>
+
+              {/* Message Field */}
+              {includeMessage && (
+                <div className="space-y-2">
+                  <Textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    maxLength={MAX_MESSAGE_LENGTH}
+                    placeholder="Escreva uma mensagem personalizada para o recrutador..."
+                    className="min-h-[120px] resize-none"
+                  />
+                  <p className="text-sm text-muted-foreground text-right">
+                    {message.length}/{MAX_MESSAGE_LENGTH}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={handleClose}>
+                Cancelar
+              </Button>
+              <Button onClick={handleNext} className="gradient-primary">
+                {hasProfileItems ? 'Próximo' : 'Confirmar Candidatura'}
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+
+        {step === 'highlights' && curriculum && (
+          <div className="py-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mb-2 -ml-2"
+              onClick={() => setStep('message')}
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Voltar
+            </Button>
+            <HighlightsSelector
+              curriculum={curriculum}
+              onConfirm={handleFinalConfirm}
+              onSkip={handleSkipHighlights}
             />
-            <Label htmlFor="include-message" className="cursor-pointer">
-              Adicionar mensagem ao recrutador
-            </Label>
           </div>
-
-          {/* Message Field */}
-          {includeMessage && (
-            <div className="space-y-2">
-              <Textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                maxLength={MAX_MESSAGE_LENGTH}
-                placeholder="Escreva uma mensagem personalizada para o recrutador..."
-                className="min-h-[120px] resize-none"
-              />
-              <p className="text-sm text-muted-foreground text-right">
-                {message.length}/{MAX_MESSAGE_LENGTH}
-              </p>
-            </div>
-          )}
-        </div>
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={handleClose}>
-            Cancelar
-          </Button>
-          <Button onClick={handleConfirm} className="gradient-primary">
-            Confirmar Candidatura
-          </Button>
-        </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

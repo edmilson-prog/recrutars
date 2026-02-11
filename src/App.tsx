@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
@@ -89,12 +89,11 @@ import CandidateDashboard from "./pages/candidato/Dashboard";
 import CandidateJobSearch from "./pages/candidato/JobSearch";
 import CandidateTests from "./pages/candidato/Tests";
 import CandidateMessages from "./pages/candidato/Messages";
-import CandidateProfile from "./pages/candidato/Profile";
+import CandidateAccount from "./pages/candidato/Profile";
 import CandidateJobDetails from "./pages/candidato/JobDetails";
 import CandidateApplications from "./pages/candidato/Applications";
 import CandidateSettings from "./pages/candidato/Settings";
-import CandidateCurriculums from "./pages/candidato/Curriculums";
-import CandidateCurriculumEdit from "./pages/candidato/CurriculumEdit";
+import CandidateProfessionalProfile from "./pages/candidato/ProfessionalProfile";
 import CandidateSavedJobs from "./pages/candidato/SavedJobs";
 import CandidateRecommendedJobs from "./pages/candidato/RecommendedJobs";
 import CandidateNotifications from "./pages/candidato/Notifications";
@@ -572,7 +571,12 @@ const App = () => (
             } />
             <Route path="/candidato/perfil" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateProfile />
+                <CandidateProfessionalProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/conta" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateAccount />
               </ProtectedRoute>
             } />
             <Route path="/candidato/vagas" element={
@@ -615,16 +619,8 @@ const App = () => (
                 <CandidateSettings />
               </ProtectedRoute>
             } />
-            <Route path="/candidato/curriculos" element={
-              <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateCurriculums />
-              </ProtectedRoute>
-            } />
-            <Route path="/candidato/curriculos/:id" element={
-              <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateCurriculumEdit />
-              </ProtectedRoute>
-            } />
+            <Route path="/candidato/curriculos" element={<Navigate to="/candidato/perfil" replace />} />
+            <Route path="/candidato/curriculos/:id" element={<Navigate to="/candidato/perfil" replace />} />
             <Route path="/candidato/notificacoes" element={
               <ProtectedRoute allowedTypes={['candidate']}>
                 <CandidateNotifications />

@@ -100,17 +100,23 @@ export interface SalaryRange {
   max: number;
 }
 
-// Currículo completo
+// Perfil profissional unificado (PRD-073)
+// Anteriormente suportava múltiplos currículos; agora é 1:1 com candidato
 export interface Curriculum {
   id: string;
   candidateId: string;
-  name: string; // Nome do currículo: "Meu Currículo", "Currículo Tech", etc.
-  isDefault: boolean;
-  isArchived: boolean;
+  /** @deprecated PRD-073: Perfil unificado não usa nome. Mantido para compatibilidade. */
+  name?: string;
+  /** @deprecated PRD-073: Sempre true para perfil unificado. */
+  isDefault?: boolean;
+  /** @deprecated PRD-073: Não aplicável para perfil unificado. */
+  isArchived?: boolean;
 
   // Informações pessoais
   title: string; // Título profissional
   location: string;
+  city?: string;
+  state?: string;
   phone?: string;
   email: string;
   linkedin?: string;
@@ -121,6 +127,14 @@ export interface Curriculum {
   // Preferências
   availability: string;
   salary: SalaryRange;
+  openToRelocation?: boolean;
+  salaryNegotiable?: boolean;
+
+  // Interesses profissionais
+  preferredSectors?: string[];
+  preferredRoles?: string[];
+  workModel?: string[];
+  contractType?: string[];
 
   // Seções do currículo
   experiences: ExperienceWithCurrent[];

@@ -54,7 +54,7 @@ export interface Ticket {
 export const ticketCategoryLabels: Record<TicketCategory, string> = {
   account: 'Conta e Acesso',
   applications: 'Candidaturas',
-  resumes: 'Currículos',
+  resumes: 'Perfil Profissional',
   tests: 'Testes',
   interviews: 'Entrevistas',
   messages: 'Mensagens',

@@ -12,6 +12,7 @@ export * from './test';
 export * from './message';
 export * from './stats';
 export * from './curriculum';
+export * from './applicationHighlight';
 export * from './notifications';
 export * from './companyNotifications';
 export * from './cvParser';

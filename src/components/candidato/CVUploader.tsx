@@ -147,7 +147,7 @@ export function CVUploader({ onFileSelect, disabled = false, className }: CVUplo
               )}
             />
             <p className="font-medium text-gray-700">
-              {isDragging ? 'Solte o arquivo aqui' : 'Arraste seu currículo aqui'}
+              {isDragging ? 'Solte o arquivo aqui' : 'Arraste seu CV aqui'}
             </p>
             <p className="text-sm text-gray-500 mt-1">
               ou clique para selecionar

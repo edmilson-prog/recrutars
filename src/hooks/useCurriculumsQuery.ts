@@ -1,6 +1,6 @@
 /**
- * React Query hooks for Curriculums service
- * PRD-066: Service Layer hooks for curriculum management (PRD-022)
+ * React Query hooks for Professional Profile service
+ * PRD-073: Perfil Profissional Unificado
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,25 +11,23 @@ import type { Curriculum } from '@/types/curriculum';
 // Query Keys
 // ---------------------------------------------------------------------------
 
-export const curriculumKeys = {
-  all: ['curriculums'] as const,
-  lists: () => [...curriculumKeys.all, 'list'] as const,
-  list: (candidateId: string) => [...curriculumKeys.lists(), candidateId] as const,
-  details: () => [...curriculumKeys.all, 'detail'] as const,
-  detail: (id: string) => [...curriculumKeys.details(), id] as const,
+export const profileKeys = {
+  all: ['profile'] as const,
+  byCandidate: (candidateId: string) => [...profileKeys.all, candidateId] as const,
+  detail: (id: string) => [...profileKeys.all, 'detail', id] as const,
 };
 
 // ---------------------------------------------------------------------------
 // Queries
 // ---------------------------------------------------------------------------
 
-/** Fetch all curriculums for a candidate */
-export function useCurriculums(candidateId: string) {
+/** Fetch the single professional profile for a candidate */
+export function useProfile(candidateId: string) {
   return useQuery({
-    queryKey: curriculumKeys.list(candidateId),
+    queryKey: profileKeys.byCandidate(candidateId),
     queryFn: async () => {
       const service = await getCurriculumsService();
-      return service.getCurriculums(candidateId);
+      return service.getProfile(candidateId);
     },
     enabled: !!candidateId,
   });
@@ -38,7 +36,7 @@ export function useCurriculums(candidateId: string) {
 /** Fetch a single curriculum by id */
 export function useCurriculum(id: string) {
   return useQuery({
-    queryKey: curriculumKeys.detail(id),
+    queryKey: profileKeys.detail(id),
     queryFn: async () => {
       const service = await getCurriculumsService();
       return service.getCurriculum(id);
@@ -51,22 +49,22 @@ export function useCurriculum(id: string) {
 // Mutations
 // ---------------------------------------------------------------------------
 
-/** Create a new curriculum */
-export function useCreateCurriculum() {
+/** Ensure the profile exists (create if not found) */
+export function useEnsureProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Omit<Curriculum, 'id' | 'createdAt' | 'updatedAt'>) => {
+    mutationFn: async ({ candidateId, initialData }: { candidateId: string; initialData?: Partial<Curriculum> }) => {
       const service = await getCurriculumsService();
-      return service.createCurriculum(data);
+      return service.ensureProfile(candidateId, initialData);
     },
     onSuccess: (created) => {
-      queryClient.invalidateQueries({ queryKey: curriculumKeys.list(created.candidateId) });
+      queryClient.invalidateQueries({ queryKey: profileKeys.byCandidate(created.candidateId) });
     },
   });
 }
 
-/** Update an existing curriculum */
+/** Update an existing curriculum/profile */
 export function useUpdateCurriculum() {
   const queryClient = useQueryClient();
 
@@ -76,45 +74,8 @@ export function useUpdateCurriculum() {
       return service.updateCurriculum(id, updates);
     },
     onSuccess: (updated, { id }) => {
-      queryClient.invalidateQueries({ queryKey: curriculumKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: curriculumKeys.lists() });
-    },
-  });
-}
-
-/** Delete a curriculum */
-export function useDeleteCurriculum() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const service = await getCurriculumsService();
-      return service.deleteCurriculum(id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: curriculumKeys.all });
-    },
-  });
-}
-
-/** Set a curriculum as the default for a candidate */
-export function useSetDefaultCurriculum() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      candidateId,
-      curriculumId,
-    }: {
-      candidateId: string;
-      curriculumId: string;
-    }) => {
-      const service = await getCurriculumsService();
-      return service.setDefault(candidateId, curriculumId);
-    },
-    onSuccess: (_, { candidateId }) => {
-      queryClient.invalidateQueries({ queryKey: curriculumKeys.list(candidateId) });
-      queryClient.invalidateQueries({ queryKey: curriculumKeys.details() });
+      queryClient.invalidateQueries({ queryKey: profileKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
     },
   });
 }

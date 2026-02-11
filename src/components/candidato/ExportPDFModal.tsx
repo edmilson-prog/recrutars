@@ -115,14 +115,14 @@ export function ExportPDFModal({
 
       const blob = await pdf(doc).toBlob();
 
-      // Nome do arquivo: Curriculo_NomeSobrenome_DDMMAAAA.pdf
+      // Nome do arquivo: Perfil_NomeSobrenome_DDMMAAAA.pdf
       const nameParts = (curriculum.title || 'Candidato').split(' ');
       const firstName = nameParts[0] || 'Candidato';
       const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
       const nameSuffix = lastName ? `${firstName}${lastName}` : firstName;
       const date = new Date();
       const dateStr = `${String(date.getDate()).padStart(2, '0')}${String(date.getMonth() + 1).padStart(2, '0')}${date.getFullYear()}`;
-      const filename = `Curriculo_${nameSuffix}_${dateStr}.pdf`;
+      const filename = `Perfil_${nameSuffix}_${dateStr}.pdf`;
 
       // Criar link e baixar
       const url = URL.createObjectURL(blob);
@@ -154,7 +154,7 @@ export function ExportPDFModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileDown className="h-5 w-5 text-cyan-600" />
-            Exportar Currículo em PDF
+            Exportar Perfil em PDF
           </DialogTitle>
           <DialogDescription>
             Escolha o template e as seções para incluir no PDF.

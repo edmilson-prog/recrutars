@@ -19,8 +19,11 @@ import { calculateMatchBreakdown } from '@/lib/matchCalculator';
 import { useState } from 'react';
 import { useApplications } from '@/hooks/useApplications';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
+import { useProfile } from '@/hooks/useCurriculumsQuery';
+import { useSetApplicationHighlights } from '@/hooks/useHighlightsQuery';
 import { ApplicationModal } from '@/components/candidato/ApplicationModal';
 import { ApplicationSuccessModal } from '@/components/candidato/ApplicationSuccessModal';
+import type { ApplicationHighlights } from '@/types/applicationHighlight';
 // PRD-002-dgn: Componentes de Match e Comportamental
 import { MatchBreakdown } from '@/components/match/MatchBreakdown';
 import { MatchStrengths } from '@/components/match/MatchStrengths';
@@ -44,9 +47,13 @@ export default function JobDetails() {
 
   // Application state
   const candidateId = currentCandidate?.id ?? '';
-  const { hasApplied, createApplication } = useApplications(candidateId);
+  const { hasApplied, createApplicationAsync } = useApplications(candidateId);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // PRD-073: Profile + Highlights
+  const { data: profile } = useProfile(candidateId);
+  const setHighlightsMutation = useSetApplicationHighlights();
 
   // PRD-035: Cálculo dinâmico de match
   const idealProfile = id ? getIdealBehavioralProfile(id) : undefined;
@@ -90,17 +97,38 @@ export default function JobDetails() {
     setShowApplicationModal(true);
   };
 
-  const handleConfirmApplication = (message?: string) => {
-    createApplication(
-      job.id,
-      job.title,
-      job.companyName,
-      'Candidato Atual',
-      message
-    );
-    setShowApplicationModal(false);
-    setShowSuccessModal(true);
-    toast.success('Candidatura enviada com sucesso!');
+  const handleConfirmApplication = async (message?: string, highlights?: ApplicationHighlights) => {
+    try {
+      const application = await createApplicationAsync(
+        job.id,
+        job.title,
+        job.companyName,
+        'Candidato Atual',
+        message
+      );
+
+      // PRD-073: Save highlights if selected
+      if (highlights && application?.id) {
+        const hasHighlights =
+          highlights.experienceIds.length > 0 ||
+          highlights.educationIds.length > 0 ||
+          highlights.skillIds.length > 0 ||
+          highlights.courseIds.length > 0;
+
+        if (hasHighlights) {
+          setHighlightsMutation.mutate({
+            applicationId: application.id,
+            highlights,
+          });
+        }
+      }
+
+      setShowApplicationModal(false);
+      setShowSuccessModal(true);
+      toast.success('Candidatura enviada com sucesso!');
+    } catch {
+      toast.error('Erro ao enviar candidatura. Tente novamente.');
+    }
   };
 
   const handleViewApplications = () => {
@@ -407,6 +435,7 @@ export default function JobDetails() {
         isOpen={showApplicationModal}
         onClose={() => setShowApplicationModal(false)}
         onConfirm={handleConfirmApplication}
+        curriculum={profile}
       />
 
       {/* Success Modal */}

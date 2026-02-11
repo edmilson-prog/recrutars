@@ -94,8 +94,8 @@ export default function ImportCV() {
     setPageState('success');
 
     toast({
-      title: 'Currículo importado!',
-      description: 'Os dados foram salvos no seu perfil.',
+      title: 'Dados importados no perfil!',
+      description: 'Os dados foram salvos no seu perfil profissional.',
     });
 
     // Redirecionar após 2 segundos
@@ -134,10 +134,10 @@ export default function ImportCV() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Importar Currículo
+                Importar Currículo (CV)
               </h1>
               <p className="text-gray-500">
-                Faça upload do seu currículo para pré-preencher seu perfil
+                Faça upload do seu CV para pré-preencher seu perfil profissional
               </p>
             </div>
           </div>
@@ -188,7 +188,7 @@ function UploadState({ onFileSelect, error, onTryAgain }: UploadStateProps) {
     <div className="bg-white rounded-lg shadow-sm border p-8">
       <div className="text-center mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          Selecione seu currículo
+          Selecione seu CV
         </h2>
         <p className="text-sm text-gray-500">
           Nosso sistema vai extrair automaticamente suas informações
@@ -242,7 +242,7 @@ function ParsingState({ progress }: ParsingStateProps) {
 
       <div className="mt-8 p-4 bg-blue-50 rounded-lg">
         <p className="text-sm text-blue-700 text-center">
-          Analisando o conteúdo do seu currículo...
+          Analisando o conteúdo do seu CV...
           <br />
           <span className="text-xs text-blue-600">
             Isso pode levar alguns segundos
@@ -324,7 +324,7 @@ function SuccessState() {
           <CheckCircle className="w-8 h-8 text-green-500" />
         </div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Currículo importado com sucesso!
+          Dados importados no perfil com sucesso!
         </h2>
         <p className="text-gray-500">
           Os dados foram salvos no seu perfil.

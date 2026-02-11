@@ -37,10 +37,10 @@ const faqItems: FAQItem[] = [
   {
     id: 'faq-c-1',
     question: 'Como me candidato a uma vaga?',
-    answer: 'Para se candidatar a uma vaga:\n\n1. Acesse "Buscar Vagas" no menu lateral\n2. Encontre a vaga desejada usando os filtros\n3. Clique em "Ver detalhes" para ver mais informações\n4. Clique no botão "Candidatar-se"\n5. Selecione qual currículo deseja usar\n6. Escreva uma mensagem opcional para a empresa\n7. Confirme sua candidatura\n\n💡 Dica: Mantenha seu currículo atualizado para aumentar suas chances!',
+    answer: 'Para se candidatar a uma vaga:\n\n1. Acesse "Buscar Vagas" no menu lateral\n2. Encontre a vaga desejada usando os filtros\n3. Clique em "Ver detalhes" para ver mais informações\n4. Clique no botão "Candidatar-se"\n5. Escreva uma mensagem opcional para a empresa\n6. Destaque itens do seu perfil relevantes para a vaga\n7. Confirme sua candidatura\n\n💡 Dica: Mantenha seu perfil profissional atualizado para aumentar suas chances!',
     category: 'Candidaturas',
     area: 'candidate',
-    relatedArticles: ['Como criar um currículo atrativo', 'Como funcionam os filtros de busca'],
+    relatedArticles: ['Como completar seu perfil profissional', 'Como funcionam os filtros de busca'],
   },
   {
     id: 'faq-c-2',
@@ -51,8 +51,8 @@ const faqItems: FAQItem[] = [
   },
   {
     id: 'faq-c-3',
-    question: 'Como edito meu currículo?',
-    answer: 'Para editar seu currículo:\n\n1. Acesse "Currículos" no menu lateral\n2. Clique no currículo que deseja editar\n3. Faça as alterações necessárias\n4. Clique em "Salvar"\n\n💡 Dica: Você pode ter múltiplos currículos para diferentes tipos de vagas!',
+    question: 'Como edito meu perfil profissional?',
+    answer: 'Para editar seu perfil profissional:\n\n1. Acesse "Meu Perfil" no menu lateral\n2. Edite as informações nas abas disponíveis\n3. Faça as alterações necessárias\n4. Clique em "Salvar"\n\n💡 Dica: Um perfil completo aumenta suas chances de ser encontrado por recrutadores!',
     category: 'Perfil',
     area: 'candidate',
   },

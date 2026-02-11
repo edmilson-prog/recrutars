@@ -1,8 +1,8 @@
 /**
  * Curriculums Service — Supabase Implementation
- * PRD-066: Service Layer Pattern
+ * PRD-073: Perfil Profissional Unificado
  *
- * Queries the `curriculums` table with joins on sub-entity tables:
+ * Queries the `curriculums` table (1:1 per candidate) with joins on sub-entity tables:
  *   curriculum_experiences, curriculum_education,
  *   curriculum_skills, curriculum_courses
  *
@@ -91,11 +91,13 @@ function rowToCurriculum(row: Record<string, unknown>): Curriculum {
   return {
     id: row.id as string,
     candidateId: row.candidate_id as string,
-    name: row.name as string,
+    name: (row.name as string) || 'Perfil Profissional',
     isDefault: row.is_default as boolean,
     isArchived: row.is_archived as boolean,
     title: row.title as string,
     location: row.location as string,
+    city: (row.city as string) || undefined,
+    state: (row.state as string) || undefined,
     phone: (row.phone as string) || undefined,
     email: row.email as string,
     linkedin: (row.linkedin as string) || undefined,
@@ -105,6 +107,12 @@ function rowToCurriculum(row: Record<string, unknown>): Curriculum {
       min: Number(row.salary_min) || 0,
       max: Number(row.salary_max) || 0,
     },
+    openToRelocation: (row.open_to_relocation as boolean) || false,
+    salaryNegotiable: (row.salary_negotiable as boolean) || false,
+    preferredSectors: (row.preferred_sectors as string[]) || [],
+    preferredRoles: (row.preferred_roles as string[]) || [],
+    workModel: (row.work_model as string[]) || [],
+    contractType: (row.contract_type as string[]) || [],
     experiences,
     education,
     skills,
@@ -128,19 +136,64 @@ const CURRICULUM_SELECT = `
 // ---------------------------------------------------------------------------
 
 export class SupabaseCurriculumsService implements ICurriculumsService {
-  async getCurriculums(candidateId: string): Promise<Curriculum[]> {
+  async getProfile(candidateId: string): Promise<Curriculum | null> {
     const { data, error } = await supabase
       .from('curriculums')
       .select(CURRICULUM_SELECT)
       .eq('candidate_id', candidateId)
-      .order('is_default', { ascending: false })
-      .order('updated_at', { ascending: false });
+      .maybeSingle();
 
     if (error) {
-      throw new Error(`Failed to fetch curriculums: ${error.message}`);
+      throw new Error(`Failed to fetch profile: ${error.message}`);
     }
 
-    return (data ?? []).map((row) => rowToCurriculum(row as Record<string, unknown>));
+    return data ? rowToCurriculum(data as Record<string, unknown>) : null;
+  }
+
+  async ensureProfile(candidateId: string, initialData?: Partial<Curriculum>): Promise<Curriculum> {
+    // Try to fetch existing profile
+    const existing = await this.getProfile(candidateId);
+    if (existing) return existing;
+
+    // Create a new profile with defaults
+    const { data: row, error } = await supabase
+      .from('curriculums')
+      .insert({
+        candidate_id: candidateId,
+        name: 'Perfil Profissional',
+        is_default: true,
+        is_archived: false,
+        title: initialData?.title ?? '',
+        location: initialData?.location ?? '',
+        city: initialData?.city ?? null,
+        state: initialData?.state ?? null,
+        phone: initialData?.phone ?? null,
+        email: initialData?.email ?? '',
+        linkedin: initialData?.linkedin ?? null,
+        about: initialData?.about ?? null,
+        availability: initialData?.availability ?? '',
+        salary_min: initialData?.salary?.min ?? 0,
+        salary_max: initialData?.salary?.max ?? 0,
+        open_to_relocation: initialData?.openToRelocation ?? false,
+        salary_negotiable: initialData?.salaryNegotiable ?? false,
+        preferred_sectors: initialData?.preferredSectors ?? [],
+        preferred_roles: initialData?.preferredRoles ?? [],
+        work_model: initialData?.workModel ?? [],
+        contract_type: initialData?.contractType ?? [],
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create profile: ${error.message}`);
+    }
+
+    // Fetch the full profile with sub-entities
+    const result = await this.getCurriculum(row.id as string);
+    if (!result) {
+      throw new Error('Failed to fetch created profile');
+    }
+    return result;
   }
 
   async getCurriculum(id: string): Promise<Curriculum | null> {
@@ -157,81 +210,26 @@ export class SupabaseCurriculumsService implements ICurriculumsService {
     return data ? rowToCurriculum(data as Record<string, unknown>) : null;
   }
 
-  async createCurriculum(
-    input: Omit<Curriculum, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<Curriculum> {
-    // If this is set as default, unset previous default for this candidate
-    if (input.isDefault) {
-      await this.unsetDefaults(input.candidateId);
-    }
-
-    // 1. Insert the main curriculum row
-    const { data: curriculumRow, error: curriculumError } = await supabase
-      .from('curriculums')
-      .insert({
-        candidate_id: input.candidateId,
-        name: input.name,
-        is_default: input.isDefault,
-        is_archived: input.isArchived,
-        title: input.title,
-        location: input.location,
-        phone: input.phone ?? null,
-        email: input.email,
-        linkedin: input.linkedin ?? null,
-        about: input.about ?? null,
-        availability: input.availability,
-        salary_min: input.salary.min,
-        salary_max: input.salary.max,
-      })
-      .select()
-      .single();
-
-    if (curriculumError) {
-      throw new Error(`Failed to create curriculum: ${curriculumError.message}`);
-    }
-
-    const curriculumId = curriculumRow.id as string;
-
-    // 2. Insert sub-entities in parallel
-    await Promise.all([
-      this.insertExperiences(curriculumId, input.experiences),
-      this.insertEducation(curriculumId, input.education),
-      this.insertSkills(curriculumId, input.skills),
-      this.insertCourses(curriculumId, input.courses),
-    ]);
-
-    // 3. Fetch the full curriculum with sub-entities
-    const result = await this.getCurriculum(curriculumId);
-    if (!result) {
-      throw new Error('Failed to fetch created curriculum');
-    }
-    return result;
-  }
-
   async updateCurriculum(id: string, updates: Partial<Curriculum>): Promise<Curriculum> {
-    // If setting as default, unset previous default for this candidate
-    if (updates.isDefault) {
-      // Fetch the current curriculum to get candidateId
-      const existing = await this.getCurriculum(id);
-      if (!existing) {
-        throw new Error(`Curriculum not found: ${id}`);
-      }
-      await this.unsetDefaults(existing.candidateId, id);
-    }
-
     // 1. Update main curriculum fields
     const mainUpdates: Record<string, unknown> = {};
 
     if (updates.name !== undefined) mainUpdates.name = updates.name;
-    if (updates.isDefault !== undefined) mainUpdates.is_default = updates.isDefault;
-    if (updates.isArchived !== undefined) mainUpdates.is_archived = updates.isArchived;
     if (updates.title !== undefined) mainUpdates.title = updates.title;
     if (updates.location !== undefined) mainUpdates.location = updates.location;
+    if (updates.city !== undefined) mainUpdates.city = updates.city;
+    if (updates.state !== undefined) mainUpdates.state = updates.state;
     if (updates.phone !== undefined) mainUpdates.phone = updates.phone;
     if (updates.email !== undefined) mainUpdates.email = updates.email;
     if (updates.linkedin !== undefined) mainUpdates.linkedin = updates.linkedin;
     if (updates.about !== undefined) mainUpdates.about = updates.about;
     if (updates.availability !== undefined) mainUpdates.availability = updates.availability;
+    if (updates.openToRelocation !== undefined) mainUpdates.open_to_relocation = updates.openToRelocation;
+    if (updates.salaryNegotiable !== undefined) mainUpdates.salary_negotiable = updates.salaryNegotiable;
+    if (updates.preferredSectors !== undefined) mainUpdates.preferred_sectors = updates.preferredSectors;
+    if (updates.preferredRoles !== undefined) mainUpdates.preferred_roles = updates.preferredRoles;
+    if (updates.workModel !== undefined) mainUpdates.work_model = updates.workModel;
+    if (updates.contractType !== undefined) mainUpdates.contract_type = updates.contractType;
     if (updates.salary !== undefined) {
       mainUpdates.salary_min = updates.salary.min;
       mainUpdates.salary_max = updates.salary.max;
@@ -244,7 +242,7 @@ export class SupabaseCurriculumsService implements ICurriculumsService {
         .eq('id', id);
 
       if (error) {
-        throw new Error(`Failed to update curriculum: ${error.message}`);
+        throw new Error(`Failed to update profile: ${error.message}`);
       }
     }
 
@@ -268,59 +266,44 @@ export class SupabaseCurriculumsService implements ICurriculumsService {
       await Promise.all(subOps);
     }
 
-    // 3. Return updated curriculum
+    // 3. Sync key fields to candidates table for search/matching
     const result = await this.getCurriculum(id);
     if (!result) {
-      throw new Error(`Curriculum not found after update: ${id}`);
+      throw new Error(`Profile not found after update: ${id}`);
     }
+
+    const candidateSync: Record<string, unknown> = {};
+    if (updates.title !== undefined) candidateSync.title = updates.title;
+    if (updates.location !== undefined) candidateSync.location = updates.location;
+    if (updates.city !== undefined) candidateSync.city = updates.city;
+    if (updates.state !== undefined) candidateSync.state = updates.state;
+    if (updates.openToRelocation !== undefined) candidateSync.open_to_relocation = updates.openToRelocation;
+    if (updates.linkedin !== undefined) candidateSync.linkedin = updates.linkedin;
+    if (updates.about !== undefined) candidateSync.about = updates.about;
+    if (updates.salaryNegotiable !== undefined) candidateSync.salary_negotiable = updates.salaryNegotiable;
+    if (updates.preferredSectors !== undefined) candidateSync.preferred_sectors = updates.preferredSectors;
+    if (updates.preferredRoles !== undefined) candidateSync.preferred_roles = updates.preferredRoles;
+    if (updates.workModel !== undefined) candidateSync.work_model = updates.workModel;
+    if (updates.contractType !== undefined) candidateSync.contract_type = updates.contractType;
+    if (updates.salary !== undefined) {
+      candidateSync.salary_min = updates.salary.min;
+      candidateSync.salary_max = updates.salary.max;
+    }
+
+    if (Object.keys(candidateSync).length > 0) {
+      await supabase
+        .from('candidates')
+        .update(candidateSync)
+        .eq('id', result.candidateId);
+    }
+
+    // 4. Return updated profile
     return result;
-  }
-
-  async deleteCurriculum(id: string): Promise<void> {
-    // Sub-entities will be cascade-deleted via FK constraints
-    const { error } = await supabase.from('curriculums').delete().eq('id', id);
-
-    if (error) {
-      throw new Error(`Failed to delete curriculum: ${error.message}`);
-    }
-  }
-
-  async setDefault(candidateId: string, curriculumId: string): Promise<void> {
-    // Unset all defaults for this candidate
-    await this.unsetDefaults(candidateId);
-
-    // Set the new default
-    const { error } = await supabase
-      .from('curriculums')
-      .update({ is_default: true })
-      .eq('id', curriculumId)
-      .eq('candidate_id', candidateId);
-
-    if (error) {
-      throw new Error(`Failed to set default curriculum: ${error.message}`);
-    }
   }
 
   // ---------------------------------------------------------------------------
   // Private helpers — sub-entity management
   // ---------------------------------------------------------------------------
-
-  private async unsetDefaults(candidateId: string, excludeId?: string): Promise<void> {
-    let query = supabase
-      .from('curriculums')
-      .update({ is_default: false })
-      .eq('candidate_id', candidateId)
-      .eq('is_default', true);
-
-    if (excludeId) {
-      query = query.neq('id', excludeId);
-    }
-
-    const { error } = await query;
-    if (error) {
-      throw new Error(`Failed to unset default curriculums: ${error.message}`);
-    }
-  }
 
   // ---- Experiences ----
 

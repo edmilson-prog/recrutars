@@ -28,6 +28,7 @@ import {
   History,
   ChevronDown,
   User2,
+  Award,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -62,6 +63,9 @@ import { useJobs } from '@/hooks/useJobsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useApplications } from '@/hooks/useApplicationsQuery';
 import { useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
+import { useProfile } from '@/hooks/useCurriculumsQuery';
+import { useApplicationHighlights } from '@/hooks/useHighlightsQuery';
+import { HighlightBadge } from '@/components/match/HighlightBadge';
 import { DIMENSION_NAMES, DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 import type { GaugeProDimension } from '@/types/gaugePro';
 import type { Job, ApplicationNote } from '@/types';
@@ -76,62 +80,22 @@ import { MatchOpportunities } from '@/components/match/MatchOpportunities';
 import { MatchMethodologyModal } from '@/components/match/MatchMethodologyModal';
 import { cn } from '@/lib/utils';
 
-// Skill level colors for CandidateProfile
-type SkillLevel = 'Expert' | 'Avançado' | 'Intermediário';
-
-const skillLevelConfig: Record<SkillLevel, { bg: string; text: string }> = {
-  Expert: { bg: 'bg-green-100', text: 'text-green-700' },
-  Avançado: { bg: 'bg-purple-100', text: 'text-purple-700' },
-  Intermediário: { bg: 'bg-slate-100', text: 'text-slate-600' },
+// Skill level colors for profile skills
+const skillLevelColors: Record<string, { bg: string; text: string }> = {
+  expert: { bg: 'bg-green-100', text: 'text-green-700' },
+  avancado: { bg: 'bg-purple-100', text: 'text-purple-700' },
+  intermediario: { bg: 'bg-slate-100', text: 'text-slate-600' },
+  basico: { bg: 'bg-slate-50', text: 'text-slate-500' },
 };
 
-const getSkillLevel = (index: number): SkillLevel => {
-  if (index < 2) return 'Expert';
-  if (index < 4) return 'Avançado';
-  return 'Intermediário';
-};
-
-// Mock experience data based on candidate.experience field
-const generateMockExperiences = (candidateTitle: string, years: number) => {
-  const experiences = [];
-
-  if (years >= 3) {
-    experiences.push({
-      id: 'exp-1',
-      company: 'Empresa Atual',
-      role: candidateTitle,
-      startDate: '2022',
-      endDate: null,
-      current: true,
-      description: 'Atuação na área com foco em resultados e inovação.',
-    });
+const getSkillLevelLabel = (level: string): string => {
+  switch (level) {
+    case 'expert': return 'Expert';
+    case 'avancado': return 'Avançado';
+    case 'intermediario': return 'Intermediário';
+    case 'basico': return 'Básico';
+    default: return level;
   }
-
-  if (years >= 5) {
-    experiences.push({
-      id: 'exp-2',
-      company: 'Empresa Anterior',
-      role: `${candidateTitle} Jr`,
-      startDate: '2019',
-      endDate: '2022',
-      current: false,
-      description: 'Desenvolvimento de habilidades e crescimento profissional.',
-    });
-  }
-
-  if (years >= 7) {
-    experiences.push({
-      id: 'exp-3',
-      company: 'Primeira Empresa',
-      role: 'Estágio',
-      startDate: '2017',
-      endDate: '2019',
-      current: false,
-      description: 'Início da carreira profissional.',
-    });
-  }
-
-  return experiences;
 };
 
 // PRD-035: Cálculo dinâmico removido - agora usamos matchResult diretamente
@@ -230,6 +194,11 @@ export default function CandidateProfile() {
   // Fetch Gauge-Pro result for this candidate
   const { data: gaugeProResult } = useGaugeProResultByCandidate(candidate?.id || '');
 
+  // PRD-073: Professional profile + highlights
+  const { data: profile } = useProfile(candidate?.id || '');
+  const activeApplicationId = selectedApplicationId || candidateApplications[0]?.id || '';
+  const { data: highlights } = useApplicationHighlights(activeApplicationId);
+
   // Get company jobs (company-1)
   const companyJobs = useMemo(
     () => allJobs.filter((job) => job.companyId === companyId && job.status === 'active'),
@@ -281,8 +250,6 @@ export default function CandidateProfile() {
     ? calculateMatchBreakdown(candidate, firstJob, idealProfile)
     : null;
   const matchScore = matchResult?.totalScore || 0;
-
-  const mockExperiences = generateMockExperiences(candidate.title, candidate.experience);
 
   const handleOpenInviteModal = (job: Job) => {
     setSelectedJob(job);
@@ -603,7 +570,7 @@ export default function CandidateProfile() {
               </motion.div>
             )}
 
-            {/* Experience */}
+            {/* Experience — PRD-073: real profile data */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -617,40 +584,52 @@ export default function CandidateProfile() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {mockExperiences.map((exp, index) => (
-                      <div
-                        key={exp.id}
-                        className={`relative pl-6 ${
-                          index !== mockExperiences.length - 1
-                            ? 'border-l-2 border-muted pb-4'
-                            : ''
-                        }`}
-                      >
-                        <div className="absolute left-0 top-0 w-3 h-3 -translate-x-[7px] rounded-full bg-primary" />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold">{exp.role}</h4>
-                            {exp.current && (
-                              <Badge variant="secondary" className="text-xs">
-                                Atual
-                              </Badge>
-                            )}
+                  {profile && profile.experiences.length > 0 ? (
+                    <div className="space-y-4">
+                      {profile.experiences.map((exp, index) => {
+                        const isHighlighted = highlights?.experienceIds.includes(exp.id);
+                        return (
+                          <div
+                            key={exp.id}
+                            className={`relative pl-6 ${
+                              index !== profile.experiences.length - 1
+                                ? 'border-l-2 border-muted pb-4'
+                                : ''
+                            }`}
+                          >
+                            <div className="absolute left-0 top-0 w-3 h-3 -translate-x-[7px] rounded-full bg-primary" />
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-semibold">{exp.role}</h4>
+                                {exp.current && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    Atual
+                                  </Badge>
+                                )}
+                                {isHighlighted && <HighlightBadge />}
+                              </div>
+                              <p className="text-muted-foreground">{exp.company}</p>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {exp.startDate} - {exp.endDate || 'Presente'}
+                              </p>
+                              {exp.description && (
+                                <p className="text-sm mt-2">{exp.description}</p>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-muted-foreground">{exp.company}</p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {exp.startDate} - {exp.endDate || 'Presente'}
-                          </p>
-                          <p className="text-sm mt-2">{exp.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {candidate.experience} ano{candidate.experience !== 1 ? 's' : ''} de experiência como {candidate.title}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
 
-            {/* Education */}
+            {/* Education — PRD-073: real profile data */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -664,13 +643,75 @@ export default function CandidateProfile() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
-                    <h4 className="font-semibold">{candidate.education}</h4>
-                    <p className="text-muted-foreground">Instituição de Ensino</p>
-                  </div>
+                  {profile && profile.education.length > 0 ? (
+                    <div className="space-y-4">
+                      {profile.education.map((edu) => {
+                        const isHighlighted = highlights?.educationIds.includes(edu.id);
+                        return (
+                          <div key={edu.id} className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-semibold">{edu.degree} em {edu.field}</h4>
+                              {isHighlighted && <HighlightBadge />}
+                            </div>
+                            <p className="text-muted-foreground">{edu.institution}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {edu.startYear} - {edu.endYear || 'Em andamento'}
+                              {edu.status && ` (${edu.status})`}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <h4 className="font-semibold">{candidate.education}</h4>
+                      <p className="text-muted-foreground">Instituição de Ensino</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
+
+            {/* Courses — PRD-073: new section */}
+            {profile && profile.courses.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.32 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Award className="w-5 h-5" />
+                      Cursos e Certificações
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {profile.courses.map((course) => {
+                        const isHighlighted = highlights?.courseIds.includes(course.id);
+                        return (
+                          <div key={course.id} className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-medium text-sm">{course.name}</h4>
+                                {isHighlighted && <HighlightBadge />}
+                              </div>
+                              <p className="text-xs text-muted-foreground">{course.institution} ({course.year})</p>
+                            </div>
+                            {course.hours && (
+                              <Badge variant="outline" className="text-xs flex-shrink-0">
+                                {course.hours}h
+                              </Badge>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
             {/* Activity History */}
             <motion.div
@@ -990,7 +1031,7 @@ export default function CandidateProfile() {
               </Card>
             </motion.div>
 
-            {/* Skills */}
+            {/* Skills — PRD-073: real profile data with levels */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1002,22 +1043,34 @@ export default function CandidateProfile() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {candidate.skills.map((skill, index) => {
-                      const level = getSkillLevel(index);
-                      const config = skillLevelConfig[level];
-                      return (
-                        <span
-                          key={skill}
-                          className={cn(
-                            "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
-                            config.bg,
-                            config.text
-                          )}
-                        >
-                          {skill} <span className="ml-1 opacity-70">({level})</span>
-                        </span>
-                      );
-                    })}
+                    {profile && profile.skills.length > 0
+                      ? profile.skills.map((skill) => {
+                          const isHighlighted = highlights?.skillIds.includes(skill.id);
+                          const colors = skillLevelColors[skill.level] || skillLevelColors.intermediario;
+                          return (
+                            <span
+                              key={skill.id}
+                              className={cn(
+                                "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium gap-1",
+                                colors.bg,
+                                colors.text
+                              )}
+                            >
+                              {skill.name}
+                              <span className="opacity-70">({getSkillLevelLabel(skill.level)})</span>
+                              {isHighlighted && <Star className="w-3 h-3 fill-amber-500 text-amber-500 ml-0.5" />}
+                            </span>
+                          );
+                        })
+                      : candidate.skills.map((skill) => (
+                          <span
+                            key={skill}
+                            className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-slate-100 text-slate-600"
+                          >
+                            {skill}
+                          </span>
+                        ))
+                    }
                   </div>
                 </CardContent>
               </Card>

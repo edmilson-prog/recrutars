@@ -143,7 +143,7 @@ export function CurriculumPreview({
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-cyan-500" />
-                Preview do Currículo
+                Preview do Perfil Profissional
               </DialogTitle>
             </DialogHeader>
 
@@ -151,7 +151,7 @@ export function CurriculumPreview({
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Este é o preview de como as empresas visualizam seu currículo.
+                Este é o preview de como as empresas visualizam seu perfil profissional.
               </AlertDescription>
             </Alert>
 
@@ -426,7 +426,7 @@ export function CurriculumPreview({
               sortedCourses.length === 0 && (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">
-                    Este currículo ainda não possui informações preenchidas.
+                    Seu perfil ainda não possui informações preenchidas.
                   </p>
                 </div>
               )}

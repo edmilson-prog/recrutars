@@ -1,7 +1,7 @@
-// PRD-022: Página de Edição de Currículo
+// PRD-073: Página de Perfil Profissional Unificado
 
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -21,6 +21,10 @@ import {
   ExternalLink,
   Link as LinkIcon,
   FileText,
+  MapPin,
+  DollarSign,
+  ChevronsUpDown,
+  Target,
 } from 'lucide-react';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -53,10 +57,23 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Switch } from '@/components/ui/switch';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from 'sonner';
 
+import {
+  brazilianStates,
+  jobSectorOptions,
+  jobRoleOptions,
+  workModelOptions,
+  contractTypeOptions,
+} from '@/data/settingsConfig';
+import { brazilianCitiesByState } from '@/data/brazilianCities';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
+
 import { useAuth } from '@/contexts/AuthContext';
-import { useCurriculum, useUpdateCurriculum, useCreateCurriculum } from '@/hooks/useCurriculumsQuery';
+import { useProfile, useEnsureProfile, useUpdateCurriculum } from '@/hooks/useCurriculumsQuery';
 import type {
   Curriculum,
   ExperienceWithCurrent,
@@ -76,27 +93,6 @@ import {
 } from '@/types/curriculum';
 import { calculateCompleteness, getProgressColor } from '@/utils/curriculumCompleteness';
 import { Progress } from '@/components/ui/progress';
-
-// Template para novo currículo
-const newCurriculumTemplate: Omit<Curriculum, 'id' | 'candidateId'> = {
-  name: 'Novo Currículo',
-  isDefault: false,
-  isArchived: false,
-  title: '',
-  location: '',
-  email: '',
-  phone: '',
-  linkedin: '',
-  about: '',
-  availability: '',
-  salary: { min: 0, max: 0 },
-  experiences: [],
-  education: [],
-  skills: [],
-  courses: [],
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-};
 
 // Componente de nível de habilidade visual
 function SkillLevelSelector({
@@ -158,19 +154,15 @@ function SkillLevelSelector({
   );
 }
 
-export default function CurriculumEdit() {
+export default function ProfessionalProfile() {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
-  const isNewCurriculum = id === 'novo';
   const { currentCandidate } = useAuth();
   const candidateId = currentCandidate?.id ?? '';
 
   // Service layer hooks
-  const { data: fetchedCurriculum, isLoading: fetchLoading } = useCurriculum(
-    isNewCurriculum ? '' : (id ?? '')
-  );
+  const { data: fetchedProfile, isLoading: fetchLoading } = useProfile(candidateId);
   const updateMutation = useUpdateCurriculum();
-  const createMutation = useCreateCurriculum();
+  const ensureProfileMutation = useEnsureProfile();
 
   // Estado do currículo
   const [curriculum, setCurriculum] = useState<Curriculum | null>(null);
@@ -179,6 +171,9 @@ export default function CurriculumEdit() {
 
   // Estado das abas
   const [activeTab, setActiveTab] = useState('basic');
+
+  // Estado do combobox de cidade
+  const [cityOpen, setCityOpen] = useState(false);
 
   // Estados para modais
   const [experienceDialogOpen, setExperienceDialogOpen] = useState(false);
@@ -192,22 +187,25 @@ export default function CurriculumEdit() {
   const [editingSkill, setEditingSkill] = useState<SkillWithLevel | null>(null);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 
-  // Carregar currículo
+  // Carregar perfil ou garantir que existe
   useEffect(() => {
-    if (isNewCurriculum) {
-      setCurriculum({
-        ...newCurriculumTemplate,
-        id: `curriculum-${Date.now()}`,
-        candidateId,
-      } as Curriculum);
-      setLoading(false);
-    } else if (!fetchLoading) {
-      if (fetchedCurriculum) {
-        setCurriculum({ ...fetchedCurriculum });
+    if (!fetchLoading) {
+      if (fetchedProfile) {
+        setCurriculum({ ...fetchedProfile });
+        setLoading(false);
+      } else if (candidateId && !ensureProfileMutation.isPending) {
+        ensureProfileMutation.mutate({ candidateId });
       }
+    }
+  }, [fetchLoading, fetchedProfile, candidateId]);
+
+  // Quando ensureProfile retorna o perfil criado, usar ele
+  useEffect(() => {
+    if (ensureProfileMutation.data) {
+      setCurriculum({ ...ensureProfileMutation.data });
       setLoading(false);
     }
-  }, [id, isNewCurriculum, fetchLoading, fetchedCurriculum, candidateId]);
+  }, [ensureProfileMutation.data]);
 
   // Handler genérico para atualizar campos
   const updateField = useCallback(
@@ -215,6 +213,21 @@ export default function CurriculumEdit() {
       setCurriculum((prev) =>
         prev ? { ...prev, [field]: value, updatedAt: new Date().toISOString() } : null
       );
+    },
+    []
+  );
+
+  // Toggle para campos de array (checkboxes de interesses)
+  const toggleArrayField = useCallback(
+    (field: keyof Curriculum, value: string) => {
+      setCurriculum((prev) => {
+        if (!prev) return null;
+        const current = (prev[field] as string[]) || [];
+        const updated = current.includes(value)
+          ? current.filter((v) => v !== value)
+          : [...current, value];
+        return { ...prev, [field]: updated, updatedAt: new Date().toISOString() };
+      });
     },
     []
   );
@@ -345,21 +358,20 @@ export default function CurriculumEdit() {
     toast.success('Curso removido.');
   };
 
-  // Salvar currículo
+  // Salvar perfil
   const handleSave = async () => {
     if (!curriculum) return;
 
+    // Compor location a partir de city+state para backward compat
+    const composedLocation = [curriculum.city, curriculum.state].filter(Boolean).join(', ');
+    const updatedCurriculum = { ...curriculum, location: composedLocation || curriculum.location };
+
     setSaving(true);
     try {
-      if (isNewCurriculum) {
-        const { id: _id, createdAt: _ca, updatedAt: _ua, ...rest } = curriculum;
-        await createMutation.mutateAsync(rest);
-      } else {
-        await updateMutation.mutateAsync({ id: curriculum.id, updates: curriculum });
-      }
-      toast.success('Currículo salvo com sucesso!');
+      await updateMutation.mutateAsync({ id: curriculum.id, updates: updatedCurriculum });
+      toast.success('Perfil salvo com sucesso!');
     } catch {
-      toast.error('Erro ao salvar currículo.');
+      toast.error('Erro ao salvar perfil.');
     } finally {
       setSaving(false);
     }
@@ -380,8 +392,8 @@ export default function CurriculumEdit() {
       <DashboardLayout userType="candidate">
         <div className="flex flex-col items-center justify-center h-64">
           <p className="text-muted-foreground mb-4">Currículo não encontrado.</p>
-          <Button onClick={() => navigate('/candidato/curriculos')}>
-            Voltar para currículos
+          <Button onClick={() => navigate('/candidato')}>
+            Voltar ao Dashboard
           </Button>
         </div>
       </DashboardLayout>
@@ -399,15 +411,15 @@ export default function CurriculumEdit() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/candidato/curriculos')}
+              onClick={() => navigate('/candidato')}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
               <h1 className="text-2xl font-bold">
-                {isNewCurriculum ? 'Novo Currículo' : 'Editar Currículo'}
+                Perfil Profissional
               </h1>
-              <p className="text-muted-foreground">{curriculum.name}</p>
+              <p className="text-muted-foreground">{curriculum.title || 'Complete seu perfil profissional'}</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -434,6 +446,18 @@ export default function CurriculumEdit() {
             <TabsTrigger value="basic" className="gap-2">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Informações</span>
+            </TabsTrigger>
+            <TabsTrigger value="location" className="gap-2">
+              <MapPin className="h-4 w-4" />
+              <span className="hidden sm:inline">Localização</span>
+            </TabsTrigger>
+            <TabsTrigger value="salary" className="gap-2">
+              <DollarSign className="h-4 w-4" />
+              <span className="hidden sm:inline">Salário</span>
+            </TabsTrigger>
+            <TabsTrigger value="interests" className="gap-2">
+              <Target className="h-4 w-4" />
+              <span className="hidden sm:inline">Interesses</span>
             </TabsTrigger>
             <TabsTrigger value="experience" className="gap-2">
               <Briefcase className="h-4 w-4" />
@@ -484,16 +508,7 @@ export default function CurriculumEdit() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome do Currículo</Label>
-                    <Input
-                      id="name"
-                      value={curriculum.name}
-                      onChange={(e) => updateField('name', e.target.value)}
-                      placeholder="Ex: Currículo Principal"
-                    />
-                  </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="title">Título Profissional</Label>
                     <Input
                       id="title"
@@ -527,16 +542,7 @@ export default function CurriculumEdit() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Localização</Label>
-                    <Input
-                      id="location"
-                      value={curriculum.location}
-                      onChange={(e) => updateField('location', e.target.value)}
-                      placeholder="São Paulo, SP"
-                    />
-                  </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="linkedin">LinkedIn</Label>
                     <Input
                       id="linkedin"
@@ -558,7 +564,7 @@ export default function CurriculumEdit() {
                   />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="availability">Disponibilidade</Label>
                     <Select
@@ -578,11 +584,133 @@ export default function CurriculumEdit() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Localização */}
+          <TabsContent value="location" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Localização</CardTitle>
+                <CardDescription>
+                  Cidade e disponibilidade para mudança.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="salaryMin">Pretensão Mínima (R$)</Label>
+                    <Label htmlFor="prof-state">Estado</Label>
+                    <Select
+                      value={curriculum.state || '__none__'}
+                      onValueChange={(value) => {
+                        const newState = value === '__none__' ? '' : value;
+                        setCurriculum((prev) =>
+                          prev ? { ...prev, state: newState, city: '' } : null
+                        );
+                      }}
+                    >
+                      <SelectTrigger id="prof-state">
+                        <SelectValue placeholder="Selecione o estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {brazilianStates.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="prof-city">Cidade</Label>
+                    <Popover open={cityOpen} onOpenChange={setCityOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="prof-city"
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={cityOpen}
+                          className="w-full justify-between font-normal"
+                          disabled={!curriculum.state}
+                        >
+                          {curriculum.city || 'Selecione a cidade...'}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar cidade..." />
+                          <CommandList>
+                            <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
+                            <CommandGroup>
+                              {(brazilianCitiesByState[curriculum.state || ''] || []).map((city) => (
+                                <CommandItem
+                                  key={city}
+                                  value={city}
+                                  onSelect={() => {
+                                    setCurriculum((prev) =>
+                                      prev ? { ...prev, city } : null
+                                    );
+                                    setCityOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      'mr-2 h-4 w-4',
+                                      curriculum.city === city ? 'opacity-100' : 'opacity-0'
+                                    )}
+                                  />
+                                  {city}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    {!curriculum.state && (
+                      <p className="text-xs text-muted-foreground">Selecione um estado primeiro</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
+                  <div>
+                    <Label className="font-medium">Disponível para Mudança</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Indica se você aceitaria mudar de cidade/estado para uma oportunidade
+                    </p>
+                  </div>
+                  <Switch
+                    checked={curriculum.openToRelocation || false}
+                    onCheckedChange={(checked) => updateField('openToRelocation', checked)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Salário */}
+          <TabsContent value="salary" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Expectativa Salarial</CardTitle>
+                <CardDescription>
+                  Faixa salarial pretendida.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="prof-salaryMin">Salário Mínimo (R$)</Label>
                     <Input
-                      id="salaryMin"
+                      id="prof-salaryMin"
                       type="number"
+                      min={0}
+                      max={100000}
+                      placeholder="Ex: 3000"
                       value={curriculum.salary?.min || ''}
                       onChange={(e) =>
                         updateField('salary', {
@@ -590,14 +718,17 @@ export default function CurriculumEdit() {
                           min: parseInt(e.target.value) || 0,
                         })
                       }
-                      placeholder="8000"
                     />
+                    <p className="text-xs text-muted-foreground">Valor mínimo pretendido</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="salaryMax">Pretensão Máxima (R$)</Label>
+                    <Label htmlFor="prof-salaryMax">Salário Máximo (R$)</Label>
                     <Input
-                      id="salaryMax"
+                      id="prof-salaryMax"
                       type="number"
+                      min={0}
+                      max={100000}
+                      placeholder="Ex: 8000"
                       value={curriculum.salary?.max || ''}
                       onChange={(e) =>
                         updateField('salary', {
@@ -605,12 +736,126 @@ export default function CurriculumEdit() {
                           max: parseInt(e.target.value) || 0,
                         })
                       }
-                      placeholder="15000"
                     />
+                    <p className="text-xs text-muted-foreground">Valor máximo pretendido</p>
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
+                  <div>
+                    <Label className="font-medium">Aceita Negociar</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Indicar se você está aberto a negociação salarial
+                    </p>
+                  </div>
+                  <Switch
+                    checked={curriculum.salaryNegotiable || false}
+                    onCheckedChange={(checked) => updateField('salaryNegotiable', checked)}
+                  />
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Tab: Interesses */}
+          <TabsContent value="interests" className="mt-6">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Áreas de Interesse</CardTitle>
+                  <CardDescription>
+                    Selecione os setores e funções que mais te interessam.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Setores Preferidos</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {jobSectorOptions.map((option) => (
+                        <div key={option.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`sector-${option.value}`}
+                            checked={(curriculum.preferredSectors || []).includes(option.value)}
+                            onCheckedChange={() => toggleArrayField('preferredSectors', option.value)}
+                          />
+                          <Label htmlFor={`sector-${option.value}`} className="text-sm font-normal cursor-pointer">
+                            {option.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Funções Desejadas</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {jobRoleOptions.map((option) => (
+                        <div key={option.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`role-${option.value}`}
+                            checked={(curriculum.preferredRoles || []).includes(option.value)}
+                            onCheckedChange={() => toggleArrayField('preferredRoles', option.value)}
+                          />
+                          <Label htmlFor={`role-${option.value}`} className="text-sm font-normal cursor-pointer">
+                            {option.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Modelo de Trabalho</CardTitle>
+                  <CardDescription>
+                    Preferências de modalidade e tipo de contrato.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Modalidade</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {workModelOptions.map((option) => (
+                        <div key={option.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`work-${option.value}`}
+                            checked={(curriculum.workModel || []).includes(option.value)}
+                            onCheckedChange={() => toggleArrayField('workModel', option.value)}
+                          />
+                          <Label htmlFor={`work-${option.value}`} className="text-sm font-normal cursor-pointer">
+                            {option.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Tipo de Contrato</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {contractTypeOptions.map((option) => (
+                        <div key={option.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`contract-${option.value}`}
+                            checked={(curriculum.contractType || []).includes(option.value)}
+                            onCheckedChange={() => toggleArrayField('contractType', option.value)}
+                          />
+                          <Label htmlFor={`contract-${option.value}`} className="text-sm font-normal cursor-pointer">
+                            {option.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Tab: Experiência */}

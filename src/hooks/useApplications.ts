@@ -3,12 +3,13 @@
  * PRD-007: Candidatura a Vagas
  * PRD-009: Adicionado cancelApplication para desistência
  * PRD-069: Migrated from mockData to service layer hooks
+ * PRD-073: Added createApplicationAsync for highlights flow
  *
  * This hook wraps the new React Query hooks from useApplicationsQuery
  * while maintaining backward compatibility with existing consumers.
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import {
   useApplicationsByCandidate,
   useCreateApplication,
@@ -62,6 +63,24 @@ export function useApplications(candidateId: string) {
     return newApp;
   }, [candidateId, createMutation]);
 
+  /** Async version that waits for the real Application (with Supabase UUID) */
+  const createApplicationAsync = useCallback(async (
+    jobId: string,
+    jobTitle: string,
+    companyName: string,
+    candidateName: string,
+    message?: string
+  ): Promise<Application> => {
+    return createMutation.mutateAsync({
+      jobId,
+      candidateId,
+      candidateName,
+      jobTitle,
+      companyName,
+      message,
+    });
+  }, [candidateId, createMutation]);
+
   const cancelApplication = useCallback((applicationId: string) => {
     updateStatusMutation.mutate({
       id: applicationId,
@@ -75,6 +94,7 @@ export function useApplications(candidateId: string) {
     hasApplied,
     getApplication,
     createApplication,
+    createApplicationAsync,
     cancelApplication,
   };
 }

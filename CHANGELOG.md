@@ -5,6 +5,66 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-02-10 "Consolidation"
+
+### Changed
+- **Campos movidos de "Minha Conta" para "Perfil Profissional"** — Reorganizacao de tabs do candidato
+  - Tab Localizacao (Estado, Cidade, Disponivel para Mudanca) movida para Perfil Profissional
+  - Tab Salario (Min, Max, Aceita Negociar) movida para Perfil Profissional
+  - Tab Interesses (Setores, Funcoes, Modalidade, Contrato) movida para Perfil Profissional
+  - Campos duplicados removidos de "Minha Conta" (Cargo/Titulo, LinkedIn, Sobre mim)
+  - Migracao de banco: colunas `city`, `state`, `open_to_relocation`, `salary_negotiable`, `preferred_sectors`, `preferred_roles`, `work_model`, `contract_type` adicionadas a tabela `curriculums`
+  - Dados migrados de `candidates` para `curriculums` automaticamente
+  - Sincronizacao bidirecional: ao salvar Perfil Profissional, tabela `candidates` e atualizada
+  - Perfil Profissional: 8 tabs (Informacoes, Localizacao, Salario, Interesses, Experiencia, Formacao, Habilidades, Cursos)
+  - Minha Conta: 5 tabs (Perfil, Privacidade, Conta, Aparencia, Plano)
+  - Imports e estado limpos em ambos os arquivos
+- **Calculo de completude reorganizado** — De 5 secoes (20% cada) para 7 secoes (~14.3% cada) alinhadas com as tabs do Perfil Profissional
+  - Secao "Informacoes basicas" desmembrada em 3 secoes: Informacoes pessoais, Localizacao, Disponibilidade e Salario
+  - Nova secao "Interesses profissionais" (opcional) — agora contabilizada na completude
+  - Secao "Cursos/Certificacoes" removida do calculo (inflava 20% desproporcional; cursos continuam visiveis na UI)
+  - Limiares de cor atualizados: verde ≥86%, amarelo ≥57%, laranja ≥29%, vermelho <29%
+  - Mensagens motivacionais ajustadas para os novos percentuais
+  - Valores possiveis: 0%, 14%, 29%, 43%, 57%, 71%, 86%, 100%
+
+## [1.9.0] - 2026-02-10 "Monolith"
+
+### Changed
+- **Perfil Profissional Unificado (PRD-073)** — Modelo de multiplos curriculos (1:N) substituido por perfil unico (1:1) por candidato
+  - Migracao de banco: consolidacao de curriculos + constraint UNIQUE em `candidate_id`
+  - Nova tabela `application_highlights` com RLS para destaques customizaveis por candidatura
+  - Service layer refatorado: `getProfile()`, `ensureProfile()` substituem operacoes multi-curriculo
+  - React Query hooks simplificados: `useProfile()`, `useEnsureProfile()` (removidos: useCurriculums, useDeleteCurriculum, useSetDefaultCurriculum, useCreateCurriculum)
+  - Pagina `CurriculumEdit.tsx` renomeada para `ProfessionalProfile.tsx` com fluxo de perfil unico
+  - Rota `/candidato/perfil` aponta para perfil profissional; `/candidato/conta` para configuracoes
+  - Sidebar: "Curriculos" → "Meu Perfil"
+  - Dashboard: secao de completude agora referencia "Perfil Profissional"
+  - Todos os textos user-facing atualizados (CurriculumPreview, ExportPDF, ImportCV, Profile, FAQ, Help)
+
+### Added
+- **Destaques de candidatura** — Candidatos podem destacar itens do perfil (experiencias, formacao, habilidades, cursos) ao se candidatar a uma vaga
+  - Highlights service (`src/services/highlights/`) com interface + implementacao Supabase
+  - React Query hooks (`useApplicationHighlights`, `useSetApplicationHighlights`)
+  - Componente `HighlightsSelector` com secoes colapsaveis e checkboxes
+  - `ApplicationModal` com step 2 para selecao de destaques
+  - `JobDetails` integrado: perfil carregado, highlights salvos apos criacao da candidatura
+- **Visao da empresa com perfil real** — `CandidateProfile` da empresa agora exibe dados reais do perfil profissional
+  - Experiencias, formacao, habilidades com niveis reais (substituindo dados mock/genericos)
+  - Nova secao de Cursos e Certificacoes
+  - `HighlightBadge` dourado nos itens destacados pelo candidato
+- **Rota `/candidato/conta`** para pagina de configuracoes (antiga Profile.tsx)
+- Redirect de rotas legadas (`/candidato/curriculos`, `/candidato/curriculos/:id`) para `/candidato/perfil`
+
+### Removed
+- `generateMockExperiences()` — Dados fictícios de experiencia substituidos por perfil real
+- `getSkillLevel()` com niveis hardcoded por indice — Habilidades agora usam niveis reais do perfil
+- `getCurriculums()`, `deleteCurriculum()`, `setDefault()`, `createCurriculum()` do service
+- `useCurriculums()`, `useDeleteCurriculum()`, `useSetDefaultCurriculum()`, `useCreateCurriculum()` dos hooks
+- Campo "Nome do Curriculo" do formulario de edicao
+- Template `newCurriculumTemplate` para criacao de curriculo
+
+---
+
 ## [1.8.0] - 2026-02-08
 
 ### Changed

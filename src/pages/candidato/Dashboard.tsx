@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useApplicationsByCandidate } from '@/hooks/useApplicationsQuery';
 import { useUnreadCount } from '@/hooks/useMessagesQuery';
-import { useCurriculums } from '@/hooks/useCurriculumsQuery';
+import { useProfile } from '@/hooks/useCurriculumsQuery';
 import { useUpdateCandidate } from '@/hooks/useCandidatesQuery';
 import { calculateProfileCompletion } from '@/utils/profileCompleteness';
 import { calculateCompleteness } from '@/utils/curriculumCompleteness';
@@ -44,7 +44,7 @@ export default function CandidateDashboard() {
   // Fetch data from service layer
   const { data: candidateApplications = [], isLoading: isLoadingApps } = useApplicationsByCandidate(candidateId);
   const { data: unreadCount = 0 } = useUnreadCount(userId);
-  const { data: curriculums = [], isLoading: isLoadingCurriculums } = useCurriculums(candidateId);
+  const { data: profile, isLoading: isLoadingProfile } = useProfile(candidateId);
   const updateCandidateMutation = useUpdateCandidate();
 
   // Gauge-Pro result from localStorage
@@ -105,12 +105,9 @@ export default function CandidateDashboard() {
     );
   }
 
-  // Completude do currículo padrão
-  const defaultCurriculum = curriculums.find(
-    c => c.candidateId === candidateId && c.isDefault && !c.isArchived
-  );
-  const curriculumCompletion = defaultCurriculum
-    ? calculateCompleteness(defaultCurriculum).percentage
+  // Completude do perfil profissional
+  const curriculumCompletion = profile
+    ? calculateCompleteness(profile).percentage
     : 0;
 
   // Compute stats from fetched data
@@ -189,33 +186,33 @@ export default function CandidateDashboard() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold text-foreground">Completude do Currículo</h2>
+                <h2 className="text-xl font-semibold text-foreground">Completude do Perfil Profissional</h2>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <HelpCircle className="w-4 h-4 text-muted-foreground/50 cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-xs">
-                    <p>Mostra o progresso do seu currículo padrão. Currículos completos aumentam o interesse dos recrutadores.</p>
+                    <p>Mostra o progresso do seu perfil profissional. Perfis completos aumentam o interesse dos recrutadores.</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <p className="text-muted-foreground">Currículos completos atraem mais recrutadores</p>
+              <p className="text-muted-foreground">Perfis completos atraem mais recrutadores</p>
             </div>
             <Button asChild variant="outline">
-              <Link to="/candidato/curriculos">
-                Gerenciar Currículos
+              <Link to="/candidato/perfil">
+                Editar Perfil Profissional
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
           </div>
-          {defaultCurriculum ? (
+          {profile ? (
             <div className="flex items-center gap-4">
               <Progress value={curriculumCompletion} className="flex-1 h-3" />
               <span className="text-2xl font-bold text-foreground">{curriculumCompletion}%</span>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Crie seu primeiro currículo para começar a se candidatar às vagas.
+              Complete seu perfil profissional para se candidatar às vagas.
             </p>
           )}
         </motion.div>

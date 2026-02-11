@@ -82,7 +82,7 @@ const companyNav: NavItem[] = [
 
 const candidateNav: NavItem[] = [
   { href: '/candidato', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/candidato/curriculos', label: 'Currículos', icon: FileText },
+  { href: '/candidato/perfil', label: 'Meu Perfil', icon: FileText },
   { href: '/candidato/vagas-recomendadas', label: 'Vagas para Você', icon: Sparkles, countKey: 'recommendations' },
   { href: '/candidato/vagas', label: 'Buscar Vagas', icon: Search },
   { href: '/candidato/vagas-salvas', label: 'Vagas Salvas', icon: Heart, countKey: 'savedJobs' },
@@ -192,7 +192,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   const getProfileRoute = () => {
     switch (userType) {
-      case 'candidate': return '/candidato/perfil';
+      case 'candidate': return '/candidato/conta';
       case 'company': return '/empresa/configuracoes';
       case 'admin': return '/admin/configuracoes';
     }
@@ -375,7 +375,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate(getProfileRoute())}>
                     <User className="w-4 h-4 mr-2" />
-                    Perfil
+                    Conta
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />

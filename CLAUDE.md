@@ -38,8 +38,8 @@ src/
 │   ├── landing/        # Landing page sections
 │   └── layout/         # DashboardLayout wrapper
 ├── contexts/           # AuthContext (Supabase Auth)
-├── hooks/              # 22 React Query hooks + utility hooks
-├── services/           # Service layer (21 Supabase modules)
+├── hooks/              # 23 React Query hooks + utility hooks
+├── services/           # Service layer (22 Supabase modules)
 ├── data/               # Reference/config data (18 files — NOT mocks)
 ├── lib/                # utils.ts, supabase.ts, supabaseConverters.ts, aiAgent/, rbac.ts
 └── types/              # database.ts (Supabase schema), gaugePro.ts, disc.ts
@@ -53,7 +53,7 @@ sql/
 - Public: `/`, `/login`, `/cadastro`, `/como-funciona`, `/planos`
 - Admin: `/admin/*`
 - Company: `/empresa/*` (vagas, candidatos, testes, equipes, mensagens)
-- Candidate: `/candidato/*` (perfil, vagas, candidaturas, testes, gauge-pro)
+- Candidate: `/candidato/*` (perfil profissional, conta, vagas, candidaturas, testes, gauge-pro)
 
 ### Key Patterns
 - **Auth**: Supabase Auth via AuthContext. `useAuth()` provides `user`, `isAuthenticated`, `loading`, `login(email, password)`, `logout()`, `signUp(params)`, `resetPassword(email)`, `currentCompany`, `currentCandidate`
@@ -76,9 +76,9 @@ src/services/
     {module}Service.supabase.ts -- Supabase implementation
 ```
 
-**21 modules:** jobs, applications, candidates, companies, users, messages, interviews, favorites, notifications, tickets, assessments, gaugePro, behavioralTests, plans, rbac, featureFlags, reports, gamification, teams, curriculums, settings
+**22 modules:** jobs, applications, candidates, companies, users, messages, interviews, favorites, notifications, tickets, assessments, gaugePro, behavioralTests, plans, rbac, featureFlags, reports, gamification, teams, curriculums, highlights, settings
 
-**React Query hooks** (src/hooks/use*Query.ts): 22 hook files with query key factories, pagination, mutations, and cache invalidation.
+**React Query hooks** (src/hooks/use*Query.ts): 23 hook files with query key factories, pagination, mutations, and cache invalidation.
 
 All modules point directly to Supabase — no mock toggle, no mock implementations.
 
@@ -124,8 +124,12 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here
 ## Migration Status
 
 Supabase migration is **complete** (v1.0.0 "Genesis"). All 10 PRDs (063-072) done.
+PRD-073 (Perfil Profissional Unificado) **complete** (v1.9.0 "Monolith").
 
 - mockData.ts deleted, 20 .mock.ts files deleted, service factories simplified
 - All UI modules consume Supabase via service layer + React Query hooks
 - Reference/config data (18 files in src/data/) stays as bundled constants
 - RBAC engine uses injectable data store via `configureRBAC()` in `src/lib/rbac.ts`
+- Curriculum model: 1:1 per candidate (UNIQUE constraint on candidate_id)
+- Application highlights: candidates can highlight profile items per application
+- Routes: `/candidato/perfil` = professional profile, `/candidato/conta` = account settings
