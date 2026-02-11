@@ -262,7 +262,7 @@ export default function HowItWorksPage() {
         </div>
 
         {/* Card de Introdução */}
-        <section className="py-12">
+        <section className="relativepy-12">
           <div className="container">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -281,7 +281,7 @@ export default function HowItWorksPage() {
         </section>
 
         {/* Seção Para Empresas */}
-        <section className="py-16">
+        <section className="relativepy-16">
           <div className="container">
             <div className="max-w-4xl mx-auto">
               <motion.div
@@ -313,7 +313,7 @@ export default function HowItWorksPage() {
         </section>
 
         {/* Seção Para Candidatos */}
-        <section className="py-16 bg-muted/30">
+        <section className="relativepy-16 bg-muted/30">
           <div className="container">
             <div className="max-w-4xl mx-auto">
               <motion.div
@@ -345,7 +345,7 @@ export default function HowItWorksPage() {
         </section>
 
         {/* Seção Nossa Tecnologia */}
-        <section className="py-16">
+        <section className="relativepy-16">
           <div className="container">
             <div className="max-w-4xl mx-auto">
               <motion.div
@@ -379,7 +379,7 @@ export default function HowItWorksPage() {
         </section>
 
         {/* Seção Por Que Funciona */}
-        <section className="py-16 bg-muted/30">
+        <section className="relativepy-16 bg-muted/30">
           <div className="container">
             <div className="max-w-4xl mx-auto">
               <motion.div
@@ -421,7 +421,7 @@ export default function HowItWorksPage() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-16">
+        <section className="relativepy-16">
           <div className="container">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -449,7 +449,7 @@ export default function HowItWorksPage() {
         </section>
 
         {/* Contato Section */}
-        <section className="py-12 border-t">
+        <section className="relativepy-12 border-t">
           <div className="container">
             <div className="max-w-4xl mx-auto text-center">
               <motion.div

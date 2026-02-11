@@ -198,7 +198,7 @@ export default function CorporateTests() {
         </div>
 
         {/* Stats */}
-        <section className="py-16 bg-muted/30">
+        <section className="relativepy-16 bg-muted/30">
           <div className="container">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {stats.map((stat, index) => (
@@ -222,7 +222,7 @@ export default function CorporateTests() {
         </section>
 
         {/* What is the Behavioral Test */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="max-w-4xl mx-auto">
               <div className="bg-card rounded-2xl shadow-soft p-8 md:p-12">
@@ -244,7 +244,7 @@ export default function CorporateTests() {
         </section>
 
         {/* Behavioral Dimensions */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">As 4 Dimensões Comportamentais</h2>
@@ -282,7 +282,7 @@ export default function CorporateTests() {
         </section>
 
         {/* Benefits */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Benefícios para sua Empresa</h2>
@@ -313,7 +313,7 @@ export default function CorporateTests() {
         </section>
 
         {/* How It Works */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Como Funciona</h2>
@@ -350,7 +350,7 @@ export default function CorporateTests() {
         </section>
 
         {/* Report Preview */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Relatório Detalhado</h2>
@@ -425,7 +425,7 @@ export default function CorporateTests() {
         </section>
 
         {/* Use Cases */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Casos de Uso</h2>
@@ -460,7 +460,7 @@ export default function CorporateTests() {
         </section>
 
         {/* Differentials */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Diferenciais Gauge-Pro</h2>
@@ -491,7 +491,7 @@ export default function CorporateTests() {
         </section>
 
         {/* Pricing */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Planos e Preços</h2>
@@ -543,7 +543,7 @@ export default function CorporateTests() {
         </section>
 
         {/* FAQ */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Perguntas Frequentes</h2>
@@ -579,7 +579,7 @@ export default function CorporateTests() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 gradient-hero">
+        <section className="relativepy-24 gradient-hero">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center text-primary-foreground max-w-3xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Comece a avaliar com ciência</h2>

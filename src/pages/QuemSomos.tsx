@@ -78,7 +78,7 @@ export default function QuemSomos() {
         </div>
 
         {/* Nossa História */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="max-w-4xl mx-auto">
               <h2 className="text-3xl font-bold text-foreground mb-8 text-center">Nossa História</h2>
@@ -95,7 +95,7 @@ export default function QuemSomos() {
         </section>
 
         {/* Problema e Solução */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
               <motion.div
@@ -147,7 +147,7 @@ export default function QuemSomos() {
         </section>
 
         {/* Diferenciais */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Nossos Diferenciais</h2>
@@ -178,7 +178,7 @@ export default function QuemSomos() {
         </section>
 
         {/* Para Quem Trabalhamos */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Para Quem Trabalhamos</h2>
@@ -248,7 +248,7 @@ export default function QuemSomos() {
         </section>
 
         {/* Compromisso */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="max-w-4xl mx-auto text-center">
               <h2 className="text-3xl font-bold text-foreground mb-8">Nosso Compromisso</h2>
@@ -283,7 +283,7 @@ export default function QuemSomos() {
         </section>
 
         {/* Liderança */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-12">
               <h2 className="text-3xl font-bold text-foreground mb-4">Conheça Nossa Liderança</h2>
@@ -310,7 +310,7 @@ export default function QuemSomos() {
         </section>
 
         {/* CTA Contato */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="max-w-4xl mx-auto text-center">
               <h2 className="text-3xl font-bold text-foreground mb-4">Junte-se a Nós</h2>

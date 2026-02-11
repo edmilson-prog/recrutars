@@ -204,7 +204,7 @@ export default function ForCompanies() {
         </div>
 
         {/* Stats */}
-        <section className="py-16 bg-muted/30">
+        <section className="relativepy-16 bg-muted/30">
           <div className="container">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {stats.map((stat, index) => (
@@ -228,7 +228,7 @@ export default function ForCompanies() {
         </section>
 
         {/* Features */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Tudo que você precisa para recrutar melhor</h2>
@@ -259,7 +259,7 @@ export default function ForCompanies() {
         </section>
 
         {/* AI Features */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 text-secondary mb-4">
@@ -299,7 +299,7 @@ export default function ForCompanies() {
         </section>
 
         {/* How It Works */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Como funciona</h2>
@@ -335,7 +335,7 @@ export default function ForCompanies() {
         </section>
 
         {/* Advanced Tools */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Ferramentas avançadas</h2>
@@ -366,7 +366,7 @@ export default function ForCompanies() {
         </section>
 
         {/* Plans Preview */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Planos para cada necessidade</h2>
@@ -422,7 +422,7 @@ export default function ForCompanies() {
         </section>
 
         {/* Testimonials */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">O que nossos clientes dizem</h2>
@@ -460,7 +460,7 @@ export default function ForCompanies() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 gradient-hero">
+        <section className="relativepy-24 gradient-hero">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center text-primary-foreground max-w-3xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Pronto para contratar melhor?</h2>

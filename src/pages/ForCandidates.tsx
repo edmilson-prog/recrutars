@@ -184,7 +184,7 @@ export default function ForCandidates() {
         </div>
 
         {/* Benefits */}
-        <section className="py-16 bg-muted/30">
+        <section className="relativepy-16 bg-muted/30">
           <div className="container">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {benefits.map((benefit, index) => (
@@ -208,7 +208,7 @@ export default function ForCandidates() {
         </section>
 
         {/* Behavioral Section */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-12">
               <h2 className="text-3xl font-bold text-foreground mb-4">Descubra seu perfil com o Teste Comportamental</h2>
@@ -253,7 +253,7 @@ export default function ForCandidates() {
         </section>
 
         {/* Features */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Recursos para impulsionar sua carreira</h2>
@@ -284,7 +284,7 @@ export default function ForCandidates() {
         </section>
 
         {/* AI Features */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 text-secondary mb-4">
@@ -324,7 +324,7 @@ export default function ForCandidates() {
         </section>
 
         {/* How It Works */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Como funciona</h2>
@@ -360,7 +360,7 @@ export default function ForCandidates() {
         </section>
 
         {/* Gamification */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Gamificação que recompensa</h2>
@@ -391,7 +391,7 @@ export default function ForCandidates() {
         </section>
 
         {/* Testimonials */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Histórias de sucesso</h2>
@@ -429,7 +429,7 @@ export default function ForCandidates() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 gradient-hero">
+        <section className="relativepy-24 gradient-hero">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center text-primary-foreground max-w-3xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Comece sua jornada agora</h2>

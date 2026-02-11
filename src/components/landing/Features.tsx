@@ -36,7 +36,7 @@ const features = [
 
 export function Features() {
   return (
-    <section className="py-24 bg-muted/50">
+    <section className="relative py-24 bg-muted/50">
       <div className="container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

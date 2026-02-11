@@ -30,7 +30,7 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section className="py-24">
+    <section className="relative py-24">
       <div className="container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

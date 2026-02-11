@@ -73,7 +73,7 @@ export default function MissaoVisaoValores() {
         </div>
 
         {/* Missão e Visão */}
-        <section className="py-24">
+        <section className="relativepy-24">
           <div className="container">
             <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
               <motion.div
@@ -107,7 +107,7 @@ export default function MissaoVisaoValores() {
         </section>
 
         {/* Valores */}
-        <section className="py-24 bg-muted/30">
+        <section className="relativepy-24 bg-muted/30">
           <div className="container">
             <motion.div {...fadeInUp} className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Nossos Valores</h2>
