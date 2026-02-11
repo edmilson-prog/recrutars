@@ -4,12 +4,13 @@
  */
 
 import { motion } from 'framer-motion';
-import { Check, Edit, Power, PowerOff } from 'lucide-react';
+import { Check, Edit, Power, PowerOff, Clock, Percent, RefreshCw, Cloud, CloudOff, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatBRL } from '@/lib/formatters';
-import type { Plan, PlanPeriod } from '@/types';
+import { useSyncPlan } from '@/hooks/useStripeQuery';
+import type { Plan, PlanPeriod, StripeEnvironment } from '@/types';
 
 const PERIOD_LABELS: Record<PlanPeriod, string> = {
   monthly: 'Mensal',
@@ -22,11 +23,20 @@ interface PlanCardProps {
   plan: Plan;
   onEdit: (plan: Plan) => void;
   onToggleStatus: (id: string) => void;
+  onDelete?: (plan: Plan) => void;
   index?: number;
+  stripeEnvironment?: StripeEnvironment;
 }
 
-export function PlanCard({ plan, onEdit, onToggleStatus, index = 0 }: PlanCardProps) {
+export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, index = 0, stripeEnvironment = 'test' }: PlanCardProps) {
   const hasLaunchPrices = plan.launchPrices && Object.values(plan.launchPrices).some(v => v > 0);
+  const isTrial = !!plan.trialDurationDays;
+  const syncPlan = useSyncPlan();
+
+  const isActive = plan.isActive ?? true;
+  const syncedAt = stripeEnvironment === 'test' ? plan.stripeSyncedAtTest : plan.stripeSyncedAtLive;
+  const productId = stripeEnvironment === 'test' ? plan.stripeProductIdTest : plan.stripeProductIdLive;
+  const isSynced = !!productId;
 
   return (
     <motion.div
@@ -35,11 +45,14 @@ export function PlanCard({ plan, onEdit, onToggleStatus, index = 0 }: PlanCardPr
       transition={{ delay: index * 0.1 }}
       className={cn(
         'bg-card rounded-2xl shadow-soft overflow-hidden transition-all hover:shadow-md',
-        !plan.isActive && 'opacity-60'
+        !isActive && 'opacity-60'
       )}
     >
-      {/* Gradient top border */}
-      <div className="h-1.5 bg-gradient-to-r from-cyan-500 to-blue-600" />
+      {/* Gradient top border — cyan/teal for trial, cyan/blue for normal */}
+      <div className={cn(
+        "h-1.5 bg-gradient-to-r",
+        isTrial ? "from-teal-400 to-cyan-500" : "from-cyan-500 to-blue-600"
+      )} />
 
       <div className="p-6 space-y-5">
         {/* Header */}
@@ -56,14 +69,14 @@ export function PlanCard({ plan, onEdit, onToggleStatus, index = 0 }: PlanCardPr
             <p className="text-sm text-muted-foreground">{plan.slug}</p>
           </div>
           <Badge
-            variant={plan.isActive ? 'default' : 'outline'}
+            variant={isActive ? 'default' : 'outline'}
             className={cn(
-              plan.isActive
+              isActive
                 ? 'bg-success/10 text-success border-success/20'
                 : 'bg-destructive/10 text-destructive border-destructive/20'
             )}
           >
-            {plan.isActive ? 'Ativo' : 'Inativo'}
+            {isActive ? 'Ativo' : 'Inativo'}
           </Badge>
         </div>
 
@@ -71,6 +84,52 @@ export function PlanCard({ plan, onEdit, onToggleStatus, index = 0 }: PlanCardPr
         <p className="text-sm text-muted-foreground leading-relaxed">
           {plan.descriptionShort}
         </p>
+
+        {/* PRD-074: Trial & discount info */}
+        {(isTrial || ((plan.discountPercentage ?? 0) > 0)) && (
+          <div className="flex flex-wrap gap-2">
+            {isTrial && (
+              <Badge variant="outline" className="gap-1 text-xs text-teal-600 border-teal-300 dark:text-teal-400 dark:border-teal-700">
+                <Clock className="w-3 h-3" />
+                Trial {plan.trialDurationDays} dias
+              </Badge>
+            )}
+            {!isTrial && (plan.discountPercentage ?? 0) > 0 && (
+              <Badge variant="outline" className="gap-1 text-xs text-green-600 border-green-300 dark:text-green-400 dark:border-green-700">
+                <Percent className="w-3 h-3" />
+                {plan.discountPercentage}% off ({plan.discountMinPeriod}+)
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {/* PRD-075: Stripe sync badge */}
+        {!plan.isFree && (
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className={cn(
+                'gap-1 text-xs',
+                isSynced
+                  ? 'text-blue-600 border-blue-300 dark:text-blue-400 dark:border-blue-700'
+                  : 'text-muted-foreground border-border'
+              )}
+            >
+              {isSynced ? <Cloud className="w-3 h-3" /> : <CloudOff className="w-3 h-3" />}
+              {isSynced ? 'Stripe sincronizado' : 'Nao sincronizado'}
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-xs"
+              disabled={syncPlan.isPending}
+              onClick={() => syncPlan.mutate({ planId: plan.id, environment: stripeEnvironment })}
+            >
+              <RefreshCw className={cn('w-3 h-3 mr-1', syncPlan.isPending && 'animate-spin')} />
+              Sync
+            </Button>
+          </div>
+        )}
 
         {/* Prices grid */}
         <div className="space-y-2">
@@ -141,16 +200,26 @@ export function PlanCard({ plan, onEdit, onToggleStatus, index = 0 }: PlanCardPr
             Editar
           </Button>
           <Button
-            variant={plan.isActive ? 'ghost' : 'default'}
+            variant={isActive ? 'ghost' : 'default'}
             size="sm"
             onClick={() => onToggleStatus(plan.id)}
           >
-            {plan.isActive ? (
+            {isActive ? (
               <PowerOff className="w-4 h-4" />
             ) : (
               <Power className="w-4 h-4" />
             )}
           </Button>
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => onDelete(plan)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </div>
     </motion.div>

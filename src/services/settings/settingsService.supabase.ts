@@ -16,7 +16,17 @@ import type {
 } from './settingsService';
 
 /** Field keys that contain sensitive data — masked on read */
-const SENSITIVE_KEYS = new Set(['apiKey', 'linkedinApiKey', 'webhookSecret']);
+const SENSITIVE_KEYS = new Set([
+  'apiKey',
+  'linkedinApiKey',
+  'webhookSecret',
+  'stripeTestPublishableKey',
+  'stripeTestSecretKey',
+  'stripeTestWebhookSecret',
+  'stripeLivePublishableKey',
+  'stripeLiveSecretKey',
+  'stripeLiveWebhookSecret',
+]);
 const MASK_PLACEHOLDER = '••••';
 
 function maskSensitiveFields(state: ConfigState): ConfigState {

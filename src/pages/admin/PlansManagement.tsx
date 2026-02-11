@@ -4,39 +4,77 @@
  */
 
 import { useState } from 'react';
-import { CreditCard } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CreditCard, Plus, RefreshCw } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { PlanCard } from '@/components/admin/plans/PlanCard';
-import { PlanEditor } from '@/components/admin/plans/PlanEditor';
 import { usePlans } from '@/hooks/usePlans';
+import { useUpdatePlan, useDeletePlan } from '@/hooks/usePlansQuery';
+import { useSyncAllPlans } from '@/hooks/useStripeQuery';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import type { Plan } from '@/types';
+import type { Plan, StripeEnvironment } from '@/types';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
 
 export default function PlansManagement() {
-  const { candidatePlans, companyPlans, updatePlan, togglePlanStatus } = usePlans();
-  const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
-  const [editorOpen, setEditorOpen] = useState(false);
+  const navigate = useNavigate();
+  const { candidatePlans, companyPlans } = usePlans();
+  const updatePlanMutation = useUpdatePlan();
+  const deletePlanMutation = useDeletePlan();
 
-  const handleEdit = (plan: Plan) => {
-    setEditingPlan(plan);
-    setEditorOpen(true);
+  const [stripeEnv, setStripeEnv] = useState<StripeEnvironment>('test');
+  const syncAll = useSyncAllPlans();
+
+  // Delete confirmation
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingPlan, setDeletingPlan] = useState<Plan | null>(null);
+
+  const handleNewPlan = () => navigate('/admin/planos/novo');
+
+  const handleEdit = (plan: Plan) => navigate(`/admin/planos/${plan.id}`);
+
+  const handleToggleStatus = async (id: string) => {
+    const plan = [...candidatePlans, ...companyPlans].find(p => p.id === id);
+    if (!plan) return;
+    const currentActive = (plan as unknown as Record<string, unknown>).isActive ?? (plan as unknown as Record<string, unknown>).is_active ?? true;
+    const newStatus = !currentActive;
+    try {
+      await updatePlanMutation.mutateAsync({ id, updates: { is_active: newStatus } });
+      toast.success(newStatus ? 'Plano ativado.' : 'Plano desativado.');
+    } catch {
+      toast.error('Erro ao alterar status do plano.');
+    }
   };
 
-  const handleCloseEditor = () => {
-    setEditorOpen(false);
-    setEditingPlan(null);
+  const handleDeleteClick = (plan: Plan) => {
+    setDeletingPlan(plan);
+    setDeleteDialogOpen(true);
   };
 
-  const handleSave = (id: string, updates: Partial<Plan>) => {
-    updatePlan(id, updates);
-    toast.success('Plano atualizado com sucesso!');
-  };
-
-  const handleToggleStatus = (id: string) => {
-    togglePlanStatus(id);
-    toast.success('Status do plano alterado.');
+  const handleConfirmDelete = async () => {
+    if (!deletingPlan) return;
+    try {
+      await deletePlanMutation.mutateAsync(deletingPlan.id);
+      toast.success(`Plano "${deletingPlan.name}" excluido.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir plano.');
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeletingPlan(null);
+    }
   };
 
   return (
@@ -44,14 +82,62 @@ export default function PlansManagement() {
       <AdminTabNav />
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <CreditCard className="w-8 h-8 text-cyan-600" />
-            Gestao de Planos
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Configure planos de assinatura para candidatos e empresas
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+              <CreditCard className="w-8 h-8 text-cyan-600" />
+              Gestao de Planos
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Configure planos de assinatura para candidatos e empresas
+            </p>
+          </div>
+          <Button onClick={handleNewPlan} className="bg-cyan-600 hover:bg-cyan-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Plano
+          </Button>
+        </div>
+
+        {/* PRD-075: Stripe environment toggle + sync all */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+            <button
+              className={cn(
+                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                stripeEnv === 'test' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+              onClick={() => setStripeEnv('test')}
+            >
+              Teste
+            </button>
+            <button
+              className={cn(
+                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                stripeEnv === 'live' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+              onClick={() => setStripeEnv('live')}
+            >
+              Producao
+            </button>
+          </div>
+          <Badge variant="outline" className={cn('text-xs', stripeEnv === 'live' ? 'text-red-600 border-red-300' : 'text-blue-600 border-blue-300')}>
+            Stripe: {stripeEnv === 'test' ? 'Teste' : 'Producao'}
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs ml-auto"
+            disabled={syncAll.isPending}
+            onClick={() => {
+              syncAll.mutate(stripeEnv, {
+                onSuccess: () => toast.success('Todos os planos sincronizados com Stripe!'),
+                onError: () => toast.error('Erro ao sincronizar planos com Stripe'),
+              });
+            }}
+          >
+            <RefreshCw className={cn('w-3 h-3 mr-1.5', syncAll.isPending && 'animate-spin')} />
+            {syncAll.isPending ? 'Sincronizando...' : 'Sincronizar Todos'}
+          </Button>
         </div>
 
         {/* Tabs */}
@@ -69,34 +155,57 @@ export default function PlansManagement() {
                   plan={plan}
                   onEdit={handleEdit}
                   onToggleStatus={handleToggleStatus}
+                  onDelete={handleDeleteClick}
                   index={index}
+                  stripeEnvironment={stripeEnv}
                 />
               ))}
             </div>
           </TabsContent>
 
           <TabsContent value="empresa" className="mt-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {companyPlans.map((plan, index) => (
                 <PlanCard
                   key={plan.id}
                   plan={plan}
                   onEdit={handleEdit}
                   onToggleStatus={handleToggleStatus}
+                  onDelete={handleDeleteClick}
                   index={index}
+                  stripeEnvironment={stripeEnv}
                 />
               ))}
             </div>
           </TabsContent>
         </Tabs>
 
-        {/* Plan Editor Dialog */}
-        <PlanEditor
-          plan={editingPlan}
-          open={editorOpen}
-          onClose={handleCloseEditor}
-          onSave={handleSave}
-        />
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Plano</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir o plano{' '}
+                <strong>&quot;{deletingPlan?.name}&quot;</strong> ({deletingPlan?.slug})?
+                Esta acao nao pode ser desfeita. Planos com assinaturas ativas nao podem ser excluidos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleConfirmDelete();
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deletePlanMutation.isPending}
+              >
+                {deletePlanMutation.isPending ? 'Excluindo...' : 'Confirmar Exclusao'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );

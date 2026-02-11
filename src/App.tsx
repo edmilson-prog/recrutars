@@ -49,8 +49,17 @@ import AdminReportsExport from "./pages/admin/ReportsExport";
 // PRD-060: Admin Plans & Subscriptions "Commerce"
 import AdminPlansManagement from "./pages/admin/PlansManagement";
 import AdminPlanCapabilities from "./pages/admin/PlanCapabilities";
+import AdminPlanDetail from "./pages/admin/PlanDetail";
 import AdminSubscriptions from "./pages/admin/Subscriptions";
 import AdminSubscriptionDashboard from "./pages/admin/SubscriptionDashboard";
+
+// PRD-075/076: Stripe Integration & Billing
+import AdminWebhookLog from "./pages/admin/WebhookLog";
+import AdminBillingDashboard from "./pages/admin/BillingDashboard";
+import CompanyCheckoutSuccess from "./pages/empresa/CheckoutSuccess";
+import CompanyCheckoutCancel from "./pages/empresa/CheckoutCancel";
+import CompanyMyPlan from "./pages/empresa/MyPlan";
+import CandidateMyPlan from "./pages/candidato/MyPlan";
 
 // PRD-058: Admin Jobs & Moderation "Sentinel"
 import AdminJobsDashboard from "./pages/admin/JobsDashboard";
@@ -310,6 +319,16 @@ const App = () => (
                 <AdminPlanCapabilities />
               </ProtectedRoute>
             } />
+            <Route path="/admin/planos/novo" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminPlanDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/planos/:id" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminPlanDetail />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/assinaturas" element={
               <ProtectedRoute allowedTypes={['admin']}>
                 <AdminSubscriptions />
@@ -318,6 +337,16 @@ const App = () => (
             <Route path="/admin/assinaturas/dashboard" element={
               <ProtectedRoute allowedTypes={['admin']}>
                 <AdminSubscriptionDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/assinaturas/webhooks" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminWebhookLog />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/assinaturas/billing" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminBillingDashboard />
               </ProtectedRoute>
             } />
 
@@ -525,6 +554,21 @@ const App = () => (
                 <CompanySettings />
               </ProtectedRoute>
             } />
+            <Route path="/empresa/checkout/sucesso" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyCheckoutSuccess />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/checkout/cancelado" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyCheckoutCancel />
+              </ProtectedRoute>
+            } />
+            <Route path="/empresa/meu-plano" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyMyPlan />
+              </ProtectedRoute>
+            } />
             <Route path="/empresa/notificacoes" element={
               <ProtectedRoute allowedTypes={['company']}>
                 <CompanyNotifications />
@@ -617,6 +661,11 @@ const App = () => (
             <Route path="/candidato/configuracoes" element={
               <ProtectedRoute allowedTypes={['candidate']}>
                 <CandidateSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/meu-plano" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateMyPlan />
               </ProtectedRoute>
             } />
             <Route path="/candidato/curriculos" element={<Navigate to="/candidato/perfil" replace />} />

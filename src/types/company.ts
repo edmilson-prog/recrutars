@@ -8,8 +8,8 @@
 // PRD-020: Status da empresa (admin view)
 export type CompanyStatus = 'active' | 'pending' | 'inactive';
 
-// PRD-020: Tipo de plano
-export type CompanyPlanType = 'Essencial Empresas' | 'Seleção Inteligente' | 'Recrutamento Premium';
+// PRD-074: Tipo de plano (reestruturado de 3 para 4 planos)
+export type CompanyPlanType = 'Basico Empresas' | 'Essencial Empresas' | 'Avancar Empresas' | 'Premium Empresas';
 
 export interface Company {
   id: string;

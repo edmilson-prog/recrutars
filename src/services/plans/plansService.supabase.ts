@@ -9,6 +9,7 @@
 import { supabase } from '@/lib/supabase';
 import type {
   Plan,
+  PlanPeriod,
   PlanCapability,
   PlanCapabilityAssignment,
   Subscription,
@@ -18,6 +19,37 @@ import type {
   SubscriptionFilters,
   CreateSubscriptionData,
 } from './plansService';
+
+/** Maps a raw Supabase row (snake_case) to the Plan interface (camelCase). */
+function normalizePlanRow(row: Record<string, unknown>): Plan {
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    slug: row.slug as string,
+    type: row.type as 'candidate' | 'company',
+    description: (row.description as string) ?? '',
+    descriptionShort: (row.description_short as string) ?? '',
+    badge: row.badge as string | undefined,
+    prices: (row.prices as Record<PlanPeriod, number>) ?? { monthly: 0, quarterly: 0, semiannual: 0, annual: 0 },
+    launchPrices: row.launch_prices as Record<PlanPeriod, number> | undefined,
+    launchPriceEndDate: row.launch_price_end_date as string | undefined,
+    isActive: (row.is_active as boolean) ?? true,
+    isFree: (row.is_free as boolean) ?? false,
+    order: (row.sort_order as number) ?? 0,
+    features: (row.features as string[]) ?? [],
+    createdAt: (row.created_at as string) ?? '',
+    trialDurationDays: row.trial_duration_days as number | undefined,
+    discountPercentage: row.discount_percentage as number | undefined,
+    discountMinPeriod: row.discount_min_period as PlanPeriod | undefined,
+    bonusTests: row.bonus_tests as Partial<Record<PlanPeriod, number>> | undefined,
+    stripeProductIdTest: row.stripe_product_id_test as string | undefined,
+    stripeProductIdLive: row.stripe_product_id_live as string | undefined,
+    stripePriceIdsTest: row.stripe_price_ids_test as Partial<Record<PlanPeriod, string>> | undefined,
+    stripePriceIdsLive: row.stripe_price_ids_live as Partial<Record<PlanPeriod, string>> | undefined,
+    stripeSyncedAtTest: row.stripe_synced_at_test as string | undefined,
+    stripeSyncedAtLive: row.stripe_synced_at_live as string | undefined,
+  };
+}
 
 export class SupabasePlansService implements IPlansService {
   async getPlans(type?: 'candidate' | 'company'): Promise<Plan[]> {
@@ -29,7 +61,7 @@ export class SupabasePlansService implements IPlansService {
 
     const { data, error } = await query;
     if (error) throw error;
-    return (data ?? []) as unknown as Plan[];
+    return (data ?? []).map(r => normalizePlanRow(r as Record<string, unknown>));
   }
 
   async getPlan(id: string): Promise<Plan | null> {
@@ -40,7 +72,7 @@ export class SupabasePlansService implements IPlansService {
       .maybeSingle();
 
     if (error) throw error;
-    return (data as unknown as Plan) ?? null;
+    return data ? normalizePlanRow(data as Record<string, unknown>) : null;
   }
 
   async getPlanBySlug(slug: string): Promise<Plan | null> {
@@ -51,7 +83,58 @@ export class SupabasePlansService implements IPlansService {
       .maybeSingle();
 
     if (error) throw error;
-    return (data as unknown as Plan) ?? null;
+    return data ? normalizePlanRow(data as Record<string, unknown>) : null;
+  }
+
+  async updatePlan(id: string, updates: Record<string, unknown>): Promise<Plan> {
+    const { data, error } = await supabase
+      .from('plans')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return normalizePlanRow(data as Record<string, unknown>);
+  }
+
+  async createPlan(data: Record<string, unknown>): Promise<Plan> {
+    const { data: created, error } = await supabase
+      .from('plans')
+      .insert(data)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return normalizePlanRow(created as Record<string, unknown>);
+  }
+
+  async deletePlan(id: string): Promise<void> {
+    // Safety: check for active/trial/past_due subscriptions
+    const { count, error: countError } = await supabase
+      .from('subscriptions')
+      .select('*', { count: 'exact', head: true })
+      .eq('plan_id', id)
+      .in('status', ['active', 'trial', 'past_due']);
+
+    if (countError) throw countError;
+
+    if (count && count > 0) {
+      throw new Error(
+        `Nao e possivel excluir: ${count} assinatura(s) ativa(s) vinculada(s).`
+      );
+    }
+
+    const { data: deleted, error } = await supabase
+      .from('plans')
+      .delete()
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    if (!deleted || deleted.length === 0) {
+      throw new Error('Falha ao excluir plano. Verifique permissoes de admin.');
+    }
   }
 
   async getCapabilities(): Promise<PlanCapability[]> {
@@ -151,6 +234,56 @@ export class SupabasePlansService implements IPlansService {
       .from('subscriptions')
       .update(updates)
       .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as unknown as Subscription;
+  }
+
+  /** PRD-074: Get the trial subscription for a company user. */
+  async getTrialSubscription(companyUserId: string): Promise<Subscription | null> {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', companyUserId)
+      .eq('is_trial', true)
+      .maybeSingle();
+
+    if (error) throw error;
+    return (data as unknown as Subscription) ?? null;
+  }
+
+  /** PRD-074: Create a trial subscription for a company. */
+  async createTrialSubscription(
+    companyUserId: string,
+    userName: string,
+    planId: string,
+  ): Promise<Subscription> {
+    const now = new Date();
+    const trialEnd = new Date(now);
+    trialEnd.setDate(trialEnd.getDate() + 90);
+
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .insert({
+        user_id: companyUserId,
+        user_type: 'company',
+        user_name: userName,
+        plan_id: planId,
+        plan_slug: 'basico-empresas',
+        plan_name: 'Basico Empresas',
+        period: 'monthly',
+        price_paid: 0,
+        start_date: now.toISOString().split('T')[0],
+        end_date: trialEnd.toISOString().split('T')[0],
+        renewal_date: trialEnd.toISOString().split('T')[0],
+        status: 'trial',
+        is_trial: true,
+        trial_start_date: now.toISOString().split('T')[0],
+        trial_end_date: trialEnd.toISOString().split('T')[0],
+        is_early_adopter: false,
+      })
       .select()
       .single();
 

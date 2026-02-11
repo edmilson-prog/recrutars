@@ -10,7 +10,7 @@ import {
   FolderTree, FileQuestion,
   LayoutDashboard, List, CheckCircle, Calendar, UserCheck,
   DollarSign, TrendingUp, Activity, Rss, Download,
-  Settings, CreditCard, BarChart3, ToggleLeft,
+  Settings, CreditCard, BarChart3, ToggleLeft, Webhook,
 } from 'lucide-react';
 
 export interface AdminTab {
@@ -76,6 +76,8 @@ export const ADMIN_TAB_GROUPS: AdminTabGroup[] = [
       { href: '/admin/planos/capabilities', label: 'Features por Plano', icon: List },
       { href: '/admin/assinaturas', label: 'Assinaturas', icon: UserCheck },
       { href: '/admin/assinaturas/dashboard', label: 'Dash Assinaturas', icon: BarChart3 },
+      { href: '/admin/assinaturas/webhooks', label: 'Webhooks', icon: Webhook },
+      { href: '/admin/assinaturas/billing', label: 'Billing', icon: DollarSign },
       { href: '/admin/feature-flags', label: 'Feature Flags', icon: ToggleLeft },
       { href: '/admin/vagas/configuracoes', label: 'Moderação', icon: Shield },
     ],

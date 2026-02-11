@@ -43,6 +43,9 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { BottomNav } from '@/components/navigation';
 import { SkipLink, AccessibilityPanel } from '@/components/accessibility';
 import { TEST_CONFIG } from '@/data/testConfig';
+import { useTrialStatus } from '@/hooks/useTrialStatus';
+import { TrialBadge, TrialIndicator, TrialGuard } from '@/components/trial';
+import { PaymentFailedBanner } from '@/components/billing/PaymentFailedBanner';
 
 interface NavItem {
   href: string;
@@ -144,6 +147,9 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
     currentCandidate?.id ?? '',
     5
   );
+
+  // PRD-074: Trial status for company users
+  const { isTrial, isExpired, daysRemaining, warningLevel } = useTrialStatus();
 
   const navItems = userType === 'admin'
     ? adminNav
@@ -321,6 +327,10 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
               </span>
             </div>
             <div className="flex items-center gap-2">
+              {/* PRD-074: Trial badge for company users */}
+              {userType === 'company' && isTrial && !isExpired && (
+                <TrialBadge daysRemaining={daysRemaining} />
+              )}
               {/* PRD-003-dgn: Painel de acessibilidade */}
               <AccessibilityPanel />
               <ThemeToggle />
@@ -349,12 +359,14 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                             {currentCandidate.plan}
                           </Badge>
                         )}
-                        {userType === 'company' && currentCompany?.plan && currentCompany.plan !== 'Essencial Empresas' && (
+                        {userType === 'company' && currentCompany?.plan && currentCompany.plan !== 'Basico Empresas' && (
                           <Badge className={cn(
                             "text-[10px] px-1.5 py-0 h-4 font-semibold border-0",
-                            currentCompany.plan === 'Recrutamento Premium'
+                            currentCompany.plan === 'Premium Empresas'
                               ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-white"
-                              : "bg-primary/15 text-primary"
+                              : currentCompany.plan === 'Avancar Empresas'
+                                ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white"
+                                : "bg-primary/15 text-primary"
                           )}>
                             {currentCompany.plan}
                           </Badge>
@@ -400,7 +412,23 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
             // Padding bottom extra para bottom nav e footer em mobile
             isMobile && "pb-32"
           )}>
-            {children}
+            {/* PRD-076: Payment failed banner */}
+            {(userType === 'company' || userType === 'candidate') && <PaymentFailedBanner />}
+
+            {/* PRD-074: Trial warning indicator (banner/alert) */}
+            {userType === 'company' && isTrial && !isExpired && warningLevel !== 'low' && (
+              <TrialIndicator
+                warningLevel={warningLevel}
+                daysRemaining={daysRemaining}
+                className="mb-4"
+              />
+            )}
+            {/* PRD-074: Block expired trials from accessing company features */}
+            {userType === 'company' ? (
+              <TrialGuard>{children}</TrialGuard>
+            ) : (
+              children
+            )}
           </div>
         </main>
 

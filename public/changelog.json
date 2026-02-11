@@ -1,12 +1,142 @@
 {
   "versions": [
     {
+      "version": "1.12.2",
+      "codename": "Gateway",
+      "type": "patch",
+      "releaseDate": "2026-02-11",
+      "prd": "PRD-075",
+      "description": "Corrigido status 'Nao sincronizado' que persistia apos sync Stripe em producao. Cache React Query invalidado automaticamente apos sync. Edge Functions validam resultado do UPDATE e parametro environment.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Cache React Query invalidado automaticamente apos sync individual ou em lote (useSyncPlan, useSyncAllPlans)",
+            "Edge Functions stripe-sync-plan e stripe-sync-all validam resultado do UPDATE no banco",
+            "Edge Functions validam parametro environment (aceita apenas 'test' ou 'live')"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.12.1",
+      "codename": "Gateway",
+      "type": "patch",
+      "releaseDate": "2026-02-11",
+      "prd": "PRD-075",
+      "description": "Substituido modal PlanEditor por pagina completa de detalhamento de planos com layout 2 colunas, Cards organizados por secao e sidebar com acoes e Stripe.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "PlanEditor dialog substituido por pagina completa PlanDetail (/admin/planos/:id e /admin/planos/novo)",
+            "Layout 2 colunas com Cards: Informacoes Basicas, Precos, Trial/Desconto/Bonus, Recursos + sidebar Acoes/Stripe/Info",
+            "PlansManagement simplificado: botoes Editar/Novo Plano agora navegam para pagina de detalhe"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.12.0",
+      "codename": "Gateway",
+      "type": "minor",
+      "releaseDate": "2026-02-11",
+      "prd": "PRD-075/PRD-076",
+      "description": "Integracao Stripe completa com 11 Edge Functions, checkout hosted, regras de billing (upgrade com proration, downgrade programado, cancelamento com motivo, reativacao), paginas Meu Plano, admin Billing Dashboard, pagina Webhook Log, e correcao de dados hardcoded.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Integracao Stripe via 11 Supabase Edge Functions (test-connection, sync-plan, sync-all, create-checkout, preview-upgrade, execute-upgrade, schedule-downgrade, cancel-downgrade, cancel-subscription, reactivate-subscription, webhook)",
+            "Service layer + React Query hooks para todas operacoes Stripe",
+            "Configuracao de credenciais Stripe (test/live) no admin com mascaramento",
+            "Sincronizacao planos → Stripe Products/Prices com badges de status",
+            "Checkout via Stripe Checkout hosted page (PCI compliant)",
+            "Webhook handler idempotente com log visual no admin",
+            "Upgrade imediato com proration nativa do Stripe",
+            "Downgrade programado para fim do periodo",
+            "Cancelamento com selecao de motivo e confirmacao dupla",
+            "Pagina Meu Plano para empresas e candidatos",
+            "Admin Billing Dashboard com KPIs (MRR, churn, conversoes)",
+            "PaymentFailedBanner no DashboardLayout",
+            "CheckoutButton e CancelSubscriptionModal reutilizaveis"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "PlansManagement: toggle test/live e botao Sincronizar Todos",
+            "PlanCard/PlanEditor: secao Stripe com sync status",
+            "Plans.tsx e TrialExpired.tsx: botoes integrados com Stripe Checkout",
+            "empresa/Settings.tsx: dados hardcoded removidos, agora dinamicos",
+            "candidato/Profile.tsx: dados hardcoded removidos, agora dinamicos"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Planos/precos desatualizados hardcoded em empresa/Settings e candidato/Profile",
+            "SubscriptionStatus TypeScript sem 'trial' e 'past_due'",
+            "RLS policy DELETE faltando na tabela plans — admin nao conseguia excluir planos (Migration 026)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.11.0",
+      "codename": "Tiers",
+      "type": "minor",
+      "releaseDate": "2026-02-11",
+      "prd": "PRD-074",
+      "description": "Reestruturacao dos planos de empresas: 4 planos (Basico trial 90 dias, Essencial R$199, Avancar R$249, Premium R$349), sistema de avisos escalonados de trial, desconto 10% para periodos 6+ meses, bonus de testes comportamentais.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Planos de empresa reestruturados de 3 para 4: Basico (trial), Essencial (R$199), Avancar (R$249), Premium (R$349)",
+            "Plano gratuito permanente substituido por trial de 90 dias (Basico Empresas)",
+            "Precos atualizados: Essencial R$199, Avancar R$249, Premium R$349",
+            "Pagina publica de planos (/planos) agora exibe 4 planos dinamicos do banco",
+            "Seletor de periodo com destaque de desconto 10% para semestral/anual",
+            "Admin PlanCard com visual diferenciado para trial e badges de desconto",
+            "Admin PlanEditor com campos de trial, desconto e bonus de testes",
+            "Admin PlansManagement com grid 4 colunas para empresas",
+            "Badges de plano no header atualizados para novos nomes"
+          ]
+        },
+        {
+          "type": "added",
+          "items": [
+            "Sistema de avisos escalonados de trial: low (16+ dias), medium (8-15), high (2-7), urgent (0-1), expired",
+            "TrialBadge: badge sutil no header para empresas em trial",
+            "TrialBanner: banner informativo dismissable (urgencia media)",
+            "TrialAlert: alerta nao-dispensavel (urgencia alta/urgente)",
+            "TrialIndicator: wrapper que seleciona componente por nivel de urgencia",
+            "TrialGuard: guard de rota que bloqueia acesso quando trial expira",
+            "Tela de conversao fullscreen (TrialExpired) com comparativo de planos pagos",
+            "Logica pura de trial (trialRules.ts): calculo de status, niveis, mensagens",
+            "Hook useTrialStatus para status do trial da empresa atual",
+            "Service methods: getTrialSubscription, createTrialSubscription",
+            "Desconto de 10% automatico para periodos semiannual/annual",
+            "Bonus de testes comportamentais por plano e periodo",
+            "KPIs de trial no SubscriptionDashboard: ativos, expirando em 15d, expirados",
+            "Trigger handle_new_user() cria subscription trial automaticamente no cadastro",
+            "Migration 024: novos campos em plans e subscriptions, seed dos 4 planos"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.10.1",
       "codename": "Consolidation",
       "type": "patch",
       "releaseDate": "2026-02-11",
       "description": "Melhoria na orientacao ao candidato sobre completude do perfil profissional.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "changed",

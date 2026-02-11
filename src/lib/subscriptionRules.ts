@@ -256,3 +256,47 @@ export function getNextRenewalDate(
   const months = PERIOD_MONTHS[period];
   return addMonths(startDate, months);
 }
+
+// ---------------------------------------------------------------------------
+// PRD-074: Discount & Bonus Rules
+// ---------------------------------------------------------------------------
+
+/**
+ * Checks whether a subscription period qualifies for the plan's long-term discount.
+ *
+ * PRD-074 RF-014: 10% discount for semiannual or annual subscriptions.
+ */
+export function shouldApplyDiscount(
+  period: PlanPeriod,
+  discountMinPeriod?: PlanPeriod,
+): boolean {
+  if (!discountMinPeriod) return false;
+  return PERIOD_MONTHS[period] >= PERIOD_MONTHS[discountMinPeriod];
+}
+
+/**
+ * Calculates the discounted price.
+ *
+ * @returns price after discount (2 decimal places)
+ */
+export function calculateDiscountedPrice(
+  basePrice: number,
+  discountPercentage: number,
+): number {
+  if (discountPercentage <= 0 || discountPercentage >= 100) return basePrice;
+  const discounted = basePrice * (1 - discountPercentage / 100);
+  return Math.round(discounted * 100) / 100;
+}
+
+/**
+ * Returns the number of bonus behavioral tests for a given plan/period.
+ *
+ * PRD-074 RF-012: Bonus is granted only for 6+ month subscriptions.
+ */
+export function calculateBonusTests(
+  period: PlanPeriod,
+  bonusConfig?: Partial<Record<PlanPeriod, number>>,
+): number {
+  if (!bonusConfig) return 0;
+  return bonusConfig[period] ?? 0;
+}

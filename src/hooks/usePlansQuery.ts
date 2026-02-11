@@ -49,6 +49,48 @@ export function usePlanBySlug(slug: string | undefined) {
   });
 }
 
+export function useUpdatePlan() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Record<string, unknown> }) => {
+      const svc = await getPlansService();
+      return svc.updatePlan(id, updates);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [PLANS_KEY] });
+    },
+  });
+}
+
+export function useCreatePlan() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Record<string, unknown>) => {
+      const svc = await getPlansService();
+      return svc.createPlan(data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [PLANS_KEY] });
+    },
+  });
+}
+
+export function useDeletePlan() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const svc = await getPlansService();
+      return svc.deletePlan(id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [PLANS_KEY] });
+    },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Capabilities
 // ---------------------------------------------------------------------------
@@ -122,6 +164,44 @@ export function useCancelSubscription() {
     mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
       const svc = await getPlansService();
       return svc.cancelSubscription(id, reason);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [SUBSCRIPTIONS_KEY] });
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// PRD-074: Trial Subscriptions
+// ---------------------------------------------------------------------------
+
+export function useTrialSubscription(userId: string | undefined) {
+  return useQuery({
+    queryKey: [SUBSCRIPTIONS_KEY, 'trial', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const svc = await getPlansService();
+      return svc.getTrialSubscription(userId);
+    },
+    enabled: !!userId,
+  });
+}
+
+export function useCreateTrialSubscription() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      companyUserId,
+      userName,
+      planId,
+    }: {
+      companyUserId: string;
+      userName: string;
+      planId: string;
+    }) => {
+      const svc = await getPlansService();
+      return svc.createTrialSubscription(companyUserId, userName, planId);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [SUBSCRIPTIONS_KEY] });

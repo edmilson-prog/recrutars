@@ -14,7 +14,6 @@ import {
   Mail,
   MoreHorizontal,
   Check,
-  X,
   Star,
   Users,
   CreditCard,
@@ -27,7 +26,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -72,7 +70,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import type { TeamMember, PendingInvite, CompanyPlan, CompanyNotificationPreferences } from '@/types/company';
+import type { TeamMember, PendingInvite, CompanyNotificationPreferences } from '@/types/company';
+import { usePlans, useSubscription } from '@/hooks/usePlansQuery';
+import { formatBRL } from '@/lib/formatters';
 // TODO: Replace with team/plan service hooks when available
 const initialTeamMembers: TeamMember[] = [
   {
@@ -100,22 +100,6 @@ const initialPendingInvites: PendingInvite[] = [
   },
 ];
 
-const initialCompanyPlan: CompanyPlan = {
-  name: 'Seleção Inteligente',
-  maxJobs: 10,
-  maxUsers: 5,
-  currentJobs: 8,
-  currentUsers: 2,
-  nextBillingDate: '01/02/2026',
-  price: 299,
-  features: [
-    'Até 10 vagas ativas',
-    'Banco de talentos ilimitado',
-    '5 usuários na conta',
-    'Suporte prioritário',
-    'Relatórios avançados',
-  ],
-};
 import { useCompanies } from '@/hooks/useCompaniesQuery';
 import { useCulturalFit } from '@/hooks/useCulturalFit';
 import { CultureProfileForm } from '@/components/cultural';
@@ -148,54 +132,7 @@ const STATE_OPTIONS = [
   'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
 ];
 
-// Plan comparison data (migrated from Plans.tsx)
-interface PlanFeature {
-  label: string;
-  essencial: string | boolean;
-  selecao: string | boolean;
-  recrutamento: string | boolean;
-}
-
-const companyPlanFeatures: PlanFeature[] = [
-  { label: 'Vagas ativas', essencial: '2', selecao: '10', recrutamento: 'Ilimitadas' },
-  { label: 'Candidatos/mês', essencial: '10', selecao: '100', recrutamento: 'Ilimitados' },
-  { label: 'Testes Gauge-Pro', essencial: '5', selecao: 'Ilimitados', recrutamento: 'Ilimitados' },
-  { label: 'Banco de talentos', essencial: 'Básico', selecao: 'Completo', recrutamento: 'Completo + API' },
-  { label: 'Análise IA', essencial: false, selecao: true, recrutamento: true },
-  { label: 'Usuários na conta', essencial: '1', selecao: '5', recrutamento: 'Ilimitados' },
-  { label: 'Relatórios', essencial: 'Básico', selecao: 'Avançado', recrutamento: 'Personalizado' },
-  { label: 'Suporte', essencial: 'Email', selecao: 'Prioritário', recrutamento: 'Dedicado + SLA' },
-];
-
-const companyPlans = [
-  {
-    name: 'Essencial Empresas',
-    price: 'R$ 0',
-    period: '/mês',
-    description: 'Para empresas que estão começando a recrutar na plataforma.',
-    isCurrent: true,
-    isPopular: false,
-    featureKey: 'essencial' as const,
-  },
-  {
-    name: 'Seleção Inteligente',
-    price: 'R$ 299',
-    period: '/mês',
-    description: 'Para equipes de RH que precisam de mais recursos e escala.',
-    isCurrent: false,
-    isPopular: true,
-    featureKey: 'selecao' as const,
-  },
-  {
-    name: 'Recrutamento Premium',
-    price: 'R$ 799',
-    period: '/mês',
-    description: 'Solução completa para grandes operações de recrutamento.',
-    isCurrent: false,
-    isPopular: false,
-    featureKey: 'recrutamento' as const,
-  },
-];
+// Plan data is now fetched dynamically via usePlans hook (PRD-075 fix)
 
 const companyFaq = [
   {
@@ -215,16 +152,6 @@ const companyFaq = [
     answer: 'Nos planos Professional e Enterprise, você pode adicionar usuários extras. No Enterprise, o número é ilimitado.',
   },
 ];
-
-function FeatureValue({ value }: { value: string | boolean }) {
-  if (value === true) {
-    return <Check className="w-4 h-4 text-green-500" />;
-  }
-  if (value === false) {
-    return <X className="w-4 h-4 text-muted-foreground/40" />;
-  }
-  return <span className="text-sm">{value}</span>;
-}
 
 export default function CompanySettings() {
   const { user, logout, currentCompany } = useAuth();
@@ -274,8 +201,9 @@ export default function CompanySettings() {
     confirmPassword: '',
   });
 
-  // Plan data
-  const [plan] = useState<CompanyPlan>(initialCompanyPlan);
+  // Plan data — fetched dynamically from Supabase (PRD-075)
+  const { data: companyPlans = [] } = usePlans('company');
+  const { data: currentSubscription } = useSubscription(user?.id);
 
   // PRD-042: Cultural Fit
   const {
@@ -849,118 +777,119 @@ export default function CompanySettings() {
 
           {/* Tab: Plano */}
           <TabsContent value="plano" className="space-y-6">
-            {/* Plano atual */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Plano {plan.name}</CardTitle>
-                  <Badge variant="secondary" className="text-lg px-3 py-1">
-                    R$ {plan.price.toFixed(2)}/mês
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2 text-foreground">
-                      <Check className="w-4 h-4 text-green-600" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Separator />
-                <p className="text-sm text-muted-foreground">
-                  Próxima cobrança: {plan.nextBillingDate}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Uso do plano */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Uso do plano</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-foreground">Vagas ativas</span>
-                    <span className="text-muted-foreground">
-                      {plan.currentJobs}/{plan.maxJobs}
-                    </span>
+            {/* Plano atual — dados dinamicos via Supabase */}
+            {currentSubscription ? (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Plano {(currentSubscription as Record<string, unknown>).plan_name as string ?? (currentSubscription as Record<string, unknown>).planName as string ?? '—'}</CardTitle>
+                    <Badge variant="secondary" className="text-lg px-3 py-1">
+                      {formatBRL((currentSubscription as Record<string, unknown>).price_paid as number ?? (currentSubscription as Record<string, unknown>).pricePaid as number ?? 0)}/mês
+                    </Badge>
                   </div>
-                  <Progress value={(plan.currentJobs / plan.maxJobs) * 100} />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-foreground">Usuários</span>
-                    <span className="text-muted-foreground">
-                      {plan.currentUsers}/{plan.maxUsers}
-                    </span>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={(currentSubscription as Record<string, unknown>).status === 'active' ? 'default' : 'outline'}>
+                      {(currentSubscription as Record<string, unknown>).status === 'active' ? 'Ativa' :
+                       (currentSubscription as Record<string, unknown>).status === 'trial' ? 'Trial' :
+                       (currentSubscription as Record<string, unknown>).status === 'past_due' ? 'Pagamento Pendente' :
+                       String((currentSubscription as Record<string, unknown>).status ?? '')}
+                    </Badge>
                   </div>
-                  <Progress value={(plan.currentUsers / plan.maxUsers) * 100} />
-                </div>
-              </CardContent>
-            </Card>
+                  <Separator />
+                  <p className="text-sm text-muted-foreground">
+                    Renovacao: {(currentSubscription as Record<string, unknown>).renewal_date
+                      ? new Date(String((currentSubscription as Record<string, unknown>).renewal_date)).toLocaleDateString('pt-BR')
+                      : (currentSubscription as Record<string, unknown>).renewalDate
+                      ? new Date(String((currentSubscription as Record<string, unknown>).renewalDate)).toLocaleDateString('pt-BR')
+                      : '—'}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sem assinatura ativa</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Escolha um plano abaixo para comecar.</p>
+                </CardContent>
+              </Card>
+            )}
 
             <Separator />
 
-            {/* Todos os Planos (migrado de Plans.tsx) */}
+            {/* Todos os Planos — dados dinamicos via usePlans */}
             <div className="space-y-6">
               <h2 className="text-lg font-semibold">Todos os Planos</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {companyPlans.map((p) => (
-                  <Card
-                    key={p.name}
-                    className={
-                      p.isPopular
-                        ? 'border-primary shadow-lg relative'
-                        : 'relative'
-                    }
-                  >
-                    {p.isPopular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <Badge className="gap-1">
-                          <Star className="w-3 h-3" />
-                          Mais popular
-                        </Badge>
-                      </div>
-                    )}
-                    <CardHeader className="text-center pb-2">
-                      <CardTitle className="text-lg">{p.name}</CardTitle>
-                      <div className="mt-2">
-                        <span className="text-3xl font-bold">{p.price}</span>
-                        <span className="text-muted-foreground text-sm">{p.period}</span>
-                      </div>
-                      <CardDescription className="mt-2">{p.description}</CardDescription>
-                    </CardHeader>
-                    <Separator />
-                    <CardContent className="pt-4">
-                      <ul className="space-y-3">
-                        {companyPlanFeatures.map((feature) => (
-                          <li key={feature.label} className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">{feature.label}</span>
-                            <FeatureValue value={feature[p.featureKey]} />
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="mt-6">
-                        {p.isCurrent ? (
-                          <Button variant="outline" className="w-full" disabled>
-                            Plano Atual
-                          </Button>
-                        ) : (
-                          <Button
-                            className="w-full"
-                            variant={p.isPopular ? 'default' : 'outline'}
-                            onClick={() => toast.info(`A assinatura do plano ${p.name} estará disponível em breve.`)}
-                          >
-                            Assinar {p.name}
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {companyPlans.map((p) => {
+                  const plan = p as Record<string, unknown>;
+                  const planName = (plan.name as string) ?? '';
+                  const planSlug = (plan.slug as string) ?? '';
+                  const prices = (plan.prices as Record<string, number>) ?? {};
+                  const monthlyPrice = prices.monthly ?? 0;
+                  const isFree = (plan.is_free ?? plan.isFree) as boolean;
+                  const features = (plan.features as string[]) ?? [];
+                  const descShort = (plan.description_short ?? plan.descriptionShort) as string ?? '';
+                  const isCurrent = currentSubscription &&
+                    ((currentSubscription as Record<string, unknown>).plan_slug === planSlug ||
+                     (currentSubscription as Record<string, unknown>).planSlug === planSlug);
+                  const badge = plan.badge as string | undefined;
+
+                  return (
+                    <Card
+                      key={planSlug}
+                      className={isCurrent ? 'border-primary shadow-lg relative' : 'relative'}
+                    >
+                      {badge && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                          <Badge className="gap-1">
+                            <Star className="w-3 h-3" />
+                            {badge}
+                          </Badge>
+                        </div>
+                      )}
+                      <CardHeader className="text-center pb-2">
+                        <CardTitle className="text-lg">{planName}</CardTitle>
+                        <div className="mt-2">
+                          <span className="text-3xl font-bold">
+                            {isFree ? 'Gratis' : formatBRL(monthlyPrice)}
+                          </span>
+                          {!isFree && <span className="text-muted-foreground text-sm">/mês</span>}
+                        </div>
+                        <CardDescription className="mt-2">{descShort}</CardDescription>
+                      </CardHeader>
+                      <Separator />
+                      <CardContent className="pt-4">
+                        <ul className="space-y-2">
+                          {features.map((feat, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-sm text-foreground">
+                              <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                              {feat}
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="mt-6">
+                          {isCurrent ? (
+                            <Button variant="outline" className="w-full" disabled>
+                              Plano Atual
+                            </Button>
+                          ) : (
+                            <Button
+                              className="w-full"
+                              variant={badge ? 'default' : 'outline'}
+                              onClick={() => navigate('/planos')}
+                            >
+                              {isFree ? 'Plano Gratuito' : `Assinar ${planName}`}
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
 

@@ -13,6 +13,9 @@ import {
   Star,
   DollarSign,
   BarChart3,
+  FlaskConical,
+  AlertTriangle,
+  TimerOff,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import {
@@ -82,6 +85,30 @@ export default function SubscriptionDashboard() {
       const endDate = new Date(s.endDate);
       return endDate >= now && endDate <= thirtyDays;
     }).length;
+  }, [subscriptions]);
+
+  // PRD-074: Trial KPIs
+  const trialStats = useMemo(() => {
+    const now = new Date();
+    const fifteenDays = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
+
+    const trialSubs = subscriptions.filter((s) => s.isTrial);
+    const active = trialSubs.filter((s) => {
+      if (s.status !== 'trial') return false;
+      const end = s.trialEndDate ? new Date(s.trialEndDate) : new Date(s.endDate);
+      return end >= now;
+    }).length;
+    const expiringSoon = trialSubs.filter((s) => {
+      if (s.status !== 'trial') return false;
+      const end = s.trialEndDate ? new Date(s.trialEndDate) : new Date(s.endDate);
+      return end >= now && end <= fifteenDays;
+    }).length;
+    const expired = trialSubs.filter((s) => {
+      const end = s.trialEndDate ? new Date(s.trialEndDate) : new Date(s.endDate);
+      return end < now || s.status === 'expired' || s.status === 'canceled';
+    }).length;
+
+    return { active, expiringSoon, expired };
   }, [subscriptions]);
 
   // Growth percentage (comparing last 2 months from mock)
@@ -187,6 +214,54 @@ export default function SubscriptionDashboard() {
               <p className="text-xs text-muted-foreground mt-1">{kpi.label}</p>
             </motion.div>
           ))}
+        </div>
+
+        {/* PRD-074: Trial KPIs */}
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Monitoramento de Trials
+          </h2>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              {
+                label: 'Trials Ativos',
+                value: trialStats.active.toString(),
+                icon: FlaskConical,
+                color: 'text-teal-600',
+                bgColor: 'bg-teal-500/10',
+              },
+              {
+                label: 'Expirando em 15d',
+                value: trialStats.expiringSoon.toString(),
+                icon: AlertTriangle,
+                color: trialStats.expiringSoon > 0 ? 'text-warning' : 'text-muted-foreground',
+                bgColor: 'bg-warning/10',
+              },
+              {
+                label: 'Trials Expirados',
+                value: trialStats.expired.toString(),
+                icon: TimerOff,
+                color: trialStats.expired > 0 ? 'text-destructive' : 'text-muted-foreground',
+                bgColor: 'bg-destructive/10',
+              },
+            ].map((kpi, index) => (
+              <motion.div
+                key={kpi.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 + index * 0.08 }}
+                className="bg-card rounded-2xl p-4 shadow-soft"
+              >
+                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center mb-3', kpi.bgColor)}>
+                  <kpi.icon className={cn('w-5 h-5', kpi.color)} />
+                </div>
+                <p className={cn('text-xl font-bold', kpi.color)}>
+                  {kpi.value}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">{kpi.label}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
 
         {/* Charts row 1 */}

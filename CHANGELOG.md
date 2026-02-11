@@ -5,6 +5,109 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.2] - 2026-02-11 "Gateway"
+
+### Fixed
+- **Sync Stripe em Producao** — Corrigido status "Nao sincronizado" que persistia apos sync
+  - Cache React Query agora e invalidado automaticamente apos sync individual ou em lote
+  - Edge Functions validam resultado do UPDATE no banco (antes retornava sucesso mesmo se falhasse)
+  - Edge Functions validam parametro environment (aceita apenas "test" ou "live")
+
+## [1.12.1] - 2026-02-11 "Gateway"
+
+### Changed
+- **Detalhamento de Planos** — Substituido modal (PlanEditor dialog) por pagina completa (/admin/planos/:id)
+  - Layout 2 colunas: formulario com Cards organizados por secao + sidebar com acoes e Stripe
+  - Rotas: /admin/planos/novo (criar) e /admin/planos/:id (editar)
+  - Mais espaco para todas as informacoes (precos, trial, desconto, bonus, Stripe, recursos)
+  - Mesmo padrao visual do FeatureFlagEditor (Cards + sidebar sticky)
+
+## [1.12.0] - 2026-02-11 "Gateway"
+
+### Added
+- **Integracao Stripe (PRD-075)** — Gateway de pagamento completo via Supabase Edge Functions
+  - 11 Edge Functions: test-connection, sync-plan, sync-all, create-checkout, preview-upgrade, execute-upgrade, schedule-downgrade, cancel-downgrade, cancel-subscription, reactivate-subscription, webhook
+  - Service layer frontend: stripeService interface + implementacao Supabase
+  - React Query hooks: useStripeTestConnection, useSyncPlan, useSyncAllPlans, useCreateCheckoutSession, useUpgradePreview, useExecuteUpgrade, useScheduleDowngrade, useCancelDowngrade, useCancelSubscription, useReactivateSubscription
+  - Configuracao de credenciais Stripe no admin (test/live) com mascaramento de chaves sensiveis
+  - Sincronizacao de planos → Stripe Products/Prices com badge de status no PlanCard e PlanEditor
+  - Toggle ambiente test/live na pagina de gestao de planos com botao "Sincronizar Todos"
+  - Webhook handler idempotente com tabela stripe_webhook_events e log visual no admin
+  - Checkout Session hosted via @stripe/stripe-js para PCI compliance
+  - Pagina Webhook Log: filtros por status/ambiente/tipo, detalhe expandivel com payload JSON
+- **Regras de Billing (PRD-076)** — Upgrade, downgrade, cancelamento e reativacao
+  - billingRules.ts: isTrialPlan, canConvertFromTrial, getAvailableUpgrades, getAvailableDowngrades, getUpgradeType, getLostFeatures
+  - Upgrade imediato com proration nativa do Stripe
+  - Downgrade programado para fim do periodo (cancel_at_period_end + nova subscription)
+  - Cancelamento com selecao de motivo (6 opcoes) e confirmacao dupla
+  - Reativacao de assinatura (se periodo nao expirou)
+  - Preview de proration via upcoming_invoice
+- **Pagina "Meu Plano"** — Para empresas (/empresa/meu-plano) e candidatos (/candidato/meu-plano)
+  - Detalhes do plano atual, proxima cobranca, status, features
+  - Acoes: upgrade, downgrade, cancelar, reativar
+  - Aviso visual de downgrade programado e falha de pagamento
+- **CheckoutButton** — Componente reutilizavel que redireciona ao Stripe Checkout
+- **CancelSubscriptionModal** — Modal com selecao de motivo e sugestao de downgrade
+- **PaymentFailedBanner** — Banner no DashboardLayout para assinaturas past_due
+- **Paginas de retorno checkout** — CheckoutSuccess e CheckoutCancel
+- **Admin Billing Dashboard** — KPIs: MRR, assinaturas ativas, churn rate, conversoes trial→pago, receita por plano
+- **Migration 025** — Campos Stripe em plans/subscriptions/companies/candidates + tabela stripe_webhook_events
+
+### Changed
+- PlansManagement: toggle test/live + botao "Sincronizar Todos" + stripeEnvironment passado para PlanCard/PlanEditor
+- PlanCard: badge Stripe sync status + botao sync individual
+- PlanEditor: secao "Integracao Stripe" read-only (Product IDs, Price IDs, ultimo sync)
+- Plans.tsx: botao "Assinar agora" integrado com CheckoutButton (Stripe Checkout)
+- TrialExpired.tsx: botao "Assinar" integrado com CheckoutButton
+- empresa/Settings.tsx: dados hardcoded de planos removidos, substituidos por usePlans() + useSubscription()
+- candidato/Profile.tsx: dados hardcoded de planos removidos, substituidos por dados dinamicos
+- DashboardLayout: PaymentFailedBanner integrado para company/candidate
+- SubscriptionStatus: adicionado 'trial' e 'past_due' ao tipo TypeScript
+- adminTabConfig.ts: novas tabs Webhooks e Billing
+
+### Fixed
+- Planos e precos desatualizados em empresa/Settings.tsx (hardcoded "Selecao Inteligente R$299", "Recrutamento Premium R$799")
+- Planos de candidato desatualizados em candidato/Profile.tsx (hardcoded com precos antigos)
+- SubscriptionStatus TypeScript nao incluia 'trial' e 'past_due' embora o banco aceitasse
+- RLS policy DELETE faltando na tabela plans — admin nao conseguia excluir planos (Migration 026)
+
+## [1.11.0] - 2026-02-11 "Tiers"
+
+### Changed
+- **Planos de empresa reestruturados (PRD-074)** — De 3 planos (Essencial gratuito permanente, Selecao Inteligente R$99, Recrutamento Premium R$119) para 4 planos com modelo trial
+  - Basico Empresas: trial gratuito de 90 dias (substitui plano gratuito permanente)
+  - Essencial Empresas: R$199/mes
+  - Avancar Empresas: R$249/mes
+  - Premium Empresas: R$349/mes
+  - Desconto de 10% automatico para periodos semestral e anual
+  - Bonus de testes comportamentais para periodos 6+ meses
+  - Pagina publica de planos dinamica com seletor de periodo e destaque de desconto
+  - Admin: PlanCard com visual diferenciado para trial, PlanEditor com campos de trial/desconto/bonus
+  - Admin: grid 4 colunas para empresas, badges de plano atualizados no header
+
+### Added
+- **Sistema de avisos escalonados de trial** — Sinalizacao visual progressiva conforme trial se aproxima do vencimento
+  - `low` (16+ dias): badge sutil no header (TrialBadge)
+  - `medium` (8-15 dias): banner informativo dismissable (TrialBanner)
+  - `high` (2-7 dias): alerta nao-dispensavel amber (TrialAlert)
+  - `urgent` (0-1 dias): alerta nao-dispensavel vermelho (TrialAlert)
+  - `expired`: bloqueio total com tela de conversao fullscreen (TrialExpired)
+  - TrialGuard bloqueia rotas `/empresa/*` quando trial expira (exceto configuracoes)
+  - TrialIndicator seleciona automaticamente o componente por nivel de urgencia
+- **Logica de trial** — Modulo `trialRules.ts` com calculo puro de status, niveis e mensagens
+- **Hook useTrialStatus** — Status do trial da empresa atual com React Query
+- **Service layer trial** — `getTrialSubscription()`, `createTrialSubscription()` no plansService
+- **KPIs de trial no admin** — Trials ativos, expirando em 15 dias, expirados no SubscriptionDashboard
+- **Trigger automatico** — `handle_new_user()` cria subscription trial de 90 dias no cadastro de empresa
+- **Migration 024** — Novos campos em plans (trial_duration_days, discount_percentage, discount_min_period, bonus_tests) e subscriptions (is_trial, trial_start_date, trial_end_date, bonus_tests_remaining/total), seed dos 4 planos
+
+## [1.10.1] - 2026-02-11 "Consolidation"
+
+### Changed
+- Dashboard: removido card duplicado de completude do perfil pessoal, mantendo apenas o do perfil profissional
+- Dashboard: card de completude profissional agora exibe as secoes faltantes para atingir 100%
+- Perfil Profissional: tab Habilidades exibe alerta orientando o candidato a adicionar pelo menos 3 habilidades
+
 ## [1.10.0] - 2026-02-10 "Consolidation"
 
 ### Changed

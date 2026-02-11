@@ -39,54 +39,10 @@ import { profileVisibilityOptions, resumeVisibilityOptions } from '@/data/settin
 import Cropper from 'react-easy-crop';
 import type { Area, Point } from 'react-easy-crop';
 import type { CandidatePlanType, VisibilityMode } from '@/types/candidate';
+import { usePlans, useSubscription } from '@/hooks/usePlansQuery';
+import { formatBRL } from '@/lib/formatters';
 
-interface PlanFeature {
-  label: string;
-  essencial: string | boolean;
-  avancar: string | boolean;
-  destaque: string | boolean;
-}
-
-const planFeatures: PlanFeature[] = [
-  { label: 'Perfil básico', essencial: true, avancar: true, destaque: true },
-  { label: 'Candidaturas/mês', essencial: '5', avancar: '30', destaque: 'Ilimitadas' },
-  { label: 'Teste comportamental', essencial: '1', avancar: 'Ilimitados', destaque: 'Ilimitados' },
-  { label: 'Vagas recomendadas', essencial: false, avancar: true, destaque: true },
-  { label: 'Perfil Profissional', essencial: true, avancar: true, destaque: true },
-  { label: 'Destaque nas buscas', essencial: false, avancar: false, destaque: true },
-  { label: 'Análise IA do perfil', essencial: false, avancar: false, destaque: true },
-  { label: 'Suporte', essencial: 'Email', avancar: 'Prioritário', destaque: 'VIP' },
-];
-
-const allPlans = [
-  {
-    name: 'Essencial',
-    price: 'R$ 0',
-    period: '/mês',
-    description: 'Ideal para quem está começando a buscar oportunidades.',
-    isCurrent: true,
-    isPopular: false,
-    featureKey: 'essencial' as const,
-  },
-  {
-    name: 'Avançar',
-    price: 'R$ 29',
-    period: '/mês',
-    description: 'Para candidatos que querem se destacar e ter mais visibilidade.',
-    isCurrent: false,
-    isPopular: true,
-    featureKey: 'avancar' as const,
-  },
-  {
-    name: 'Destaque Máximo',
-    price: 'R$ 59',
-    period: '/mês',
-    description: 'Acesso completo com recursos exclusivos e suporte VIP.',
-    isCurrent: false,
-    isPopular: false,
-    featureKey: 'destaque' as const,
-  },
-];
+// Plan data is now fetched dynamically via usePlans hook (PRD-075 fix)
 
 const faq = [
   {
@@ -145,16 +101,6 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
   });
 }
 
-function FeatureValue({ value }: { value: string | boolean }) {
-  if (value === true) {
-    return <Check className="w-4 h-4 text-green-500" />;
-  }
-  if (value === false) {
-    return <X className="w-4 h-4 text-muted-foreground/40" />;
-  }
-  return <span className="text-sm">{value}</span>;
-}
-
 // Formata CPF: 000.000.000-00
 function formatCPF(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -178,32 +124,6 @@ function formatPhone(value: string): string {
     .replace(/(\d{2})(\d)/, '($1) $2')
     .replace(/(\d{5})(\d)/, '$1-$2');
 }
-
-const candidatePlanData: Record<CandidatePlanType, {
-  price: number;
-  features: string[];
-  maxApplications: number;
-  maxResumes: number;
-}> = {
-  'Essencial': {
-    price: 0,
-    features: ['Perfil basico', '5 candidaturas/mes', '1 teste comportamental', 'Perfil profissional'],
-    maxApplications: 5,
-    maxResumes: 1,
-  },
-  'Avançar': {
-    price: 29,
-    features: ['30 candidaturas/mes', 'Testes ilimitados', 'Perfil profissional', 'Vagas recomendadas'],
-    maxApplications: 30,
-    maxResumes: 3,
-  },
-  'Destaque Máximo': {
-    price: 59,
-    features: ['Candidaturas ilimitadas', 'Testes ilimitados', 'Perfil profissional', 'Destaque nas buscas', 'Analise IA'],
-    maxApplications: 999,
-    maxResumes: 10,
-  },
-};
 
 export default function CandidateProfile() {
   const { user, refreshCurrentCandidate } = useAuth();
@@ -272,7 +192,17 @@ export default function CandidateProfile() {
   });
 
   const currentPlan: CandidatePlanType = candidate?.plan || 'Essencial';
-  const planData = candidatePlanData[currentPlan];
+  // Dynamic plan data from Supabase (PRD-075)
+  const { data: candidatePlans = [] } = usePlans('candidate');
+  const { data: candidateSubscription } = useSubscription(user?.id);
+  const currentPlanObj = candidatePlans.find((p) => {
+    const row = p as Record<string, unknown>;
+    const planName = (row.name as string) ?? '';
+    return planName === currentPlan;
+  });
+  const planFeatures = (currentPlanObj as Record<string, unknown>)?.features as string[]
+    ?? (currentPlanObj as Record<string, unknown>)?.features as string[]
+    ?? ['Perfil basico'];
 
   if (isLoading || !candidate) {
     return (
@@ -948,7 +878,7 @@ export default function CandidateProfile() {
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Recursos inclusos:</p>
                   <ul className="space-y-2">
-                    {planData.features.map((feature, index) => (
+                    {planFeatures.map((feature, index) => (
                       <li key={index} className="flex items-center gap-2 text-sm">
                         <Check className="w-4 h-4 text-green-500 shrink-0" />
                         <span>{feature}</span>
@@ -970,11 +900,11 @@ export default function CandidateProfile() {
                   <div className="flex items-center justify-between text-sm">
                     <span>Candidaturas este mês</span>
                     <span className="font-medium">
-                      {usedApplications}/{planData.maxApplications === 999 ? '∞' : planData.maxApplications}
+                      {usedApplications}
                     </span>
                   </div>
                   <Progress
-                    value={planData.maxApplications === 999 ? 5 : (usedApplications / planData.maxApplications) * 100}
+                    value={Math.min(usedApplications * 10, 100)}
                     className="h-2"
                   />
                 </div>
@@ -983,11 +913,11 @@ export default function CandidateProfile() {
                   <div className="flex items-center justify-between text-sm">
                     <span>Perfil profissional</span>
                     <span className="font-medium">
-                      {usedResumes}/{planData.maxResumes}
+                      {usedResumes}/1
                     </span>
                   </div>
                   <Progress
-                    value={(usedResumes / planData.maxResumes) * 100}
+                    value={usedResumes > 0 ? 100 : 0}
                     className="h-2"
                   />
                 </div>
@@ -996,66 +926,77 @@ export default function CandidateProfile() {
 
             <Separator />
 
-            {/* Todos os Planos (migrado de Plans.tsx) */}
+            {/* Todos os Planos — dados dinamicos via usePlans (PRD-075) */}
             <div className="space-y-4">
               <h2 className="text-lg font-semibold">Todos os Planos</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {allPlans.map((plan) => (
-                  <Card
-                    key={plan.name}
-                    className={
-                      plan.isPopular
-                        ? 'border-primary shadow-lg relative'
-                        : 'relative'
-                    }
-                  >
-                    {plan.isPopular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <Badge className="gap-1">
-                          <Star className="w-3 h-3" />
-                          Mais popular
-                        </Badge>
-                      </div>
-                    )}
-                    <CardHeader className="text-center pb-2">
-                      <CardTitle className="text-lg">{plan.name}</CardTitle>
-                      <div className="mt-2">
-                        <span className="text-3xl font-bold">{plan.price}</span>
-                        <span className="text-muted-foreground text-sm">{plan.period}</span>
-                      </div>
-                      <CardDescription className="mt-2">{plan.description}</CardDescription>
-                    </CardHeader>
-                    <Separator />
-                    <CardContent className="pt-4">
-                      <ul className="space-y-3">
-                        {planFeatures.map((feature) => (
-                          <li key={feature.label} className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">{feature.label}</span>
-                            <FeatureValue value={feature[plan.featureKey]} />
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="mt-6">
-                        {plan.isCurrent ? (
-                          <Button variant="outline" className="w-full" disabled>
-                            Plano Atual
-                          </Button>
-                        ) : (
-                          <Button
-                            className="w-full"
-                            variant={plan.isPopular ? 'default' : 'outline'}
-                            onClick={() => toastShadcn({
-                              title: 'Funcionalidade em breve',
-                              description: `A assinatura do plano ${plan.name} estará disponível em breve.`,
-                            })}
-                          >
-                            Assinar {plan.name}
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {candidatePlans.map((p) => {
+                  const plan = p as Record<string, unknown>;
+                  const planName = (plan.name as string) ?? '';
+                  const planSlug = (plan.slug as string) ?? '';
+                  const prices = (plan.prices as Record<string, number>) ?? {};
+                  const monthlyPrice = prices.monthly ?? 0;
+                  const isFree = (plan.is_free ?? plan.isFree) as boolean;
+                  const features = (plan.features as string[]) ?? [];
+                  const descShort = (plan.description_short ?? plan.descriptionShort) as string ?? '';
+                  const isCurrent = planName === currentPlan;
+                  const badge = plan.badge as string | undefined;
+
+                  return (
+                    <Card
+                      key={planSlug}
+                      className={badge ? 'border-primary shadow-lg relative' : 'relative'}
+                    >
+                      {badge && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                          <Badge className="gap-1">
+                            <Star className="w-3 h-3" />
+                            {badge}
+                          </Badge>
+                        </div>
+                      )}
+                      <CardHeader className="text-center pb-2">
+                        <CardTitle className="text-lg">{planName}</CardTitle>
+                        <div className="mt-2">
+                          <span className="text-3xl font-bold">
+                            {isFree ? 'Gratis' : formatBRL(monthlyPrice)}
+                          </span>
+                          {!isFree && <span className="text-muted-foreground text-sm">/mês</span>}
+                        </div>
+                        <CardDescription className="mt-2">{descShort}</CardDescription>
+                      </CardHeader>
+                      <Separator />
+                      <CardContent className="pt-4">
+                        <ul className="space-y-2">
+                          {features.map((feat, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-sm text-foreground">
+                              <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                              {feat}
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="mt-6">
+                          {isCurrent ? (
+                            <Button variant="outline" className="w-full" disabled>
+                              Plano Atual
+                            </Button>
+                          ) : (
+                            <Button
+                              className="w-full"
+                              variant={badge ? 'default' : 'outline'}
+                              onClick={() => toastShadcn({
+                                title: 'Em breve',
+                                description: `A assinatura do plano ${planName} estara disponivel em breve.`,
+                              })}
+                            >
+                              {isFree ? 'Plano Gratuito' : `Assinar ${planName}`}
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
 

@@ -57,6 +57,25 @@ export interface IPlansService {
 
   /** Cancel a subscription. */
   cancelSubscription(id: string, reason?: string): Promise<Subscription>;
+
+  /** Update a plan's fields (snake_case keys). */
+  updatePlan(id: string, updates: Record<string, unknown>): Promise<Plan>;
+
+  /** Create a new plan (snake_case keys). */
+  createPlan(data: Record<string, unknown>): Promise<Plan>;
+
+  /** Delete a plan by ID. Throws if has active subscriptions. */
+  deletePlan(id: string): Promise<void>;
+
+  /** PRD-074: Get the trial subscription for a company user. */
+  getTrialSubscription(companyUserId: string): Promise<Subscription | null>;
+
+  /** PRD-074: Create a trial subscription for a company. */
+  createTrialSubscription(
+    companyUserId: string,
+    userName: string,
+    planId: string,
+  ): Promise<Subscription>;
 }
 
 // ---------------------------------------------------------------------------
