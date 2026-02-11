@@ -1,13 +1,31 @@
 {
   "versions": [
     {
+      "version": "1.10.1",
+      "codename": "Consolidation",
+      "type": "patch",
+      "releaseDate": "2026-02-11",
+      "description": "Melhoria na orientacao ao candidato sobre completude do perfil profissional.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Dashboard: removido card duplicado de completude do perfil pessoal, mantendo apenas o do perfil profissional",
+            "Dashboard: card de completude profissional agora exibe as secoes faltantes para atingir 100%",
+            "Perfil Profissional: tab Habilidades exibe alerta orientando o candidato a adicionar pelo menos 3 habilidades"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.10.0",
       "codename": "Consolidation",
       "type": "minor",
       "releaseDate": "2026-02-10",
       "prd": "PRD-073",
       "description": "Campos de Localizacao, Salario e Interesses movidos de Minha Conta para Perfil Profissional. Calculo de completude reorganizado de 5 secoes para 7 secoes alinhadas com as tabs do perfil.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "changed",

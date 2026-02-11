@@ -106,9 +106,8 @@ export default function CandidateDashboard() {
   }
 
   // Completude do perfil profissional
-  const curriculumCompletion = profile
-    ? calculateCompleteness(profile).percentage
-    : 0;
+  const completenessResult = profile ? calculateCompleteness(profile) : null;
+  const curriculumCompletion = completenessResult?.percentage ?? 0;
 
   // Compute stats from fetched data
   const interviewCount = candidateApplications.filter(a => a.status === 'interview').length;
@@ -142,40 +141,6 @@ export default function CandidateDashboard() {
           profileCompletion={profileCompletion}
         />
 
-        {/* Profile Completion */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-card rounded-2xl p-6 shadow-soft"
-        >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold text-foreground">Completude do Perfil</h2>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <HelpCircle className="w-4 h-4 text-muted-foreground/50 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    <p>Indica o preenchimento das suas informações pessoais. Perfis completos têm 3x mais chances de serem vistos por recrutadores.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <p className="text-muted-foreground">Perfis completos têm 3x mais chances de serem vistos</p>
-            </div>
-            <Button asChild variant="outline">
-              <Link to="/candidato/perfil">
-                Completar Perfil
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
-            </Button>
-          </div>
-          <div className="flex items-center gap-4">
-            <Progress value={profileCompletion} className="flex-1 h-3" />
-            <span className="text-2xl font-bold text-foreground">{profileCompletion}%</span>
-          </div>
-        </motion.div>
-
         {/* Curriculum Completion */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -206,9 +171,16 @@ export default function CandidateDashboard() {
             </Button>
           </div>
           {profile ? (
-            <div className="flex items-center gap-4">
-              <Progress value={curriculumCompletion} className="flex-1 h-3" />
-              <span className="text-2xl font-bold text-foreground">{curriculumCompletion}%</span>
+            <div className="space-y-2">
+              <div className="flex items-center gap-4">
+                <Progress value={curriculumCompletion} className="flex-1 h-3" />
+                <span className="text-2xl font-bold text-foreground">{curriculumCompletion}%</span>
+              </div>
+              {completenessResult && completenessResult.missingSections.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Falta completar: {completenessResult.missingSections.join(', ')}
+                </p>
+              )}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">

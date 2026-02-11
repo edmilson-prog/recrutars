@@ -25,6 +25,7 @@ import {
   DollarSign,
   ChevronsUpDown,
   Target,
+  AlertCircle,
 } from 'lucide-react';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -1049,6 +1050,12 @@ export default function ProfessionalProfile() {
                 </Button>
               </CardHeader>
               <CardContent>
+                {curriculum.skills.length < 3 && (
+                  <div className="mb-4 flex items-center gap-2 rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>Adicione pelo menos 3 habilidades para completar esta seção do perfil. Você tem {curriculum.skills.length} de 3.</span>
+                  </div>
+                )}
                 {curriculum.skills.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     Nenhuma habilidade adicionada.
