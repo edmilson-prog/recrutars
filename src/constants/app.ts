@@ -4,8 +4,8 @@
  * PRD-044: Pagina "Sobre" e Tooltip de Versao
  */
 
-export const APP_VERSION = "1.10.1";
-export const APP_CODENAME = "Consolidation";
+export const APP_VERSION = "1.12.2";
+export const APP_CODENAME = "Gateway";
 export const APP_NAME = "RecrutaRS";
 export const APP_COMPANY = "AILA - Sistemas Inteligentes";
 export const APP_COMPANY_URL = "https://aila.com.br";
