@@ -1,12 +1,14 @@
 // PRD-025: Tipos para sistema de notificações
 
 export type NotificationType =
-  | 'job_match'           // Nova vaga compatível
-  | 'application_update'  // Mudança de status na candidatura
-  | 'test_request'        // Empresa solicita teste
-  | 'message'             // Nova mensagem de empresa
-  | 'application_approved' // Candidatura aprovada
-  | 'application_rejected'; // Candidatura reprovada
+  | 'job_match'              // Nova vaga compatível
+  | 'application_update'     // Mudança de status na candidatura
+  | 'test_request'           // Empresa solicita teste
+  | 'message'                // Nova mensagem de empresa
+  | 'application_approved'   // Candidatura aprovada
+  | 'application_rejected'   // Candidatura reprovada
+  | 'application_hired'      // Candidato contratado (PRD-077)
+  | 'application_talent_pool'; // Movido para banco de talentos (PRD-077)
 
 export interface NotificationMetadata {
   jobId?: string;
@@ -39,6 +41,8 @@ export const notificationTypeLabels: Record<NotificationType, string> = {
   message: 'Mensagens',
   application_approved: 'Candidaturas',
   application_rejected: 'Candidaturas',
+  application_hired: 'Contratado',
+  application_talent_pool: 'Banco de Talentos',
 };
 
 // Ícones para cada tipo (nome do ícone Lucide)
@@ -49,6 +53,8 @@ export const notificationTypeIcons: Record<NotificationType, string> = {
   message: 'MessageSquare',
   application_approved: 'CheckCircle',
   application_rejected: 'XCircle',
+  application_hired: 'Trophy',
+  application_talent_pool: 'Users',
 };
 
 // Cores para cada tipo
@@ -59,6 +65,8 @@ export const notificationTypeColors: Record<NotificationType, string> = {
   message: 'text-green-500',
   application_approved: 'text-emerald-500',
   application_rejected: 'text-red-500',
+  application_hired: 'text-emerald-600',
+  application_talent_pool: 'text-indigo-500',
 };
 
 // Filtros disponíveis na página de notificações
@@ -85,7 +93,7 @@ export const filterLabels: Record<NotificationFilter, string> = {
 export const filterToTypes: Record<NotificationFilter, NotificationType[] | null> = {
   all: null,
   jobs: ['job_match'],
-  applications: ['application_update', 'application_approved', 'application_rejected'],
+  applications: ['application_update', 'application_approved', 'application_rejected', 'application_hired', 'application_talent_pool'],
   messages: ['message'],
   tests: ['test_request'],
 };

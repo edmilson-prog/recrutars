@@ -27,6 +27,7 @@ export const INITIAL_FORM_STATE = {
   salaryMax: '',
   salaryNegotiable: false,
   requirements: '',
+  positionsCount: '1',
 };
 
 export const DESCRIPTION_LIMIT = 2000;
@@ -75,6 +76,7 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       salaryMax: (job as Job).salary.max.toString(),
       salaryNegotiable: (job as Job).salary.min === 0 && (job as Job).salary.max === 0,
       requirements: (job as Job).requirements.join('\n'),
+      positionsCount: ((job as Job).positionsCount ?? 1).toString(),
     });
     const common = (job as Job).benefits.filter(b => COMMON_BENEFITS.includes(b));
     const other = (job as Job).benefits.filter(b => !COMMON_BENEFITS.includes(b));
@@ -222,6 +224,7 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
         : { min: parseInt(formData.salaryMin) || 0, max: parseInt(formData.salaryMax) || 0 },
       requirements: formData.requirements.split('\n').filter(r => r.trim()),
       benefits: allBenefits,
+      positionsCount: Math.max(1, parseInt(formData.positionsCount) || 1),
     };
 
     const handleSuccess = () => {

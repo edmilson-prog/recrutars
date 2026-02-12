@@ -16,6 +16,7 @@ interface JobFormBasicInfoProps {
     type: 'remote' | 'hybrid' | 'onsite';
     location: string;
     level: string;
+    positionsCount: string;
   };
   onUpdate: (updates: Partial<JobFormBasicInfoProps['formData']>) => void;
 }
@@ -89,6 +90,17 @@ export function JobFormBasicInfo({ formData, onUpdate }: JobFormBasicInfoProps) 
                 <SelectItem value="Gerente">Gerente</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="positionsCount">Numero de vagas</Label>
+            <Input
+              id="positionsCount"
+              type="number"
+              min={1}
+              value={formData.positionsCount}
+              onChange={(e) => onUpdate({ positionsCount: e.target.value })}
+              placeholder="1"
+            />
           </div>
         </div>
       </CardContent>

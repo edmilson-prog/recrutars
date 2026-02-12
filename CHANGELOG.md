@@ -5,6 +5,24 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-02-12 "Bridge"
+
+### Added
+- **Fluxo de Contratacao (PRD-077)** — Ponte completa entre pipeline de recrutamento e Gestao de Equipes
+  - Acao "Contratar" no drawer do candidato aprovado (botao emerald destacado)
+  - Modal de contratacao com departamento, cargo, data de inicio, salario e observacoes
+  - Transicao atomica: cria colaborador no modulo de Equipes com perfil Gauge-Pro preservado
+  - Verificacao inteligente de posicoes: sugere encerramento quando todas preenchidas
+  - Modal de encerramento de vaga com 3 opcoes (notificar, encerrar silencioso, manter aberta)
+  - Notificacao de parabens ao candidato contratado
+  - Notificacao aos candidatos dispensados quando vaga e encerrada
+  - Registro de metricas: tempo de preenchimento, tempo no pipeline, estagios percorridos
+  - Secao "Contratados" colapsavel no pipeline Kanban
+  - Contador de posicoes preenchidas por vaga
+  - Campo "Numero de vagas" no formulario de criacao/edicao de vaga
+  - Tabela `hirings` para historico e metricas de contratacoes
+  - RPCs atomicas `hire_candidate` e `close_job_with_remaining` (rollback automatico em falha)
+
 ## [1.12.5] - 2026-02-11 "Gateway"
 
 ### Fixed

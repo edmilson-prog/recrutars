@@ -26,6 +26,7 @@ export interface Job {
   salary: SalaryRange;
   status: JobStatus;
   applicationsCount: number;
+  positionsCount: number;
   createdAt: string;
   area: string;
 }

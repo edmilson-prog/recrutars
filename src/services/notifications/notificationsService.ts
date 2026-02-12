@@ -19,6 +19,16 @@ export interface INotificationsService {
 
   /** Get count of unread notifications for a user */
   getUnreadCount(userId: string): Promise<number>;
+
+  /** Create a notification for a user (PRD-077) */
+  createNotification(params: {
+    userId: string;
+    type: string;
+    title: string;
+    description: string;
+    actionUrl: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------

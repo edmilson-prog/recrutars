@@ -54,6 +54,28 @@ export class NotificationsServiceSupabase implements INotificationsService {
     return count ?? 0;
   }
 
+  async createNotification(params: {
+    userId: string;
+    type: string;
+    title: string;
+    description: string;
+    actionUrl: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<void> {
+    const { error } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: params.userId,
+        type: params.type,
+        title: params.title,
+        description: params.description,
+        action_url: params.actionUrl,
+        metadata: params.metadata ?? null,
+      });
+
+    if (error) throw error;
+  }
+
   // ---------------------------------------------------------------------------
   // Mapper (snake_case DB -> camelCase TS)
   // ---------------------------------------------------------------------------

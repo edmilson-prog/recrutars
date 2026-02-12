@@ -32,6 +32,7 @@ function jobRowToJob(
     salary: { min: Number(row.salary_min) || 0, max: Number(row.salary_max) || 0 },
     status: row.status as Job['status'],
     applicationsCount: row.applications_count,
+    positionsCount: (row as Record<string, unknown>).positions_count as number ?? 1,
     createdAt: row.created_at,
     area: row.area ?? '',
   };
@@ -137,6 +138,7 @@ export class JobsServiceSupabase implements IJobsService {
         salary_max: job.salary?.max ?? 0,
         status: job.status ?? 'active',
         area: job.area ?? '',
+        positions_count: job.positionsCount ?? 1,
       })
       .select('*, companies!jobs_company_id_fkey(name, logo_url)')
       .single();
@@ -164,6 +166,7 @@ export class JobsServiceSupabase implements IJobsService {
       updatePayload.salary_min = updates.salary.min;
       updatePayload.salary_max = updates.salary.max;
     }
+    if (updates.positionsCount !== undefined) updatePayload.positions_count = updates.positionsCount;
 
     const { data, error } = await supabase
       .from('jobs')

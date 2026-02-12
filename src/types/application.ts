@@ -7,7 +7,7 @@
  * PRD-016: Adicionado TestRequestStatus e campos de solicitação de teste
  */
 
-export type ApplicationStatus = 'pending' | 'reviewing' | 'interview' | 'offer' | 'rejected' | 'hired' | 'withdrawn';
+export type ApplicationStatus = 'pending' | 'reviewing' | 'interview' | 'offer' | 'rejected' | 'hired' | 'withdrawn' | 'talent_pool';
 
 export type TestRequestStatus = 'nao_solicitado' | 'solicitado' | 'realizado';
 

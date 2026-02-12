@@ -36,6 +36,7 @@ import {
   Calendar,
   MoreVertical,
   Loader2,
+  Trophy,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -108,6 +109,12 @@ import { useCompanyInterviews } from '@/hooks/useCompanyInterviews';
 import type { ExportContext } from '@/types/export';
 import type { Candidate } from '@/types';
 
+// PRD-077: Fluxo de contratacao
+import { HiringModal } from '@/components/empresa/HiringModal';
+import { JobClosureModal } from '@/components/empresa/JobClosureModal';
+import { useHiredCountForJob, useIsAlreadyTeamMember } from '@/hooks/useHiringsQuery';
+import type { HireResult } from '@/types/hiring';
+
 // Status configuration
 const STATUS_CONFIG: Record<
   string,
@@ -137,6 +144,16 @@ const STATUS_CONFIG: Record<
     label: 'Reprovados',
     color: 'text-red-600',
     bgColor: 'bg-red-500/10 border-red-500/20',
+  },
+  hired: {
+    label: 'Contratados',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-500/10 border-emerald-500/20',
+  },
+  talent_pool: {
+    label: 'Banco de Talentos',
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-500/10 border-indigo-500/20',
   },
 };
 
@@ -249,6 +266,13 @@ export default function CompanyApplications() {
   const [rejectedOpen, setRejectedOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+
+  // PRD-077: Hiring flow state
+  const [hiringModalOpen, setHiringModalOpen] = useState(false);
+  const [jobClosureModalOpen, setJobClosureModalOpen] = useState(false);
+  const [lastHireResult, setLastHireResult] = useState<HireResult | null>(null);
+  const [hiredOpen, setHiredOpen] = useState(false);
+  const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false);
 
   // PRD-016: Test request modal state
   const [requestTestModalOpen, setRequestTestModalOpen] = useState(false);
@@ -369,6 +393,8 @@ export default function CompanyApplications() {
     interview: filteredApplications.filter((a) => a.status === 'interview'),
     offer: filteredApplications.filter((a) => a.status === 'offer'),
     rejected: filteredApplications.filter((a) => a.status === 'rejected'),
+    hired: filteredApplications.filter((a) => a.status === 'hired'),
+    talent_pool: filteredApplications.filter((a) => a.status === 'talent_pool'),
   };
 
   // PRD-032: Candidatos para exportação
@@ -626,6 +652,13 @@ export default function CompanyApplications() {
 
   const selectedJob = companyJobs.find((j) => j.id === selectedJobId);
 
+  // PRD-077: Hired count for selected job
+  const { data: hiredCount = 0 } = useHiredCountForJob(selectedJobId);
+
+  // PRD-077: Check duplicate team member
+  const selectedCandidateId = selectedApplication?.candidateId ?? '';
+  const { data: duplicateCheck } = useIsAlreadyTeamMember(selectedCandidateId, companyId);
+
   // PRD-002-dgn: Converter candidato para formato de comparação
   const convertToComparisonCandidate = (candidateId: string): CandidateForComparison | null => {
     const candidate = candidatesMap[candidateId];
@@ -805,6 +838,42 @@ export default function CompanyApplications() {
                 <CollapsibleContent>
                   <div className="flex gap-4 overflow-x-auto py-4">
                     {groupedApplications.rejected.map((app) => (
+                      <ApplicationCard
+                        key={app.id}
+                        application={app}
+                        onManage={() => handleCardClick(app)}
+                        onNavigate={() => handleNavigateToProfile(app.candidateId)}
+                        compact
+                      />
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+
+            {/* PRD-077: Hired Section */}
+            {groupedApplications.hired.length > 0 && (
+              <Collapsible open={hiredOpen} onOpenChange={setHiredOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-between text-emerald-600 hover:text-emerald-700"
+                  >
+                    <span className="flex items-center gap-2">
+                      {hiredOpen ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
+                      <Trophy className="w-4 h-4" />
+                      Contratados ({groupedApplications.hired.length})
+                    </span>
+                    <span className="text-sm">Ver lista</span>
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="flex gap-4 overflow-x-auto py-4">
+                    {groupedApplications.hired.map((app) => (
                       <ApplicationCard
                         key={app.id}
                         application={app}
@@ -1232,8 +1301,25 @@ export default function CompanyApplications() {
 
               {/* Actions */}
               <DialogFooter className="mt-6 flex-col sm:flex-row gap-2">
+                {/* PRD-077: Botão de contratar (apenas para status offer/aprovado) */}
+                {selectedApplication.status === 'offer' && (
+                  <Button
+                    onClick={() => {
+                      if (duplicateCheck?.exists) {
+                        setDuplicateWarningOpen(true);
+                      } else {
+                        setHiringModalOpen(true);
+                      }
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto"
+                  >
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Contratar
+                  </Button>
+                )}
+
                 {/* PRD-034: Botão de agendar entrevista */}
-                {selectedApplication.status !== 'rejected' && (
+                {selectedApplication.status !== 'rejected' && selectedApplication.status !== 'hired' && (
                   <Button
                     variant="outline"
                     onClick={() => setShowScheduleModal(true)}
@@ -1260,7 +1346,7 @@ export default function CompanyApplications() {
                     : 'Adicionar à comparação'}
                 </Button>
 
-                {selectedApplication.status !== 'rejected' && (
+                {selectedApplication.status !== 'rejected' && selectedApplication.status !== 'hired' && selectedApplication.status !== 'talent_pool' && (
                   <>
                     <Select
                       value=""
@@ -1452,6 +1538,73 @@ export default function CompanyApplications() {
           }}
         />
       )}
+
+      {/* PRD-077: Modal de contratacao */}
+      {selectedApplication && selectedCandidate && (
+        <HiringModal
+          open={hiringModalOpen}
+          onOpenChange={setHiringModalOpen}
+          application={selectedApplication}
+          candidateName={selectedCandidate.name}
+          candidateAvatar={selectedCandidate.avatar}
+          jobTitle={selectedApplication.jobTitle}
+          matchScore={calculateMatch(selectedApplication.candidateId)}
+          testStatus={selectedApplication.testStatus}
+          onHired={(result) => {
+            setLastHireResult(result);
+            setHiringModalOpen(false);
+            setDrawerOpen(false);
+            if (result.allPositionsFilled) {
+              setJobClosureModalOpen(true);
+            } else {
+              const remaining = result.positionsCount - result.hiredCount;
+              toast.info(`Vaga ainda possui ${remaining} posicao(oes) em aberto.`);
+            }
+          }}
+        />
+      )}
+
+      {/* PRD-077: Modal de encerramento de vaga */}
+      {lastHireResult && (
+        <JobClosureModal
+          open={jobClosureModalOpen}
+          onOpenChange={setJobClosureModalOpen}
+          jobId={lastHireResult.jobId}
+          jobTitle={lastHireResult.jobTitle}
+          hiredCount={lastHireResult.hiredCount}
+          positionsCount={lastHireResult.positionsCount}
+          onClosed={() => {
+            setJobClosureModalOpen(false);
+            setLastHireResult(null);
+          }}
+        />
+      )}
+
+      {/* PRD-077: Aviso de candidato ja e colaborador */}
+      <AlertDialog open={duplicateWarningOpen} onOpenChange={setDuplicateWarningOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Candidato ja e colaborador</AlertDialogTitle>
+            <AlertDialogDescription>
+              Este candidato ja faz parte da sua equipe
+              {duplicateCheck?.hireDate ? ` desde ${duplicateCheck.hireDate}` : ''}.
+              Deseja registrar nova contratacao mesmo assim?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setDuplicateWarningOpen(false);
+                setHiringModalOpen(true);
+              }}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              Sim, contratar novamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
