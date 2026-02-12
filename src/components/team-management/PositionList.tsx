@@ -24,8 +24,8 @@ interface PositionListProps {
 
 const levelLabels: Record<HierarchyLevel, string> = {
   operational: "Operacional",
-  tactical: "T\u00e1tico",
-  strategic: "Estrat\u00e9gico",
+  tactical: "Tático",
+  strategic: "Estratégico",
 };
 
 const levelBadgeStyles: Record<HierarchyLevel, string> = {
@@ -84,9 +84,9 @@ export default function PositionList({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Cargo</TableHead>
-                      <TableHead className="text-center">N\u00edvel</TableHead>
+                      <TableHead className="text-center">Nível</TableHead>
                       <TableHead className="text-center">Status</TableHead>
-                      <TableHead className="text-right">A\u00e7\u00f5es</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -155,9 +155,9 @@ export default function PositionList({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Cargo</TableHead>
-                      <TableHead className="text-center">N\u00edvel</TableHead>
+                      <TableHead className="text-center">Nível</TableHead>
                       <TableHead className="text-center">Status</TableHead>
-                      <TableHead className="text-right">A\u00e7\u00f5es</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

@@ -5,6 +5,18 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.6] - 2026-02-12 "Bridge"
+
+### Fixed
+- **CRUD de departamentos e cargos nao persistia no Supabase** — Todos os handlers (criar, editar, toggle ativo) apenas modificavam useState local, dados eram perdidos ao recarregar a pagina
+  - Handlers agora usam React Query mutations (`useCreateDepartment`, `useUpdateDepartment`, `useCreatePosition`, `useUpdatePosition`)
+  - Removido padrao useState+useEffect para departamentos/posicoes — dados vem direto do React Query
+  - `createDepartment()` agora inclui `company_id` (corrigido NOT NULL violation)
+  - Adicionado `updatePosition()` no service layer (antes nao existia)
+  - Removido filtro `is_active=true` de `getDepartments()` e `getPositions()` — itens inativos agora permanecem visiveis na listagem
+  - IDs agora sao UUIDs gerados pelo Supabase (antes eram client-side `dept-${Date.now()}`)
+- **Caracteres unicode escapados nos modais de Gestao de Equipes** — `\u00e7`, `\u00e3o`, etc. substituidos por caracteres UTF-8 reais em DepartmentForm, DepartmentList, PositionForm e PositionList
+
 ## [1.13.5] - 2026-02-12 "Bridge"
 
 ### Fixed

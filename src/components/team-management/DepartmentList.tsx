@@ -55,10 +55,10 @@ export default function DepartmentList({
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead>Descri\u00e7\u00e3o</TableHead>
+                <TableHead>Descrição</TableHead>
                 <TableHead className="text-center">Cargos</TableHead>
                 <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-right">A\u00e7\u00f5es</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

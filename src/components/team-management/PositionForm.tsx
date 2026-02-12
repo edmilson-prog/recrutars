@@ -30,8 +30,8 @@ interface PositionFormProps {
 
 const levelOptions: { value: HierarchyLevel; label: string }[] = [
   { value: "operational", label: "Operacional" },
-  { value: "tactical", label: "T\u00e1tico" },
-  { value: "strategic", label: "Estrat\u00e9gico" },
+  { value: "tactical", label: "Tático" },
+  { value: "strategic", label: "Estratégico" },
 ];
 
 export default function PositionForm({
@@ -89,10 +89,10 @@ export default function PositionForm({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="pos-title">T\u00edtulo *</Label>
+            <Label htmlFor="pos-title">Título *</Label>
             <Input
               id="pos-title"
-              placeholder="Ex: Desenvolvedor S\u00eanior"
+              placeholder="Ex: Desenvolvedor Sênior"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -118,10 +118,10 @@ export default function PositionForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pos-level">N\u00edvel hier\u00e1rquico *</Label>
+            <Label htmlFor="pos-level">Nível hierárquico *</Label>
             <Select value={level} onValueChange={(v) => setLevel(v as HierarchyLevel)}>
               <SelectTrigger id="pos-level">
-                <SelectValue placeholder="Selecione o n\u00edvel" />
+                <SelectValue placeholder="Selecione o nível" />
               </SelectTrigger>
               <SelectContent>
                 {levelOptions.map((opt) => (
@@ -139,7 +139,7 @@ export default function PositionForm({
                 Cargo ativo
               </Label>
               <p className="text-xs text-muted-foreground">
-                Cargos inativos n\u00e3o aparecem nas listagens padr\u00e3o.
+                Cargos inativos não aparecem nas listagens padrão.
               </p>
             </div>
             <Switch

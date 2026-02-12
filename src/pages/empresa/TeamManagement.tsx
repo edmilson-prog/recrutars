@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useDepartments, useTeamMembers, usePositions } from '@/hooks/useTeamsQuery';
+import { useDepartments, useTeamMembers, usePositions, useCreateDepartment, useUpdateDepartment, useCreatePosition, useUpdatePosition } from '@/hooks/useTeamsQuery';
 import { mockTeamAlerts } from '@/data/teamManagementData';
 import TeamDashboard from '@/components/team-management/TeamDashboard';
 import TeamMemberList from '@/components/team-management/TeamMemberList';
@@ -65,9 +65,11 @@ export default function TeamManagement() {
 
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Local state initialized from service layer data
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [positions, setPositions] = useState<Position[]>([]);
+  // React Query data — departments and positions come directly from Supabase
+  const departments = fetchedDepartments;
+  const positions = fetchedPositions;
+
+  // Members still use local state (out of scope for this fix)
   const [members, setMembers] = useState<TeamMember[]>([]);
 
   // Dialog states
@@ -83,18 +85,16 @@ export default function TeamManagement() {
   // Behavioral map filter
   const [mapDeptFilter, setMapDeptFilter] = useState<string | null>(null);
 
-  // Sync fetched data into local state on every RQ refetch
-  useEffect(() => {
-    setDepartments(fetchedDepartments);
-  }, [fetchedDepartments]);
-
-  useEffect(() => {
-    setPositions(fetchedPositions);
-  }, [fetchedPositions]);
-
+  // Sync members from React Query
   useEffect(() => {
     setMembers(fetchedMembers);
   }, [fetchedMembers]);
+
+  // Mutations for departments and positions
+  const createDept = useCreateDepartment();
+  const updateDept = useUpdateDepartment();
+  const createPos = useCreatePosition();
+  const updatePos = useUpdatePosition();
 
   const isLoading = deptsLoading || membersLoading || positionsLoading;
 
@@ -108,39 +108,59 @@ export default function TeamManagement() {
     );
   }
 
-  // Department handlers
-  const handleSaveDept = (data: Omit<Department, 'id' | 'createdAt'>) => {
-    if (editingDept) {
-      setDepartments(prev => prev.map(d => d.id === editingDept.id ? { ...d, ...data } : d));
-    } else {
-      const newDept: Department = { ...data, id: `dept-${Date.now()}`, createdAt: new Date().toISOString() };
-      setDepartments(prev => [...prev, newDept]);
+  // Department handlers — persisted to Supabase via React Query mutations
+  const handleSaveDept = async (data: Omit<Department, 'id' | 'createdAt'>) => {
+    try {
+      if (editingDept) {
+        await updateDept.mutateAsync({ id: editingDept.id, updates: data });
+      } else {
+        await createDept.mutateAsync({ companyId, ...data });
+      }
+    } catch {
+      // React Query will handle error state; toast could be added later
     }
     setEditingDept(null);
     setDeptFormOpen(false);
   };
 
-  const handleToggleDept = (deptId: string) => {
-    setDepartments(prev => prev.map(d => d.id === deptId ? { ...d, isActive: !d.isActive } : d));
+  const handleToggleDept = async (deptId: string) => {
+    const dept = departments.find(d => d.id === deptId);
+    if (dept) {
+      try {
+        await updateDept.mutateAsync({ id: deptId, updates: { isActive: !dept.isActive } });
+      } catch {
+        // silent — React Query handles error state
+      }
+    }
   };
 
-  // Position handlers
-  const handleSavePos = (data: Omit<Position, 'id'>) => {
-    if (editingPos) {
-      setPositions(prev => prev.map(p => p.id === editingPos.id ? { ...p, ...data } : p));
-    } else {
-      const newPos: Position = { ...data, id: `pos-${Date.now()}` };
-      setPositions(prev => [...prev, newPos]);
+  // Position handlers — persisted to Supabase via React Query mutations
+  const handleSavePos = async (data: Omit<Position, 'id'>) => {
+    try {
+      if (editingPos) {
+        await updatePos.mutateAsync({ id: editingPos.id, updates: data });
+      } else {
+        await createPos.mutateAsync(data);
+      }
+    } catch {
+      // React Query will handle error state
     }
     setEditingPos(null);
     setPosFormOpen(false);
   };
 
-  const handleTogglePos = (posId: string) => {
-    setPositions(prev => prev.map(p => p.id === posId ? { ...p, isActive: !p.isActive } : p));
+  const handleTogglePos = async (posId: string) => {
+    const pos = positions.find(p => p.id === posId);
+    if (pos) {
+      try {
+        await updatePos.mutateAsync({ id: posId, updates: { isActive: !pos.isActive } });
+      } catch {
+        // silent — React Query handles error state
+      }
+    }
   };
 
-  // Member handlers
+  // Member handlers (still local state — out of scope)
   const handleSaveMember = (data: Partial<TeamMember>) => {
     if (editingMember) {
       setMembers(prev => prev.map(m => m.id === editingMember.id ? { ...m, ...data } : m));

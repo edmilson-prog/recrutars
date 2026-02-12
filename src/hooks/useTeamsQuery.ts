@@ -157,9 +157,9 @@ export function useUpdateTeamMember() {
 export function useCreateDepartment() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: Omit<Department, 'id' | 'createdAt'>) => {
+    mutationFn: async ({ companyId, ...data }: { companyId: string } & Omit<Department, 'id' | 'createdAt'>) => {
       const service = await getTeamsService();
-      return service.createDepartment(data);
+      return service.createDepartment(companyId, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamKeys.all });
@@ -189,10 +189,22 @@ export function useCreatePosition() {
       const service = await getTeamsService();
       return service.createPosition(data);
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: teamKeys.positions(variables.departmentId),
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamKeys.all });
+    },
+  });
+}
+
+/** Update an existing position */
+export function useUpdatePosition() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Position> }) => {
+      const service = await getTeamsService();
+      return service.updatePosition(id, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamKeys.all });
     },
   });
 }

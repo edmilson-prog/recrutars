@@ -80,10 +80,10 @@ export default function DepartmentForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dept-description">Descri\u00e7\u00e3o</Label>
+            <Label htmlFor="dept-description">Descrição</Label>
             <Textarea
               id="dept-description"
-              placeholder="Descri\u00e7\u00e3o do departamento (opcional)"
+              placeholder="Descrição do departamento (opcional)"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -96,7 +96,7 @@ export default function DepartmentForm({
                 Departamento ativo
               </Label>
               <p className="text-xs text-muted-foreground">
-                Departamentos inativos n\u00e3o aparecem nas listagens padr\u00e3o.
+                Departamentos inativos não aparecem nas listagens padrão.
               </p>
             </div>
             <Switch

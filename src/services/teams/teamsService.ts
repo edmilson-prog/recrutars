@@ -25,12 +25,13 @@ export interface TeamsFilters {
 export interface ITeamsService {
   // Departments
   getDepartments(companyId: string): Promise<Department[]>;
-  createDepartment(data: Omit<Department, 'id' | 'createdAt'>): Promise<Department>;
+  createDepartment(companyId: string, data: Omit<Department, 'id' | 'createdAt'>): Promise<Department>;
   updateDepartment(id: string, updates: Partial<Department>): Promise<Department>;
 
   // Positions
   getPositions(departmentId: string): Promise<Position[]>;
   createPosition(data: Omit<Position, 'id'>): Promise<Position>;
+  updatePosition(id: string, updates: Partial<Position>): Promise<Position>;
 
   // Team Members
   getTeamMembers(filters?: TeamsFilters): Promise<TeamMember[]>;

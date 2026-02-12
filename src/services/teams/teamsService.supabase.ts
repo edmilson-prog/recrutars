@@ -28,7 +28,6 @@ export class TeamsServiceSupabase implements ITeamsService {
       .from('departments')
       .select('*')
       .eq('company_id', companyId)
-      .eq('is_active', true)
       .order('name', { ascending: true });
 
     if (error) throw new Error(`Failed to fetch departments: ${error.message}`);
@@ -36,10 +35,11 @@ export class TeamsServiceSupabase implements ITeamsService {
     return (data ?? []).map(this.mapDepartment);
   }
 
-  async createDepartment(input: Omit<Department, 'id' | 'createdAt'>): Promise<Department> {
+  async createDepartment(companyId: string, input: Omit<Department, 'id' | 'createdAt'>): Promise<Department> {
     const { data, error } = await supabase
       .from('departments')
       .insert({
+        company_id: companyId,
         name: input.name,
         description: input.description ?? null,
         manager_id: input.managerId ?? null,
@@ -81,7 +81,6 @@ export class TeamsServiceSupabase implements ITeamsService {
     let query = supabase
       .from('positions')
       .select('*')
-      .eq('is_active', true)
       .order('title', { ascending: true });
 
     if (departmentId && departmentId !== 'all') {
@@ -108,6 +107,26 @@ export class TeamsServiceSupabase implements ITeamsService {
       .single();
 
     if (error) throw new Error(`Failed to create position: ${error.message}`);
+
+    return this.mapPosition(data);
+  }
+
+  async updatePosition(id: string, updates: Partial<Position>): Promise<Position> {
+    const payload: Record<string, unknown> = {};
+
+    if (updates.title !== undefined) payload.title = updates.title;
+    if (updates.departmentId !== undefined) payload.department_id = updates.departmentId;
+    if (updates.level !== undefined) payload.level = updates.level;
+    if (updates.isActive !== undefined) payload.is_active = updates.isActive;
+
+    const { data, error } = await supabase
+      .from('positions')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to update position: ${error.message}`);
 
     return this.mapPosition(data);
   }
