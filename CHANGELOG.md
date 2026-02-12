@@ -5,6 +5,28 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.4] - 2026-02-12 "Bridge"
+
+### Enhanced
+- **Estatisticas e metadados no card de respostas do teste** — Secao de resumo com 6 metricas adicionada ao topo do `GaugeProResponsesCard` (dentro do collapsible)
+  - Data e hora da realizacao do teste (formatado pt-BR)
+  - Duracao total do teste (calculada a partir de timestamps reais startedAt/completedAt)
+  - Duracao individual da Parte 1 (Palavras) e Parte 2 (Cenarios)
+  - Total de palavras selecionadas (de 100) e cenarios respondidos (de 15)
+  - Duracao inline nos sub-headers de cada parte
+  - Grid responsivo: 2 colunas mobile, 3 colunas desktop
+  - Tratamento seguro para timestamps ausentes (exibe "—")
+
+## [1.13.3] - 2026-02-12 "Bridge"
+
+### Added
+- **Respostas reais do teste comportamental no perfil do candidato** — Quando a empresa abre o detalhamento de um candidato que completou o Gauge-Pro, agora exibe as respostas exatas do teste alem da analise da IA
+  - Part 1 (Selecao de Palavras): mostra as palavras que o candidato selecionou em cada dimensao, separadas por auto-percepcao e percepcao de terceiros, com badges coloridas por polaridade (high/low)
+  - Part 2 (Cenarios Situacionais): exibe os 15 cenarios com todas as opcoes, destacando a opcao escolhida pelo candidato com icone de check
+  - Componente `GaugeProResponsesCard` colapsavel (fechado por default) para nao poluir a pagina
+  - Dados resolvidos de `gauge_pro_assessments` (respostas reais) contra dados de referencia bundled (`GAUGE_PRO_ADJECTIVES`, `GAUGE_PRO_SCENARIOS`)
+  - Posicionado entre Perfil Comportamental (scores) e Analise da IA no fluxo do detalhamento
+
 ## [1.13.2] - 2026-02-12 "Bridge"
 
 ### Fixed

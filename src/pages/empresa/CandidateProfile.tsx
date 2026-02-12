@@ -62,7 +62,8 @@ import { getOrGenerateIdealProfile, gaugeProToBehavioralProfile } from '@/lib/be
 import { useJobs } from '@/hooks/useJobsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useApplications } from '@/hooks/useApplicationsQuery';
-import { useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
+import { useGaugeProResultByCandidate, useGaugeProSessionByCandidate } from '@/hooks/useGaugeProQuery';
+import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
 import { useProfile } from '@/hooks/useCurriculumsQuery';
 import { useApplicationHighlights } from '@/hooks/useHighlightsQuery';
 import { HighlightBadge } from '@/components/match/HighlightBadge';
@@ -191,8 +192,9 @@ export default function CandidateProfile() {
 
   const candidate = allCandidates.find((c) => c.id === id);
 
-  // Fetch Gauge-Pro result for this candidate
+  // Fetch Gauge-Pro result + assessment (respostas reais) for this candidate
   const { data: gaugeProResult } = useGaugeProResultByCandidate(candidate?.id || '');
+  const { data: gaugeProAssessment } = useGaugeProSessionByCandidate(candidate?.id || '');
 
   // PRD-073: Professional profile + highlights
   const { data: profile } = useProfile(candidate?.id || '');
@@ -557,6 +559,20 @@ export default function CandidateProfile() {
                     </div>
                   </CardContent>
                 </Card>
+              </motion.div>
+            )}
+
+            {/* Respostas Reais do Teste — v1.13.3 */}
+            {gaugeProAssessment && gaugeProResult && gaugeProAssessment.phase === 'completed' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12 }}
+              >
+                <GaugeProResponsesCard
+                  assessment={gaugeProAssessment}
+                  result={gaugeProResult}
+                />
               </motion.div>
             )}
 
