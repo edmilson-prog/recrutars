@@ -18,6 +18,8 @@ import {
   Users,
   CreditCard,
   Heart,
+  Fingerprint,
+  Copy,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -688,6 +690,58 @@ export default function CompanySettings() {
 
           {/* Tab: Conta */}
           <TabsContent value="conta" className="space-y-6">
+            {/* Informações da Conta */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                    <Fingerprint className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle>Informações da Conta</CardTitle>
+                    <CardDescription>Identificador único e dados da sua conta</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">ID da Empresa</p>
+                    <p className="text-xs text-muted-foreground font-mono truncate">{currentCompany?.id || '—'}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="ml-3 shrink-0"
+                    onClick={() => {
+                      if (currentCompany?.id) {
+                        navigator.clipboard.writeText(currentCompany.id);
+                        toast.success('ID copiado para a área de transferência');
+                      }
+                    }}
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    Copiar
+                  </Button>
+                </div>
+                {currentCompany?.createdAt && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-sm font-medium">Membro desde</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(currentCompany.createdAt).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Segurança */}
             <Card>
               <CardHeader>
