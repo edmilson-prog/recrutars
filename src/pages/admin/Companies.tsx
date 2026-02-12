@@ -227,7 +227,8 @@ const initialAdminActions: AdminAction[] = [
 ];
 import { useCompanies } from '@/hooks/useCompaniesQuery';
 import { useJobs } from '@/hooks/useJobsQuery';
-import type { Company, CompanyStatus, CompanyPlanType, AdminAction, Job } from '@/types';
+import type { Company, CompanyStatus, AdminAction, Job } from '@/types';
+import { usePlans } from '@/hooks/usePlans';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
@@ -256,7 +257,7 @@ const STATUS_CONFIG = {
   },
 };
 
-const PLANS = ['Essencial Empresas', 'Seleção Inteligente', 'Recrutamento Premium'];
+// PLANS removido — dados agora vem dinamicamente via usePlans()
 const INDUSTRIES = [
   'Tecnologia',
   'Saúde',
@@ -310,8 +311,12 @@ export default function AdminCompanies() {
 
   // Form state
   const [deactivateReason, setDeactivateReason] = useState('');
-  const [newPlan, setNewPlan] = useState<CompanyPlanType>('Essencial Empresas');
+  const [newPlan, setNewPlan] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
+
+  // Planos dinamicos para Select
+  const { companyPlans } = usePlans();
+  const PLANS = companyPlans.filter(p => p.isActive).map(p => p.name);
 
   // Local state for companies (to allow status/plan changes)
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -840,7 +845,7 @@ export default function AdminCompanies() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="newPlan">Novo plano</Label>
-              <Select value={newPlan} onValueChange={(v) => setNewPlan(v as CompanyPlanType)}>
+              <Select value={newPlan} onValueChange={(v) => setNewPlan(v)}>
                 <SelectTrigger id="newPlan">
                   <SelectValue placeholder="Selecione o novo plano" />
                 </SelectTrigger>

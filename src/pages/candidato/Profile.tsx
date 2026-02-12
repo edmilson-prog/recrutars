@@ -51,7 +51,7 @@ const faq = [
   },
   {
     question: 'Como funciona o período de teste?',
-    answer: 'Oferecemos 7 dias grátis para os planos Avançar e Destaque Máximo. Você pode cancelar antes do fim do período sem ser cobrado.',
+    answer: 'Oferecemos um período de teste gratuito para planos pagos. Você pode cancelar antes do fim do período sem ser cobrado.',
   },
   {
     question: 'Posso trocar de plano depois?',
@@ -203,6 +203,9 @@ export default function CandidateProfile() {
   const planFeatures = (currentPlanObj as Record<string, unknown>)?.features as string[]
     ?? (currentPlanObj as Record<string, unknown>)?.features as string[]
     ?? ['Perfil basico'];
+  const currentPrices = (currentPlanObj as Record<string, unknown>)?.prices as Record<string, number> ?? {};
+  const currentMonthlyPrice = currentPrices.monthly ?? 0;
+  const isCurrentFree = ((currentPlanObj as Record<string, unknown>)?.is_free ?? (currentPlanObj as Record<string, unknown>)?.isFree) as boolean;
 
   if (isLoading || !candidate) {
     return (
@@ -856,20 +859,26 @@ export default function CandidateProfile() {
                     <CardTitle>Seu Plano</CardTitle>
                     <CardDescription>Detalhes da sua assinatura atual</CardDescription>
                   </div>
-                  <Badge variant={currentPlan === 'Destaque Máximo' ? 'default' : currentPlan === 'Avançar' ? 'secondary' : 'outline'}>
+                  <Badge variant={(currentPlanObj as Record<string, unknown>)?.badge ? 'default' : isCurrentFree ? 'outline' : 'secondary'}>
                     {currentPlan}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold">R$ {planData.price}</span>
-                  <span className="text-muted-foreground">/mês</span>
+                  <span className="text-3xl font-bold">
+                    {isCurrentFree ? 'Gratis' : formatBRL(currentMonthlyPrice)}
+                  </span>
+                  {!isCurrentFree && <span className="text-muted-foreground">/mês</span>}
                 </div>
 
-                {currentPlan !== 'Essencial' && (
+                {!isCurrentFree && candidateSubscription && (
                   <p className="text-sm text-muted-foreground">
-                    Próxima cobrança em 15/03/2026
+                    Próxima cobrança em {(() => {
+                      const sub = candidateSubscription as Record<string, unknown>;
+                      const date = sub.renewal_date ?? sub.renewalDate ?? sub.end_date ?? sub.endDate;
+                      return date ? new Date(String(date)).toLocaleDateString('pt-BR') : '—';
+                    })()}
                   </p>
                 )}
 

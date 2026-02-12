@@ -1,9 +1,9 @@
 /**
  * Plans Page (Public)
- * PRD-074: Dynamic pricing page with 4 company plans from database.
+ * PRD-074: Dynamic pricing page with plans from database.
  *
- * Shows period selector, discount highlighting, bonus tests info,
- * and responsive grid layout.
+ * Shows plan type toggle (company/candidate), period selector,
+ * dynamic discount highlighting, bonus tests info, and responsive grid layout.
  */
 
 import { useState } from 'react';
@@ -19,6 +19,7 @@ import { formatBRL } from '@/lib/formatters';
 import { usePlans } from '@/hooks/usePlans';
 import { useAuth } from '@/contexts/AuthContext';
 import { CheckoutButton } from '@/components/billing/CheckoutButton';
+import { shouldApplyDiscount } from '@/lib/subscriptionRules';
 import type { PlanPeriod } from '@/types';
 
 const PERIOD_LABELS: Record<PlanPeriod, string> = {
@@ -29,12 +30,24 @@ const PERIOD_LABELS: Record<PlanPeriod, string> = {
 };
 
 export default function PlansPage() {
-  const { companyPlans, isLoading } = usePlans();
+  const { companyPlans, candidatePlans, isLoading } = usePlans();
   const { isAuthenticated } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState<PlanPeriod>('monthly');
+  const [planType, setPlanType] = useState<'company' | 'candidate'>('company');
 
-  const activePlans = companyPlans.filter((p) => p.isActive);
-  const isDiscountPeriod = selectedPeriod === 'semiannual' || selectedPeriod === 'annual';
+  const allPlans = planType === 'company' ? companyPlans : candidatePlans;
+  const activePlans = allPlans.filter((p) => p.isActive);
+
+  // Desconto dinamico: maior desconto entre planos ativos
+  const maxDiscount = activePlans.length > 0
+    ? Math.max(...activePlans.map(p => p.discountPercentage ?? 0))
+    : 0;
+
+  // Verifica se algum plano tem desconto para o periodo dado
+  const periodHasDiscount = (period: PlanPeriod) =>
+    maxDiscount > 0 && activePlans.some(p =>
+      (p.discountPercentage ?? 0) > 0 && shouldApplyDiscount(period, p.discountMinPeriod)
+    );
 
   return (
     <PublicLayout>
@@ -44,13 +57,35 @@ export default function PlansPage() {
           <div className="container py-16 text-center text-primary-foreground">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Planos e Precos</h1>
             <p className="text-xl text-primary-foreground/80 max-w-2xl mx-auto">
-              Escolha o plano ideal para sua empresa
+              {planType === 'company'
+                ? 'Escolha o plano ideal para sua empresa'
+                : 'Escolha o plano ideal para voce'}
             </p>
           </div>
         </div>
 
+        {/* Plan Type Toggle */}
+        <div className="container pt-8 pb-4">
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              variant={planType === 'company' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setPlanType('company')}
+            >
+              Para Empresas
+            </Button>
+            <Button
+              variant={planType === 'candidate' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setPlanType('candidate')}
+            >
+              Para Candidatos
+            </Button>
+          </div>
+        </div>
+
         {/* Period Selector */}
-        <div className="container py-8">
+        <div className="container py-4">
           <div className="flex items-center justify-center gap-2 flex-wrap">
             {(Object.keys(PERIOD_LABELS) as PlanPeriod[]).map((period) => (
               <Button
@@ -60,9 +95,9 @@ export default function PlansPage() {
                 onClick={() => setSelectedPeriod(period)}
               >
                 {PERIOD_LABELS[period]}
-                {(period === 'semiannual' || period === 'annual') && (
+                {periodHasDiscount(period) && (
                   <Badge className="ml-1.5 text-[9px] px-1 py-0 h-3.5 bg-green-500 text-white border-0">
-                    -10%
+                    -{maxDiscount}%
                   </Badge>
                 )}
               </Button>
@@ -76,14 +111,24 @@ export default function PlansPage() {
             <div className="flex items-center justify-center py-20">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
             </div>
+          ) : activePlans.length === 0 ? (
+            <div className="text-center py-20 text-muted-foreground">
+              <p>Nenhum plano disponivel no momento.</p>
+            </div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <div className={cn(
+              "grid sm:grid-cols-2 gap-6 max-w-6xl mx-auto",
+              activePlans.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"
+            )}>
               {activePlans.map((plan, index) => {
                 const isTrial = !!plan.trialDurationDays;
                 const basePrice = plan.prices.monthly ?? 0;
                 const periodPrice = plan.prices[selectedPeriod] ?? basePrice;
-                const hasDiscount = !isTrial && isDiscountPeriod && periodPrice < basePrice;
-                const isPopular = plan.badge === 'Mais popular';
+                const planDiscount = plan.discountPercentage ?? 0;
+                const hasDiscount = !isTrial && planDiscount > 0
+                  && shouldApplyDiscount(selectedPeriod, plan.discountMinPeriod)
+                  && periodPrice < basePrice;
+                const isPopular = !!plan.badge;
 
                 return (
                   <motion.div
@@ -127,6 +172,10 @@ export default function PlansPage() {
                             <span>{plan.trialDurationDays} dias de teste</span>
                           </div>
                         </div>
+                      ) : plan.isFree ? (
+                        <div>
+                          <span className="text-3xl font-bold text-foreground">Gratis</span>
+                        </div>
                       ) : (
                         <div>
                           <div className="flex items-baseline justify-center gap-1">
@@ -142,10 +191,10 @@ export default function PlansPage() {
                           </div>
                           {hasDiscount && (
                             <Badge className="mt-2 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-0 text-xs">
-                              10% de desconto
+                              {planDiscount}% de desconto
                             </Badge>
                           )}
-                          {plan.bonusTests && isDiscountPeriod && (plan.bonusTests[selectedPeriod] ?? 0) > 0 && (
+                          {plan.bonusTests && shouldApplyDiscount(selectedPeriod, plan.discountMinPeriod) && (plan.bonusTests[selectedPeriod] ?? 0) > 0 && (
                             <p className="text-xs text-cyan-600 dark:text-cyan-400 mt-2 font-medium">
                               + {plan.bonusTests[selectedPeriod]} testes comportamentais
                             </p>
@@ -163,7 +212,7 @@ export default function PlansPage() {
                       ))}
                     </ul>
 
-                    {isAuthenticated && !isTrial ? (
+                    {isAuthenticated && !isTrial && !plan.isFree ? (
                       <CheckoutButton
                         planId={plan.id}
                         planName={plan.name}
@@ -178,7 +227,7 @@ export default function PlansPage() {
                         size="lg"
                         onClick={() => { if (!isAuthenticated) window.location.href = '/cadastro'; }}
                       >
-                        {isTrial ? 'Comecar gratis' : 'Assinar agora'}
+                        {isTrial || plan.isFree ? 'Comecar gratis' : 'Assinar agora'}
                       </Button>
                     )}
                   </motion.div>

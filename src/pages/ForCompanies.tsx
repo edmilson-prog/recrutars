@@ -23,7 +23,10 @@ import {
   ArrowRight,
   CheckCircle2,
   Star,
+  Loader2,
 } from 'lucide-react';
+import { usePlans } from '@/hooks/usePlans';
+import { formatBRL } from '@/lib/formatters';
 
 const stats = [
   { value: '+1.200', label: 'Empresas ativas', icon: Building2 },
@@ -107,30 +110,7 @@ const steps = [
   { step: '06', title: 'Contrate', description: 'O candidato ideal para sua equipe' },
 ];
 
-const plansPreview = [
-  {
-    name: 'Essencial Empresas',
-    price: 'Grátis',
-    highlight: '2 vagas ativas',
-    features: ['Até 2 vagas simultâneas', '50 candidatos/mês', 'Dashboard básico', 'Suporte por email'],
-    popular: false,
-  },
-  {
-    name: 'Seleção Inteligente',
-    price: 'R$ 299',
-    period: '/mês',
-    highlight: '10 vagas + Testes ilimitados',
-    features: ['Até 10 vagas simultâneas', 'Candidatos ilimitados', 'Testes comportamentais ilimitados', 'Recomendação por IA', 'Suporte prioritário'],
-    popular: true,
-  },
-  {
-    name: 'Recrutamento Premium',
-    price: 'Personalizado',
-    highlight: 'Vagas ilimitadas + API',
-    features: ['Vagas ilimitadas', 'API de integração', 'Gerente de conta dedicado', 'SLA garantido', 'Treinamento personalizado'],
-    popular: false,
-  },
-];
+// plansPreview removido — dados agora vem dinamicamente via usePlans()
 
 const testimonials = [
   {
@@ -155,6 +135,9 @@ const fadeInUp = {
 };
 
 export default function ForCompanies() {
+  const { companyPlans, isLoading: plansLoading } = usePlans();
+  const previewPlans = companyPlans.filter(p => p.isActive).slice(0, 3);
+
   return (
     <PublicLayout>
       <div className="min-h-screen pb-12">
@@ -375,43 +358,52 @@ export default function ForCompanies() {
               </p>
             </motion.div>
 
-            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {plansPreview.map((plan, index) => (
-                <motion.div
-                  key={plan.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className={`bg-card rounded-2xl shadow-soft p-6 relative ${
-                    plan.popular ? 'border-2 border-secondary ring-4 ring-secondary/10' : ''
-                  }`}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-secondary text-secondary-foreground text-sm font-medium rounded-full flex items-center gap-1">
-                      <Star className="w-3 h-3" />
-                      Mais Popular
-                    </div>
-                  )}
-                  <div className="text-center mb-6 pt-2">
-                    <h3 className="text-xl font-semibold text-foreground mb-2">{plan.name}</h3>
-                    <div className="text-3xl font-bold text-foreground">
-                      {plan.price}
-                      {plan.period && <span className="text-lg font-normal text-muted-foreground">{plan.period}</span>}
-                    </div>
-                    <p className="text-sm text-secondary mt-1">{plan.highlight}</p>
-                  </div>
-                  <ul className="space-y-3 mb-6">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <CheckCircle2 className="w-4 h-4 text-secondary flex-shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
-              ))}
-            </div>
+            {plansLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                {previewPlans.map((plan, index) => {
+                  const isPopular = !!plan.badge;
+                  return (
+                    <motion.div
+                      key={plan.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      className={`bg-card rounded-2xl shadow-soft p-6 relative ${
+                        isPopular ? 'border-2 border-secondary ring-4 ring-secondary/10' : ''
+                      }`}
+                    >
+                      {plan.badge && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-secondary text-secondary-foreground text-sm font-medium rounded-full flex items-center gap-1">
+                          <Star className="w-3 h-3" />
+                          {plan.badge}
+                        </div>
+                      )}
+                      <div className="text-center mb-6 pt-2">
+                        <h3 className="text-xl font-semibold text-foreground mb-2">{plan.name}</h3>
+                        <div className="text-3xl font-bold text-foreground">
+                          {plan.isFree ? 'Grátis' : formatBRL(plan.prices.monthly ?? 0)}
+                          {!plan.isFree && <span className="text-lg font-normal text-muted-foreground">/mês</span>}
+                        </div>
+                        <p className="text-sm text-secondary mt-1">{plan.descriptionShort}</p>
+                      </div>
+                      <ul className="space-y-3 mb-6">
+                        {plan.features.map((feature, idx) => (
+                          <li key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <CheckCircle2 className="w-4 h-4 text-secondary flex-shrink-0" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
 
             <motion.div {...fadeInUp} className="text-center mt-8">
               <Button asChild size="lg">

@@ -46,6 +46,7 @@ import { TEST_CONFIG } from '@/data/testConfig';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
 import { TrialBadge, TrialIndicator, TrialGuard } from '@/components/trial';
 import { PaymentFailedBanner } from '@/components/billing/PaymentFailedBanner';
+import { usePlans } from '@/hooks/usePlans';
 
 interface NavItem {
   href: string;
@@ -150,6 +151,15 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   // PRD-074: Trial status for company users
   const { isTrial, isExpired, daysRemaining, warningLevel } = useTrialStatus();
+
+  // Planos dinamicos para badge de plano no header
+  const { candidatePlans, companyPlans } = usePlans();
+  const candidatePlanObj = currentCandidate?.plan
+    ? candidatePlans.find(p => p.name === currentCandidate.plan)
+    : undefined;
+  const companyPlanObj = currentCompany?.plan
+    ? companyPlans.find(p => p.name === currentCompany.plan)
+    : undefined;
 
   const navItems = userType === 'admin'
     ? adminNav
@@ -349,22 +359,24 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                     <div className="hidden sm:block text-right">
                       <div className="flex items-center gap-1.5 justify-end">
                         <span className="text-sm font-medium">{displayName}</span>
-                        {userType === 'candidate' && currentCandidate?.plan && currentCandidate.plan !== 'Essencial' && (
+                        {userType === 'candidate' && currentCandidate?.plan && !candidatePlanObj?.isFree && (
                           <Badge className={cn(
                             "text-[10px] px-1.5 py-0 h-4 font-semibold border-0",
-                            currentCandidate.plan === 'Destaque Máximo'
+                            candidatePlanObj?.badge
                               ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-white"
-                              : "bg-primary/15 text-primary"
+                              : (candidatePlanObj?.order ?? 0) >= 2
+                                ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white"
+                                : "bg-primary/15 text-primary"
                           )}>
                             {currentCandidate.plan}
                           </Badge>
                         )}
-                        {userType === 'company' && currentCompany?.plan && currentCompany.plan !== 'Basico Empresas' && (
+                        {userType === 'company' && currentCompany?.plan && !companyPlanObj?.isFree && !(companyPlanObj?.trialDurationDays) && (
                           <Badge className={cn(
                             "text-[10px] px-1.5 py-0 h-4 font-semibold border-0",
-                            currentCompany.plan === 'Premium Empresas'
+                            companyPlanObj?.badge
                               ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-white"
-                              : currentCompany.plan === 'Avancar Empresas'
+                              : (companyPlanObj?.order ?? 0) >= 2
                                 ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white"
                                 : "bg-primary/15 text-primary"
                           )}>

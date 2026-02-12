@@ -8,8 +8,8 @@
 import type { BehavioralTest } from './test';
 import type { SalaryRange } from './job';
 
-// Tipo de plano do candidato
-export type CandidatePlanType = 'Essencial' | 'Avançar' | 'Destaque Máximo';
+// Tipo de plano do candidato (dinamico — nomes vem do banco via tabela plans)
+export type CandidatePlanType = string;
 
 // PRD-026: Modos de visibilidade do perfil
 export type VisibilityMode = 'public' | 'partial' | 'private';

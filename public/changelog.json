@@ -1,13 +1,35 @@
 {
   "versions": [
     {
+      "version": "1.12.3",
+      "codename": "Gateway",
+      "type": "patch",
+      "releaseDate": "2026-02-11",
+      "description": "Planos criados pelo admin agora refletidos dinamicamente para candidatos, empresas e landing page. Removidos nomes de plano hardcoded em favor de dados do banco via hooks existentes.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "ForCompanies.tsx: preview de planos agora carrega dinamicamente do banco via usePlans()",
+            "Plans.tsx: toggle empresa/candidato, desconto dinamico por plano e badge de desconto percentual",
+            "DashboardLayout: badge de plano no header agora dinamico baseado em isFree/badge/order",
+            "Admin Companies: select de planos agora populado dinamicamente via usePlans()",
+            "Profile.tsx (candidato): badge de plano, condicao de billing e data de cobranca dinamicos",
+            "CandidatePlanType e CompanyPlanType flexibilizados de union literal para string",
+            "FAQs genericizados em candidato/Profile e empresa/Settings (removidos nomes de plano hardcoded)"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.12.2",
       "codename": "Gateway",
       "type": "patch",
       "releaseDate": "2026-02-11",
       "prd": "PRD-075",
       "description": "Corrigido status 'Nao sincronizado' que persistia apos sync Stripe em producao. Cache React Query invalidado automaticamente apos sync. Edge Functions validam resultado do UPDATE e parametro environment.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

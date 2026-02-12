@@ -144,12 +144,12 @@ const companyFaq = [
     answer: 'Sim, oferecemos 20% de desconto para planos anuais. Entre em contato com nosso time comercial.',
   },
   {
-    question: 'Como funciona o plano Enterprise?',
-    answer: 'O Enterprise inclui API de integração, suporte dedicado com SLA, relatórios personalizados e onboarding assistido.',
+    question: 'Como funciona o plano premium?',
+    answer: 'O plano de nível mais alto inclui API de integração, suporte dedicado com SLA, relatórios personalizados e onboarding assistido.',
   },
   {
     question: 'Posso adicionar mais usuários ao meu plano?',
-    answer: 'Nos planos Professional e Enterprise, você pode adicionar usuários extras. No Enterprise, o número é ilimitado.',
+    answer: 'Nos planos mais avançados, você pode adicionar usuários extras. Consulte os detalhes de cada plano para saber os limites.',
   },
 ];
 
