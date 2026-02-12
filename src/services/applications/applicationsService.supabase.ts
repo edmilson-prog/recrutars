@@ -196,6 +196,42 @@ export class ApplicationsServiceSupabase implements IApplicationsService {
   }
 
   async createApplication(appData: CreateApplicationData): Promise<Application> {
+    // Check if there's a withdrawn application for this job — reactivate instead of inserting
+    const { data: existing } = await supabase
+      .from('applications')
+      .select(APPLICATION_SELECT)
+      .eq('job_id', appData.jobId)
+      .eq('candidate_id', appData.candidateId)
+      .eq('status', 'withdrawn')
+      .maybeSingle();
+
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id ?? appData.candidateId;
+
+    if (existing) {
+      const { data, error } = await supabase
+        .from('applications')
+        .update({
+          status: 'pending',
+          message: appData.message ?? existing.message,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id)
+        .select(APPLICATION_SELECT)
+        .single();
+
+      if (error) throw new Error(`Failed to reactivate application: ${error.message}`);
+
+      await supabase.from('application_history').insert({
+        application_id: data.id,
+        from_status: 'withdrawn',
+        to_status: 'pending',
+        changed_by: userId,
+      });
+
+      return applicationRowToApplication(data);
+    }
+
     const { data, error } = await supabase
       .from('applications')
       .insert({
@@ -213,12 +249,11 @@ export class ApplicationsServiceSupabase implements IApplicationsService {
     }
 
     // Create initial history entry
-    const { data: userData } = await supabase.auth.getUser();
     await supabase.from('application_history').insert({
       application_id: data.id,
       from_status: null,
       to_status: 'pending',
-      changed_by: userData?.user?.id ?? data.candidate_id,
+      changed_by: userId,
     });
 
     return applicationRowToApplication(data);

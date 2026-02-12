@@ -23,11 +23,11 @@ export function useApplications(candidateId: string) {
   const updateStatusMutation = useUpdateApplicationStatus();
 
   const hasApplied = useCallback((jobId: string) => {
-    return applications.some(app => app.jobId === jobId);
+    return applications.some(app => app.jobId === jobId && app.status !== 'withdrawn');
   }, [applications]);
 
   const getApplication = useCallback((jobId: string) => {
-    return applications.find(app => app.jobId === jobId);
+    return applications.find(app => app.jobId === jobId && app.status !== 'withdrawn');
   }, [applications]);
 
   const createApplication = useCallback((

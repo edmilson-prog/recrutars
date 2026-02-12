@@ -216,7 +216,10 @@ export default function CompanyApplications() {
 
   // Fetch data from service layer
   const { data: fetchedCompanyJobs = [], isLoading: isLoadingJobs } = useJobsByCompany(companyId);
-  const { data: applicationsResult, isLoading: isLoadingApps } = useApplicationsQuery({ companyId });
+  const { data: applicationsResult, isLoading: isLoadingApps } = useApplicationsQuery(
+    { companyId },
+    { page: 1, pageSize: 500 }
+  );
   const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates();
   const { data: behavioralTests = [] } = useBehavioralTests();
 
@@ -269,6 +272,17 @@ export default function CompanyApplications() {
     ),
     [applications_, localStatusOverrides]
   );
+
+  // Real application count per job (excludes withdrawn)
+  const applicationsCountByJob = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const app of applications) {
+      if (app.status !== 'withdrawn') {
+        map[app.jobId] = (map[app.jobId] ?? 0) + 1;
+      }
+    }
+    return map;
+  }, [applications]);
 
   // Notes state (local + fetched)
   const [localNotes, setLocalNotes] = useState<ApplicationNote[]>([]);
@@ -668,7 +682,7 @@ export default function CompanyApplications() {
               <SelectContent>
                 {companyJobs.map((job) => (
                   <SelectItem key={job.id} value={job.id}>
-                    {job.title} ({job.applicationsCount} candidaturas)
+                    {job.title} ({applicationsCountByJob[job.id] ?? 0} candidaturas)
                   </SelectItem>
                 ))}
               </SelectContent>

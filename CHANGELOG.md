@@ -5,6 +5,25 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.5] - 2026-02-11 "Gateway"
+
+### Fixed
+- **Contador de candidaturas no dropdown das vagas** — Dropdown exibia contagem inflada (ex: 10 ao inves de 5) porque `jobs.applications_count` estava dessincronizado com a realidade
+  - Correcao SQL: sincronizado `applications_count` com contagem real de rows em `applications`
+  - Frontend: dropdown agora computa contagem real a partir dos dados carregados, excluindo candidaturas `withdrawn`
+  - Paginacao: query de applications no Kanban agora busca ate 500 resultados (antes limitava a 10)
+
+## [1.12.4] - 2026-02-11 "Gateway"
+
+### Fixed
+- **TDZ crash em CandidateProfile** — Variavel `candidateApplications` era referenciada antes da declaracao (useMemo), causando crash ao abrir perfil de candidato pela empresa
+- **HTTP 400 em conversations** — Coluna `unread_count` faltando na tabela `conversations`; adicionada via migration
+- **RLS policy INSERT em application_history (candidato)** — Candidatos nao conseguiam cancelar candidaturas; adicionada policy de INSERT para candidatos
+- **RLS policy INSERT em application_history (empresa/admin)** — Empresas nao conseguiam mudar status de candidatos; adicionadas policies de INSERT para company e admin
+- **Recandidatura apos desistencia** — Apos desistir de uma vaga, candidato via "Ja candidatado" e nao podia recandidatar-se
+  - `hasApplied()` e `getApplication()` agora excluem candidaturas com status `withdrawn`
+  - `createApplication()` reativa candidatura existente (UPDATE para `pending`) ao inves de INSERT duplicado
+
 ## [1.12.2] - 2026-02-11 "Gateway"
 
 ### Fixed

@@ -196,8 +196,6 @@ export default function CandidateProfile() {
 
   // PRD-073: Professional profile + highlights
   const { data: profile } = useProfile(candidate?.id || '');
-  const activeApplicationId = selectedApplicationId || candidateApplications[0]?.id || '';
-  const { data: highlights } = useApplicationHighlights(activeApplicationId);
 
   // Get company jobs (company-1)
   const companyJobs = useMemo(
@@ -210,6 +208,9 @@ export default function CandidateProfile() {
     () => allApplications.filter((a) => a.candidateId === id),
     [allApplications, id]
   );
+
+  const activeApplicationId = selectedApplicationId || candidateApplications[0]?.id || '';
+  const { data: highlights } = useApplicationHighlights(activeApplicationId);
 
   const selectedApplication = useMemo(
     () => candidateApplications.find((a) => a.id === selectedApplicationId) || candidateApplications[0] || null,

@@ -82,7 +82,8 @@
       "Bash(copy \"docs\\\\prds\\\\PRD-076-regras-billing-upgrade.md\" \"docs\\\\prds\\\\PRD-076-regras-billing-upgrade_DONE.md\")",
       "mcp__supabase__list_edge_functions",
       "mcp__supabase__get_edge_function",
-      "Bash(del \"D:\\\\claude\\\\recrutars-maike\\\\src\\\\components\\\\admin\\\\plans\\\\PlanEditor.tsx\")"
+      "Bash(del \"D:\\\\claude\\\\recrutars-maike\\\\src\\\\components\\\\admin\\\\plans\\\\PlanEditor.tsx\")",
+      "Bash(npx:*)"
     ]
   }
 }
