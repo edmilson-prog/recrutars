@@ -171,11 +171,16 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
 
           await svc.saveResult({ ...localResult, assessmentId });
 
-          // Update assessment status to completed
+          // Update assessment status to completed (include part timestamps from localStorage)
           if (existingAssessment && existingAssessment.phase !== 'completed') {
+            const localSession = JSON.parse(localStorage.getItem(storageKey) || '{}');
             await svc.updateAssessment(existingAssessment.id, {
               phase: 'completed',
               completedAt: localResult.generatedAt,
+              part1StartedAt: localSession.part1StartedAt,
+              part1CompletedAt: localSession.part1CompletedAt,
+              part2StartedAt: localSession.part2StartedAt,
+              part2CompletedAt: localSession.part2CompletedAt,
             });
           }
         } catch { /* Supabase offline — localStorage is sufficient */ }
@@ -474,7 +479,9 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
           await svc.updateAssessment(sbId, {
             phase: 'completed',
             completedAt: new Date().toISOString(),
+            part1StartedAt: assessment?.part1StartedAt,
             part1CompletedAt: assessment?.part1CompletedAt,
+            part2StartedAt: assessment?.part2StartedAt,
             part2CompletedAt: new Date().toISOString(),
             wordStepResponses,
             scenarioResponses,

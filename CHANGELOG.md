@@ -5,6 +5,14 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.5] - 2026-02-12 "Bridge"
+
+### Fixed
+- **Timestamps de Parte 1/Parte 2 nao persistidos no Supabase** — `part1StartedAt` e `part2StartedAt` eram salvos apenas no localStorage mas nunca incluidos no payload enviado ao Supabase em `finishAssessment()`, resultando em colunas NULL no banco e "—" no card de estatisticas
+  - Adicionados `part1StartedAt` e `part2StartedAt` ao `svc.updateAssessment()` em `finishAssessment()`
+  - Lazy sync agora tambem persiste timestamps parciais do localStorage ao sincronizar assessments incompletos
+  - Migration de backfill aplicada para estimar timestamps em assessments existentes (`part1_started_at = started_at`, `part2_started_at = part1_completed_at`)
+
 ## [1.13.4] - 2026-02-12 "Bridge"
 
 ### Enhanced
