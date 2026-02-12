@@ -101,11 +101,11 @@ export default function Register() {
     }
   };
 
-  // ── Email Verification Screen ──
-  if (showEmailVerification) {
-    return (
-      <>
-        <ForceLightTheme />
+  // ── Render ──
+  return (
+    <>
+      <ForceLightTheme />
+      {showEmailVerification ? (
         <div className="h-screen flex overflow-hidden">
           <div className="hidden lg:block flex-1 relative overflow-hidden">
             <img
@@ -191,14 +191,7 @@ export default function Register() {
             </motion.div>
           </div>
         </div>
-      </>
-    );
-  }
-
-  // ── Registration Form ──
-  return (
-    <>
-      <ForceLightTheme />
+      ) : (
       <div className="h-screen flex overflow-hidden">
         {/* Left - Visual */}
         <div className="hidden lg:block flex-1 relative overflow-hidden">
@@ -417,6 +410,7 @@ export default function Register() {
           </motion.div>
         </div>
       </div>
+      )}
     </>
   );
 }

@@ -207,7 +207,7 @@ export function MatchMethodologyModal({
           {/* Link para política de privacidade */}
           <div className="flex justify-center pt-2">
             <Button variant="link" size="sm" className="text-muted-foreground" asChild>
-              <a href="/politica-privacidade" target="_blank" rel="noopener noreferrer">
+              <a href="/politica-de-privacidade" target="_blank" rel="noopener noreferrer">
                 Ver Política de Privacidade
                 <ExternalLink className="w-3.5 h-3.5 ml-1" />
               </a>

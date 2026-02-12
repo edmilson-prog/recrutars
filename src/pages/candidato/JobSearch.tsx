@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/pagination';
 import { useJobs } from '@/hooks/useJobsQuery';
 import { useAuth } from '@/contexts/AuthContext';
-import { getIdealBehavioralProfile } from '@/lib/behavioralProfiles';
+import { getOrGenerateIdealProfile } from '@/lib/behavioralProfiles';
 import type { Job } from '@/types';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -96,7 +96,7 @@ export default function CandidateJobSearch() {
     if (!currentCandidate) return {};
     const scores: Record<string, number> = {};
     for (const job of activeJobs) {
-      const idealProfile = getIdealBehavioralProfile(job.id);
+      const idealProfile = getOrGenerateIdealProfile(job);
       const result = calculateMatchBreakdown(currentCandidate, job, idealProfile);
       scores[job.id] = result.totalScore;
     }

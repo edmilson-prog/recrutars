@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Users, Briefcase, Brain, TrendingUp, ArrowUp, ArrowDown, ChevronRight, FileText, Target, AlertTriangle, Code2, GraduationCap, MapPin } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { getIdealBehavioralProfile } from '@/lib/behavioralProfiles';
+import { getOrGenerateIdealProfile } from '@/lib/behavioralProfiles';
 
 // TODO: Replace with data from admin reports service/API
 const adminStats = {
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
       const job = jobs.find(j => j.id === application.jobId);
 
       if (candidate && job) {
-        const idealProfile = getIdealBehavioralProfile(job.id);
+        const idealProfile = getOrGenerateIdealProfile(job);
         const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
         matchResults.push(matchResult);
       }
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
           jobMatchCounts[job.id] = { high: 0, total: 0, title: job.title };
         }
 
-        const idealProfile = getIdealBehavioralProfile(job.id);
+        const idealProfile = getOrGenerateIdealProfile(job);
         const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
 
         jobMatchCounts[job.id].total++;

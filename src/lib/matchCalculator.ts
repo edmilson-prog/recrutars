@@ -31,57 +31,125 @@ const EXPERIENCE_LEVELS: Record<string, { min: number; max: number }> = {
   'Pleno': { min: 3, max: 5 },
   'Senior': { min: 5, max: 15 },
   'Sênior': { min: 5, max: 15 },
+  'Estágio': { min: 0, max: 1 },
+  'Estagio': { min: 0, max: 1 },
   'Especialista': { min: 8, max: 20 },
   'Gerente': { min: 5, max: 15 },
   'Diretor': { min: 10, max: 25 },
 };
 
+// Stop words em portugues para filtrar de requisitos (nao sao skills)
+const STOP_WORDS = new Set([
+  'de', 'do', 'da', 'dos', 'das', 'em', 'no', 'na', 'nos', 'nas',
+  'com', 'para', 'por', 'pelo', 'pela', 'ao', 'aos',
+  'um', 'uma', 'uns', 'umas', 'ou', 'se',
+  'que', 'como', 'mais', 'muito', 'bem', 'ser', 'ter', 'estar',
+  'anos', 'ano', 'experiencia', 'minima', 'minimo', 'conhecimento',
+  'conhecimentos', 'habilidade', 'habilidades', 'capacidade',
+  'desejavel', 'obrigatorio', 'necessario', 'preferencia',
+  'area', 'nivel', 'superior', 'completo', 'cursando',
+]);
+
+// Aliases de abreviacoes/variacoes comuns em tech
+const SKILL_ALIASES: Record<string, string> = {
+  'js': 'javascript',
+  'ts': 'typescript',
+  'node': 'nodejs',
+  'node.js': 'nodejs',
+  'react.js': 'react',
+  'reactjs': 'react',
+  'vue.js': 'vue',
+  'vuejs': 'vue',
+  'angular.js': 'angular',
+  'angularjs': 'angular',
+  'next.js': 'nextjs',
+  'nuxt.js': 'nuxtjs',
+  'c#': 'csharp',
+  'c++': 'cplusplus',
+  '.net': 'dotnet',
+  'pg': 'postgresql',
+  'postgres': 'postgresql',
+  'mongo': 'mongodb',
+  'aws': 'amazon web services',
+  'gcp': 'google cloud',
+  'k8s': 'kubernetes',
+};
+
+/**
+ * Normaliza uma string para comparacao (lowercase, sem acentos, trim)
+ */
+const normalizeString = (s: string) =>
+  s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+/**
+ * Resolve um skill para sua forma canonica via aliases
+ */
+function resolveAlias(token: string): string {
+  return SKILL_ALIASES[token] ?? token;
+}
+
+/**
+ * Extrai tokens tecnicos de uma frase de requisito, removendo stop words
+ */
+function extractTokens(text: string): string[] {
+  const normalized = normalizeString(text);
+  // Split por espacos, virgulas, pontos, parenteses, barras
+  const raw = normalized.split(/[\s,;.()\/]+/).filter(Boolean);
+  return raw
+    .filter(w => !STOP_WORDS.has(w) && w.length >= 2)
+    .map(resolveAlias);
+}
+
 /**
  * Calcula o score de skills comparando as habilidades do candidato
- * com os requisitos da vaga
+ * com os requisitos da vaga.
+ *
+ * Estrategia: tokeniza cada requisito em keywords tecnicas, compara com
+ * skills do candidato usando match exato por token (evita falsos positivos).
  */
 export function calculateSkillsScore(
   candidateSkills: string[],
   jobRequirements: string[]
 ): number {
   if (!candidateSkills?.length || !jobRequirements?.length) {
-    return 50; // Score neutro se não houver dados
+    return 50; // Score neutro se nao houver dados
   }
 
-  // Normaliza as strings para comparação
-  const normalizeString = (s: string) =>
-    s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  // Normaliza e resolve aliases das skills do candidato
+  const normalizedSkills = candidateSkills.map(s => resolveAlias(normalizeString(s)));
 
-  const normalizedCandidateSkills = candidateSkills.map(normalizeString);
-  const normalizedRequirements = jobRequirements.map(normalizeString);
-
-  // Conta quantos requisitos são atendidos
-  let matchedRequirements = 0;
-  let partialMatches = 0;
-
-  for (const req of normalizedRequirements) {
-    // Match exato
-    if (normalizedCandidateSkills.some(skill =>
-      skill === req || skill.includes(req) || req.includes(skill)
-    )) {
-      matchedRequirements++;
-    }
-    // Match parcial (palavras em comum)
-    else {
-      const reqWords = req.split(/\s+/);
-      const hasPartialMatch = normalizedCandidateSkills.some(skill =>
-        reqWords.some(word => word.length > 3 && skill.includes(word))
-      );
-      if (hasPartialMatch) {
-        partialMatches++;
-      }
+  // Extrai todos os tokens tecnicos unicos dos requisitos
+  const requirementTokens = new Set<string>();
+  for (const req of jobRequirements) {
+    for (const token of extractTokens(req)) {
+      requirementTokens.add(token);
     }
   }
 
-  // Score = (matches completos * 1.0 + matches parciais * 0.5) / total
-  const score = ((matchedRequirements + partialMatches * 0.5) / normalizedRequirements.length) * 100;
+  // Se nao sobrou nenhum token tecnico, usa score neutro
+  if (requirementTokens.size === 0) return 50;
 
-  // Clamp entre 0 e 100
+  let matched = 0;
+  let partial = 0;
+
+  for (const token of requirementTokens) {
+    // Match exato (token == skill ou skill == token)
+    if (normalizedSkills.some(skill => skill === token || token === skill)) {
+      matched++;
+    }
+    // Match por contencao (skill contem o token ou vice-versa)
+    // Mas somente se ambos tem >= 4 chars para evitar falsos positivos
+    else if (
+      token.length >= 4 &&
+      normalizedSkills.some(skill =>
+        skill.length >= 4 && (skill.includes(token) || token.includes(skill))
+      )
+    ) {
+      partial++;
+    }
+  }
+
+  const score = ((matched + partial * 0.5) / requirementTokens.size) * 100;
   return Math.min(100, Math.max(0, Math.round(score)));
 }
 
@@ -363,17 +431,19 @@ export function generateOpportunities(
 export function calculateMatchBreakdown(
   candidate: Partial<Candidate>,
   job: Partial<Job>,
-  idealProfile?: BehavioralProfile
+  idealProfile?: BehavioralProfile,
+  candidateBehavioralProfile?: BehavioralProfile
 ): MatchResult {
-  // Extrai perfil comportamental do candidato
-  const candidateProfile: BehavioralProfile | undefined = candidate.testResult?.result
-    ? {
-        d: candidate.testResult.result.dominance,
-        i: candidate.testResult.result.influence,
-        s: candidate.testResult.result.steadiness,
-        c: candidate.testResult.result.compliance,
-      }
-    : undefined;
+  // Usa perfil fornecido externamente, ou extrai de candidate.testResult (legacy)
+  const candidateProfile: BehavioralProfile | undefined = candidateBehavioralProfile
+    ?? (candidate.testResult?.result
+      ? {
+          d: candidate.testResult.result.dominance,
+          i: candidate.testResult.result.influence,
+          s: candidate.testResult.result.steadiness,
+          c: candidate.testResult.result.compliance,
+        }
+      : undefined);
 
   // Calcula scores individuais
   const skillsScore = calculateSkillsScore(

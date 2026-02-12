@@ -58,7 +58,7 @@ import { Label } from '@/components/ui/label';
 import { ScheduleInterviewModal } from '@/components/empresa/ScheduleInterviewModal';
 import { useCompanyInterviews } from '@/hooks/useCompanyInterviews';
 import { useCandidateActivity, type ActivityType } from '@/hooks/useCandidateActivity';
-import { getIdealBehavioralProfile } from '@/lib/behavioralProfiles';
+import { getOrGenerateIdealProfile, gaugeProToBehavioralProfile } from '@/lib/behavioralProfiles';
 import { useJobs } from '@/hooks/useJobsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useApplications } from '@/hooks/useApplicationsQuery';
@@ -244,11 +244,14 @@ export default function CandidateProfile() {
     );
   }
 
-  // PRD-035: Cálculo dinâmico de match
+  // PRD-035: Cálculo dinâmico de match (com perfil Gauge-Pro real)
   const firstJob = companyJobs[0];
-  const idealProfile = firstJob ? getIdealBehavioralProfile(firstJob.id) : undefined;
+  const idealProfile = firstJob ? getOrGenerateIdealProfile(firstJob) : undefined;
+  const candidateBehavioralProfile = gaugeProResult
+    ? gaugeProToBehavioralProfile(gaugeProResult.finalScores)
+    : undefined;
   const matchResult = firstJob
-    ? calculateMatchBreakdown(candidate, firstJob, idealProfile)
+    ? calculateMatchBreakdown(candidate, firstJob, idealProfile, candidateBehavioralProfile)
     : null;
   const matchScore = matchResult?.totalScore || 0;
 

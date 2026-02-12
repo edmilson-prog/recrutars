@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useJob } from '@/hooks/useJobsQuery';
 import { useAuth } from '@/contexts/AuthContext';
-import { getIdealBehavioralProfile } from '@/lib/behavioralProfiles';
+import { getOrGenerateIdealProfile } from '@/lib/behavioralProfiles';
 import { toast } from 'sonner';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
 import { useState } from 'react';
@@ -56,7 +56,7 @@ export default function JobDetails() {
   const setHighlightsMutation = useSetApplicationHighlights();
 
   // PRD-035: Cálculo dinâmico de match
-  const idealProfile = id ? getIdealBehavioralProfile(id) : undefined;
+  const idealProfile = job ? getOrGenerateIdealProfile(job) : undefined;
   const matchResult = job && currentCandidate
     ? calculateMatchBreakdown(currentCandidate, job, idealProfile)
     : undefined;

@@ -89,7 +89,7 @@ import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   getCandidateBehavioralProfile,
-  getIdealBehavioralProfile,
+  getOrGenerateIdealProfile,
 } from '@/lib/behavioralProfiles';
 import type { Conversation } from '@/types/message';
 import type { Application, ApplicationStatus, ApplicationNote, ApplicationHistory, TestRequestStatus, Message } from '@/types';
@@ -177,10 +177,11 @@ const DEADLINE_OPTIONS = [
 const DEFAULT_TEST_MESSAGE = `Olá! Para darmos continuidade ao processo seletivo, gostaríamos que você realizasse nosso teste comportamental Gauge-Pro. O teste leva cerca de 15-20 minutos e nos ajuda a entender melhor seu perfil.`;
 
 // PRD-035: Cálculo dinâmico de match - esta função é usada em múltiplos lugares
-// NOTE: This uses candidatesMap and companyJobs from the component scope
+// NOTE: This uses candidatesMap, companyJobs and behavioralTests from the component scope
 // via closures, set during render
 let _candidatesMap: Record<string, import('@/types').Candidate> = {};
 let _companyJobs: import('@/types').Job[] = [];
+let _behavioralTests: Array<{ candidateId: string; status: string; result?: { dominance: number; influence: number; steadiness: number; compliance: number } | null }> = [];
 let currentSelectedJobId = '';
 const calculateMatch = (candidateId: string): number => {
   const candidate = _candidatesMap[candidateId];
@@ -191,8 +192,9 @@ const calculateMatch = (candidateId: string): number => {
     _companyJobs.find((j) => j.status === 'active');
   if (!job) return 0;
 
-  const idealProfile = getIdealBehavioralProfile(job.id);
-  const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
+  const idealProfile = getOrGenerateIdealProfile(job);
+  const candidateProfile = getCandidateBehavioralProfile(candidateId, _behavioralTests);
+  const matchResult = calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile);
   return matchResult.totalScore;
 };
 
@@ -250,6 +252,7 @@ export default function CompanyApplications() {
   // Update module-level refs for calculateMatch
   _candidatesMap = candidatesMap;
   _companyJobs = fetchedCompanyJobs;
+  _behavioralTests = behavioralTests;
 
   const applications_ = useMemo(() => applicationsResult?.data ?? [], [applicationsResult]);
   const isLoading = isLoadingJobs || isLoadingApps || isLoadingCandidates;

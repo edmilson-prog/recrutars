@@ -5,6 +5,30 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.2] - 2026-02-12 "Bridge"
+
+### Fixed
+- **Dark mode trava no light ao navegar para paginas publicas** — Componente `ForceLightTheme` tinha 3 bugs interconectados que impediam a restauracao do tema ao voltar para o dashboard
+  - **Race condition entre instancias**: ao navegar Landing→Login (redirect), a nova instancia capturava `'light'` (ja forcado) via `useTheme()` em vez do tema real do usuario, porque o `setState` do cleanup anterior estava batched pelo React 18
+  - **DOM nao atualizava no unmount**: `setTheme()` do next-themes grava no localStorage sincronamente mas aplica classes CSS somente via `useEffect` (dependente de re-render), causando inconsistencia visual
+  - **Register.tsx com 2 instancias**: duas `<ForceLightTheme />` em `return` separados causavam mount/unmount desnecessario ao alternar entre formulario e verificacao de email
+  - Solucao: backup via localStorage separado (`recrutars-theme-backup`), contador module-level de instancias ativas, e manipulacao direta do DOM no cleanup
+
+## [1.13.1] - 2026-02-12 "Bridge"
+
+### Fixed
+- **Match Score — Perfil Comportamental sempre 50%** — `idealBehavioralProfiles` usava IDs mock (job-1 a job-15) que nunca casavam com UUIDs reais do Supabase, e `candidate.testResult` nunca era populado do banco
+  - Nova funcao `generateIdealProfile(job)` gera perfil ideal DISC dinamicamente baseado em area, nivel, tipo e keywords do titulo da vaga
+  - Nova funcao `gaugeProToBehavioralProfile(scores)` converte Gauge-Pro 5D (D1-D5) para BehavioralProfile 4D (DISC)
+  - `calculateMatchBreakdown` aceita perfil comportamental externo via novo parametro opcional
+  - 6 call sites atualizados (CandidateProfile, Applications, Candidates, JobSearch, JobDetails, Dashboard) para passar dados reais de Gauge-Pro e testes comportamentais
+- **Match Score — Skills matching impreciso** — Requisitos em frases completas ("Experiencia com React e Node.js") nunca casavam com tags de skills ("React"), e "Java" dava falso positivo com "JavaScript"
+  - Tokenizacao de requisitos: extrai keywords tecnicas individuais, remove stop words em portugues
+  - Mapa de aliases: abreviacoes comuns (JS→JavaScript, TS→TypeScript, C#→CSharp, Node→Node.js, etc.)
+  - Match por contencao exige minimo 4 caracteres para evitar falsos positivos (Java/JavaScript)
+- **Match Score — Nivel "Estagio" nao reconhecido** — Vaga com nivel "Estagio" retornava score default 70 porque faltava no mapa `EXPERIENCE_LEVELS`
+  - Adicionado `Estágio` e `Estagio` (com e sem acento) com range 0-1 anos
+
 ## [1.13.0] - 2026-02-12 "Bridge"
 
 ### Added
