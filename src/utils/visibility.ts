@@ -4,6 +4,7 @@
  */
 
 import type { Candidate, VisibilitySettings, VisibilityMode, AnonymousProfile } from '@/types/candidate';
+import { getCandidateDisplayName } from '@/lib/candidateDisplayName';
 
 /**
  * Gera um anonymousId baseado no ID do candidato
@@ -82,7 +83,7 @@ export function getDisplayName(candidate: Candidate): string {
   if (visibility.mode === 'partial') {
     return `Perfil Anônimo #${visibility.anonymousId}`;
   }
-  return candidate.name;
+  return getCandidateDisplayName(candidate);
 }
 
 /**

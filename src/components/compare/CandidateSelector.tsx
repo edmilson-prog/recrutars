@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getMatchScoreColor } from "@/types/disc";
 import { Users, X, GitCompare } from "lucide-react";
+import { getCandidateInitials } from "@/lib/candidateDisplayName";
 
 const MAX_CANDIDATES = 3;
 
@@ -83,11 +84,7 @@ export function CandidateSelector({
               <Avatar className="h-10 w-10">
                 <AvatarImage src={candidate.avatar} alt={candidate.name} />
                 <AvatarFallback>
-                  {candidate.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)}
+                  {getCandidateInitials(candidate.name)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
@@ -160,11 +157,7 @@ export function SelectionBar({
               <Avatar className="h-8 w-8 border-2 border-background">
                 <AvatarImage src={candidate.avatar} alt={candidate.name} />
                 <AvatarFallback className="text-xs">
-                  {candidate.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)}
+                  {getCandidateInitials(candidate.name)}
                 </AvatarFallback>
               </Avatar>
               <button

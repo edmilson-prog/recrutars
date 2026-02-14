@@ -39,6 +39,7 @@ import {
   Send,
 } from "lucide-react";
 import { getMatchScoreColor } from "@/types/disc";
+import { getCandidateInitials } from "@/lib/candidateDisplayName";
 
 interface CandidateComparisonProps {
   candidates: CandidateForComparison[];
@@ -116,11 +117,7 @@ export function CandidateComparison({
                         alt={candidate.name}
                       />
                       <AvatarFallback className="text-lg">
-                        {candidate.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .slice(0, 2)}
+                        {getCandidateInitials(candidate.name)}
                       </AvatarFallback>
                     </Avatar>
                     <h3 className="font-semibold text-lg">{candidate.name}</h3>
@@ -348,11 +345,7 @@ export function ComparisonSummary({
       <Avatar className="h-10 w-10">
         <AvatarImage src={topCandidate.avatar} alt={topCandidate.name} />
         <AvatarFallback>
-          {topCandidate.name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .slice(0, 2)}
+          {getCandidateInitials(topCandidate.name)}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1">

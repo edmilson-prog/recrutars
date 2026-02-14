@@ -43,6 +43,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { Application, TestRequestStatus } from '@/types/application';
 import type { HireResult } from '@/types/hiring';
 import { Link } from 'react-router-dom';
+import { getCandidateInitials } from '@/lib/candidateDisplayName';
 
 interface HiringModalProps {
   open: boolean;
@@ -139,12 +140,7 @@ export function HiringModal({
     return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
-  const initials = candidateName
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = getCandidateInitials(candidateName);
 
   return (
     <>

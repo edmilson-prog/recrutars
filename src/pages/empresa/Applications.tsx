@@ -95,6 +95,8 @@ import type { Conversation } from '@/types/message';
 import type { Application, ApplicationStatus, ApplicationNote, ApplicationHistory, TestRequestStatus, Message } from '@/types';
 import type { CandidateForComparison } from '@/types/disc';
 import { toast } from 'sonner';
+import { formatDateBR, formatRelativeDate } from '@/lib/formatters';
+import { getCandidateDisplayName, getCandidateInitials } from '@/lib/candidateDisplayName';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
 import { getMatchScoreColor } from '@/types/disc';
 // PRD-002-dgn: Componentes de comparação
@@ -675,7 +677,7 @@ export default function CompanyApplications() {
 
     return {
       id: candidate.id,
-      name: candidate.name,
+      name: getCandidateDisplayName(candidate),
       avatar: candidate.avatar,
       matchScore,
       behavioralProfile,
@@ -907,487 +909,544 @@ export default function CompanyApplications() {
 
       {/* Candidate Drawer */}
       <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-4 sm:p-6">
           {selectedApplication && selectedCandidate && (
             <>
               {/* Header */}
-              <DialogHeader className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <Avatar className="w-16 h-16">
+              <DialogHeader className="flex-shrink-0 space-y-3 pb-4 border-b border-border">
+                <div className="flex items-start gap-3">
+                  <Avatar className="w-12 h-12">
                     <AvatarImage src={selectedCandidate.avatar} />
-                    <AvatarFallback className="text-lg bg-primary/10 text-primary">
-                      {selectedCandidate.name
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .slice(0, 2)}
+                    <AvatarFallback className="text-sm bg-primary/10 text-primary">
+                      {getCandidateInitials(selectedCandidate)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1">
-                    <DialogTitle className="text-xl">
-                      {selectedCandidate.name}
+                  <div className="flex-1 min-w-0">
+                    <DialogTitle className="text-lg truncate">
+                      {getCandidateDisplayName(selectedCandidate)}
                     </DialogTitle>
-                    <p className="text-muted-foreground">
+                    <p className="text-sm text-muted-foreground truncate">
                       {selectedCandidate.title}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      Candidatura: {selectedApplication.appliedAt}
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Candidatura em {formatDateBR(selectedApplication.appliedAt)}{' '}
+                      <span className="opacity-70">({formatRelativeDate(selectedApplication.appliedAt)})</span>
                     </p>
                   </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Badge
-                    className={`${getMatchScoreColor(selectedMatch).bg} ${getMatchScoreColor(selectedMatch).text} border ${getMatchScoreColor(selectedMatch).border}`}
-                  >
-                    <Star className="w-3 h-3 mr-1" />
-                    {selectedMatch}% match
-                  </Badge>
-                  {selectedCandidate.testResult ? (
-                    <Badge variant="secondary">
-                      {selectedCandidate.testResult.result.profile}
+                  <div className="flex flex-wrap gap-1.5 items-start justify-end shrink-0">
+                    <Badge
+                      className={`${getMatchScoreColor(selectedMatch).bg} ${getMatchScoreColor(selectedMatch).text} border ${getMatchScoreColor(selectedMatch).border}`}
+                    >
+                      <Star className="w-3 h-3 mr-1" />
+                      {selectedMatch}% match
                     </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-muted-foreground">
-                      Sem teste comportamental
+                    {selectedCandidate.testResult ? (
+                      <Badge variant="secondary">
+                        {selectedCandidate.testResult.result.profile}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-muted-foreground">
+                        Sem teste
+                      </Badge>
+                    )}
+                    <Badge
+                      className={STATUS_CONFIG[selectedApplication.status]?.bgColor}
+                    >
+                      {STATUS_CONFIG[selectedApplication.status]?.label}
                     </Badge>
-                  )}
-                  <Badge
-                    className={STATUS_CONFIG[selectedApplication.status]?.bgColor}
-                  >
-                    {STATUS_CONFIG[selectedApplication.status]?.label}
-                  </Badge>
+                  </div>
                 </div>
               </DialogHeader>
 
-              {/* Tabs */}
-              <Tabs defaultValue="perfil" className="mt-6">
-                <TabsList className="grid grid-cols-5 w-full">
-                  <TabsTrigger value="perfil">Perfil</TabsTrigger>
-                  <TabsTrigger value="experiencia">Exp.</TabsTrigger>
-                  <TabsTrigger value="teste">Teste</TabsTrigger>
-                  <TabsTrigger value="mensagem">Msg</TabsTrigger>
-                  <TabsTrigger value="historico">Hist.</TabsTrigger>
-                </TabsList>
+              {/* Two-column body */}
+              <div className="flex flex-1 min-h-0 mt-4 flex-col md:flex-row gap-0">
+                {/* LEFT: Tabs content */}
+                <div className="flex-1 min-w-0 flex flex-col min-h-0">
+                  <Tabs defaultValue="perfil" className="flex flex-col flex-1 min-h-0">
+                    <TabsList className="grid grid-cols-6 w-full flex-shrink-0">
+                      <TabsTrigger value="perfil">Perfil</TabsTrigger>
+                      <TabsTrigger value="experiencia">Exp.</TabsTrigger>
+                      <TabsTrigger value="teste">Teste</TabsTrigger>
+                      <TabsTrigger value="mensagem">Msg</TabsTrigger>
+                      <TabsTrigger value="historico">Hist.</TabsTrigger>
+                      <TabsTrigger value="notas" className="relative">
+                        Notas
+                        {currentNotes.length > 0 && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground rounded-full text-[10px] flex items-center justify-center">
+                            {currentNotes.length}
+                          </span>
+                        )}
+                      </TabsTrigger>
+                    </TabsList>
 
-                <ScrollArea className="h-[300px] mt-4">
-                  <TabsContent value="perfil" className="space-y-4 mt-0">
-                    <div>
-                      <h4 className="font-medium mb-2">Localização</h4>
-                      <p className="text-muted-foreground">
-                        {selectedCandidate.location}
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">Experiência</h4>
-                      <p className="text-muted-foreground">
-                        {selectedCandidate.experience} anos
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">Formação</h4>
-                      <p className="text-muted-foreground">
-                        {selectedCandidate.education}
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">Skills</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedCandidate.skills.map((skill) => (
-                          <Badge key={skill} variant="outline">
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">Disponibilidade</h4>
-                      <p className="text-muted-foreground">
-                        {selectedCandidate.availability}
-                      </p>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="experiencia" className="space-y-4 mt-0">
-                    {selectedExperiences.length > 0 ? (
-                      selectedExperiences.map((exp, index) => (
-                        <div
-                          key={exp.id}
-                          className={`relative pl-6 ${
-                            index !== selectedExperiences.length - 1
-                              ? 'border-l-2 border-muted pb-4'
-                              : ''
-                          }`}
-                        >
-                          <div className="absolute left-0 top-0 w-3 h-3 -translate-x-[7px] rounded-full bg-primary" />
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold">{exp.role}</h4>
-                              {exp.current && (
-                                <Badge variant="secondary" className="text-xs">
-                                  Atual
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-muted-foreground">{exp.company}</p>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {exp.startDate} - {exp.endDate || 'Presente'}
-                            </p>
-                            <p className="text-sm mt-2">{exp.description}</p>
+                    <ScrollArea className="flex-1 mt-3 pr-4">
+                      <TabsContent value="perfil" className="mt-0">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                          <div className="bg-muted/30 rounded-lg p-3">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Localização</h4>
+                            <p className="text-sm">{selectedCandidate.location}</p>
+                          </div>
+                          <div className="bg-muted/30 rounded-lg p-3">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Experiência</h4>
+                            <p className="text-sm">{selectedCandidate.experience} anos</p>
+                          </div>
+                          <div className="bg-muted/30 rounded-lg p-3">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Formação</h4>
+                            <p className="text-sm">{selectedCandidate.education}</p>
+                          </div>
+                          <div className="bg-muted/30 rounded-lg p-3">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Disponibilidade</h4>
+                            <p className="text-sm">{selectedCandidate.availability}</p>
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-muted-foreground">
-                        Experiências não informadas
-                      </p>
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="teste" className="space-y-4 mt-0">
-                    {selectedCandidate.testResult ? (
-                      <>
-                        <div className="text-center mb-4">
-                          <Badge variant="secondary" className="text-lg px-4 py-1">
-                            {selectedCandidate.testResult.result.profile}
-                          </Badge>
-                        </div>
-
-                        <div className="space-y-3">
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                              <span className="font-medium">Dominância (D)</span>
-                              <span className="text-muted-foreground">
-                                {selectedCandidate.testResult.result.dominance}%
-                              </span>
-                            </div>
-                            <Progress
-                              value={selectedCandidate.testResult.result.dominance}
-                              className="h-2"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                              <span className="font-medium">Influência (I)</span>
-                              <span className="text-muted-foreground">
-                                {selectedCandidate.testResult.result.influence}%
-                              </span>
-                            </div>
-                            <Progress
-                              value={selectedCandidate.testResult.result.influence}
-                              className="h-2"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                              <span className="font-medium">Estabilidade (S)</span>
-                              <span className="text-muted-foreground">
-                                {selectedCandidate.testResult.result.steadiness}%
-                              </span>
-                            </div>
-                            <Progress
-                              value={selectedCandidate.testResult.result.steadiness}
-                              className="h-2"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                              <span className="font-medium">Conformidade (C)</span>
-                              <span className="text-muted-foreground">
-                                {selectedCandidate.testResult.result.compliance}%
-                              </span>
-                            </div>
-                            <Progress
-                              value={selectedCandidate.testResult.result.compliance}
-                              className="h-2"
-                            />
-                          </div>
-                        </div>
-
-                        <Separator className="my-4" />
-
                         <div>
-                          <h4 className="font-medium mb-2">Pontos Fortes</h4>
+                          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Skills</h4>
                           <div className="flex flex-wrap gap-2">
-                            {selectedCandidate.testResult.result.strengths.map(
-                              (s) => (
-                                <Badge
-                                  key={s}
-                                  variant="outline"
-                                  className="text-success border-success/30"
-                                >
-                                  {s}
-                                </Badge>
-                              )
-                            )}
+                            {selectedCandidate.skills.map((skill) => (
+                              <Badge key={skill} variant="outline">
+                                {skill}
+                              </Badge>
+                            ))}
                           </div>
                         </div>
+                      </TabsContent>
 
-                        {selectedCandidate.testResult.result.watchPoints && (
-                          <div>
-                            <h4 className="font-medium mb-2">Pontos de Atenção</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {selectedCandidate.testResult.result.watchPoints.map(
-                                (p) => (
-                                  <Badge
-                                    key={p}
-                                    variant="outline"
-                                    className="text-warning border-warning/30"
-                                  >
-                                    {p}
-                                  </Badge>
-                                )
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="text-center py-8 space-y-4">
-                        <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground opacity-50" />
-                        <div>
-                          <p className="font-medium">Teste não realizado</p>
-                          {selectedApplication.testStatus === 'solicitado' ? (
-                            <div className="mt-2 text-sm text-muted-foreground space-y-1">
-                              <p className="flex items-center justify-center gap-2">
-                                <Clock className="w-4 h-4" />
-                                Solicitado em:{' '}
-                                {selectedApplication.testRequestedAt
-                                  ? new Date(selectedApplication.testRequestedAt).toLocaleDateString('pt-BR')
-                                  : '-'}
-                              </p>
-                              {selectedApplication.testDeadline && (
-                                <p>
-                                  Prazo:{' '}
-                                  {new Date(selectedApplication.testDeadline).toLocaleDateString('pt-BR')}
-                                </p>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Solicite que o candidato realize o teste comportamental
-                            </p>
-                          )}
-                        </div>
-                        {selectedApplication.testStatus === 'nao_solicitado' && (
-                          <Button onClick={() => setRequestTestModalOpen(true)}>
-                            <Send className="w-4 h-4 mr-2" />
-                            Solicitar Teste
-                          </Button>
-                        )}
-                        {selectedApplication.testStatus === 'solicitado' && (
-                          <Badge variant="outline" className="text-yellow-600 border-yellow-600/30">
-                            <Clock className="w-3 h-3 mr-1" />
-                            Aguardando realização
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="mensagem" className="space-y-4 mt-0">
-                    {selectedApplication.message ? (
-                      <div className="bg-muted/50 rounded-lg p-4">
-                        <h4 className="font-medium mb-2">
-                          Mensagem do candidato
-                        </h4>
-                        <p className="text-muted-foreground">
-                          {selectedApplication.message}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground">
-                        Nenhuma mensagem enviada
-                      </p>
-                    )}
-                    <Button variant="outline" className="w-full" asChild>
-                      <Link
-                        to={`/empresa/mensagens?candidato=${selectedCandidate.id}`}
-                      >
-                        <MessageSquare className="w-4 h-4 mr-2" />
-                        Enviar mensagem
-                      </Link>
-                    </Button>
-                  </TabsContent>
-
-                  <TabsContent value="historico" className="space-y-4 mt-0">
-                    {currentHistory.length > 0 ? (
-                      <div className="space-y-3">
-                        {currentHistory
-                          .sort(
-                            (a, b) =>
-                              new Date(b.changedAt).getTime() -
-                              new Date(a.changedAt).getTime()
-                          )
-                          .map((entry) => (
+                      <TabsContent value="experiencia" className="space-y-4 mt-0">
+                        {selectedExperiences.length > 0 ? (
+                          selectedExperiences.map((exp, index) => (
                             <div
-                              key={entry.id}
-                              className="flex items-start gap-3 text-sm"
+                              key={exp.id}
+                              className={`relative pl-6 ${
+                                index !== selectedExperiences.length - 1
+                                  ? 'border-l-2 border-muted pb-4'
+                                  : ''
+                              }`}
                             >
-                              <div className="w-2 h-2 mt-2 rounded-full bg-primary" />
+                              <div className="absolute left-0 top-0 w-3 h-3 -translate-x-[7px] rounded-full bg-primary" />
                               <div>
-                                <p>
-                                  <span className="font-medium">
-                                    {entry.changedBy}
-                                  </span>{' '}
-                                  moveu para{' '}
-                                  <Badge variant="outline" className="text-xs">
-                                    {STATUS_CONFIG[entry.toStatus]?.label ||
-                                      entry.toStatus}
-                                  </Badge>
-                                </p>
-                                {entry.reason && (
-                                  <p className="text-muted-foreground mt-1">
-                                    Motivo: {entry.reason}
-                                  </p>
-                                )}
-                                <p className="text-muted-foreground text-xs mt-1">
-                                  {new Date(entry.changedAt).toLocaleString(
-                                    'pt-BR'
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-semibold">{exp.role}</h4>
+                                  {exp.current && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      Atual
+                                    </Badge>
                                   )}
+                                </div>
+                                <p className="text-muted-foreground">{exp.company}</p>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {exp.startDate} - {exp.endDate || 'Presente'}
                                 </p>
+                                <p className="text-sm mt-2">{exp.description}</p>
                               </div>
                             </div>
-                          ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground">
-                        Nenhuma movimentação registrada
-                      </p>
-                    )}
-                  </TabsContent>
-                </ScrollArea>
-              </Tabs>
+                          ))
+                        ) : (
+                          <p className="text-muted-foreground">
+                            Experiências não informadas
+                          </p>
+                        )}
+                      </TabsContent>
 
-              {/* Notes Section */}
-              <div className="mt-6 border-t pt-4">
-                <h4 className="font-semibold mb-3">Anotações Internas</h4>
-                <div className="flex gap-2 mb-4">
-                  <Textarea
-                    placeholder="Adicionar anotação..."
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                    className="resize-none"
-                    rows={2}
-                  />
-                  <Button onClick={handleAddNote} disabled={!newNote.trim()}>
-                    Adicionar
-                  </Button>
-                </div>
-                {currentNotes.length > 0 && (
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {currentNotes
-                      .sort(
-                        (a, b) =>
-                          new Date(b.createdAt).getTime() -
-                          new Date(a.createdAt).getTime()
-                      )
-                      .map((note) => (
-                        <div
-                          key={note.id}
-                          className="text-sm bg-muted/50 p-3 rounded-lg"
-                        >
-                          <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                            <span className="font-medium">{note.author}</span>
-                            <span>
-                              {new Date(note.createdAt).toLocaleDateString(
-                                'pt-BR'
+                      <TabsContent value="teste" className="space-y-4 mt-0">
+                        {selectedCandidate.testResult ? (
+                          <>
+                            <div className="text-center mb-4">
+                              <Badge variant="secondary" className="text-lg px-4 py-1">
+                                {selectedCandidate.testResult.result.profile}
+                              </Badge>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-sm">
+                                  <span className="font-medium">Dominância (D)</span>
+                                  <span className="text-muted-foreground">
+                                    {selectedCandidate.testResult.result.dominance}%
+                                  </span>
+                                </div>
+                                <Progress
+                                  value={selectedCandidate.testResult.result.dominance}
+                                  className="h-2"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-sm">
+                                  <span className="font-medium">Influência (I)</span>
+                                  <span className="text-muted-foreground">
+                                    {selectedCandidate.testResult.result.influence}%
+                                  </span>
+                                </div>
+                                <Progress
+                                  value={selectedCandidate.testResult.result.influence}
+                                  className="h-2"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-sm">
+                                  <span className="font-medium">Estabilidade (S)</span>
+                                  <span className="text-muted-foreground">
+                                    {selectedCandidate.testResult.result.steadiness}%
+                                  </span>
+                                </div>
+                                <Progress
+                                  value={selectedCandidate.testResult.result.steadiness}
+                                  className="h-2"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-sm">
+                                  <span className="font-medium">Conformidade (C)</span>
+                                  <span className="text-muted-foreground">
+                                    {selectedCandidate.testResult.result.compliance}%
+                                  </span>
+                                </div>
+                                <Progress
+                                  value={selectedCandidate.testResult.result.compliance}
+                                  className="h-2"
+                                />
+                              </div>
+                            </div>
+
+                            <Separator className="my-4" />
+
+                            <div>
+                              <h4 className="font-medium mb-2">Pontos Fortes</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {selectedCandidate.testResult.result.strengths.map(
+                                  (s) => (
+                                    <Badge
+                                      key={s}
+                                      variant="outline"
+                                      className="text-success border-success/30"
+                                    >
+                                      {s}
+                                    </Badge>
+                                  )
+                                )}
+                              </div>
+                            </div>
+
+                            {selectedCandidate.testResult.result.watchPoints && (
+                              <div>
+                                <h4 className="font-medium mb-2">Pontos de Atenção</h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {selectedCandidate.testResult.result.watchPoints.map(
+                                    (p) => (
+                                      <Badge
+                                        key={p}
+                                        variant="outline"
+                                        className="text-warning border-warning/30"
+                                      >
+                                        {p}
+                                      </Badge>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="text-center py-8 space-y-4">
+                            <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground opacity-50" />
+                            <div>
+                              <p className="font-medium">Teste não realizado</p>
+                              {selectedApplication.testStatus === 'solicitado' ? (
+                                <div className="mt-2 text-sm text-muted-foreground space-y-1">
+                                  <p className="flex items-center justify-center gap-2">
+                                    <Clock className="w-4 h-4" />
+                                    Solicitado em:{' '}
+                                    {selectedApplication.testRequestedAt
+                                      ? new Date(selectedApplication.testRequestedAt).toLocaleDateString('pt-BR')
+                                      : '-'}
+                                  </p>
+                                  {selectedApplication.testDeadline && (
+                                    <p>
+                                      Prazo:{' '}
+                                      {new Date(selectedApplication.testDeadline).toLocaleDateString('pt-BR')}
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Solicite que o candidato realize o teste comportamental
+                                </p>
                               )}
-                            </span>
+                            </div>
+                            {selectedApplication.testStatus === 'nao_solicitado' && (
+                              <Button onClick={() => setRequestTestModalOpen(true)}>
+                                <Send className="w-4 h-4 mr-2" />
+                                Solicitar Teste
+                              </Button>
+                            )}
+                            {selectedApplication.testStatus === 'solicitado' && (
+                              <Badge variant="outline" className="text-yellow-600 border-yellow-600/30">
+                                <Clock className="w-3 h-3 mr-1" />
+                                Aguardando realização
+                              </Badge>
+                            )}
                           </div>
-                          <p>{note.content}</p>
+                        )}
+                      </TabsContent>
+
+                      <TabsContent value="mensagem" className="space-y-4 mt-0">
+                        {selectedApplication.message ? (
+                          <div className="bg-muted/50 rounded-lg p-4">
+                            <h4 className="font-medium mb-2">
+                              Mensagem do candidato
+                            </h4>
+                            <p className="text-muted-foreground">
+                              {selectedApplication.message}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-muted-foreground">
+                            Nenhuma mensagem enviada
+                          </p>
+                        )}
+                        <Button variant="outline" className="w-full" asChild>
+                          <Link
+                            to={`/empresa/mensagens?candidato=${selectedCandidate.id}`}
+                          >
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Enviar mensagem
+                          </Link>
+                        </Button>
+                      </TabsContent>
+
+                      <TabsContent value="historico" className="space-y-4 mt-0">
+                        {currentHistory.length > 0 ? (
+                          <div className="space-y-3">
+                            {currentHistory
+                              .sort(
+                                (a, b) =>
+                                  new Date(b.changedAt).getTime() -
+                                  new Date(a.changedAt).getTime()
+                              )
+                              .map((entry) => (
+                                <div
+                                  key={entry.id}
+                                  className="flex items-start gap-3 text-sm"
+                                >
+                                  <div className="w-2 h-2 mt-2 rounded-full bg-primary" />
+                                  <div>
+                                    <p>
+                                      <span className="font-medium">
+                                        {entry.changedBy}
+                                      </span>{' '}
+                                      moveu para{' '}
+                                      <Badge variant="outline" className="text-xs">
+                                        {STATUS_CONFIG[entry.toStatus]?.label ||
+                                          entry.toStatus}
+                                      </Badge>
+                                    </p>
+                                    {entry.reason && (
+                                      <p className="text-muted-foreground mt-1">
+                                        Motivo: {entry.reason}
+                                      </p>
+                                    )}
+                                    <p className="text-muted-foreground text-xs mt-1">
+                                      {new Date(entry.changedAt).toLocaleDateString('pt-BR')}{' '}
+                                      às {new Date(entry.changedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <p className="text-muted-foreground">
+                            Nenhuma movimentação registrada
+                          </p>
+                        )}
+                      </TabsContent>
+
+                      {/* Notes Tab */}
+                      <TabsContent value="notas" className="space-y-4 mt-0">
+                        <div className="flex gap-2">
+                          <Textarea
+                            placeholder="Adicionar anotação..."
+                            value={newNote}
+                            onChange={(e) => setNewNote(e.target.value)}
+                            className="resize-none flex-1"
+                            rows={3}
+                          />
+                          <Button
+                            onClick={handleAddNote}
+                            disabled={!newNote.trim()}
+                            size="sm"
+                            className="self-end"
+                          >
+                            Adicionar
+                          </Button>
                         </div>
-                      ))}
+
+                        {currentNotes.length > 0 ? (
+                          <div className="space-y-2">
+                            {currentNotes
+                              .sort(
+                                (a, b) =>
+                                  new Date(b.createdAt).getTime() -
+                                  new Date(a.createdAt).getTime()
+                              )
+                              .map((note) => (
+                                <div
+                                  key={note.id}
+                                  className="text-sm bg-muted/50 p-3 rounded-lg"
+                                >
+                                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                                    <span className="font-medium">{note.author}</span>
+                                    <span>
+                                      {formatDateBR(note.createdAt)}
+                                    </span>
+                                  </div>
+                                  <p>{note.content}</p>
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center py-4">
+                            Nenhuma anotação registrada
+                          </p>
+                        )}
+                      </TabsContent>
+                    </ScrollArea>
+                  </Tabs>
+                </div>
+
+                {/* RIGHT: Action Sidebar */}
+                <div className="w-full md:w-64 flex-shrink-0 md:border-l md:border-border md:pl-4 md:ml-4 border-t md:border-t-0 pt-4 md:pt-0 mt-4 md:mt-0 overflow-y-auto space-y-5">
+                  {/* Current Status */}
+                  <div className="rounded-lg bg-muted/30 p-3 space-y-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Status Atual
+                    </h4>
+                    <Badge className={`${STATUS_CONFIG[selectedApplication.status]?.bgColor} w-full justify-center py-1`}>
+                      {STATUS_CONFIG[selectedApplication.status]?.label}
+                    </Badge>
                   </div>
-                )}
-              </div>
 
-              {/* Actions */}
-              <DialogFooter className="mt-6 flex-col sm:flex-row gap-2">
-                {/* PRD-077: Botão de contratar (apenas para status offer/aprovado) */}
-                {selectedApplication.status === 'offer' && (
-                  <Button
-                    onClick={() => {
-                      if (duplicateCheck?.exists) {
-                        setDuplicateWarningOpen(true);
-                      } else {
-                        setHiringModalOpen(true);
-                      }
-                    }}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto"
-                  >
-                    <Trophy className="w-4 h-4 mr-2" />
-                    Contratar
-                  </Button>
-                )}
+                  {/* Primary Actions */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Ações
+                    </h4>
 
-                {/* PRD-034: Botão de agendar entrevista */}
-                {selectedApplication.status !== 'rejected' && selectedApplication.status !== 'hired' && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowScheduleModal(true)}
-                    className="w-full sm:w-auto"
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Agendar Entrevista
-                  </Button>
-                )}
+                    {/* PRD-077: Botão de contratar (apenas para status offer/aprovado) */}
+                    {selectedApplication.status === 'offer' && (
+                      <Button
+                        onClick={() => {
+                          if (duplicateCheck?.exists) {
+                            setDuplicateWarningOpen(true);
+                          } else {
+                            setHiringModalOpen(true);
+                          }
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white w-full"
+                        size="sm"
+                      >
+                        <Trophy className="w-4 h-4 mr-2" />
+                        Contratar
+                      </Button>
+                    )}
 
-                {/* PRD-002-dgn: Botão de comparação */}
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (selectedApplication) {
-                      toggleCompareCandidate(selectedApplication.candidateId);
-                    }
-                  }}
-                  disabled={!isSelectedForComparison(selectedApplication.candidateId) && !canSelect}
-                  className="w-full sm:w-auto"
-                >
-                  {isSelectedForComparison(selectedApplication.candidateId)
-                    ? 'Remover da comparação'
-                    : 'Adicionar à comparação'}
-                </Button>
+                    {/* PRD-034: Botão de agendar entrevista */}
+                    {selectedApplication.status !== 'rejected' && selectedApplication.status !== 'hired' && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowScheduleModal(true)}
+                        className="w-full"
+                        size="sm"
+                      >
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Agendar Entrevista
+                      </Button>
+                    )}
 
-                {selectedApplication.status !== 'rejected' && selectedApplication.status !== 'hired' && selectedApplication.status !== 'talent_pool' && (
-                  <>
-                    <Select
-                      value=""
-                      onValueChange={(status) =>
-                        handleMove(
-                          selectedApplication.id,
-                          status as ApplicationStatus
-                        )
-                      }
-                    >
-                      <SelectTrigger className="w-full sm:w-48">
-                        <SelectValue placeholder="Mover para..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {selectedApplication.status !== 'pending' && (
-                          <SelectItem value="pending">Novos</SelectItem>
-                        )}
-                        {selectedApplication.status !== 'reviewing' && (
-                          <SelectItem value="reviewing">Em Análise</SelectItem>
-                        )}
-                        {selectedApplication.status !== 'interview' && (
-                          <SelectItem value="interview">Entrevista</SelectItem>
-                        )}
-                        {selectedApplication.status !== 'offer' && (
-                          <SelectItem value="offer">Aprovado</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-
+                    {/* PRD-002-dgn: Botão de comparação */}
                     <Button
-                      variant="destructive"
-                      onClick={() => setRejectDialogOpen(true)}
+                      variant="outline"
+                      onClick={() => {
+                        if (selectedApplication) {
+                          toggleCompareCandidate(selectedApplication.candidateId);
+                        }
+                      }}
+                      disabled={!isSelectedForComparison(selectedApplication.candidateId) && !canSelect}
+                      className="w-full"
+                      size="sm"
                     >
-                      Reprovar
+                      {isSelectedForComparison(selectedApplication.candidateId)
+                        ? 'Remover comparação'
+                        : 'Comparar'}
                     </Button>
-                  </>
-                )}
-              </DialogFooter>
+                  </div>
+
+                  {/* Pipeline Movement */}
+                  {selectedApplication.status !== 'rejected' && selectedApplication.status !== 'hired' && selectedApplication.status !== 'talent_pool' && (
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Mover para
+                      </h4>
+                      <Select
+                        value=""
+                        onValueChange={(status) =>
+                          handleMove(
+                            selectedApplication.id,
+                            status as ApplicationStatus
+                          )
+                        }
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecionar etapa..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {selectedApplication.status !== 'pending' && (
+                            <SelectItem value="pending">Novos</SelectItem>
+                          )}
+                          {selectedApplication.status !== 'reviewing' && (
+                            <SelectItem value="reviewing">Em Análise</SelectItem>
+                          )}
+                          {selectedApplication.status !== 'interview' && (
+                            <SelectItem value="interview">Entrevista</SelectItem>
+                          )}
+                          {selectedApplication.status !== 'offer' && (
+                            <SelectItem value="offer">Aprovado</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+
+                      <Button
+                        variant="destructive"
+                        onClick={() => setRejectDialogOpen(true)}
+                        className="w-full"
+                        size="sm"
+                      >
+                        Reprovar
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Quick Info */}
+                  <Separator />
+                  <div className="space-y-2 text-sm">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Resumo
+                    </h4>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Experiência</span>
+                      <span className="font-medium">{selectedCandidate.experience} anos</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Skills</span>
+                      <span className="font-medium">{selectedCandidate.skills.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Teste</span>
+                      <span className="font-medium">
+                        {selectedCandidate.testResult ? 'Realizado' : 'Pendente'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </>
           )}
         </DialogContent>
@@ -1400,7 +1459,7 @@ export default function CompanyApplications() {
             <AlertDialogTitle>Reprovar candidato</AlertDialogTitle>
             <AlertDialogDescription>
               Você tem certeza que deseja reprovar{' '}
-              {selectedCandidate?.name || 'este candidato'}?
+              {selectedCandidate ? getCandidateDisplayName(selectedCandidate) : 'este candidato'}?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Textarea
@@ -1428,7 +1487,7 @@ export default function CompanyApplications() {
           <DialogHeader>
             <DialogTitle>Solicitar Teste Comportamental</DialogTitle>
             <DialogDescription>
-              Candidato: {selectedCandidate?.name} | Vaga: {selectedApplication?.jobTitle}
+              Candidato: {selectedCandidate ? getCandidateDisplayName(selectedCandidate) : ''} | Vaga: {selectedApplication?.jobTitle}
             </DialogDescription>
           </DialogHeader>
 
@@ -1493,7 +1552,7 @@ export default function CompanyApplications() {
         onInviteToInterview={(candidateId) => {
           const candidate = candidatesMap[candidateId];
           if (candidate) {
-            toast.success(`Candidato ${candidate.name} movido para Entrevista`);
+            toast.success(`Candidato ${getCandidateDisplayName(candidate)} movido para Entrevista`);
             // Encontrar a candidatura e mover para entrevista
             const app = applications.find((a) => a.candidateId === candidateId);
             if (app) {
@@ -1528,7 +1587,7 @@ export default function CompanyApplications() {
           open={showScheduleModal}
           onOpenChange={setShowScheduleModal}
           candidateId={selectedApplication.candidateId}
-          candidateName={selectedCandidate.name}
+          candidateName={getCandidateDisplayName(selectedCandidate)}
           jobId={selectedApplication.jobId}
           jobTitle={selectedApplication.jobTitle}
           applicationId={selectedApplication.id}
@@ -1548,7 +1607,7 @@ export default function CompanyApplications() {
           open={hiringModalOpen}
           onOpenChange={setHiringModalOpen}
           application={selectedApplication}
-          candidateName={selectedCandidate.name}
+          candidateName={getCandidateDisplayName(selectedCandidate)}
           candidateAvatar={selectedCandidate.avatar}
           jobTitle={selectedApplication.jobTitle}
           matchScore={calculateMatch(selectedApplication.candidateId)}
@@ -1746,15 +1805,11 @@ function ApplicationCard({
           <Avatar className="w-10 h-10">
             <AvatarImage src={candidate.avatar} />
             <AvatarFallback className="bg-primary/10 text-primary text-sm">
-              {candidate.name
-                .split(' ')
-                .map((n) => n[0])
-                .join('')
-                .slice(0, 2)}
+              {getCandidateInitials(candidate)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="font-medium truncate hover:text-primary transition-colors">{candidate.name}</p>
+            <p className="font-medium truncate hover:text-primary transition-colors">{getCandidateDisplayName(candidate)}</p>
             <p className="text-sm text-muted-foreground truncate">
               {candidate.title}
             </p>

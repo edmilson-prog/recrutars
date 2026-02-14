@@ -26,6 +26,7 @@ import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
 import { NotSuitableReason } from '@/lib/candidateRecommendation';
 import { NotSuitableModal } from './NotSuitableModal';
 import { CandidateRecommendation, getCandidateScoreBadgeClasses } from '@/lib/candidateRecommendation';
+import { getCandidateDisplayName, getCandidateInitials } from '@/lib/candidateDisplayName';
 
 interface SuggestedCandidateCardProps {
   recommendation: CandidateRecommendation;
@@ -83,16 +84,6 @@ export function SuggestedCandidateCard({
     onInvite?.(candidate.id);
   };
 
-  // Obter iniciais do nome
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
-  };
-
   if (variant === 'compact') {
     return (
       <>
@@ -118,7 +109,7 @@ export function SuggestedCandidateCard({
                 />
               ) : (
                 <span className="text-sm font-semibold text-primary">
-                  {getInitials(candidate.name)}
+                  {getCandidateInitials(candidate)}
                 </span>
               )}
             </div>
@@ -126,7 +117,7 @@ export function SuggestedCandidateCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="font-medium text-foreground truncate">{candidate.name}</h3>
+                  <h3 className="font-medium text-foreground truncate">{getCandidateDisplayName(candidate)}</h3>
                   <p className="text-sm text-muted-foreground">{candidate.title}</p>
                 </div>
                 <Badge className={cn("flex-shrink-0", getCandidateScoreBadgeClasses(score))}>
@@ -224,12 +215,12 @@ export function SuggestedCandidateCard({
                 />
               ) : (
                 <span className="text-lg font-semibold text-primary">
-                  {getInitials(candidate.name)}
+                  {getCandidateInitials(candidate)}
                 </span>
               )}
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-foreground">{candidate.name}</h3>
+              <h3 className="text-lg font-semibold text-foreground">{getCandidateDisplayName(candidate)}</h3>
               <p className="text-muted-foreground">{candidate.title}</p>
             </div>
           </div>

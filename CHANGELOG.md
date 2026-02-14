@@ -5,6 +5,44 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.9] - 2026-02-14 "Bridge"
+
+### Enhanced
+- **Card de completude do perfil ocultavel ao atingir 100%** — No dashboard do candidato, o card "Completude do Perfil Profissional" agora exibe um botao de fechar (X) quando a completude atinge 100%, permitindo ao candidato oculta-lo
+  - Botao X aparece somente quando completude = 100% (invisivel abaixo disso)
+  - Mensagem congratulatoria exibida ao atingir 100%: "Perfil completo! Voce esta pronto para atrair os melhores recrutadores."
+  - Subtitulo muda para "Parabens! Seu perfil profissional esta completo." a 100%
+  - Ocultacao persistente via localStorage (escopo por candidateId para suporte multi-conta)
+  - Card reaparece automaticamente se completude cair abaixo de 100% (ex: edicao do perfil)
+  - Animacao suave de saida com Framer Motion (AnimatePresence + exit animation)
+
+## [1.13.8] - 2026-02-13 "Bridge"
+
+### Enhanced
+- **Nome de exibicao do candidato (Display Name)** — Nomes de candidatos em paginas da empresa agora priorizam `displayName` (definido pelo candidato no perfil), com fallback para "primeiro nome + ultimo sobrenome" em vez do nome completo
+  - Criado utilitario centralizado `src/lib/candidateDisplayName.ts` com `getCandidateDisplayName()`, `formatShortName()` e `getCandidateInitials()`
+  - Atualizado `getDisplayName()` em `src/utils/visibility.ts` para usar display name (modo anonimo continua prevalecendo)
+  - Atualizado modal de candidaturas (`Applications.tsx`): header, cards kanban, dialogs, toasts e props de modais
+  - Atualizado perfil do candidato (`CandidateProfile.tsx`): header h1, avatar initials, dialogs de convite/teste/entrevista e toasts
+  - Atualizado componentes de comparacao (`CandidateComparison.tsx`, `CandidateSelector.tsx`): initials nos avatars
+  - Atualizado `SuggestedCandidateCard.tsx`: nome e initials centralizados, removida funcao local `getInitials`
+  - Atualizado `HiringModal.tsx`: initials centralizadas via `getCandidateInitials()`
+  - Paginas do candidato e admin continuam exibindo nome completo (nao afetadas)
+
+## [1.13.7] - 2026-02-13 "Bridge"
+
+### Enhanced
+- **Redesign do modal de candidaturas** — Modal que abre ao clicar nos "tres pontinhos" de um candidato foi completamente reestruturado para melhor usabilidade e aparencia profissional
+  - Largura dinamica: `sm:max-w-5xl` (1024px) com `w-[95vw]` em mobile (antes fixo em 768px)
+  - Layout dois paineis: conteudo em abas a esquerda + sidebar de acoes a direita (coluna unica em mobile)
+  - Data de candidatura formatada: `12/02/2026 (ha 1 dia)` em vez de timestamp ISO cru
+  - Notas internas movidas para 6a aba com badge de contagem, liberando espaco vertical
+  - Tab Perfil em grid 2 colunas com cards sutis (`bg-muted/30`) para Localizacao, Experiencia, Formacao e Disponibilidade
+  - ScrollArea flex (ocupa espaco disponivel) em vez de altura fixa de 300px
+  - Sidebar de acoes organizada em secoes (Status Atual, Acoes, Mover para, Resumo) em vez de footer amontoado
+  - Header otimizado com badges alinhados a direita e avatar compacto
+  - Adicionada funcao `formatDateTimeBR()` em `src/lib/formatters.ts`
+
 ## [1.13.6] - 2026-02-12 "Bridge"
 
 ### Fixed

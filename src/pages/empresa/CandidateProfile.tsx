@@ -80,6 +80,7 @@ import { MatchStrengths } from '@/components/match/MatchStrengths';
 import { MatchOpportunities } from '@/components/match/MatchOpportunities';
 import { MatchMethodologyModal } from '@/components/match/MatchMethodologyModal';
 import { cn } from '@/lib/utils';
+import { getCandidateDisplayName, getCandidateInitials } from '@/lib/candidateDisplayName';
 
 // Skill level colors for profile skills
 const skillLevelColors: Record<string, { bg: string; text: string }> = {
@@ -267,7 +268,7 @@ export default function CandidateProfile() {
     if (!selectedJob) return;
 
     toast.success(
-      `Convite enviado para ${candidate.name} para a vaga "${selectedJob.title}"`
+      `Convite enviado para ${getCandidateDisplayName(candidate)} para a vaga "${selectedJob.title}"`
     );
     setIsInviteModalOpen(false);
     setSelectedJob(null);
@@ -280,7 +281,7 @@ export default function CandidateProfile() {
 
   const handleRequestTest = () => {
     if (!selectedApplication) return;
-    toast.success(`Solicitação de teste enviada para ${candidate.name}`);
+    toast.success(`Solicitação de teste enviada para ${getCandidateDisplayName(candidate)}`);
     setIsTestRequestModalOpen(false);
     setTestMessage(DEFAULT_TEST_MESSAGE);
     setTestDeadline('7');
@@ -288,7 +289,7 @@ export default function CandidateProfile() {
 
   const handleScheduleInterview = (data: Parameters<typeof createInterview>[0]) => {
     createInterview(data);
-    toast.success(`Entrevista agendada com ${candidate.name}`);
+    toast.success(`Entrevista agendada com ${getCandidateDisplayName(candidate)}`);
     setIsScheduleModalOpen(false);
   };
 
@@ -334,11 +335,7 @@ export default function CandidateProfile() {
             <Avatar className="w-24 h-24 flex-shrink-0">
               <AvatarImage src={candidate.avatar} />
               <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                {candidate.name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')
-                  .slice(0, 2)}
+                {getCandidateInitials(candidate)}
               </AvatarFallback>
             </Avatar>
 
@@ -346,7 +343,7 @@ export default function CandidateProfile() {
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">
-                    {candidate.name}
+                    {getCandidateDisplayName(candidate)}
                   </h1>
                   <p className="text-lg text-muted-foreground">{candidate.title}</p>
 
@@ -585,7 +582,7 @@ export default function CandidateProfile() {
               >
                 <PracticalAnalysisCard
                   candidateId={candidate.id}
-                  candidateName={candidate.name}
+                  candidateName={getCandidateDisplayName(candidate)}
                 />
               </motion.div>
             )}
@@ -1154,7 +1151,7 @@ export default function CandidateProfile() {
           <DialogHeader>
             <DialogTitle>Convidar candidato</DialogTitle>
             <DialogDescription>
-              Envie um convite para {candidate.name} se candidatar à vaga "
+              Envie um convite para {getCandidateDisplayName(candidate)} se candidatar à vaga "
               {selectedJob?.title}"
             </DialogDescription>
           </DialogHeader>
@@ -1194,7 +1191,7 @@ export default function CandidateProfile() {
           <DialogHeader>
             <DialogTitle>Solicitar Teste Comportamental</DialogTitle>
             <DialogDescription>
-              Candidato: {candidate.name}
+              Candidato: {getCandidateDisplayName(candidate)}
               {selectedApplication && ` | Vaga: ${selectedApplication.jobTitle}`}
             </DialogDescription>
           </DialogHeader>
@@ -1271,7 +1268,7 @@ export default function CandidateProfile() {
           open={isScheduleModalOpen}
           onOpenChange={setIsScheduleModalOpen}
           candidateId={candidate.id}
-          candidateName={candidate.name}
+          candidateName={getCandidateDisplayName(candidate)}
           jobId={selectedApplication.jobId}
           jobTitle={selectedApplication.jobTitle}
           applicationId={selectedApplication.id}

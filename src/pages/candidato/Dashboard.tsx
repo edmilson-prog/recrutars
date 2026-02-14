@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { FileText, Calendar, Brain, Eye, Search, MessageSquare, ArrowRight, Clock, Building2, HelpCircle, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FileText, Calendar, Brain, Eye, Search, MessageSquare, ArrowRight, Clock, Building2, HelpCircle, Loader2, X, CheckCircle2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -26,6 +26,8 @@ import { DiscIncentiveBanner } from '@/components/candidato/DiscIncentiveBanner'
 // PRD-036: Widget de vagas recomendadas
 import { RecommendedJobsWidget } from '@/components/candidato/RecommendedJobsWidget';
 
+const PROFILE_CARD_DISMISSED_KEY = (id: string) => `recrutars-profile-card-dismissed-${id}`;
+
 const DIMENSION_COLORS: Record<GaugeProDimension, string> = {
   D1: '#ef4444',
   D2: '#f59e0b',
@@ -46,6 +48,23 @@ export default function CandidateDashboard() {
   const { data: unreadCount = 0 } = useUnreadCount(userId);
   const { data: profile, isLoading: isLoadingProfile } = useProfile(candidateId);
   const updateCandidateMutation = useUpdateCandidate();
+
+  // Profile completeness card dismiss (persistent, per-candidate)
+  const [isProfileCardDismissed, setIsProfileCardDismissed] = useState(() => {
+    if (!candidateId) return false;
+    try {
+      return localStorage.getItem(PROFILE_CARD_DISMISSED_KEY(candidateId)) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleDismissProfileCard = () => {
+    setIsProfileCardDismissed(true);
+    try {
+      localStorage.setItem(PROFILE_CARD_DISMISSED_KEY(candidateId), 'true');
+    } catch { /* ignore */ }
+  };
 
   // Gauge-Pro result from localStorage
   const [gaugeResult, setGaugeResult] = useState<GaugeProResult | null>(null);
@@ -108,6 +127,7 @@ export default function CandidateDashboard() {
   // Completude do perfil profissional
   const completenessResult = profile ? calculateCompleteness(profile) : null;
   const curriculumCompletion = completenessResult?.percentage ?? 0;
+  const showProfileCard = !isProfileCardDismissed || curriculumCompletion < 100;
 
   // Compute stats from fetched data
   const interviewCount = candidateApplications.filter(a => a.status === 'interview').length;
@@ -142,52 +162,88 @@ export default function CandidateDashboard() {
         />
 
         {/* Curriculum Completion */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="bg-card rounded-2xl p-6 shadow-soft"
-        >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold text-foreground">Completude do Perfil Profissional</h2>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <HelpCircle className="w-4 h-4 text-muted-foreground/50 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    <p>Mostra o progresso do seu perfil profissional. Perfis completos aumentam o interesse dos recrutadores.</p>
-                  </TooltipContent>
-                </Tooltip>
+        <AnimatePresence>
+          {showProfileCard && (
+            <motion.div
+              key="profile-completeness-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20, transition: { duration: 0.3 } }}
+              transition={{ delay: 0.05 }}
+              className="bg-card rounded-2xl p-6 shadow-soft"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-semibold text-foreground">Completude do Perfil Profissional</h2>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="w-4 h-4 text-muted-foreground/50 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <p>Mostra o progresso do seu perfil profissional. Perfis completos aumentam o interesse dos recrutadores.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="text-muted-foreground">
+                    {curriculumCompletion === 100
+                      ? 'Parabéns! Seu perfil profissional está completo.'
+                      : 'Perfis completos atraem mais recrutadores'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button asChild variant="outline">
+                    <Link to="/candidato/perfil">
+                      Editar Perfil Profissional
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Link>
+                  </Button>
+                  {/* Dismiss button - only at 100% */}
+                  {curriculumCompletion === 100 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={handleDismissProfileCard}
+                          className="p-1.5 rounded-full hover:bg-muted transition-colors"
+                          aria-label="Ocultar card de completude"
+                        >
+                          <X className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Ocultar este card</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
               </div>
-              <p className="text-muted-foreground">Perfis completos atraem mais recrutadores</p>
-            </div>
-            <Button asChild variant="outline">
-              <Link to="/candidato/perfil">
-                Editar Perfil Profissional
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
-            </Button>
-          </div>
-          {profile ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-4">
-                <Progress value={curriculumCompletion} className="flex-1 h-3" />
-                <span className="text-2xl font-bold text-foreground">{curriculumCompletion}%</span>
-              </div>
-              {completenessResult && completenessResult.missingSections.length > 0 && (
+              {profile ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4">
+                    <Progress value={curriculumCompletion} className="flex-1 h-3" />
+                    <span className="text-2xl font-bold text-foreground">{curriculumCompletion}%</span>
+                  </div>
+                  {completenessResult && completenessResult.missingSections.length > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Falta completar: {completenessResult.missingSections.join(', ')}
+                    </p>
+                  )}
+                  {curriculumCompletion === 100 && (
+                    <div className="flex items-center gap-2 mt-2 text-sm text-green-600 dark:text-green-400">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Perfil completo! Você está pronto para atrair os melhores recrutadores.</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <p className="text-sm text-muted-foreground">
-                  Falta completar: {completenessResult.missingSections.join(', ')}
+                  Complete seu perfil profissional para se candidatar às vagas.
                 </p>
               )}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Complete seu perfil profissional para se candidatar às vagas.
-            </p>
+
+            </motion.div>
           )}
-        </motion.div>
+        </AnimatePresence>
 
         {/* Gauge-Pro Behavioral Profile Card */}
         {gaugeResult ? (

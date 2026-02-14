@@ -59,3 +59,11 @@ export function formatDateBR(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return d.toLocaleDateString('pt-BR');
 }
+
+/**
+ * Formata data e hora no padrão brasileiro DD/MM/YYYY às HH:MM
+ */
+export function formatDateTimeBR(date: string | Date): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
