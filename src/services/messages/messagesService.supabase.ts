@@ -1,6 +1,7 @@
 /**
  * Messages Service — Supabase Implementation
  * PRD-067: Service Layer — Specialized Modules
+ * v1.14.1: Fix JOINs, sendMessage FK, metadata JSONB, unread count, mappers
  *
  * Queries conversations and messages tables with joins.
  * Tables: conversations, messages
@@ -10,25 +11,75 @@ import type { Conversation, Message } from '@/types';
 import { supabase } from '@/lib/supabase';
 import type { IMessagesService } from './messagesService';
 
+// PostgREST JOIN select — pulls names from FK relationships
+const CONVERSATION_SELECT = '*, candidates(name), companies(name), jobs(title)';
+
 export class MessagesServiceSupabase implements IMessagesService {
   async getConversations(userId: string, userType: string): Promise<Conversation[]> {
     const column = userType === 'candidate' ? 'candidate_id' : 'company_id';
 
     const { data, error } = await supabase
       .from('conversations')
-      .select('*')
+      .select(CONVERSATION_SELECT)
       .eq(column, userId)
       .order('updated_at', { ascending: false });
 
     if (error) throw error;
 
-    return (data ?? []).map(this.mapConversation);
+    const conversations = (data ?? []).map((row: any) => this.mapConversation(row));
+
+    if (conversations.length === 0) return conversations;
+
+    // Batch: fetch last message + unread count per conversation
+    const convIds = conversations.map(c => c.id);
+
+    // 1) Last message per conversation (most recent first, limit to N)
+    const { data: recentMessages } = await supabase
+      .from('messages')
+      .select('*')
+      .in('conversation_id', convIds)
+      .order('created_at', { ascending: false });
+
+    // 2) Unread count: messages where sender_type != userType and read = false
+    const oppositeType = userType === 'candidate' ? 'company' : 'candidate';
+    const { data: unreadMessages } = await supabase
+      .from('messages')
+      .select('conversation_id')
+      .in('conversation_id', convIds)
+      .eq('sender_type', oppositeType)
+      .eq('read', false);
+
+    // Build lookup maps
+    const lastMessageMap = new Map<string, Message>();
+    const unreadCountMap = new Map<string, number>();
+
+    // Last message: first occurrence per conversation_id (already sorted desc)
+    for (const row of (recentMessages ?? [])) {
+      const convId = row.conversation_id;
+      if (!lastMessageMap.has(convId)) {
+        lastMessageMap.set(convId, this.mapMessage(row));
+      }
+    }
+
+    // Unread count
+    for (const row of (unreadMessages ?? [])) {
+      const convId = row.conversation_id;
+      unreadCountMap.set(convId, (unreadCountMap.get(convId) ?? 0) + 1);
+    }
+
+    // Enrich conversations
+    for (const conv of conversations) {
+      conv.lastMessage = lastMessageMap.get(conv.id);
+      conv.unreadCount = unreadCountMap.get(conv.id) ?? 0;
+    }
+
+    return conversations;
   }
 
   async getConversation(id: string): Promise<Conversation | null> {
     const { data, error } = await supabase
       .from('conversations')
-      .select('*')
+      .select(CONVERSATION_SELECT)
       .eq('id', id)
       .single();
 
@@ -49,7 +100,7 @@ export class MessagesServiceSupabase implements IMessagesService {
 
     if (error) throw error;
 
-    return (data ?? []).map(this.mapMessage);
+    return (data ?? []).map((row: any) => this.mapMessage(row));
   }
 
   async sendMessage(conversationId: string, message: Partial<Message>): Promise<Message> {
@@ -58,26 +109,21 @@ export class MessagesServiceSupabase implements IMessagesService {
       .insert({
         conversation_id: conversationId,
         sender_id: message.senderId,
-        sender_name: message.senderName,
+        sender_name: message.senderName ?? null,
         sender_type: message.senderType,
-        receiver_id: message.receiverId,
-        receiver_name: message.receiverName,
+        receiver_name: message.receiverName ?? null,
         subject: message.subject ?? '',
         content: message.content ?? '',
         read: false,
         type: message.type ?? 'regular',
-        metadata: message.metadata ? JSON.stringify(message.metadata) : null,
+        metadata: message.metadata ?? null,
       })
       .select()
       .single();
 
     if (error) throw error;
 
-    // Update conversation's updated_at
-    await supabase
-      .from('conversations')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', conversationId);
+    // Note: trigger trg_update_conversation_on_message handles updated_at automatically
 
     return this.mapMessage(data);
   }
@@ -90,12 +136,6 @@ export class MessagesServiceSupabase implements IMessagesService {
       .eq('read', false);
 
     if (error) throw error;
-
-    // Reset unread count on conversation
-    await supabase
-      .from('conversations')
-      .update({ unread_count: 0 })
-      .eq('id', conversationId);
   }
 
   async createConversation(
@@ -106,7 +146,7 @@ export class MessagesServiceSupabase implements IMessagesService {
     // Check for existing conversation
     let query = supabase
       .from('conversations')
-      .select('*')
+      .select(CONVERSATION_SELECT)
       .eq('candidate_id', candidateId)
       .eq('company_id', companyId);
 
@@ -124,9 +164,8 @@ export class MessagesServiceSupabase implements IMessagesService {
         candidate_id: candidateId,
         company_id: companyId,
         job_id: jobId ?? null,
-        unread_count: 0,
       })
-      .select()
+      .select(CONVERSATION_SELECT)
       .single();
 
     if (error) throw error;
@@ -134,11 +173,26 @@ export class MessagesServiceSupabase implements IMessagesService {
     return this.mapConversation(data);
   }
 
-  async getUnreadCount(userId: string): Promise<number> {
+  async getUnreadCount(userId: string, userType: string): Promise<number> {
+    const column = userType === 'candidate' ? 'candidate_id' : 'company_id';
+    const oppositeType = userType === 'candidate' ? 'company' : 'candidate';
+
+    // 1) Get conversation IDs where user is a participant
+    const { data: convRows } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq(column, userId);
+
+    if (!convRows || convRows.length === 0) return 0;
+
+    const convIds = convRows.map(r => r.id);
+
+    // 2) Count unread messages from the other party
     const { count, error } = await supabase
       .from('messages')
       .select('*', { count: 'exact', head: true })
-      .eq('receiver_id', userId)
+      .in('conversation_id', convIds)
+      .eq('sender_type', oppositeType)
       .eq('read', false);
 
     if (error) throw error;
@@ -155,12 +209,12 @@ export class MessagesServiceSupabase implements IMessagesService {
     return {
       id: row.id,
       candidateId: row.candidate_id,
-      candidateName: row.candidate_name ?? '',
+      candidateName: row.candidates?.name ?? '',
       companyId: row.company_id,
-      companyName: row.company_name ?? '',
+      companyName: row.companies?.name ?? '',
       jobId: row.job_id ?? '',
-      jobTitle: row.job_title ?? '',
-      unreadCount: row.unread_count ?? 0,
+      jobTitle: row.jobs?.title ?? '',
+      unreadCount: 0, // populated by batch in getConversations
       updatedAt: row.updated_at,
     };
   }
@@ -170,16 +224,18 @@ export class MessagesServiceSupabase implements IMessagesService {
       id: row.id,
       conversationId: row.conversation_id,
       senderId: row.sender_id,
-      senderName: row.sender_name,
+      senderName: row.sender_name ?? '',
       senderType: row.sender_type,
-      receiverId: row.receiver_id,
-      receiverName: row.receiver_name,
+      receiverId: row.receiver_id ?? '',
+      receiverName: row.receiver_name ?? '',
       subject: row.subject,
       content: row.content,
       read: row.read,
       createdAt: row.created_at,
       type: row.type ?? undefined,
-      metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+      metadata: row.metadata
+        ? (typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata)
+        : undefined,
     };
   }
   /* eslint-enable @typescript-eslint/no-explicit-any */

@@ -33,7 +33,7 @@ export interface IMessagesService {
   createConversation(candidateId: string, companyId: string, jobId?: string): Promise<Conversation>;
 
   /** Get count of unread messages for a user */
-  getUnreadCount(userId: string): Promise<number>;
+  getUnreadCount(userId: string, userType: string): Promise<number>;
 }
 
 // ---------------------------------------------------------------------------

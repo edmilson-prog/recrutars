@@ -38,26 +38,26 @@ export function useConversations(userId: string, userType: string) {
 }
 
 /** Fetch all messages in a conversation */
-export function useMessages(conversationId: string) {
+export function useConversationMessages(conversationId: string | null) {
   return useQuery({
-    queryKey: KEYS.messages(conversationId),
+    queryKey: KEYS.messages(conversationId ?? ''),
     queryFn: async () => {
       const service = await getMessagesService();
-      return service.getMessages(conversationId);
+      return service.getMessages(conversationId!);
     },
     enabled: !!conversationId,
   });
 }
 
 /** Get count of unread messages for a user */
-export function useUnreadCount(userId: string) {
+export function useUnreadCount(userId: string, userType: string) {
   return useQuery({
     queryKey: KEYS.unreadCount(userId),
     queryFn: async () => {
       const service = await getMessagesService();
-      return service.getUnreadCount(userId);
+      return service.getUnreadCount(userId, userType);
     },
-    enabled: !!userId,
+    enabled: !!userId && !!userType,
     refetchInterval: 30_000, // poll every 30s
   });
 }
@@ -88,6 +88,9 @@ export function useSendMessage() {
       });
       // Invalidate conversations list (updated_at changed)
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+    onError: (error, variables) => {
+      console.error('[useSendMessage] Erro ao enviar mensagem:', error, variables);
     },
   });
 }

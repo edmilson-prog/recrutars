@@ -2,36 +2,55 @@
  * useMessages hook
  * PRD-010: Mensagens do Candidato
  * PRD-017: Suporte a userType para empresa
+ * v1.14.1: Fix stubs — real messages via useConversationMessages, fix senderId
+ * v1.14.2: Fix infinite re-render loop (useRef for mutations), fix sendMessage never firing
  *
  * Delegates to useMessagesQuery hooks (PRD-070 migration).
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import {
   useConversations,
-  useMessages as useMessagesQuery,
+  useConversationMessages,
   useUnreadCount,
   useSendMessage,
   useMarkAsRead,
 } from '@/hooks/useMessagesQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Message } from '@/types';
 
 interface UseMessagesParams {
   userId: string;
   userType: 'candidate' | 'company';
+  selectedConversationId?: string | null;
 }
 
-export function useMessages({ userId, userType }: UseMessagesParams) {
+export function useMessages({ userId, userType, selectedConversationId }: UseMessagesParams) {
+  const { user } = useAuth();
+
   // --- React Query hooks ---
   const {
     data: rawConversations = [],
     isLoading: conversationsLoading,
   } = useConversations(userId, userType);
 
-  const { data: unreadCount = 0 } = useUnreadCount(userId);
+  const { data: unreadCount = 0 } = useUnreadCount(userId, userType);
+
+  // Fetch messages for the selected conversation
+  const {
+    data: conversationMessages = [],
+    isLoading: messagesLoading,
+  } = useConversationMessages(selectedConversationId ?? null);
 
   const sendMessageMutation = useSendMessage();
   const markAsReadMutation = useMarkAsRead();
+
+  // Stable refs — useMutation returns new object every render, causing
+  // useCallback deps to change → useEffect infinite loops (v1.14.2 fix)
+  const sendMutationRef = useRef(sendMessageMutation);
+  sendMutationRef.current = sendMessageMutation;
+  const markAsReadRef = useRef(markAsReadMutation);
+  markAsReadRef.current = markAsReadMutation;
 
   // Sort conversations by updatedAt descending
   const sortedConversations = useMemo(() => {
@@ -41,76 +60,70 @@ export function useMessages({ userId, userType }: UseMessagesParams) {
   }, [rawConversations]);
 
   // Get messages for a specific conversation
-  // NOTE: callers should prefer the useMessages hook from useMessagesQuery directly,
-  // but this wrapper keeps backward compatibility.
   const getConversationMessages = useCallback(
-    (_conversationId: string): Message[] => {
-      // For backward compatibility we return an empty array;
-      // consumers should use the dedicated useMessages(conversationId) hook.
+    (conversationId: string): Message[] => {
+      // Return messages from React Query if this is the selected conversation
+      if (conversationId === selectedConversationId) {
+        return conversationMessages;
+      }
       return [];
     },
-    []
+    [selectedConversationId, conversationMessages]
   );
 
-  // Get last message for a conversation
+  // Get last message for a conversation (from enriched data in getConversations)
   const getLastMessage = useCallback(
-    (_conversationId: string): Message | undefined => {
-      return undefined;
+    (conversationId: string): Message | undefined => {
+      const conv = rawConversations.find(c => c.id === conversationId);
+      return conv?.lastMessage;
     },
-    []
+    [rawConversations]
   );
 
-  // Mark conversation as read
+  // Mark conversation as read (stable ref — no deps change)
   const markAsRead = useCallback(
     (conversationId: string) => {
-      markAsReadMutation.mutate(conversationId);
+      markAsReadRef.current.mutate(conversationId);
     },
-    [markAsReadMutation]
+    []
   );
 
-  // Send a new message
+  // Send a new message (stable ref — no mutation in deps)
   const sendMessage = useCallback(
     (conversationId: string, content: string) => {
       const conversation = rawConversations.find(c => c.id === conversationId);
-      if (!conversation) return null;
+      if (!conversation) {
+        console.warn('[useMessages] Conversa nao encontrada:', conversationId);
+        return;
+      }
 
       const isCompany = userType === 'company';
-      const senderId = userId;
+      // sender_id must be auth.uid (profiles.id) — NOT the entity ID
+      const senderId = user?.id ?? userId;
       const senderName = isCompany ? conversation.companyName : conversation.candidateName;
       const senderType = isCompany ? 'company' : 'candidate';
-      const receiverId = isCompany ? conversation.candidateId : conversation.companyId;
       const receiverName = isCompany ? conversation.candidateName : conversation.companyName;
 
-      const messagePayload: Partial<Message> = {
-        senderId,
-        senderName,
-        senderType,
-        receiverId,
-        receiverName,
-        subject: 'Re: Conversa',
-        content,
-        read: true,
-      };
-
-      sendMessageMutation.mutate({ conversationId, message: messagePayload });
-
-      // Return a locally-optimistic message for immediate UI update
-      const optimistic: Message = {
-        id: `msg-${Date.now()}`,
+      sendMutationRef.current.mutate({
         conversationId,
-        ...messagePayload,
-        createdAt: new Date().toISOString(),
-      } as Message;
-
-      return optimistic;
+        message: {
+          senderId,
+          senderName,
+          senderType,
+          receiverName,
+          subject: 'Re: Conversa',
+          content,
+        },
+      });
     },
-    [userId, userType, rawConversations, sendMessageMutation]
+    [user?.id, userId, userType, rawConversations]
   );
 
   return {
     conversations: sortedConversations,
-    messages: [] as Message[],
+    messages: conversationMessages,
     isLoading: conversationsLoading,
+    messagesLoading,
     getConversationMessages,
     getLastMessage,
     markAsRead,

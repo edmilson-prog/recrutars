@@ -41,4 +41,5 @@ export interface Conversation {
   jobTitle: string;
   unreadCount: number;
   updatedAt: string;
+  lastMessage?: Message;
 }

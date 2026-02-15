@@ -45,7 +45,7 @@ export default function CandidateDashboard() {
 
   // Fetch data from service layer
   const { data: candidateApplications = [], isLoading: isLoadingApps } = useApplicationsByCandidate(candidateId);
-  const { data: unreadCount = 0 } = useUnreadCount(userId);
+  const { data: unreadCount = 0 } = useUnreadCount(candidateId, 'candidate');
   const { data: profile, isLoading: isLoadingProfile } = useProfile(candidateId);
   const updateCandidateMutation = useUpdateCandidate();
 

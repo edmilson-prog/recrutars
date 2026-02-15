@@ -5,6 +5,31 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.2] - 2026-02-14 "Bridge"
+
+### Fixed
+- **Envio de mensagens nao funcionava** — Clicar "Enviar" nao produzia efeito; zero POST requests chegavam ao Supabase
+  - **Bug 1 (Infinite loop):** `markAsRead` callback dependia de `markAsReadMutation` (objeto novo a cada render do `useMutation`) → useEffect disparava em loop infinito → dezenas de PATCH requests por segundo → queries invalidadas constantemente — corrigido com `useRef` para referencia estavel
+  - **Bug 2 (sendMessage silencioso):** Durante o loop, `rawConversations` ficava em flux (invalidacao/refetch constante) → `rawConversations.find()` retornava `undefined` → funcao retornava `null` sem chamar o mutation — corrigido com `useRef` para mutation estavel + `console.warn` quando conversa nao encontrada
+  - **Bug 3 (Erros engolidos):** `useSendMessage` mutation nao tinha `onError` handler → erros RLS/FK eram silenciosamente ignorados pelo React Query — adicionado `onError` com `console.error`
+
+## [1.14.1] - 2026-02-14 "Bridge"
+
+### Fixed
+- **Sistema de mensagens completamente inoperante** — Corrigidos 7 bugs criticos que impediam o funcionamento do chat entre empresas e candidatos
+  - **Bug 1 (Hook):** `getConversationMessages()` retornava `[]` sempre (stub nunca implementado) — agora usa `useConversationMessages` do React Query para buscar mensagens reais
+  - **Bug 2 (Hook):** `getLastMessage()` retornava `undefined` sempre (stub) — agora extrai `lastMessage` das conversas enriquecidas pelo service layer
+  - **Bug 3 (Service):** Mapper lia `row.candidate_name`, `row.company_name`, `row.job_title` que NAO existem na tabela conversations — corrigido com JOINs PostgREST (`candidates(name)`, `companies(name)`, `jobs(title)`)
+  - **Bug 4 (Service):** `sendMessage` inseria `receiver_id = candidates.id` mas FK aponta para `auth.users.id` causando FK violation — removido `receiver_id` do INSERT
+  - **Bug 5 (Service):** `markAsRead()` e `createConversation()` referenciavam coluna `unread_count` que NAO existe na tabela conversations — removido; unread count agora calculado via query batch
+  - **Bug 6 (Service):** `metadata` JSONB sofria double-stringify (`JSON.stringify` no INSERT + `JSON.parse` no mapper) — corrigido: JSONB aceita objetos direto, mapper verifica typeof antes de parsear
+  - **Bug 7 (Pagina):** Candidato usava `user.id` (profiles.id) mas `conversations.candidate_id` referencia `candidates.id` (UUIDs diferentes) — corrigido para `currentCandidate.id`
+  - Sidebar agora exibe nomes reais de candidatos/empresas, titulo da vaga, preview da ultima mensagem e timestamp
+  - Chat exibe mensagens reais ao clicar numa conversa
+  - Unread count calculado corretamente por tipo de usuario (mensagens do lado oposto)
+  - Template variable `empresa` corrigida de hardcoded 'TechSolutions' para `currentCompany.name`
+  - Trigger DB `trg_update_conversation_on_message` utilizado em vez de update manual de `updated_at`
+
 ## [1.14.0] - 2026-02-14 "Bridge"
 
 ### Fixed

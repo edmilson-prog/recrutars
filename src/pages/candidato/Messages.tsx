@@ -35,16 +35,17 @@ const isTestRequestMessage = (msg: Message): boolean =>
   msg.type === 'solicitacao_teste';
 
 export default function CandidateMessages() {
-  const { user } = useAuth();
+  const { currentCandidate } = useAuth();
+
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+
   const {
     conversations,
     getConversationMessages,
     getLastMessage,
     markAsRead,
     sendMessage,
-  } = useMessages({ userId: user?.id ?? '', userType: 'candidate' });
-
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  } = useMessages({ userId: currentCandidate?.id ?? '', userType: 'candidate', selectedConversationId });
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);

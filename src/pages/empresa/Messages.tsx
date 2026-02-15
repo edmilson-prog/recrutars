@@ -56,6 +56,8 @@ import type { TemplateVariableData } from '@/types/messageTemplates';
 
 export default function CompanyMessages() {
   const { currentCompany } = useAuth();
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+
   const {
     conversations,
     getConversationMessages,
@@ -63,9 +65,7 @@ export default function CompanyMessages() {
     markAsRead,
     sendMessage,
     totalUnreadCount,
-  } = useMessages({ userId: currentCompany?.id ?? '', userType: 'company' });
-
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  } = useMessages({ userId: currentCompany?.id ?? '', userType: 'company', selectedConversationId });
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedJobFilter, setSelectedJobFilter] = useState<string>('all');
@@ -113,7 +113,7 @@ export default function CompanyMessages() {
     return {
       nome: selectedConversation.candidateName,
       vaga: selectedConversation.jobTitle,
-      empresa: 'TechSolutions', // Mock company name
+      empresa: currentCompany?.name ?? '',
     };
   }, [selectedConversation]);
 
