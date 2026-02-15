@@ -6,7 +6,7 @@
 import type { GaugeProResult } from '@/types/gaugePro';
 import { DIMENSION_NAMES } from '@/types/gaugePro';
 
-export const SYSTEM_PROMPT = `Você é um especialista em psicologia organizacional e avaliação comportamental, com profundo conhecimento nos modelos Predictive Index (PI), Big Five (OCEAN) e DISC.
+export const SYSTEM_PROMPT = `Você é um especialista em psicologia organizacional e avaliação comportamental, com profundo conhecimento em avaliação comportamental, incluindo modelos como Predictive Index (PI) e Big Five (OCEAN).
 
 Você analisa resultados de testes comportamentais e gera insights acionáveis.
 

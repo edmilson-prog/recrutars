@@ -28,7 +28,8 @@
             "Rota quebrada no card 'Testes do Plano' do dashboard da empresa (/empresa/plano → /empresa/meu-plano)",
             "Tooltips com ícone HelpCircle adicionados em todos os cards do dashboard da empresa",
             "Tabela 'Últimas Candidaturas': removido match% falso (gerado por hash mock) e substituído por status real do teste comportamental",
-            "Tabela 'Últimas Candidaturas': datas agora exibidas em formato relativo ('há 2 dias') em vez de ISO 8601 cru"
+            "Tabela 'Últimas Candidaturas': datas agora exibidas em formato relativo ('há 2 dias') em vez de ISO 8601 cru",
+            "Removida referência a 'DISC' no prompt do agente de IA — agora usa 'avaliação comportamental'"
           ]
         }
       ]
