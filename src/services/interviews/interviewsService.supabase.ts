@@ -72,7 +72,7 @@ export class InterviewsServiceSupabase implements IInterviewsService {
         title: data.title,
         type: data.type ?? 'video',
         status: data.status ?? 'pending_candidate',
-        proposed_slots: data.proposedSlots ? JSON.stringify(data.proposedSlots) : null,
+        proposed_slots: data.proposedSlots ?? null,
         duration: data.duration ?? 60,
         video_link: data.videoLink ?? null,
         phone_number: data.phoneNumber ?? null,
@@ -101,9 +101,9 @@ export class InterviewsServiceSupabase implements IInterviewsService {
     if (updates.cancelledAt !== undefined) updatePayload.cancelled_at = updates.cancelledAt;
     if (updates.cancellationReason !== undefined) updatePayload.cancellation_reason = updates.cancellationReason;
     if (updates.cancellationDetails !== undefined) updatePayload.cancellation_details = updates.cancellationDetails;
-    if (updates.suggestedSlots !== undefined) updatePayload.suggested_slots = JSON.stringify(updates.suggestedSlots);
+    if (updates.suggestedSlots !== undefined) updatePayload.suggested_slots = updates.suggestedSlots;
     if (updates.suggestionReason !== undefined) updatePayload.suggestion_reason = updates.suggestionReason;
-    if (updates.proposedSlots !== undefined) updatePayload.proposed_slots = JSON.stringify(updates.proposedSlots);
+    if (updates.proposedSlots !== undefined) updatePayload.proposed_slots = updates.proposedSlots;
     if (updates.videoLink !== undefined) updatePayload.video_link = updates.videoLink;
     if (updates.phoneNumber !== undefined) updatePayload.phone_number = updates.phoneNumber;
     if (updates.address !== undefined) updatePayload.address = updates.address;
@@ -163,8 +163,12 @@ export class InterviewsServiceSupabase implements IInterviewsService {
       title: row.title,
       type: row.type,
       status: row.status,
-      proposedSlots: row.proposed_slots ? JSON.parse(row.proposed_slots) : undefined,
-      suggestedSlots: row.suggested_slots ? JSON.parse(row.suggested_slots) : undefined,
+      proposedSlots: row.proposed_slots
+        ? (typeof row.proposed_slots === 'string' ? JSON.parse(row.proposed_slots) : row.proposed_slots)
+        : undefined,
+      suggestedSlots: row.suggested_slots
+        ? (typeof row.suggested_slots === 'string' ? JSON.parse(row.suggested_slots) : row.suggested_slots)
+        : undefined,
       suggestionReason: row.suggestion_reason ?? undefined,
       confirmedDatetime: row.confirmed_datetime ?? undefined,
       duration: row.duration,

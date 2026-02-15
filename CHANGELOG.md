@@ -5,6 +5,15 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-02-14 "Bridge"
+
+### Fixed
+- **Criacao de entrevistas falhava com HTTP 400** — Corrigido bug critico que impedia o agendamento de entrevistas pelo modal "Agendar Entrevista" nas candidaturas
+  - **Bug 1 (DB):** Colunas `job_title` e `company_name` nao existiam na tabela `interviews` mas o service tentava inseri-las — adicionadas via migration
+  - **Bug 2 (Service):** `JSON.stringify()` em colunas JSONB (`proposed_slots`, `suggested_slots`) causava double-stringification — removido, pois JSONB aceita objetos JS diretamente
+  - **Bug 3 (Service):** `mapInterview()` usava `JSON.parse()` em dados JSONB que ja vinham como arrays do Supabase, causando crash silencioso e pagina de Entrevistas vazia — mapper agora verifica o tipo antes de parsear
+  - Entrevistas criadas agora aparecem corretamente na pagina `/empresa/entrevistas` com stats, tabs e cards funcionais
+
 ## [1.13.9] - 2026-02-14 "Bridge"
 
 ### Enhanced
