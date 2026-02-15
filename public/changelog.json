@@ -1,12 +1,34 @@
 {
   "versions": [
     {
+      "version": "1.14.4",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-15",
+      "description": "Localização da empresa agora usa combobox pesquisável para cidades (igual ao candidato). Ordem invertida para Estado primeiro e Cidade depois, com filtro automático por UF. Largura das páginas de Configurações e Perfil do candidato aumentada.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Campo Cidade da empresa convertido de input livre para combobox pesquisável com ~5.570 municípios (IBGE)",
+            "Cidades filtradas automaticamente pelo estado selecionado",
+            "Ordem invertida: Estado primeiro, Cidade depois (consistente com perfil do candidato)",
+            "Estado exibe nome completo (ex: 'São Paulo') em vez de sigla ('SP')",
+            "Ao trocar estado, cidade é limpa automaticamente",
+            "Mensagem 'Selecione um estado primeiro' quando sem estado",
+            "Largura das páginas Configurações (empresa) e Perfil (candidato) aumentada de max-w-4xl para max-w-7xl"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.14.3",
       "codename": "Bridge",
       "type": "patch",
       "releaseDate": "2026-02-15",
       "description": "Badge de teste voluntário no Kanban de candidaturas. Diferencia visualmente entre teste comportamental voluntário e solicitado pela empresa, com 4 estados visuais distintos.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

@@ -20,6 +20,7 @@ import {
   Heart,
   Fingerprint,
   Copy,
+  ChevronsUpDown,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -70,8 +71,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { brazilianStates } from '@/data/settingsConfig';
+import { brazilianCitiesByState } from '@/data/brazilianCities';
 import type { TeamMember, PendingInvite, CompanyNotificationPreferences } from '@/types/company';
 import { usePlans, useSubscription } from '@/hooks/usePlansQuery';
 import { formatBRL } from '@/lib/formatters';
@@ -128,11 +145,7 @@ const SIZE_OPTIONS = [
   '1000+ funcionários',
 ];
 
-const STATE_OPTIONS = [
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
-];
+// STATE_OPTIONS removido — agora usa brazilianStates de settingsConfig.ts
 
 // Plan data is now fetched dynamically via usePlans hook (PRD-075 fix)
 
@@ -173,6 +186,7 @@ export default function CompanySettings() {
     address: currentCompany?.address || '',
   });
   const [logoPreview, setLogoPreview] = useState<string | null>(currentCompany?.logo || null);
+  const [cityOpen, setCityOpen] = useState(false);
 
   // Team state
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
@@ -333,7 +347,7 @@ export default function CompanySettings() {
 
   return (
     <DashboardLayout userType="company">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-foreground">Configurações</h1>
@@ -513,32 +527,78 @@ export default function CompanySettings() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
+                  {/* Estado (primeiro) */}
                   <div className="space-y-2">
-                    <Label htmlFor="city">Cidade *</Label>
-                    <Input
-                      id="city"
-                      value={companyProfile.city}
-                      onChange={e => setCompanyProfile(prev => ({ ...prev, city: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="state">Estado *</Label>
+                    <Label htmlFor="company-state">Estado *</Label>
                     <Select
-                      value={companyProfile.state}
-                      onValueChange={value => setCompanyProfile(prev => ({ ...prev, state: value }))}
+                      value={companyProfile.state || '__none__'}
+                      onValueChange={value => {
+                        const newState = value === '__none__' ? '' : value;
+                        setCompanyProfile(prev => ({ ...prev, state: newState, city: '' }));
+                      }}
                     >
-                      <SelectTrigger id="state">
-                        <SelectValue placeholder="UF" />
+                      <SelectTrigger id="company-state">
+                        <SelectValue placeholder="Selecione o estado" />
                       </SelectTrigger>
                       <SelectContent>
-                        {STATE_OPTIONS.map(option => (
-                          <SelectItem key={option} value={option}>
-                            {option}
+                        {brazilianStates.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Cidade (combobox pesquisável) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="company-city">Cidade *</Label>
+                    <Popover open={cityOpen} onOpenChange={setCityOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="company-city"
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={cityOpen}
+                          className="w-full justify-between font-normal"
+                          disabled={!companyProfile.state}
+                        >
+                          {companyProfile.city || 'Selecione a cidade...'}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar cidade..." />
+                          <CommandList>
+                            <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
+                            <CommandGroup>
+                              {(brazilianCitiesByState[companyProfile.state || ''] || []).map(city => (
+                                <CommandItem
+                                  key={city}
+                                  value={city}
+                                  onSelect={() => {
+                                    setCompanyProfile(prev => ({ ...prev, city }));
+                                    setCityOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      'mr-2 h-4 w-4',
+                                      companyProfile.city === city ? 'opacity-100' : 'opacity-0'
+                                    )}
+                                  />
+                                  {city}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    {!companyProfile.state && (
+                      <p className="text-xs text-muted-foreground">Selecione um estado primeiro</p>
+                    )}
                   </div>
                 </div>
 
