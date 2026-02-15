@@ -1145,6 +1145,29 @@ export default function CompanyApplications() {
                               </div>
                             )}
                           </>
+                        ) : selectedCandidate.hasTest ? (
+                          /* v1.14.3: Candidato fez Gauge-Pro voluntariamente */
+                          <div className="text-center py-8 space-y-4">
+                            <ClipboardCheck className="w-12 h-12 mx-auto text-cyan-500" />
+                            <div>
+                              <p className="font-medium">Gauge-Pro realizado voluntariamente</p>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                O candidato realizou o teste comportamental por iniciativa própria.
+                                Visualize o perfil completo na página do candidato.
+                              </p>
+                            </div>
+                            <Button variant="outline" asChild>
+                              <Link to={`/empresa/candidatos/${selectedCandidate.id}`}>
+                                Ver perfil completo
+                              </Link>
+                            </Button>
+                            {selectedApplication.testStatus === 'nao_solicitado' && (
+                              <Button variant="outline" onClick={() => setRequestTestModalOpen(true)}>
+                                <Send className="w-4 h-4 mr-2" />
+                                Solicitar novo teste
+                              </Button>
+                            )}
+                          </div>
                         ) : (
                           <div className="text-center py-8 space-y-4">
                             <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground opacity-50" />
@@ -1612,6 +1635,7 @@ export default function CompanyApplications() {
           jobTitle={selectedApplication.jobTitle}
           matchScore={calculateMatch(selectedApplication.candidateId)}
           testStatus={selectedApplication.testStatus}
+          candidateHasTest={selectedCandidate.hasTest}
           onHired={(result) => {
             setLastHireResult(result);
             setHiringModalOpen(false);
@@ -1840,14 +1864,20 @@ function ApplicationCard({
             {candidate.testResult.result.profile.split(' ')[0]}
           </Badge>
         )}
-        {/* PRD-016: Test status indicator */}
-        <Badge
-          variant="outline"
-          className={`text-xs ${TEST_STATUS_CONFIG[application.testStatus]?.color || ''}`}
-        >
-          {TEST_STATUS_CONFIG[application.testStatus]?.icon}{' '}
-          {application.testStatus === 'realizado' ? 'Teste' : 'Teste: ' + (TEST_STATUS_CONFIG[application.testStatus]?.label || '')}
-        </Badge>
+        {/* PRD-016: Test status indicator (v1.14.3: voluntary vs requested) */}
+        {application.testStatus === 'nao_solicitado' && candidate.hasTest ? (
+          <Badge variant="outline" className="text-xs text-cyan-600 border-cyan-600/30">
+            ✓ Gauge-Pro voluntário
+          </Badge>
+        ) : (
+          <Badge
+            variant="outline"
+            className={`text-xs ${TEST_STATUS_CONFIG[application.testStatus]?.color || ''}`}
+          >
+            {TEST_STATUS_CONFIG[application.testStatus]?.icon}{' '}
+            {application.testStatus === 'realizado' ? 'Teste' : 'Teste: ' + (TEST_STATUS_CONFIG[application.testStatus]?.label || '')}
+          </Badge>
+        )}
       </div>
     </motion.div>
   );

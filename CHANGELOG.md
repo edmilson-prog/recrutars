@@ -5,6 +5,17 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.3] - 2026-02-15 "Bridge"
+
+### Added
+- **Badge de teste voluntário no Kanban de candidaturas** — Diferencia visualmente entre teste comportamental voluntário e solicitado pela empresa
+  - Candidato sem teste + empresa não solicitou → ❌ "Teste: Não solicitado" (cinza)
+  - Candidato fez Gauge-Pro voluntariamente → ✓ "Gauge-Pro voluntário" (cyan)
+  - Empresa solicitou, pendente → ⏳ "Teste: Solicitado" (amarelo)
+  - Empresa solicitou, realizado → ✅ "Teste" (verde)
+  - Drawer de candidatura: novo estado intermediário mostra "Gauge-Pro realizado voluntariamente" com link ao perfil completo e opção de solicitar novo teste
+  - HiringModal: badge atualizado para exibir "Gauge-Pro voluntário" em cyan quando candidato tem teste voluntário
+
 ## [1.14.2] - 2026-02-14 "Bridge"
 
 ### Fixed

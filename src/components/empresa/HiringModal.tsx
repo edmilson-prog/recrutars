@@ -54,6 +54,7 @@ interface HiringModalProps {
   jobTitle: string;
   matchScore: number;
   testStatus: TestRequestStatus;
+  candidateHasTest?: boolean;
   onHired: (result: HireResult) => void;
 }
 
@@ -66,6 +67,7 @@ export function HiringModal({
   jobTitle,
   matchScore,
   testStatus,
+  candidateHasTest,
   onHired,
 }: HiringModalProps) {
   const { currentCompany } = useAuth();
@@ -173,14 +175,20 @@ export function HiringModal({
                 </Badge>
               )}
               <Badge
-                variant={testStatus === 'realizado' ? 'default' : 'outline'}
-                className={testStatus === 'realizado' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : ''}
+                variant={testStatus === 'realizado' ? 'default' : candidateHasTest ? 'secondary' : 'outline'}
+                className={
+                  testStatus === 'realizado' ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                  : candidateHasTest ? 'bg-cyan-100 text-cyan-700 border-cyan-200'
+                  : ''
+                }
               >
                 {testStatus === 'realizado'
                   ? 'Gauge-Pro'
                   : testStatus === 'solicitado'
                     ? 'Teste pendente'
-                    : 'Sem teste'}
+                    : candidateHasTest
+                      ? 'Gauge-Pro voluntário'
+                      : 'Sem teste'}
               </Badge>
             </div>
           </div>
