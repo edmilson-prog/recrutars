@@ -35,7 +35,15 @@ export function TestFunnel({ data }: TestFunnelProps) {
               <YAxis type="category" dataKey="name" fontSize={12} width={80} />
               <Tooltip
                 formatter={(value: number) => [value, 'Total']}
-                contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                cursor={{ fill: 'transparent' }}
+                contentStyle={{
+                  fontSize: 12,
+                  borderRadius: 8,
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  color: 'hsl(var(--foreground))',
+                }}
+                labelStyle={{ color: 'hsl(var(--foreground))' }}
               />
               <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                 {chartData.map((_, index) => (

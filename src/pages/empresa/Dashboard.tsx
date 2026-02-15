@@ -3,7 +3,7 @@ import {
   Briefcase, Users, UserPlus, Clock, Plus, ArrowUp, Eye, Search, MessageSquare, Brain, ChevronRight,
   LayoutGrid, CircleCheck, FileEdit, PauseCircle, CheckCircle2,
   ClipboardCheck, TrendingUp, UsersRound,
-  UserCheck, CalendarClock, History, ArrowRight, Loader2
+  UserCheck, CalendarClock, History, ArrowRight, Loader2, HelpCircle
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -79,11 +79,11 @@ export default function CompanyDashboard() {
 
   // Mini-cards de status de vagas
   const jobStatusCards = [
-    { label: 'Total de Vagas', value: totalJobsCount, icon: LayoutGrid, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
-    { label: 'Vagas Ativas', value: activeJobsCount, icon: CircleCheck, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
-    { label: 'Rascunhos', value: 0, icon: FileEdit, iconBg: 'bg-slate-100', iconColor: 'text-slate-500' },
-    { label: 'Pausadas', value: pausedJobsCount, icon: PauseCircle, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
-    { label: 'Vagas Finalizadas', value: closedJobsCount, icon: CheckCircle2, iconBg: 'bg-sky-100', iconColor: 'text-sky-600' },
+    { label: 'Total de Vagas', value: totalJobsCount, icon: LayoutGrid, iconBg: 'bg-blue-100', iconColor: 'text-blue-600', tooltip: 'Número total de vagas criadas pela empresa' },
+    { label: 'Vagas Ativas', value: activeJobsCount, icon: CircleCheck, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', tooltip: 'Vagas publicadas e recebendo candidaturas' },
+    { label: 'Rascunhos', value: 0, icon: FileEdit, iconBg: 'bg-slate-100', iconColor: 'text-slate-500', tooltip: 'Vagas em edição ainda não publicadas' },
+    { label: 'Pausadas', value: pausedJobsCount, icon: PauseCircle, iconBg: 'bg-amber-100', iconColor: 'text-amber-600', tooltip: 'Vagas temporariamente suspensas' },
+    { label: 'Vagas Finalizadas', value: closedJobsCount, icon: CheckCircle2, iconBg: 'bg-sky-100', iconColor: 'text-sky-600', tooltip: 'Vagas encerradas ou preenchidas' },
   ];
 
   // RF-001 a RF-005: Cards clicáveis
@@ -183,8 +183,16 @@ export default function CompanyDashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-card rounded-xl p-4 shadow-soft"
+              className="bg-card rounded-xl p-4 shadow-soft relative"
             >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/40 hover:text-muted-foreground cursor-help absolute top-2.5 right-2.5 transition-colors" />
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>{card.tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-lg ${card.iconBg} flex items-center justify-center flex-shrink-0`}>
                   <card.icon className={`w-5 h-5 ${card.iconColor}`} />
@@ -212,7 +220,17 @@ export default function CompanyDashboard() {
                 <ClipboardCheck className="w-5 h-5 text-violet-600" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-foreground">Testes do Plano</h3>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="text-sm font-semibold text-foreground">Testes do Plano</h3>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/40 hover:text-muted-foreground cursor-help transition-colors" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p>Testes comportamentais disponíveis no seu plano atual</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <p className="text-xs text-muted-foreground">{dashboardMetrics.planName}</p>
               </div>
             </div>
@@ -229,7 +247,7 @@ export default function CompanyDashboard() {
               </p>
             </div>
             <Link
-              to="/empresa/plano"
+              to="/empresa/meu-plano"
               className="text-sm text-secondary font-medium hover:underline inline-flex items-center gap-1"
             >
               Ver meu plano <ArrowRight className="w-3.5 h-3.5" />
@@ -247,7 +265,17 @@ export default function CompanyDashboard() {
               <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center flex-shrink-0">
                 <TrendingUp className="w-5 h-5 text-cyan-600" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground">Avaliações do Mês</h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-sm font-semibold text-foreground">Avaliações do Mês</h3>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/40 hover:text-muted-foreground cursor-help transition-colors" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Total de avaliações comportamentais realizadas neste mês</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
             <div className="text-3xl font-bold text-foreground mb-1">
               {dashboardMetrics.assessmentsThisMonth}
@@ -274,7 +302,17 @@ export default function CompanyDashboard() {
               <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
                 <UsersRound className="w-5 h-5 text-indigo-600" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground">Candidatos Avaliados</h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-sm font-semibold text-foreground">Candidatos Avaliados</h3>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/40 hover:text-muted-foreground cursor-help transition-colors" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Total de candidatos que completaram avaliações comportamentais</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
             <div className="text-3xl font-bold text-foreground mb-1">
               {dashboardMetrics.candidatesEvaluated}
@@ -304,7 +342,17 @@ export default function CompanyDashboard() {
               <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
                 <UserCheck className="w-5 h-5 text-emerald-600" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground">Contratações</h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-sm font-semibold text-foreground">Contratações</h3>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/40 hover:text-muted-foreground cursor-help transition-colors" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Candidatos contratados através da plataforma</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
             <div className="text-3xl font-bold text-emerald-600 mb-1">
               {allApplications.filter(a => a.status === 'hired').length}
@@ -331,7 +379,17 @@ export default function CompanyDashboard() {
               <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
                 <CalendarClock className="w-5 h-5 text-orange-600" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground">Entrevistas Agendadas</h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-sm font-semibold text-foreground">Entrevistas Agendadas</h3>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/40 hover:text-muted-foreground cursor-help transition-colors" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Entrevistas confirmadas ou aguardando confirmação do candidato</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
             <div className="text-3xl font-bold text-foreground mb-1">
               {scheduledInterviewsCount}
@@ -358,7 +416,17 @@ export default function CompanyDashboard() {
               <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                 <History className="w-5 h-5 text-blue-600" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground">Entrevistas Realizadas</h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-sm font-semibold text-foreground">Entrevistas Realizadas</h3>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/40 hover:text-muted-foreground cursor-help transition-colors" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Total de entrevistas já concluídas</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
             <div className="text-3xl font-bold text-foreground mb-1">
               {completedInterviewsCount}
@@ -378,32 +446,36 @@ export default function CompanyDashboard() {
         {/* Stats Grid - RF-001 a RF-005 */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
-            <Tooltip key={stat.label}>
-              <TooltipTrigger asChild>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Link
-                    to={stat.href}
-                    className="block bg-card rounded-2xl p-6 shadow-soft hover:shadow-md transition-shadow group"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-                        <stat.icon className="w-6 h-6 text-primary-foreground" />
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    <div className="text-3xl font-bold text-foreground mb-1">{stat.value}</div>
-                    <div className="text-sm text-muted-foreground">{stat.label}</div>
-                  </Link>
-                </motion.div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{stat.tooltip}</p>
-              </TooltipContent>
-            </Tooltip>
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <Link
+                to={stat.href}
+                className="block bg-card rounded-2xl p-6 shadow-soft hover:shadow-md transition-shadow group relative"
+              >
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="absolute top-4 right-4 z-10" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                      <HelpCircle className="w-4 h-4 text-muted-foreground/40 hover:text-muted-foreground cursor-help transition-colors" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>{stat.tooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
+                    <stat.icon className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <div className="text-3xl font-bold text-foreground mb-1">{stat.value}</div>
+                <div className="text-sm text-muted-foreground">{stat.label}</div>
+              </Link>
+            </motion.div>
           ))}
         </div>
 
@@ -417,7 +489,17 @@ export default function CompanyDashboard() {
             className="lg:col-span-2 bg-card rounded-2xl p-6 shadow-soft"
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-foreground">Candidaturas por Vaga</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-foreground">Candidaturas por Vaga</h2>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-4 h-4 text-muted-foreground/40 hover:text-muted-foreground cursor-help transition-colors" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Distribuição de candidaturas nas suas vagas mais concorridas</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <Link to="/empresa/vagas" className="text-sm text-secondary font-medium hover:underline">
                 Ver todas
               </Link>
@@ -453,7 +535,17 @@ export default function CompanyDashboard() {
             transition={{ delay: 0.5 }}
             className="bg-card rounded-2xl p-6 shadow-soft"
           >
-            <h2 className="text-xl font-semibold text-foreground mb-6">Ações Pendentes</h2>
+            <div className="flex items-center gap-2 mb-6">
+              <h2 className="text-xl font-semibold text-foreground">Ações Pendentes</h2>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground/40 hover:text-muted-foreground cursor-help transition-colors" />
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>Itens que precisam da sua atenção</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <div className="space-y-4">
               {pendingActions.map((action) => (
                 <Link
@@ -487,7 +579,17 @@ export default function CompanyDashboard() {
           className="bg-card rounded-2xl p-6 shadow-soft"
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-foreground">Últimas Candidaturas</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-foreground">Últimas Candidaturas</h2>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground/40 hover:text-muted-foreground cursor-help transition-colors" />
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>As candidaturas mais recentes recebidas</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <Link to="/empresa/candidatos" className="text-sm text-secondary font-medium hover:underline">
               Ver todas
             </Link>
@@ -579,7 +681,17 @@ export default function CompanyDashboard() {
           transition={{ delay: 0.7 }}
           className="bg-card rounded-2xl p-6 shadow-soft"
         >
-          <h2 className="text-xl font-semibold text-foreground mb-6">Ações Rápidas</h2>
+          <div className="flex items-center gap-2 mb-6">
+            <h2 className="text-xl font-semibold text-foreground">Ações Rápidas</h2>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="w-4 h-4 text-muted-foreground/40 hover:text-muted-foreground cursor-help transition-colors" />
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>Atalhos para as ações mais frequentes</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <div className="flex flex-wrap gap-4">
             <Button asChild>
               <Link to="/empresa/vagas/nova">
@@ -610,7 +722,17 @@ export default function CompanyDashboard() {
             transition={{ delay: 0.8 }}
             className="bg-card rounded-2xl p-6 shadow-soft"
           >
-            <h2 className="text-xl font-semibold text-foreground mb-6">Métricas do Mês</h2>
+            <div className="flex items-center gap-2 mb-6">
+              <h2 className="text-xl font-semibold text-foreground">Métricas do Mês</h2>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground/40 hover:text-muted-foreground cursor-help transition-colors" />
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>Indicadores de desempenho do mês atual</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <div className="space-y-6">
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -643,7 +765,17 @@ export default function CompanyDashboard() {
             className="bg-card rounded-2xl p-6 shadow-soft"
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-foreground">Minhas Vagas</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-foreground">Minhas Vagas</h2>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-4 h-4 text-muted-foreground/40 hover:text-muted-foreground cursor-help transition-colors" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Resumo das suas vagas mais recentes</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <Link to="/empresa/vagas" className="text-sm text-secondary font-medium hover:underline">
                 Ver todas
               </Link>

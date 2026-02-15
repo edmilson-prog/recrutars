@@ -19,6 +19,15 @@
             "Mensagem 'Selecione um estado primeiro' quando sem estado",
             "Largura das páginas Configurações (empresa) e Perfil (candidato) aumentada de max-w-4xl para max-w-7xl"
           ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Fundo cinza ao passar o mouse no gráfico Funil de Conversão (tooltip cursor do Recharts agora transparente)",
+            "Tooltip do gráfico Funil de Conversão agora respeita dark mode com fundo e texto do tema",
+            "Rota quebrada no card 'Testes do Plano' do dashboard da empresa (/empresa/plano → /empresa/meu-plano)",
+            "Tooltips com ícone HelpCircle adicionados em todos os cards do dashboard da empresa"
+          ]
         }
       ]
     },
