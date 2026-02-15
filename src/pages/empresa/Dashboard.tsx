@@ -19,6 +19,7 @@ import { Progress } from '@/components/ui/progress';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { SuggestedCandidatesWidget } from '@/components/empresa/SuggestedCandidatesWidget';
+import { formatRelativeDate } from '@/lib/formatters';
 
 /**
  * Returns greeting based on current hour
@@ -146,14 +147,6 @@ export default function CompanyDashboard() {
     },
   ];
 
-  // RF-014 a RF-015: Mock de match e teste para candidaturas
-  const getMatchAndTestInfo = (applicationId: string) => {
-    // Mock: gera valores baseados no ID para consistência
-    const hash = applicationId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-    const matchPercentage = 65 + (hash % 30); // 65-94%
-    const hasTest = hash % 2 === 0;
-    return { matchPercentage, hasTest };
-  };
 
   return (
     <DashboardLayout userType="company">
@@ -600,16 +593,14 @@ export default function CompanyDashboard() {
                 <tr className="text-left text-muted-foreground text-sm border-b border-border">
                   <th className="pb-4 font-medium">Candidato</th>
                   <th className="pb-4 font-medium">Vaga</th>
-                  <th className="pb-4 font-medium">Match / Teste</th>
+                  <th className="pb-4 font-medium">Teste</th>
                   <th className="pb-4 font-medium">Status</th>
                   <th className="pb-4 font-medium">Data</th>
                   <th className="pb-4 font-medium text-right">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {recentApplications.map((app) => {
-                  const { matchPercentage, hasTest } = getMatchAndTestInfo(app.id);
-                  return (
+                {recentApplications.map((app) => (
                     <tr key={app.id} className="border-b border-border last:border-0">
                       <td className="py-4">
                         <div className="flex items-center gap-3">
@@ -621,14 +612,13 @@ export default function CompanyDashboard() {
                       </td>
                       <td className="py-4 text-muted-foreground">{app.jobTitle}</td>
                       <td className="py-4">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-sm font-medium text-secondary">{matchPercentage}% match</span>
-                          {hasTest ? (
-                            <span className="text-xs text-success">Teste realizado</span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">Aguardando teste</span>
-                          )}
-                        </div>
+                        {app.testStatus === 'realizado' ? (
+                          <span className="text-xs font-medium text-success">Teste realizado</span>
+                        ) : app.testStatus === 'solicitado' ? (
+                          <span className="text-xs font-medium text-warning">Aguardando teste</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Não solicitado</span>
+                        )}
                       </td>
                       <td className="py-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -645,15 +635,14 @@ export default function CompanyDashboard() {
                            app.status === 'rejected' ? 'Rejeitado' : 'Contratado'}
                         </span>
                       </td>
-                      <td className="py-4 text-muted-foreground">{app.appliedAt}</td>
+                      <td className="py-4 text-muted-foreground">{formatRelativeDate(app.appliedAt)}</td>
                       <td className="py-4 text-right">
                         <Button variant="ghost" size="sm">
                           <Eye className="w-4 h-4" />
                         </Button>
                       </td>
                     </tr>
-                  );
-                })}
+                ))}
               </tbody>
             </table>
           </div>
