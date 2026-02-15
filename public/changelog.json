@@ -1,21 +1,335 @@
 {
   "versions": [
     {
+      "version": "1.14.3",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-15",
+      "description": "Badge de teste voluntário no Kanban de candidaturas. Diferencia visualmente entre teste comportamental voluntário e solicitado pela empresa, com 4 estados visuais distintos.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Badge 'Gauge-Pro voluntário' (cyan) no card Kanban quando candidato fez teste por iniciativa própria",
+            "4 estados visuais de teste: Sem teste, Gauge-Pro voluntário, Solicitado, Realizado",
+            "Drawer de candidatura: estado intermediário 'Gauge-Pro realizado voluntariamente' com link ao perfil completo",
+            "HiringModal: badge atualizado para exibir 'Gauge-Pro voluntário' em cyan"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.14.2",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-14",
+      "description": "Envio de mensagens não funcionava — infinite re-render loop em useMessages corrigido com useRef para mutations estáveis. Erros silenciosos agora logados.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Infinite re-render loop: markAsRead callback dependia de useMutation (novo objeto a cada render) — corrigido com useRef",
+            "sendMessage silencioso: rawConversations.find() retornava undefined durante loop — corrigido com useRef + console.warn",
+            "Erros engolidos: useSendMessage sem onError handler — adicionado console.error"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.14.1",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-14",
+      "description": "Sistema de mensagens completamente inoperante. Corrigidos 7 bugs críticos que impediam o funcionamento do chat entre empresas e candidatos.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "getConversationMessages() e getLastMessage() retornavam stubs vazios — agora usam React Query",
+            "Mapper lia colunas inexistentes — corrigido com JOINs PostgREST",
+            "sendMessage inseria receiver_id inválido causando FK violation — removido do INSERT",
+            "markAsRead/createConversation referenciavam coluna unread_count inexistente — removido",
+            "metadata JSONB sofria double-stringify — corrigido",
+            "Candidato usava profiles.id em vez de candidates.id — corrigido",
+            "Sidebar exibe nomes reais, preview da última mensagem e timestamps"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.14.0",
+      "codename": "Bridge",
+      "type": "minor",
+      "releaseDate": "2026-02-14",
+      "description": "Criação de entrevistas falhava com HTTP 400. Corrigidos bugs em colunas inexistentes, double-stringification JSONB e mapper de entrevistas.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Colunas job_title e company_name adicionadas a tabela interviews via migration",
+            "JSON.stringify() em colunas JSONB causava double-stringification — removido",
+            "mapInterview() usava JSON.parse() em dados que já vinham como arrays — corrigido"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.13.9",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-14",
+      "description": "Card de completude do perfil ocultável ao atingir 100%. Botão fechar, mensagem congratulatória, persistência via localStorage e animação de saída.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Botão X aparece quando completude = 100% para ocultar o card",
+            "Mensagem congratulatória ao atingir 100%",
+            "Ocultação persistente via localStorage (escopo por candidateId)",
+            "Card reaparece se completude cair abaixo de 100%",
+            "Animação suave de saída com Framer Motion"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.13.8",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-13",
+      "description": "Nome de exibição do candidato (Display Name) prioriza displayName definido pelo candidato, com fallback para primeiro+último nome em vez do nome completo.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Utilitário centralizado candidateDisplayName.ts com getCandidateDisplayName, formatShortName, getCandidateInitials",
+            "getDisplayName() em visibility.ts atualizado para usar display name",
+            "Atualizado em Applications.tsx, CandidateProfile.tsx, CandidateComparison.tsx, SuggestedCandidateCard.tsx, HiringModal.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.13.7",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-13",
+      "description": "Redesign do modal de candidaturas com largura dinâmica, layout dois painéis, data formatada, notas em aba separada e sidebar de ações.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Largura dinâmica sm:max-w-5xl com w-[95vw] em mobile",
+            "Layout dois painéis: conteúdo em abas + sidebar de ações",
+            "Data de candidatura formatada com tempo relativo",
+            "Notas internas movidas para 6a aba com badge de contagem",
+            "ScrollArea flex em vez de altura fixa de 300px",
+            "Adicionada função formatDateTimeBR() em formatters.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.13.6",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-12",
+      "description": "CRUD de departamentos e cargos agora persistem no Supabase via React Query mutations. Caracteres unicode escapados substituídos por UTF-8 real.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Handlers de criar/editar/toggle usam React Query mutations em vez de useState local",
+            "createDepartment() inclui company_id (corrigido NOT NULL violation)",
+            "Adicionado updatePosition() no service layer",
+            "Removido filtro is_active=true — itens inativos visíveis na listagem",
+            "IDs agora UUIDs do Supabase (antes client-side dept-Date.now())",
+            "Caracteres unicode escapados substituídos por UTF-8 real"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.13.5",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-12",
+      "description": "Timestamps de Parte 1/Parte 2 do Gauge-Pro agora persistidos no Supabase. Stats mostram durações reais em vez de traços.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "part1StartedAt e part2StartedAt incluidos no payload de finishAssessment()",
+            "Lazy sync persiste timestamps parciais do localStorage",
+            "Migration de backfill para estimar timestamps em assessments existentes"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.13.4",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-12",
+      "description": "Estatísticas e metadados no card de respostas do teste Gauge-Pro com 6 métricas: data, duração total, duração por parte, palavras selecionadas e cenários respondidos.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "6 métricas: data/hora, duração total, duração Parte 1/2, palavras selecionadas, cenários respondidos",
+            "Duração inline nos sub-headers de cada parte",
+            "Grid responsivo: 2 colunas mobile, 3 colunas desktop",
+            "Tratamento seguro para timestamps ausentes"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.13.3",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-12",
+      "description": "Respostas reais do teste comportamental (Gauge-Pro) no perfil do candidato visto pela empresa. Palavras selecionadas e cenários respondidos com destaque visual.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Part 1 (Seleção de Palavras): palavras selecionadas por dimensão com badges por polaridade",
+            "Part 2 (Cenários Situacionais): 15 cenários com opção escolhida destacada",
+            "Componente GaugeProResponsesCard colapsável (fechado por default)",
+            "Dados resolvidos de gauge_pro_assessments contra dados de referência bundled"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.13.2",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-12",
+      "description": "Dark mode corrigido — tema travava no light ao navegar para páginas públicas. Race condition, DOM desatualizado no unmount e instâncias duplicadas resolvidos.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Race condition entre instâncias de ForceLightTheme no React 18 batching",
+            "DOM não atualizava no unmount — setTheme grava localStorage mas classes CSS dependem de re-render",
+            "Register.tsx com 2 instâncias de ForceLightTheme causando mount/unmount desnecessário",
+            "Solução: backup via localStorage separado, contador de instâncias e manipulação direta do DOM"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.13.1",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-12",
+      "description": "Match Score corrigido — perfil comportamental sempre 50% (IDs mock), skills matching impreciso (frases vs tags) e nível Estágio não reconhecido.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "idealBehavioralProfiles usava IDs mock — nova função generateIdealProfile() gera perfil DISC dinâmico",
+            "gaugeProToBehavioralProfile() converte Gauge-Pro 5D para BehavioralProfile 4D (DISC)",
+            "Tokenização de requisitos: extrai keywords técnicas, remove stop words, mapa de aliases",
+            "Match por contenção exige mínimo 4 chars para evitar falsos positivos (Java/JavaScript)",
+            "Nível Estágio adicionado ao mapa EXPERIENCE_LEVELS (com e sem acento)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.13.0",
+      "codename": "Bridge",
+      "type": "minor",
+      "releaseDate": "2026-02-12",
+      "prd": "PRD-077",
+      "description": "Fluxo de Contratação completo — ponte entre pipeline de recrutamento e Gestão de Equipes com transição atômica, verificação de posições e notificações.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Ação 'Contratar' no drawer do candidato aprovado",
+            "Modal de contratação: departamento, cargo, data de início, salário, observações",
+            "Transição atômica: cria colaborador em Equipes com perfil Gauge-Pro preservado",
+            "Verificação inteligente de posições com sugestão de encerramento",
+            "Modal de encerramento de vaga com 3 opções",
+            "Notificação de parabéns ao contratado e aviso aos dispensados",
+            "Métricas: tempo de preenchimento, tempo no pipeline, estágios percorridos",
+            "Seção 'Contratados' colapsável no Kanban",
+            "Tabela hirings e RPCs atômicas hire_candidate/close_job_with_remaining"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.12.5",
+      "codename": "Gateway",
+      "type": "patch",
+      "releaseDate": "2026-02-11",
+      "description": "Contador de candidaturas no dropdown das vagas corrigido — contagem inflada e paginação limitada a 10 resultados.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "applications_count sincronizado com contagem real de rows em applications",
+            "Frontend computa contagem real excluindo candidaturas withdrawn",
+            "Páginação: query de applications no Kanban busca até 500 resultados (antes 10)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.12.4",
+      "codename": "Gateway",
+      "type": "patch",
+      "releaseDate": "2026-02-11",
+      "description": "TDZ crash em CandidateProfile, HTTP 400 em conversations, RLS policies em application_history e recandidatura após desistência.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "TDZ crash: candidateApplications referenciada antes da declaração — reordenado",
+            "HTTP 400: coluna unread_count adicionada a tabela conversations via migration",
+            "RLS policy INSERT em application_history para candidato, empresa e admin",
+            "Recandidatura: hasApplied/getApplication excluem withdrawn, createApplication reativa em vez de duplicar"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.12.3",
       "codename": "Gateway",
       "type": "patch",
       "releaseDate": "2026-02-11",
       "description": "Planos criados pelo admin agora refletidos dinamicamente para candidatos, empresas e landing page. Removidos nomes de plano hardcoded em favor de dados do banco via hooks existentes.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "changed",
           "items": [
             "ForCompanies.tsx: preview de planos agora carrega dinamicamente do banco via usePlans()",
-            "Plans.tsx: toggle empresa/candidato, desconto dinamico por plano e badge de desconto percentual",
-            "DashboardLayout: badge de plano no header agora dinamico baseado em isFree/badge/order",
+            "Plans.tsx: toggle empresa/candidato, desconto dinâmico por plano e badge de desconto percentual",
+            "DashboardLayout: badge de plano no header agora dinâmico baseado em isFree/badge/order",
             "Admin Companies: select de planos agora populado dinamicamente via usePlans()",
-            "Profile.tsx (candidato): badge de plano, condicao de billing e data de cobranca dinamicos",
+            "Profile.tsx (candidato): badge de plano, condição de billing e data de cobrança dinâmicos",
             "CandidatePlanType e CompanyPlanType flexibilizados de union literal para string",
             "FAQs genericizados em candidato/Profile e empresa/Settings (removidos nomes de plano hardcoded)"
           ]
@@ -28,15 +342,15 @@
       "type": "patch",
       "releaseDate": "2026-02-11",
       "prd": "PRD-075",
-      "description": "Corrigido status 'Nao sincronizado' que persistia apos sync Stripe em producao. Cache React Query invalidado automaticamente apos sync. Edge Functions validam resultado do UPDATE e parametro environment.",
+      "description": "Corrigido status 'Não sincronizado' que persistia após sync Stripe em produção. Cache React Query invalidado automaticamente após sync. Edge Functions validam resultado do UPDATE e parâmetro environment.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Cache React Query invalidado automaticamente apos sync individual ou em lote (useSyncPlan, useSyncAllPlans)",
+            "Cache React Query invalidado automaticamente após sync individual ou em lote (useSyncPlan, useSyncAllPlans)",
             "Edge Functions stripe-sync-plan e stripe-sync-all validam resultado do UPDATE no banco",
-            "Edge Functions validam parametro environment (aceita apenas 'test' ou 'live')"
+            "Edge Functions validam parâmetro environment (aceita apenas 'test' ou 'live')"
           ]
         }
       ]
@@ -47,15 +361,15 @@
       "type": "patch",
       "releaseDate": "2026-02-11",
       "prd": "PRD-075",
-      "description": "Substituido modal PlanEditor por pagina completa de detalhamento de planos com layout 2 colunas, Cards organizados por secao e sidebar com acoes e Stripe.",
+      "description": "Substituído modal PlanEditor por página completa de detalhamento de planos com layout 2 colunas, Cards organizados por seção e sidebar com ações e Stripe.",
       "isCurrent": false,
       "changes": [
         {
           "type": "changed",
           "items": [
-            "PlanEditor dialog substituido por pagina completa PlanDetail (/admin/planos/:id e /admin/planos/novo)",
-            "Layout 2 colunas com Cards: Informacoes Basicas, Precos, Trial/Desconto/Bonus, Recursos + sidebar Acoes/Stripe/Info",
-            "PlansManagement simplificado: botoes Editar/Novo Plano agora navegam para pagina de detalhe"
+            "PlanEditor dialog substituído por página completa PlanDetail (/admin/planos/:id e /admin/planos/novo)",
+            "Layout 2 colunas com Cards: Informações Básicas, Preços, Trial/Desconto/Bônus, Recursos + sidebar Ações/Stripe/Info",
+            "PlansManagement simplificado: botões Editar/Novo Plano agora navegam para página de detalhe"
           ]
         }
       ]
@@ -66,43 +380,43 @@
       "type": "minor",
       "releaseDate": "2026-02-11",
       "prd": "PRD-075/PRD-076",
-      "description": "Integracao Stripe completa com 11 Edge Functions, checkout hosted, regras de billing (upgrade com proration, downgrade programado, cancelamento com motivo, reativacao), paginas Meu Plano, admin Billing Dashboard, pagina Webhook Log, e correcao de dados hardcoded.",
+      "description": "Integração Stripe completa com 11 Edge Functions, checkout hosted, regras de billing (upgrade com proration, downgrade programado, cancelamento com motivo, reativação), páginas Meu Plano, admin Billing Dashboard, página Webhook Log, e correção de dados hardcoded.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Integracao Stripe via 11 Supabase Edge Functions (test-connection, sync-plan, sync-all, create-checkout, preview-upgrade, execute-upgrade, schedule-downgrade, cancel-downgrade, cancel-subscription, reactivate-subscription, webhook)",
-            "Service layer + React Query hooks para todas operacoes Stripe",
-            "Configuracao de credenciais Stripe (test/live) no admin com mascaramento",
-            "Sincronizacao planos → Stripe Products/Prices com badges de status",
+            "Integração Stripe via 11 Supabase Edge Functions (test-connection, sync-plan, sync-all, create-checkout, preview-upgrade, execute-upgrade, schedule-downgrade, cancel-downgrade, cancel-subscription, reactivate-subscription, webhook)",
+            "Service layer + React Query hooks para todas operações Stripe",
+            "Configuração de credenciais Stripe (test/live) no admin com mascaramento",
+            "Sincronização planos → Stripe Products/Prices com badges de status",
             "Checkout via Stripe Checkout hosted page (PCI compliant)",
             "Webhook handler idempotente com log visual no admin",
             "Upgrade imediato com proration nativa do Stripe",
-            "Downgrade programado para fim do periodo",
-            "Cancelamento com selecao de motivo e confirmacao dupla",
-            "Pagina Meu Plano para empresas e candidatos",
-            "Admin Billing Dashboard com KPIs (MRR, churn, conversoes)",
+            "Downgrade programado para fim do período",
+            "Cancelamento com seleção de motivo e confirmação dupla",
+            "Página Meu Plano para empresas e candidatos",
+            "Admin Billing Dashboard com KPIs (MRR, churn, conversões)",
             "PaymentFailedBanner no DashboardLayout",
-            "CheckoutButton e CancelSubscriptionModal reutilizaveis"
+            "CheckoutButton e CancelSubscriptionModal reutilizáveis"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "PlansManagement: toggle test/live e botao Sincronizar Todos",
-            "PlanCard/PlanEditor: secao Stripe com sync status",
-            "Plans.tsx e TrialExpired.tsx: botoes integrados com Stripe Checkout",
-            "empresa/Settings.tsx: dados hardcoded removidos, agora dinamicos",
-            "candidato/Profile.tsx: dados hardcoded removidos, agora dinamicos"
+            "PlansManagement: toggle test/live e botão Sincronizar Todos",
+            "PlanCard/PlanEditor: seção Stripe com sync status",
+            "Plans.tsx e TrialExpired.tsx: botões integrados com Stripe Checkout",
+            "empresa/Settings.tsx: dados hardcoded removidos, agora dinâmicos",
+            "candidato/Profile.tsx: dados hardcoded removidos, agora dinâmicos"
           ]
         },
         {
           "type": "fixed",
           "items": [
-            "Planos/precos desatualizados hardcoded em empresa/Settings e candidato/Profile",
+            "Planos/preços desatualizados hardcoded em empresa/Settings e candidato/Profile",
             "SubscriptionStatus TypeScript sem 'trial' e 'past_due'",
-            "RLS policy DELETE faltando na tabela plans — admin nao conseguia excluir planos (Migration 026)"
+            "RLS policy DELETE faltando na tabela plans — admin não conseguia excluir planos (Migration 026)"
           ]
         }
       ]
@@ -113,19 +427,19 @@
       "type": "minor",
       "releaseDate": "2026-02-11",
       "prd": "PRD-074",
-      "description": "Reestruturacao dos planos de empresas: 4 planos (Basico trial 90 dias, Essencial R$199, Avancar R$249, Premium R$349), sistema de avisos escalonados de trial, desconto 10% para periodos 6+ meses, bonus de testes comportamentais.",
+      "description": "Reestruturação dos planos de empresas: 4 planos (Básico trial 90 dias, Essencial R$199, Avançar R$249, Premium R$349), sistema de avisos escalonados de trial, desconto 10% para períodos 6+ meses, bônus de testes comportamentais.",
       "isCurrent": false,
       "changes": [
         {
           "type": "changed",
           "items": [
-            "Planos de empresa reestruturados de 3 para 4: Basico (trial), Essencial (R$199), Avancar (R$249), Premium (R$349)",
-            "Plano gratuito permanente substituido por trial de 90 dias (Basico Empresas)",
-            "Precos atualizados: Essencial R$199, Avancar R$249, Premium R$349",
-            "Pagina publica de planos (/planos) agora exibe 4 planos dinamicos do banco",
-            "Seletor de periodo com destaque de desconto 10% para semestral/anual",
+            "Planos de empresa reestruturados de 3 para 4: Básico (trial), Essencial (R$199), Avançar (R$249), Premium (R$349)",
+            "Plano gratuito permanente substituído por trial de 90 dias (Básico Empresas)",
+            "Preços atualizados: Essencial R$199, Avançar R$249, Premium R$349",
+            "Página pública de planos (/planos) agora exibe 4 planos dinâmicos do banco",
+            "Seletor de período com destaque de desconto 10% para semestral/anual",
             "Admin PlanCard com visual diferenciado para trial e badges de desconto",
-            "Admin PlanEditor com campos de trial, desconto e bonus de testes",
+            "Admin PlanEditor com campos de trial, desconto e bônus de testes",
             "Admin PlansManagement com grid 4 colunas para empresas",
             "Badges de plano no header atualizados para novos nomes"
           ]
@@ -135,16 +449,16 @@
           "items": [
             "Sistema de avisos escalonados de trial: low (16+ dias), medium (8-15), high (2-7), urgent (0-1), expired",
             "TrialBadge: badge sutil no header para empresas em trial",
-            "TrialBanner: banner informativo dismissable (urgencia media)",
-            "TrialAlert: alerta nao-dispensavel (urgencia alta/urgente)",
-            "TrialIndicator: wrapper que seleciona componente por nivel de urgencia",
+            "TrialBanner: banner informativo dismissable (urgência media)",
+            "TrialAlert: alerta não-dispensável (urgência alta/urgente)",
+            "TrialIndicator: wrapper que seleciona componente por nível de urgência",
             "TrialGuard: guard de rota que bloqueia acesso quando trial expira",
-            "Tela de conversao fullscreen (TrialExpired) com comparativo de planos pagos",
-            "Logica pura de trial (trialRules.ts): calculo de status, niveis, mensagens",
+            "Tela de conversão fullscreen (TrialExpired) com comparativo de planos pagos",
+            "Lógica pura de trial (trialRules.ts): cálculo de status, níveis, mensagens",
             "Hook useTrialStatus para status do trial da empresa atual",
             "Service methods: getTrialSubscription, createTrialSubscription",
-            "Desconto de 10% automatico para periodos semiannual/annual",
-            "Bonus de testes comportamentais por plano e periodo",
+            "Desconto de 10% automático para períodos semiannual/annual",
+            "Bônus de testes comportamentais por plano e período",
             "KPIs de trial no SubscriptionDashboard: ativos, expirando em 15d, expirados",
             "Trigger handle_new_user() cria subscription trial automaticamente no cadastro",
             "Migration 024: novos campos em plans e subscriptions, seed dos 4 planos"
@@ -157,14 +471,14 @@
       "codename": "Consolidation",
       "type": "patch",
       "releaseDate": "2026-02-11",
-      "description": "Melhoria na orientacao ao candidato sobre completude do perfil profissional.",
+      "description": "Melhoria na orientação ao candidato sobre completude do perfil profissional.",
       "isCurrent": false,
       "changes": [
         {
           "type": "changed",
           "items": [
             "Dashboard: removido card duplicado de completude do perfil pessoal, mantendo apenas o do perfil profissional",
-            "Dashboard: card de completude profissional agora exibe as secoes faltantes para atingir 100%",
+            "Dashboard: card de completude profissional agora exibe as seções faltantes para atingir 100%",
             "Perfil Profissional: tab Habilidades exibe alerta orientando o candidato a adicionar pelo menos 3 habilidades"
           ]
         }
@@ -176,24 +490,24 @@
       "type": "minor",
       "releaseDate": "2026-02-10",
       "prd": "PRD-073",
-      "description": "Campos de Localizacao, Salario e Interesses movidos de Minha Conta para Perfil Profissional. Calculo de completude reorganizado de 5 secoes para 7 secoes alinhadas com as tabs do perfil.",
+      "description": "Campos de Localização, Salário e Interesses movidos de Minha Conta para Perfil Profissional. Cálculo de completude reorganizado de 5 seções para 7 seções alinhadas com as tabs do perfil.",
       "isCurrent": false,
       "changes": [
         {
           "type": "changed",
           "items": [
-            "Tab Localizacao (Estado, Cidade, Disponivel para Mudanca) movida para Perfil Profissional",
-            "Tab Salario (Min, Max, Aceita Negociar) movida para Perfil Profissional",
-            "Tab Interesses (Setores, Funcoes, Modalidade, Contrato) movida para Perfil Profissional",
-            "Campos duplicados removidos de Minha Conta (Cargo/Titulo, LinkedIn, Sobre mim)",
+            "Tab Localização (Estado, Cidade, Disponível para Mudança) movida para Perfil Profissional",
+            "Tab Salário (Min, Max, Aceita Negociar) movida para Perfil Profissional",
+            "Tab Interesses (Setores, Funções, Modalidade, Contrato) movida para Perfil Profissional",
+            "Campos duplicados removidos de Minha Conta (Cargo/Título, LinkedIn, Sobre mim)",
             "Migration: colunas preferred_sectors, preferred_roles, work_model, contract_type adicionadas a curriculums",
-            "Sincronizacao bidirecional: ao salvar Perfil Profissional, tabela candidates e atualizada",
-            "Perfil Profissional: 8 tabs (Informacoes, Localizacao, Salario, Interesses, Experiencia, Formacao, Habilidades, Cursos)",
-            "Minha Conta: 5 tabs (Perfil, Privacidade, Conta, Aparencia, Plano)",
-            "Completude reorganizada de 5 secoes (20% cada) para 7 secoes (~14.3% cada)",
-            "Secao Informacoes basicas desmembrada em: Informacoes pessoais, Localizacao, Disponibilidade e Salario",
-            "Nova secao Interesses profissionais (opcional) contabilizada na completude",
-            "Secao Cursos/Certificacoes removida do calculo de completude",
+            "Sincronização bidirecional: ao salvar Perfil Profissional, tabela candidates e atualizada",
+            "Perfil Profissional: 8 tabs (Informações, Localização, Salário, Interesses, Experiência, Formação, Habilidades, Cursos)",
+            "Minha Conta: 5 tabs (Perfil, Privacidade, Conta, Aparência, Plano)",
+            "Completude reorganizada de 5 seções (20% cada) para 7 seções (~14.3% cada)",
+            "Seção Informações básicas desmembrada em: Informações pessoais, Localização, Disponibilidade e Salário",
+            "Nova seção Interesses profissionais (opcional) contabilizada na completude",
+            "Seção Cursos/Certificações removida do cálculo de completude",
             "Limiares de cor atualizados: verde >=86%, amarelo >=57%, laranja >=29%, vermelho <29%"
           ]
         }
@@ -205,31 +519,31 @@
       "type": "minor",
       "releaseDate": "2026-02-10",
       "prd": "PRD-073",
-      "description": "Perfil Profissional Unificado: modelo de multiplos curriculos (1:N) substituido por perfil unico (1:1) por candidato. Inclui sistema de destaques por candidatura e visao real do perfil pela empresa.",
+      "description": "Perfil Profissional Unificado: modelo de múltiplos currículos (1:N) substituído por perfil único (1:1) por candidato. Inclui sistema de destaques por candidatura e visão real do perfil pela empresa.",
       "isCurrent": false,
       "changes": [
         {
           "type": "changed",
           "items": [
-            "Modelo multi-curriculo substituido por perfil unico (1:1) por candidato",
-            "Migration: consolidacao de curriculos + constraint UNIQUE em candidate_id",
-            "Service layer refatorado: getProfile(), ensureProfile() substituem operacoes multi-curriculo",
+            "Modelo multi-currículo substituído por perfil único (1:1) por candidato",
+            "Migration: consolidação de currículos + constraint UNIQUE em candidate_id",
+            "Service layer refatorado: getProfile(), ensureProfile() substituem operações multi-currículo",
             "React Query hooks simplificados: useProfile(), useEnsureProfile()",
             "CurriculumEdit.tsx renomeada para ProfessionalProfile.tsx",
-            "Rota /candidato/perfil aponta para perfil profissional; /candidato/conta para configuracoes",
-            "Sidebar: Curriculos renomeado para Meu Perfil"
+            "Rota /candidato/perfil aponta para perfil profissional; /candidato/conta para configurações",
+            "Sidebar: Currículos renomeado para Meu Perfil"
           ]
         },
         {
           "type": "added",
           "items": [
             "Sistema de destaques de candidatura (highlights) — candidatos destacam itens do perfil ao se candidatar",
-            "Highlights service com interface + implementacao Supabase",
-            "Componente HighlightsSelector com secoes colapsaveis",
-            "ApplicationModal com step 2 para selecao de destaques",
-            "Visao da empresa com perfil real: experiencias, formacao, habilidades com dados reais",
+            "Highlights service com interface + implementação Supabase",
+            "Componente HighlightsSelector com seções colapsáveis",
+            "ApplicationModal com step 2 para seleção de destaques",
+            "Visão da empresa com perfil real: experiências, formação, habilidades com dados reais",
             "HighlightBadge dourado nos itens destacados pelo candidato",
-            "Rota /candidato/conta para pagina de configuracoes"
+            "Rota /candidato/conta para página de configurações"
           ]
         },
         {
@@ -237,8 +551,8 @@
           "items": [
             "getCurriculums(), deleteCurriculum(), setDefault(), createCurriculum() do service",
             "useCurriculums(), useDeleteCurriculum(), useSetDefaultCurriculum(), useCreateCurriculum() dos hooks",
-            "Campo Nome do Curriculo do formulario de edicao",
-            "generateMockExperiences() e getSkillLevel() com niveis hardcoded"
+            "Campo Nome do Currículo do formulário de edição",
+            "generateMockExperiences() e getSkillLevel() com níveis hardcoded"
           ]
         }
       ]
@@ -249,19 +563,19 @@
       "type": "minor",
       "releaseDate": "2026-02-08",
       "prd": "PRD-025/PRD-033",
-      "description": "Sistema de notificacoes migrado de mock/localStorage para Supabase. Candidato e empresa agora consomem notificacoes reais do banco com polling a cada 30s, filtros, agrupamento por data e mark-as-read.",
+      "description": "Sistema de notificações migrado de mock/localStorage para Supabase. Candidato e empresa agora consomem notificações reais do banco com polling a cada 30s, filtros, agrupamento por data e mark-as-read.",
       "isCurrent": false,
       "changes": [
         {
           "type": "changed",
           "items": [
-            "6 componentes de notificacao migrados para React Query + Supabase",
-            "Polling a cada 30s para atualizacoes em tempo real",
-            "Helpers compartilhados extraidos para notificationHelpers.ts",
+            "6 componentes de notificação migrados para React Query + Supabase",
+            "Polling a cada 30s para atualizações em tempo real",
+            "Helpers compartilhados extraídos para notificationHelpers.ts",
             "Filtros client-side preservados (candidato: 5, empresa: 5)",
-            "Agrupamento por data (Hoje/Ontem/Esta semana/Este mes/Anteriores)",
+            "Agrupamento por data (Hoje/Ontem/Esta semana/Este mês/Anteriores)",
             "Mark as read individual e bulk via Supabase mutations",
-            "20 notificacoes seed inseridas (8 candidato + 12 empresa)"
+            "20 notificações seed inseridas (8 candidato + 12 empresa)"
           ]
         },
         {
@@ -279,19 +593,19 @@
       "type": "minor",
       "releaseDate": "2026-02-06",
       "prd": "",
-      "description": "Perfil comportamental Gauge-Pro agora visivel na visao da empresa. Barras de 5 dimensoes, archetype, pontos fortes e areas de desenvolvimento exibidos no perfil do candidato e no Banco de Talentos.",
+      "description": "Perfil comportamental Gauge-Pro agora visível na visão da empresa. Barras de 5 dimensões, archetype, pontos fortes e áreas de desenvolvimento exibidos no perfil do candidato e no Banco de Talentos.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Perfil comportamental nao aparecia na visao da empresa (candidate.testResult nunca populado)",
-            "Secao Perfil Comportamental agora busca de gauge_pro_results via useGaugeProResultByCandidate",
-            "Barras DISC legadas substituidas por 5 dimensoes Gauge-Pro com classificacao",
+            "Perfil comportamental não aparecia na visão da empresa (candidate.testResult nunca populado)",
+            "Seção Perfil Comportamental agora busca de gauge_pro_results via useGaugeProResultByCandidate",
+            "Barras DISC legadas substituídas por 5 dimensões Gauge-Pro com classificação",
             "Badge no Banco de Talentos mostra archetype Gauge-Pro",
-            "Filtro de perfil comportamental usa archetypes dinamicos",
+            "Filtro de perfil comportamental usa archetypes dinâmicos",
             "RLS policy adicionada em ai_analyses para leitura por empresas",
-            "Corrigido 403 em POST ai_analyses quando empresa visualiza analise IA"
+            "Corrigido 403 em POST ai_analyses quando empresa visualiza análise IA"
           ]
         },
         {
@@ -309,15 +623,15 @@
       "type": "minor",
       "releaseDate": "2026-02-06",
       "prd": "",
-      "description": "Correcao geral de cache e reatividade — dados agora atualizam em tempo real sem necessidade de F5 nos 3 perfis (admin, empresa, candidato).",
+      "description": "Correção geral de cache e reatividade — dados agora atualizam em tempo real sem necessidade de F5 nos 3 perfis (admin, empresa, candidato).",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
             "QueryClient configurado com staleTime, refetchOnWindowFocus, refetchOnMount e retry",
-            "useAIAnalysis migrado para React Query — analise IA aparece sem F5",
-            "Fire-and-forget de geracao IA agora invalida cache automaticamente",
+            "useAIAnalysis migrado para React Query — análise IA aparece sem F5",
+            "Fire-and-forget de geração IA agora invalida cache automaticamente",
             "Anti-pattern 'init gate' corrigido em PermissionGroups, RolesPermissions, TeamManagement e Curriculums",
             "useCandidateRecommendations extrai .data de PaginatedResult (3 erros runtime eliminados)"
           ]
@@ -330,15 +644,15 @@
       "type": "patch",
       "releaseDate": "2026-02-06",
       "prd": "",
-      "description": "Correcao de formatacao markdown inline nos cards de analise IA. Texto bold (**texto**) agora renderiza corretamente. renderAnalysisContent extraido para modulo compartilhado.",
+      "description": "Correção de formatação markdown inline nos cards de análise IA. Texto bold (**texto**) agora renderiza corretamente. renderAnalysisContent extraído para módulo compartilhado.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Formatacao markdown inline (**bold**) nos cards de analise IA agora renderiza corretamente",
-            "renderAnalysisContent extraido para modulo compartilhado eliminando duplicacao",
-            "AIAnalysisSection agora usa renderAnalysisContent ao inves de texto cru"
+            "Formatação markdown inline (**bold**) nos cards de análise IA agora renderiza corretamente",
+            "renderAnalysisContent extraído para módulo compartilhado eliminando duplicação",
+            "AIAnalysisSection agora usa renderAnalysisContent ao invés de texto cru"
           ]
         }
       ]
@@ -349,14 +663,14 @@
       "type": "patch",
       "releaseDate": "2026-02-06",
       "prd": "",
-      "description": "Card 'Informacoes da Conta' na aba Conta do perfil do candidato, exibindo UUID com botao copiar e data de criacao.",
+      "description": "Card 'Informações da Conta' na aba Conta do perfil do candidato, exibindo UUID com botão copiar e data de criação.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "ID do candidato (UUID) visivel na aba Conta do perfil com botao copiar",
-            "Data 'Membro desde' exibida no card de informacoes da conta"
+            "ID do candidato (UUID) visível na aba Conta do perfil com botão copiar",
+            "Data 'Membro desde' exibida no card de informações da conta"
           ]
         }
       ]
@@ -367,31 +681,31 @@
       "type": "minor",
       "releaseDate": "2026-02-06",
       "prd": "",
-      "description": "Persistencia Supabase para resultados Gauge-Pro e analises IA com dual-write localStorage + Supabase, lazy sync retroativo e deteccao cross-browser.",
+      "description": "Persistência Supabase para resultados Gauge-Pro e análises IA com dual-write localStorage + Supabase, lazy sync retroativo e detecção cross-browser.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Persistencia Supabase para analises IA com dual-write localStorage + Supabase (tabela ai_analyses)",
-            "Lazy sync retroativo: dados pre-existentes no localStorage sincronizados automaticamente",
-            "Persistencia Supabase para resultados Gauge-Pro entre navegadores",
-            "Botao 'Gerar agora' para analise IA com indicador de 3 estados",
-            "Cards de analise IA (PracticalAnalysisCard e TechnicalAnalysisCard) na pagina de resultado"
+            "Persistência Supabase para análises IA com dual-write localStorage + Supabase (tabela ai_analyses)",
+            "Lazy sync retroativo: dados pré-existentes no localStorage sincronizados automaticamente",
+            "Persistência Supabase para resultados Gauge-Pro entre navegadores",
+            "Botão 'Gerar agora' para análise IA com indicador de 3 estados",
+            "Cards de análise IA (PracticalAnalysisCard e TechnicalAnalysisCard) na página de resultado"
           ]
         },
         {
           "type": "fixed",
           "items": [
             "CORS Anthropic API: header anthropic-dangerous-direct-browser-access adicionado",
-            "Erro IA cacheado no localStorage: validacao para nao salvar analises com status error",
+            "Erro IA cacheado no localStorage: válidação para não salvar análises com status error",
             "candidateId incorreto unificado para usar currentCandidate.id do AuthContext"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "BehavioralTest.tsx: pagina 'Teste Comportamental' agora executa Gauge-Pro inline"
+            "BehavioralTest.tsx: página 'Teste Comportamental' agora executa Gauge-Pro inline"
           ]
         }
       ]
@@ -402,14 +716,14 @@
       "type": "patch",
       "releaseDate": "2026-02-05",
       "prd": "PRD-061",
-      "description": "Tabela permission_audit_logs criada para auditoria RBAC. Resolvia erro 404 ao acessar Usuarios & Permissoes > Auditoria.",
+      "description": "Tabela permission_audit_logs criada para auditoria RBAC. Resolvia erro 404 ao acessar Usuários & Permissões > Auditoria.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
             "Tabela permission_audit_logs criada com indexes para filtros e RLS admin-only",
-            "Corrigido erro 404 ao acessar Usuarios & Permissoes > Auditoria"
+            "Corrigido erro 404 ao acessar Usuários & Permissões > Auditoria"
           ]
         }
       ]
@@ -420,15 +734,15 @@
       "type": "patch",
       "releaseDate": "2026-02-05",
       "prd": "",
-      "description": "Corrigido nome de coluna 'order' para 'sort_order' em 3 servicos Supabase que causava erro 400.",
+      "description": "Corrigido nome de coluna 'order' para 'sort_order' em 3 serviços Supabase que causava erro 400.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
             "plansService.supabase.ts: query .order('order') corrigida para sort_order",
-            "gaugeProService.supabase.ts: query e mapeamento de cenarios corrigidos",
-            "assessmentsService.supabase.ts: queries de dimensoes/categorias corrigidas"
+            "gaugeProService.supabase.ts: query e mapeamento de cenários corrigidos",
+            "assessmentsService.supabase.ts: queries de dimensões/categorias corrigidas"
           ]
         }
       ]
@@ -439,21 +753,21 @@
       "type": "minor",
       "releaseDate": "2026-02-05",
       "prd": "",
-      "description": "Configuracoes do admin migradas de localStorage para Supabase. Tabelas system_settings e settings_history com RLS, triggers e mascaramento de campos sensiveis.",
+      "description": "Configurações do admin migradas de localStorage para Supabase. Tabelas system_settings e settings_history com RLS, triggers e mascaramento de campos sensíveis.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
             "Tabelas system_settings e settings_history com RLS e triggers",
-            "Mascaramento automatico de campos sensiveis no historico",
-            "Dropdown dinamico de modelos IA via API Anthropic"
+            "Mascaramento automático de campos sensíveis no histórico",
+            "Dropdown dinâmico de modelos IA via API Anthropic"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "Configuracoes do admin migradas de localStorage para Supabase"
+            "Configurações do admin migradas de localStorage para Supabase"
           ]
         }
       ]
@@ -464,14 +778,14 @@
       "type": "patch",
       "releaseDate": "2026-02-05",
       "prd": "",
-      "description": "Checkbox Lembrar-me no login agora funcional. Persiste sessao por 30 dias ou encerra ao fechar navegador.",
+      "description": "Checkbox Lembrar-me no login agora funcional. Persiste sessão por 30 dias ou encerra ao fechar navegador.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
             "Checkbox Lembrar-me implementado com persistSession do Supabase Auth",
-            "Sessao persiste por 30 dias (marcado) ou encerra ao fechar navegador (desmarcado)"
+            "Sessão persiste por 30 dias (marcado) ou encerra ao fechar navegador (desmarcado)"
           ]
         }
       ]
@@ -482,13 +796,13 @@
       "type": "patch",
       "releaseDate": "2026-02-05",
       "prd": "",
-      "description": "Correcao de tela branca apos login de candidato: useEffect chamado apos early return violava regras de Hooks do React.",
+      "description": "Correção de tela branca após login de candidato: useEffect chamado após early return violava regras de Hooks do React.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "CandidateDashboard: tela branca apos login com erro 'Rendered more hooks than during the previous render'",
+            "CandidateDashboard: tela branca após login com erro 'Rendered more hooks than during the previous render'",
             "useEffect de sync do profileCompletion movido para antes do guard condicional"
           ]
         }
@@ -500,15 +814,15 @@
       "type": "patch",
       "releaseDate": "2026-02-05",
       "prd": "",
-      "description": "Campo Cidade convertido para combobox pesquisavel com ~5.570 municipios brasileiros filtrados por estado.",
+      "description": "Campo Cidade convertido para combobox pesquisável com ~5.570 municípios brasileiros filtrados por estado.",
       "isCurrent": false,
       "changes": [
         {
           "type": "changed",
           "items": [
-            "Tab Localizacao: campo Cidade convertido de input livre para combobox pesquisavel",
+            "Tab Localização: campo Cidade convertido de input livre para combobox pesquisável",
             "Cidades filtradas automaticamente pelo estado selecionado",
-            "Novo arquivo src/data/brazilianCities.ts com dados de ~5.570 municipios (IBGE)"
+            "Novo arquivo src/data/brazilianCities.ts com dados de ~5.570 municípios (IBGE)"
           ]
         }
       ]
@@ -519,22 +833,22 @@
       "type": "minor",
       "releaseDate": "2026-02-05",
       "prd": "",
-      "description": "Novas abas Interesses, Salario e Privacidade no perfil do candidato com preferencias de vagas e controle de visibilidade.",
+      "description": "Novas abas Interesses, Salário e Privacidade no perfil do candidato com preferências de vagas e controle de visibilidade.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Tab Interesses: areas de interesse (setores e funcoes) e modelo de trabalho (modalidade e contrato)",
-            "Tab Salario: faixa salarial minimo/maximo e toggle Aceita Negociar",
-            "Tab Privacidade: visibilidade do perfil, exibicao de salario e visibilidade do curriculo",
-            "Migration 023 e 024: colunas de preferencias e privacidade na tabela candidates"
+            "Tab Interesses: áreas de interesse (setores e funções) e modelo de trabalho (modalidade e contrato)",
+            "Tab Salário: faixa salarial mínimo/máximo e toggle Aceita Negociar",
+            "Tab Privacidade: visibilidade do perfil, exibição de salário e visibilidade do currículo",
+            "Migration 023 e 024: colunas de preferências e privacidade na tabela candidates"
           ]
         },
         {
           "type": "removed",
           "items": [
-            "Secoes Preferencias de Vagas e Privacidade removidas da pagina Configuracoes (agora em Perfil)"
+            "Seções Preferências de Vagas e Privacidade removidas da página Configurações (agora em Perfil)"
           ]
         }
       ]
@@ -545,20 +859,20 @@
       "type": "patch",
       "releaseDate": "2026-02-05",
       "prd": "",
-      "description": "Simplificacao da pagina de Configuracoes: tab Dados Pessoais removida (disponivel em Perfil) e formatacao de telefone adicionada.",
+      "description": "Simplificação da página de Configurações: tab Dados Pessoais removida (disponível em Perfil) e formatação de telefone adicionada.",
       "isCurrent": false,
       "changes": [
         {
           "type": "removed",
           "items": [
-            "Tab Dados Pessoais removida de Configuracoes (dados continuam em /candidato/perfil)"
+            "Tab Dados Pessoais removida de Configurações (dados continuam em /candidato/perfil)"
           ]
         },
         {
           "type": "changed",
           "items": [
             "Settings.tsx simplificado de 968 para 416 linhas",
-            "Formatacao automatica de telefone no perfil do candidato"
+            "Formatação automática de telefone no perfil do candidato"
           ]
         }
       ]
@@ -569,15 +883,15 @@
       "type": "minor",
       "releaseDate": "2026-02-05",
       "prd": "",
-      "description": "Consolidacao do perfil do candidato: campo Nome de Exibicao e nova aba Localizacao com cidade, estado e disponibilidade para mudanca.",
+      "description": "Consolidação do perfil do candidato: campo Nome de Exibição e nova aba Localização com cidade, estado e disponibilidade para mudança.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Campo 'Nome de Exibicao' na tab Perfil para candidatos definirem como querem ser chamados",
-            "Nova aba 'Localizacao' com campos: Cidade, Estado (select 27 UFs), Disponivel para Mudanca (toggle)",
-            "Migration SQL com 4 novas colunas na tabela candidates + indice para buscas por localizacao",
+            "Campo 'Nome de Exibição' na tab Perfil para candidatos definirem como querem ser chamados",
+            "Nova aba 'Localização' com campos: Cidade, Estado (select 27 UFs), Disponível para Mudança (toggle)",
+            "Migration SQL com 4 novas colunas na tabela candidates + índice para buscas por localização",
             "Image Cropper para avatar: modal de recorte com zoom e posicionamento antes do upload"
           ]
         },
@@ -585,15 +899,15 @@
           "type": "changed",
           "items": [
             "Grid de abas em Profile.tsx expandido de 4 para 5 colunas",
-            "brazilianStates exportado de settingsConfig.ts para reutilizacao",
+            "brazilianStates exportado de settingsConfig.ts para reutilização",
             "Interface Candidate estendida com displayName, city, state, openToRelocation",
-            "Header e avatar agora exibem Nome de Exibicao (com fallback para nome completo)"
+            "Header e avatar agora exibem Nome de Exibição (com fallback para nome completo)"
           ]
         },
         {
           "type": "removed",
           "items": [
-            "Campo 'Localizacao' redundante da tab Perfil (substituido pela aba dedicada com campos estruturados)"
+            "Campo 'Localização' redundante da tab Perfil (substituído pela aba dedicada com campos estruturados)"
           ]
         }
       ]
@@ -604,7 +918,7 @@
       "type": "minor",
       "releaseDate": "2026-02-05",
       "prd": "",
-      "description": "Correcoes de persistencia de dados do perfil do candidato, IDs mock hardcoded em 26 arquivos, e erro de Select.Item com value vazio.",
+      "description": "Correções de persistência de dados do perfil do candidato, IDs mock hardcoded em 26 arquivos, e erro de Select.Item com value vazio.",
       "isCurrent": false,
       "changes": [
         {
@@ -630,29 +944,29 @@
       "type": "major",
       "releaseDate": "2026-02-04",
       "prd": "PRD-072",
-      "description": "Limpeza final — mockData.ts deletado, 20 .mock.ts removidos, service factories simplificadas. Todos os modulos apontam para Supabase.",
+      "description": "Limpeza final — mockData.ts deletado, 20 .mock.ts removidos, service factories simplificadas. Todos os módulos apontam para Supabase.",
       "isCurrent": false,
       "changes": [
         {
           "type": "removed",
           "items": [
             "mockData.ts (~4.000 linhas de dados simulados)",
-            "20 arquivos .mock.ts de servicos",
+            "20 arquivos .mock.ts de serviços",
             "5 arquivos de dados mock-only (featureFlagsData, plansData, rbacData, reportsData, mockData)",
-            "DATA_SOURCE toggle e logica condicional mock/supabase"
+            "DATA_SOURCE toggle e lógica condicional mock/supabase"
           ]
         },
         {
           "type": "added",
           "items": [
-            "src/lib/behavioralProfiles.ts (helpers de perfil comportamental extraidos do mockData)"
+            "src/lib/behavioralProfiles.ts (helpers de perfil comportamental extraídos do mockData)"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "20 service factories simplificadas para importacao direta do supabase (sem branch condicional)",
-            "14 paginas e hooks migrados para consumir service layer ao inves de imports mock"
+            "20 service factories simplificadas para importação direta do supabase (sem branch condicional)",
+            "14 páginas e hooks migrados para consumir service layer ao invés de imports mock"
           ]
         }
       ]
@@ -663,26 +977,26 @@
       "type": "minor",
       "releaseDate": "2026-02-04",
       "prd": "PRD-064, PRD-065, PRD-066, PRD-067, PRD-068, PRD-069, PRD-070, PRD-071",
-      "description": "Migracao completa mock→Supabase: 21 migrations SQL, 64+ tabelas com RLS, service layer com 62 arquivos, React Query hooks, UI migrada.",
+      "description": "Migração completa mock→Supabase: 21 migrations SQL, 64+ tabelas com RLS, service layer com 62 arquivos, React Query hooks, UI migrada.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
             "21 migrations SQL com 64+ tabelas, RLS policies, triggers e FTS",
-            "Seeds de desenvolvimento e dados de referencia permanentes",
-            "62 arquivos de service layer (interfaces, factories, implementacoes Supabase)",
-            "18 React Query hooks com query key factories, paginacao, mutations e cache invalidation",
-            "DATA_SOURCE toggle para migracao incremental por modulo"
+            "Seeds de desenvolvimento e dados de referência permanentes",
+            "62 arquivos de service layer (interfaces, factories, implementações Supabase)",
+            "18 React Query hooks com query key factories, paginação, mutations e cache invalidation",
+            "DATA_SOURCE toggle para migração incremental por módulo"
           ]
         },
         {
           "type": "changed",
           "items": [
             "UI migrada de imports mock diretos para service hooks via React Query",
-            "RBAC engine refatorado com data store injetavel via configureRBAC()",
+            "RBAC engine refatorado com data store injetável via configureRBAC()",
             "Recommendation engines parametrizados (aceitam dados como argumento)",
-            "getCandidateBehavioralProfile() recebe array de testes como parametro"
+            "getCandidateBehavioralProfile() recebe array de testes como parâmetro"
           ]
         }
       ]
@@ -693,21 +1007,21 @@
       "type": "minor",
       "releaseDate": "2026-02-04",
       "prd": "PRD-063",
-      "description": "Magic Link login, tela 'Verifique seu email' pos-registro, trigger expandido handle_new_user() para criar profiles+candidates/companies atomicamente.",
+      "description": "Magic Link login, tela 'Verifique seu email' pós-registro, trigger expandido handle_new_user() para criar profiles+candidates/companies atomicamente.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
             "Magic Link via supabase.auth.signInWithOtp()",
-            "Tela de verificacao de email pos-registro",
-            "Trigger expandido handle_new_user() para criacao atomica de profiles+candidates/companies"
+            "Tela de verificação de email pós-registro",
+            "Trigger expandido handle_new_user() para criação atômica de profiles+candidates/companies"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "signUp() simplificado, retorna needsEmailConfirmation ao inves de login automatico"
+            "signUp() simplificado, retorna needsEmailConfirmation ao invés de login automático"
           ]
         }
       ]
@@ -718,7 +1032,7 @@
       "type": "minor",
       "releaseDate": "2026-02-04",
       "prd": "PRD-063",
-      "description": "Integracao Supabase como backend. Auth real com login/registro/reset, schema SQL com RLS, seed de desenvolvimento.",
+      "description": "Integração Supabase como backend. Auth real com login/registro/reset, schema SQL com RLS, seed de desenvolvimento.",
       "isCurrent": false,
       "changes": [
         {
@@ -727,7 +1041,7 @@
             "Client Supabase tipado (src/lib/supabase.ts)",
             "Schema SQL com RLS policies e triggers (sql/migrations/)",
             "AuthContext real com Supabase Auth (login, registro, reset de senha)",
-            "Seed de desenvolvimento com 9 usuarios de teste (sql/seeds/)"
+            "Seed de desenvolvimento com 9 usuários de teste (sql/seeds/)"
           ]
         },
         {
@@ -744,26 +1058,26 @@
       "type": "minor",
       "releaseDate": "2026-02-03",
       "prd": "PRD-058, PRD-059, PRD-060, PRD-061, PRD-062",
-      "description": "Painel Admin Avancado com 5 modulos: RBAC Guardian, Planos Commerce, Feature Flags Switch, Vagas Sentinel, Relatorios Radar. Sidebar admin convertido de submenus para tabs horizontais nas paginas",
+      "description": "Painel Admin Avançado com 5 módulos: RBAC Guardian, Planos Commerce, Feature Flags Switch, Vagas Sentinel, Relatórios Radar. Sidebar admin convertido de submenus para tabs horizontais nas páginas",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "RBAC Guardian (PRD-061): listagem de usuarios com filtros, detalhe com override, grupos de permissao, 8 papeis com 34 permissoes, motor RBAC, auditoria, impersonacao",
-            "Planos Commerce (PRD-060): CRUD de 6 planos, matriz de 25 capabilities, gestao de assinaturas com upgrade/downgrade, dashboard com MRR e churn, compras avulsas",
-            "Feature Flags Switch (PRD-062): CRUD de 25 flags com condicoes compostas, kill switch, overrides, simulador de planos, motor de avaliacao com cadeia explicativa, auditoria",
-            "Vagas Sentinel (PRD-058): dashboard com KPIs e graficos, listagem com filtros, fila de moderacao, vagas finalizadas, entrevistas e contratacoes, configuracao de moderacao",
-            "Relatorios Radar (PRD-059): dashboard financeiro (MRR, ARR, churn, LTV), crescimento com cohort table, operacional com funil, activity feed, exportacao PDF/Excel"
+            "RBAC Guardian (PRD-061): listagem de usuários com filtros, detalhe com override, grupos de permissão, 8 papéis com 34 permissões, motor RBAC, auditoria, impersonação",
+            "Planos Commerce (PRD-060): CRUD de 6 planos, matriz de 25 capabilities, gestão de assinaturas com upgrade/downgrade, dashboard com MRR e churn, compras avulsas",
+            "Feature Flags Switch (PRD-062): CRUD de 25 flags com condições compostas, kill switch, overrides, simulador de planos, motor de avaliação com cadeia explicativa, auditoria",
+            "Vagas Sentinel (PRD-058): dashboard com KPIs e gráficos, listagem com filtros, fila de moderação, vagas finalizadas, entrevistas e contratações, configuração de moderação",
+            "Relatórios Radar (PRD-059): dashboard financeiro (MRR, ARR, churn, LTV), crescimento com cohort table, operacional com funil, activity feed, exportação PDF/Excel"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "Sidebar admin convertido de submenus colapsiveis para tabs horizontais nas paginas",
-            "5 grupos de tabs: Usuarios (4), Avaliacoes (2), Vagas (6), Relatorios (5), Configuracoes (7)",
+            "Sidebar admin convertido de submenus colapsáveis para tabs horizontais nas páginas",
+            "5 grupos de tabs: Usuários (4), Avaliações (2), Vagas (6), Relatórios (5), Configurações (7)",
             "Componente AdminTabNav auto-detecta grupo pela URL com scroll horizontal em mobile",
-            "Nomes de planos migrados: Gratuito->Essencial, Pro->Avancar, Premium->Destaque Maximo",
+            "Nomes de planos migrados: Gratuito->Essencial, Pro->Avançar, Premium->Destaque Máximo",
             "Tipo User enriquecido com campos RBAC: roleId, status, lastAccessAt, groupIds"
           ]
         }
@@ -775,27 +1089,27 @@
       "type": "minor",
       "releaseDate": "2026-02-02",
       "prd": "PRD-053",
-      "description": "Enriquecimento da visualizacao de resultados no Hub de Testes Comportamentais com sistema de abas, radar de competencias, score de risco, fatores emocionais, recomendacoes IA e respostas do teste",
+      "description": "Enriquecimento da visualização de resultados no Hub de Testes Comportamentais com sistema de abas, radar de competências, score de risco, fatores emocionais, recomendações IA e respostas do teste",
       "isCurrent": false,
       "changes": [
         {
           "type": "changed",
           "items": [
-            "CandidateResultView reestruturado com 4 abas: Visao Geral, Competencias, IA & Recomendacoes, Respostas",
+            "CandidateResultView reestruturado com 4 abas: Visão Geral, Competências, IA & Recomendações, Respostas",
             "Header do candidato e FitScore persistem acima das abas",
-            "Aba Visao Geral: radar D1-D5, barras por dimensao, archetype, forcas/areas de desenvolvimento",
-            "KPIs na pagina de detalhe do teste agora exibem cards dinamicos para status abandoned e expired"
+            "Aba Visão Geral: radar D1-D5, barras por dimensão, archetype, forças/áreas de desenvolvimento",
+            "KPIs na página de detalhe do teste agora exibem cards dinâmicos para status abandoned e expired"
           ]
         },
         {
           "type": "added",
           "items": [
-            "Aba Competencias: radar de 6 eixos (Lideranca, Comunicacao, Organizacao, Inovacao, Trabalho em Equipe, Analise Critica)",
-            "Aba Competencias: card de Fatores Emocionais com 5 barras (Empatia, Autocontrole, Sociabilidade, Resiliencia, IE)",
-            "Aba Competencias: card de Avaliacao de Risco com classificacao Baixo/Moderado/Alto/Critico e flags",
-            "Aba IA & Recomendacoes: analise IA expandida, recomendacao de contratacao, plano de desenvolvimento, posicionamento em equipe, mitigacao de riscos",
-            "Aba Respostas: reconstrucao mock das selecoes de palavras por dimensao e 15 cenarios situacionais",
-            "Utilitarios: competencyRadar.ts, emotionalFactors.ts, riskScore.ts, mockResponseGenerator.ts",
+            "Aba Competências: radar de 6 eixos (Liderança, Comunicação, Organização, Inovação, Trabalho em Equipe, Análise Crítica)",
+            "Aba Competências: card de Fatores Emocionais com 5 barras (Empatia, Autocontrole, Sociabilidade, Resiliência, IE)",
+            "Aba Competências: card de Avaliação de Risco com classificação Baixo/Moderado/Alto/Crítico e flags",
+            "Aba IA & Recomendações: análise IA expandida, recomendação de contratação, plano de desenvolvimento, posicionamento em equipe, mitigação de riscos",
+            "Aba Respostas: reconstrução mock das seleções de palavras por dimensão e 15 cenários situacionais",
+            "Utilitários: competencyRadar.ts, emotionalFactors.ts, riskScore.ts, mockResponseGenerator.ts",
             "Tipos: CompetencyScores, EmotionalFactorScores, RiskAssessment, MockTestResponses em companyTest.ts"
           ]
         }
@@ -807,19 +1121,19 @@
       "type": "minor",
       "releaseDate": "2026-02-02",
       "prd": "",
-      "description": "Redesign da pagina de perfil do candidato com sistema de abas e novas funcionalidades",
+      "description": "Redesign da página de perfil do candidato com sistema de abas e novas funcionalidades",
       "isCurrent": false,
       "changes": [
         {
           "type": "changed",
           "items": [
-            "Perfil do candidato reestruturado com 4 abas: Perfil, Conta, Aparencia, Plano",
-            "Aba Perfil: formulario pessoal com novo campo Data de Nascimento",
-            "Aba Conta: seguranca (alterar email/senha), notificacoes e zona de perigo",
-            "Aba Aparencia: selecao de tema (claro/escuro/sistema) via ThemeSettings",
-            "Aba Plano: resumo do plano atual, uso de recursos e link para pagina de planos",
-            "Card de completude do perfil removido da pagina de perfil",
-            "Tabs responsivas: apenas icones em telas pequenas, icones + texto em telas maiores"
+            "Perfil do candidato reestruturado com 4 abas: Perfil, Conta, Aparência, Plano",
+            "Aba Perfil: formulário pessoal com novo campo Data de Nascimento",
+            "Aba Conta: segurança (alterar email/senha), notificações e zona de perigo",
+            "Aba Aparência: seleção de tema (claro/escuro/sistema) via ThemeSettings",
+            "Aba Plano: resumo do plano atual, uso de recursos e link para página de planos",
+            "Card de completude do perfil removido da página de perfil",
+            "Tabs responsivas: apenas ícones em telas pequenas, ícones + texto em telas maiores"
           ]
         },
         {
@@ -903,8 +1217,8 @@
         {
           "type": "fixed",
           "items": [
-            "Scrollbar adicionada na aba de carregar cenarios do ScenarioManager",
-            "ScrollArea Radix substituida por overflow-y-auto nativo no ScenarioManager"
+            "Scrollbar adicionada na aba de carregar cenários do ScenarioManager",
+            "ScrollArea Radix substituída por overflow-y-auto nativo no ScenarioManager"
           ]
         }
       ]
@@ -1048,7 +1362,7 @@
       "type": "minor",
       "releaseDate": "2026-01-27",
       "prd": "PRD-049 & PRD-050",
-      "description": "Gauge-Pro: Selecao de Palavras e Cenarios Situacionais",
+      "description": "Gauge-Pro: Seleção de Palavras e Cenários Situacionais",
       "isCurrent": false,
       "changes": [
         {
@@ -1079,23 +1393,23 @@
           "items": [
             "Teste Geral do Candidato (PRD-047): 50-60 perguntas balanceadas",
             "Tipos de pergunta: Likert (1-5) e Situacional (A-D)",
-            "Salvamento automatico e sessao valida por 7 dias",
-            "Pagina de resultado com grafico radar e insights",
-            "Gamificacao: +50 XP e badge Perfil Completo",
-            "Teste por Vaga (PRD-048): Wizard de criacao em 3 passos",
-            "Selecao de competencias com prioridade critica/importante",
+            "Salvamento automático e sessão válida por 7 dias",
+            "Página de resultado com gráfico radar e insights",
+            "Gamificação: +50 XP e badge Perfil Completo",
+            "Teste por Vaga (PRD-048): Wizard de criação em 3 passos",
+            "Seleção de competências com prioridade crítica/importante",
             "Sistema de convites para candidatos internos",
             "Links magicos para candidatos externos",
             "Relatorio detalhado com ajuste de score pelo recrutador",
             "Decisao de aprovar/avaliar depois/reprovar",
-            "Comparacao lado a lado de ate 4 candidatos"
+            "Comparação lado a lado de até 4 candidatos"
           ]
         },
         {
           "type": "changed",
           "items": [
             "Menu lateral candidato com Teste Comportamental",
-            "Menu de acoes das vagas com acesso ao teste"
+            "Menu de ações das vagas com acesso ao teste"
           ]
         }
       ]
@@ -1106,19 +1420,19 @@
       "type": "minor",
       "releaseDate": "2026-01-20",
       "prd": "PRD-046",
-      "description": "Banco de Perguntas e Avaliacao Comportamental Gauge-Pro 2.0",
+      "description": "Banco de Perguntas e Avaliação Comportamental Gauge-Pro 2.0",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
             "Sistema de gerenciamento de perguntas Gauge-Pro 2.0",
-            "222 perguntas em 3 dimensoes e 20 categorias",
-            "Dimensoes: Personalidade (60), Carater (48), Competencias (114)",
-            "Tipos: Comportamental, Situacional, Autoavaliacao",
-            "Niveis: Basico, Intermediario, Avancado",
-            "Pagina Admin de Categorias com arvore hierarquica",
-            "Pagina Admin de Perguntas com busca, filtros e paginacao",
+            "222 perguntas em 3 dimensões e 20 categorias",
+            "Dimensões: Personalidade (60), Carater (48), Competências (114)",
+            "Tipos: Comportamental, Situacional, Autoavaliação",
+            "Níveis: Básico, Intermediario, Avançado",
+            "Página Admin de Categorias com arvore hierarquica",
+            "Página Admin de Perguntas com busca, filtros e paginação",
             "CRUD completo: criar, editar, duplicar, ativar/desativar",
             "Itens de menu 'Categorias' e 'Perguntas' no painel Admin"
           ]
@@ -1126,7 +1440,7 @@
         {
           "type": "changed",
           "items": [
-            "Menu lateral Admin com novos itens de avaliacao"
+            "Menu lateral Admin com novos itens de avaliação"
           ]
         }
       ]
@@ -1137,26 +1451,26 @@
       "type": "minor",
       "releaseDate": "2026-01-18",
       "prd": "PRD-045",
-      "description": "Pagina de Configuracoes Admin com layout duas colunas e busca global",
+      "description": "Página de Configurações Admin com layout duas colunas e busca global",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Pagina de Configuracoes para Admin (/admin/configuracoes)",
+            "Página de Configurações para Admin (/admin/configurações)",
             "Layout duas colunas: Sidebar categorias (30%) + Conteudo (70%)",
-            "8 categorias expansiveis: Geral, IA, Gamificacao, Notificacoes, Integracoes, Usuarios, Relatorios, Sistema",
+            "8 categorias expansíveis: Geral, IA, Gamificação, Notificações, Integrações, Usuários, Relatórios, Sistema",
             "Busca global com dropdown de resultados por tipo",
-            "Historico de alteracoes com filtros por categoria e periodo",
+            "Histórico de alterações com filtros por categoria e período",
             "Campos editaveis: TextField, Toggle, Select, ImageUpload, ColorPicker",
-            "Persistencia em localStorage",
+            "Persistência em localStorage",
             "Responsivo com Drawer mobile para sidebar"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "Rota /admin/configuracoes aponta para nova pagina Settings"
+            "Rota /admin/configurações aponta para nova página Settings"
           ]
         }
       ]
@@ -1167,17 +1481,17 @@
       "type": "minor",
       "releaseDate": "2026-01-18",
       "prd": "PRD-044",
-      "description": "Pagina Sobre com historico de versoes e tooltip interativo no footer",
+      "description": "Página Sobre com histórico de versões e tooltip interativo no footer",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Pagina 'Sobre' com historico completo de versoes",
-            "Tooltip interativo de versao no footer (HoverCard)",
-            "Item 'Sobre' no menu lateral de todos os paineis",
-            "Busca e filtros no historico de versoes",
-            "Accordion expansivel com detalhes de cada versao"
+            "Página 'Sobre' com histórico completo de versões",
+            "Tooltip interativo de versão no footer (HoverCard)",
+            "Item 'Sobre' no menu lateral de todos os painéis",
+            "Busca e filtros no histórico de versões",
+            "Accordion expansível com detalhes de cada versão"
           ]
         }
       ]
@@ -1188,15 +1502,15 @@
       "type": "minor",
       "releaseDate": "2026-01-18",
       "prd": "PRD-043",
-      "description": "Footer fixo com efeito glassmorphism nas areas autenticadas",
+      "description": "Footer fixo com efeito glassmorphism nas áreas autenticadas",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Footer fixo nas areas autenticadas (candidato, empresa, admin)",
+            "Footer fixo nas áreas autenticadas (candidato, empresa, admin)",
             "Efeito glassmorphism com backdrop-blur e transparencia",
-            "Versao do app exibida dinamicamente",
+            "Versão do app exibida dinamicamente",
             "Credito 'AILA Sistemas Inteligentes' no canto direito",
             "Suporte a dark mode com cores ajustadas"
           ]
@@ -1204,8 +1518,8 @@
         {
           "type": "changed",
           "items": [
-            "DashboardLayout.tsx - integracao do GlassFooter",
-            "Padding bottom do conteudo ajustado para evitar sobreposicao"
+            "DashboardLayout.tsx - integração do GlassFooter",
+            "Padding bottom do conteúdo ajustado para evitar sobreposição"
           ]
         }
       ]
@@ -1216,7 +1530,7 @@
       "type": "minor",
       "releaseDate": "2026-01-17",
       "prd": "PRD-034 a PRD-042",
-      "description": "Features IA, agendamento de entrevistas empresariais, transparencia de match, chatbot, templates de mensagem, fit cultural, paginas institucionais e melhorias UX",
+      "description": "Features IA, agendamento de entrevistas empresariais, transparencia de match, chatbot, templates de mensagem, fit cultural, páginas institucionais e melhorias UX",
       "isCurrent": false,
       "changes": [
         {
@@ -1225,31 +1539,31 @@
             "Agendamento de entrevistas pela empresa com calendario e horarios (PRD-034)",
             "Banners de incentivo ao teste comportamental para candidatos (PRD-035)",
             "Transparencia de match com breakdown e explicabilidade para candidatos (PRD-035)",
-            "Sugestoes IA para descricao de vagas (PRD-036)",
-            "Auto-preenchimento inteligente de formularios (PRD-037)",
-            "Analise IA de compatibilidade candidato-vaga (PRD-038)",
+            "Sugestoes IA para descrição de vagas (PRD-036)",
+            "Auto-preenchimento inteligente de formulários (PRD-037)",
+            "Análise IA de compatibilidade candidato-vaga (PRD-038)",
             "Insights IA no dashboard da empresa (PRD-039)",
             "Chatbot de atendimento ao candidato (PRD-040)",
             "Templates de mensagem para recrutadores (PRD-041)",
             "Score de fit cultural candidato-empresa (PRD-042)",
             "Hero com efeito parallax e carousel de imagens",
-            "Pagina Como Funciona com etapas ilustradas",
-            "Paginas institucionais (Quem Somos, Termos, Privacidade)",
-            "Menu dropdown do usuario no header de areas autenticadas"
+            "Página Como Funciona com etapas ilustradas",
+            "Páginas institucionais (Quem Somos, Termos, Privacidade)",
+            "Menu dropdown do usuario no header de áreas autenticadas"
           ]
         },
         {
           "type": "changed",
           "items": [
             "Login e registro com melhorias visuais e UX",
-            "Navegacao institucional reorganizada"
+            "Navegação institucional reorganizada"
           ]
         },
         {
           "type": "fixed",
           "items": [
             "Labels e grid no mini radar chart comportamental",
-            "DialogDescription ausente na pagina Jobs",
+            "DialogDescription ausente na página Jobs",
             "forwardRef no componente Badge",
             "SelectionBar props em SavedCandidates"
           ]
@@ -1262,27 +1576,27 @@
       "type": "minor",
       "releaseDate": "2026-01-15",
       "prd": "PRD-033",
-      "description": "Sistema de notificacoes completo para empresas",
+      "description": "Sistema de notificações completo para empresas",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "10 tipos de notificacao especificos para empresas",
-            "Sino de notificacoes no header para empresas",
-            "Dropdown com ultimas 5 notificacoes",
-            "Badge com contador de nao lidas",
-            "Pagina completa de notificacoes (/empresa/notificacoes)",
+            "10 tipos de notificação especificos para empresas",
+            "Sino de notificações no header para empresas",
+            "Dropdown com ultimas 5 notificações",
+            "Badge com contador de não lidas",
+            "Página completa de notificações (/empresa/notificações)",
             "Filtros: Todas, Candidaturas, Entrevistas, Mensagens, Vagas",
-            "Agrupamento por data: Hoje, Ontem, Esta semana, Este mes, Anteriores",
-            "Persistencia de estado de leitura em localStorage"
+            "Agrupamento por data: Hoje, Ontem, Esta semana, Este mês, Anteriores",
+            "Persistência de estado de leitura em localStorage"
           ]
         },
         {
           "type": "changed",
           "items": [
             "DashboardLayout.tsx - sino no header + item no menu da empresa",
-            "App.tsx - rota /empresa/notificacoes"
+            "App.tsx - rota /empresa/notificações"
           ]
         }
       ]
@@ -1293,18 +1607,18 @@
       "type": "minor",
       "releaseDate": "2026-01-15",
       "prd": "PRD-032",
-      "description": "Exportacao de candidatos em Excel e PDF para empresas",
+      "description": "Exportação de candidatos em Excel e PDF para empresas",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Modal de exportacao com selecao de formato (XLSX/PDF)",
-            "Checkboxes para selecao de campos a incluir",
-            "Ordenacao configuravel (match, nome, experiencia, recentes)",
-            "Exportacao Excel via biblioteca xlsx",
-            "Exportacao PDF via @react-pdf/renderer com template formatado",
-            "Botao Exportar no Banco de Talentos e Candidatos Salvos"
+            "Modal de exportação com seleção de formato (XLSX/PDF)",
+            "Checkboxes para seleção de campos a incluir",
+            "Ordenação configurável (match, nome, experiência, recentes)",
+            "Exportação Excel via biblioteca xlsx",
+            "Exportação PDF via @react-pdf/renderer com template formatado",
+            "Botão Exportar no Banco de Talentos e Candidatos Salvos"
           ]
         }
       ]
@@ -1315,17 +1629,17 @@
       "type": "minor",
       "releaseDate": "2026-01-15",
       "prd": "PRD-031",
-      "description": "Comparacao lado a lado de ate 3 candidatos",
+      "description": "Comparação lado a lado de até 3 candidatos",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Checkbox de selecao nos cards de candidatos (maximo 3)",
-            "Barra flutuante de selecao com contador",
-            "Modal de comparacao lado a lado",
-            "Metricas expandidas: Match Score, Experiencia, Formacao, Salario",
-            "Perfil comportamental com grafico radar mini",
+            "Checkbox de seleção nos cards de candidatos (máximo 3)",
+            "Barra flutuante de seleção com contador",
+            "Modal de comparação lado a lado",
+            "Métricas expandidas: Match Score, Experiência, Formação, Salário",
+            "Perfil comportamental com gráfico radar mini",
             "Toggle 'Mostrar apenas diferencas'"
           ]
         }
@@ -1343,11 +1657,11 @@
         {
           "type": "added",
           "items": [
-            "Botao de favoritar (coracao) nos cards de candidato",
-            "Nova pagina /empresa/candidatos-salvos",
+            "Botão de favoritar (coração) nos cards de candidato",
+            "Nova página /empresa/candidatos-salvos",
             "Badge com contador de candidatos salvos no menu",
-            "Ordenacao: mais recentes, maior match, mais experiencia",
-            "Persistencia em localStorage"
+            "Ordenação: mais recentes, maior match, mais experiência",
+            "Persistência em localStorage"
           ]
         }
       ]
@@ -1363,11 +1677,11 @@
         {
           "type": "added",
           "items": [
-            "Bottom Navigation Bar para dispositivos moveis",
-            "Skip Link para navegacao por teclado",
-            "Painel de Configuracoes de Acessibilidade",
+            "Bottom Navigation Bar para dispositivos móveis",
+            "Skip Link para navegação por teclado",
+            "Painel de Configurações de Acessibilidade",
             "Tamanho de fonte ajustavel (12px a 24px)",
-            "Toggle para reduzir animacoes",
+            "Toggle para reduzir animações",
             "Toggle para alto contraste"
           ]
         },
@@ -1385,7 +1699,7 @@
       "codename": "Vibrant Viterbi",
       "type": "minor",
       "releaseDate": "2026-01-15",
-      "description": "Visualizacao interativa de perfil comportamental e Match Score",
+      "description": "Visualização interativa de perfil comportamental e Match Score",
       "isCurrent": false,
       "changes": [
         {
@@ -1393,9 +1707,9 @@
           "items": [
             "Radar chart interativo para perfil comportamental",
             "Match Score com breakdown transparente por categorias",
-            "Secao 'Por que voce combina' com pontos fortes",
-            "Comparacao visual candidato vs perfil ideal da vaga",
-            "Ferramenta de comparacao de ate 3 candidatos"
+            "Seção 'Por que você combina' com pontos fortes",
+            "Comparação visual candidato vs perfil ideal da vaga",
+            "Ferramenta de comparação de até 3 candidatos"
           ]
         }
       ]
@@ -1405,17 +1719,17 @@
       "codename": "Ultimate Ullman",
       "type": "minor",
       "releaseDate": "2026-01-15",
-      "description": "Sistema de gamificacao completo para candidatos",
+      "description": "Sistema de gamificação completo para candidatos",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Sistema de XP com pontuacao por acoes",
-            "5 niveis de progressao: Iniciante ate Expert",
+            "Sistema de XP com pontuação por ações",
+            "5 níveis de progressao: Iniciante até Expert",
             "17 badges organizados em 5 categorias",
             "Sistema de Streak com contador de dias consecutivos",
-            "Celebracoes visuais ao desbloquear badges (confetti)"
+            "Celebrações visuais ao desbloquear badges (confetti)"
           ]
         }
       ]
@@ -1425,18 +1739,18 @@
       "codename": "Tremendous Torvalds",
       "type": "minor",
       "releaseDate": "2026-01-15",
-      "description": "Design System expandido e sistema de animacoes",
+      "description": "Design System expandido e sistema de animações",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
             "Tokens de espacamento, border-radius e timing",
-            "Sistema de animacoes centralizado",
+            "Sistema de animações centralizado",
             "Hook useReducedMotion para acessibilidade",
             "Componentes de skeleton loading",
             "Componentes de estado: Empty, Error, Loading, Success",
-            "Sistema de celebracoes visuais com canvas-confetti"
+            "Sistema de celebrações visuais com canvas-confetti"
           ]
         }
       ]
@@ -1446,18 +1760,18 @@
       "codename": "Stellar Shannon",
       "type": "minor",
       "releaseDate": "2026-01-15",
-      "description": "Modo escuro (dark mode) com 3 opcoes",
+      "description": "Modo escuro (dark mode) com 3 opções",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Dark mode com 3 opcoes: Claro, Escuro, Sistema",
+            "Dark mode com 3 opções: Claro, Escuro, Sistema",
             "Toggle de tema no header do dashboard",
-            "Secao 'Aparencia' nas configuracoes",
-            "Deteccao automatica da preferencia do sistema",
-            "Persistencia da escolha de tema no localStorage",
-            "Script anti-flash para evitar mudanca brusca"
+            "Seção 'Aparência' nas configurações",
+            "Detecção automática da preferência do sistema",
+            "Persistência da escolha de tema no localStorage",
+            "Script anti-flash para evitar mudança brusca"
           ]
         },
         {
@@ -1479,13 +1793,13 @@
         {
           "type": "added",
           "items": [
-            "Pagina publica de ajuda (/ajuda)",
+            "Página pública de ajuda (/ajuda)",
             "FAQ accordion com busca em tempo real",
             "Sistema de tickets de suporte",
             "10 categorias de ticket",
             "Upload de anexos em tickets",
-            "Thread de conversacao em tickets",
-            "Simulacao de respostas automaticas do suporte"
+            "Thread de conversação em tickets",
+            "Simulação de respostas automáticas do suporte"
           ]
         }
       ]
@@ -1501,10 +1815,10 @@
         {
           "type": "added",
           "items": [
-            "Pagina 'Minhas Entrevistas' (/candidato/entrevistas)",
+            "Página 'Minhas Entrevistas' (/candidato/entrevistas)",
             "3 abas: Pendentes, Confirmadas, Realizadas",
-            "Aceitar horario proposto pela empresa",
-            "Sugerir horarios alternativos (ate 3)",
+            "Aceitar horário proposto pela empresa",
+            "Sugerir horarios alternativos (até 3)",
             "Mini-calendario com indicadores de entrevistas",
             "Badge de entrevistas pendentes no menu lateral"
           ]
@@ -1516,16 +1830,16 @@
       "codename": "Powerful Perlis",
       "type": "minor",
       "releaseDate": "2026-01-15",
-      "description": "Configuracao de visibilidade do perfil do candidato",
+      "description": "Configuração de visibilidade do perfil do candidato",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "3 modos de visibilidade: Publico, Parcial, Privado",
+            "3 modos de visibilidade: Público, Parcial, Privado",
             "Modo Parcial: aparece como 'Perfil Anonimo #XXXX'",
             "Indicador visual 'Anonimo' com badge para empresas",
-            "Avatar generico para candidatos anonimos"
+            "Avatar genérico para candidatos anonimos"
           ]
         }
       ]
@@ -1535,18 +1849,18 @@
       "codename": "Outstanding Odersky",
       "type": "minor",
       "releaseDate": "2026-01-15",
-      "description": "Sistema de notificacoes para candidatos",
+      "description": "Sistema de notificações para candidatos",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
             "Icone de sino no header do dashboard do candidato",
-            "Badge com contador de notificacoes nao lidas",
-            "Dropdown com as 5 ultimas notificacoes",
-            "Pagina completa de notificacoes (/candidato/notificacoes)",
-            "6 tipos de notificacao diferentes",
-            "Formatacao de tempo relativo"
+            "Badge com contador de notificações não lidas",
+            "Dropdown com as 5 ultimas notificações",
+            "Página completa de notificações (/candidato/notificações)",
+            "6 tipos de notificação diferentes",
+            "Formatação de tempo relativo"
           ]
         }
       ]
@@ -1562,11 +1876,11 @@
         {
           "type": "added",
           "items": [
-            "Botao de coracao em todos os cards de vaga",
-            "Nova pagina 'Vagas Salvas' (/candidato/vagas-salvas)",
+            "Botão de coração em todos os cards de vaga",
+            "Nova página 'Vagas Salvas' (/candidato/vagas-salvas)",
             "Contador de vagas salvas no menu lateral",
-            "Indicador de prazo proximo 'Encerra em X dias'",
-            "Persistencia de favoritos via localStorage"
+            "Indicador de prazo próximo 'Encerra em X dias'",
+            "Persistência de favoritos via localStorage"
           ]
         }
       ]
@@ -1576,17 +1890,17 @@
       "codename": "Magnificent McCarthy",
       "type": "minor",
       "releaseDate": "2026-01-15",
-      "description": "Exportacao de curriculos em PDF com 3 templates",
+      "description": "Exportação de currículos em PDF com 3 templates",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
             "Tres templates de PDF: Classico, Moderno, Minimalista",
-            "Modal de exportacao com selecao de template",
-            "Checkboxes para selecao de secoes a incluir",
-            "Opcao para incluir link do LinkedIn no PDF",
-            "Indicador de loading durante geracao do PDF"
+            "Modal de exportação com seleção de template",
+            "Checkboxes para seleção de seções a incluir",
+            "Opção para incluir link do LinkedIn no PDF",
+            "Indicador de loading durante geração do PDF"
           ]
         }
       ]
@@ -1596,24 +1910,24 @@
       "codename": "Legendary Lamport",
       "type": "minor",
       "releaseDate": "2026-01-15",
-      "description": "Sistema avancado de multiplos curriculos",
+      "description": "Sistema avancado de múltiplos currículos",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Pagina de listagem de curriculos com abas",
-            "Duplicar, arquivar/desarquivar curriculos",
-            "Calculo de completude detalhado",
-            "Barra de progresso visual por curriculo",
-            "Editor de curriculo em 5 abas",
-            "Badge 'Atual' nas experiencias em andamento"
+            "Página de listagem de currículos com abas",
+            "Duplicar, arquivar/desarquivar currículos",
+            "Cálculo de completude detalhado",
+            "Barra de progresso visual por currículo",
+            "Editor de currículo em 5 abas",
+            "Badge 'Atual' nas experiências em andamento"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "Navegacao do candidato: 'Meu Perfil' renomeado para 'Curriculos'"
+            "Navegação do candidato: 'Meu Perfil' renomeado para 'Currículos'"
           ]
         }
       ]
@@ -1623,7 +1937,7 @@
       "codename": "Keen Knuth",
       "type": "minor",
       "releaseDate": "2026-01-15",
-      "description": "Gestao de candidatos para administrador",
+      "description": "Gestão de candidatos para administrador",
       "isCurrent": false,
       "changes": [
         {
@@ -1632,8 +1946,8 @@
             "Listagem de candidatos com busca por nome ou email",
             "Filtros: status, teste comportamental, perfil Gauge-Pro",
             "Drawer de detalhes com 4 tabs",
-            "Tab Teste: resultado comportamental completo com grafico",
-            "Acoes administrativas: desativar, reativar, resetar teste"
+            "Tab Teste: resultado comportamental completo com gráfico",
+            "Ações administrativas: desativar, reativar, resetar teste"
           ]
         }
       ]
@@ -1643,7 +1957,7 @@
       "codename": "Jovial Joy",
       "type": "minor",
       "releaseDate": "2026-01-15",
-      "description": "Gestao de empresas para administrador",
+      "description": "Gestão de empresas para administrador",
       "isCurrent": false,
       "changes": [
         {
@@ -1652,7 +1966,7 @@
             "Listagem de empresas com busca por nome ou CNPJ",
             "Filtros: status, plano, setor",
             "Drawer de detalhes com 4 tabs",
-            "Acoes administrativas: desativar, reativar, alterar plano",
+            "Ações administrativas: desativar, reativar, alterar plano",
             "Alertas visuais para empresas com pagamento pendente"
           ]
         }
@@ -1663,17 +1977,17 @@
       "codename": "Innovative Iverson",
       "type": "minor",
       "releaseDate": "2026-01-14",
-      "description": "Dashboard administrativo com visualizacoes avancadas",
+      "description": "Dashboard administrativo com visualizações avancadas",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
             "Grafico de crescimento de empresas e candidatos",
-            "Distribuicao visual de candidaturas por status",
+            "Distribuição visual de candidaturas por status",
             "Ranking das top 5 empresas por vagas ativas",
-            "Secao de acoes rapidas",
-            "Cards de metricas clicaveis"
+            "Seção de ações rapidas",
+            "Cards de métricas clicáveis"
           ]
         }
       ]
@@ -1683,16 +1997,16 @@
       "codename": "Humble Hopper",
       "type": "minor",
       "releaseDate": "2026-01-11",
-      "description": "Pagina de configuracoes da empresa completa",
+      "description": "Página de configurações da empresa completa",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Tab Perfil: upload de logo, informacoes basicas",
+            "Tab Perfil: upload de logo, informações básicas",
             "Tab Equipe: lista de membros, convites pendentes",
-            "Tab Conta: seguranca, preferencias de notificacao",
-            "Tab Plano: informacoes do plano, barras de uso"
+            "Tab Conta: segurança, preferências de notificação",
+            "Tab Plano: informações do plano, barras de uso"
           ]
         }
       ]
@@ -1711,7 +2025,7 @@
             "Lista de conversas agrupadas por candidato + vaga",
             "Filtro por vaga com dropdown",
             "Busca por nome do candidato",
-            "Indicador de mensagens nao lidas",
+            "Indicador de mensagens não lidas",
             "Layout responsivo (lista/detalhe separados em mobile)"
           ]
         }
@@ -1722,16 +2036,16 @@
       "codename": "Fantastic Floyd",
       "type": "minor",
       "releaseDate": "2026-01-11",
-      "description": "Solicitacao de teste comportamental pela empresa",
+      "description": "Solicitação de teste comportamental pela empresa",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Modal de solicitacao com mensagem personalizavel e prazo",
+            "Modal de solicitação com mensagem personalizável e prazo",
             "Status do teste na candidatura",
-            "Notificacao especial para candidato nas mensagens",
-            "Botao direto para realizar teste na notificacao"
+            "Notificação especial para candidato nas mensagens",
+            "Botão direto para realizar teste na notificação"
           ]
         }
       ]
@@ -1741,7 +2055,7 @@
       "codename": "Epic Engelbart",
       "type": "minor",
       "releaseDate": "2026-01-11",
-      "description": "Gestao de Candidaturas completa (Pipeline Kanban)",
+      "description": "Gestão de Candidaturas completa (Pipeline Kanban)",
       "isCurrent": false,
       "changes": [
         {
@@ -1750,9 +2064,9 @@
             "Pipeline visual (Kanban) com colunas de status",
             "Cards de candidato com match e perfil comportamental",
             "Drawer com detalhes do candidato (5 tabs)",
-            "Movimentacao de candidatos entre etapas",
-            "Modal de reprovacao com motivo opcional",
-            "Anotacoes internas por candidato"
+            "Movimentação de candidatos entre etapas",
+            "Modal de reprovação com motivo opcional",
+            "Anotações internas por candidato"
           ]
         }
       ]
@@ -1771,7 +2085,7 @@
             "Listagem de candidatos com busca e filtros",
             "Busca com debounce de 300ms",
             "Cards de candidato com avatar e indicador de match",
-            "Pagina de perfil completo do candidato",
+            "Página de perfil completo do candidato",
             "Dropdown para convidar candidato para vagas"
           ]
         }
@@ -1790,8 +2104,8 @@
           "items": [
             "Filtros por status com contadores",
             "Formulario completo com checkboxes de beneficios",
-            "Edicao de vaga existente",
-            "Gestao de status (pausar, reativar, encerrar)",
+            "Edição de vaga existente",
+            "Gestão de status (pausar, reativar, encerrar)",
             "Duplicar e excluir vaga"
           ]
         }
@@ -1808,10 +2122,10 @@
         {
           "type": "added",
           "items": [
-            "Saudacao personalizada com horario",
-            "Cards de metricas clicaveis",
+            "Saudação personalizada com horário",
+            "Cards de métricas clicáveis",
             "Grafico de barras de candidaturas por vaga",
-            "Secao de acoes pendentes e rapidas",
+            "Seção de ações pendentes e rapidas",
             "Indicadores de match e teste nas candidaturas"
           ]
         }
@@ -1822,17 +2136,17 @@
       "codename": "Amazing Abelson",
       "type": "minor",
       "releaseDate": "2026-01-11",
-      "description": "Pagina de configuracoes do candidato",
+      "description": "Página de configurações do candidato",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Secao de seguranca (alterar email/senha)",
-            "Preferencias de notificacao por email",
-            "Configuracao de visibilidade do perfil",
-            "Botao para baixar dados pessoais",
-            "Opcao de desativar e excluir conta"
+            "Seção de segurança (alterar email/senha)",
+            "Preferências de notificação por email",
+            "Configuração de visibilidade do perfil",
+            "Botão para baixar dados pessoais",
+            "Opção de desativar e excluir conta"
           ]
         }
       ]
@@ -1849,9 +2163,9 @@
           "type": "added",
           "items": [
             "Lista de conversas agrupadas por empresa e vaga",
-            "Visualizacao de historico de mensagens",
+            "Visualização de histórico de mensagens",
             "Envio de novas mensagens em tempo real",
-            "Indicador de mensagens nao lidas",
+            "Indicador de mensagens não lidas",
             "Busca de conversas por empresa ou vaga"
           ]
         }
@@ -1862,7 +2176,7 @@
       "codename": "Youthful Yoneda",
       "type": "minor",
       "releaseDate": "2026-01-11",
-      "description": "Pagina Minhas Candidaturas completa",
+      "description": "Página Minhas Candidaturas completa",
       "isCurrent": false,
       "changes": [
         {
@@ -1870,8 +2184,8 @@
           "items": [
             "Listagem de candidaturas ordenada por data",
             "Filtros por status com contadores",
-            "Cards com informacoes da vaga e empresa",
-            "Funcionalidade de cancelamento com confirmacao",
+            "Cards com informações da vaga e empresa",
+            "Funcionalidade de cancelamento com confirmação",
             "Estado vazio com link para busca de vagas"
           ]
         }
@@ -1888,11 +2202,11 @@
         {
           "type": "added",
           "items": [
-            "Botao 'Anterior' para navegacao entre questoes",
-            "Persistencia de progresso via localStorage",
+            "Botão 'Anterior' para navegação entre questoes",
+            "Persistência de progresso via localStorage",
             "Tela de processamento animada ao finalizar",
-            "Secao 'Caracteristicas Principais' no resultado",
-            "Botao 'Baixar PDF'"
+            "Seção 'Caracteristicas Principais' no resultado",
+            "Botão 'Baixar PDF'"
           ]
         }
       ]
@@ -1908,10 +2222,10 @@
         {
           "type": "added",
           "items": [
-            "Modal de confirmacao de candidatura",
+            "Modal de confirmação de candidatura",
             "Campo opcional de mensagem ao recrutador",
-            "Modal de sucesso com opcoes de navegacao",
-            "Indicador visual 'Candidatado' nas vagas ja aplicadas",
+            "Modal de sucesso com opções de navegação",
+            "Indicador visual 'Candidatado' nas vagas já aplicadas",
             "Hook useApplications para gerenciamento de candidaturas"
           ]
         }
@@ -1922,17 +2236,17 @@
       "codename": "Valiant Von Neumann",
       "type": "minor",
       "releaseDate": "2026-01-11",
-      "description": "Busca de vagas com debounce e paginacao",
+      "description": "Busca de vagas com debounce e paginação",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
             "Busca de vagas com debounce de 300ms",
-            "Dropdown de ordenacao (recentes, maior/menor salario)",
-            "Paginacao de resultados (10 itens por pagina)",
-            "Pagina de detalhes da vaga",
-            "Secao 'Sobre a empresa' na pagina de detalhes"
+            "Dropdown de ordenação (recentes, maior/menor salário)",
+            "Páginação de resultados (10 itens por página)",
+            "Página de detalhes da vaga",
+            "Seção 'Sobre a empresa' na página de detalhes"
           ]
         }
       ]
@@ -1942,17 +2256,17 @@
       "codename": "Ultimate Ullman",
       "type": "minor",
       "releaseDate": "2026-01-11",
-      "description": "Pagina de perfil completo do candidato",
+      "description": "Página de perfil completo do candidato",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Secao de foto de perfil com upload e preview",
+            "Seção de foto de perfil com upload e preview",
             "Contador de caracteres no campo 'Sobre mim'",
-            "Confirmacao de remocao via AlertDialog",
-            "Ordenacao automatica por data",
-            "Validacao de skills duplicadas"
+            "Confirmação de remoção via AlertDialog",
+            "Ordenação automática por data",
+            "Válidação de skills duplicadas"
           ]
         }
       ]
@@ -1989,18 +2303,18 @@
         {
           "type": "added",
           "items": [
-            "Header com efeito glassmorphism nas areas logadas",
-            "Footer com efeito glassmorphism exibindo versao",
-            "Componente GlassHeader reutilizavel",
-            "Componente GlassFooter reutilizavel",
-            "Componente PublicLayout para paginas publicas"
+            "Header com efeito glassmorphism nas áreas logadas",
+            "Footer com efeito glassmorphism exibindo versão",
+            "Componente GlassHeader reutilizável",
+            "Componente GlassFooter reutilizável",
+            "Componente PublicLayout para páginas públicas"
           ]
         },
         {
           "type": "changed",
           "items": [
             "DashboardLayout atualizado com GlassHeader e GlassFooter",
-            "Paginas publicas agora usam PublicLayout"
+            "Páginas públicas agora usam PublicLayout"
           ]
         }
       ]
@@ -2010,15 +2324,15 @@
       "codename": "Reliable Ritchie",
       "type": "minor",
       "releaseDate": "2025-01-10",
-      "description": "Protecao de rotas por tipo de usuario",
+      "description": "Proteção de rotas por tipo de usuario",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Componente ProtectedRoute para protecao de rotas",
+            "Componente ProtectedRoute para proteção de rotas",
             "Componente RedirectIfAuthenticated",
-            "Redirecionamento automatico baseado em autenticacao"
+            "Redirecionamento automático baseado em autenticação"
           ]
         },
         {
@@ -2034,21 +2348,21 @@
       "codename": "Quick Quine",
       "type": "patch",
       "releaseDate": "2025-01-10",
-      "description": "Remocao de referencias a plataforma externa",
+      "description": "Remoção de referências a plataforma externa",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Removidas referencias a plataforma Lovable do projeto"
+            "Removidas referências a plataforma Lovable do projeto"
           ]
         },
         {
           "type": "changed",
           "items": [
             "Atualizados metadados do package.json para AILA",
-            "Atualizado README.md com informacoes do RecrutaRS",
-            "Removida dependencia lovable-tagger"
+            "Atualizado README.md com informações do RecrutaRS",
+            "Removida dependência lovable-tagger"
           ]
         }
       ]
@@ -2065,8 +2379,8 @@
           "type": "added",
           "items": [
             "Estrutura inicial do projeto RecrutaRS",
-            "Landing page com secoes Hero, Features, HowItWorks, CTA",
-            "Sistema de autenticacao mockado (Admin, Empresa, Candidato)",
+            "Landing page com seções Hero, Features, HowItWorks, CTA",
+            "Sistema de autenticação mockado (Admin, Empresa, Candidato)",
             "Dashboards para cada tipo de usuario",
             "Componentes UI baseados em shadcn/ui",
             "Sistema de rotas com React Router v6"

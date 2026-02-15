@@ -1,6 +1,6 @@
 /**
  * AboutHeroCard Component
- * PRD-044: Card principal com versao atual
+ * PRD-044: Card principal com versão atual
  */
 
 import { format, parseISO } from 'date-fns';
@@ -20,7 +20,7 @@ interface AboutHeroCardProps {
 const releaseTypeConfig = {
   major: {
     label: 'Major',
-    description: 'Mudancas significativas',
+    description: 'Mudanças significativas',
     color: 'bg-red-500/20 text-red-500 border-red-500/30',
   },
   minor: {
@@ -30,7 +30,7 @@ const releaseTypeConfig = {
   },
   patch: {
     label: 'Patch',
-    description: 'Correcoes e ajustes',
+    description: 'Correções e ajustes',
     color: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
   },
 };
@@ -93,7 +93,7 @@ export function AboutHeroCard({ version, onViewHistory }: AboutHeroCardProps) {
           <div className="p-4 md:p-6 text-center">
             <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
               <Calendar className="w-4 h-4" />
-              <span className="text-xs uppercase tracking-wider">Lancamento</span>
+              <span className="text-xs uppercase tracking-wider">Lançamento</span>
             </div>
             <p className="font-semibold text-sm md:text-base">{formattedDate}</p>
           </div>
@@ -107,7 +107,7 @@ export function AboutHeroCard({ version, onViewHistory }: AboutHeroCardProps) {
           <div className="p-4 md:p-6 text-center">
             <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
               <Sparkles className="w-4 h-4" />
-              <span className="text-xs uppercase tracking-wider">Mudancas</span>
+              <span className="text-xs uppercase tracking-wider">Mudanças</span>
             </div>
             <p className="font-semibold text-sm md:text-base">{totalChanges} itens</p>
           </div>
@@ -121,7 +121,7 @@ export function AboutHeroCard({ version, onViewHistory }: AboutHeroCardProps) {
             onClick={onViewHistory}
           >
             <ArrowDown className="w-4 h-4 mr-2" />
-            O que ha de novo
+            O que há de novo
           </Button>
         </div>
       </CardContent>

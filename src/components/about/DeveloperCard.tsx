@@ -1,6 +1,6 @@
 /**
  * DeveloperCard Component
- * PRD-044: Card com informacoes do desenvolvedor
+ * PRD-044: Card com informações do desenvolvedor
  */
 
 import { ExternalLink, Code2 } from 'lucide-react';
@@ -27,14 +27,14 @@ export function DeveloperCard() {
             </div>
           </div>
 
-          {/* Descricao - flex-1 para ocupar espaco */}
+          {/* Descrição - flex-1 para ocupar espaço */}
           <p className="flex-1 text-sm text-muted-foreground md:border-l md:pl-6">
-            Desenvolvemos solucoes inteligentes para recrutamento e gestao de talentos,
-            combinando tecnologia de ponta com analise comportamental para conectar
+            Desenvolvemos soluções inteligentes para recrutamento e gestão de talentos,
+            combinando tecnologia de ponta com análise comportamental para conectar
             empresas aos melhores candidatos.
           </p>
 
-          {/* Botao no final */}
+          {/* Botão no final */}
           <Button
             variant="outline"
             className="shrink-0"

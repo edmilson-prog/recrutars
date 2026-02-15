@@ -1,6 +1,6 @@
 /**
  * VersionTooltip Component
- * PRD-044: Tooltip interativo de versao no footer
+ * PRD-044: Tooltip interativo de versão no footer
  */
 
 import { ReactNode } from 'react';
@@ -61,7 +61,7 @@ export function VersionTooltip({ children }: VersionTooltipProps) {
         sideOffset={8}
       >
         <div className="space-y-3">
-          {/* Header com versao e codinome */}
+          {/* Header com versão e codinome */}
           <div className="flex items-start justify-between gap-2">
             <div>
               <div className="flex items-center gap-2">
@@ -82,12 +82,12 @@ export function VersionTooltip({ children }: VersionTooltipProps) {
             </Badge>
           </div>
 
-          {/* Data de lancamento */}
+          {/* Data de lançamento */}
           <div className="text-sm text-muted-foreground">
-            Lancamento: {formattedDate}
+            Lançamento: {formattedDate}
           </div>
 
-          {/* Descricao */}
+          {/* Descrição */}
           <p className="text-sm">
             {version.description}
           </p>
@@ -95,11 +95,11 @@ export function VersionTooltip({ children }: VersionTooltipProps) {
           {/* PRD reference se existir */}
           {version.prd && (
             <div className="text-xs text-muted-foreground">
-              Referencia: {version.prd}
+              Referência: {version.prd}
             </div>
           )}
 
-          {/* Link para pagina Sobre */}
+          {/* Link para página Sobre */}
           <Link
             to="/sobre"
             className={cn(
@@ -109,7 +109,7 @@ export function VersionTooltip({ children }: VersionTooltipProps) {
             )}
           >
             <Sparkles className="w-4 h-4" />
-            Ver o que ha de novo
+            Ver o que há de novo
             <ExternalLink className="w-3 h-3 ml-auto" />
           </Link>
         </div>

@@ -1,6 +1,6 @@
 /**
  * VersionAccordion Component
- * PRD-044: Accordion expansivel com versoes
+ * PRD-044: Accordion expansível com versões
  */
 
 import { format, parseISO } from 'date-fns';
@@ -65,7 +65,7 @@ const changeTypeConfig: Record<ChangeType, { label: string; icon: typeof Plus; c
     color: 'text-purple-500',
   },
   security: {
-    label: 'Seguranca',
+    label: 'Segurança',
     icon: Shield,
     color: 'text-orange-500',
   },

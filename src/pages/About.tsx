@@ -1,6 +1,6 @@
 /**
  * About Page
- * PRD-044: Pagina "Sobre" e Tooltip de Versao no Footer
+ * PRD-044: Página "Sobre" e Tooltip de Versão no Footer
  */
 
 import { useRef } from 'react';
@@ -58,7 +58,7 @@ export default function AboutPage() {
               <AlertCircle className="w-12 h-12 mx-auto text-destructive mb-4" />
               <h2 className="text-lg font-semibold mb-2">Erro ao carregar dados</h2>
               <p className="text-muted-foreground">
-                Nao foi possivel carregar o historico de versoes.
+                Não foi possível carregar o histórico de versões.
                 Tente novamente mais tarde.
               </p>
             </CardContent>
@@ -71,7 +71,7 @@ export default function AboutPage() {
   return (
     <DashboardLayout userType={userType}>
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Hero Card com versao atual */}
+        {/* Hero Card com versão atual */}
         {currentVersion && (
           <AboutHeroCard
             version={currentVersion}
@@ -82,7 +82,7 @@ export default function AboutPage() {
         {/* Card do desenvolvedor - horizontal abaixo do hero */}
         <DeveloperCard />
 
-        {/* Historico de versoes - largura total */}
+        {/* Histórico de versões - largura total */}
         <VersionHistory
           ref={historyRef}
           versions={versions}

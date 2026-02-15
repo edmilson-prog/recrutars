@@ -1,6 +1,6 @@
 /**
  * VersionHistory Component
- * PRD-044: Historico de versoes com busca e filtros
+ * PRD-044: Histórico de versões com busca e filtros
  */
 
 import { forwardRef } from 'react';
@@ -48,10 +48,10 @@ export const VersionHistory = forwardRef<HTMLDivElement, VersionHistoryProps>(
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <CardTitle className="text-xl">Historico de Versoes</CardTitle>
+              <CardTitle className="text-xl">Histórico de Versões</CardTitle>
               <div className="text-sm text-muted-foreground mt-1">
                 <Badge variant="secondary" className="font-normal">
-                  {filteredVersions.length} de {versions.length} versoes
+                  {filteredVersions.length} de {versions.length} versões
                 </Badge>
               </div>
             </div>
@@ -63,7 +63,7 @@ export const VersionHistory = forwardRef<HTMLDivElement, VersionHistoryProps>(
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar versao, funcionalidade..."
+                placeholder="Buscar versão, funcionalidade..."
                 value={search}
                 onChange={(e) => onSearchChange(e.target.value)}
                 className="pl-9"
@@ -93,14 +93,14 @@ export const VersionHistory = forwardRef<HTMLDivElement, VersionHistoryProps>(
               onValueChange={(value) => onDateRangeChange(value as DateFilter)}
             >
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="Periodo" />
+                <SelectValue placeholder="Período" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todo o periodo</SelectItem>
-                <SelectItem value="week">Ultima semana</SelectItem>
-                <SelectItem value="month">Ultimo mes</SelectItem>
-                <SelectItem value="3months">Ultimos 3 meses</SelectItem>
-                <SelectItem value="year">Ultimo ano</SelectItem>
+                <SelectItem value="all">Todo o período</SelectItem>
+                <SelectItem value="week">Última semana</SelectItem>
+                <SelectItem value="month">Último mês</SelectItem>
+                <SelectItem value="3months">Últimos 3 meses</SelectItem>
+                <SelectItem value="year">Último ano</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -109,7 +109,7 @@ export const VersionHistory = forwardRef<HTMLDivElement, VersionHistoryProps>(
         <CardContent>
           {filteredVersions.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <p>Nenhuma versao encontrada com os filtros atuais.</p>
+              <p>Nenhuma versão encontrada com os filtros atuais.</p>
               <p className="text-sm mt-1">Tente ajustar os filtros ou limpar a busca.</p>
             </div>
           ) : (
