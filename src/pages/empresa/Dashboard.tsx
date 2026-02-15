@@ -15,8 +15,11 @@ import {
 import { useJobsByCompany } from '@/hooks/useJobsQuery';
 import { useApplications as useApplicationsQuery } from '@/hooks/useApplicationsQuery';
 import { useInterviewsByCompany } from '@/hooks/useInterviewsQuery';
+import { useUnreadCount } from '@/hooks/useMessagesQuery';
+import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
+import { useSubscription } from '@/hooks/usePlansQuery';
 import { Progress } from '@/components/ui/progress';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { SuggestedCandidatesWidget } from '@/components/empresa/SuggestedCandidatesWidget';
 import { formatRelativeDate } from '@/lib/formatters';
@@ -34,12 +37,16 @@ const getGreeting = () => {
 
 export default function CompanyDashboard() {
   const { user, currentCompany } = useAuth();
+  const navigate = useNavigate();
   const companyId = currentCompany?.id ?? '';
 
   // Fetch data from service layer
   const { data: companyJobs = [], isLoading: isLoadingJobs } = useJobsByCompany(companyId);
   const { data: applicationsResult, isLoading: isLoadingApps } = useApplicationsQuery({ companyId });
   const { data: companyInterviews = [], isLoading: isLoadingInterviews } = useInterviewsByCompany(companyId);
+  const { data: unreadCount = 0 } = useUnreadCount(currentCompany?.userId ?? '', 'company');
+  const { data: companyTests = [] } = useBehavioralTests({ companyId });
+  const { data: subscription } = useSubscription(currentCompany?.userId);
 
   const allApplications = applicationsResult?.data ?? [];
   const recentApplications = allApplications.slice(0, 5);
@@ -49,13 +56,20 @@ export default function CompanyDashboard() {
   // Calculate metrics
   const activeJobsCount = companyJobs.filter(j => j.status === 'active').length;
   const totalCandidates = companyJobs.reduce((sum, job) => sum + job.applicationsCount, 0);
-  const newTodayCount = 12; // TODO: compute from real data when timestamps available
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const newTodayCount = allApplications.filter(app =>
+    new Date(app.appliedAt) >= startOfToday
+  ).length;
+
   const inReviewCount = allApplications.filter(app =>
     app.status === 'reviewing' && companyJobs.some(job => job.id === app.jobId)
   ).length;
 
   // Novos cálculos para cards de referência
   const totalJobsCount = companyJobs.length;
+  const draftJobsCount = companyJobs.filter(j => j.status === 'draft').length;
   const pausedJobsCount = companyJobs.filter(j => j.status === 'paused').length;
   const closedJobsCount = companyJobs.filter(j => j.status === 'closed').length;
 
@@ -66,23 +80,45 @@ export default function CompanyDashboard() {
     i => i.status === 'completed'
   ).length;
 
-  // Métricas mock locais
-  const dashboardMetrics = {
-    planName: 'Seleção Inteligente',
-    planTestsTotal: 5,
-    planTestsUsed: 0,
-    assessmentsThisMonth: 0,
-    assessmentsPending: 7,
-    candidatesEvaluated: 27,
-    avgAssessmentTime: 96,
-    activeEmployees: 0,
-  };
+  // Métricas de testes comportamentais (dados reais)
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  const completedTests = companyTests.filter(t => t.status === 'completed');
+  const completedTestsThisMonth = completedTests.filter(t =>
+    t.completedAt && new Date(t.completedAt) >= startOfMonth
+  );
+  const pendingTestsCount = companyTests.filter(t => t.status === 'sent' || t.status === 'in_progress').length;
+  const candidatesEvaluated = new Set(completedTests.map(t => t.candidateId)).size;
+  const testsToReview = allApplications.filter(a => a.testStatus === 'realizado').length;
+
+  // Métricas de plano
+  const planName = subscription?.planName ?? 'Sem plano';
+
+  // Métricas de contratação
+  const hiredCount = allApplications.filter(a => a.status === 'hired').length;
+  const hiredThisMonth = allApplications.filter(a =>
+    a.status === 'hired' && new Date(a.updatedAt) >= startOfMonth
+  ).length;
+  const hiredLastMonth = allApplications.filter(a =>
+    a.status === 'hired' &&
+    new Date(a.updatedAt) >= startOfLastMonth &&
+    new Date(a.updatedAt) < startOfMonth
+  ).length;
+
+  const hiredApps = allApplications.filter(a => a.status === 'hired');
+  const avgHireDays = hiredApps.length > 0
+    ? Math.round(hiredApps.reduce((sum, a) => {
+        const days = (new Date(a.updatedAt).getTime() - new Date(a.appliedAt).getTime()) / (1000 * 60 * 60 * 24);
+        return sum + Math.max(days, 0);
+      }, 0) / hiredApps.length)
+    : 0;
 
   // Mini-cards de status de vagas
   const jobStatusCards = [
     { label: 'Total de Vagas', value: totalJobsCount, icon: LayoutGrid, iconBg: 'bg-blue-100', iconColor: 'text-blue-600', tooltip: 'Número total de vagas criadas pela empresa' },
     { label: 'Vagas Ativas', value: activeJobsCount, icon: CircleCheck, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', tooltip: 'Vagas publicadas e recebendo candidaturas' },
-    { label: 'Rascunhos', value: 0, icon: FileEdit, iconBg: 'bg-slate-100', iconColor: 'text-slate-500', tooltip: 'Vagas em edição ainda não publicadas' },
+    { label: 'Rascunhos', value: draftJobsCount, icon: FileEdit, iconBg: 'bg-slate-100', iconColor: 'text-slate-500', tooltip: 'Vagas em edição ainda não publicadas' },
     { label: 'Pausadas', value: pausedJobsCount, icon: PauseCircle, iconBg: 'bg-amber-100', iconColor: 'text-amber-600', tooltip: 'Vagas temporariamente suspensas' },
     { label: 'Vagas Finalizadas', value: closedJobsCount, icon: CheckCircle2, iconBg: 'bg-sky-100', iconColor: 'text-sky-600', tooltip: 'Vagas encerradas ou preenchidas' },
   ];
@@ -129,19 +165,19 @@ export default function CompanyDashboard() {
   const pendingActions = [
     {
       label: 'Novos candidatos',
-      count: 12,
+      count: newTodayCount,
       href: '/empresa/candidatos',
       icon: UserPlus
     },
     {
       label: 'Mensagens não lidas',
-      count: 5,
+      count: unreadCount,
       href: '/empresa/mensagens',
       icon: MessageSquare
     },
     {
       label: 'Testes para avaliar',
-      count: 3,
+      count: testsToReview,
       href: '/empresa/testes',
       icon: Brain
     },
@@ -224,19 +260,19 @@ export default function CompanyDashboard() {
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <p className="text-xs text-muted-foreground">{dashboardMetrics.planName}</p>
+                <p className="text-xs text-muted-foreground">{planName}</p>
               </div>
             </div>
             <div className="text-3xl font-bold text-foreground mb-3">
-              {dashboardMetrics.planTestsTotal}
+              {companyTests.length}
             </div>
             <div className="space-y-2 mb-4">
               <Progress
-                value={(dashboardMetrics.planTestsUsed / dashboardMetrics.planTestsTotal) * 100}
+                value={companyTests.length > 0 ? (completedTestsThisMonth.length / companyTests.length) * 100 : 0}
                 className="h-2"
               />
               <p className="text-xs text-muted-foreground">
-                {dashboardMetrics.planTestsUsed} de {dashboardMetrics.planTestsTotal} usados este mês
+                {completedTestsThisMonth.length} de {companyTests.length} usados este mês
               </p>
             </div>
             <Link
@@ -271,10 +307,10 @@ export default function CompanyDashboard() {
               </div>
             </div>
             <div className="text-3xl font-bold text-foreground mb-1">
-              {dashboardMetrics.assessmentsThisMonth}
+              {completedTestsThisMonth.length}
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              {dashboardMetrics.assessmentsPending} pendentes
+              {pendingTestsCount} pendentes
             </p>
             <Link
               to="/empresa/testes"
@@ -308,10 +344,10 @@ export default function CompanyDashboard() {
               </div>
             </div>
             <div className="text-3xl font-bold text-foreground mb-1">
-              {dashboardMetrics.candidatesEvaluated}
+              {candidatesEvaluated}
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              Tempo médio: {dashboardMetrics.avgAssessmentTime} min
+              {completedTests.length} com resultado completo
             </p>
             <Link
               to="/empresa/candidatos"
@@ -351,7 +387,7 @@ export default function CompanyDashboard() {
               {allApplications.filter(a => a.status === 'hired').length}
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              {dashboardMetrics.activeEmployees} funcionários ativos
+              {hiredCount} funcionários ativos
             </p>
             <Link
               to="/empresa/candidatos"
@@ -637,7 +673,7 @@ export default function CompanyDashboard() {
                       </td>
                       <td className="py-4 text-muted-foreground">{formatRelativeDate(app.appliedAt)}</td>
                       <td className="py-4 text-right">
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/empresa/candidatos/${app.candidateId}`)}>
                           <Eye className="w-4 h-4" />
                         </Button>
                       </td>
@@ -726,21 +762,19 @@ export default function CompanyDashboard() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-muted-foreground">Contratações este mês</span>
-                  <span className="text-2xl font-bold text-success">{allApplications.filter(a => a.status === 'hired').length}</span>
+                  <span className="text-2xl font-bold text-success">{hiredThisMonth}</span>
                 </div>
-                <div className="flex items-center gap-1 text-success text-sm">
-                  <ArrowUp className="w-4 h-4" />
-                  +50% vs mês anterior
-                </div>
+                {hiredLastMonth > 0 && (
+                  <div className={`flex items-center gap-1 text-sm ${hiredThisMonth >= hiredLastMonth ? 'text-success' : 'text-destructive'}`}>
+                    <ArrowUp className={`w-4 h-4 ${hiredThisMonth < hiredLastMonth ? 'rotate-180' : ''}`} />
+                    {hiredThisMonth >= hiredLastMonth ? '+' : ''}{Math.round(((hiredThisMonth - hiredLastMonth) / hiredLastMonth) * 100)}% vs mês anterior
+                  </div>
+                )}
               </div>
               <div className="border-t border-border pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-muted-foreground">Tempo médio de contratação</span>
-                  <span className="text-2xl font-bold text-foreground">18d</span>
-                </div>
-                <div className="flex items-center gap-1 text-success text-sm">
-                  <Clock className="w-4 h-4" />
-                  -3 dias vs mês anterior
+                  <span className="text-2xl font-bold text-foreground">{hiredApps.length > 0 ? `${avgHireDays}d` : '—'}</span>
                 </div>
               </div>
             </div>
