@@ -33,7 +33,7 @@
             "Dashboard empresa: métricas agora excluem candidaturas com status 'withdrawn' (retiradas) — valor do card 'Total de candidaturas' coincide com a contagem na página de Candidaturas",
             "Minhas Vagas: contagem de candidatos nos cards agora exclui candidaturas retiradas (withdrawn) — trigger SQL corrigido para decrementar ao retirar e incrementar ao reativar candidatura",
             "Editar Vaga: ao salvar alterações, usuário permanece na página de edição em vez de ser redirecionado para a lista de vagas",
-            "Contratação de candidato: corrigido erro 'hire_date is of type date but expression is of type text' — cast TEXT→DATE adicionado na RPC hire_candidate",
+            "Contratação de candidato: corrigidos erros de tipo na RPC hire_candidate — cast TEXT→DATE para hire_date e remoção de ::TEXT em last_test_date (timestamptz)",
             "Modal de contratação: acentuação corrigida em todos os textos (contratação, será, módulo, Gestão, ação, não, início, Salário, Observações, Anotações)"
           ]
         }

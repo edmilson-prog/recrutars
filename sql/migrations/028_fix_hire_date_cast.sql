@@ -1,6 +1,6 @@
--- Migration 028: Fix hire_date TEXT->DATE cast in hire_candidate RPC
--- team_members.hire_date e tipo DATE no banco, mas p_hire_date e TEXT.
--- Adicionado cast p_hire_date::DATE no INSERT de team_members.
+-- Migration 028: Fix type casts in hire_candidate RPC
+-- team_members.hire_date e DATE, p_hire_date e TEXT → cast ::DATE
+-- team_members.last_test_date e timestamptz → remover ::TEXT de NOW()
 
 CREATE OR REPLACE FUNCTION public.hire_candidate(
   p_application_id UUID,
@@ -114,7 +114,7 @@ BEGIN
     CASE WHEN v_gauge IS NOT NULL THEN NULLIF(v_gauge.archetype_id, '') ELSE NULL END,
     TRUE,
     v_app.candidate_id,
-    CASE WHEN v_gauge_status = 'completed' THEN NOW()::TEXT ELSE NULL END
+    CASE WHEN v_gauge_status = 'completed' THEN NOW() ELSE NULL END
   )
   RETURNING id INTO v_team_member_id;
 
