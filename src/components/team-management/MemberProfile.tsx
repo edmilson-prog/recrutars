@@ -6,7 +6,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Table,
@@ -31,8 +30,10 @@ import { cn } from '@/lib/utils';
 import GaugeStatusBadge from './GaugeStatusBadge';
 import { GaugeProRadarChart } from '@/components/corporate-tests/GaugeProRadarChart';
 import { DimensionBarsGaugePro } from '@/components/corporate-tests/DimensionBarsGaugePro';
+import { PracticalAnalysisCard } from '@/components/aiAnalysis/PracticalAnalysisCard';
+import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
 import type { TeamMember, Department, Position } from '@/types/teamManagement';
-import type { DimensionScores } from '@/types/gaugePro';
+import type { DimensionScores, GaugeProAssessment, GaugeProResult } from '@/types/gaugePro';
 
 interface MemberProfileProps {
   member: TeamMember;
@@ -44,6 +45,9 @@ interface MemberProfileProps {
     archetype: string;
     completedAt: string;
   }>;
+  candidateId?: string;
+  gaugeProAssessment?: GaugeProAssessment;
+  gaugeProResult?: GaugeProResult;
   onEdit: () => void;
   onScheduleRetest: () => void;
   onViewDevelopment: () => void;
@@ -67,6 +71,9 @@ export function MemberProfile({
   department,
   position,
   testHistory = [],
+  candidateId,
+  gaugeProAssessment,
+  gaugeProResult,
   onEdit,
   onScheduleRetest,
   onViewDevelopment,
@@ -193,7 +200,15 @@ export function MemberProfile({
         </Card>
       )}
 
-      {/* ── Section 3: Quick Actions ───────────────────────────────────── */}
+      {/* ── Section 3: AI Analysis ──────────────────────────────────────── */}
+      {candidateId && isMapped && (
+        <PracticalAnalysisCard
+          candidateId={candidateId}
+          candidateName={member.name}
+        />
+      )}
+
+      {/* ── Section 4: Quick Actions ────────────────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Card
           className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5"
@@ -234,7 +249,15 @@ export function MemberProfile({
         </Card>
       </div>
 
-      {/* ── Section 4: Test History ────────────────────────────────────── */}
+      {/* ── Section 5: Test Responses ────────────────────────────────── */}
+      {gaugeProAssessment && gaugeProResult && gaugeProAssessment.phase === 'completed' && (
+        <GaugeProResponsesCard
+          assessment={gaugeProAssessment}
+          result={gaugeProResult}
+        />
+      )}
+
+      {/* ── Section 6: Test History ────────────────────────────────────── */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Histórico de Testes</CardTitle>

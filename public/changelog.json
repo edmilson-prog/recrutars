@@ -38,7 +38,8 @@
             "Modal de encerramento de vaga: corrigido warning DOM nesting (Badge dentro de DialogDescription/p) e acentuação (posições, vão, notificação)",
             "Gestão de Equipes: formulário de novo/editar colaborador trocado de Sheet lateral para Dialog centralizado flutuante",
             "Gestão de Equipes: corrigido crash ao editar colaborador com positionId null (membros criados via contratação)",
-            "Perfil do Colaborador: Histórico de Testes agora busca dados reais de gauge_pro_results via imported_from_candidate_id (antes usava mock data vazio)"
+            "Perfil do Colaborador: Histórico de Testes agora busca dados reais de gauge_pro_results via imported_from_candidate_id (antes usava mock data vazio)",
+            "Perfil do Colaborador: adicionadas seções 'Análise Inteligente' (IA comportamental) e 'Respostas do Teste' (seleções e cenários Gauge-Pro) — dados que antes só existiam no perfil do candidato agora acompanham o colaborador"
           ]
         }
       ]

@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTeamMember, useDepartments, usePositions } from '@/hooks/useTeamsQuery';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { useGaugeProSessionByCandidate, useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
 import { Loader2 } from 'lucide-react';
 
 export default function TeamMemberProfile() {
@@ -32,7 +33,10 @@ export default function TeamMemberProfile() {
   const position = member
     ? positions.find((p) => p.id === member.positionId)
     : undefined;
-  const candidateId = member?.importedFromCandidateId;
+  const candidateId = member?.importedFromCandidateId ?? '';
+  const { data: gaugeProAssessment } = useGaugeProSessionByCandidate(candidateId);
+  const { data: gaugeProResult } = useGaugeProResultByCandidate(candidateId);
+
   const { data: memberTestHistory = [] } = useQuery({
     queryKey: ['team-member-test-history', candidateId],
     queryFn: async () => {
@@ -116,6 +120,9 @@ export default function TeamMemberProfile() {
           department={department}
           position={position}
           testHistory={memberTestHistory}
+          candidateId={candidateId || undefined}
+          gaugeProAssessment={gaugeProAssessment ?? undefined}
+          gaugeProResult={gaugeProResult ?? undefined}
           onEdit={() => {
             // Placeholder: open edit modal
           }}
