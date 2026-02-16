@@ -4,7 +4,7 @@
       "version": "1.14.5",
       "codename": "Bridge",
       "type": "patch",
-      "releaseDate": "2026-02-15",
+      "releaseDate": "2026-02-16",
       "description": "Comparação de candidatos restaurada após migração Gauge-Pro. Match score unificado entre Banco de Talentos e Candidatos Salvos. Dashboard empresa com dados reais.",
       "isCurrent": true,
       "changes": [
@@ -35,7 +35,8 @@
             "Editar Vaga: ao salvar alterações, usuário permanece na página de edição em vez de ser redirecionado para a lista de vagas",
             "Contratação de candidato: corrigidos erros na RPC hire_candidate — cast TEXT→DATE (hire_date), remoção de ::TEXT (last_test_date), e valores de gauge_status alinhados ao constraint (mapped/unmapped)",
             "Modal de contratação: acentuação corrigida em todos os textos (contratação, será, módulo, Gestão, ação, não, início, Salário, Observações, Anotações)",
-            "Modal de encerramento de vaga: corrigido warning DOM nesting (Badge dentro de DialogDescription/p) e acentuação (posições, vão, notificação)"
+            "Modal de encerramento de vaga: corrigido warning DOM nesting (Badge dentro de DialogDescription/p) e acentuação (posições, vão, notificação)",
+            "Gestão de Equipes: formulário de novo/editar colaborador trocado de Sheet lateral para Dialog centralizado flutuante"
           ]
         }
       ]
