@@ -8,7 +8,6 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain,
-  X,
   ChevronDown,
   FilePlus,
   Send,
@@ -25,8 +24,7 @@ import { cn } from '@/lib/utils';
 
 // --- localStorage persistence ---
 
-const DISMISS_KEY = 'recrutars-gauge-pro-onboarding-dismissed';
-const COLLAPSE_KEY = 'recrutars-gauge-pro-onboarding-collapsed';
+const SEEN_KEY = 'recrutars-gauge-pro-onboarding-seen';
 
 function loadBool(key: string, fallback: boolean): boolean {
   try {
@@ -107,23 +105,18 @@ export function GaugeProOnboardingBanner({
   onNavigateToTests,
   className,
 }: GaugeProOnboardingBannerProps) {
-  const [isDismissed, setIsDismissed] = useState(() => loadBool(DISMISS_KEY, false));
-  const [isCollapsed, setIsCollapsed] = useState(() => loadBool(COLLAPSE_KEY, false));
-
-  const handleDismiss = useCallback(() => {
-    setIsDismissed(true);
-    saveBool(DISMISS_KEY, true);
-  }, []);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    const seen = loadBool(SEEN_KEY, false);
+    if (!seen) {
+      saveBool(SEEN_KEY, true);
+      return false; // expandido na primeira vez
+    }
+    return true; // colapsado nas vezes seguintes
+  });
 
   const toggleCollapse = useCallback(() => {
-    setIsCollapsed((prev) => {
-      const next = !prev;
-      saveBool(COLLAPSE_KEY, next);
-      return next;
-    });
+    setIsCollapsed((prev) => !prev);
   }, []);
-
-  if (isDismissed) return null;
 
   return (
     <AnimatePresence>
@@ -172,30 +165,21 @@ export function GaugeProOnboardingBanner({
               </p>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <button
-                onClick={toggleCollapse}
-                className="p-1.5 rounded-full hover:bg-primary/10 transition-colors"
-                aria-expanded={!isCollapsed}
-                aria-controls="gauge-pro-onboarding-content"
-                aria-label={isCollapsed ? 'Expandir guia' : 'Recolher guia'}
-              >
-                <ChevronDown
-                  className={cn(
-                    'w-4 h-4 text-muted-foreground transition-transform duration-200',
-                    isCollapsed && '-rotate-90'
-                  )}
-                />
-              </button>
-              <button
-                onClick={handleDismiss}
-                className="p-1.5 rounded-full hover:bg-primary/10 transition-colors"
-                aria-label="Fechar introdução ao Gauge-Pro"
-              >
-                <X className="w-4 h-4 text-muted-foreground" />
-              </button>
-            </div>
+            {/* Collapse toggle */}
+            <button
+              onClick={toggleCollapse}
+              className="p-1.5 rounded-full hover:bg-primary/10 transition-colors flex-shrink-0"
+              aria-expanded={!isCollapsed}
+              aria-controls="gauge-pro-onboarding-content"
+              aria-label={isCollapsed ? 'Expandir guia' : 'Recolher guia'}
+            >
+              <ChevronDown
+                className={cn(
+                  'w-4 h-4 text-muted-foreground transition-transform duration-200',
+                  isCollapsed && '-rotate-90'
+                )}
+              />
+            </button>
           </div>
 
           {/* Expandable content */}
