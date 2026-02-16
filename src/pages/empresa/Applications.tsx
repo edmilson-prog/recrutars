@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   DndContext,
@@ -276,8 +276,12 @@ export default function CompanyApplications() {
   const updateStatusMutation = useUpdateApplicationStatus();
   const addNoteMutation = useAddApplicationNote();
 
+  // Read jobId from URL query params (e.g. /empresa/candidaturas?jobId=xxx)
+  const [searchParams] = useSearchParams();
+  const initialJobId = searchParams.get('jobId') ?? '';
+
   // State
-  const [selectedJobId, setSelectedJobId] = useState<string>('');
+  const [selectedJobId, setSelectedJobId] = useState<string>(initialJobId);
   const [selectedApplication, setSelectedApplication] =
     useState<Application | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);

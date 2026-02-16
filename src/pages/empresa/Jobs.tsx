@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Search, MoreVertical, Users, Eye, Pause, Play, Trash2, Edit, Copy, XCircle, X, Briefcase, Brain, Loader2 } from 'lucide-react';
+import { Plus, Search, MoreVertical, Users, Eye, Pause, Play, Trash2, Edit, Copy, XCircle, X, Briefcase, Brain, Loader2, Sparkles } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useJobsByCompany, useUpdateJob, useDeleteJob, useCreateJob } from '@/hooks/useJobsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { Job, JobStatus } from '@/types';
@@ -134,6 +140,10 @@ export default function CompanyJobs() {
               <Edit className="w-4 h-4 mr-2" />
               Editar
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(`/empresa/vagas/${job.id}/candidatos-sugeridos`)}>
+              <Sparkles className="w-4 h-4 mr-2" />
+              Candidatos Sugeridos
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate(`/empresa/vagas/${job.id}/teste`)}>
               <Brain className="w-4 h-4 mr-2" />
               Teste Comportamental
@@ -159,6 +169,10 @@ export default function CompanyJobs() {
             <DropdownMenuItem onClick={() => navigate(`/empresa/vagas/${job.id}/editar`)}>
               <Edit className="w-4 h-4 mr-2" />
               Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(`/empresa/vagas/${job.id}/candidatos-sugeridos`)}>
+              <Sparkles className="w-4 h-4 mr-2" />
+              Candidatos Sugeridos
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setJobToReactivate(job)}>
               <Play className="w-4 h-4 mr-2" />
@@ -316,14 +330,38 @@ export default function CompanyJobs() {
                     <span>Criada em {job.createdAt}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-xl">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => navigate(`/empresa/candidaturas?jobId=${job.id}`)}
+                    className="flex items-center gap-2 px-4 py-2 bg-muted rounded-xl cursor-pointer hover:bg-muted/80 transition-colors"
+                    aria-label={`Ver ${job.applicationsCount} candidaturas para ${job.title}`}
+                  >
                     <Users className="w-5 h-5 text-primary" />
                     <div className="text-center">
                       <div className="font-semibold text-foreground">{job.applicationsCount}</div>
                       <div className="text-xs text-muted-foreground">candidatos</div>
                     </div>
-                  </div>
+                  </button>
+                  {job.status !== 'closed' && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => navigate(`/empresa/vagas/${job.id}/candidatos-sugeridos`)}
+                            className="text-muted-foreground hover:text-secondary"
+                            aria-label="Candidatos Sugeridos"
+                          >
+                            <Sparkles className="w-5 h-5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Candidatos Sugeridos</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
