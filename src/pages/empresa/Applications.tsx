@@ -326,6 +326,9 @@ export default function CompanyApplications() {
     return map;
   }, [applications]);
 
+  // Total de candidaturas ativas (exclui withdrawn) — exibido no badge do titulo
+  const totalActiveApplications = applications.filter(a => a.status !== 'withdrawn').length;
+
   // Notes state (local + fetched)
   const [localNotes, setLocalNotes] = useState<ApplicationNote[]>([]);
   const notes = localNotes; // Will be populated from fetched + local
@@ -715,7 +718,16 @@ export default function CompanyApplications() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Candidaturas</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-foreground">Candidaturas</h1>
+            <Badge
+              variant="secondary"
+              className="text-base font-semibold px-3 py-1 bg-secondary/10 text-secondary"
+              aria-label={`${totalActiveApplications} candidaturas no total`}
+            >
+              {totalActiveApplications}
+            </Badge>
+          </div>
           <p className="text-muted-foreground">
             Gerencie as candidaturas das suas vagas
           </p>
@@ -790,6 +802,41 @@ export default function CompanyApplications() {
             )}
           </div>
         </div>
+
+        {/* Summary Strip — breakdown da vaga selecionada */}
+        {selectedJobId && !isLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-wrap items-center gap-3 px-4 py-2.5 bg-muted/50 rounded-xl border border-border/50"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="text-sm font-medium text-foreground">
+              {jobApplications.filter(a => a.status !== 'withdrawn').length} nesta vaga
+            </span>
+            <Separator orientation="vertical" className="h-4" />
+            {[
+              { key: 'pending',   label: 'Novos',       color: 'text-blue-600',   bg: 'bg-blue-500/10' },
+              { key: 'reviewing', label: 'Em Análise',   color: 'text-yellow-600', bg: 'bg-yellow-500/10' },
+              { key: 'interview', label: 'Entrevista',   color: 'text-purple-600', bg: 'bg-purple-500/10' },
+              { key: 'offer',     label: 'Aprovados',    color: 'text-green-600',  bg: 'bg-green-500/10' },
+            ].map(({ key, label, color, bg }) => (
+              <span
+                key={key}
+                className={cn(
+                  "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full",
+                  bg, color
+                )}
+              >
+                <span className="font-bold">
+                  {groupedApplications[key as keyof typeof groupedApplications]?.length ?? 0}
+                </span>
+                <span className="hidden sm:inline">{label}</span>
+              </span>
+            ))}
+          </motion.div>
+        )}
 
         {/* Loading State */}
         {isLoading && (

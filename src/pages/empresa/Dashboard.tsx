@@ -49,21 +49,23 @@ export default function CompanyDashboard() {
   const { data: subscription } = useSubscription(currentCompany?.userId);
 
   const allApplications = applicationsResult?.data ?? [];
+  // Excluir candidaturas retiradas (withdrawn) — consistente com pagina de Candidaturas
+  const activeApplications = allApplications.filter(app => app.status !== 'withdrawn');
   const recentApplications = allApplications.slice(0, 5);
 
   const isLoading = isLoadingJobs || isLoadingApps;
 
   // Calculate metrics
   const activeJobsCount = companyJobs.filter(j => j.status === 'active').length;
-  const totalCandidates = allApplications.length;
+  const totalCandidates = activeApplications.length;
 
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const newTodayCount = allApplications.filter(app =>
+  const newTodayCount = activeApplications.filter(app =>
     new Date(app.appliedAt) >= startOfToday
   ).length;
 
-  const inReviewCount = allApplications.filter(app =>
+  const inReviewCount = activeApplications.filter(app =>
     app.status === 'reviewing' && companyJobs.some(job => job.id === app.jobId)
   ).length;
 
@@ -90,23 +92,23 @@ export default function CompanyDashboard() {
   );
   const pendingTestsCount = companyTests.filter(t => t.status === 'sent' || t.status === 'in_progress').length;
   const candidatesEvaluated = new Set(completedTests.map(t => t.candidateId)).size;
-  const testsToReview = allApplications.filter(a => a.testStatus === 'realizado').length;
+  const testsToReview = activeApplications.filter(a => a.testStatus === 'realizado').length;
 
   // Métricas de plano
   const planName = subscription?.planName ?? 'Sem plano';
 
   // Métricas de contratação
-  const hiredCount = allApplications.filter(a => a.status === 'hired').length;
-  const hiredThisMonth = allApplications.filter(a =>
+  const hiredCount = activeApplications.filter(a => a.status === 'hired').length;
+  const hiredThisMonth = activeApplications.filter(a =>
     a.status === 'hired' && new Date(a.updatedAt) >= startOfMonth
   ).length;
-  const hiredLastMonth = allApplications.filter(a =>
+  const hiredLastMonth = activeApplications.filter(a =>
     a.status === 'hired' &&
     new Date(a.updatedAt) >= startOfLastMonth &&
     new Date(a.updatedAt) < startOfMonth
   ).length;
 
-  const hiredApps = allApplications.filter(a => a.status === 'hired');
+  const hiredApps = activeApplications.filter(a => a.status === 'hired');
   const avgHireDays = hiredApps.length > 0
     ? Math.round(hiredApps.reduce((sum, a) => {
         const days = (new Date(a.updatedAt).getTime() - new Date(a.appliedAt).getTime()) / (1000 * 60 * 60 * 24);
@@ -384,7 +386,7 @@ export default function CompanyDashboard() {
               </div>
             </div>
             <div className="text-3xl font-bold text-emerald-600 mb-1">
-              {allApplications.filter(a => a.status === 'hired').length}
+              {activeApplications.filter(a => a.status === 'hired').length}
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               {hiredCount} funcionários ativos
