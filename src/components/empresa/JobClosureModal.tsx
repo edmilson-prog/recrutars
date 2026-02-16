@@ -1,6 +1,6 @@
 /**
- * JobClosureModal — Modal de encerramento de vaga apos contratacao
- * PRD-077: Fluxo de Contratacao e Transicao para Gestao de Equipes
+ * JobClosureModal — Modal de encerramento de vaga após contratação
+ * PRD-077: Fluxo de Contratação e Transição para Gestão de Equipes
  */
 
 import { useState } from 'react';
@@ -81,18 +81,20 @@ export function JobClosureModal({
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
             <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-            <DialogTitle>Todas as posicoes foram preenchidas!</DialogTitle>
+            <DialogTitle>Todas as posições foram preenchidas!</DialogTitle>
           </div>
-          <DialogDescription>
-            <Badge variant="secondary" className="mt-1">
-              {hiredCount} de {positionsCount} {positionsCount === 1 ? 'posicao preenchida' : 'posicoes preenchidas'}
-            </Badge>
+          <DialogDescription className="sr-only">
+            Opções de encerramento da vaga
           </DialogDescription>
         </DialogHeader>
 
+        <Badge variant="secondary">
+          {hiredCount} de {positionsCount} {positionsCount === 1 ? 'posição preenchida' : 'posições preenchidas'}
+        </Badge>
+
         <div className="py-2">
           <p className="text-sm text-muted-foreground mb-4">
-            A vaga <strong>"{jobTitle}"</strong> teve todas as posicoes preenchidas.
+            A vaga <strong>"{jobTitle}"</strong> teve todas as posições preenchidas.
             O que deseja fazer com os candidatos restantes no pipeline?
           </p>
 
@@ -105,7 +107,7 @@ export function JobClosureModal({
                   Encerrar vaga e notificar candidatos
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Candidatos vao para o banco de talentos e recebem notificacao.
+                  Candidatos vão para o banco de talentos e recebem notificação.
                 </p>
               </Label>
             </div>
@@ -118,7 +120,7 @@ export function JobClosureModal({
                   Encerrar vaga sem notificar
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Candidatos vao para o banco de talentos silenciosamente.
+                  Candidatos vão para o banco de talentos silenciosamente.
                 </p>
               </Label>
             </div>

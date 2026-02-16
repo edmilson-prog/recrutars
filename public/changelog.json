@@ -34,7 +34,8 @@
             "Minhas Vagas: contagem de candidatos nos cards agora exclui candidaturas retiradas (withdrawn) — trigger SQL corrigido para decrementar ao retirar e incrementar ao reativar candidatura",
             "Editar Vaga: ao salvar alterações, usuário permanece na página de edição em vez de ser redirecionado para a lista de vagas",
             "Contratação de candidato: corrigidos erros na RPC hire_candidate — cast TEXT→DATE (hire_date), remoção de ::TEXT (last_test_date), e valores de gauge_status alinhados ao constraint (mapped/unmapped)",
-            "Modal de contratação: acentuação corrigida em todos os textos (contratação, será, módulo, Gestão, ação, não, início, Salário, Observações, Anotações)"
+            "Modal de contratação: acentuação corrigida em todos os textos (contratação, será, módulo, Gestão, ação, não, início, Salário, Observações, Anotações)",
+            "Modal de encerramento de vaga: corrigido warning DOM nesting (Badge dentro de DialogDescription/p) e acentuação (posições, vão, notificação)"
           ]
         }
       ]
