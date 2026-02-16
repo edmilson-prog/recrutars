@@ -36,7 +36,9 @@
             "Contratação de candidato: corrigidos erros na RPC hire_candidate — cast TEXT→DATE (hire_date), remoção de ::TEXT (last_test_date), e valores de gauge_status alinhados ao constraint (mapped/unmapped)",
             "Modal de contratação: acentuação corrigida em todos os textos (contratação, será, módulo, Gestão, ação, não, início, Salário, Observações, Anotações)",
             "Modal de encerramento de vaga: corrigido warning DOM nesting (Badge dentro de DialogDescription/p) e acentuação (posições, vão, notificação)",
-            "Gestão de Equipes: formulário de novo/editar colaborador trocado de Sheet lateral para Dialog centralizado flutuante"
+            "Gestão de Equipes: formulário de novo/editar colaborador trocado de Sheet lateral para Dialog centralizado flutuante",
+            "Gestão de Equipes: corrigido crash ao editar colaborador com positionId null (membros criados via contratação)",
+            "Perfil do Colaborador: Histórico de Testes agora busca dados reais de gauge_pro_results via imported_from_candidate_id (antes usava mock data vazio)"
           ]
         }
       ]

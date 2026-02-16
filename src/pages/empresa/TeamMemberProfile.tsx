@@ -12,7 +12,8 @@ import { ArrowLeft } from 'lucide-react';
 import { MemberProfile } from '@/components/team-management/MemberProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamMember, useDepartments, usePositions } from '@/hooks/useTeamsQuery';
-import { mockTestHistory } from '@/data/teamManagementData';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
 
 export default function TeamMemberProfile() {
@@ -31,7 +32,25 @@ export default function TeamMemberProfile() {
   const position = member
     ? positions.find((p) => p.id === member.positionId)
     : undefined;
-  const memberTestHistory = mockTestHistory.filter((t) => t.memberId === id);
+  const candidateId = member?.importedFromCandidateId;
+  const { data: memberTestHistory = [] } = useQuery({
+    queryKey: ['team-member-test-history', candidateId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('gauge_pro_results')
+        .select('id, generated_at, archetype_id, final_scores, candidate_id')
+        .eq('candidate_id', candidateId!)
+        .order('generated_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((r: Record<string, unknown>) => ({
+        id: r.id as string,
+        scores: r.final_scores as Record<string, number>,
+        archetype: (r.archetype_id as string) ?? '–',
+        completedAt: r.generated_at as string,
+      }));
+    },
+    enabled: !!candidateId,
+  });
 
   if (memberLoading) {
     return (
