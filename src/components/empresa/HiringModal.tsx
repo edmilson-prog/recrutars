@@ -1,6 +1,6 @@
 /**
- * HiringModal — Modal de contratacao de candidato aprovado
- * PRD-077: Fluxo de Contratacao e Transicao para Gestao de Equipes
+ * HiringModal — Modal de contratação de candidato aprovado
+ * PRD-077: Fluxo de Contratação e Transição para Gestão de Equipes
  */
 
 import { useState } from 'react';
@@ -240,7 +240,7 @@ export function HiringModal({
 
             {/* Hire date */}
             <div className="space-y-2">
-              <Label htmlFor="hireDate">Data de inicio prevista *</Label>
+              <Label htmlFor="hireDate">Data de início prevista *</Label>
               <Input
                 id="hireDate"
                 type="date"
@@ -253,7 +253,7 @@ export function HiringModal({
             {/* Salary (optional) */}
             <div className="space-y-2">
               <Label htmlFor="salary" className="flex items-center gap-2">
-                Salario acordado
+                Salário acordado
                 <Badge variant="outline" className="text-xs font-normal">Confidencial</Badge>
               </Label>
               <Input
@@ -266,12 +266,12 @@ export function HiringModal({
 
             {/* Notes (optional) */}
             <div className="space-y-2">
-              <Label htmlFor="notes">Observacoes</Label>
+              <Label htmlFor="notes">Observações</Label>
               <Textarea
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Anotacoes sobre a contratacao..."
+                placeholder="Anotações sobre a contratação..."
                 rows={2}
               />
             </div>
@@ -291,7 +291,7 @@ export function HiringModal({
               ) : (
                 <Trophy className="w-4 h-4 mr-2" />
               )}
-              Confirmar Contratacao
+              Confirmar Contratação
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -301,10 +301,10 @@ export function HiringModal({
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar contratacao</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar contratação</AlertDialogTitle>
             <AlertDialogDescription>
-              <strong>{candidateName}</strong> sera transferido(a) para o modulo de{' '}
-              <strong>Gestao de Equipes</strong> como colaborador(a). Esta acao nao pode ser desfeita.
+              <strong>{candidateName}</strong> será transferido(a) para o módulo de{' '}
+              <strong>Gestão de Equipes</strong> como colaborador(a). Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
