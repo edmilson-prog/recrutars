@@ -58,10 +58,10 @@ export default function TeamMemberForm({
   useEffect(() => {
     if (open) {
       if (member) {
-        setName(member.name);
-        setEmail(member.email);
-        setDepartmentId(member.departmentId);
-        setPositionId(member.positionId);
+        setName(member.name ?? "");
+        setEmail(member.email ?? "");
+        setDepartmentId(member.departmentId ?? "");
+        setPositionId(member.positionId ?? "");
         setHireDate(member.hireDate ?? "");
         setIsActive(member.isActive);
       } else {
