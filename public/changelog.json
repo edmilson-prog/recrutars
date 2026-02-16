@@ -16,7 +16,10 @@
             "SelectionBar de comparação agora aparece corretamente nas 3 páginas (Candidatos, Candidaturas e Salvos) — contagem de selecionados coincide com checkboxes marcados",
             "Match score em Candidatos Salvos unificado com Banco de Talentos — removida função mock (só skills) e substituída por calculateMatchBreakdown (skills 40% + experiência 30% + perfil 20% + localização 10%)",
             "Dashboard empresa: cards 'Ações Pendentes' (novos candidatos, mensagens não lidas, testes pendentes), 'Métricas do Mês' e contadores agora usam dados reais do Supabase em vez de valores hardcoded",
-            "Dashboard empresa: botão 'olho' na tabela Últimas Candidaturas agora navega para o perfil do candidato (antes não tinha ação)"
+            "Dashboard empresa: botão 'olho' na tabela Últimas Candidaturas agora navega para o perfil do candidato (antes não tinha ação)",
+            "Anotações no perfil do candidato agora persistem no Supabase — antes ficavam apenas em estado local e sumiam ao recarregar a página",
+            "Dashboard empresa: card 'Total de candidatos' renomeado para 'Total de candidaturas' e valor corrigido para contar candidaturas reais (antes usava counter cache desatualizado)",
+            "Dashboard empresa: cards 'Total de candidaturas', 'Novas hoje' e 'Em análise' agora levam para /empresa/candidaturas (antes levavam para o Banco de Talentos equivocadamente)"
           ]
         }
       ]

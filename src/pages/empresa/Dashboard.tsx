@@ -55,7 +55,7 @@ export default function CompanyDashboard() {
 
   // Calculate metrics
   const activeJobsCount = companyJobs.filter(j => j.status === 'active').length;
-  const totalCandidates = companyJobs.reduce((sum, job) => sum + job.applicationsCount, 0);
+  const totalCandidates = allApplications.length;
 
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -133,24 +133,24 @@ export default function CompanyDashboard() {
       tooltip: 'Vagas publicadas e recebendo candidaturas'
     },
     {
-      label: 'Total de candidatos',
+      label: 'Total de candidaturas',
       value: totalCandidates,
       icon: Users,
-      href: '/empresa/candidatos',
-      tooltip: 'Soma de candidatos em todas as suas vagas'
+      href: '/empresa/candidaturas',
+      tooltip: 'Total de candidaturas recebidas em todas as suas vagas'
     },
     {
       label: 'Novas hoje',
       value: newTodayCount,
       icon: UserPlus,
-      href: '/empresa/candidatos',
+      href: '/empresa/candidaturas',
       tooltip: 'Candidaturas recebidas nas ultimas 24 horas'
     },
     {
       label: 'Em análise',
       value: inReviewCount,
       icon: Clock,
-      href: '/empresa/candidatos',
+      href: '/empresa/candidaturas',
       tooltip: 'Candidatos aguardando sua avaliacao'
     },
   ];
@@ -166,7 +166,7 @@ export default function CompanyDashboard() {
     {
       label: 'Novos candidatos',
       count: newTodayCount,
-      href: '/empresa/candidatos',
+      href: '/empresa/candidaturas',
       icon: UserPlus
     },
     {

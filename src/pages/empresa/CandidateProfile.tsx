@@ -61,7 +61,7 @@ import { useCandidateActivity, type ActivityType } from '@/hooks/useCandidateAct
 import { getOrGenerateIdealProfile, gaugeProToBehavioralProfile } from '@/lib/behavioralProfiles';
 import { useJobs } from '@/hooks/useJobsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
-import { useApplications } from '@/hooks/useApplicationsQuery';
+import { useApplications, useApplicationNotes, useAddApplicationNote } from '@/hooks/useApplicationsQuery';
 import { useGaugeProResultByCandidate, useGaugeProSessionByCandidate } from '@/hooks/useGaugeProQuery';
 import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
 import { useProfile } from '@/hooks/useCurriculumsQuery';
@@ -214,20 +214,21 @@ export default function CandidateProfile() {
 
   const activeApplicationId = selectedApplicationId || candidateApplications[0]?.id || '';
   const { data: highlights } = useApplicationHighlights(activeApplicationId);
+  const { data: serverNotes = [] } = useApplicationNotes(activeApplicationId);
+  const addNoteMutation = useAddApplicationNote();
 
   const selectedApplication = useMemo(
     () => candidateApplications.find((a) => a.id === selectedApplicationId) || candidateApplications[0] || null,
     [candidateApplications, selectedApplicationId]
   );
 
-  // Existing notes for this candidate's applications
+  // Existing notes: server (persisted) + local (optimistic, deduped)
   const existingNotes = useMemo(() => {
-    const appIds = candidateApplications.map((a) => a.id);
-    return [
-      ...([] as ApplicationNote[]).filter((n) => appIds.includes(n.applicationId)),
-      ...localNotes,
-    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [candidateApplications, localNotes]);
+    const serverIds = new Set(serverNotes.map(n => n.id));
+    const uniqueLocal = localNotes.filter(n => !serverIds.has(n.id));
+    return [...serverNotes, ...uniqueLocal]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [serverNotes, localNotes]);
 
   if (!candidate) {
     return (
@@ -303,6 +304,10 @@ export default function CandidateProfile() {
       createdAt: new Date().toISOString(),
     };
     setLocalNotes((prev) => [...prev, newNote]);
+    addNoteMutation.mutate({
+      applicationId: selectedApplication.id,
+      content: noteText.trim(),
+    });
     setNoteText('');
     setShowNoteInput(false);
     toast.success('Anotação adicionada');
