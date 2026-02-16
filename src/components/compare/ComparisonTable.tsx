@@ -80,10 +80,10 @@ export function ComparisonTable({
   ): string | number | boolean | undefined => {
     // Valores especiais mapeados
     if (metric.key === "matchScore") return candidate.matchScore;
-    if (metric.key === "discD") return candidate.behavioralProfile.d;
-    if (metric.key === "discI") return candidate.behavioralProfile.i;
-    if (metric.key === "discS") return candidate.behavioralProfile.s;
-    if (metric.key === "discC") return candidate.behavioralProfile.c;
+    if (metric.key === "discD") return candidate.behavioralProfile?.d;
+    if (metric.key === "discI") return candidate.behavioralProfile?.i;
+    if (metric.key === "discS") return candidate.behavioralProfile?.s;
+    if (metric.key === "discC") return candidate.behavioralProfile?.c;
     // PRD-031: Novos campos diretos
     if (metric.key === "experienceYears") return candidate.experienceYears;
     if (metric.key === "currentRole") return candidate.currentRole;
@@ -294,10 +294,10 @@ export function ComparisonTableCompact({
               {candidates.map((candidate) => {
                 let value: string | number | boolean | undefined;
                 if (metric.key === "matchScore") value = candidate.matchScore;
-                else if (metric.key === "discD") value = candidate.behavioralProfile.d;
-                else if (metric.key === "discI") value = candidate.behavioralProfile.i;
-                else if (metric.key === "discS") value = candidate.behavioralProfile.s;
-                else if (metric.key === "discC") value = candidate.behavioralProfile.c;
+                else if (metric.key === "discD") value = candidate.behavioralProfile?.d;
+                else if (metric.key === "discI") value = candidate.behavioralProfile?.i;
+                else if (metric.key === "discS") value = candidate.behavioralProfile?.s;
+                else if (metric.key === "discC") value = candidate.behavioralProfile?.c;
                 else value = candidate.metrics?.[metric.key];
 
                 return (

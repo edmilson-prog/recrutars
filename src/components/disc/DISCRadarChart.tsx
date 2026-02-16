@@ -223,9 +223,16 @@ export function DISCRadarChartMini({
   profile,
   className,
 }: {
-  profile: BehavioralProfile;
+  profile?: BehavioralProfile;
   className?: string;
 }) {
+  if (!profile) {
+    return (
+      <div className={cn("flex items-center justify-center text-muted-foreground text-xs", className)}>
+        Sem perfil comportamental
+      </div>
+    );
+  }
   return (
     <DISCRadarChart
       profile={profile}

@@ -1,12 +1,33 @@
 {
   "versions": [
     {
+      "version": "1.14.5",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-15",
+      "description": "Comparação de candidatos restaurada após migração Gauge-Pro. Dashboard da empresa agora exibe dados reais em todos os cards.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Comparação de candidatos restaurada: perfil comportamental agora lê resultados Gauge-Pro (D1-D4) com fallback para testes antigos",
+            "Candidatos sem teste comportamental agora podem ser comparados — exibem placeholder 'Sem perfil' no radar e '-' nos scores",
+            "SelectionBar de comparação agora aparece corretamente nas páginas Candidatos, Candidaturas e Salvos",
+            "Dashboard empresa: cards 'Ações Pendentes', 'Métricas do Mês' e contadores agora usam dados reais do Supabase",
+            "Dashboard empresa: botão 'olho' na tabela Últimas Candidaturas agora navega para o perfil do candidato",
+            "Match score em Candidatos Salvos agora usa o mesmo cálculo sofisticado do Banco de Talentos (skills + experiência + perfil + localização)"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.14.4",
       "codename": "Bridge",
       "type": "patch",
       "releaseDate": "2026-02-15",
       "description": "Localização da empresa agora usa combobox pesquisável para cidades (igual ao candidato). Ordem invertida para Estado primeiro e Cidade depois, com filtro automático por UF. Largura das páginas de Configurações e Perfil do candidato aumentada.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "changed",

@@ -86,11 +86,13 @@ import {
 } from '@/hooks/useApplicationsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
+import { useAllGaugeProResults } from '@/hooks/useGaugeProQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  getCandidateBehavioralProfile,
+  getCompositeBehavioralProfile,
   getOrGenerateIdealProfile,
 } from '@/lib/behavioralProfiles';
+import type { GaugeProResult } from '@/types/gaugePro';
 import type { Conversation } from '@/types/message';
 import type { Application, ApplicationStatus, ApplicationNote, ApplicationHistory, TestRequestStatus, Message } from '@/types';
 import type { CandidateForComparison } from '@/types/disc';
@@ -184,6 +186,7 @@ const DEFAULT_TEST_MESSAGE = `Olá! Para darmos continuidade ao processo seletiv
 let _candidatesMap: Record<string, import('@/types').Candidate> = {};
 let _companyJobs: import('@/types').Job[] = [];
 let _behavioralTests: Array<{ candidateId: string; status: string; result?: { dominance: number; influence: number; steadiness: number; compliance: number } | null }> = [];
+let _gaugeResultsByCandidate: Map<string, GaugeProResult> = new Map();
 let currentSelectedJobId = '';
 const calculateMatch = (candidateId: string): number => {
   const candidate = _candidatesMap[candidateId];
@@ -195,7 +198,7 @@ const calculateMatch = (candidateId: string): number => {
   if (!job) return 0;
 
   const idealProfile = getOrGenerateIdealProfile(job);
-  const candidateProfile = getCandidateBehavioralProfile(candidateId, _behavioralTests);
+  const candidateProfile = getCompositeBehavioralProfile(candidateId, _behavioralTests, _gaugeResultsByCandidate);
   const matchResult = calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile);
   return matchResult.totalScore;
 };
@@ -243,6 +246,7 @@ export default function CompanyApplications() {
   );
   const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates();
   const { data: behavioralTests = [] } = useBehavioralTests();
+  const { data: allGaugeResults = [] } = useAllGaugeProResults();
 
   const candidatesMap = useMemo(() => {
     const candidates = candidatesResult?.data ?? [];
@@ -251,10 +255,19 @@ export default function CompanyApplications() {
     return map;
   }, [candidatesResult]);
 
+  const gaugeResultsByCandidate = useMemo(() => {
+    const map = new Map<string, GaugeProResult>();
+    allGaugeResults.forEach(r => {
+      if (!map.has(r.candidateId)) map.set(r.candidateId, r);
+    });
+    return map;
+  }, [allGaugeResults]);
+
   // Update module-level refs for calculateMatch
   _candidatesMap = candidatesMap;
   _companyJobs = fetchedCompanyJobs;
   _behavioralTests = behavioralTests;
+  _gaugeResultsByCandidate = gaugeResultsByCandidate;
 
   const applications_ = useMemo(() => applicationsResult?.data ?? [], [applicationsResult]);
   const isLoading = isLoadingJobs || isLoadingApps || isLoadingCandidates;
@@ -669,8 +682,7 @@ export default function CompanyApplications() {
     const candidate = candidatesMap[candidateId];
     if (!candidate) return null;
 
-    const behavioralProfile = getCandidateBehavioralProfile(candidateId, behavioralTests);
-    if (!behavioralProfile) return null;
+    const behavioralProfile = getCompositeBehavioralProfile(candidateId, behavioralTests, gaugeResultsByCandidate);
 
     // PRD-035: Usa cálculo dinâmico de match
     const matchScore = calculateMatch(candidateId);

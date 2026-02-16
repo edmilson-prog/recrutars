@@ -56,10 +56,13 @@ import {
 } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { useFavoriteCandidates, formatCandidateSavedAt } from '@/hooks/useFavoriteCandidates';
-import { getCandidateBehavioralProfile } from '@/lib/behavioralProfiles';
+import { getCompositeBehavioralProfile, getOrGenerateIdealProfile } from '@/lib/behavioralProfiles';
+import { calculateMatchBreakdown } from '@/lib/matchCalculator';
 import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
+import { useAllGaugeProResults } from '@/hooks/useGaugeProQuery';
 import { useJobs } from '@/hooks/useJobsQuery';
 import type { Candidate, Job } from '@/types';
+import type { GaugeProResult } from '@/types/gaugePro';
 import type { CandidateForComparison } from '@/types/disc';
 import {
   isAnonymous,
@@ -87,19 +90,19 @@ const getUniqueAreas = (candidates: Candidate[]): string[] => {
   return Array.from(areas).sort();
 };
 
-// Helper to calculate mock match percentage
-const calculateMatch = (candidateSkills: string[], jobs: Job[]): number => {
+// PRD-035: Cálculo dinâmico de match usando matchCalculator (mesmo de Candidates.tsx)
+const calculateMatch = (
+  candidate: Candidate,
+  jobs: Job[],
+  behavioralTests: Array<{ candidateId: string; status: string; result?: { dominance: number; influence: number; steadiness: number; compliance: number } | null }> = [],
+  gaugeResultsByCandidate: Map<string, GaugeProResult> = new Map()
+): number => {
   if (jobs.length === 0) return 0;
-  const avgSkillMatch =
-    jobs.reduce((acc, job) => {
-      const jobSkills = job.requirements.join(' ').toLowerCase();
-      const matchingSkills = candidateSkills.filter((s) =>
-        jobSkills.includes(s.toLowerCase())
-      ).length;
-      return acc + (matchingSkills / candidateSkills.length) * 100;
-    }, 0) / jobs.length;
-
-  return Math.min(99, Math.round(avgSkillMatch * 0.7 + 20));
+  const job = jobs[0];
+  const idealProfile = getOrGenerateIdealProfile(job);
+  const candidateProfile = getCompositeBehavioralProfile(candidate.id, behavioralTests, gaugeResultsByCandidate);
+  const matchResult = calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile);
+  return matchResult.totalScore;
 };
 
 export default function SavedCandidates() {
@@ -129,6 +132,15 @@ export default function SavedCandidates() {
   const { data: jobsResult } = useJobs();
   const allJobs = jobsResult?.data ?? [];
   const { data: behavioralTests = [] } = useBehavioralTests();
+  const { data: allGaugeResults = [] } = useAllGaugeProResults();
+
+  const gaugeResultsByCandidate = useMemo(() => {
+    const map = new Map<string, GaugeProResult>();
+    allGaugeResults.forEach(r => {
+      if (!map.has(r.candidateId)) map.set(r.candidateId, r);
+    });
+    return map;
+  }, [allGaugeResults]);
 
   // Get company jobs
   const companyJobs = useMemo(() =>
@@ -154,8 +166,8 @@ export default function SavedCandidates() {
     return [...filteredCandidates].sort((a, b) => {
       switch (sortBy) {
         case 'match':
-          const matchA = calculateMatch(a.skills, companyJobs);
-          const matchB = calculateMatch(b.skills, companyJobs);
+          const matchA = calculateMatch(a, companyJobs, behavioralTests, gaugeResultsByCandidate);
+          const matchB = calculateMatch(b, companyJobs, behavioralTests, gaugeResultsByCandidate);
           return matchB - matchA;
         case 'experience':
           return b.experience - a.experience;
@@ -164,7 +176,7 @@ export default function SavedCandidates() {
           return new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime();
       }
     });
-  }, [filteredCandidates, sortBy, companyJobs]);
+  }, [filteredCandidates, sortBy, companyJobs, behavioralTests, gaugeResultsByCandidate]);
 
   // Áreas disponíveis para filtro
   const availableAreas = useMemo(() => {
@@ -178,8 +190,8 @@ export default function SavedCandidates() {
         const candidate = savedCandidates.find((c) => c.id === id);
         if (!candidate) return null;
 
-        const behavioralProfile = getCandidateBehavioralProfile(candidate.id, behavioralTests);
-        const matchScore = calculateMatch(candidate.skills, companyJobs);
+        const behavioralProfile = getCompositeBehavioralProfile(candidate.id, behavioralTests, gaugeResultsByCandidate);
+        const matchScore = calculateMatch(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate);
 
         return {
           id: candidate.id,
@@ -199,7 +211,7 @@ export default function SavedCandidates() {
         };
       })
       .filter((c): c is CandidateForComparison => c !== null);
-  }, [selectedIds, savedCandidates, companyJobs]);
+  }, [selectedIds, savedCandidates, companyJobs, behavioralTests, gaugeResultsByCandidate]);
 
   const handleToggleFavorite = (candidateId: string) => {
     const isNowFavorite = toggleFavorite(candidateId);
@@ -215,7 +227,7 @@ export default function SavedCandidates() {
   };
 
   const renderCandidateCard = (candidate: Candidate & { savedAt: string }, index: number) => {
-    const matchScore = calculateMatch(candidate.skills, companyJobs);
+    const matchScore = calculateMatch(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate);
     const candidateIsAnonymous = isAnonymous(candidate);
     const displayName = getDisplayName(candidate);
     const displayAvatar = getDisplayAvatar(candidate);
@@ -552,7 +564,7 @@ export default function SavedCandidates() {
           candidateCount: sortedCandidates.length,
           companyName: 'TechCorp Soluções',
         }}
-        calculateMatch={(candidate) => calculateMatch(candidate.skills, companyJobs)}
+        calculateMatch={(candidate) => calculateMatch(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate)}
       />
 
       {/* Dialog de confirmação de remoção */}

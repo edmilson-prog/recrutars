@@ -59,7 +59,7 @@ export interface CandidateForComparison {
   name: string;
   avatar?: string;
   matchScore: number;
-  behavioralProfile: BehavioralProfile;
+  behavioralProfile?: BehavioralProfile;
   metrics: Record<string, string | number | boolean>;
   // PRD-031: Campos adicionais para comparação
   experienceYears?: number;

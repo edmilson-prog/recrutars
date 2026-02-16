@@ -184,3 +184,22 @@ export function getCandidateBehavioralProfile(
     c: test.result.compliance,
   };
 }
+
+/**
+ * Composite lookup: tries Gauge-Pro results first, then old behavioral tests.
+ * Primary function for extracting a candidate's behavioral profile when both
+ * data sources may be available.
+ */
+export function getCompositeBehavioralProfile(
+  candidateId: string,
+  behavioralTests: Array<{ candidateId: string; status: string; result?: { dominance: number; influence: number; steadiness: number; compliance: number } | null }>,
+  gaugeResultsByCandidate: Map<string, import('@/types/gaugePro').GaugeProResult>
+): BehavioralProfile | undefined {
+  // 1. Prefer Gauge-Pro (newer system)
+  const gaugeResult = gaugeResultsByCandidate.get(candidateId);
+  if (gaugeResult?.finalScores) {
+    return gaugeProToBehavioralProfile(gaugeResult.finalScores);
+  }
+  // 2. Fallback to old behavioral tests
+  return getCandidateBehavioralProfile(candidateId, behavioralTests);
+}

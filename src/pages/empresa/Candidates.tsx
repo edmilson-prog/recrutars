@@ -65,7 +65,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { getOrGenerateIdealProfile, getCandidateBehavioralProfile } from '@/lib/behavioralProfiles';
+import { getOrGenerateIdealProfile, getCompositeBehavioralProfile } from '@/lib/behavioralProfiles';
 import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
 import { useJobs } from '@/hooks/useJobsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
@@ -125,13 +125,14 @@ const getExperienceRange = (years: number): string => {
 const calculateMatch = (
   candidate: Candidate,
   jobs: Job[],
-  behavioralTests: Array<{ candidateId: string; status: string; result?: { dominance: number; influence: number; steadiness: number; compliance: number } | null }> = []
+  behavioralTests: Array<{ candidateId: string; status: string; result?: { dominance: number; influence: number; steadiness: number; compliance: number } | null }> = [],
+  gaugeResultsByCandidate: Map<string, GaugeProResult> = new Map()
 ): number => {
   if (jobs.length === 0) return 0;
 
   const job = jobs[0];
   const idealProfile = getOrGenerateIdealProfile(job);
-  const candidateProfile = getCandidateBehavioralProfile(candidate.id, behavioralTests);
+  const candidateProfile = getCompositeBehavioralProfile(candidate.id, behavioralTests, gaugeResultsByCandidate);
   const matchResult = calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile);
 
   return matchResult.totalScore;
@@ -316,11 +317,10 @@ export default function CompanyCandidates() {
 
   // PRD-002-dgn: Converter candidato para formato de comparação
   const convertToComparisonCandidate = (candidate: Candidate): CandidateForComparison | null => {
-    const behavioralProfile = getCandidateBehavioralProfile(candidate.id, behavioralTests);
-    if (!behavioralProfile) return null;
+    const behavioralProfile = getCompositeBehavioralProfile(candidate.id, behavioralTests, gaugeResultsByCandidate);
 
     // PRD-035: Usa cálculo dinâmico de match
-    const matchScore = calculateMatch(candidate, companyJobs, behavioralTests);
+    const matchScore = calculateMatch(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate);
 
     return {
       id: candidate.id,
@@ -555,7 +555,7 @@ export default function CompanyCandidates() {
             </div>
 
             {paginatedCandidates.map((candidate, index) => {
-              const matchScore = calculateMatch(candidate, companyJobs, behavioralTests);
+              const matchScore = calculateMatch(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate);
               // PRD-026: Verificar se candidato é anônimo
               const candidateIsAnonymous = isAnonymous(candidate);
               const displayName = getDisplayName(candidate);
@@ -917,7 +917,7 @@ export default function CompanyCandidates() {
           candidateCount: filteredCandidates.length,
           companyName: 'TechCorp Soluções',
         }}
-        calculateMatch={(candidate) => calculateMatch(candidate, companyJobs, behavioralTests)}
+        calculateMatch={(candidate) => calculateMatch(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate)}
       />
     </DashboardLayout>
   );
