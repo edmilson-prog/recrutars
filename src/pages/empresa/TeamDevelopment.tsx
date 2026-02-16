@@ -96,24 +96,27 @@ export default function TeamDevelopment() {
 
   // Handlers
   const handleUpdateObjectiveStatus = useCallback(
-    (objectiveId: string, status: ObjectiveStatus) => {
+    async (objectiveId: string, status: ObjectiveStatus) => {
       if (!plan) return;
-      setPlan((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          objectives: prev.objectives.map((obj) =>
-            obj.id === objectiveId ? { ...obj, status } : obj,
-          ),
-          updatedAt: new Date().toISOString(),
-        };
-      });
-      toast({
-        title: 'Status atualizado',
-        description: 'O status do objetivo foi alterado com sucesso.',
-      });
+      const updatedPlan: DevelopmentPlan = {
+        ...plan,
+        objectives: plan.objectives.map((obj) =>
+          obj.id === objectiveId ? { ...obj, status } : obj,
+        ),
+        updatedAt: new Date().toISOString(),
+      };
+      setPlan(updatedPlan);
+      try {
+        await savePlanMutation.mutateAsync(updatedPlan);
+        toast({
+          title: 'Status atualizado',
+          description: 'O status do objetivo foi alterado com sucesso.',
+        });
+      } catch {
+        toast({ title: 'Erro ao salvar status', variant: 'destructive' });
+      }
     },
-    [plan, toast],
+    [plan, toast, savePlanMutation],
   );
 
   const handleEditObjective = useCallback((objective: DevelopmentObjective) => {
@@ -127,26 +130,24 @@ export default function TeamDevelopment() {
   }, []);
 
   const handleSaveObjective = useCallback(
-    (data: Partial<DevelopmentObjective>) => {
+    async (data: Partial<DevelopmentObjective>) => {
       if (!plan) return;
+
+      let updatedPlan: DevelopmentPlan;
 
       if (data.id) {
         // Edit existing
-        setPlan((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            objectives: prev.objectives.map((obj) =>
-              obj.id === data.id ? { ...obj, ...data } : obj,
-            ),
-            updatedAt: new Date().toISOString(),
-          };
-        });
-        toast({ title: 'Objetivo atualizado', description: 'As alterações foram salvas.' });
+        updatedPlan = {
+          ...plan,
+          objectives: plan.objectives.map((obj) =>
+            obj.id === data.id ? { ...obj, ...data } : obj,
+          ),
+          updatedAt: new Date().toISOString(),
+        };
       } else {
         // Add new
         const newObjective: DevelopmentObjective = {
-          id: `obj-new-${Date.now()}`,
+          id: crypto.randomUUID(),
           planId: plan.id,
           dimension: data.dimension || 'D1',
           title: data.title || '',
@@ -157,40 +158,60 @@ export default function TeamDevelopment() {
           notes: data.notes,
           createdAt: new Date().toISOString(),
         };
-        setPlan((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            objectives: [...prev.objectives, newObjective],
-            updatedAt: new Date().toISOString(),
-          };
+        updatedPlan = {
+          ...plan,
+          objectives: [...plan.objectives, newObjective],
+          updatedAt: new Date().toISOString(),
+        };
+      }
+
+      setPlan(updatedPlan);
+      try {
+        await savePlanMutation.mutateAsync(updatedPlan);
+        toast({
+          title: data.id ? 'Objetivo atualizado' : 'Objetivo adicionado',
+          description: data.id
+            ? 'As alterações foram salvas.'
+            : 'Novo objetivo criado com sucesso.',
         });
-        toast({ title: 'Objetivo adicionado', description: 'Novo objetivo criado com sucesso.' });
+      } catch {
+        toast({ title: 'Erro ao salvar objetivo', variant: 'destructive' });
       }
     },
-    [plan, toast],
+    [plan, toast, savePlanMutation],
   );
 
   const handleGeneratePDI = useCallback(
-    (objectives: DevelopmentObjective[]) => {
+    async (objectives: DevelopmentObjective[]) => {
       const now = new Date().toISOString();
+      const planId = crypto.randomUUID();
       const newPlan: DevelopmentPlan = {
-        id: `plan-auto-${Date.now()}`,
+        id: planId,
         memberId: id || '',
         objectives: objectives.map((obj) => ({
           ...obj,
-          planId: `plan-auto-${Date.now()}`,
+          planId,
         })),
         createdAt: now,
         updatedAt: now,
       };
       setPlan(newPlan);
-      toast({
-        title: 'PDI gerado',
-        description: `${objectives.length} objetivos criados automaticamente.`,
-      });
+      try {
+        const saved = await savePlanMutation.mutateAsync(newPlan);
+        setPlan(saved);
+        toast({
+          title: 'PDI gerado e salvo',
+          description: `${objectives.length} objetivos criados automaticamente.`,
+        });
+      } catch {
+        toast({
+          title: 'Erro ao salvar PDI',
+          description: 'O plano foi gerado mas não pôde ser salvo. Tente novamente.',
+          variant: 'destructive',
+        });
+      }
     },
-    [id, toast],
+    [id, toast, savePlanMutation],
   );
 
   const handleSaveRetestSchedule = useCallback(

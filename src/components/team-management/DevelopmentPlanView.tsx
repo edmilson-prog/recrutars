@@ -53,7 +53,6 @@ const DIMENSION_HEADER_COLORS: Record<GaugeProDimension, string> = {
 function generateAutoPDI(scores: DimensionScores): DevelopmentObjective[] {
   const now = new Date().toISOString();
   const objectives: DevelopmentObjective[] = [];
-  let idx = 1;
 
   const templates: Record<
     GaugeProDimension,
@@ -114,7 +113,7 @@ function generateAutoPDI(scores: DimensionScores): DevelopmentObjective[] {
       // Priority development area: 2 intensive objectives
       for (const title of dimTemplates.intensive) {
         objectives.push({
-          id: `auto-obj-${idx++}`,
+          id: crypto.randomUUID(),
           planId: '',
           dimension: dim,
           title,
@@ -127,7 +126,7 @@ function generateAutoPDI(scores: DimensionScores): DevelopmentObjective[] {
     } else if (score <= 50) {
       // Development area: 1 moderate objective
       objectives.push({
-        id: `auto-obj-${idx++}`,
+        id: crypto.randomUUID(),
         planId: '',
         dimension: dim,
         title: dimTemplates.moderate,
@@ -139,7 +138,7 @@ function generateAutoPDI(scores: DimensionScores): DevelopmentObjective[] {
     } else if (score <= 66) {
       // Maintenance: 1 strengthen objective
       objectives.push({
-        id: `auto-obj-${idx++}`,
+        id: crypto.randomUUID(),
         planId: '',
         dimension: dim,
         title: dimTemplates.strengthen,
@@ -151,7 +150,7 @@ function generateAutoPDI(scores: DimensionScores): DevelopmentObjective[] {
     } else {
       // Strength: 1 leverage objective
       objectives.push({
-        id: `auto-obj-${idx++}`,
+        id: crypto.randomUUID(),
         planId: '',
         dimension: dim,
         title: dimTemplates.leverage,

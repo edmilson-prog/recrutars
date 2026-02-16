@@ -39,7 +39,8 @@
             "Gestão de Equipes: formulário de novo/editar colaborador trocado de Sheet lateral para Dialog centralizado flutuante",
             "Gestão de Equipes: corrigido crash ao editar colaborador com positionId null (membros criados via contratação)",
             "Perfil do Colaborador: Histórico de Testes agora busca dados reais de gauge_pro_results via imported_from_candidate_id (antes usava mock data vazio)",
-            "Perfil do Colaborador: adicionadas seções 'Análise Inteligente' (IA comportamental) e 'Respostas do Teste' (seleções e cenários Gauge-Pro) — dados que antes só existiam no perfil do candidato agora acompanham o colaborador"
+            "Perfil do Colaborador: adicionadas seções 'Análise Inteligente' (IA comportamental) e 'Respostas do Teste' (seleções e cenários Gauge-Pro) — dados que antes só existiam no perfil do candidato agora acompanham o colaborador",
+            "Plano de Desenvolvimento (PDI): corrigido bug crítico — o PDI era gerado na tela mas nunca salvo no banco (mutation existia mas não era chamada + IDs inválidos para UUID). Agora gerar PDI, editar objetivo, mudar status e adicionar objetivo persistem automaticamente no Supabase"
           ]
         }
       ]
