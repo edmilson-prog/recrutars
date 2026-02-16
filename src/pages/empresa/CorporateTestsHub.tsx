@@ -10,11 +10,13 @@ import { Button } from '@/components/ui/button';
 import { BarChart3, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
+  GaugeProOnboardingBanner,
   HubDashboard,
   TestCreateForm,
   TestList,
   InvitePanel,
 } from '@/components/corporate-tests';
+import { mockCompanyTests } from '@/data/companyTestData';
 
 export default function CorporateTestsHub() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -52,6 +54,13 @@ export default function CorporateTestsHub() {
             </Button>
           </div>
         </div>
+
+        {/* Onboarding Banner */}
+        <GaugeProOnboardingBanner
+          hasTests={mockCompanyTests.length > 0}
+          onNavigateToCreate={() => setActiveTab('create')}
+          onNavigateToTests={() => setActiveTab('tests')}
+        />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

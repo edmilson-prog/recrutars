@@ -13,7 +13,8 @@
           "items": [
             "Página de Candidaturas: badge com total geral de candidaturas ao lado do título e barra de resumo com breakdown por status (Novos, Em Análise, Entrevista, Aprovados) para a vaga selecionada",
             "Minhas Vagas: botão 'Candidatos Sugeridos' (ícone Sparkles) em cada card de vaga ativa/pausada, com tooltip e item no menu dropdown",
-            "Minhas Vagas: contagem de candidatos no card agora é clicável e navega direto para Candidaturas com a vaga pré-selecionada"
+            "Minhas Vagas: contagem de candidatos no card agora é clicável e navega direto para Candidaturas com a vaga pré-selecionada",
+            "Hub de Testes: banner explicativo colapsável sobre o Gauge-Pro com fluxo de trabalho em 4 passos e 3 benefícios, dispensável permanentemente via localStorage"
           ]
         },
         {

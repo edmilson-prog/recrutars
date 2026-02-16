@@ -4,6 +4,7 @@
  */
 
 // PRD-052: Dashboard & Management
+export { GaugeProOnboardingBanner } from './GaugeProOnboardingBanner';
 export { HubDashboard } from './HubDashboard';
 export { KPICards } from './KPICards';
 export { TestFunnel } from './TestFunnel';
