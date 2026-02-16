@@ -1,6 +1,6 @@
 /**
  * TeamMemberForm
- * PRD-055: Formulario lateral (Sheet) para criar/editar colaboradores.
+ * PRD-055: Dialog centralizado para criar/editar colaboradores.
  */
 
 import { useState, useEffect, useMemo } from "react";
@@ -16,15 +16,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 import type { TeamMember, Department, Position } from "@/types/teamManagement";
 
@@ -124,25 +123,20 @@ export default function TeamMemberForm({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-md flex flex-col p-0">
-        <div className="px-6 pt-6">
-          <SheetHeader>
-            <SheetTitle>
-              {isEditing ? "Editar Colaborador" : "Novo Colaborador"}
-            </SheetTitle>
-            <SheetDescription>
-              {isEditing
-                ? "Atualize as informações do colaborador."
-                : "Preencha os dados para adicionar um novo colaborador à equipe."}
-            </SheetDescription>
-          </SheetHeader>
-        </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            {isEditing ? "Editar Colaborador" : "Novo Colaborador"}
+          </DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? "Atualize as informações do colaborador."
+              : "Preencha os dados para adicionar um novo colaborador à equipe."}
+          </DialogDescription>
+        </DialogHeader>
 
-        <Separator className="mt-4" />
-
-        <ScrollArea className="flex-1 px-6">
-          <div className="space-y-5 py-5">
+        <div className="max-h-[60vh] overflow-y-auto space-y-5 py-1 pr-1">
             {/* Nome */}
             <div className="space-y-2">
               <Label htmlFor="member-name">
@@ -249,21 +243,17 @@ export default function TeamMemberForm({
                 onCheckedChange={setIsActive}
               />
             </div>
-          </div>
-        </ScrollArea>
+        </div>
 
-        <Separator />
-
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4">
+        <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={!canSave}>
             {isEditing ? "Salvar Alterações" : "Adicionar Colaborador"}
           </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
