@@ -29,7 +29,8 @@
             "Anotações no perfil do candidato agora persistem no Supabase — antes ficavam apenas em estado local e sumiam ao recarregar a página",
             "Dashboard empresa: card 'Total de candidatos' renomeado para 'Total de candidaturas' e valor corrigido para contar candidaturas reais (antes usava counter cache desatualizado)",
             "Dashboard empresa: cards 'Total de candidaturas', 'Novas hoje' e 'Em análise' agora levam para /empresa/candidaturas (antes levavam para o Banco de Talentos equivocadamente)",
-            "Dashboard empresa: métricas agora excluem candidaturas com status 'withdrawn' (retiradas) — valor do card 'Total de candidaturas' coincide com a contagem na página de Candidaturas"
+            "Dashboard empresa: métricas agora excluem candidaturas com status 'withdrawn' (retiradas) — valor do card 'Total de candidaturas' coincide com a contagem na página de Candidaturas",
+            "Minhas Vagas: contagem de candidatos nos cards agora exclui candidaturas retiradas (withdrawn) — trigger SQL corrigido para decrementar ao retirar e incrementar ao reativar candidatura"
           ]
         }
       ]
