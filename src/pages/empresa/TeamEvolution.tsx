@@ -79,26 +79,31 @@ export default function TeamEvolution() {
 
   // Add annotation handler
   const handleAddAnnotation = useCallback(
-    (data: Omit<EvolutionAnnotation, 'id' | 'createdAt'>) => {
-      const newAnnotation: EvolutionAnnotation = {
-        id: `annot-new-${Date.now()}`,
+    async (data: Omit<EvolutionAnnotation, 'id' | 'createdAt'>) => {
+      const tempAnnotation: EvolutionAnnotation = {
+        id: crypto.randomUUID(),
         memberId: id || '',
         text: data.text,
         type: data.type,
         date: data.date,
         createdAt: new Date().toISOString(),
       };
-      setAnnotations((prev) => [...prev, newAnnotation]);
-      createAnnotationMutation.mutate({
-        memberId: id || '',
-        text: data.text,
-        type: data.type,
-        date: data.date,
-      });
-      toast({
-        title: 'Anotação adicionada',
-        description: 'A anotação de evolução foi registrada com sucesso.',
-      });
+      setAnnotations((prev) => [...prev, tempAnnotation]);
+      try {
+        await createAnnotationMutation.mutateAsync({
+          memberId: id || '',
+          text: data.text,
+          type: data.type,
+          date: data.date,
+        });
+        toast({
+          title: 'Anotação adicionada',
+          description: 'A anotação de evolução foi registrada com sucesso.',
+        });
+      } catch {
+        setAnnotations((prev) => prev.filter((a) => a.id !== tempAnnotation.id));
+        toast({ title: 'Erro ao salvar anotação', variant: 'destructive' });
+      }
     },
     [id, toast, createAnnotationMutation],
   );

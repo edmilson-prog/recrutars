@@ -215,28 +215,34 @@ export default function TeamDevelopment() {
   );
 
   const handleSaveRetestSchedule = useCallback(
-    (data: Partial<RetestSchedule>) => {
+    async (data: Partial<RetestSchedule>) => {
+      let updatedSchedule: RetestSchedule;
+
       if (retestSchedule) {
-        setRetestSchedule((prev) =>
-          prev ? { ...prev, ...data } : prev,
-        );
+        updatedSchedule = { ...retestSchedule, ...data };
       } else {
-        const newSchedule: RetestSchedule = {
-          id: `retest-new-${Date.now()}`,
+        updatedSchedule = {
+          id: crypto.randomUUID(),
           memberId: id || '',
           frequency: data.frequency || '6months',
           nextDate: data.nextDate || '',
           autoSend: data.autoSend ?? true,
           createdAt: new Date().toISOString(),
         };
-        setRetestSchedule(newSchedule);
       }
-      toast({
-        title: 'Agendamento salvo',
-        description: 'O agendamento de reteste foi atualizado.',
-      });
+
+      setRetestSchedule(updatedSchedule);
+      try {
+        await saveRetestMutation.mutateAsync(updatedSchedule);
+        toast({
+          title: 'Agendamento salvo',
+          description: 'O agendamento de reteste foi atualizado.',
+        });
+      } catch {
+        toast({ title: 'Erro ao salvar agendamento', variant: 'destructive' });
+      }
     },
-    [retestSchedule, id, toast],
+    [retestSchedule, id, toast, saveRetestMutation],
   );
 
   if (isLoading) {

@@ -40,7 +40,9 @@
             "Gestão de Equipes: corrigido crash ao editar colaborador com positionId null (membros criados via contratação)",
             "Perfil do Colaborador: Histórico de Testes agora busca dados reais de gauge_pro_results via imported_from_candidate_id (antes usava mock data vazio)",
             "Perfil do Colaborador: adicionadas seções 'Análise Inteligente' (IA comportamental) e 'Respostas do Teste' (seleções e cenários Gauge-Pro) — dados que antes só existiam no perfil do candidato agora acompanham o colaborador",
-            "Plano de Desenvolvimento (PDI): corrigido bug crítico — o PDI era gerado na tela mas nunca salvo no banco (mutation existia mas não era chamada + IDs inválidos para UUID). Agora gerar PDI, editar objetivo, mudar status e adicionar objetivo persistem automaticamente no Supabase"
+            "Plano de Desenvolvimento (PDI): corrigido bug crítico — o PDI era gerado na tela mas nunca salvo no banco (mutation existia mas não era chamada + IDs inválidos para UUID). Agora gerar PDI, editar objetivo, mudar status e adicionar objetivo persistem automaticamente no Supabase",
+            "Agendamento de Reteste: corrigida persistência — mutation nunca era chamada e frequências do DB não correspondiam ao TypeScript. CHECK constraint atualizado e save agora persiste no Supabase",
+            "Anotações de Evolução: corrigido CHECK constraint do tipo de anotação — DB usava valores diferentes do TypeScript (observation/improvement vs training/coaching). Constraint alinhado + error handling com rollback otimista"
           ]
         }
       ]
