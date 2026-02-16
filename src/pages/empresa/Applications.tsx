@@ -1210,6 +1210,15 @@ export default function CompanyApplications() {
                             <ClipboardCheck className="w-12 h-12 mx-auto text-cyan-500" />
                             <div>
                               <p className="font-medium">Gauge-Pro realizado voluntariamente</p>
+                              {(() => {
+                                const gaugeResult = gaugeResultsByCandidate.get(selectedCandidate.id);
+                                return gaugeResult?.generatedAt ? (
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    Realizado em {formatDateBR(gaugeResult.generatedAt)}{' '}
+                                    <span className="opacity-70">({formatRelativeDate(gaugeResult.generatedAt)})</span>
+                                  </p>
+                                ) : null;
+                              })()}
                               <p className="text-sm text-muted-foreground mt-1">
                                 O candidato realizou o teste comportamental por iniciativa própria.
                                 Visualize o perfil completo na página do candidato.
@@ -1523,7 +1532,9 @@ export default function CompanyApplications() {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Teste</span>
                       <span className="font-medium">
-                        {selectedCandidate.testResult ? 'Realizado' : 'Pendente'}
+                        {selectedCandidate.testResult || selectedCandidate.hasTest || gaugeResultsByCandidate.has(selectedCandidate.id)
+                          ? 'Realizado'
+                          : 'Pendente'}
                       </span>
                     </div>
                   </div>
