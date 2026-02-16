@@ -5,18 +5,18 @@
       "codename": "Bridge",
       "type": "patch",
       "releaseDate": "2026-02-15",
-      "description": "Comparação de candidatos restaurada após migração Gauge-Pro. Dashboard da empresa agora exibe dados reais em todos os cards.",
+      "description": "Comparação de candidatos restaurada após migração Gauge-Pro. Match score unificado entre Banco de Talentos e Candidatos Salvos. Dashboard empresa com dados reais.",
       "isCurrent": true,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Comparação de candidatos restaurada: perfil comportamental agora lê resultados Gauge-Pro (D1-D4) com fallback para testes antigos",
-            "Candidatos sem teste comportamental agora podem ser comparados — exibem placeholder 'Sem perfil' no radar e '-' nos scores",
-            "SelectionBar de comparação agora aparece corretamente nas páginas Candidatos, Candidaturas e Salvos",
-            "Dashboard empresa: cards 'Ações Pendentes', 'Métricas do Mês' e contadores agora usam dados reais do Supabase",
-            "Dashboard empresa: botão 'olho' na tabela Últimas Candidaturas agora navega para o perfil do candidato",
-            "Match score em Candidatos Salvos agora usa o mesmo cálculo sofisticado do Banco de Talentos (skills + experiência + perfil + localização)"
+            "Comparação de candidatos restaurada: nova função getCompositeBehavioralProfile() lê resultados Gauge-Pro (D1-D4) com fallback para testes comportamentais antigos",
+            "Candidatos sem teste comportamental agora podem ser comparados — radar exibe placeholder 'Sem perfil comportamental' e tabela mostra '-' nos scores D/I/S/C",
+            "SelectionBar de comparação agora aparece corretamente nas 3 páginas (Candidatos, Candidaturas e Salvos) — contagem de selecionados coincide com checkboxes marcados",
+            "Match score em Candidatos Salvos unificado com Banco de Talentos — removida função mock (só skills) e substituída por calculateMatchBreakdown (skills 40% + experiência 30% + perfil 20% + localização 10%)",
+            "Dashboard empresa: cards 'Ações Pendentes' (novos candidatos, mensagens não lidas, testes pendentes), 'Métricas do Mês' e contadores agora usam dados reais do Supabase em vez de valores hardcoded",
+            "Dashboard empresa: botão 'olho' na tabela Últimas Candidaturas agora navega para o perfil do candidato (antes não tinha ação)"
           ]
         }
       ]
