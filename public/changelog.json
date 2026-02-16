@@ -14,7 +14,8 @@
             "Página de Candidaturas: badge com total geral de candidaturas ao lado do título e barra de resumo com breakdown por status (Novos, Em Análise, Entrevista, Aprovados) para a vaga selecionada",
             "Minhas Vagas: botão 'Candidatos Sugeridos' (ícone Sparkles) em cada card de vaga ativa/pausada, com tooltip e item no menu dropdown",
             "Minhas Vagas: contagem de candidatos no card agora é clicável e navega direto para Candidaturas com a vaga pré-selecionada",
-            "Hub de Testes: banner explicativo colapsável sobre o Gauge-Pro com fluxo de trabalho em 4 passos e 3 benefícios, dispensável permanentemente via localStorage"
+            "Hub de Testes: banner explicativo colapsável sobre o Gauge-Pro com fluxo de trabalho em 4 passos e 3 benefícios, dispensável permanentemente via localStorage",
+            "Editar Vaga: opções de pausar, reativar e encerrar vaga diretamente na página de edição, com badge de status e diálogos de confirmação"
           ]
         },
         {
@@ -30,7 +31,8 @@
             "Dashboard empresa: card 'Total de candidatos' renomeado para 'Total de candidaturas' e valor corrigido para contar candidaturas reais (antes usava counter cache desatualizado)",
             "Dashboard empresa: cards 'Total de candidaturas', 'Novas hoje' e 'Em análise' agora levam para /empresa/candidaturas (antes levavam para o Banco de Talentos equivocadamente)",
             "Dashboard empresa: métricas agora excluem candidaturas com status 'withdrawn' (retiradas) — valor do card 'Total de candidaturas' coincide com a contagem na página de Candidaturas",
-            "Minhas Vagas: contagem de candidatos nos cards agora exclui candidaturas retiradas (withdrawn) — trigger SQL corrigido para decrementar ao retirar e incrementar ao reativar candidatura"
+            "Minhas Vagas: contagem de candidatos nos cards agora exclui candidaturas retiradas (withdrawn) — trigger SQL corrigido para decrementar ao retirar e incrementar ao reativar candidatura",
+            "Editar Vaga: ao salvar alterações, usuário permanece na página de edição em vez de ser redirecionado para a lista de vagas"
           ]
         }
       ]

@@ -1,11 +1,21 @@
-import { useEffect } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Briefcase, DollarSign, FileText, ListChecks, Gift, Code } from 'lucide-react';
+import { ArrowLeft, Briefcase, DollarSign, FileText, ListChecks, Gift, Code, Pause, Play, XCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useJobForm } from '@/hooks/useJobForm';
 import { JobAssistant } from '@/components/empresa/JobAssistant';
 import {
@@ -16,6 +26,13 @@ import {
   JobFormBenefits,
   JobFormSkills,
 } from '@/components/empresa/job-form';
+import { JobStatus } from '@/types';
+
+const STATUS_CONFIG: Record<JobStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
+  active: { label: 'Ativa', variant: 'default', className: 'bg-green-500/10 text-green-700 border-green-500/20 dark:text-green-400' },
+  paused: { label: 'Pausada', variant: 'secondary', className: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20 dark:text-yellow-400' },
+  closed: { label: 'Encerrada', variant: 'outline', className: 'bg-muted text-muted-foreground' },
+};
 
 export default function CompanyJobForm() {
   const navigate = useNavigate();
@@ -32,6 +49,7 @@ export default function CompanyJobForm() {
     notFound,
     isDirty,
     progress,
+    jobStatus,
     updateFormData,
     setOtherBenefits,
     setNewSkill,
@@ -41,9 +59,15 @@ export default function CompanyJobForm() {
     handleSkillKeyPress,
     handleApplySuggestion,
     handleSaveJob,
+    handleUpdateStatus,
     analysis,
     isAnalyzing,
   } = useJobForm({ jobId: id });
+
+  // Status confirmation dialogs
+  const [showPauseDialog, setShowPauseDialog] = useState(false);
+  const [showReactivateDialog, setShowReactivateDialog] = useState(false);
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
 
   // Beforeunload protection
   useEffect(() => {
@@ -80,21 +104,46 @@ export default function CompanyJobForm() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">
-                {isEditing ? 'Editar Vaga' : 'Nova Vaga'}
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold">
+                  {isEditing ? 'Editar Vaga' : 'Nova Vaga'}
+                </h1>
+                {isEditing && jobStatus && (
+                  <Badge variant={STATUS_CONFIG[jobStatus].variant} className={STATUS_CONFIG[jobStatus].className}>
+                    {STATUS_CONFIG[jobStatus].label}
+                  </Badge>
+                )}
+              </div>
               <p className="text-muted-foreground">
                 {isEditing ? 'Atualize as informações da vaga' : 'Preencha os dados para criar uma nova vaga'}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
             <div className="hidden sm:flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Progresso:</span>
               <Progress value={progress} className="w-24 h-2" />
               <span className="text-sm font-medium">{progress}%</span>
             </div>
-            <Button onClick={handleSaveJob}>
+            {isEditing && jobStatus === 'active' && (
+              <Button variant="outline" size="sm" onClick={() => setShowPauseDialog(true)}>
+                <Pause className="h-4 w-4 mr-1" />
+                Pausar
+              </Button>
+            )}
+            {isEditing && jobStatus === 'paused' && (
+              <Button variant="outline" size="sm" onClick={() => setShowReactivateDialog(true)}>
+                <Play className="h-4 w-4 mr-1" />
+                Reativar
+              </Button>
+            )}
+            {isEditing && (jobStatus === 'active' || jobStatus === 'paused') && (
+              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setShowCloseDialog(true)}>
+                <XCircle className="h-4 w-4 mr-1" />
+                Encerrar
+              </Button>
+            )}
+            <Button onClick={handleSaveJob} disabled={jobStatus === 'closed'}>
               {isEditing ? 'Salvar Alterações' : 'Publicar Vaga'}
             </Button>
           </div>
@@ -180,7 +229,7 @@ export default function CompanyJobForm() {
               <Button variant="outline" onClick={() => navigate('/empresa/vagas')}>
                 Cancelar
               </Button>
-              <Button onClick={handleSaveJob}>
+              <Button onClick={handleSaveJob} disabled={jobStatus === 'closed'}>
                 {isEditing ? 'Salvar Alterações' : 'Publicar Vaga'}
               </Button>
             </div>
@@ -198,6 +247,54 @@ export default function CompanyJobForm() {
           </div>
         </div>
       </div>
+
+      {/* Status confirmation dialogs */}
+      <AlertDialog open={showPauseDialog} onOpenChange={setShowPauseDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pausar vaga?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A vaga não aparecerá para novos candidatos, mas candidaturas existentes serão mantidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleUpdateStatus('paused' as JobStatus)}>Pausar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showReactivateDialog} onOpenChange={setShowReactivateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reativar vaga?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A vaga voltará a aparecer para candidatos e receberá novas candidaturas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleUpdateStatus('active' as JobStatus)}>Reativar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Encerrar vaga?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A vaga será encerrada permanentemente. Candidaturas existentes serão mantidas para consulta.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleUpdateStatus('closed' as JobStatus)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Encerrar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

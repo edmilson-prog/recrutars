@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Job } from '@/types';
+import { Job, JobStatus } from '@/types';
 import { useJob, useCreateJob, useUpdateJob } from '@/hooks/useJobsQuery';
 import { useJobAnalyzer, createJobFormData } from '@/hooks/useJobAnalyzer';
 import { toast } from 'sonner';
@@ -54,6 +54,7 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
   const [newSkill, setNewSkill] = useState('');
   const [notFound, setNotFound] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
 
   // Load job for editing via React Query
   useEffect(() => {
@@ -83,6 +84,7 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     setSelectedBenefits(common);
     setOtherBenefits(other.join('\n'));
     setSkills([]);
+    setJobStatus((job as Job).status);
   }, [jobId, jobResult]);
 
   // Mark as dirty on any change after initial load
@@ -199,6 +201,25 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     toast.success('Sugestão aplicada!');
   }, []);
 
+  // Update job status
+  const handleUpdateStatus = useCallback((newStatus: JobStatus) => {
+    if (!jobId) return;
+    const messages: Record<JobStatus, string> = {
+      paused: 'Vaga pausada. Ela não aparecerá mais para candidatos.',
+      active: 'Vaga reativada com sucesso!',
+      closed: 'Vaga encerrada. Não receberá mais candidaturas.',
+    };
+    updateJobMutation.mutate(
+      { id: jobId, updates: { status: newStatus } },
+      {
+        onSuccess: () => {
+          setJobStatus(newStatus);
+          toast.success(messages[newStatus]);
+        },
+      }
+    );
+  }, [jobId, updateJobMutation]);
+
   // Save job
   const handleSaveJob = useCallback(() => {
     const { valid } = validate();
@@ -227,22 +248,15 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       positionsCount: Math.max(1, parseInt(formData.positionsCount) || 1),
     };
 
-    const handleSuccess = () => {
-      setIsDirty(false);
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        navigate('/empresa/vagas');
-      }
-    };
-
     if (isEditing && jobId) {
       updateJobMutation.mutate(
         { id: jobId, updates: jobData },
         {
           onSuccess: () => {
             toast.success('Vaga atualizada com sucesso!');
-            handleSuccess();
+            setIsDirty(false);
+            if (onSuccess) onSuccess();
+            // Permanece na pagina — nao navega
           },
         }
       );
@@ -256,9 +270,14 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
         createdAt: new Date().toISOString().split('T')[0],
       };
       createJobMutation.mutate(newJob, {
-        onSuccess: () => {
+        onSuccess: (createdJob) => {
           toast.success('Vaga publicada com sucesso!');
-          handleSuccess();
+          setIsDirty(false);
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            navigate(`/empresa/vagas/${createdJob.id}/editar`);
+          }
         },
       });
     }
@@ -275,6 +294,7 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     notFound,
     isDirty,
     progress,
+    jobStatus,
 
     // Setters
     updateFormData,
@@ -289,6 +309,7 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     handleSkillKeyPress,
     handleApplySuggestion,
     handleSaveJob,
+    handleUpdateStatus,
     validate,
 
     // AI Analysis
