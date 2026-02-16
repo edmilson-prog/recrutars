@@ -7,6 +7,7 @@ import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -153,6 +154,9 @@ export function HiringModal({
               <Trophy className="w-5 h-5 text-emerald-600" />
               Contratar Candidato
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Formulário de contratação de candidato
+            </DialogDescription>
           </DialogHeader>
 
           {/* Candidate summary */}

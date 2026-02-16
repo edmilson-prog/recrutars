@@ -1,6 +1,7 @@
--- Migration 028: Fix type casts in hire_candidate RPC
+-- Migration 028: Fix type casts + gauge_status in hire_candidate RPC
 -- team_members.hire_date e DATE, p_hire_date e TEXT → cast ::DATE
 -- team_members.last_test_date e timestamptz → remover ::TEXT de NOW()
+-- gauge_status: 'completed'→'mapped', 'not_started'→'unmapped' (constraint check)
 
 CREATE OR REPLACE FUNCTION public.hire_candidate(
   p_application_id UUID,
@@ -89,11 +90,11 @@ BEGIN
   ORDER BY gpr.generated_at DESC NULLS LAST
   LIMIT 1;
 
-  -- Determine gauge status
+  -- Determine gauge status (constraint: unmapped, invited, in_progress, mapped, retest_pending)
   IF v_gauge IS NOT NULL AND v_gauge.final_scores IS NOT NULL THEN
-    v_gauge_status := 'completed';
+    v_gauge_status := 'mapped';
   ELSE
-    v_gauge_status := 'not_started';
+    v_gauge_status := 'unmapped';
   END IF;
 
   -- Create team member (hire_date cast TEXT->DATE)
@@ -114,7 +115,7 @@ BEGIN
     CASE WHEN v_gauge IS NOT NULL THEN NULLIF(v_gauge.archetype_id, '') ELSE NULL END,
     TRUE,
     v_app.candidate_id,
-    CASE WHEN v_gauge_status = 'completed' THEN NOW() ELSE NULL END
+    CASE WHEN v_gauge_status = 'mapped' THEN NOW() ELSE NULL END
   )
   RETURNING id INTO v_team_member_id;
 
