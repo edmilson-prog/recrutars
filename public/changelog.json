@@ -1,12 +1,140 @@
 {
   "versions": [
     {
+      "version": "1.16.0",
+      "codename": "Verify",
+      "type": "minor",
+      "releaseDate": "2026-02-16",
+      "description": "Cadastro de empresa com validacao de CNPJ via API Minha Receita. Fluxo progressivo em 3 etapas com preenchimento automatico dos dados oficiais.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Cadastro empresa: fluxo progressivo em 3 etapas — CNPJ, confirmacao de dados e credenciais",
+            "Cadastro empresa: consulta automatica a API Minha Receita para preencher razao social, nome fantasia, endereco completo, setor e porte",
+            "Cadastro empresa: validacao local de CNPJ com digitos verificadores antes de consultar a API",
+            "Cadastro empresa: verificacao de unicidade do CNPJ — impede cadastro duplicado",
+            "Cadastro empresa: bloqueio de cadastro para empresas com situacao cadastral inativa",
+            "Cadastro empresa: cooldown de 15 segundos entre consultas a API com contador visual",
+            "Cadastro empresa: mascara progressiva no campo CNPJ (XX.XXX.XXX/XXXX-XX)",
+            "Edge Function cnpj-lookup: proxy para API Minha Receita com validacao e verificacao de unicidade",
+            "Banco de dados: 8 novos campos na tabela companies (razao_social, nome_fantasia, cep, logradouro, numero, complemento, bairro, situacao_cadastral)",
+            "Banco de dados: constraint UNIQUE no campo cnpj e funcao RPC check_cnpj_available"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Trigger handle_new_user() atualizado para extrair e gravar todos os campos CNPJ do metadata no cadastro de empresa",
+            "AuthContext signUp() agora aceita dados CNPJ completos via metadata para empresas"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.15.1",
+      "codename": "Nexus",
+      "type": "patch",
+      "releaseDate": "2026-02-16",
+      "description": "Correcao do redirect de confirmacao de email no cadastro de empresa e candidato.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Cadastro: link de confirmacao de email agora redireciona corretamente para a aplicacao (adicionado emailRedirectTo ao signUp e ao reenvio)",
+            "Cadastro: reenvio de email de confirmacao agora tambem inclui URL de redirect consistente com os demais fluxos de autenticacao"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.15.0",
+      "codename": "Nexus",
+      "type": "minor",
+      "releaseDate": "2026-02-16",
+      "description": "Convites reais de equipe: membros podem ser convidados por email para acessar a conta da empresa com cargos Admin/Membro.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Aba Equipe: convites reais via email usando Supabase Auth — convite cria conta e vincula o novo membro a empresa existente",
+            "Aba Equipe: seletor de cargo (Admin/Membro) no modal de convite",
+            "Aba Equipe: acoes de alterar cargo (promover/rebaixar) e remover membro com persistencia no banco",
+            "Aba Equipe: reenvio e cancelamento de convites pendentes",
+            "Edge Function invite-team-member: gerencia convites, remocao e alteracao de cargo com validacao de permissoes",
+            "Tabelas company_users e company_invites no Supabase com RLS completo",
+            "AuthContext: suporte a membros convidados — campo companyRole (admin/member) disponivel no contexto"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Trigger handle_new_user() atualizado para detectar usuarios convidados via invited_company_id no metadata",
+            "Helper get_company_id() agora busca tambem na tabela company_users para membros convidados"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.14.8",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-16",
+      "description": "Correção do salvamento de Valores e Descrição Cultural na aba Cultura das Configurações.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Configurações > Cultura: 'Valores da Empresa' e 'Descrição Cultural' agora salvam corretamente — estado duplicado entre o componente e o hook causava perda dos dados ao clicar 'Salvar perfil cultural'"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.14.7",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-16",
+      "description": "Upload e salvamento do logo da empresa implementado. Perfil da empresa agora persiste no Supabase.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Configurações > Perfil: logo da empresa agora é enviado para Supabase Storage e a URL salva no banco — antes o botão 'Salvar alterações' não persistia nenhum dado",
+            "Configurações > Perfil: todos os campos do perfil (nome, setor, tamanho, website, LinkedIn, descrição, localização) agora são salvos no Supabase ao clicar 'Salvar alterações'",
+            "Configurações > Perfil: adicionado spinner de loading no botão durante o salvamento"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.14.6",
+      "codename": "Bridge",
+      "type": "patch",
+      "releaseDate": "2026-02-16",
+      "description": "Padronização da exibição do Score de Fit nos Testes Corporativos. Auditoria completa validou fórmula e classificação (PRD-053).",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Score de Fit: padronizada exibição para 1 casa decimal em todos os pontos — badge na lista de candidatos, modo compacto e seletor de comparação agora mostram '68.5%' em vez de '69%', alinhado com a página de detalhe"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.14.5",
       "codename": "Bridge",
       "type": "patch",
       "releaseDate": "2026-02-16",
       "description": "Comparação de candidatos restaurada após migração Gauge-Pro. Match score unificado entre Banco de Talentos e Candidatos Salvos. Dashboard empresa com dados reais.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
@@ -42,7 +170,8 @@
             "Perfil do Colaborador: adicionadas seções 'Análise Inteligente' (IA comportamental) e 'Respostas do Teste' (seleções e cenários Gauge-Pro) — dados que antes só existiam no perfil do candidato agora acompanham o colaborador",
             "Plano de Desenvolvimento (PDI): corrigido bug crítico — o PDI era gerado na tela mas nunca salvo no banco (mutation existia mas não era chamada + IDs inválidos para UUID). Agora gerar PDI, editar objetivo, mudar status e adicionar objetivo persistem automaticamente no Supabase",
             "Agendamento de Reteste: corrigida persistência — mutation nunca era chamada e frequências do DB não correspondiam ao TypeScript. CHECK constraint atualizado e save agora persiste no Supabase",
-            "Anotações de Evolução: corrigido CHECK constraint do tipo de anotação — DB usava valores diferentes do TypeScript (observation/improvement vs training/coaching). Constraint alinhado + error handling com rollback otimista"
+            "Anotações de Evolução: corrigido CHECK constraint do tipo de anotação — DB usava valores diferentes do TypeScript (observation/improvement vs training/coaching). Constraint alinhado + error handling com rollback otimista",
+            "Agendamento de Reteste: corrigido erro 22007 ao salvar sem data preenchida — botão desabilitado quando campo de data está vazio + validação defensiva no handler"
           ]
         }
       ]

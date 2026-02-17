@@ -46,6 +46,8 @@ interface UseCulturalFitReturn {
 
   // Form state
   formProfile: CulturalProfile;
+  formValues: string[];
+  formDescription: string;
   setFormDimension: (dimension: CulturalDimension, value: DimensionValue) => void;
   resetForm: () => void;
   isModified: boolean;
@@ -221,6 +223,8 @@ export function useCulturalFit(
     getCandidateCulturalProfile,
     getQuickScore,
     formProfile,
+    formValues,
+    formDescription,
     setFormDimension,
     resetForm,
     isModified,

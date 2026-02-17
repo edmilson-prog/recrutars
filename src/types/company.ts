@@ -34,11 +34,21 @@ export interface Company {
   createdAt: string;         // PRD-020: formato ISO date
   paymentStatus?: 'ok' | 'pending' | 'overdue';  // PRD-020: status de pagamento
   deactivatedAt?: string;    // PRD-020: data de desativação (se aplicável)
+  // PRD-078: Campos CNPJ / Minha Receita
+  razaoSocial?: string;
+  nomeFantasia?: string;
+  cep?: string;
+  logradouro?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  situacaoCadastral?: string;
 }
 
 // PRD-018: Tipos auxiliares para configurações
 export type TeamMemberRole = 'admin' | 'member';
 
+// Legacy mock types (kept for backward compat, prefer CompanyUser/CompanyInvite)
 export interface TeamMember {
   id: string;
   name: string;
@@ -52,6 +62,32 @@ export interface PendingInvite {
   id: string;
   email: string;
   sentAt: string;
+}
+
+// Real Supabase-backed types (v1.15.0)
+export interface CompanyUser {
+  id: string;
+  companyId: string;
+  profileId: string;
+  role: TeamMemberRole;
+  invitedBy: string | null;
+  createdAt: string;
+  // Joined from profiles:
+  name: string;
+  email: string;
+  lastAccessAt: string | null;
+  avatarUrl: string | null;
+}
+
+export interface CompanyInvite {
+  id: string;
+  companyId: string;
+  email: string;
+  role: TeamMemberRole;
+  invitedBy: string;
+  status: 'pending' | 'accepted' | 'cancelled';
+  createdAt: string;
+  acceptedAt: string | null;
 }
 
 export interface CompanyPlan {

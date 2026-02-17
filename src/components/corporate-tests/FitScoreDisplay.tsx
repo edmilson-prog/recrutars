@@ -29,7 +29,7 @@ export function FitScoreDisplay({ score, classification, compact }: FitScoreDisp
           />
         </div>
         <span className="text-xs font-semibold" style={{ color }}>
-          {score.toFixed(0)}%
+          {score.toFixed(1)}%
         </span>
       </div>
     );

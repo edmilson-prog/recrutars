@@ -11,10 +11,27 @@ import { supabase } from '@/lib/supabase';
 import { profileRowToUser, candidateRowToCandidate, companyRowToCompany } from '@/lib/supabaseConverters';
 import type { User } from '@/types/user';
 import type { Candidate } from '@/types/candidate';
-import type { Company } from '@/types/company';
+import type { Company, TeamMemberRole } from '@/types/company';
 import type { Session } from '@supabase/supabase-js';
 
 // ── Sign Up Parameters ──
+
+interface CnpjSignUpData {
+  cnpj: string;
+  razaoSocial: string;
+  nomeFantasia: string;
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  city: string;
+  state: string;
+  address: string;
+  situacaoCadastral: string;
+  industry: string;
+  size: string;
+}
 
 interface SignUpParams {
   email: string;
@@ -22,6 +39,7 @@ interface SignUpParams {
   name: string;
   phone?: string;
   type: 'candidate' | 'company';
+  cnpjData?: CnpjSignUpData;
 }
 
 // ── Context Interface ──
@@ -36,10 +54,12 @@ interface AuthContextType {
   logout: () => void;
   currentCompany: Company | null;
   currentCandidate: Candidate | null;
+  companyRole: TeamMemberRole | null;
   loading: boolean;
   signUp: (params: SignUpParams) => Promise<{ needsEmailConfirmation: boolean }>;
   resetPassword: (email: string) => Promise<void>;
   refreshCurrentCandidate: () => Promise<void>;
+  refreshCurrentCompany: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
   const [currentCandidate, setCurrentCandidate] = useState<Candidate | null>(null);
+  const [companyRole, setCompanyRole] = useState<TeamMemberRole | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Load profile + type-specific data from Supabase
@@ -58,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setCurrentCompany(null);
       setCurrentCandidate(null);
+      setCompanyRole(null);
       setLoading(false);
       return;
     }
@@ -75,6 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setCurrentCompany(null);
         setCurrentCandidate(null);
+        setCompanyRole(null);
         setLoading(false);
         return;
       }
@@ -100,24 +123,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCurrentCandidate(candidateData ? candidateRowToCandidate(candidateData) : null);
         setCurrentCompany(null);
       } else if (userProfile.type === 'company') {
-        const { data: companyData } = await supabase
+        // Try as owner first
+        let { data: companyData } = await supabase
           .from('companies')
           .select('*')
           .eq('profile_id', session.user.id)
           .single();
 
+        let role: TeamMemberRole = 'admin';
+
+        if (!companyData) {
+          // Not an owner — check company_users (invited member)
+          const { data: memberData } = await supabase
+            .from('company_users')
+            .select('company_id, role')
+            .eq('profile_id', session.user.id)
+            .single();
+
+          if (memberData) {
+            role = memberData.role as TeamMemberRole;
+            const { data: memberCompanyData } = await supabase
+              .from('companies')
+              .select('*')
+              .eq('id', memberData.company_id)
+              .single();
+            companyData = memberCompanyData;
+          }
+        } else {
+          // Owner — get role from company_users
+          const { data: ownerRole } = await supabase
+            .from('company_users')
+            .select('role')
+            .eq('profile_id', session.user.id)
+            .single();
+          if (ownerRole) role = ownerRole.role as TeamMemberRole;
+        }
+
         setCurrentCompany(companyData ? companyRowToCompany(companyData) : null);
+        setCompanyRole(companyData ? role : null);
         setCurrentCandidate(null);
       } else {
         // Admin: no additional data
         setCurrentCompany(null);
         setCurrentCandidate(null);
+        setCompanyRole(null);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
       setUser(null);
       setCurrentCompany(null);
       setCurrentCandidate(null);
+      setCompanyRole(null);
     } finally {
       setLoading(false);
     }
@@ -134,6 +190,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single();
 
     setCurrentCandidate(candidateData ? candidateRowToCandidate(candidateData) : null);
+  }, [user]);
+
+  // Refresh currentCompany without re-authenticating (for use after mutations)
+  const refreshCurrentCompany = useCallback(async () => {
+    if (!user || user.type !== 'company') return;
+
+    // Try as owner first
+    let { data: companyData } = await supabase
+      .from('companies')
+      .select('*')
+      .eq('profile_id', user.id)
+      .single();
+
+    let role: TeamMemberRole = 'admin';
+
+    if (!companyData) {
+      const { data: memberData } = await supabase
+        .from('company_users')
+        .select('company_id, role')
+        .eq('profile_id', user.id)
+        .single();
+
+      if (memberData) {
+        role = memberData.role as TeamMemberRole;
+        const { data: memberCompanyData } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', memberData.company_id)
+          .single();
+        companyData = memberCompanyData;
+      }
+    } else {
+      const { data: ownerRole } = await supabase
+        .from('company_users')
+        .select('role')
+        .eq('profile_id', user.id)
+        .single();
+      if (ownerRole) role = ownerRole.role as TeamMemberRole;
+    }
+
+    setCurrentCompany(companyData ? companyRowToCompany(companyData) : null);
+    setCompanyRole(companyData ? role : null);
   }, [user]);
 
   // Initialize: check existing session + listen for changes
@@ -164,14 +262,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // State is cleared automatically by onAuthStateChange
   };
 
-  const signUp = async ({ email, password, name, phone, type }: SignUpParams) => {
+  const signUp = async ({ email, password, name, phone, type, cnpjData }: SignUpParams) => {
     // The handle_new_user() trigger creates profiles + candidates/companies
     // atomically on auth.users INSERT — no manual INSERT needed here.
+    // For companies with CNPJ data, all fields are passed via metadata to the trigger.
+    const metadata: Record<string, unknown> = { name, type, phone: phone || null };
+
+    if (type === 'company' && cnpjData) {
+      metadata.name = cnpjData.nomeFantasia || cnpjData.razaoSocial;
+      metadata.cnpj = cnpjData.cnpj;
+      metadata.razao_social = cnpjData.razaoSocial;
+      metadata.nome_fantasia = cnpjData.nomeFantasia;
+      metadata.cep = cnpjData.cep;
+      metadata.logradouro = cnpjData.logradouro;
+      metadata.numero = cnpjData.numero;
+      metadata.complemento = cnpjData.complemento;
+      metadata.bairro = cnpjData.bairro;
+      metadata.city = cnpjData.city;
+      metadata.state = cnpjData.state;
+      metadata.address = cnpjData.address;
+      metadata.situacao_cadastral = cnpjData.situacaoCadastral;
+      metadata.industry = cnpjData.industry;
+      metadata.size = cnpjData.size;
+    }
+
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name, type, phone: phone || null },
+        data: metadata,
+        emailRedirectTo: `${window.location.origin}/login`,
       },
     });
 
@@ -213,10 +333,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         currentCompany,
         currentCandidate,
+        companyRole,
         loading,
         signUp,
         resetPassword,
         refreshCurrentCandidate,
+        refreshCurrentCompany,
       }}
     >
       {children}

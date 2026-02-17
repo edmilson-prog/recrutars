@@ -76,7 +76,7 @@ export function ComparisonView({ test, results }: ComparisonViewProps) {
                   </div>
                   {r.fitScore !== undefined && (
                     <Badge variant="outline" className="text-xs shrink-0">
-                      {r.fitScore.toFixed(0)}%
+                      {r.fitScore.toFixed(1)}%
                     </Badge>
                   )}
                 </label>

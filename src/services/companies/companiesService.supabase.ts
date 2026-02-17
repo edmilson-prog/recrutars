@@ -165,6 +165,15 @@ export class CompaniesServiceSupabase implements ICompaniesService {
     if (updates.plan !== undefined) dbUpdates.plan = updates.plan;
     if (updates.paymentStatus !== undefined) dbUpdates.payment_status = updates.paymentStatus;
     if (updates.deactivatedAt !== undefined) dbUpdates.deactivated_at = updates.deactivatedAt;
+    // PRD-078: Campos CNPJ / Minha Receita
+    if (updates.razaoSocial !== undefined) dbUpdates.razao_social = updates.razaoSocial;
+    if (updates.nomeFantasia !== undefined) dbUpdates.nome_fantasia = updates.nomeFantasia;
+    if (updates.cep !== undefined) dbUpdates.cep = updates.cep;
+    if (updates.logradouro !== undefined) dbUpdates.logradouro = updates.logradouro;
+    if (updates.numero !== undefined) dbUpdates.numero = updates.numero;
+    if (updates.complemento !== undefined) dbUpdates.complemento = updates.complemento;
+    if (updates.bairro !== undefined) dbUpdates.bairro = updates.bairro;
+    if (updates.situacaoCadastral !== undefined) dbUpdates.situacao_cadastral = updates.situacaoCadastral;
 
     const { data, error } = await supabase
       .from('companies')

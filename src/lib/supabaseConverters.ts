@@ -114,5 +114,14 @@ export function companyRowToCompany(row: CompanyRow): Company {
     createdAt: row.created_at,
     paymentStatus: row.payment_status as Company['paymentStatus'],
     deactivatedAt: row.deactivated_at ?? undefined,
+    // PRD-078: Campos CNPJ / Minha Receita
+    razaoSocial: (row as CompanyRow & { razao_social?: string }).razao_social ?? undefined,
+    nomeFantasia: (row as CompanyRow & { nome_fantasia?: string }).nome_fantasia ?? undefined,
+    cep: (row as CompanyRow & { cep?: string }).cep ?? undefined,
+    logradouro: (row as CompanyRow & { logradouro?: string }).logradouro ?? undefined,
+    numero: (row as CompanyRow & { numero?: string }).numero ?? undefined,
+    complemento: (row as CompanyRow & { complemento?: string }).complemento ?? undefined,
+    bairro: (row as CompanyRow & { bairro?: string }).bairro ?? undefined,
+    situacaoCadastral: (row as CompanyRow & { situacao_cadastral?: string }).situacao_cadastral ?? undefined,
   };
 }

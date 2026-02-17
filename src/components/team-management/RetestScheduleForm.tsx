@@ -125,10 +125,20 @@ export default function RetestScheduleForm({
         )}
 
         {/* Save button */}
-        <Button onClick={handleSave} className="w-full gap-2" size="sm">
+        <Button
+          onClick={handleSave}
+          className="w-full gap-2"
+          size="sm"
+          disabled={!nextDate}
+        >
           <Save className="h-4 w-4" />
           Salvar Agendamento
         </Button>
+        {!nextDate && (
+          <p className="text-xs text-muted-foreground text-center">
+            Preencha a data do próximo reteste para salvar.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

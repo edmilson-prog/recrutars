@@ -752,8 +752,11 @@ export type Database = {
         Row: {
           active_jobs: number | null
           address: string | null
+          bairro: string | null
           city: string | null
+          cep: string | null
           cnpj: string | null
+          complemento: string | null
           created_at: string | null
           deactivated_at: string | null
           description: string | null
@@ -761,12 +764,17 @@ export type Database = {
           industry: string | null
           linkedin: string | null
           location: string | null
+          logradouro: string | null
           logo_url: string | null
           name: string
+          nome_fantasia: string | null
+          numero: string | null
           payment_status: string | null
           phone: string | null
           plan: string | null
           profile_id: string
+          razao_social: string | null
+          situacao_cadastral: string | null
           size: string | null
           state: string | null
           status: string | null
@@ -777,8 +785,11 @@ export type Database = {
         Insert: {
           active_jobs?: number | null
           address?: string | null
+          bairro?: string | null
+          cep?: string | null
           city?: string | null
           cnpj?: string | null
+          complemento?: string | null
           created_at?: string | null
           deactivated_at?: string | null
           description?: string | null
@@ -786,12 +797,17 @@ export type Database = {
           industry?: string | null
           linkedin?: string | null
           location?: string | null
+          logradouro?: string | null
           logo_url?: string | null
           name: string
+          nome_fantasia?: string | null
+          numero?: string | null
           payment_status?: string | null
           phone?: string | null
           plan?: string | null
           profile_id: string
+          razao_social?: string | null
+          situacao_cadastral?: string | null
           size?: string | null
           state?: string | null
           status?: string | null
@@ -802,8 +818,11 @@ export type Database = {
         Update: {
           active_jobs?: number | null
           address?: string | null
+          bairro?: string | null
+          cep?: string | null
           city?: string | null
           cnpj?: string | null
+          complemento?: string | null
           created_at?: string | null
           deactivated_at?: string | null
           description?: string | null
@@ -811,12 +830,17 @@ export type Database = {
           industry?: string | null
           linkedin?: string | null
           location?: string | null
+          logradouro?: string | null
           logo_url?: string | null
           name?: string
+          nome_fantasia?: string | null
+          numero?: string | null
           payment_status?: string | null
           phone?: string | null
           plan?: string | null
           profile_id?: string
+          razao_social?: string | null
+          situacao_cadastral?: string | null
           size?: string | null
           state?: string | null
           status?: string | null

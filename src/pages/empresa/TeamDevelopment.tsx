@@ -216,6 +216,11 @@ export default function TeamDevelopment() {
 
   const handleSaveRetestSchedule = useCallback(
     async (data: Partial<RetestSchedule>) => {
+      if (!data.nextDate) {
+        toast({ title: 'Informe a data do próximo reteste', variant: 'destructive' });
+        return;
+      }
+
       let updatedSchedule: RetestSchedule;
 
       if (retestSchedule) {
@@ -225,7 +230,7 @@ export default function TeamDevelopment() {
           id: crypto.randomUUID(),
           memberId: id || '',
           frequency: data.frequency || '6months',
-          nextDate: data.nextDate || '',
+          nextDate: data.nextDate,
           autoSend: data.autoSend ?? true,
           createdAt: new Date().toISOString(),
         };

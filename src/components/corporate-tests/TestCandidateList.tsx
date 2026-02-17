@@ -88,7 +88,7 @@ export function TestCandidateList({ testId, invitations, results }: TestCandidat
 
                   {result?.fitScore !== undefined && (
                     <Badge variant="secondary" className="shrink-0 text-[10px]">
-                      Fit: {result.fitScore.toFixed(0)}%
+                      Fit: {result.fitScore.toFixed(1)}%
                     </Badge>
                   )}
 

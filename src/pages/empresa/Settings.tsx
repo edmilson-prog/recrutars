@@ -21,6 +21,7 @@ import {
   Fingerprint,
   Copy,
   ChevronsUpDown,
+  Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -89,37 +90,21 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { brazilianStates } from '@/data/settingsConfig';
 import { brazilianCitiesByState } from '@/data/brazilianCities';
-import type { TeamMember, PendingInvite, CompanyNotificationPreferences } from '@/types/company';
+import type { CompanyNotificationPreferences, CompanyUser, TeamMemberRole } from '@/types/company';
 import { usePlans, useSubscription } from '@/hooks/usePlansQuery';
 import { formatBRL } from '@/lib/formatters';
-// TODO: Replace with team/plan service hooks when available
-const initialTeamMembers: TeamMember[] = [
-  {
-    id: 'member-1',
-    name: 'Maria Silva',
-    email: 'maria@techsolutions.com.br',
-    role: 'admin',
-    lastAccess: 'Hoje às 14:30',
-    isCurrentUser: true,
-  },
-  {
-    id: 'member-2',
-    name: 'João Santos',
-    email: 'joao@techsolutions.com.br',
-    role: 'member',
-    lastAccess: 'Ontem às 18:00',
-  },
-];
+import {
+  useCompanyUsers,
+  useCompanyInvites,
+  useInviteMember,
+  useResendInvite,
+  useCancelInvite,
+  useRemoveMember,
+  useUpdateMemberRole,
+} from '@/hooks/useCompanyInvitesQuery';
 
-const initialPendingInvites: PendingInvite[] = [
-  {
-    id: 'invite-1',
-    email: 'ana@techsolutions.com.br',
-    sentAt: '10/01/2026',
-  },
-];
-
-import { useCompanies } from '@/hooks/useCompaniesQuery';
+import { useUpdateCompany } from '@/hooks/useCompaniesQuery';
+import { supabase } from '@/lib/supabase';
 import { useCulturalFit } from '@/hooks/useCulturalFit';
 import { CultureProfileForm } from '@/components/cultural';
 
@@ -169,7 +154,7 @@ const companyFaq = [
 ];
 
 export default function CompanySettings() {
-  const { user, logout, currentCompany } = useAuth();
+  const { user, logout, currentCompany, companyRole, refreshCurrentCompany } = useAuth();
   const navigate = useNavigate();
   const companyId = currentCompany?.id ?? '';
 
@@ -186,13 +171,23 @@ export default function CompanySettings() {
     address: currentCompany?.address || '',
   });
   const [logoPreview, setLogoPreview] = useState<string | null>(currentCompany?.logo || null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [cityOpen, setCityOpen] = useState(false);
 
-  // Team state
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
-  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>(initialPendingInvites);
+  const updateCompanyMutation = useUpdateCompany();
+
+  // Team state (real Supabase data)
+  const { data: companyUsers = [], isLoading: isLoadingUsers } = useCompanyUsers(companyId || undefined);
+  const { data: companyInvitesList = [], isLoading: isLoadingInvites } = useCompanyInvites(companyId || undefined);
+  const inviteMemberMutation = useInviteMember(companyId || undefined);
+  const resendInviteMutation = useResendInvite(companyId || undefined);
+  const cancelInviteMutation = useCancelInvite(companyId || undefined);
+  const removeMemberMutation = useRemoveMember(companyId || undefined);
+  const updateRoleMutation = useUpdateMemberRole(companyId || undefined);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<TeamMemberRole>('member');
 
   // Account state
   const [notifications, setNotifications] = useState<CompanyNotificationPreferences>({
@@ -207,7 +202,7 @@ export default function CompanySettings() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
-  const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
+  const [memberToRemove, setMemberToRemove] = useState<CompanyUser | null>(null);
 
   // Form states
   const [newEmail, setNewEmail] = useState('');
@@ -231,14 +226,15 @@ export default function CompanySettings() {
     resetForm: resetCulturalForm,
     isModified: isCulturalModified,
     companyProfile: culturalCompanyProfile,
+    formValues: culturalValues,
+    formDescription: culturalDescription,
   } = useCulturalFit({ companyId });
-  const [culturalValues, setCulturalValuesState] = useState<string[]>(culturalCompanyProfile?.values || []);
-  const [culturalDescription, setCulturalDescriptionState] = useState<string>(culturalCompanyProfile?.description || '');
 
   // Handle logo change
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setLogoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogoPreview(reader.result as string);
@@ -248,45 +244,116 @@ export default function CompanySettings() {
   };
 
   // Handle profile save
-  const handleSaveProfile = () => {
-    toast.success('Perfil atualizado com sucesso');
+  const handleSaveProfile = async () => {
+    if (!currentCompany || !user) return;
+    setIsSaving(true);
+    try {
+      let logoUrl = currentCompany.logo;
+
+      // Upload logo se arquivo novo foi selecionado
+      if (logoFile) {
+        const ext = logoFile.name.split('.').pop() || 'png';
+        const fileName = `${user.id}/${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, logoFile, {
+            upsert: true,
+            contentType: logoFile.type,
+          });
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+        logoUrl = urlData.publicUrl;
+      }
+
+      // Salvar todos os campos do perfil
+      await updateCompanyMutation.mutateAsync({
+        id: currentCompany.id,
+        updates: {
+          name: companyProfile.name,
+          industry: companyProfile.industry,
+          size: companyProfile.size,
+          website: companyProfile.website,
+          linkedin: companyProfile.linkedin,
+          description: companyProfile.description,
+          city: companyProfile.city,
+          state: companyProfile.state,
+          address: companyProfile.address,
+          logo: logoUrl,
+        },
+      });
+
+      await refreshCurrentCompany();
+      setLogoFile(null);
+      toast.success('Perfil atualizado com sucesso');
+    } catch (error) {
+      console.error('Erro ao salvar perfil:', error);
+      toast.error('Erro ao salvar perfil. Tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Handle invite member
-  const handleInviteMember = () => {
+  const handleInviteMember = async () => {
     if (!inviteEmail || !inviteEmail.includes('@')) {
       toast.error('Digite um email válido');
       return;
     }
-    const newInvite: PendingInvite = {
-      id: `invite-${Date.now()}`,
-      email: inviteEmail,
-      sentAt: new Date().toLocaleDateString('pt-BR'),
-    };
-    setPendingInvites(prev => [...prev, newInvite]);
-    setInviteEmail('');
-    setShowInviteModal(false);
-    toast.success(`Convite enviado para ${inviteEmail}`);
+    try {
+      const result = await inviteMemberMutation.mutateAsync({ email: inviteEmail, role: inviteRole });
+      setInviteEmail('');
+      setInviteRole('member');
+      setShowInviteModal(false);
+      toast.success(result.message);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao enviar convite');
+    }
   };
 
   // Handle resend invite
-  const handleResendInvite = (invite: PendingInvite) => {
-    toast.success(`Convite reenviado para ${invite.email}`);
+  const handleResendInvite = async (inviteId: string) => {
+    try {
+      const result = await resendInviteMutation.mutateAsync(inviteId);
+      toast.success(result.message);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao reenviar convite');
+    }
   };
 
   // Handle cancel invite
-  const handleCancelInvite = (inviteId: string) => {
-    setPendingInvites(prev => prev.filter(i => i.id !== inviteId));
-    toast.success('Convite cancelado');
+  const handleCancelInvite = async (inviteId: string) => {
+    try {
+      await cancelInviteMutation.mutateAsync(inviteId);
+      toast.success('Convite cancelado');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao cancelar convite');
+    }
   };
 
   // Handle remove member
-  const handleRemoveMember = () => {
+  const handleRemoveMember = async () => {
     if (!memberToRemove) return;
-    setTeamMembers(prev => prev.filter(m => m.id !== memberToRemove.id));
-    setShowRemoveMemberModal(false);
-    setMemberToRemove(null);
-    toast.success('Membro removido da equipe');
+    try {
+      await removeMemberMutation.mutateAsync(memberToRemove.profileId);
+      setShowRemoveMemberModal(false);
+      setMemberToRemove(null);
+      toast.success('Membro removido da equipe');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao remover membro');
+    }
+  };
+
+  // Handle role change
+  const handleRoleChange = async (member: CompanyUser, newRole: TeamMemberRole) => {
+    try {
+      await updateRoleMutation.mutateAsync({ profileId: member.profileId, role: newRole });
+      toast.success(`Cargo de ${member.name} atualizado para ${newRole === 'admin' ? 'Admin' : 'Membro'}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao alterar cargo');
+    }
   };
 
   // Handle notification change
@@ -331,8 +398,6 @@ export default function CompanySettings() {
 
   // PRD-042: Handle save cultural profile
   const handleSaveCulturalProfile = () => {
-    setCulturalValues(culturalValues);
-    setCulturalDescription(culturalDescription);
     saveCulturalProfile();
     toast.success('Perfil cultural salvo com sucesso!');
   };
@@ -614,7 +679,8 @@ export default function CompanySettings() {
               </CardContent>
             </Card>
 
-            <Button onClick={handleSaveProfile} className="w-full sm:w-auto">
+            <Button onClick={handleSaveProfile} className="w-full sm:w-auto" disabled={isSaving}>
+              {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Salvar alterações
             </Button>
           </TabsContent>
@@ -626,11 +692,11 @@ export default function CompanySettings() {
               values={culturalValues}
               description={culturalDescription}
               onDimensionChange={setCulturalDimension}
-              onValuesChange={setCulturalValuesState}
-              onDescriptionChange={setCulturalDescriptionState}
+              onValuesChange={setCulturalValues}
+              onDescriptionChange={setCulturalDescription}
               onSave={handleSaveCulturalProfile}
               onReset={resetCulturalForm}
-              isModified={isCulturalModified || culturalValues.length > 0 || culturalDescription.length > 0}
+              isModified={isCulturalModified}
             />
           </TabsContent>
 
@@ -642,73 +708,108 @@ export default function CompanySettings() {
                   <CardTitle>Equipe</CardTitle>
                   <CardDescription>Gerencie quem tem acesso à conta da empresa</CardDescription>
                 </div>
-                <Button onClick={() => setShowInviteModal(true)}>
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Convidar membro
-                </Button>
+                {companyRole === 'admin' && (
+                  <Button onClick={() => setShowInviteModal(true)}>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Convidar membro
+                  </Button>
+                )}
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Team Members */}
-                {teamMembers.map(member => (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback>
-                          {member.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-foreground">{member.name}</p>
-                        <p className="text-sm text-muted-foreground">{member.email}</p>
-                        {member.lastAccess && (
-                          <p className="text-xs text-muted-foreground">
-                            Último acesso: {member.lastAccess}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
-                        {member.role === 'admin' ? 'Admin' : 'Membro'}
-                      </Badge>
-                      {member.isCurrentUser ? (
-                        <Badge variant="outline">Você</Badge>
-                      ) : (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => toast.info('Funcionalidade em breve')}>
-                              Alterar cargo
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => {
-                                setMemberToRemove(member);
-                                setShowRemoveMemberModal(true);
-                              }}
-                            >
-                              Remover membro
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </div>
+                {isLoadingUsers ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                   </div>
-                ))}
+                ) : (
+                  companyUsers.map(member => {
+                    const isCurrentUser = member.profileId === user?.id;
+                    const initials = member.name
+                      .split(' ')
+                      .map(n => n[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase();
+                    const lastAccess = member.lastAccessAt
+                      ? new Date(member.lastAccessAt).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : null;
+
+                    return (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            {member.avatarUrl && <AvatarImage src={member.avatarUrl} />}
+                            <AvatarFallback>{initials}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium text-foreground">{member.name}</p>
+                            <p className="text-sm text-muted-foreground">{member.email}</p>
+                            {lastAccess && (
+                              <p className="text-xs text-muted-foreground">
+                                Último acesso: {lastAccess}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
+                            {member.role === 'admin' ? 'Admin' : 'Membro'}
+                          </Badge>
+                          {isCurrentUser ? (
+                            <Badge variant="outline">Você</Badge>
+                          ) : companyRole === 'admin' ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleRoleChange(
+                                      member,
+                                      member.role === 'admin' ? 'member' : 'admin'
+                                    )
+                                  }
+                                >
+                                  {member.role === 'admin'
+                                    ? 'Rebaixar para Membro'
+                                    : 'Promover a Admin'}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => {
+                                    setMemberToRemove(member);
+                                    setShowRemoveMemberModal(true);
+                                  }}
+                                >
+                                  Remover membro
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
 
                 {/* Pending Invites */}
-                {pendingInvites.length > 0 && (
+                {!isLoadingInvites && companyInvitesList.length > 0 && (
                   <>
                     <Separator />
                     <p className="text-sm font-medium text-foreground">Convites pendentes</p>
-                    {pendingInvites.map(invite => (
+                    {companyInvitesList.map(invite => (
                       <div
                         key={invite.id}
                         className="flex items-center justify-between p-4 border rounded-lg bg-muted/50"
@@ -720,26 +821,38 @@ export default function CompanySettings() {
                           <div>
                             <p className="font-medium text-foreground">{invite.email}</p>
                             <p className="text-xs text-muted-foreground">
-                              Enviado em: {invite.sentAt}
+                              Enviado em:{' '}
+                              {new Date(invite.createdAt).toLocaleDateString('pt-BR')}
                             </p>
+                            <Badge variant="outline" className="text-xs mt-1">
+                              {invite.role === 'admin' ? 'Admin' : 'Membro'}
+                            </Badge>
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleResendInvite(invite)}
-                          >
-                            Reenviar
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCancelInvite(invite.id)}
-                          >
-                            Cancelar
-                          </Button>
-                        </div>
+                        {companyRole === 'admin' && (
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={resendInviteMutation.isPending}
+                              onClick={() => handleResendInvite(invite.id)}
+                            >
+                              {resendInviteMutation.isPending ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                'Reenviar'
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={cancelInviteMutation.isPending}
+                              onClick={() => handleCancelInvite(invite.id)}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </>
@@ -1045,12 +1158,33 @@ export default function CompanySettings() {
                 onChange={e => setInviteEmail(e.target.value)}
               />
             </div>
+            <div className="space-y-2">
+              <Label>Cargo</Label>
+              <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as TeamMemberRole)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="member">Membro</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowInviteModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleInviteMember}>Enviar convite</Button>
+            <Button onClick={handleInviteMember} disabled={inviteMemberMutation.isPending}>
+              {inviteMemberMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                'Enviar convite'
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1171,10 +1305,17 @@ export default function CompanySettings() {
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleRemoveMember}
+              onClick={async (e) => {
+                e.preventDefault();
+                await handleRemoveMember();
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Remover membro
+              {removeMemberMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                'Remover membro'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
