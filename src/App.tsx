@@ -28,7 +28,9 @@ import NotFound from "./pages/NotFound";
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminCompanies from "./pages/admin/Companies";
+import AdminCompanyDetail from "./pages/admin/CompanyDetail";
 import AdminCandidates from "./pages/admin/Candidates";
+import AdminCandidateDetail from "./pages/admin/CandidateDetail";
 import AdminSettings from "./pages/admin/Settings";
 import AdminAssessmentCategories from "./pages/admin/AssessmentCategories";
 import AdminAssessmentQuestions from "./pages/admin/AssessmentQuestions";
@@ -237,9 +239,19 @@ const App = () => (
                 <AdminCompanies />
               </ProtectedRoute>
             } />
+            <Route path="/admin/empresas/:id" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminCompanyDetail />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/candidatos" element={
               <ProtectedRoute allowedTypes={['admin']}>
                 <AdminCandidates />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/candidatos/:id" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminCandidateDetail />
               </ProtectedRoute>
             } />
             <Route path="/admin/configuracoes" element={

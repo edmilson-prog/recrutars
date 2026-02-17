@@ -1,57 +1,13 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Building2, Users, Briefcase, Brain, TrendingUp, ArrowUp, ArrowDown, ChevronRight, FileText, Target, AlertTriangle, Code2, GraduationCap, MapPin } from 'lucide-react';
+import { Building2, Users, Briefcase, Brain, TrendingUp, ArrowUp, ArrowDown, ChevronRight, FileText, Target, AlertTriangle, Code2, GraduationCap, MapPin, LayoutDashboard } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { getOrGenerateIdealProfile } from '@/lib/behavioralProfiles';
-
-// TODO: Replace with data from admin reports service/API
-const adminStats = {
-  totalCompanies: 47,
-  totalCandidates: 1284,
-  activeJobs: 156,
-  testsCompleted: 892,
-  newCompaniesThisMonth: 8,
-  newCandidatesThisMonth: 156,
-  matchRate: 78,
-};
-
-// TODO: Replace with data from admin reports service/API
-const adminGrowthData = [
-  { date: '15/12', companies: 39, candidates: 1095 },
-  { date: '16/12', companies: 39, candidates: 1102 },
-  { date: '17/12', companies: 40, candidates: 1108 },
-  { date: '18/12', companies: 40, candidates: 1115 },
-  { date: '19/12', companies: 40, candidates: 1123 },
-  { date: '20/12', companies: 41, candidates: 1129 },
-  { date: '21/12', companies: 41, candidates: 1136 },
-  { date: '22/12', companies: 41, candidates: 1142 },
-  { date: '23/12', companies: 42, candidates: 1150 },
-  { date: '24/12', companies: 42, candidates: 1156 },
-  { date: '25/12', companies: 42, candidates: 1163 },
-  { date: '26/12', companies: 43, candidates: 1170 },
-  { date: '27/12', companies: 43, candidates: 1178 },
-  { date: '28/12', companies: 43, candidates: 1185 },
-  { date: '29/12', companies: 44, candidates: 1192 },
-  { date: '30/12', companies: 44, candidates: 1199 },
-  { date: '31/12', companies: 44, candidates: 1206 },
-  { date: '01/01', companies: 44, candidates: 1213 },
-  { date: '02/01', companies: 45, candidates: 1220 },
-  { date: '03/01', companies: 45, candidates: 1228 },
-  { date: '04/01', companies: 45, candidates: 1235 },
-  { date: '05/01', companies: 45, candidates: 1242 },
-  { date: '06/01', companies: 46, candidates: 1249 },
-  { date: '07/01', companies: 46, candidates: 1256 },
-  { date: '08/01', companies: 46, candidates: 1262 },
-  { date: '09/01', companies: 46, candidates: 1269 },
-  { date: '10/01', companies: 47, candidates: 1274 },
-  { date: '11/01', companies: 47, candidates: 1278 },
-  { date: '12/01', companies: 47, candidates: 1281 },
-  { date: '13/01', companies: 47, candidates: 1284 },
-];
 import { useJobs } from '@/hooks/useJobsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useCompanies } from '@/hooks/useCompaniesQuery';
 import { useApplications } from '@/hooks/useApplicationsQuery';
+import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { calculateMatchBreakdown, calculateMatchStatistics } from '@/lib/matchCalculator';
@@ -63,45 +19,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-
-const stats = [
-  {
-    label: 'Empresas ativas',
-    value: adminStats.totalCompanies,
-    icon: Building2,
-    change: `+${adminStats.newCompaniesThisMonth}`,
-    trend: 'up',
-    href: '/admin/empresas',
-    tooltip: 'Total de empresas com conta ativa na plataforma'
-  },
-  {
-    label: 'Candidatos cadastrados',
-    value: adminStats.totalCandidates.toLocaleString('pt-BR'),
-    icon: Users,
-    change: `+${adminStats.newCandidatesThisMonth}`,
-    trend: 'up',
-    href: '/admin/candidatos',
-    tooltip: 'Total de candidatos registrados na plataforma'
-  },
-  {
-    label: 'Vagas ativas',
-    value: adminStats.activeJobs,
-    icon: Briefcase,
-    change: '+12',
-    trend: 'up',
-    href: '/admin/vagas',
-    tooltip: 'Vagas publicadas e abertas para candidaturas'
-  },
-  {
-    label: 'Testes concluídos',
-    value: adminStats.testsCompleted,
-    icon: Brain,
-    change: '+45',
-    trend: 'up',
-    href: '/admin/testes',
-    tooltip: 'Total de testes comportamentais finalizados'
-  },
-];
 
 // PRD-035: Mapeamento de categorias para ícones
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -124,11 +41,92 @@ export default function AdminDashboard() {
   const { data: candidatesResult } = useCandidates();
   const { data: companiesResult } = useCompanies();
   const { data: applicationsResult } = useApplications();
+  const { data: testsResult } = useBehavioralTests();
 
   const jobs = jobsResult?.data ?? [];
   const candidates = candidatesResult?.data ?? [];
   const companies = companiesResult?.data ?? [];
   const applications = applicationsResult?.data ?? [];
+  const tests = testsResult?.data ?? [];
+
+  // Compute real metrics from Supabase data
+  const adminStats = useMemo(() => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const totalCompanies = companies.length;
+    const totalCandidates = candidates.length;
+    const activeJobs = jobs.filter((j: any) => (j.status ?? j.status) === 'active').length;
+    const testsCompleted = tests.filter((t: any) => (t.status ?? t.status) === 'completed').length;
+
+    const getCreatedAt = (item: any) => new Date(item.createdAt ?? item.created_at);
+
+    const newCompaniesThisMonth = companies.filter(c => getCreatedAt(c) >= startOfMonth).length;
+    const newCandidatesThisMonth = candidates.filter(c => getCreatedAt(c) >= startOfMonth).length;
+    const newJobsThisMonth = jobs.filter((j: any) => (j.status ?? j.status) === 'active' && getCreatedAt(j) >= startOfMonth).length;
+    const newTestsThisMonth = tests.filter((t: any) => (t.status ?? t.status) === 'completed' && getCreatedAt(t) >= startOfMonth).length;
+
+    // Match rate: percentage of applications with high match (>= 80%)
+    const matchRate = applications.length > 0
+      ? Math.round((applications.filter((a: any) => (a.matchScore ?? a.match_score ?? 0) >= 80).length / applications.length) * 100)
+      : 0;
+
+    return { totalCompanies, totalCandidates, activeJobs, testsCompleted, newCompaniesThisMonth, newCandidatesThisMonth, newJobsThisMonth, newTestsThisMonth, matchRate };
+  }, [companies, candidates, jobs, tests, applications]);
+
+  const stats = useMemo(() => [
+    {
+      label: 'Empresas ativas',
+      value: adminStats.totalCompanies.toLocaleString('pt-BR'),
+      icon: Building2,
+      change: adminStats.newCompaniesThisMonth,
+      href: '/admin/empresas',
+      tooltip: 'Total de empresas com conta ativa na plataforma'
+    },
+    {
+      label: 'Candidatos cadastrados',
+      value: adminStats.totalCandidates.toLocaleString('pt-BR'),
+      icon: Users,
+      change: adminStats.newCandidatesThisMonth,
+      href: '/admin/candidatos',
+      tooltip: 'Total de candidatos registrados na plataforma'
+    },
+    {
+      label: 'Vagas ativas',
+      value: adminStats.activeJobs.toLocaleString('pt-BR'),
+      icon: Briefcase,
+      change: adminStats.newJobsThisMonth,
+      href: '/admin/vagas',
+      tooltip: 'Vagas publicadas e abertas para candidaturas'
+    },
+    {
+      label: 'Testes concluídos',
+      value: adminStats.testsCompleted.toLocaleString('pt-BR'),
+      icon: Brain,
+      change: adminStats.newTestsThisMonth,
+      href: '/admin/testes',
+      tooltip: 'Total de testes comportamentais finalizados'
+    },
+  ], [adminStats]);
+
+  // Growth chart data: cumulative companies/candidates over last 30 days
+  const growthData = useMemo(() => {
+    const days = 30;
+    const now = new Date();
+    const data = [];
+    const getCreatedAt = (item: any) => new Date(item.createdAt ?? item.created_at);
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      date.setHours(23, 59, 59, 999);
+      const dateStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      const companiesCount = companies.filter(c => getCreatedAt(c) <= date).length;
+      const candidatesCount = candidates.filter(c => getCreatedAt(c) <= date).length;
+      data.push({ date: dateStr, companies: companiesCount, candidates: candidatesCount });
+    }
+    return data;
+  }, [companies, candidates]);
 
   // PRD-035: Calcular estatísticas de match para todas as candidaturas
   const matchStatistics = useMemo(() => {
@@ -188,11 +186,25 @@ export default function AdminDashboard() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">Visão geral da plataforma RecrutaRS</p>
-        </div>
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <LayoutDashboard className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Visão geral da plataforma RecrutaRS. Acompanhe métricas de empresas, candidatos, vagas e testes comportamentais.
+              </p>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Stats Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -210,12 +222,14 @@ export default function AdminDashboard() {
                       <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
                         <stat.icon className="w-6 h-6 text-primary-foreground" />
                       </div>
-                      <div className={`flex items-center gap-1 text-sm font-medium ${
-                        stat.trend === 'up' ? 'text-success' : 'text-destructive'
-                      }`}>
-                        {stat.trend === 'up' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
-                        {stat.change}
-                      </div>
+                      {stat.change !== 0 && (
+                        <div className={`flex items-center gap-1 text-sm font-medium ${
+                          stat.change > 0 ? 'text-success' : 'text-destructive'
+                        }`}>
+                          {stat.change > 0 ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                          {stat.change > 0 ? `+${stat.change}` : stat.change}
+                        </div>
+                      )}
                     </div>
                     <div className="text-3xl font-bold text-foreground mb-1">{stat.value}</div>
                     <div className="text-sm text-muted-foreground">{stat.label}</div>
@@ -304,7 +318,7 @@ export default function AdminDashboard() {
               <h2 className="text-xl font-semibold text-foreground">Crescimento (Últimos 30 dias)</h2>
             </div>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={adminGrowthData}>
+              <LineChart data={growthData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
                 <XAxis
                   dataKey="date"

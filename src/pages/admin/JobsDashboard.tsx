@@ -125,18 +125,28 @@ export default function JobsDashboard() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <BarChart3 className="w-8 h-8 text-cyan-600" />
-            Dashboard de Vagas
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Visao geral de vagas, moderacao e metricas de recrutamento
-          </p>
-        </div>
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <BarChart3 className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Dashboard de Vagas</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Visão geral de vagas, moderação e métricas de recrutamento da plataforma.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        <AdminTabNav />
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

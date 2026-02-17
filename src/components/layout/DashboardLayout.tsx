@@ -12,7 +12,7 @@ import {
   LayoutDashboard, Building2, Users, Settings, LogOut,
   Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart, Calendar, HelpCircle, Bell,
   ChevronLeft, ChevronRight, Sparkles, Info, UsersRound,
-  ShieldCheck, BarChart3,
+  ShieldCheck, BarChart3, CreditCard, DollarSign, ToggleLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdminNavItemActive, getTabLabelForPath } from '@/config/adminTabConfig';
@@ -59,6 +59,9 @@ const adminNav: NavItem[] = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/empresas', label: 'Empresas', icon: Building2 },
   { href: '/admin/candidatos', label: 'Candidatos', icon: Users },
+  { href: '/admin/planos', label: 'Planos & Assinaturas', icon: CreditCard },
+  { href: '/admin/assinaturas/billing', label: 'Financeiro', icon: DollarSign },
+  { href: '/admin/feature-flags', label: 'Feature Flags', icon: ToggleLeft },
   { href: '/admin/usuarios', label: 'Usuários & Permissões', icon: ShieldCheck },
   { href: '/admin/avaliacoes/categorias', label: 'Avaliações', icon: Brain },
   { href: '/admin/vagas', label: 'Vagas', icon: Briefcase },

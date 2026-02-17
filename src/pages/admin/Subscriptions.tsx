@@ -166,18 +166,28 @@ export default function SubscriptionsPage() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <CreditCard className="w-8 h-8 text-cyan-600" />
-            Assinaturas
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie todas as assinaturas da plataforma
-          </p>
-        </div>
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <CreditCard className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Assinaturas</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Gerencie todas as assinaturas da plataforma. Visualize status, planos ativos e histórico de pagamentos.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        <AdminTabNav />
 
         {/* KPI cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">

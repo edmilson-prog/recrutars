@@ -46,6 +46,18 @@ export interface IPlansService {
   /** List capability assignments for a specific plan. */
   getCapabilityAssignments(planId: string): Promise<PlanCapabilityAssignment[]>;
 
+  /** List ALL capability assignments across all plans. */
+  getAllCapabilityAssignments(): Promise<PlanCapabilityAssignment[]>;
+
+  /** Create a new capability. */
+  createCapability(data: Omit<PlanCapability, 'id'>): Promise<PlanCapability>;
+
+  /** Delete a capability by key. */
+  deleteCapability(key: string): Promise<void>;
+
+  /** Upsert a capability assignment (insert or update value). */
+  upsertCapabilityAssignment(planId: string, capabilityKey: string, value: string | number | boolean): Promise<PlanCapabilityAssignment>;
+
   /** List subscriptions with optional filters. */
   getSubscriptions(filters?: SubscriptionFilters): Promise<Subscription[]>;
 

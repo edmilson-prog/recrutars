@@ -117,6 +117,58 @@ export function useCapabilityAssignments(planId: string | undefined) {
   });
 }
 
+export function useAllCapabilityAssignments() {
+  return useQuery({
+    queryKey: [CAPABILITIES_KEY, 'assignments', 'all'],
+    queryFn: async () => {
+      const svc = await getPlansService();
+      return svc.getAllCapabilityAssignments();
+    },
+  });
+}
+
+export function useCreateCapability() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Omit<import('@/types/plans').PlanCapability, 'id'>) => {
+      const svc = await getPlansService();
+      return svc.createCapability(data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [CAPABILITIES_KEY] });
+    },
+  });
+}
+
+export function useDeleteCapability() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (key: string) => {
+      const svc = await getPlansService();
+      return svc.deleteCapability(key);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [CAPABILITIES_KEY] });
+    },
+  });
+}
+
+export function useUpsertAssignment() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ planId, capabilityKey, value }: { planId: string; capabilityKey: string; value: string | number | boolean }) => {
+      const svc = await getPlansService();
+      return svc.upsertCapabilityAssignment(planId, capabilityKey, value);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [CAPABILITIES_KEY] });
+    },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Subscriptions
 // ---------------------------------------------------------------------------

@@ -186,7 +186,6 @@ export default function PlanDetail() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -203,6 +202,8 @@ export default function PlanDetail() {
             </p>
           </div>
         </div>
+
+        <AdminTabNav />
 
         {/* 2-column grid */}
         <div className="grid lg:grid-cols-3 gap-6">

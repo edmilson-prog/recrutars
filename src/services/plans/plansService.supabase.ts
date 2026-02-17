@@ -51,6 +51,20 @@ function normalizePlanRow(row: Record<string, unknown>): Plan {
   };
 }
 
+/** Maps a raw assignment row (snake_case) to PlanCapabilityAssignment (camelCase). */
+function normalizeAssignmentRow(row: Record<string, unknown>): PlanCapabilityAssignment {
+  const raw = row.value as string;
+  let value: string | number | boolean = raw;
+  if (raw === 'true') value = true;
+  else if (raw === 'false') value = false;
+  else if (/^\d+$/.test(raw)) value = parseInt(raw, 10);
+  return {
+    planId: row.plan_id as string,
+    capabilityKey: row.capability_key as string,
+    value,
+  };
+}
+
 export class SupabasePlansService implements IPlansService {
   async getPlans(type?: 'candidate' | 'company'): Promise<Plan[]> {
     let query = supabase.from('plans').select('*').order('sort_order', { ascending: true });
@@ -144,7 +158,15 @@ export class SupabasePlansService implements IPlansService {
       .order('category');
 
     if (error) throw error;
-    return (data ?? []) as unknown as PlanCapability[];
+    return (data ?? []).map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      key: row.key as string,
+      name: row.name as string,
+      description: (row.description as string) ?? '',
+      category: row.category as string,
+      valueType: row.value_type === 'text' ? 'enum' : row.value_type as 'boolean' | 'number' | 'enum',
+      possibleValues: row.possible_values as string[] | undefined,
+    }));
   }
 
   async getCapabilityAssignments(planId: string): Promise<PlanCapabilityAssignment[]> {
@@ -154,11 +176,74 @@ export class SupabasePlansService implements IPlansService {
       .eq('plan_id', planId);
 
     if (error) throw error;
-    return (data ?? []).map((row: Record<string, unknown>) => ({
-      planId: row.plan_id as string,
-      capabilityKey: row.capability_key as string,
-      value: row.value as string | number | boolean,
-    }));
+    return (data ?? []).map((row: Record<string, unknown>) => normalizeAssignmentRow(row));
+  }
+
+  async getAllCapabilityAssignments(): Promise<PlanCapabilityAssignment[]> {
+    const { data, error } = await supabase
+      .from('plan_capability_assignments')
+      .select('*');
+
+    if (error) throw error;
+    return (data ?? []).map((row: Record<string, unknown>) => normalizeAssignmentRow(row));
+  }
+
+  async createCapability(input: Omit<PlanCapability, 'id'>): Promise<PlanCapability> {
+    const { data, error } = await supabase
+      .from('plan_capabilities')
+      .insert({
+        key: input.key,
+        name: input.name,
+        description: input.description,
+        category: input.category,
+        value_type: input.valueType === 'enum' ? 'enum' : input.valueType,
+        possible_values: input.possibleValues ?? null,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    const row = data as Record<string, unknown>;
+    return {
+      id: row.id as string,
+      key: row.key as string,
+      name: row.name as string,
+      description: (row.description as string) ?? '',
+      category: row.category as string,
+      valueType: row.value_type === 'text' ? 'enum' : row.value_type as 'boolean' | 'number' | 'enum',
+      possibleValues: row.possible_values as string[] | undefined,
+    };
+  }
+
+  async deleteCapability(key: string): Promise<void> {
+    const { data: deleted, error } = await supabase
+      .from('plan_capabilities')
+      .delete()
+      .eq('key', key)
+      .select();
+
+    if (error) throw error;
+    if (!deleted || deleted.length === 0) {
+      throw new Error('Falha ao excluir capability. Verifique permissoes de admin.');
+    }
+  }
+
+  async upsertCapabilityAssignment(
+    planId: string,
+    capabilityKey: string,
+    value: string | number | boolean,
+  ): Promise<PlanCapabilityAssignment> {
+    const { data, error } = await supabase
+      .from('plan_capability_assignments')
+      .upsert(
+        { plan_id: planId, capability_key: capabilityKey, value: String(value) },
+        { onConflict: 'plan_id,capability_key' },
+      )
+      .select()
+      .single();
+
+    if (error) throw error;
+    return normalizeAssignmentRow(data as Record<string, unknown>);
   }
 
   async getSubscriptions(filters?: SubscriptionFilters): Promise<Subscription[]> {

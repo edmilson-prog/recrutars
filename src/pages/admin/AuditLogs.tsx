@@ -223,19 +223,32 @@ export default function AdminAuditLogs() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Auditoria</h1>
-            <p className="text-muted-foreground">Registro de todas as acoes realizadas no sistema</p>
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <ScrollText className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Auditoria</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Registro de todas as ações realizadas no sistema. Rastreie operações de usuários, alterações e eventos.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" className="shrink-0">
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </Button>
           </div>
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Exportar
-          </Button>
-        </div>
+        </motion.div>
+
+        <AdminTabNav />
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

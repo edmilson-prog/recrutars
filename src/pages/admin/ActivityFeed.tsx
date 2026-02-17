@@ -95,7 +95,6 @@ export default function ActivityFeed() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -115,6 +114,8 @@ export default function ActivityFeed() {
             Atualizacao automatica ativa
           </div>
         </div>
+
+        <AdminTabNav />
 
         {/* Summary bar */}
         <motion.div

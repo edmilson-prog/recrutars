@@ -96,29 +96,38 @@ export default function WebhookLog() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              <Webhook className="w-8 h-8 text-cyan-600" />
-              Webhook Log
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Eventos recebidos do Stripe via webhook
-            </p>
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <Webhook className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Webhook Log</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Eventos recebidos do Stripe via webhook. Monitore processamento, falhas e reenvios.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchEvents}
+              disabled={loading}
+              className="shrink-0"
+            >
+              <RefreshCw className={cn('w-4 h-4 mr-2', loading && 'animate-spin')} />
+              Atualizar
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchEvents}
-            disabled={loading}
-          >
-            <RefreshCw className={cn('w-4 h-4 mr-2', loading && 'animate-spin')} />
-            Atualizar
-          </Button>
-        </div>
+        </motion.div>
+
+        <AdminTabNav />
 
         {/* KPI cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

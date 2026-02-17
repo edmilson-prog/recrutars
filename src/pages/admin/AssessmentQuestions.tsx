@@ -156,30 +156,35 @@ export default function AdminAssessmentQuestions() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Button variant="ghost" size="sm" asChild className="h-8 px-2">
-                <Link to="/admin/avaliacoes/categorias">
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Categorias
-                </Link>
-              </Button>
+        {/* Banner */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6">
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <FileQuestion className="w-6 h-6 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">Banco de Perguntas</h1>
-            <p className="text-muted-foreground">
-              Gerencie as {stats.totalQuestions} perguntas do sistema Gauge-Pro 2.0
-            </p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <Button variant="ghost" size="sm" asChild className="h-8 px-2">
+                  <Link to="/admin/avaliacoes/categorias">
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Categorias
+                  </Link>
+                </Button>
+              </div>
+              <h1 className="text-2xl font-bold text-foreground">Banco de Perguntas</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Gerencie as {stats.totalQuestions} perguntas do sistema Gauge-Pro 2.0 organizadas por dimensão e categoria.
+              </p>
+            </div>
+            <Button onClick={() => setIsFormOpen(true)} className="shrink-0">
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Pergunta
+            </Button>
           </div>
-
-          <Button onClick={() => setIsFormOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Pergunta
-          </Button>
         </div>
+
+        <AdminTabNav />
 
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-5">
