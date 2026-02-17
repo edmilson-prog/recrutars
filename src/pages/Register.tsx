@@ -210,7 +210,7 @@ export default function Register() {
       const message = err instanceof Error ? err.message : '';
 
       if (message.includes('already registered') || message.includes('already been registered')) {
-        setError('Este email ja esta cadastrado. Faca login.');
+        setError('Este email ja possui uma conta. Use a pagina de login ou clique em "Esqueci minha senha" para recuperar o acesso.');
       } else if (message.includes('Invalid email')) {
         setError('Email invalido. Verifique o formato.');
       } else if (message.includes('Password') || message.includes('password')) {
@@ -250,21 +250,31 @@ export default function Register() {
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="cnpj">CNPJ da empresa</Label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+        <div className={cn("relative", (cnpjLoading || cooldownSeconds > 0) && "cursor-not-allowed")}>
+          {cooldownSeconds > 0 ? (
+            <Timer className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+          ) : (
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+          )}
           <Input
             id="cnpj"
             type="text"
             inputMode="numeric"
-            placeholder="00.000.000/0000-00"
-            className="pl-10"
+            placeholder={cooldownSeconds > 0
+              ? `Aguarde ${cooldownSeconds}s para nova consulta`
+              : "00.000.000/0000-00"}
+            className={cn(
+              "pl-10",
+              cooldownSeconds > 0 && "border-muted-foreground/30 bg-muted/50"
+            )}
             value={cnpjInput}
             onChange={handleCnpjChange}
             disabled={cnpjLoading || cooldownSeconds > 0}
+            aria-describedby="cnpj-helper"
             autoFocus
           />
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p id="cnpj-helper" className="text-xs text-muted-foreground">
           Informe o CNPJ para consultar os dados oficiais da empresa na Receita Federal.
         </p>
       </div>
@@ -291,13 +301,6 @@ export default function Register() {
               <strong>Nome Fantasia:</strong> {cnpjData.nomeFantasia}
             </p>
           )}
-        </div>
-      )}
-
-      {cooldownSeconds > 0 && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground" role="timer" aria-live="polite">
-          <Timer className="w-4 h-4" />
-          Aguarde {cooldownSeconds}s para nova consulta
         </div>
       )}
 

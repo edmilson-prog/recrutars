@@ -298,6 +298,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (authError) throw authError;
     if (!authData.user) throw new Error('Falha ao criar conta');
 
+    // Detect repeated signup — Supabase returns empty identities instead of error
+    if (!authData.user.identities || authData.user.identities.length === 0) {
+      throw new Error('already registered');
+    }
+
     // If session is null, email confirmation is required
     const needsEmailConfirmation = authData.session === null;
     return { needsEmailConfirmation };
