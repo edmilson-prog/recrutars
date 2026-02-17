@@ -217,6 +217,7 @@ export default function Login() {
                   className="w-full"
                   size="lg"
                   onClick={switchToMagicLink}
+                  disabled
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Entrar com link magico
