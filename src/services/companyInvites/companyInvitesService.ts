@@ -91,7 +91,12 @@ export async function getCompanyInvites(companyId: string): Promise<CompanyInvit
 
 export async function inviteMember(email: string, role: TeamMemberRole = 'member'): Promise<{ message: string }> {
   const { data, error } = await supabase.functions.invoke('invite-team-member', {
-    body: { action: 'invite', email, role },
+    body: {
+      action: 'invite',
+      email,
+      role,
+      redirect_url: `${window.location.origin}/aceitar-convite`,
+    },
   });
 
   if (error) throw error;
@@ -101,7 +106,11 @@ export async function inviteMember(email: string, role: TeamMemberRole = 'member
 
 export async function resendInvite(inviteId: string): Promise<{ message: string }> {
   const { data, error } = await supabase.functions.invoke('invite-team-member', {
-    body: { action: 'resend', invite_id: inviteId },
+    body: {
+      action: 'resend',
+      invite_id: inviteId,
+      redirect_url: `${window.location.origin}/aceitar-convite`,
+    },
   });
 
   if (error) throw error;

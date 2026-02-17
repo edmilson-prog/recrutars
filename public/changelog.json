@@ -1,12 +1,36 @@
 {
   "versions": [
     {
+      "version": "1.16.2",
+      "codename": "Verify",
+      "type": "patch",
+      "releaseDate": "2026-02-17",
+      "description": "Correcao do link de convite de equipe: redirect agora aponta para a URL correta da aplicacao com pagina dedicada para definir senha.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Convite de equipe: link do email agora redireciona para a porta correta da aplicacao (antes apontava para localhost:3000)",
+            "Convite de equipe: Edge Function invite-team-member agora aceita redirect_url e repassa como redirectTo ao Supabase Auth"
+          ]
+        },
+        {
+          "type": "added",
+          "items": [
+            "Nova pagina /aceitar-convite para membros convidados definirem sua senha ao aceitar o convite",
+            "Fluxo completo de aceitacao: validacao do token, formulario de senha e redirecionamento automatico para o painel da empresa"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.16.0",
       "codename": "Verify",
       "type": "minor",
       "releaseDate": "2026-02-16",
       "description": "Cadastro de empresa com validacao de CNPJ via API Minha Receita. Fluxo progressivo em 3 etapas com preenchimento automatico dos dados oficiais.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

@@ -22,6 +22,7 @@ import TermosUso from "./pages/TermosUso";
 import ForCompanies from "./pages/ForCompanies";
 import ForCandidates from "./pages/ForCandidates";
 import CorporateTests from "./pages/CorporateTests";
+import AceitarConvite from "./pages/AceitarConvite";
 import NotFound from "./pages/NotFound";
 
 // Admin pages
@@ -203,6 +204,9 @@ const App = () => (
             <Route path="/para-empresas" element={<ForCompanies />} />
             <Route path="/para-candidatos" element={<ForCandidates />} />
             <Route path="/testes-corporativos" element={<CorporateTests />} />
+
+            {/* Team invite acceptance (public — no wrappers) */}
+            <Route path="/aceitar-convite" element={<AceitarConvite />} />
 
             {/* PRD-048: Magic Link Route (public) */}
             <Route path="/t/:token" element={<MagicLinkLanding />} />
