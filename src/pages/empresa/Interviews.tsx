@@ -39,6 +39,7 @@ import { useJobsByCompany } from '@/hooks/useJobsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { toast } from 'sonner';
 import type { Interview } from '@/types/interview';
+import { getCandidateDisplayName } from '@/lib/candidateDisplayName';
 
 type TabValue = 'pending' | 'confirmed' | 'completed';
 
@@ -159,24 +160,42 @@ export default function CompanyInterviews() {
     return candidate?.avatar;
   };
 
+  // Helper para obter nome do candidato
+  const getCandidateName = (candidateId: string): string | undefined => {
+    const candidate = allCandidates.find((c) => c.id === candidateId);
+    if (!candidate) return undefined;
+    return getCandidateDisplayName(candidate);
+  };
+
   return (
     <DashboardLayout userType="company">
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <Calendar className="h-8 w-8 text-primary" />
-            Entrevistas
-            {pendingCount > 0 && (
-              <Badge className="bg-yellow-500 text-white">
-                {pendingCount} aguardando acao
-              </Badge>
-            )}
-          </h1>
-          <p className="text-muted-foreground">
-            Gerencie as entrevistas com candidatos
-          </p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <Calendar className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                Entrevistas
+                {pendingCount > 0 && (
+                  <Badge className="bg-yellow-500 text-white">
+                    {pendingCount} aguardando ação
+                  </Badge>
+                )}
+              </h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Gerencie e acompanhe entrevistas agendadas. Registre feedback, controle o status e avance candidatos no processo seletivo.
+              </p>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Stats Summary */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -295,6 +314,7 @@ export default function CompanyInterviews() {
                     <CompanyInterviewCard
                       interview={interview}
                       candidateAvatar={getCandidateAvatar(interview.candidateId)}
+                      candidateName={getCandidateName(interview.candidateId)}
                       onAcceptSuggestion={() => handleAcceptSuggestion(interview)}
                       onProposeNew={() => handleProposeNew(interview)}
                       onCancel={() => handleCancel(interview)}
@@ -314,6 +334,7 @@ export default function CompanyInterviews() {
                       <CompanyInterviewCard
                         interview={interview}
                         candidateAvatar={getCandidateAvatar(interview.candidateId)}
+                        candidateName={getCandidateName(interview.candidateId)}
                         onRemind={() => handleRemind(interview)}
                         onCancel={() => handleCancel(interview)}
                       />
@@ -363,6 +384,7 @@ export default function CompanyInterviews() {
                       <CompanyInterviewCard
                         interview={interview}
                         candidateAvatar={getCandidateAvatar(interview.candidateId)}
+                        candidateName={getCandidateName(interview.candidateId)}
                         onMessage={() => handleMessage(interview)}
                         onMarkCompleted={() => handleMarkCompleted(interview)}
                         onCancel={() => handleCancel(interview)}
@@ -424,6 +446,7 @@ export default function CompanyInterviews() {
                     <CompanyInterviewCard
                       interview={interview}
                       candidateAvatar={getCandidateAvatar(interview.candidateId)}
+                      candidateName={getCandidateName(interview.candidateId)}
                       onViewCandidate={() => handleViewCandidate(interview)}
                     />
                   </motion.div>

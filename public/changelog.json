@@ -1,12 +1,69 @@
 {
   "versions": [
     {
+      "version": "1.18.0",
+      "codename": "Refine",
+      "type": "minor",
+      "releaseDate": "2026-02-18",
+      "description": "Polimento geral de UX: banners descritivos em todas as paginas da empresa, melhorias na tela de login, correcao do modal de contratacao e identificacao do candidato nos cards de entrevista.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Banners descritivos animados em 7 paginas do dashboard da empresa: Candidaturas, Entrevistas, Banco de Talentos, Candidatos Salvos, Hub de Testes, Gestao de Equipes e Notificacoes",
+            "Login: toggle de visibilidade de senha (icone olho/olho-fechado) no campo de senha",
+            "Login: 'Lembrar-me' agora salva e restaura o email no localStorage",
+            "Login: trim automatico em todos os campos de email (remove espacos acidentais)"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Banner de trial nao aparecia no dashboard — normalizacao snake_case para camelCase em useSubscription() e useTrialSubscription()",
+            "Links dos componentes de trial (TrialAlert, TrialBadge, TrialBanner) corrigidos para /empresa/configuracoes?tab=plano",
+            "Pagina de Configuracoes agora abre diretamente na aba correta via ?tab= na URL",
+            "Modal de contratacao desproporcional — ampliado para sm:max-w-xl; campos Data de inicio e Salario reorganizados em grid 2 colunas",
+            "Cards de entrevista nao exibiam o nome do candidato — agora exibe nome real com iniciais corretas no Avatar (antes mostrava titulo da entrevista e chars do UUID)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.17.0",
+      "codename": "Gatekeeper",
+      "type": "minor",
+      "releaseDate": "2026-02-18",
+      "description": "Vinculacao obrigatoria de plano e gestao de trial para empresas. Toda empresa nova recebe automaticamente o plano Basico Empresas em modo trial com duracao dinamica. Empresas existentes foram migradas.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Vinculacao automatica: toda empresa nova recebe trial do plano Basico Empresas no cadastro",
+            "Duracao dinamica: trial lido de plans.trial_duration_days, sem hardcode no codigo (RF-003)",
+            "Migracao: empresas existentes sem subscription normalizadas para trial com auditoria",
+            "Bloqueio pos-trial: empresa com trial expirado ve tela de conversao com planos pagos",
+            "Aviso visual progressivo: badge sutil (16+ dias), banner (8-15 dias), alerta (2-7 dias), urgente (0-1 dia)",
+            "TrialGuard: paths de checkout e meu-plano acessiveis mesmo com trial expirado"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Query getSubscription() agora inclui status 'trial' — corrigido bug que impedia deteccao de trials",
+            "Trigger handle_new_user() restaurado com criacao automatica de trial subscription (perdido na migracao 030)"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.16.2",
       "codename": "Verify",
       "type": "patch",
       "releaseDate": "2026-02-17",
       "description": "Correcao do link de convite de equipe: redirect agora aponta para a URL correta da aplicacao com pagina dedicada para definir senha.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

@@ -721,21 +721,33 @@ export default function CompanyApplications() {
     <DashboardLayout userType="company">
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-foreground">Candidaturas</h1>
-            <Badge
-              variant="secondary"
-              className="text-base font-semibold px-3 py-1 bg-secondary/10 text-secondary"
-              aria-label={`${totalActiveApplications} candidaturas no total`}
-            >
-              {totalActiveApplications}
-            </Badge>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <ClipboardCheck className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                Candidaturas
+                <Badge
+                  variant="secondary"
+                  className="text-base font-semibold px-3 py-1 bg-secondary/10 text-secondary"
+                  aria-label={`${totalActiveApplications} candidaturas no total`}
+                >
+                  {totalActiveApplications}
+                </Badge>
+              </h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Acompanhe e gerencie todas as candidaturas das suas vagas. Filtre por status, avalie candidatos e avance no processo seletivo.
+              </p>
+            </div>
           </div>
-          <p className="text-muted-foreground">
-            Gerencie as candidaturas das suas vagas
-          </p>
-        </div>
+        </motion.div>
 
         {/* Job Selector and Filters */}
         <div className="flex flex-col lg:flex-row gap-4">

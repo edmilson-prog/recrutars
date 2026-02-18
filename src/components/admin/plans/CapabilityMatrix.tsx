@@ -3,6 +3,7 @@
  * PRD-060: Matrix table for plan capabilities management
  */
 
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
@@ -38,12 +39,43 @@ export function CapabilityMatrix({
   categorizedCapabilities,
   onUpdateAssignment,
 }: CapabilityMatrixProps) {
-  const getValue = (planId: string, capKey: string): string | number | boolean | null => {
+  // Optimistic local overrides — applied immediately on user interaction,
+  // cleared when React Query delivers fresh data via `assignments` prop.
+  const [localOverrides, setLocalOverrides] = useState<Map<string, string | number | boolean>>(new Map());
+
+  // Clear overrides when server data arrives (React Query refetched)
+  useEffect(() => {
+    setLocalOverrides(new Map());
+  }, [assignments]);
+
+  const getValue = useCallback((planId: string, capKey: string): string | number | boolean | null => {
+    const overrideKey = `${planId}:${capKey}`;
+    if (localOverrides.has(overrideKey)) return localOverrides.get(overrideKey)!;
     const assignment = assignments.find(
       (a) => a.planId === planId && a.capabilityKey === capKey
     );
     return assignment?.value ?? null;
-  };
+  }, [assignments, localOverrides]);
+
+  // For checkboxes and selects: update local override + fire mutation immediately
+  const handleImmediateChange = useCallback((planId: string, capKey: string, value: string | number | boolean) => {
+    setLocalOverrides(prev => new Map(prev).set(`${planId}:${capKey}`, value));
+    onUpdateAssignment(planId, capKey, value);
+  }, [onUpdateAssignment]);
+
+  // For number inputs: only update local override (mutation fires on blur)
+  const handleLocalChange = useCallback((planId: string, capKey: string, value: number) => {
+    setLocalOverrides(prev => new Map(prev).set(`${planId}:${capKey}`, value));
+  }, []);
+
+  // Fire mutation on blur for number inputs
+  const handleBlurSave = useCallback((planId: string, capKey: string) => {
+    const overrideKey = `${planId}:${capKey}`;
+    const value = localOverrides.get(overrideKey);
+    if (value !== undefined) {
+      onUpdateAssignment(planId, capKey, value);
+    }
+  }, [localOverrides, onUpdateAssignment]);
 
   const renderCell = (plan: Plan, capability: PlanCapability) => {
     const value = getValue(plan.id, capability.key);
@@ -53,7 +85,7 @@ export function CapabilityMatrix({
         <Checkbox
           checked={value === true}
           onCheckedChange={(checked) =>
-            onUpdateAssignment(plan.id, capability.key, !!checked)
+            handleImmediateChange(plan.id, capability.key, !!checked)
           }
         />
       );
@@ -66,12 +98,13 @@ export function CapabilityMatrix({
           min={0}
           value={typeof value === 'number' ? value : 0}
           onChange={(e) =>
-            onUpdateAssignment(
+            handleLocalChange(
               plan.id,
               capability.key,
               parseInt(e.target.value, 10) || 0
             )
           }
+          onBlur={() => handleBlurSave(plan.id, capability.key)}
           className="h-8 w-20 text-sm text-center"
         />
       );
@@ -83,7 +116,7 @@ export function CapabilityMatrix({
         <Select
           value={currentValue}
           onValueChange={(v) =>
-            onUpdateAssignment(plan.id, capability.key, v)
+            handleImmediateChange(plan.id, capability.key, v)
           }
         >
           <SelectTrigger className="h-8 w-28 text-xs">
@@ -125,9 +158,9 @@ export function CapabilityMatrix({
         </TableHeader>
         <TableBody>
           {categories.map((category) => (
-            <>
+            <Fragment key={category}>
               {/* Category header row */}
-              <TableRow key={`cat-${category}`} className="bg-cyan-50/50 dark:bg-cyan-950/20">
+              <TableRow className="bg-cyan-50/50 dark:bg-cyan-950/20">
                 <TableCell
                   colSpan={plans.length + 1}
                   className="font-semibold text-cyan-700 dark:text-cyan-400 text-sm py-2"
@@ -161,7 +194,7 @@ export function CapabilityMatrix({
                   ))}
                 </TableRow>
               ))}
-            </>
+            </Fragment>
           ))}
         </TableBody>
       </Table>

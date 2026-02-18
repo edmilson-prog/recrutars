@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/tooltip';
 import type { Interview } from '@/types/interview';
 import { interviewTypeLabels } from '@/types/interview';
+import { getCandidateInitials } from '@/lib/candidateDisplayName';
 import {
   companyCancellationReasonLabels,
   type CompanyCancellationReason,
@@ -42,6 +43,7 @@ import {
 interface CompanyInterviewCardProps {
   interview: Interview;
   candidateAvatar?: string;
+  candidateName?: string;
   onAcceptSuggestion?: () => void;
   onProposeNew?: () => void;
   onCancel?: () => void;
@@ -62,7 +64,7 @@ function getStatusBadge(status: Interview['status']) {
     case 'pending_candidate':
       return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30">Aguardando candidato</Badge>;
     case 'pending_company':
-      return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30">Candidato sugeriu horarios</Badge>;
+      return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30">Candidato sugeriu horários</Badge>;
     case 'confirmed':
       return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">Confirmada</Badge>;
     case 'completed':
@@ -85,7 +87,7 @@ function getCountdown(dateStr: string): { text: string; urgent: boolean } {
     return { text: 'Hoje', urgent: true };
   }
   if (isTomorrow(date)) {
-    return { text: 'Amanha', urgent: true };
+    return { text: 'Amanhã', urgent: true };
   }
   const days = differenceInDays(date, new Date());
   return { text: `Em ${days} dias`, urgent: days <= 3 };
@@ -94,6 +96,7 @@ function getCountdown(dateStr: string): { text: string; urgent: boolean } {
 export function CompanyInterviewCard({
   interview,
   candidateAvatar,
+  candidateName,
   onAcceptSuggestion,
   onProposeNew,
   onCancel,
@@ -105,8 +108,8 @@ export function CompanyInterviewCard({
   const TypeIcon = typeIcons[interview.type];
 
   // Obter iniciais do candidato
-  const candidateInitials = interview.candidateId
-    ? interview.candidateId.substring(0, 2).toUpperCase()
+  const candidateInitials = candidateName
+    ? getCandidateInitials(candidateName)
     : 'C';
 
   // Renderizar card para entrevista aguardando resposta do candidato
@@ -141,14 +144,17 @@ export function CompanyInterviewCard({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold truncate">{interview.title}</h3>
+              <h3 className="font-semibold truncate">{candidateName ?? interview.title}</h3>
+              {candidateName && (
+                <p className="text-xs text-muted-foreground/70 truncate">{interview.title}</p>
+              )}
               <p className="text-sm text-muted-foreground truncate">
                 {interview.jobTitle}
               </p>
             </div>
           </div>
 
-          <p className="text-sm mb-3">Horarios propostos:</p>
+          <p className="text-sm mb-3">Horários propostos:</p>
 
           <div className="space-y-2 mb-4">
             {interview.proposedSlots?.map((slot, idx) => (
@@ -190,7 +196,7 @@ export function CompanyInterviewCard({
     );
   }
 
-  // Renderizar card quando candidato sugeriu horarios alternativos
+  // Renderizar card quando candidato sugeriu horários alternativos
   if (interview.status === 'pending_company') {
     return (
       <Card className="border-yellow-500/30 bg-yellow-500/5">
@@ -207,7 +213,10 @@ export function CompanyInterviewCard({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold truncate">{interview.title}</h3>
+              <h3 className="font-semibold truncate">{candidateName ?? interview.title}</h3>
+              {candidateName && (
+                <p className="text-xs text-muted-foreground/70 truncate">{interview.title}</p>
+              )}
               <p className="text-sm text-muted-foreground truncate">
                 {interview.jobTitle}
               </p>
@@ -248,7 +257,7 @@ export function CompanyInterviewCard({
           <div className="flex gap-2">
             <Button onClick={onAcceptSuggestion} className="flex-1">
               <Check className="h-4 w-4 mr-2" />
-              Aceitar Sugestao
+              Aceitar Sugestão
             </Button>
             <Button variant="outline" onClick={onProposeNew} className="flex-1">
               <Calendar className="h-4 w-4 mr-2" />
@@ -282,7 +291,10 @@ export function CompanyInterviewCard({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold truncate">{interview.title}</h3>
+              <h3 className="font-semibold truncate">{candidateName ?? interview.title}</h3>
+              {candidateName && (
+                <p className="text-xs text-muted-foreground/70 truncate">{interview.title}</p>
+              )}
               <p className="text-sm text-muted-foreground truncate">
                 {interview.jobTitle}
               </p>
@@ -327,7 +339,7 @@ export function CompanyInterviewCard({
               <Button variant="outline" size="sm" asChild>
                 <a href={interview.videoLink} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4 mr-2" />
-                  Entrar na Reuniao
+                  Entrar na Reunião
                 </a>
               </Button>
             )}
@@ -371,7 +383,10 @@ export function CompanyInterviewCard({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold truncate">{interview.title}</h3>
+              <h3 className="font-semibold truncate">{candidateName ?? interview.title}</h3>
+              {candidateName && (
+                <p className="text-xs text-muted-foreground/70 truncate">{interview.title}</p>
+              )}
               <p className="text-sm text-muted-foreground truncate">
                 {interview.jobTitle}
               </p>
@@ -420,7 +435,10 @@ export function CompanyInterviewCard({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold truncate">{interview.title}</h3>
+              <h3 className="font-semibold truncate">{candidateName ?? interview.title}</h3>
+              {candidateName && (
+                <p className="text-xs text-muted-foreground/70 truncate">{interview.title}</p>
+              )}
               <p className="text-sm text-muted-foreground truncate">
                 {interview.jobTitle}
               </p>

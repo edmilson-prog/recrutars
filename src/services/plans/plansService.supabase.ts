@@ -272,7 +272,9 @@ export class SupabasePlansService implements IPlansService {
       .from('subscriptions')
       .select('*')
       .eq('user_id', userId)
-      .eq('status', 'active')
+      .in('status', ['active', 'trial'])
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (error) throw error;
@@ -339,15 +341,27 @@ export class SupabasePlansService implements IPlansService {
     return (data as unknown as Subscription) ?? null;
   }
 
-  /** PRD-074: Create a trial subscription for a company. */
+  /** PRD-074/079: Create a trial subscription for a company.
+   *  Reads trial_duration_days from the plan dynamically (RF-003). */
   async createTrialSubscription(
     companyUserId: string,
     userName: string,
     planId: string,
   ): Promise<Subscription> {
+    // PRD-079: Read trial duration from the plan configuration
+    const { data: planRow } = await supabase
+      .from('plans')
+      .select('trial_duration_days, slug, name')
+      .eq('id', planId)
+      .single();
+
+    const trialDays = planRow?.trial_duration_days ?? 90; // fail-safe fallback
+    const planSlug = planRow?.slug ?? 'basico-empresas';
+    const planName = planRow?.name ?? 'Basico Empresas';
+
     const now = new Date();
     const trialEnd = new Date(now);
-    trialEnd.setDate(trialEnd.getDate() + 90);
+    trialEnd.setDate(trialEnd.getDate() + trialDays);
 
     const { data, error } = await supabase
       .from('subscriptions')
@@ -356,8 +370,8 @@ export class SupabasePlansService implements IPlansService {
         user_type: 'company',
         user_name: userName,
         plan_id: planId,
-        plan_slug: 'basico-empresas',
-        plan_name: 'Basico Empresas',
+        plan_slug: planSlug,
+        plan_name: planName,
         period: 'monthly',
         price_paid: 0,
         start_date: now.toISOString().split('T')[0],

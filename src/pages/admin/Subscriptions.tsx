@@ -62,6 +62,7 @@ const ITEMS_PER_PAGE = 10;
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
   active: { label: 'Ativa', color: 'bg-success/10 text-success', icon: CheckCircle2 },
+  trial: { label: 'Trial', color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-400', icon: Clock },
   cancelled: { label: 'Cancelada', color: 'bg-destructive/10 text-destructive', icon: XCircle },
   expired: { label: 'Expirada', color: 'bg-muted text-muted-foreground', icon: Clock },
   suspended: { label: 'Suspensa', color: 'bg-warning/10 text-warning', icon: Pause },
@@ -155,9 +156,12 @@ export default function SubscriptionsPage() {
   // Unique plan slugs for filter
   const planSlugs = useMemo(() => {
     const slugMap = new Map<string, string>();
-    filteredSubscriptions.forEach((s) => slugMap.set(s.planSlug, s.planName));
+    filteredSubscriptions.forEach((s) => {
+      if (s.planSlug) slugMap.set(s.planSlug, s.planName);
+    });
     // Also include all from unfiltered stats
     Object.keys(stats.byPlan).forEach((name) => {
+      if (!name) return;
       const slug = name.toLowerCase().replace(/\s+/g, '-');
       slugMap.set(slug, name);
     });
@@ -262,6 +266,7 @@ export default function SubscriptionsPage() {
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="active">Ativas</SelectItem>
+                  <SelectItem value="trial">Trial</SelectItem>
                   <SelectItem value="cancelled">Canceladas</SelectItem>
                   <SelectItem value="expired">Expiradas</SelectItem>
                   <SelectItem value="suspended">Suspensas</SelectItem>
@@ -355,7 +360,7 @@ export default function SubscriptionsPage() {
                             )}
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
-                            {formatDateBR(sub.renewalDate)}
+                            {sub.renewalDate ? formatDateBR(sub.renewalDate) : '--'}
                           </TableCell>
                         </TableRow>
                       );

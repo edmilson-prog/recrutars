@@ -14,6 +14,7 @@ import {
   useCreateCapability,
   useUpsertAssignment,
 } from './usePlansQuery';
+import { toast } from 'sonner';
 
 export function useCapabilities(activePlanId?: string) {
   const { data: capabilities = [], isLoading: capsLoading, error: capsError } = useCapabilitiesQuery();
@@ -56,7 +57,12 @@ export function useCapabilities(activePlanId?: string) {
   // Update a single assignment — persists to Supabase
   const updateAssignment = useCallback(
     (planId: string, capabilityKey: string, value: string | number | boolean) => {
-      upsertAssignmentMutation.mutate({ planId, capabilityKey, value });
+      upsertAssignmentMutation.mutate(
+        { planId, capabilityKey, value },
+        {
+          onError: () => toast.error('Erro ao atualizar capability.'),
+        },
+      );
     },
     [upsertAssignmentMutation],
   );
@@ -64,7 +70,10 @@ export function useCapabilities(activePlanId?: string) {
   // Add new capability — persists to Supabase
   const addCapability = useCallback((capability: PlanCapability) => {
     const { id: _id, ...data } = capability;
-    createCapabilityMutation.mutate(data);
+    createCapabilityMutation.mutate(data, {
+      onSuccess: () => toast.success(`Capability "${capability.name}" adicionada.`),
+      onError: () => toast.error('Erro ao criar capability.'),
+    });
   }, [createCapabilityMutation]);
 
   return {

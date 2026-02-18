@@ -68,7 +68,7 @@ export default function PlansManagement() {
     if (!deletingPlan) return;
     try {
       await deletePlanMutation.mutateAsync(deletingPlan.id);
-      toast.success(`Plano "${deletingPlan.name}" excluido.`);
+      toast.success(`Plano "${deletingPlan.name}" excluído.`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao excluir plano.');
     } finally {
@@ -120,11 +120,11 @@ export default function PlansManagement() {
               )}
               onClick={() => setStripeEnv('live')}
             >
-              Producao
+              Produção
             </button>
           </div>
           <Badge variant="outline" className={cn('text-xs', stripeEnv === 'live' ? 'text-red-600 border-red-300' : 'text-blue-600 border-blue-300')}>
-            Stripe: {stripeEnv === 'test' ? 'Teste' : 'Producao'}
+            Stripe: {stripeEnv === 'test' ? 'Teste' : 'Produção'}
           </Badge>
           <Button
             variant="outline"
@@ -191,7 +191,7 @@ export default function PlansManagement() {
               <AlertDialogDescription>
                 Tem certeza que deseja excluir o plano{' '}
                 <strong>&quot;{deletingPlan?.name}&quot;</strong> ({deletingPlan?.slug})?
-                Esta acao nao pode ser desfeita. Planos com assinaturas ativas nao podem ser excluidos.
+                Esta ação não pode ser desfeita. Planos com assinaturas ativas não podem ser excluídos.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -204,7 +204,7 @@ export default function PlansManagement() {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 disabled={deletePlanMutation.isPending}
               >
-                {deletePlanMutation.isPending ? 'Excluindo...' : 'Confirmar Exclusao'}
+                {deletePlanMutation.isPending ? 'Excluindo...' : 'Confirmar Exclusão'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

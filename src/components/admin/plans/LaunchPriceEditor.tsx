@@ -56,9 +56,9 @@ export function LaunchPriceEditor({ plan, onChange }: LaunchPriceEditorProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <Label className="text-sm font-semibold">Precos de Lancamento</Label>
+          <Label className="text-sm font-semibold">Preços de Lançamento</Label>
           <p className="text-xs text-muted-foreground">
-            Ative para definir precos promocionais de lancamento
+            Ative para definir preços promocionais de lançamento
           </p>
         </div>
         <Switch
@@ -89,7 +89,7 @@ export function LaunchPriceEditor({ plan, onChange }: LaunchPriceEditorProps) {
 
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              Data fim do lancamento
+              Data fim do lançamento
             </Label>
             <Input
               type="date"

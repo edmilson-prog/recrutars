@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Building2,
   Shield,
@@ -156,6 +156,8 @@ const companyFaq = [
 export default function CompanySettings() {
   const { user, logout, currentCompany, companyRole, refreshCurrentCompany } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'perfil';
   const companyId = currentCompany?.id ?? '';
 
   // Company profile state
@@ -420,7 +422,7 @@ export default function CompanySettings() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="perfil" className="space-y-6">
+        <Tabs defaultValue={initialTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="perfil" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />

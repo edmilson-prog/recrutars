@@ -13,7 +13,6 @@ import { CapabilityMatrix } from '@/components/admin/plans/CapabilityMatrix';
 import { CapabilityEditor } from '@/components/admin/plans/CapabilityEditor';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { usePlans } from '@/hooks/usePlans';
-import { toast } from 'sonner';
 import type { PlanCapability } from '@/types';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
 
@@ -31,12 +30,10 @@ export default function PlanCapabilities() {
 
   const handleUpdateAssignment = (planId: string, capKey: string, value: string | number | boolean) => {
     updateAssignment(planId, capKey, value);
-    toast.success('Capability atualizada.');
   };
 
   const handleAddCapability = (capability: PlanCapability) => {
     addCapability(capability);
-    toast.success(`Capability "${capability.name}" adicionada.`);
   };
 
   return (

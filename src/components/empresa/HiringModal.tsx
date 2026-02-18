@@ -148,7 +148,7 @@ export function HiringModal({
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Trophy className="w-5 h-5 text-emerald-600" />
@@ -242,30 +242,30 @@ export function HiringModal({
               />
             </div>
 
-            {/* Hire date */}
-            <div className="space-y-2">
-              <Label htmlFor="hireDate">Data de início prevista *</Label>
-              <Input
-                id="hireDate"
-                type="date"
-                value={hireDate}
-                min={today}
-                onChange={(e) => setHireDate(e.target.value)}
-              />
-            </div>
-
-            {/* Salary (optional) */}
-            <div className="space-y-2">
-              <Label htmlFor="salary" className="flex items-center gap-2">
-                Salário acordado
-                <Badge variant="outline" className="text-xs font-normal">Confidencial</Badge>
-              </Label>
-              <Input
-                id="salary"
-                value={salary}
-                onChange={(e) => setSalary(formatSalary(e.target.value))}
-                placeholder="R$ 0,00"
-              />
+            {/* Hire date + Salary — 2 colunas */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="hireDate">Data de início *</Label>
+                <Input
+                  id="hireDate"
+                  type="date"
+                  value={hireDate}
+                  min={today}
+                  onChange={(e) => setHireDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="salary" className="flex items-center gap-2">
+                  Salário
+                  <Badge variant="outline" className="text-xs font-normal">Confidencial</Badge>
+                </Label>
+                <Input
+                  id="salary"
+                  value={salary}
+                  onChange={(e) => setSalary(formatSalary(e.target.value))}
+                  placeholder="R$ 0,00"
+                />
+              </div>
             </div>
 
             {/* Notes (optional) */}

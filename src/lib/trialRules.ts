@@ -1,6 +1,6 @@
 /**
  * Trial Rules — Pure business logic for trial status calculation
- * PRD-074: Reestruturacao dos Planos de Empresas
+ * PRD-074: Reestruturação dos Planos de Empresas
  *
  * Computes trial status, warning levels, and messages
  * based on trial start/end dates. No UI dependencies.
@@ -103,21 +103,21 @@ export function getWarningMessage(
 ): string {
   switch (level) {
     case 'low':
-      return `Periodo de teste \u2014 ${daysRemaining} dias restantes`;
+      return `Período de teste \u2014 ${daysRemaining} dias restantes`;
 
     case 'medium':
-      return `Seu periodo gratuito termina em ${daysRemaining} dias. Conheca nossos planos.`;
+      return `Seu período gratuito termina em ${daysRemaining} dias. Conheça nossos planos.`;
 
     case 'high':
-      return `Faltam apenas ${daysRemaining} dias! Assine agora para nao perder acesso.`;
+      return `Faltam apenas ${daysRemaining} dias! Assine agora para não perder acesso.`;
 
     case 'urgent':
       return daysRemaining <= 0
-        ? 'Ultimo dia de acesso gratuito!'
-        : 'Amanha seu acesso sera encerrado!';
+        ? 'Último dia de acesso gratuito!'
+        : 'Amanhã seu acesso será encerrado!';
 
     case 'expired':
-      return 'Seu periodo gratuito encerrou. Assine um plano para continuar.';
+      return 'Seu período gratuito encerrou. Assine um plano para continuar.';
   }
 }
 

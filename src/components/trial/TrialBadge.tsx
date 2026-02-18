@@ -2,7 +2,7 @@
  * TrialBadge Component
  * PRD-074: Subtle badge shown in the header for companies in trial (low urgency).
  *
- * Displays "Periodo de teste — X dias restantes" as a clickable badge
+ * Displays "Período de Teste — X dias restantes" as a clickable badge
  * that links to the plans page.
  */
 
@@ -18,7 +18,7 @@ interface TrialBadgeProps {
 
 export function TrialBadge({ daysRemaining, className }: TrialBadgeProps) {
   return (
-    <Link to="/planos" className={cn('no-underline', className)}>
+    <Link to="/empresa/configuracoes?tab=plano" className={cn('no-underline', className)}>
       <Badge
         variant="outline"
         className={cn(
@@ -28,7 +28,7 @@ export function TrialBadge({ daysRemaining, className }: TrialBadgeProps) {
       >
         <Clock className="w-3 h-3" />
         <span className="hidden sm:inline">
-          Periodo de teste &mdash; {daysRemaining} dias restantes
+          Período de Teste &mdash; {daysRemaining} dias restantes
         </span>
         <span className="sm:hidden">
           {daysRemaining}d restantes
