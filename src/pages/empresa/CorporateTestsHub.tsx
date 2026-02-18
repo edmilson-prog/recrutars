@@ -12,6 +12,7 @@ import { BarChart3, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   GaugeProOnboardingBanner,
+  GaugeProMiniManual,
   HubDashboard,
   TestCreateForm,
   TestList,
@@ -26,6 +27,13 @@ export default function CorporateTestsHub() {
   return (
     <DashboardLayout userType="company">
       <div className="space-y-6">
+        {/* Onboarding Banner */}
+        <GaugeProOnboardingBanner
+          hasTests={mockCompanyTests.length > 0}
+          onNavigateToCreate={() => setActiveTab('create')}
+          onNavigateToTests={() => setActiveTab('tests')}
+        />
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -60,16 +68,10 @@ export default function CorporateTestsHub() {
                 <Shield className="h-4 w-4 mr-2" />
                 Auditoria
               </Button>
+              <GaugeProMiniManual />
             </div>
           </div>
         </motion.div>
-
-        {/* Onboarding Banner */}
-        <GaugeProOnboardingBanner
-          hasTests={mockCompanyTests.length > 0}
-          onNavigateToCreate={() => setActiveTab('create')}
-          onNavigateToTests={() => setActiveTab('tests')}
-        />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
