@@ -117,6 +117,13 @@ function rowToCurriculum(row: Record<string, unknown>): Curriculum {
     education,
     skills,
     courses,
+    resumePdfUrl: (row.resume_pdf_url as string) || undefined,
+    resumePdfName: (row.resume_pdf_name as string) || undefined,
+    resumePdfSize: (row.resume_pdf_size as number) || undefined,
+    resumePdfUploadedAt: (row.resume_pdf_uploaded_at as string) || undefined,
+    presentationVideoUrl: (row.presentation_video_url as string) || undefined,
+    presentationVideoType: (row.presentation_video_type as 'upload' | 'external') || undefined,
+    presentationVideoName: (row.presentation_video_name as string) || undefined,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -234,6 +241,13 @@ export class SupabaseCurriculumsService implements ICurriculumsService {
       mainUpdates.salary_min = updates.salary.min;
       mainUpdates.salary_max = updates.salary.max;
     }
+    if (updates.resumePdfUrl !== undefined) mainUpdates.resume_pdf_url = updates.resumePdfUrl;
+    if (updates.resumePdfName !== undefined) mainUpdates.resume_pdf_name = updates.resumePdfName;
+    if (updates.resumePdfSize !== undefined) mainUpdates.resume_pdf_size = updates.resumePdfSize;
+    if (updates.resumePdfUploadedAt !== undefined) mainUpdates.resume_pdf_uploaded_at = updates.resumePdfUploadedAt;
+    if (updates.presentationVideoUrl !== undefined) mainUpdates.presentation_video_url = updates.presentationVideoUrl;
+    if (updates.presentationVideoType !== undefined) mainUpdates.presentation_video_type = updates.presentationVideoType;
+    if (updates.presentationVideoName !== undefined) mainUpdates.presentation_video_name = updates.presentationVideoName;
 
     if (Object.keys(mainUpdates).length > 0) {
       const { error } = await supabase

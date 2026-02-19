@@ -94,6 +94,7 @@ import {
 } from '@/types/curriculum';
 import { calculateCompleteness, getProgressColor } from '@/utils/curriculumCompleteness';
 import { Progress } from '@/components/ui/progress';
+import DocumentsTab from '@/components/profile/DocumentsTab';
 
 // Componente de nível de habilidade visual
 function SkillLevelSelector({
@@ -493,6 +494,15 @@ export default function ProfessionalProfile() {
               {curriculum.courses.length > 0 && (
                 <Badge variant="secondary" className="ml-1">
                   {curriculum.courses.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="gap-2">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Documentos</span>
+              {(curriculum.resumePdfUrl || curriculum.presentationVideoUrl) && (
+                <Badge variant="secondary" className="ml-1">
+                  {(curriculum.resumePdfUrl ? 1 : 0) + (curriculum.presentationVideoUrl ? 1 : 0)}
                 </Badge>
               )}
             </TabsTrigger>
@@ -1226,6 +1236,17 @@ export default function ProfessionalProfile() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Tab: Documentos */}
+          <TabsContent value="documents">
+            <DocumentsTab
+              curriculum={curriculum}
+              candidateId={candidateId}
+              onUpdate={async (updates) => {
+                await updateMutation.mutateAsync({ id: curriculum.id, updates });
+              }}
+            />
           </TabsContent>
         </Tabs>
 
