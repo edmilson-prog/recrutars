@@ -1,12 +1,41 @@
 {
   "versions": [
     {
+      "version": "1.23.0",
+      "codename": "Beacon",
+      "type": "minor",
+      "releaseDate": "2026-02-19",
+      "description": "Painel admin de gestao do Assistente IA: toggles para habilitar/desabilitar por tipo de usuario (candidatos e empresas), dashboard com KPIs, grafico de conversas, distribuicao por tipo de usuario, perguntas mais frequentes, escalacoes recentes e feed de atividade. Edge Function chatbot-ai atualizada com verificacao dos flags por userContext.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Subcategoria 'Assistente IA' em Admin > Configuracoes > Inteligencia Artificial",
+            "Toggles para habilitar/desabilitar o assistente com IA por candidatos e empresas separadamente",
+            "Dashboard com 4 KPI cards: conversas, taxa de resposta IA, tempo medio, taxa de escalacao",
+            "Grafico de area com volume de conversas nos ultimos 30 dias",
+            "Grafico donut com distribuicao de conversas por tipo de usuario",
+            "Lista das 10 perguntas mais frequentes com categoria badge",
+            "Tabela de escalacoes recentes com status Aberto/Resolvido",
+            "Feed de atividade recente com badge de origem (IA / Base Local / Escalacao)"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Edge Function chatbot-ai (v2): verifica flags chatbotEnabledCandidates e chatbotEnabledCompanies antes de processar — usuarios desabilitados caem no fallback local de forma silenciosa"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.22.1",
       "codename": "Dossier",
       "type": "patch",
       "releaseDate": "2026-02-19",
       "description": "Correcoes criticas: link publico de testes agora usa dominio canonico de producao (VITE_APP_URL), e criacao de vagas substitui companyId mock por empresa real do usuario autenticado.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
