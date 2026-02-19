@@ -34,7 +34,7 @@ export default function GaugeProAssessment() {
   const gaugePro = useGaugeProAssessment({
     candidateId,
     onComplete: () => {
-      navigate('/candidato/gauge-pro/resultado');
+      navigate('/candidato/gauge-pro/resultado', { state: { analysisGenerating: true } });
     },
     onXPAwarded: (xp) => {
       toast({
@@ -53,7 +53,7 @@ export default function GaugeProAssessment() {
   // Redirect to result page when assessment is completed (only if NOT in cooldown)
   useEffect(() => {
     if (gaugePro.phase === 'completed' && gaugePro.result && !gaugePro.isInCooldown) {
-      navigate('/candidato/gauge-pro/resultado');
+      navigate('/candidato/gauge-pro/resultado', { state: { analysisGenerating: true } });
     }
   }, [gaugePro.phase, gaugePro.result, gaugePro.isInCooldown, navigate]);
 

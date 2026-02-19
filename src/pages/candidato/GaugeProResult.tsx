@@ -3,7 +3,7 @@
  * PRD-050: Display archetype, radar chart, strengths, careers
  */
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,6 +55,8 @@ const CLASSIFICATION_COLORS: Record<string, string> = {
 export default function GaugeProResult() {
   const { user, currentCandidate } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const analysisGenerating = !!(location.state as { analysisGenerating?: boolean } | null)?.analysisGenerating;
   const [result, setResult] = useState<GaugeProResultType | null>(null);
 
   const candidateId = currentCandidate?.id || user?.id || '';
@@ -291,8 +293,6 @@ export default function GaugeProResult() {
             <TechnicalAnalysisCard
               candidateId={candidateId}
               candidateName={currentCandidate?.name || user?.email || 'Candidato'}
-              gaugeProResult={result}
-              showRegenerate
             />
           </>
         )}
@@ -300,7 +300,7 @@ export default function GaugeProResult() {
         {/* AI Analysis Indicator */}
         {!hasAnalysis && (
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/60 py-2">
-            {aiAnalysis.isGenerating ? (
+            {(aiAnalysis.isGenerating || analysisGenerating) ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 <span>Gerando análise inteligente...</span>

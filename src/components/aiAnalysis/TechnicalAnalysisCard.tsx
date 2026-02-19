@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Bot, RefreshCw, ChevronDown, ChevronUp, Clock, Cpu, Hash } from 'lucide-react';
+import { Sparkles, Bot, ChevronDown, ChevronUp, Clock, Cpu, Hash } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,23 +9,17 @@ import { useAIAnalysis } from '@/hooks/useAIAnalysis';
 import { AnalysisLoadingState } from './AnalysisLoadingState';
 import { AnalysisErrorState } from './AnalysisErrorState';
 import { renderAnalysisContent } from '@/lib/renderAnalysisContent';
-import type { GaugeProResult } from '@/types/gaugePro';
-
 interface TechnicalAnalysisCardProps {
   candidateId: string;
   candidateName?: string;
-  gaugeProResult?: GaugeProResult | null;
-  showRegenerate?: boolean;
 }
 
 export function TechnicalAnalysisCard({
   candidateId,
   candidateName,
-  gaugeProResult,
-  showRegenerate = false,
 }: TechnicalAnalysisCardProps) {
   const [metadataOpen, setMetadataOpen] = useState(false);
-  const { technicalAnalysis, isGenerating, isRegenerating, error, agentEnabled, regenerateAnalysis } =
+  const { technicalAnalysis, isGenerating, error, agentEnabled } =
     useAIAnalysis({
       candidateId,
       candidateName,
@@ -48,12 +42,6 @@ export function TechnicalAnalysisCard({
     return null;
   }
 
-  const handleRegenerate = () => {
-    if (gaugeProResult) {
-      regenerateAnalysis('technical', gaugeProResult);
-    }
-  };
-
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -62,24 +50,10 @@ export function TechnicalAnalysisCard({
             <Sparkles className="w-5 h-5 text-primary" />
             Análise Técnica IA
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="gap-1 text-xs font-normal">
-              <Bot className="w-3 h-3" />
-              Gerado por IA
-            </Badge>
-            {showRegenerate && gaugeProResult && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRegenerate}
-                disabled={isRegenerating}
-                className="gap-1 h-7 text-xs"
-              >
-                <RefreshCw className={`w-3 h-3 ${isRegenerating ? 'animate-spin' : ''}`} />
-                {isRegenerating ? 'Regenerando...' : 'Regenerar'}
-              </Button>
-            )}
-          </div>
+          <Badge variant="outline" className="gap-1 text-xs font-normal">
+            <Bot className="w-3 h-3" />
+            Gerado por IA
+          </Badge>
         </div>
       </CardHeader>
       <Separator />

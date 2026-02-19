@@ -938,7 +938,6 @@ export default function AdminCandidates() {
                   <TechnicalAnalysisCard
                     candidateId={selectedCandidate.id}
                     candidateName={selectedCandidate.name}
-                    showRegenerate
                   />
                 </div>
               ) : (

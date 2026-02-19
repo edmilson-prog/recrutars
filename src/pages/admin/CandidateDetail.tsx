@@ -811,7 +811,6 @@ export default function AdminCandidateDetail() {
                   <TechnicalAnalysisCard
                     candidateId={mergedCandidate.id}
                     candidateName={mergedCandidate.name}
-                    gaugeProResult={gaugeProResult}
                   />
                 </>
               ) : (
