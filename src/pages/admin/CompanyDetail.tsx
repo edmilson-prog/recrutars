@@ -28,11 +28,18 @@ import {
   Loader2,
   ExternalLink,
   Mail,
+  Eye,
+  ShieldCheck,
+  ShieldAlert,
+  ShieldQuestion,
+  FileEdit,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useCompany } from '@/hooks/useCompaniesQuery';
-import { useJobs } from '@/hooks/useJobsQuery';
+import { useAdminJobs } from '@/hooks/useAdminJobs';
+import { useModeration } from '@/hooks/useModeration';
 import { useCompanyUsers, useCompanyInvites } from '@/hooks/useCompanyInvitesQuery';
+import { ModerationActions } from '@/components/admin/jobs/ModerationActions';
 import { usePlans } from '@/hooks/usePlans';
 import { formatRelativeDate, formatDateBR } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
@@ -170,12 +177,12 @@ export default function AdminCompanyDetail() {
 
   // Data hooks
   const { data: company, isLoading: isLoadingCompany } = useCompany(id || '');
-  const { data: jobsResult } = useJobs();
+  const { jobs: allAdminJobs, approveJob, rejectJob, requestCorrection } = useAdminJobs();
+  const { config: moderationConfig } = useModeration();
   const { data: companyUsers, isLoading: isLoadingUsers } = useCompanyUsers(id);
   const { data: companyInvites, isLoading: isLoadingInvites } = useCompanyInvites(id);
   const { companyPlans } = usePlans();
 
-  const allJobs = jobsResult?.data ?? [];
   const PLANS = companyPlans.filter((p) => p.isActive).map((p) => p.name);
 
   // Local state for company overrides (status/plan changes)
@@ -187,14 +194,16 @@ export default function AdminCompanyDetail() {
     return { ...company, ...localCompanyOverrides } as Company;
   }, [company, localCompanyOverrides]);
 
-  // Filter jobs for this company
+  // Filter jobs for this company (using AdminJob data with moderation fields)
   const companyJobs = useMemo(() => {
     if (!id) return [];
-    return allJobs.filter((job) => {
-      const jobCompanyId = dualGet<string>(job as unknown as Record<string, unknown>, 'companyId', 'company_id');
-      return jobCompanyId === id;
-    });
-  }, [allJobs, id]);
+    return allAdminJobs.filter((job) => job.companyId === id);
+  }, [allAdminJobs, id]);
+
+  const pendingCount = useMemo(
+    () => companyJobs.filter((j) => j.moderationStatus === 'pending').length,
+    [companyJobs],
+  );
 
   // Admin actions (local state, same pattern as Companies.tsx)
   const [adminActions, setAdminActions] = useState<AdminAction[]>([]);
@@ -512,14 +521,14 @@ export default function AdminCompanyDetail() {
                 <KPICard
                   icon={Briefcase}
                   label="Vagas Ativas"
-                  value={dualGet<number>(mergedCompany as unknown as Record<string, unknown>, 'activeJobs', 'active_jobs') ?? 0}
+                  value={companyJobs.filter((j) => j.status === 'active').length}
                   iconColor="text-blue-500"
                   bgColor="bg-blue-500/10"
                 />
                 <KPICard
                   icon={Users}
                   label="Total Candidaturas"
-                  value={dualGet<number>(mergedCompany as unknown as Record<string, unknown>, 'totalCandidates', 'total_candidates') ?? 0}
+                  value={companyJobs.reduce((sum, j) => sum + j.applicationsCount, 0)}
                   iconColor="text-emerald-500"
                   bgColor="bg-emerald-500/10"
                 />
@@ -814,7 +823,7 @@ export default function AdminCompanyDetail() {
           </TabsContent>
 
           {/* ================================================================
-              Tab 4: Vagas
+              Tab 4: Vagas (com controles de moderacao)
               ================================================================ */}
           <TabsContent value="vagas">
             <motion.div
@@ -825,7 +834,15 @@ export default function AdminCompanyDetail() {
               <div className="bg-card rounded-xl p-6 shadow-soft">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-foreground">Vagas da Empresa</h3>
-                  <Badge variant="secondary">{companyJobs.length}</Badge>
+                  <div className="flex items-center gap-2">
+                    {pendingCount > 0 && (
+                      <Badge variant="outline" className="border-yellow-500/30 text-yellow-700 dark:text-yellow-400">
+                        <ShieldQuestion className="w-3 h-3 mr-1" />
+                        {pendingCount} pendente{pendingCount !== 1 ? 's' : ''}
+                      </Badge>
+                    )}
+                    <Badge variant="secondary">{companyJobs.length}</Badge>
+                  </div>
                 </div>
 
                 {companyJobs.length === 0 ? (
@@ -836,34 +853,70 @@ export default function AdminCompanyDetail() {
                 ) : (
                   <div className="space-y-3">
                     {companyJobs.map((job) => {
-                      const jobStatus = job.status;
-                      const appCount = dualGet<number>(job as unknown as Record<string, unknown>, 'applicationsCount', 'applications_count') ?? 0;
+                      const modStatus = job.moderationStatus;
 
                       return (
                         <div
                           key={job.id}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                          className={cn(
+                            'p-4 rounded-lg border transition-colors',
+                            modStatus === 'pending'
+                              ? 'bg-yellow-50/50 border-yellow-200 dark:bg-yellow-500/5 dark:border-yellow-500/20'
+                              : 'bg-muted/30 hover:bg-muted/50',
+                          )}
                         >
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-foreground truncate">{job.title}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {job.level} | {job.location}
-                            </p>
+                          {/* Row 1: Title + Badges */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-foreground truncate">{job.title}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {[job.area, job.location].filter(Boolean).join(' | ')}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                              <span className="text-sm text-muted-foreground">
+                                {job.applicationsCount} candidatura{job.applicationsCount !== 1 ? 's' : ''}
+                              </span>
+                              <Badge variant={job.status === 'active' ? 'default' : 'secondary'}>
+                                {job.status === 'active' ? 'Ativa' : job.status === 'paused' ? 'Pausada' : job.status === 'rejected' ? 'Rejeitada' : 'Encerrada'}
+                              </Badge>
+                              <ModerationBadge status={modStatus} />
+                            </div>
                           </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                            <span className="text-sm text-muted-foreground">
-                              {appCount} candidatura{appCount !== 1 ? 's' : ''}
-                            </span>
-                            <Badge
-                              variant={jobStatus === 'active' ? 'default' : 'secondary'}
+
+                          {/* Row 2: Moderation actions (only for pending) + detail link */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-3">
+                            {modStatus === 'pending' ? (
+                              <ModerationActions
+                                job={job}
+                                onApprove={approveJob}
+                                onReject={rejectJob}
+                                onRequestCorrection={requestCorrection}
+                                reasons={moderationConfig.rejectionReasons}
+                              />
+                            ) : (
+                              <div />
+                            )}
+                            <Link
+                              to={`/admin/vagas/${job.id}`}
+                              className="inline-flex items-center gap-1.5 text-sm text-secondary hover:underline shrink-0"
                             >
-                              {jobStatus === 'active'
-                                ? 'Ativa'
-                                : jobStatus === 'paused'
-                                  ? 'Pausada'
-                                  : 'Encerrada'}
-                            </Badge>
+                              <Eye className="w-4 h-4" />
+                              Ver detalhes
+                            </Link>
                           </div>
+
+                          {/* Rejection reason / correction fields info */}
+                          {modStatus === 'rejected' && job.rejectionReason && (
+                            <p className="mt-2 text-xs text-destructive">
+                              Motivo: {job.rejectionReason}
+                            </p>
+                          )}
+                          {modStatus === 'correction_requested' && job.correctionFields && (
+                            <p className="mt-2 text-xs text-yellow-700 dark:text-yellow-400">
+                              Campos a corrigir: {job.correctionFields.join(', ')}
+                            </p>
+                          )}
                         </div>
                       );
                     })}
@@ -1266,5 +1319,24 @@ function InfoItem({ label, value }: InfoItemProps) {
       <span className="text-xs text-muted-foreground uppercase tracking-wider">{label}</span>
       <div className="mt-0.5 text-sm text-foreground">{value}</div>
     </div>
+  );
+}
+
+/** Moderation status badge */
+const MODERATION_BADGE_CONFIG: Record<string, { label: string; icon: typeof ShieldCheck; className: string }> = {
+  approved: { label: 'Aprovada', icon: ShieldCheck, className: 'border-emerald-500/30 text-emerald-700 dark:text-emerald-400' },
+  pending: { label: 'Pendente', icon: ShieldQuestion, className: 'border-yellow-500/30 text-yellow-700 dark:text-yellow-400' },
+  rejected: { label: 'Rejeitada', icon: ShieldAlert, className: 'border-destructive/30 text-destructive' },
+  correction_requested: { label: 'Correcao', icon: FileEdit, className: 'border-orange-500/30 text-orange-700 dark:text-orange-400' },
+};
+
+function ModerationBadge({ status }: { status: string }) {
+  const config = MODERATION_BADGE_CONFIG[status] ?? MODERATION_BADGE_CONFIG.pending;
+  const Icon = config.icon;
+  return (
+    <Badge variant="outline" className={cn('text-xs', config.className)}>
+      <Icon className="w-3 h-3 mr-1" />
+      {config.label}
+    </Badge>
   );
 }

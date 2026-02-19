@@ -46,16 +46,16 @@ const PIE_COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
 export default function JobsDashboard() {
   const { jobs, stats, hires, alerts } = useAdminJobs();
 
-  // KPI: conversion rate
+  // KPI: conversion rate (N/D while hires data is pending real implementation)
   const conversionRate = useMemo(() => {
-    if (stats.totalApplications === 0) return '0%';
+    if (hires.length === 0 || stats.totalApplications === 0) return 'N/D';
     const rate = (hires.length / stats.totalApplications) * 100;
     return `${rate.toFixed(1)}%`;
   }, [stats.totalApplications, hires.length]);
 
-  // KPI: avg time to fill
+  // KPI: avg time to fill (N/D while hires data is pending real implementation)
   const avgTimeToFill = useMemo(() => {
-    if (hires.length === 0) return '-- dias';
+    if (hires.length === 0) return 'N/D';
     const avg = hires.reduce((s, h) => s + h.timeToFillDays, 0) / hires.length;
     return `${Math.round(avg)} dias`;
   }, [hires]);
@@ -87,12 +87,21 @@ export default function JobsDashboard() {
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [jobs]);
 
-  // Chart: monthly publications (last 6 months)
+  // Chart: monthly publications (last 6 months) — computed from real job data
   const monthlyPublications = useMemo(() => {
-    const months = ['Set', 'Out', 'Nov', 'Dez', 'Jan', 'Fev'];
-    const values = [4, 6, 5, 8, 12, stats.publishedThisMonth];
-    return months.map((month, i) => ({ month, vagas: values[i] }));
-  }, [stats.publishedThisMonth]);
+    const now = new Date();
+    const result: { month: string; vagas: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = d.toLocaleString('pt-BR', { month: 'short' }).replace('.', '');
+      const count = jobs.filter((j) => {
+        const pub = new Date(j.publishedAt || j.createdAt);
+        return pub.getMonth() === d.getMonth() && pub.getFullYear() === d.getFullYear();
+      }).length;
+      result.push({ month: label.charAt(0).toUpperCase() + label.slice(1), vagas: count });
+    }
+    return result;
+  }, [jobs]);
 
   // Chart: top 10 companies by jobs
   const topCompanies = useMemo(() => {
@@ -106,20 +115,29 @@ export default function JobsDashboard() {
       .map(([name, vagas]) => ({ name, vagas }));
   }, [jobs]);
 
-  // Chart: applications trend
+  // Chart: applications trend (last 6 months) — computed from real job data
   const applicationsTrend = useMemo(() => {
-    const months = ['Set', 'Out', 'Nov', 'Dez', 'Jan', 'Fev'];
-    const values = [45, 68, 92, 120, 180, stats.totalApplications];
-    return months.map((month, i) => ({ month, candidaturas: values[i] }));
-  }, [stats.totalApplications]);
+    const now = new Date();
+    const result: { month: string; candidaturas: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = d.toLocaleString('pt-BR', { month: 'short' }).replace('.', '');
+      const total = jobs
+        .filter((j) => {
+          const pub = new Date(j.publishedAt || j.createdAt);
+          return pub.getMonth() === d.getMonth() && pub.getFullYear() === d.getFullYear();
+        })
+        .reduce((sum, j) => sum + j.applicationsCount, 0);
+      result.push({ month: label.charAt(0).toUpperCase() + label.slice(1), candidaturas: total });
+    }
+    return result;
+  }, [jobs]);
 
-  // Chart: recruitment funnel
+  // Chart: recruitment funnel — only stages with real data
   const funnelData = useMemo(() => {
     return [
       { value: stats.totalApplications, name: 'Candidaturas', fill: '#3b82f6' },
-      { value: Math.round(stats.totalApplications * 0.4), name: 'Triagem', fill: '#8b5cf6' },
-      { value: Math.round(stats.totalApplications * 0.15), name: 'Entrevista', fill: '#f59e0b' },
-      { value: hires.length, name: 'Contratacao', fill: '#10b981' },
+      { value: hires.length, name: 'Contratacoes', fill: '#10b981' },
     ];
   }, [stats.totalApplications, hires.length]);
 
