@@ -1,12 +1,29 @@
 {
   "versions": [
     {
+      "version": "1.22.1",
+      "codename": "Dossier",
+      "type": "patch",
+      "releaseDate": "2026-02-19",
+      "description": "Correcoes criticas: link publico de testes agora usa dominio canonico de producao (VITE_APP_URL), e criacao de vagas substitui companyId mock por empresa real do usuario autenticado.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Link publico de testes exibia localhost em vez do dominio de producao — adicionada funcao getAppBaseUrl() com VITE_APP_URL",
+            "Criacao de vaga falhava com FK violation — companyId hardcoded 'company-1' substituido por empresa real via useAuth()"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.22.0",
       "codename": "Dossier",
       "type": "minor",
       "releaseDate": "2026-02-19",
       "description": "Aba Documentos adicionada ao perfil profissional do candidato. Upload de curriculo em PDF com drag-and-drop, card com metadados e visualizacao. Video de apresentacao por upload ou link externo (YouTube/Vimeo com thumbnail automatico). Migration DB + bucket Supabase Storage.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
