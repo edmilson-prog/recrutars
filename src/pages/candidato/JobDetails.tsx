@@ -7,7 +7,7 @@
 
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Building2, MapPin, DollarSign, Calendar, Briefcase, Heart, Users, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building2, MapPin, DollarSign, Calendar, Briefcase, Heart, Users, CheckCircle, Loader2, EyeOff } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +33,7 @@ import { MatchComparison } from '@/components/match/MatchComparison';
 import { MatchMethodologyModal } from '@/components/match/MatchMethodologyModal';
 // PRD-035: Banner de incentivo ao teste comportamental
 import { DiscIncentiveBanner } from '@/components/candidato/DiscIncentiveBanner';
+import { getDisplayCompanyName } from '@/lib/anonymousJob';
 
 export default function JobDetails() {
   const { id } = useParams<{ id: string }>();
@@ -192,7 +193,7 @@ export default function JobDetails() {
             </div>
             <div className="flex-1">
               <h1 className="text-2xl md:text-3xl font-bold text-foreground">{job.title}</h1>
-              <p className="text-lg text-muted-foreground mt-1">{job.companyName}</p>
+              <p className="text-lg text-muted-foreground mt-1">{getDisplayCompanyName(job)}</p>
               <div className="flex flex-wrap gap-2 mt-4">
                 <Badge className="bg-primary text-primary-foreground">{job.level}</Badge>
                 <Badge variant="secondary">{getTypeLabel(job.type)}</Badge>
@@ -387,7 +388,7 @@ export default function JobDetails() {
               <Building2 className="w-8 h-8 text-muted-foreground" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-foreground">{job.companyName}</h3>
+              <h3 className="text-lg font-semibold text-foreground">{getDisplayCompanyName(job)}</h3>
               <p className="text-muted-foreground">
                 {job.applicationsCount} candidaturas recebidas para esta vaga
               </p>

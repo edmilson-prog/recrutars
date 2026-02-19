@@ -23,6 +23,30 @@ import type {
 } from '@/types';
 
 // ---------------------------------------------------------------------------
+// Dual-access helper for snake_case (DB) / camelCase (TS) fields
+// ---------------------------------------------------------------------------
+
+/** Returns obj[camel] ?? obj[snake], handling the DB snake_case vs TS camelCase mismatch */
+function d<T>(obj: Record<string, unknown>, camel: string, snake: string): T {
+  return (obj[camel] ?? obj[snake]) as T;
+}
+
+/** Finds an override matching flagKey + targetType + targetId with dual-access */
+function findOverride(
+  overrides: FeatureFlagOverride[],
+  flagKey: string,
+  targetType: string,
+  targetId: string,
+): FeatureFlagOverride | undefined {
+  return overrides.find(o => {
+    const oKey = d<string>(o as any, 'flagKey', 'flag_key');
+    const oType = d<string>(o as any, 'targetType', 'target_type');
+    const oId = d<string>(o as any, 'targetId', 'target_id');
+    return oKey === flagKey && oType === targetType && oId === targetId;
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Hash helpers for deterministic rollout
 // ---------------------------------------------------------------------------
 
@@ -123,14 +147,22 @@ export function evaluateWithExplanation(
 ): EvaluationResult {
   const chain: EvaluationStep[] = [];
 
+  // Extract fields with dual-access (snake_case from DB / camelCase from TS types)
+  const f = flag as any;
+  const flagIsKillSwitched = d<boolean>(f, 'isKillSwitched', 'is_kill_switched');
+  const flagKillSwitchReason = d<string | undefined>(f, 'killSwitchReason', 'kill_switch_reason');
+  const flagDefaultValue = d<boolean>(f, 'defaultValue', 'default_value') ?? false;
+  const flagConditionGroups = d<ConditionGroup[]>(f, 'conditionGroups', 'condition_groups') ?? [];
+  const flagRolloutPercentage = d<number | undefined>(f, 'rolloutPercentage', 'rollout_percentage');
+
   // Step 1 - Kill switch
-  const isKilled = flag.status === 'killed' || flag.isKillSwitched;
+  const isKilled = flag.status === 'killed' || flagIsKillSwitched;
   chain.push({
     step: 'Kill Switch',
     checked: 'flag.isKillSwitched / flag.status',
     result: !isKilled,
     detail: isKilled
-      ? `Flag esta com kill switch ativo${flag.killSwitchReason ? `: ${flag.killSwitchReason}` : ''}`
+      ? `Flag esta com kill switch ativo${flagKillSwitchReason ? `: ${flagKillSwitchReason}` : ''}`
       : 'Kill switch inativo',
   });
   if (isKilled) {
@@ -145,7 +177,7 @@ export function evaluateWithExplanation(
       result: false,
       detail: 'Flag inativa - retornando valor padrao',
     });
-    return { enabled: flag.defaultValue, reason: 'Flag inativa - valor padrao utilizado', chain };
+    return { enabled: flagDefaultValue, reason: 'Flag inativa - valor padrao utilizado', chain };
   }
   chain.push({
     step: 'Status da Flag',
@@ -155,9 +187,7 @@ export function evaluateWithExplanation(
   });
 
   // Step 3 - User-level override
-  const userOverride = overrides.find(
-    o => o.flagKey === flag.key && o.targetType === 'user' && o.targetId === context.userId,
-  );
+  const userOverride = findOverride(overrides, flag.key, 'user', context.userId);
   if (userOverride) {
     chain.push({
       step: 'Override de Usuario',
@@ -180,9 +210,7 @@ export function evaluateWithExplanation(
 
   // Step 4 - Company-level override
   if (context.companyId) {
-    const companyOverride = overrides.find(
-      o => o.flagKey === flag.key && o.targetType === 'company' && o.targetId === context.companyId,
-    );
+    const companyOverride = findOverride(overrides, flag.key, 'company', context.companyId);
     if (companyOverride) {
       chain.push({
         step: 'Override de Empresa',
@@ -205,9 +233,9 @@ export function evaluateWithExplanation(
   }
 
   // Step 5 - Condition groups (OR between groups)
-  if (flag.conditionGroups.length > 0) {
+  if (flagConditionGroups.length > 0) {
     let anyGroupPassed = false;
-    flag.conditionGroups.forEach((group, idx) => {
+    flagConditionGroups.forEach((group, idx) => {
       const groupResult = evaluateConditionGroup(group, context);
       const conditionDetails = group.conditions
         .map(c => {
@@ -238,32 +266,32 @@ export function evaluateWithExplanation(
   }
 
   // Step 6 - Rollout percentage
-  if (flag.rolloutPercentage !== undefined && flag.rolloutPercentage > 0) {
-    const inRollout = isInRollout(context.userId, flag.key, flag.rolloutPercentage);
+  if (flagRolloutPercentage !== undefined && flagRolloutPercentage > 0) {
+    const inRollout = isInRollout(context.userId, flag.key, flagRolloutPercentage);
     chain.push({
       step: 'Rollout Percentual',
-      checked: `${flag.rolloutPercentage}%`,
+      checked: `${flagRolloutPercentage}%`,
       result: inRollout,
       detail: inRollout
-        ? `Usuario dentro do rollout de ${flag.rolloutPercentage}%`
-        : `Usuario fora do rollout de ${flag.rolloutPercentage}%`,
+        ? `Usuario dentro do rollout de ${flagRolloutPercentage}%`
+        : `Usuario fora do rollout de ${flagRolloutPercentage}%`,
     });
     if (inRollout) {
-      return { enabled: true, reason: `Dentro do rollout de ${flag.rolloutPercentage}%`, chain };
+      return { enabled: true, reason: `Dentro do rollout de ${flagRolloutPercentage}%`, chain };
     }
   }
 
   // Step 7 - Default value
   chain.push({
     step: 'Valor Padrao',
-    checked: `defaultValue=${flag.defaultValue}`,
-    result: flag.defaultValue,
-    detail: `Utilizando valor padrao: ${flag.defaultValue}`,
+    checked: `defaultValue=${flagDefaultValue}`,
+    result: flagDefaultValue,
+    detail: `Utilizando valor padrao: ${flagDefaultValue}`,
   });
 
   return {
-    enabled: flag.defaultValue,
-    reason: `Valor padrao: ${flag.defaultValue}`,
+    enabled: flagDefaultValue,
+    reason: `Valor padrao: ${flagDefaultValue}`,
     chain,
   };
 }

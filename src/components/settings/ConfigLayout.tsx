@@ -169,6 +169,7 @@ export function ConfigLayout({
               onValueChange={handleValueChange}
               onSave={handleSave}
               onRestoreDefaults={handleRestoreDefaults}
+              onNavigate={handleNavigate}
             />
           )}
         </main>

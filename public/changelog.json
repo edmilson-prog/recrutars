@@ -1,12 +1,138 @@
 {
   "versions": [
     {
+      "version": "1.20.0",
+      "codename": "Forge",
+      "type": "minor",
+      "releaseDate": "2026-02-19",
+      "description": "Migracao completa do Hub de Testes Comportamentais de dados mock para backend real com Supabase. Novas tabelas, service layer, Edge Function para convites, hooks React Query e pagina publica para candidatos externos.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "4 novas tabelas Supabase: company_tests, test_invitations, test_results, test_audit_logs com RLS completo",
+            "Edge Function send-test-invitation com acoes send, resend e cancel",
+            "Service layer completo para testes (interface + implementacao Supabase)",
+            "10 React Query hooks e 8 mutations com cache invalidation e toasts",
+            "Pagina publica /teste/:slug para candidatos externos se cadastrarem e iniciarem avaliacao",
+            "Rota publica /teste/:slug registrada no App.tsx"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Hub de Testes 100% migrado de mock para Supabase real (25+ componentes e paginas)",
+            "Audit log de testes migrado de localStorage para tabela test_audit_logs no Supabase",
+            "PublicLinkManager persiste slug no banco (company_tests) em vez de estado local",
+            "InternalCandidateInvite busca candidatos reais da empresa via servico Supabase",
+            "Dashboard de metricas e KPIs calculados a partir de dados reais"
+          ]
+        },
+        {
+          "type": "removed",
+          "items": [
+            "companyTestData.ts (312 linhas de dados mock) removido apos migracao completa",
+            "Funcoes de localStorage (getAuditLogs, addAuditLog) removidas de auditLog.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.19.0",
+      "codename": "Cockpit",
+      "type": "minor",
+      "releaseDate": "2026-02-18",
+      "description": "Reestruturacao das configuracoes de IA no painel admin. Novo painel Provedores LLM em Integracoes com suporte a Anthropic e OpenAI, teste de conexao real via Edge Functions, selecao dinamica de modelos e painel de consumo. Agente de Analise simplificado para apenas toggles comportamentais.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Novo painel 'Provedores LLM' em Integracoes com cards individuais para Anthropic e OpenAI",
+            "Teste de conexao real via Edge Function test-llm-connection (chamada minima a API do provedor)",
+            "Listagem dinamica de modelos via Edge Function list-llm-models (Anthropic e OpenAI)",
+            "Seletor de provedor padrao (Anthropic ou OpenAI) para todas as funcionalidades de IA",
+            "Painel de consumo mensal com visao consolidada e por provedor (dados mockados)",
+            "Parametros de geracao colapsaveis por provedor: temperatura (slider) e max tokens",
+            "Campo tipo info-banner no sistema de configuracoes com navegacao entre categorias",
+            "Componente customizado no engine de configuracoes via propriedade customComponent"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Agente de Analise simplificado: apenas toggles de Analise Pratica e Tecnica + banner informativo",
+            "Settings loader com dual-read: busca configs em Provedores LLM com fallback para localizacao antiga",
+            "Chaves API de LLM (Anthropic e OpenAI) mascaradas via SENSITIVE_KEYS no servico de configuracoes"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.18.0",
+      "codename": "Refine",
+      "type": "minor",
+      "releaseDate": "2026-02-18",
+      "description": "Polimento geral de UX: banners descritivos em todas as paginas da empresa, melhorias na tela de login, correcao do modal de contratacao e identificacao do candidato nos cards de entrevista.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Banners descritivos animados em 7 paginas do dashboard da empresa: Candidaturas, Entrevistas, Banco de Talentos, Candidatos Salvos, Hub de Testes, Gestao de Equipes e Notificacoes",
+            "Login: toggle de visibilidade de senha (icone olho/olho-fechado) no campo de senha",
+            "Login: 'Lembrar-me' agora salva e restaura o email no localStorage",
+            "Login: trim automatico em todos os campos de email (remove espacos acidentais)"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Banner de trial nao aparecia no dashboard — normalizacao snake_case para camelCase em useSubscription() e useTrialSubscription()",
+            "Links dos componentes de trial (TrialAlert, TrialBadge, TrialBanner) corrigidos para /empresa/configuracoes?tab=plano",
+            "Pagina de Configuracoes agora abre diretamente na aba correta via ?tab= na URL",
+            "Modal de contratacao desproporcional — ampliado para sm:max-w-xl; campos Data de inicio e Salario reorganizados em grid 2 colunas",
+            "Cards de entrevista nao exibiam o nome do candidato — agora exibe nome real com iniciais corretas no Avatar (antes mostrava titulo da entrevista e chars do UUID)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.17.0",
+      "codename": "Gatekeeper",
+      "type": "minor",
+      "releaseDate": "2026-02-18",
+      "description": "Vinculacao obrigatoria de plano e gestao de trial para empresas. Toda empresa nova recebe automaticamente o plano Basico Empresas em modo trial com duracao dinamica. Empresas existentes foram migradas.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Vinculacao automatica: toda empresa nova recebe trial do plano Basico Empresas no cadastro",
+            "Duracao dinamica: trial lido de plans.trial_duration_days, sem hardcode no codigo (RF-003)",
+            "Migracao: empresas existentes sem subscription normalizadas para trial com auditoria",
+            "Bloqueio pos-trial: empresa com trial expirado ve tela de conversao com planos pagos",
+            "Aviso visual progressivo: badge sutil (16+ dias), banner (8-15 dias), alerta (2-7 dias), urgente (0-1 dia)",
+            "TrialGuard: paths de checkout e meu-plano acessiveis mesmo com trial expirado"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Query getSubscription() agora inclui status 'trial' — corrigido bug que impedia deteccao de trials",
+            "Trigger handle_new_user() restaurado com criacao automatica de trial subscription (perdido na migracao 030)"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.16.2",
       "codename": "Verify",
       "type": "patch",
       "releaseDate": "2026-02-17",
       "description": "Correcao do link de convite de equipe: redirect agora aponta para a URL correta da aplicacao com pagina dedicada para definir senha.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

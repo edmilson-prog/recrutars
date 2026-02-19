@@ -1,6 +1,7 @@
 // PRD-033: Página completa de notificações da empresa
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Bell, CheckCheck, Filter } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -54,51 +55,60 @@ export default function Notifications() {
     <DashboardLayout userType="company">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Notificações</h1>
-            <p className="text-muted-foreground">
-              {unreadCount > 0
-                ? `Você tem ${unreadCount} notificação${unreadCount !== 1 ? 'ões' : ''} não lida${unreadCount !== 1 ? 's' : ''}`
-                : 'Todas as notificações foram lidas'}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Filtro */}
-            <Select
-              value={filter}
-              onValueChange={(value) => setFilter(value as CompanyNotificationFilter)}
-            >
-              <SelectTrigger className="w-[200px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filtrar por tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(companyFilterLabels) as CompanyNotificationFilter[]).map(
-                  (key) => (
-                    <SelectItem key={key} value={key}>
-                      {companyFilterLabels[key]}
-                    </SelectItem>
-                  )
-                )}
-              </SelectContent>
-            </Select>
-
-            {/* Marcar todas como lidas */}
-            {unreadCount > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleMarkAllAsRead}
-                className="whitespace-nowrap"
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <Bell className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Notificações</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {unreadCount > 0
+                  ? `Você tem ${unreadCount} notificação${unreadCount !== 1 ? 'ões' : ''} não lida${unreadCount !== 1 ? 's' : ''}`
+                  : 'Todas as notificações foram lidas'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              {/* Filtro */}
+              <Select
+                value={filter}
+                onValueChange={(value) => setFilter(value as CompanyNotificationFilter)}
               >
-                <CheckCheck className="h-4 w-4 mr-2" />
-                Marcar todas como lidas
-              </Button>
-            )}
+                <SelectTrigger className="w-[200px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filtrar por tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(companyFilterLabels) as CompanyNotificationFilter[]).map(
+                    (key) => (
+                      <SelectItem key={key} value={key}>
+                        {companyFilterLabels[key]}
+                      </SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
+
+              {/* Marcar todas como lidas */}
+              {unreadCount > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleMarkAllAsRead}
+                  className="whitespace-nowrap"
+                >
+                  <CheckCheck className="h-4 w-4 mr-2" />
+                  Marcar todas como lidas
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Lista de notificações agrupadas */}
         {groupedNotifications.length > 0 ? (

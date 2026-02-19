@@ -1,10 +1,11 @@
 /**
  * ConfigContent Component
  * PRD-045: Área de conteúdo com campos editáveis
+ * PRD-080: Custom component support for subcategories
  */
 
-import { useState } from 'react';
-import { RotateCcw, Save } from 'lucide-react';
+import { lazy, Suspense, useState } from 'react';
+import { RotateCcw, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -20,6 +21,8 @@ import {
 import { ConfigSection } from './ConfigSection';
 import type { ConfigCategory, ConfigSubcategory } from '@/types/settings';
 
+const LLMProvidersPanel = lazy(() => import('./custom/LLMProvidersPanel'));
+
 interface ConfigContentProps {
   category: ConfigCategory;
   subcategory: ConfigSubcategory;
@@ -27,6 +30,7 @@ interface ConfigContentProps {
   onValueChange: (fieldKey: string, value: unknown) => void;
   onSave: () => void;
   onRestoreDefaults: () => void;
+  onNavigate?: (categoryKey: string, subcategoryKey: string) => void;
 }
 
 export function ConfigContent({
@@ -36,6 +40,7 @@ export function ConfigContent({
   onValueChange,
   onSave,
   onRestoreDefaults,
+  onNavigate,
 }: ConfigContentProps) {
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
 
@@ -43,6 +48,27 @@ export function ConfigContent({
     onRestoreDefaults();
     setShowRestoreDialog(false);
   };
+
+  // Custom component rendering
+  if (subcategory.customComponent === 'LLMProvidersPanel') {
+    return (
+      <Suspense
+        fallback={
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </CardContent>
+          </Card>
+        }
+      >
+        <LLMProvidersPanel
+          values={values}
+          onValueChange={onValueChange}
+          onSave={onSave}
+        />
+      </Suspense>
+    );
+  }
 
   // Campos ordenados
   const sortedFields = [...subcategory.fields].sort((a, b) => a.order - b.order);
@@ -75,6 +101,10 @@ export function ConfigContent({
             field={field}
             value={values[field.key] ?? field.defaultValue}
             onChange={(value) => onValueChange(field.key, value)}
+            onNavigate={field.link && onNavigate ? (link) => {
+              const [catKey, subKey] = link.split(':');
+              if (catKey && subKey) onNavigate(catKey, subKey);
+            } : undefined}
           />
         ))}
 

@@ -13,7 +13,6 @@ import { CapabilityMatrix } from '@/components/admin/plans/CapabilityMatrix';
 import { CapabilityEditor } from '@/components/admin/plans/CapabilityEditor';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { usePlans } from '@/hooks/usePlans';
-import { toast } from 'sonner';
 import type { PlanCapability } from '@/types';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
 
@@ -31,34 +30,40 @@ export default function PlanCapabilities() {
 
   const handleUpdateAssignment = (planId: string, capKey: string, value: string | number | boolean) => {
     updateAssignment(planId, capKey, value);
-    toast.success('Capability atualizada.');
   };
 
   const handleAddCapability = (capability: PlanCapability) => {
     addCapability(capability);
-    toast.success(`Capability "${capability.name}" adicionada.`);
   };
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              <Grid3X3 className="w-8 h-8 text-cyan-600" />
-              Features por Plano
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Configure quais funcionalidades cada plano libera
-            </p>
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <Grid3X3 className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Features por Plano</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Configure quais funcionalidades cada plano libera. Defina capabilities e atribua-as aos planos.
+              </p>
+            </div>
+            <Button onClick={() => setEditorOpen(true)} className="shrink-0">
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Capability
+            </Button>
           </div>
-          <Button onClick={() => setEditorOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Capability
-          </Button>
-        </div>
+        </motion.div>
+
+        <AdminTabNav />
 
         {/* Tabs */}
         <Tabs defaultValue="candidato" className="w-full">

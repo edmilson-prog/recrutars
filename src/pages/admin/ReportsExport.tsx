@@ -107,13 +107,14 @@ export default function ReportsExport() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground">Exportar Relatorios</h1>
           <p className="text-muted-foreground">Exporte relatorios e configure envios automaticos</p>
         </div>
+
+        <AdminTabNav />
 
         {/* Export Cards */}
         <div className="grid lg:grid-cols-2 gap-6">

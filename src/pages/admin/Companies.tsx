@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -38,6 +39,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -281,6 +283,8 @@ const INDUSTRIES = [
 ];
 
 export default function AdminCompanies() {
+  const navigate = useNavigate();
+
   // Fetch companies via service layer
   const { data: companiesResult, isLoading: isLoadingCompanies } = useCompanies();
   const { data: jobsResult } = useJobs();
@@ -375,8 +379,7 @@ export default function AdminCompanies() {
     industryFilter !== 'all';
 
   const handleCardClick = (company: Company) => {
-    setSelectedCompany(company);
-    setDrawerOpen(true);
+    navigate(`/admin/empresas/${company.id}`);
   };
 
   // ACTIONS: Deactivate, Reactivate, Change Plan, Notify
@@ -609,15 +612,42 @@ export default function AdminCompanies() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Gestão de Empresas
-          </h1>
-          <p className="text-muted-foreground">
-            Gerencie empresas cadastradas na plataforma
-          </p>
-        </div>
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <Building2 className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Gestão de Empresas</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Visualize e gerencie todas as empresas cadastradas na plataforma.
+                Acompanhe status, planos, vagas publicadas e execute ações administrativas.
+              </p>
+              {companies.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                    <Building2 className="w-3 h-3" />
+                    {companies.length} {companies.length === 1 ? 'empresa' : 'empresas'}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="w-3 h-3" />
+                    {companies.filter(c => c.status === 'active').length} ativas
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-xs font-medium text-amber-600 dark:text-amber-400">
+                    <Clock className="w-3 h-3" />
+                    {companies.filter(c => c.status === 'pending').length} pendentes
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
 
         {/* Search Bar */}
         <div className="flex flex-col sm:flex-row gap-4">
@@ -653,6 +683,7 @@ export default function AdminCompanies() {
             <SheetContent side="right" className="w-[300px]">
               <SheetHeader>
                 <SheetTitle>Filtros</SheetTitle>
+                <SheetDescription className="sr-only">Filtrar empresas por status, plano e setor</SheetDescription>
               </SheetHeader>
               <div className="mt-6">
                 <FilterContent />
@@ -1093,6 +1124,7 @@ function CompanyDrawer({
               {statusConfig.label}
             </Badge>
           </div>
+          <SheetDescription className="sr-only">Detalhes da empresa {company.name}</SheetDescription>
         </SheetHeader>
 
         {/* Tabs */}

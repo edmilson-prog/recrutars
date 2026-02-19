@@ -16,6 +16,7 @@ export interface Job {
   companyId: string;
   companyName: string;
   companyLogo?: string;
+  isAnonymous: boolean;
   title: string;
   description: string;
   requirements: string[];

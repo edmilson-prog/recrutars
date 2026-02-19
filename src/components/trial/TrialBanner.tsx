@@ -43,7 +43,7 @@ export function TrialBanner({
         <strong>{daysRemaining} dias</strong>.{' '}
         Conheca nossos planos.
       </p>
-      <Link to="/planos">
+      <Link to="/empresa/configuracoes?tab=plano">
         <Button size="sm" variant="outline" className="gap-1 border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900">
           Ver planos
           <ArrowRight className="w-3.5 h-3.5" />

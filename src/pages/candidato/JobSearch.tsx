@@ -39,6 +39,7 @@ import { useJobs } from '@/hooks/useJobsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { getOrGenerateIdealProfile } from '@/lib/behavioralProfiles';
 import type { Job } from '@/types';
+import { getDisplayCompanyName } from '@/lib/anonymousJob';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useApplications } from '@/hooks/useApplications';
@@ -106,7 +107,7 @@ export default function CandidateJobSearch() {
   // Filter jobs
   const filteredJobs = activeJobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-                          job.companyName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                          getDisplayCompanyName(job).toLowerCase().includes(debouncedSearch.toLowerCase()) ||
                           job.description.toLowerCase().includes(debouncedSearch.toLowerCase());
     const matchesLocation = locationFilter === 'all' || job.location.includes(locationFilter);
     const matchesType = typeFilter === 'all' || job.type === typeFilter;
@@ -407,7 +408,7 @@ export default function CandidateJobSearch() {
                         <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
                           {job.title}
                         </h3>
-                        <p className="text-muted-foreground">{job.companyName}</p>
+                        <p className="text-muted-foreground">{getDisplayCompanyName(job)}</p>
                       </div>
                       <button
                         onClick={(e) => {

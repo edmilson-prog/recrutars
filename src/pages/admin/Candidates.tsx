@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -14,6 +15,7 @@ import {
   Briefcase,
   Calendar,
   CheckCircle2,
+  Clock,
   XCircle,
   ChevronRight,
   Power,
@@ -43,6 +45,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -269,6 +272,8 @@ const BEHAVIORAL_PROFILES = [
 ];
 
 export default function AdminCandidates() {
+  const navigate = useNavigate();
+
   // Fetch candidates via service layer
   const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates();
 
@@ -563,8 +568,7 @@ export default function AdminCandidates() {
         transition={{ duration: 0.3, delay: index * 0.05 }}
         className="bg-card border rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
         onClick={() => {
-          setSelectedCandidate(candidate);
-          setDrawerOpen(true);
+          navigate(`/admin/candidatos/${candidate.id}`);
         }}
       >
         <div className="flex items-start justify-between gap-4">
@@ -672,6 +676,7 @@ export default function AdminCandidates() {
                 </div>
               </div>
             </div>
+            <SheetDescription className="sr-only">Detalhes do candidato {selectedCandidate.name}</SheetDescription>
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-2">
@@ -1040,15 +1045,42 @@ export default function AdminCandidates() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Gestão de Candidatos</h1>
-            <p className="text-muted-foreground">
-              Gerencie candidatos da plataforma
-            </p>
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <User className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Gestão de Candidatos</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Visualize e gerencie todos os candidatos cadastrados na plataforma.
+                Acompanhe perfis comportamentais, status de testes e ações administrativas.
+              </p>
+              {candidates.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                    <User className="w-3 h-3" />
+                    {candidates.length} {candidates.length === 1 ? 'candidato' : 'candidatos'}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="w-3 h-3" />
+                    {candidates.filter(c => c.status === 'active').length} ativos
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 text-xs font-medium text-violet-600 dark:text-violet-400">
+                    <Brain className="w-3 h-3" />
+                    {candidates.filter(c => c.hasTest === true).length} com teste
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Search and Filters */}
         <div className="flex flex-col md:flex-row gap-4">
@@ -1084,6 +1116,7 @@ export default function AdminCandidates() {
             <SheetContent side="left">
               <SheetHeader>
                 <SheetTitle>Filtros</SheetTitle>
+                <SheetDescription className="sr-only">Filtrar candidatos por status, teste e busca</SheetDescription>
               </SheetHeader>
               <div className="mt-6">
                 <FilterContent />

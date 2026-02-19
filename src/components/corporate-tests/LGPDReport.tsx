@@ -3,44 +3,49 @@
  * PRD-054: Relatório de acesso a dados por candidato
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Shield, Search, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addAuditLog, getActionLabel } from '@/utils/auditLog';
-// TODO: PRD-072 — migrate to service layer
-import { mockAuditLogs } from '@/data/companyTestData';
+import { getActionLabel } from '@/utils/auditLog';
+import { useTestAuditLogs, useAddTestAuditLog } from '@/hooks/useCompanyTestsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import type { AuditLog } from '@/types/companyTest';
 
 export function LGPDReport() {
   const { toast } = useToast();
+  const { currentCompany, user } = useAuth();
+  const { data: auditLogs = [], isLoading } = useTestAuditLogs(currentCompany?.id);
+  const addAuditLogMutation = useAddTestAuditLog();
   const [candidateName, setCandidateName] = useState('');
   const [results, setResults] = useState<AuditLog[]>([]);
   const [searched, setSearched] = useState(false);
 
   const handleSearch = () => {
     if (!candidateName.trim()) return;
-    const filtered = mockAuditLogs.filter(
+    const filtered = auditLogs.filter(
       log => log.resourceName?.toLowerCase().includes(candidateName.toLowerCase()) ||
              log.details?.toLowerCase().includes(candidateName.toLowerCase())
     );
     setResults(filtered);
     setSearched(true);
 
-    addAuditLog(
-      'lgpd_report_generated',
-      'user-comp-1',
-      'Maria Recrutadora',
-      'result',
-      candidateName,
-      candidateName,
-      'Relatório LGPD de acessos'
-    );
+    addAuditLogMutation.mutate({
+      action: 'lgpd_report_generated',
+      userId: user?.id ?? '',
+      userName: user?.user_metadata?.full_name ?? '',
+      resourceType: 'result',
+      resourceId: candidateName,
+      resourceName: candidateName,
+      details: 'Relatório LGPD de acessos',
+      companyId: currentCompany?.id ?? '',
+    });
   };
 
   return (

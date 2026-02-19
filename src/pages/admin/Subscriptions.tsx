@@ -62,6 +62,7 @@ const ITEMS_PER_PAGE = 10;
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
   active: { label: 'Ativa', color: 'bg-success/10 text-success', icon: CheckCircle2 },
+  trial: { label: 'Trial', color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-400', icon: Clock },
   cancelled: { label: 'Cancelada', color: 'bg-destructive/10 text-destructive', icon: XCircle },
   expired: { label: 'Expirada', color: 'bg-muted text-muted-foreground', icon: Clock },
   suspended: { label: 'Suspensa', color: 'bg-warning/10 text-warning', icon: Pause },
@@ -155,9 +156,12 @@ export default function SubscriptionsPage() {
   // Unique plan slugs for filter
   const planSlugs = useMemo(() => {
     const slugMap = new Map<string, string>();
-    filteredSubscriptions.forEach((s) => slugMap.set(s.planSlug, s.planName));
+    filteredSubscriptions.forEach((s) => {
+      if (s.planSlug) slugMap.set(s.planSlug, s.planName);
+    });
     // Also include all from unfiltered stats
     Object.keys(stats.byPlan).forEach((name) => {
+      if (!name) return;
       const slug = name.toLowerCase().replace(/\s+/g, '-');
       slugMap.set(slug, name);
     });
@@ -166,18 +170,28 @@ export default function SubscriptionsPage() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <CreditCard className="w-8 h-8 text-cyan-600" />
-            Assinaturas
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie todas as assinaturas da plataforma
-          </p>
-        </div>
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <CreditCard className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Assinaturas</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Gerencie todas as assinaturas da plataforma. Visualize status, planos ativos e histórico de pagamentos.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        <AdminTabNav />
 
         {/* KPI cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -252,6 +266,7 @@ export default function SubscriptionsPage() {
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="active">Ativas</SelectItem>
+                  <SelectItem value="trial">Trial</SelectItem>
                   <SelectItem value="cancelled">Canceladas</SelectItem>
                   <SelectItem value="expired">Expiradas</SelectItem>
                   <SelectItem value="suspended">Suspensas</SelectItem>
@@ -345,7 +360,7 @@ export default function SubscriptionsPage() {
                             )}
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
-                            {formatDateBR(sub.renewalDate)}
+                            {sub.renewalDate ? formatDateBR(sub.renewalDate) : '--'}
                           </TableCell>
                         </TableRow>
                       );

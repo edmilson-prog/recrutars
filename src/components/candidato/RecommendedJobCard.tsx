@@ -21,6 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { getDisplayCompanyName } from '@/lib/anonymousJob';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
 import { NotInterestedReason } from '@/hooks/useJobFeedback';
 import { NotInterestedModal } from './NotInterestedModal';
@@ -102,7 +103,7 @@ export function RecommendedJobCard({
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="font-medium text-foreground truncate">{job.title}</h3>
-                  <p className="text-sm text-muted-foreground">{job.companyName}</p>
+                  <p className="text-sm text-muted-foreground">{getDisplayCompanyName(job)}</p>
                 </div>
                 <Badge className={cn("flex-shrink-0", getScoreBadgeClasses(score))}>
                   {score}%
@@ -163,7 +164,7 @@ export function RecommendedJobCard({
           open={showNotInterestedModal}
           onOpenChange={setShowNotInterestedModal}
           jobTitle={job.title}
-          companyName={job.companyName}
+          companyName={getDisplayCompanyName(job)}
           onConfirm={handleConfirmNotInterested}
           onSkip={handleSkipNotInterested}
         />
@@ -195,7 +196,7 @@ export function RecommendedJobCard({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-foreground">{job.title}</h3>
-              <p className="text-muted-foreground">{job.companyName}</p>
+              <p className="text-muted-foreground">{getDisplayCompanyName(job)}</p>
             </div>
           </div>
 
@@ -304,7 +305,7 @@ export function RecommendedJobCard({
         open={showNotInterestedModal}
         onOpenChange={setShowNotInterestedModal}
         jobTitle={job.title}
-        companyName={job.companyName}
+        companyName={getDisplayCompanyName(job)}
         onConfirm={handleConfirmNotInterested}
         onSkip={handleSkipNotInterested}
       />

@@ -22,6 +22,7 @@ function jobRowToJob(
     companyId: row.company_id,
     companyName: row.companies?.name ?? '',
     companyLogo: row.companies?.logo_url ?? undefined,
+    isAnonymous: (row as Record<string, unknown>).is_anonymous as boolean ?? false,
     title: row.title,
     description: row.description,
     requirements: row.requirements ?? [],
@@ -139,6 +140,7 @@ export class JobsServiceSupabase implements IJobsService {
         status: job.status ?? 'active',
         area: job.area ?? '',
         positions_count: job.positionsCount ?? 1,
+        is_anonymous: job.isAnonymous ?? false,
       })
       .select('*, companies!jobs_company_id_fkey(name, logo_url)')
       .single();
@@ -167,6 +169,7 @@ export class JobsServiceSupabase implements IJobsService {
       updatePayload.salary_max = updates.salary.max;
     }
     if (updates.positionsCount !== undefined) updatePayload.positions_count = updates.positionsCount;
+    if (updates.isAnonymous !== undefined) updatePayload.is_anonymous = updates.isAnonymous;
 
     const { data, error } = await supabase
       .from('jobs')

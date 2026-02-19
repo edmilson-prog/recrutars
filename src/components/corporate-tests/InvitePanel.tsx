@@ -1,6 +1,6 @@
 /**
  * Invite Panel
- * PRD-052: Painel de convites (3 modos)
+ * PRD-052: Painel de convites (3 modos) — Supabase-backed
  */
 
 import { useState } from 'react';
@@ -8,33 +8,54 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Mail, Link2, Users } from 'lucide-react';
 import { EmailInviteForm } from './EmailInviteForm';
 import { PublicLinkManager } from './PublicLinkManager';
 import { InternalCandidateInvite } from './InternalCandidateInvite';
-// TODO: PRD-072 — migrate to service layer
-import { mockCompanyTests, mockTestInvitations } from '@/data/companyTestData';
+import { useCompanyTests, useTestInvitations } from '@/hooks/useCompanyTestsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function InvitePanel() {
-  const activeTests = mockCompanyTests.filter(t => t.status === 'active');
-  const [selectedTestId, setSelectedTestId] = useState(activeTests[0]?.id || '');
-  const selectedTest = mockCompanyTests.find(t => t.id === selectedTestId);
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id;
 
-  const invitations = mockTestInvitations.filter(i => i.testId === selectedTestId);
+  const { data: tests, isLoading: testsLoading } = useCompanyTests(companyId, { status: 'active' });
+  const activeTests = tests ?? [];
+
+  const [selectedTestId, setSelectedTestId] = useState('');
+
+  // Auto-select first test when data loads
+  const effectiveTestId = selectedTestId || activeTests[0]?.id || '';
+  const selectedTest = activeTests.find(t => t.id === effectiveTestId);
+
+  const { data: invitations, isLoading: invitationsLoading } = useTestInvitations(
+    effectiveTestId || undefined
+  );
+
   const stats = {
-    total: invitations.length,
-    sent: invitations.filter(i => i.status === 'sent').length,
-    started: invitations.filter(i => i.status === 'started').length,
-    completed: invitations.filter(i => i.status === 'completed').length,
-    expired: invitations.filter(i => i.status === 'expired').length,
+    total: invitations?.length ?? 0,
+    sent: invitations?.filter(i => i.status === 'sent').length ?? 0,
+    started: invitations?.filter(i => i.status === 'started').length ?? 0,
+    completed: invitations?.filter(i => i.status === 'completed').length ?? 0,
+    expired: invitations?.filter(i => i.status === 'expired').length ?? 0,
   };
+
+  if (testsLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Test Selector */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Teste ativo</label>
-        <Select value={selectedTestId} onValueChange={setSelectedTestId}>
+        <Select value={effectiveTestId} onValueChange={setSelectedTestId}>
           <SelectTrigger className="w-full max-w-md">
             <SelectValue placeholder="Selecione um teste" />
           </SelectTrigger>
@@ -54,12 +75,18 @@ export function InvitePanel() {
         <>
           {/* Stats */}
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">Total: {stats.total}</Badge>
-            <Badge variant="secondary">Pendentes: {stats.sent}</Badge>
-            <Badge className="bg-blue-100 text-blue-700">Em andamento: {stats.started}</Badge>
-            <Badge className="bg-green-100 text-green-700">Concluídos: {stats.completed}</Badge>
-            {stats.expired > 0 && (
-              <Badge variant="destructive">Expirados: {stats.expired}</Badge>
+            {invitationsLoading ? (
+              <Skeleton className="h-6 w-48" />
+            ) : (
+              <>
+                <Badge variant="outline">Total: {stats.total}</Badge>
+                <Badge variant="secondary">Pendentes: {stats.sent}</Badge>
+                <Badge className="bg-blue-100 text-blue-700">Em andamento: {stats.started}</Badge>
+                <Badge className="bg-green-100 text-green-700">Concluídos: {stats.completed}</Badge>
+                {stats.expired > 0 && (
+                  <Badge variant="destructive">Expirados: {stats.expired}</Badge>
+                )}
+              </>
             )}
           </div>
 
@@ -86,18 +113,18 @@ export function InvitePanel() {
                 </TabsList>
 
                 <TabsContent value="email" className="mt-4">
-                  <EmailInviteForm testId={selectedTestId} testName={selectedTest.name} />
+                  <EmailInviteForm testId={effectiveTestId} testName={selectedTest.name} />
                 </TabsContent>
                 <TabsContent value="link" className="mt-4">
                   <PublicLinkManager
-                    testId={selectedTestId}
+                    testId={effectiveTestId}
                     testName={selectedTest.name}
                     existingSlug={selectedTest.publicLinkSlug}
                     isActive={selectedTest.publicLinkActive}
                   />
                 </TabsContent>
                 <TabsContent value="internal" className="mt-4">
-                  <InternalCandidateInvite testId={selectedTestId} testName={selectedTest.name} />
+                  <InternalCandidateInvite testId={effectiveTestId} testName={selectedTest.name} />
                 </TabsContent>
               </Tabs>
             </CardContent>

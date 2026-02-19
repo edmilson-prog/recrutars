@@ -12,6 +12,7 @@ import {
   Star,
   MoreHorizontal,
   Eye,
+  EyeOff,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -112,36 +113,44 @@ export default function JobsList() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              <Briefcase className="w-8 h-8 text-cyan-600" />
-              Todas as Vagas
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              {filtered.length} vagas encontradas
-            </p>
-          </div>
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <Briefcase className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Todas as Vagas</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Navegue e filtre todas as vagas publicadas na plataforma. {filtered.length} vagas encontradas.
+              </p>
+            </div>
 
-          {/* Mobile filter trigger */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="lg:hidden">
-                <Filter className="w-4 h-4 mr-2" />
-                Filtros
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-80">
-              <SheetHeader>
-                <SheetTitle>Filtros</SheetTitle>
-              </SheetHeader>
-              <div className="mt-4">{FilterSidebar}</div>
-            </SheetContent>
-          </Sheet>
-        </div>
+            {/* Mobile filter trigger */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="lg:hidden shrink-0">
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filtros
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-80">
+                <SheetHeader>
+                  <SheetTitle>Filtros</SheetTitle>
+                </SheetHeader>
+                <div className="mt-4">{FilterSidebar}</div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </motion.div>
+
+        <AdminTabNav />
 
         <div className="flex gap-6">
           {/* Desktop filter sidebar */}
@@ -222,6 +231,9 @@ export default function JobsList() {
                                   </AvatarFallback>
                                 </Avatar>
                                 <span className="text-sm truncate max-w-[100px]">{job.companyName}</span>
+                                {job.isAnonymous && (
+                                  <EyeOff className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" title="Empresa confidencial para candidatos" />
+                                )}
                               </div>
                             </TableCell>
                             <TableCell className="hidden md:table-cell text-sm text-muted-foreground">

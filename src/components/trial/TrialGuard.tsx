@@ -19,7 +19,12 @@ interface TrialGuardProps {
 }
 
 /** Routes accessible even when trial is expired */
-const ALLOWED_EXPIRED_PATHS = ['/empresa/configuracoes'];
+const ALLOWED_EXPIRED_PATHS = [
+  '/empresa/configuracoes',
+  '/empresa/meu-plano',
+  '/empresa/checkout/sucesso',
+  '/empresa/checkout/cancelado',
+];
 
 export function TrialGuard({ children }: TrialGuardProps) {
   const { user } = useAuth();

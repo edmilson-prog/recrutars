@@ -38,7 +38,7 @@ export async function generateSingleAnalysis(
 
   try {
     const response = await callClaudeApi({
-      model: settings.claudeModel,
+      model: settings.model,
       max_tokens: settings.maxTokens,
       temperature: settings.temperature,
       system: SYSTEM_PROMPT,
@@ -72,7 +72,7 @@ export async function generateSingleAnalysis(
       analysisType: type,
       content: '',
       status: 'error',
-      modelUsed: settings.claudeModel,
+      modelUsed: settings.model,
       tokensInput: 0,
       tokensOutput: 0,
       generationTimeMs: Math.round(performance.now() - startTime),

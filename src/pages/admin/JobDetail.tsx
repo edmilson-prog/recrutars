@@ -133,6 +133,9 @@ export default function JobDetail() {
                   <span className="flex items-center gap-1">
                     <Building2 className="w-4 h-4" />
                     {job.companyName}
+                    {job.isAnonymous && (
+                      <EyeOff className="w-3.5 h-3.5 text-muted-foreground" title="Empresa confidencial para candidatos" />
+                    )}
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />

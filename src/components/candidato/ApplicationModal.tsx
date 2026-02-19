@@ -22,6 +22,7 @@ import { HighlightsSelector } from '@/components/candidato/HighlightsSelector';
 import type { Job } from '@/types';
 import type { Curriculum } from '@/types/curriculum';
 import type { ApplicationHighlights } from '@/types/applicationHighlight';
+import { getDisplayCompanyName } from '@/lib/anonymousJob';
 
 const MAX_MESSAGE_LENGTH = 500;
 
@@ -100,7 +101,7 @@ export function ApplicationModal({ job, isOpen, onClose, onConfirm, curriculum }
                 </div>
                 <div>
                   <h3 className="font-semibold text-foreground">{job.title}</h3>
-                  <p className="text-sm text-muted-foreground">{job.companyName}</p>
+                  <p className="text-sm text-muted-foreground">{getDisplayCompanyName(job)}</p>
                 </div>
               </div>
 

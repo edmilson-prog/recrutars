@@ -1,57 +1,9 @@
 /**
- * Audit Log Utility
- * PRD-054: Registro de auditoria (localStorage)
+ * Audit Log Utility — Pure helper functions
+ * Labels and icons for audit actions (no localStorage)
  */
 
-import type { AuditLog, AuditAction } from '@/types/companyTest';
-
-const STORAGE_KEY = 'recrutars_audit_logs';
-
-export function getAuditLogs(): AuditLog[] {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function addAuditLog(
-  action: AuditAction,
-  userId: string,
-  userName: string,
-  resourceType: AuditLog['resourceType'],
-  resourceId: string,
-  resourceName?: string,
-  details?: string
-): AuditLog {
-  const log: AuditLog = {
-    id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    action,
-    userId,
-    userName,
-    resourceType,
-    resourceId,
-    resourceName,
-    details,
-    timestamp: new Date().toISOString(),
-  };
-
-  const logs = getAuditLogs();
-  logs.unshift(log);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
-  return log;
-}
-
-export function getAuditLogsForCandidate(candidateId: string): AuditLog[] {
-  return getAuditLogs().filter(
-    (log) => log.resourceId === candidateId || log.details?.includes(candidateId)
-  );
-}
-
-export function clearAuditLogs(): void {
-  localStorage.removeItem(STORAGE_KEY);
-}
+import type { AuditAction } from '@/types/companyTest';
 
 export function getActionLabel(action: AuditAction): string {
   const labels: Record<AuditAction, string> = {

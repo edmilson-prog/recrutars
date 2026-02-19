@@ -3,33 +3,48 @@
  * PRD-054: Relatórios PDF/Excel
  */
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, FileText, FileSpreadsheet, Download, Users } from 'lucide-react';
-import { mockCompanyTests, mockTestResults, mockTestInvitations } from '@/data/companyTestData';
+import { useCompanyTest, useTestResults, useTestInvitations, useAddTestAuditLog } from '@/hooks/useCompanyTestsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import { ExcelExportHub } from '@/components/corporate-tests';
 import { useToast } from '@/hooks/use-toast';
-import { addAuditLog } from '@/utils/auditLog';
 
 export default function CorporateTestReports() {
   const { testId } = useParams<{ testId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, currentCompany } = useAuth();
+  const addAuditLog = useAddTestAuditLog();
   const [selectedCandidate, setSelectedCandidate] = useState<string>('all');
 
-  const test = useMemo(() => mockCompanyTests.find(t => t.id === testId), [testId]);
-  const results = useMemo(
-    () => mockTestResults.filter(r => r.testId === testId),
-    [testId]
-  );
-  const invitations = useMemo(
-    () => mockTestInvitations.filter(i => i.testId === testId),
-    [testId]
-  );
+  const { data: test, isLoading: isLoadingTest } = useCompanyTest(testId);
+  const { data: results = [], isLoading: isLoadingResults } = useTestResults(testId);
+  const { data: invitations = [], isLoading: isLoadingInvitations } = useTestInvitations(testId);
+
+  const isLoading = isLoadingTest || isLoadingResults || isLoadingInvitations;
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-8 w-64" />
+          <div className="grid gap-6 md:grid-cols-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-48 w-full rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!test) {
     return (
@@ -44,11 +59,20 @@ export default function CorporateTestReports() {
     );
   }
 
-  const handlePDFIndividual = async (candidateId: string) => {
-    const result = results.find(r => r.candidateId === candidateId);
+  const handlePDFIndividual = async (resultId: string) => {
+    const result = results.find(r => r.id === resultId);
     if (!result) return;
 
-    addAuditLog('pdf_downloaded', 'user-comp-1', 'Maria Recrutadora', 'result', result.id, result.candidateName, 'PDF individual');
+    addAuditLog.mutate({
+      action: 'pdf_downloaded',
+      userId: user?.id ?? '',
+      userName: user?.user_metadata?.full_name ?? '',
+      resourceType: 'result',
+      resourceId: result.id,
+      resourceName: result.candidateName,
+      details: 'PDF individual',
+      companyId: currentCompany?.id ?? '',
+    });
     toast({
       title: 'PDF gerado',
       description: `Relatório de ${result.candidateName} pronto para download.`,
@@ -56,7 +80,16 @@ export default function CorporateTestReports() {
   };
 
   const handlePDFComparative = async () => {
-    addAuditLog('pdf_downloaded', 'user-comp-1', 'Maria Recrutadora', 'test', test.id, test.name, 'PDF comparativo');
+    addAuditLog.mutate({
+      action: 'pdf_downloaded',
+      userId: user?.id ?? '',
+      userName: user?.user_metadata?.full_name ?? '',
+      resourceType: 'test',
+      resourceId: test.id,
+      resourceName: test.name,
+      details: 'PDF comparativo',
+      companyId: currentCompany?.id ?? '',
+    });
     toast({
       title: 'PDF comparativo gerado',
       description: `Relatório comparativo de ${results.length} candidatos pronto.`,
@@ -95,7 +128,7 @@ export default function CorporateTestReports() {
                 </SelectTrigger>
                 <SelectContent>
                   {results.map(r => (
-                    <SelectItem key={r.candidateId} value={r.candidateId}>
+                    <SelectItem key={r.id} value={r.id}>
                       {r.candidateName}
                     </SelectItem>
                   ))}

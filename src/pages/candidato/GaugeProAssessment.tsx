@@ -19,8 +19,10 @@ import { ScenarioCard } from '@/components/gaugePro/ScenarioCard';
 import { AnalyzingScreen } from '@/components/gaugePro/AnalyzingScreen';
 import { BlockCompleteDivider } from '@/components/gaugePro/BlockCompleteDivider';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ArrowLeft, Clock } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Clock, Eye } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { TEST_CONFIG } from '@/data/testConfig';
+import { GAUGE_PRO_CONFIG } from '@/data/gaugeProConfig';
 
 export default function GaugeProAssessment() {
   const { user, currentCandidate } = useAuth();
@@ -48,12 +50,12 @@ export default function GaugeProAssessment() {
     },
   });
 
-  // Redirect to result page when assessment is completed
+  // Redirect to result page when assessment is completed (only if NOT in cooldown)
   useEffect(() => {
-    if (gaugePro.phase === 'completed' && gaugePro.result) {
+    if (gaugePro.phase === 'completed' && gaugePro.result && !gaugePro.isInCooldown) {
       navigate('/candidato/gauge-pro/resultado');
     }
-  }, [gaugePro.phase, gaugePro.result, navigate]);
+  }, [gaugePro.phase, gaugePro.result, gaugePro.isInCooldown, navigate]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -62,6 +64,45 @@ export default function GaugeProAssessment() {
   };
 
   const renderContent = () => {
+    // Cooldown screen — shown when candidate tries to retake within cooldown period
+    if (gaugePro.isInCooldown && gaugePro.result) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-2xl mx-auto"
+        >
+          <div className="bg-card rounded-2xl p-8 shadow-soft text-center space-y-6">
+            <div className="w-20 h-20 mx-auto rounded-2xl bg-amber-500/10 flex items-center justify-center">
+              <Clock className="w-10 h-10 text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground mb-2">
+                Teste em Período de Espera
+              </h1>
+              <p className="text-muted-foreground">
+                Novo teste disponível em{' '}
+                <strong className="text-foreground">{gaugePro.cooldownDaysRemaining} dias</strong>.
+              </p>
+            </div>
+            <div className="bg-muted/50 rounded-xl p-4 text-sm text-muted-foreground">
+              O período de espera de {GAUGE_PRO_CONFIG.cooldownDays} dias garante a confiabilidade
+              dos resultados comportamentais, evitando variações por fatores temporários.
+            </div>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => navigate('/candidato/gauge-pro/resultado')}
+              className="gap-2"
+            >
+              <Eye className="w-4 h-4" />
+              Ver Meu Resultado Atual
+            </Button>
+          </div>
+        </motion.div>
+      );
+    }
+
     switch (gaugePro.phase) {
       case 'intro':
         return (

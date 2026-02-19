@@ -7,24 +7,29 @@ import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { TestCard } from './TestCard';
-// TODO: PRD-072 — migrate to service layer
-import { mockCompanyTests } from '@/data/companyTestData';
+import { useCompanyTests } from '@/hooks/useCompanyTestsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import type { CompanyTestStatus } from '@/types/companyTest';
 
 export function TestList() {
+  const { currentCompany } = useAuth();
+  const companyId = currentCompany?.id;
+  const { data: tests, isLoading } = useCompanyTests(companyId);
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<CompanyTestStatus | 'all'>('all');
 
   const filtered = useMemo(() => {
-    return mockCompanyTests.filter((test) => {
+    return (tests ?? []).filter((test) => {
       const matchesSearch =
         test.name.toLowerCase().includes(search.toLowerCase()) ||
         (test.jobTitle?.toLowerCase().includes(search.toLowerCase()) ?? false);
       const matchesStatus = statusFilter === 'all' || test.status === statusFilter;
       return matchesSearch && matchesStatus;
     }).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  }, [search, statusFilter]);
+  }, [tests, search, statusFilter]);
 
   return (
     <div className="space-y-4">
@@ -52,7 +57,13 @@ export function TestList() {
         </Select>
       </div>
 
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-lg" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">Nenhum teste encontrado.</p>
         </div>

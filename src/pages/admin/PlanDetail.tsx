@@ -136,7 +136,11 @@ export default function PlanDetail() {
         toast.success('Plano criado com sucesso!');
         navigate('/admin/planos');
       } else if (id) {
-        await updatePlanMutation.mutateAsync({ id, updates: payload });
+        const updated = await updatePlanMutation.mutateAsync({ id, updates: payload });
+        // Re-sync editState with the server response so sidebar and form stay fresh
+        if (updated) {
+          setEditState({ ...updated, features: [...(updated.features ?? [])] });
+        }
         toast.success('Plano atualizado com sucesso!');
       }
     } catch (err) {
@@ -172,7 +176,7 @@ export default function PlanDetail() {
     return (
       <DashboardLayout userType="admin">
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <p className="text-lg text-muted-foreground">Plano nao encontrado.</p>
+          <p className="text-lg text-muted-foreground">Plano não encontrado.</p>
           <Button variant="outline" onClick={() => navigate('/admin/planos')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar para Planos
@@ -186,7 +190,6 @@ export default function PlanDetail() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -204,15 +207,17 @@ export default function PlanDetail() {
           </div>
         </div>
 
+        <AdminTabNav />
+
         {/* 2-column grid */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* LEFT COLUMN */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Card 1: Informacoes Basicas */}
+            {/* Card 1: Informações Básicas */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <Card>
                 <CardHeader>
-                  <CardTitle>Informacoes Basicas</CardTitle>
+                  <CardTitle>Informações Básicas</CardTitle>
                   <CardDescription>Identifique e configure o plano</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -294,7 +299,7 @@ export default function PlanDetail() {
                   )}
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="plan-desc-short">Descricao curta</Label>
+                    <Label htmlFor="plan-desc-short">Descrição curta</Label>
                     <Input
                       id="plan-desc-short"
                       value={editState.descriptionShort}
@@ -304,28 +309,28 @@ export default function PlanDetail() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="plan-desc">Descricao completa</Label>
+                    <Label htmlFor="plan-desc">Descrição completa</Label>
                     <Textarea
                       id="plan-desc"
                       value={editState.description}
                       onChange={(e) => handleFieldChange('description', e.target.value)}
                       rows={4}
                       className="resize-none"
-                      placeholder="Descricao detalhada do plano"
+                      placeholder="Descrição detalhada do plano"
                     />
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
 
-            {/* Card 2: Precos */}
+            {/* Card 2: Preços */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle>Precos</CardTitle>
-                      <CardDescription>Configure precos regulares e de lancamento</CardDescription>
+                      <CardTitle>Preços</CardTitle>
+                      <CardDescription>Configure preços regulares e de lançamento</CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
                       <Label className="text-sm text-muted-foreground">Plano gratuito</Label>
@@ -338,7 +343,7 @@ export default function PlanDetail() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <Label className="text-sm font-semibold mb-3 block">Precos Regulares</Label>
+                    <Label className="text-sm font-semibold mb-3 block">Preços Regulares</Label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {(Object.keys(PERIOD_LABELS) as PlanPeriod[]).map((period) => (
                         <div key={period} className="space-y-1">
@@ -367,30 +372,24 @@ export default function PlanDetail() {
               </Card>
             </motion.div>
 
-            {/* Card 3: Trial, Desconto e Bonus */}
+            {/* Card 3: Trial, Desconto e Bônus */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
               <Card>
                 <CardHeader>
-                  <CardTitle>Trial, Desconto e Bonus</CardTitle>
-                  <CardDescription>Configure periodo de trial, descontos e bonus de testes</CardDescription>
+                  <CardTitle>Trial, Desconto e Bônus</CardTitle>
+                  <CardDescription>Configure período de trial, descontos e bônus de testes</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label>Duracao trial (dias)</Label>
+                      <Label>Duração trial (dias)</Label>
                       <Input
                         type="number"
                         min="0"
                         value={editState.trialDurationDays ?? ''}
                         onChange={(e) => handleFieldChange('trialDurationDays', e.target.value ? parseInt(e.target.value) : undefined)}
                         placeholder="Ex: 90"
-                        disabled={!isNew && !!editState.trialDurationDays}
                       />
-                      {!isNew && editState.trialDurationDays && (
-                        <p className="text-xs text-muted-foreground">
-                          Nao pode ser alterado apos definido
-                        </p>
-                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label>Desconto (%)</Label>
@@ -408,7 +407,7 @@ export default function PlanDetail() {
 
                   {!editState.isFree && (editState.discountPercentage ?? 0) > 0 && (
                     <div className="space-y-1.5">
-                      <Label>Periodo minimo para desconto</Label>
+                      <Label>Período mínimo para desconto</Label>
                       <Select
                         value={editState.discountMinPeriod ?? ''}
                         onValueChange={(v) => handleFieldChange('discountMinPeriod', (v || undefined) as PlanPeriod | undefined)}
@@ -425,7 +424,7 @@ export default function PlanDetail() {
 
                   {!editState.isFree && (
                     <div className="space-y-1.5">
-                      <Label>Bonus testes comportamentais</Label>
+                      <Label>Bônus testes comportamentais</Label>
                       <div className="grid sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Semestral</Label>
@@ -463,7 +462,7 @@ export default function PlanDetail() {
               <Card>
                 <CardHeader>
                   <CardTitle>Recursos do Plano</CardTitle>
-                  <CardDescription>Lista de recursos incluidos no plano</CardDescription>
+                  <CardDescription>Lista de recursos incluídos no plano</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {editState.features.map((feature, idx) => (
@@ -525,7 +524,7 @@ export default function PlanDetail() {
                       className="w-full bg-cyan-600 hover:bg-cyan-700"
                     >
                       <Save className="w-4 h-4 mr-2" />
-                      {isSaving ? 'Salvando...' : (isNew ? 'Criar Plano' : 'Salvar Alteracoes')}
+                      {isSaving ? 'Salvando...' : (isNew ? 'Criar Plano' : 'Salvar Alterações')}
                     </Button>
                     <Button
                       variant="outline"
@@ -567,7 +566,7 @@ export default function PlanDetail() {
                           )}
                           onClick={() => setStripeEnv('live')}
                         >
-                          Producao
+                          Produção
                         </button>
                       </div>
 
@@ -579,7 +578,7 @@ export default function PlanDetail() {
                         )}
                       >
                         {isSynced ? <Cloud className="w-3 h-3" /> : <CloudOff className="w-3 h-3" />}
-                        {isSynced ? 'Sincronizado' : 'Nao sincronizado'}
+                        {isSynced ? 'Sincronizado' : 'Não sincronizado'}
                       </Badge>
 
                       {isSynced && (
@@ -614,7 +613,7 @@ export default function PlanDetail() {
 
                       {!isSynced && (
                         <p className="text-xs text-muted-foreground">
-                          Clique em sincronizar para criar produto e precos no Stripe.
+                          Clique em sincronizar para criar produto e preços no Stripe.
                         </p>
                       )}
 
@@ -628,9 +627,21 @@ export default function PlanDetail() {
                           syncPlan.mutate(
                             { planId: id, environment: stripeEnv },
                             {
-                              onSuccess: () => {
+                              onSuccess: async () => {
                                 toast.success('Plano sincronizado com Stripe!');
-                                refetch();
+                                const { data: freshPlan } = await refetch();
+                                if (freshPlan) {
+                                  // Re-sync Stripe fields in editState so sidebar reflects new IDs
+                                  setEditState(prev => ({
+                                    ...prev,
+                                    stripeProductIdTest: freshPlan.stripeProductIdTest,
+                                    stripeProductIdLive: freshPlan.stripeProductIdLive,
+                                    stripePriceIdsTest: freshPlan.stripePriceIdsTest,
+                                    stripePriceIdsLive: freshPlan.stripePriceIdsLive,
+                                    stripeSyncedAtTest: freshPlan.stripeSyncedAtTest,
+                                    stripeSyncedAtLive: freshPlan.stripeSyncedAtLive,
+                                  }));
+                                }
                               },
                               onError: () => toast.error('Erro ao sincronizar com Stripe'),
                             }
@@ -645,14 +656,14 @@ export default function PlanDetail() {
                 </motion.div>
               )}
 
-              {/* Card: Informacoes (edit only) */}
+              {/* Card: Informações (edit only) */}
               {!isNew && plan && (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2">
                         <Info className="w-4 h-4" />
-                        Informacoes
+                        Informações
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
@@ -671,6 +682,38 @@ export default function PlanDetail() {
                           <span className="text-muted-foreground">Criado em: </span>
                           <span>{new Date(plan.createdAt).toLocaleDateString('pt-BR')}</span>
                         </div>
+                      )}
+
+                      {/* Stripe IDs */}
+                      {stripeProductId && (
+                        <>
+                          <Separator className="my-2" />
+                          <div>
+                            <span className="text-muted-foreground">Stripe Product: </span>
+                            <code className="bg-muted px-1 py-0.5 rounded text-[11px] break-all">{stripeProductId}</code>
+                          </div>
+                          {stripePriceIds && Object.keys(stripePriceIds).length > 0 && (
+                            <div className="space-y-1">
+                              <span className="text-muted-foreground">Stripe Prices:</span>
+                              {(Object.keys(PERIOD_LABELS) as PlanPeriod[]).map(period => {
+                                const pid = stripePriceIds[period];
+                                if (!pid) return null;
+                                return (
+                                  <div key={period} className="pl-2 text-xs">
+                                    <span className="text-muted-foreground">{PERIOD_LABELS[period]}: </span>
+                                    <code className="bg-muted px-1 py-0.5 rounded text-[11px] break-all">{pid}</code>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {stripeSyncedAt && (
+                            <div>
+                              <span className="text-muted-foreground">Última sync: </span>
+                              <span className="text-xs">{new Date(stripeSyncedAt).toLocaleString('pt-BR')}</span>
+                            </div>
+                          )}
+                        </>
                       )}
                     </CardContent>
                   </Card>

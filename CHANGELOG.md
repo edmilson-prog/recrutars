@@ -5,6 +5,32 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0] - 2026-02-18 "Refine"
+
+### Added
+- **Banners descritivos animados em 7 páginas da empresa** — Candidaturas, Entrevistas, Banco de Talentos, Candidatos Salvos, Hub de Testes, Gestão de Equipes e Notificações recebem o mesmo padrão de banner com gradiente, ícone contextual e descrição da página (replicando o padrão já existente em Minhas Vagas)
+- **Login — toggle de visibilidade de senha** — Ícone olho/olho-fechado no campo de senha para alternar entre texto e asteriscos
+- **Login — "Lembrar-me" salva e restaura o email** — Email persiste no localStorage ao marcar a opção; desmarcando limpa o email salvo
+- **Login — trim automático nos campos de email** — Espaços acidentais no início/fim são removidos em todos os campos de email do fluxo de login
+
+### Fixed
+- **Banner de trial não aparecia no dashboard da empresa** — `useSubscription()` e `useTrialSubscription()` retornavam dados snake_case brutos do Supabase; `useTrialStatus` verificava campos camelCase (`isTrial`, `trialEndDate`) — adicionada função `normalizeSubscription()` em `usePlansQuery.ts` para converter corretamente
+- **Links dos banners de trial corrigidos** — `TrialAlert`, `TrialBadge` e `TrialBanner` apontavam para `/planos` (página pública); corrigidos para `/empresa/configuracoes?tab=plano` (aba de plano nas configurações da empresa)
+- **Configurações abre na aba correta via URL** — `Settings.tsx` agora lê o parâmetro `?tab=` via `useSearchParams` e o usa como `defaultValue` do Radix `<Tabs>`
+- **Modal de contratação desproporcional** — Ampliado de `sm:max-w-md` para `sm:max-w-xl`; campos "Data de início" e "Salário" reorganizados em grid 2 colunas (economia de espaço vertical)
+- **Cards de entrevista não identificavam o candidato** — `CompanyInterviewCard` exibia `interview.title` ("Entrevista com RH") como nome e usava primeiros 2 chars do UUID como iniciais do Avatar; corrigido para exibir o nome real do candidato (via `getCandidateDisplayName`) e iniciais corretas (via `getCandidateInitials`)
+
+## [1.17.0] - 2026-02-18 "Gatekeeper"
+
+### Added
+- **Vinculacao obrigatoria de plano e trial para empresas (PRD-079)** — Toda empresa agora recebe automaticamente uma subscription trial ao se cadastrar
+  - Trigger `handle_new_user()` cria trial subscription com duracao dinamica lida de `plans.trial_duration_days`
+  - `getSubscription()` corrigido para encontrar subscriptions com `status = 'trial'` (antes so buscava `active`)
+  - `createTrialSubscription()` agora le dias do plano em vez de hardcodar 90
+  - Migracao: 4 empresas existentes normalizadas com trial subscription (Basico Empresas, 90 dias)
+  - `TrialGuard` ampliado: permite `/empresa/meu-plano` e paths de checkout quando trial expira
+  - Pagina de Assinaturas admin: status "Trial" com badge cyan, normalizacao snake_case→camelCase
+
 ## [1.14.3] - 2026-02-15 "Bridge"
 
 ### Added

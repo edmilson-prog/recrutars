@@ -68,7 +68,7 @@ export default function PlansManagement() {
     if (!deletingPlan) return;
     try {
       await deletePlanMutation.mutateAsync(deletingPlan.id);
-      toast.success(`Plano "${deletingPlan.name}" excluido.`);
+      toast.success(`Plano "${deletingPlan.name}" excluído.`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao excluir plano.');
     } finally {
@@ -79,24 +79,27 @@ export default function PlansManagement() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              <CreditCard className="w-8 h-8 text-cyan-600" />
-              Gestao de Planos
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Configure planos de assinatura para candidatos e empresas
-            </p>
+        {/* Banner */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6">
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <CreditCard className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Gestão de Planos</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Configure planos de assinatura para candidatos e empresas. Gerencie preços, recursos e sincronização com Stripe.
+              </p>
+            </div>
+            <Button onClick={handleNewPlan} className="bg-cyan-600 hover:bg-cyan-700 shrink-0">
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Plano
+            </Button>
           </div>
-          <Button onClick={handleNewPlan} className="bg-cyan-600 hover:bg-cyan-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Plano
-          </Button>
         </div>
+
+        <AdminTabNav />
 
         {/* PRD-075: Stripe environment toggle + sync all */}
         <div className="flex items-center gap-3">
@@ -117,11 +120,11 @@ export default function PlansManagement() {
               )}
               onClick={() => setStripeEnv('live')}
             >
-              Producao
+              Produção
             </button>
           </div>
           <Badge variant="outline" className={cn('text-xs', stripeEnv === 'live' ? 'text-red-600 border-red-300' : 'text-blue-600 border-blue-300')}>
-            Stripe: {stripeEnv === 'test' ? 'Teste' : 'Producao'}
+            Stripe: {stripeEnv === 'test' ? 'Teste' : 'Produção'}
           </Badge>
           <Button
             variant="outline"
@@ -188,7 +191,7 @@ export default function PlansManagement() {
               <AlertDialogDescription>
                 Tem certeza que deseja excluir o plano{' '}
                 <strong>&quot;{deletingPlan?.name}&quot;</strong> ({deletingPlan?.slug})?
-                Esta acao nao pode ser desfeita. Planos com assinaturas ativas nao podem ser excluidos.
+                Esta ação não pode ser desfeita. Planos com assinaturas ativas não podem ser excluídos.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -201,7 +204,7 @@ export default function PlansManagement() {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 disabled={deletePlanMutation.isPending}
               >
-                {deletePlanMutation.isPending ? 'Excluindo...' : 'Confirmar Exclusao'}
+                {deletePlanMutation.isPending ? 'Excluindo...' : 'Confirmar Exclusão'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

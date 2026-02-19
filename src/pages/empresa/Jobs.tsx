@@ -205,17 +205,29 @@ export default function CompanyJobs() {
   return (
     <DashboardLayout userType="company">
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Minhas Vagas</h1>
-            <p className="text-muted-foreground">Gerencie suas vagas e processos seletivos</p>
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <Briefcase className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Minhas Vagas</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Gerencie suas vagas e processos seletivos. Acompanhe candidaturas, configure testes comportamentais e encontre os melhores talentos.
+              </p>
+            </div>
+            <Button onClick={() => navigate('/empresa/vagas/nova')} className="shrink-0">
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Vaga
+            </Button>
           </div>
-          <Button onClick={() => navigate('/empresa/vagas/nova')}>
-            <Plus className="w-5 h-5 mr-2" />
-            Nova Vaga
-          </Button>
-        </div>
+        </motion.div>
 
         {/* Status Filter Tabs */}
         <div className="flex flex-wrap gap-2">

@@ -116,7 +116,7 @@ export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, index = 0, st
               )}
             >
               {isSynced ? <Cloud className="w-3 h-3" /> : <CloudOff className="w-3 h-3" />}
-              {isSynced ? 'Stripe sincronizado' : 'Nao sincronizado'}
+              {isSynced ? 'Stripe sincronizado' : 'Não sincronizado'}
             </Badge>
             <Button
               variant="ghost"
@@ -133,7 +133,7 @@ export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, index = 0, st
 
         {/* Prices grid */}
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">Precos</h4>
+          <h4 className="text-sm font-semibold text-foreground">Preços</h4>
           <div className="grid grid-cols-2 gap-2">
             {(Object.keys(PERIOD_LABELS) as PlanPeriod[]).map((period) => {
               const regularPrice = plan.prices[period];
@@ -149,7 +149,7 @@ export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, index = 0, st
                     {PERIOD_LABELS[period]}
                   </p>
                   {plan.isFree ? (
-                    <p className="text-base font-bold text-success">Gratis</p>
+                    <p className="text-base font-bold text-success">Grátis</p>
                   ) : showLaunchPrice ? (
                     <div>
                       <p className="text-xs text-muted-foreground line-through">
@@ -170,7 +170,7 @@ export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, index = 0, st
           </div>
           {hasLaunchPrices && plan.launchPriceEndDate && (
             <p className="text-xs text-cyan-600 font-medium">
-              Preco de lancamento ate {new Date(plan.launchPriceEndDate).toLocaleDateString('pt-BR')}
+              Preço de lançamento até {new Date(plan.launchPriceEndDate).toLocaleDateString('pt-BR')}
             </p>
           )}
         </div>

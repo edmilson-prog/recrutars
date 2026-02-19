@@ -8,15 +8,17 @@ import { ConfigToggle } from './fields/ConfigToggle';
 import { ConfigSelect } from './fields/ConfigSelect';
 import { ConfigModelSelect } from './fields/ConfigModelSelect';
 import { ConfigImageUpload } from './fields/ConfigImageUpload';
+import { ConfigInfoBanner } from './fields/ConfigInfoBanner';
 import type { ConfigField } from '@/types/settings';
 
 interface ConfigSectionProps {
   field: ConfigField;
   value: unknown;
   onChange: (value: unknown) => void;
+  onNavigate?: (link: string) => void;
 }
 
-export function ConfigSection({ field, value, onChange }: ConfigSectionProps) {
+export function ConfigSection({ field, value, onChange, onNavigate }: ConfigSectionProps) {
   switch (field.type) {
     case 'text':
     case 'password':
@@ -102,6 +104,14 @@ export function ConfigSection({ field, value, onChange }: ConfigSectionProps) {
           field={field}
           value={value as string}
           onChange={onChange}
+        />
+      );
+
+    case 'info-banner':
+      return (
+        <ConfigInfoBanner
+          field={field}
+          onNavigate={onNavigate}
         />
       );
 

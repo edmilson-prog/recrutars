@@ -120,7 +120,6 @@ export default function ReportsOperational() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -130,6 +129,8 @@ export default function ReportsOperational() {
           </div>
           <TimeFilter value={timeFilter} onChange={setTimeFilter} />
         </div>
+
+        <AdminTabNav />
 
         {/* KPI Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">

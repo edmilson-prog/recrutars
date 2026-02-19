@@ -8,11 +8,75 @@ import type {
   FeatureFlag,
   FeatureFlagOverride,
   FeatureFlagAudit,
+  FlagAuditAction,
   EvaluationContext,
 } from '@/types/featureFlags';
 import type { IFeatureFlagsService, AddOverrideData } from './featureFlagsService';
 
+/** Maps a raw audit row (snake_case) to FeatureFlagAudit (camelCase). */
+function normalizeAuditRow(row: Record<string, unknown>): FeatureFlagAudit {
+  return {
+    id: row.id as string,
+    flagKey: row.flag_key as string,
+    flagName: row.flag_name as string,
+    action: row.action as FlagAuditAction,
+    oldValue: row.old_value as string | undefined,
+    newValue: row.new_value as string | undefined,
+    performedBy: row.performed_by as string,
+    performedByName: row.performed_by_name as string,
+    performedAt: row.performed_at as string,
+    details: row.details as string | undefined,
+  };
+}
+
+/** Gets current user ID and name for audit entries. */
+async function getCurrentUser(): Promise<{ id: string; name: string }> {
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id ?? 'system';
+
+  if (userId === 'system') return { id: 'system', name: 'Sistema' };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('name, email')
+    .eq('id', userId)
+    .maybeSingle();
+
+  return {
+    id: userId,
+    name: profile?.name || profile?.email || user?.email || 'Admin',
+  };
+}
+
 export class SupabaseFeatureFlagsService implements IFeatureFlagsService {
+  /** Insert an audit log entry. Non-blocking — errors are logged but don't break the operation. */
+  private async logAudit(params: {
+    flagKey: string;
+    flagName: string;
+    action: FlagAuditAction;
+    oldValue?: string;
+    newValue?: string;
+    details?: string;
+  }): Promise<void> {
+    try {
+      const currentUser = await getCurrentUser();
+
+      await supabase.from('feature_flag_audit').insert({
+        flag_key: params.flagKey,
+        flag_name: params.flagName,
+        action: params.action,
+        old_value: params.oldValue ?? null,
+        new_value: params.newValue ?? null,
+        performed_by: currentUser.id,
+        performed_by_name: currentUser.name,
+        details: params.details ?? null,
+        performed_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error('[FeatureFlags] Failed to log audit entry:', err);
+    }
+  }
+
   async getFlags(): Promise<FeatureFlag[]> {
     const { data, error } = await supabase
       .from('feature_flags')
@@ -36,6 +100,8 @@ export class SupabaseFeatureFlagsService implements IFeatureFlagsService {
   }
 
   async updateFlag(key: string, updates: Partial<FeatureFlag>): Promise<FeatureFlag> {
+    const flag = await this.getFlag(key);
+
     const { data, error } = await supabase
       .from('feature_flags')
       .update({ ...updates, updated_at: new Date().toISOString() })
@@ -44,6 +110,15 @@ export class SupabaseFeatureFlagsService implements IFeatureFlagsService {
       .single();
 
     if (error) throw error;
+
+    const changedFields = Object.keys(updates).filter(k => k !== 'updated_at').join(', ');
+    await this.logAudit({
+      flagKey: key,
+      flagName: flag?.name ?? key,
+      action: 'updated',
+      details: `Campos alterados: ${changedFields}`,
+    });
+
     return data as unknown as FeatureFlag;
   }
 
@@ -51,7 +126,8 @@ export class SupabaseFeatureFlagsService implements IFeatureFlagsService {
     const flag = await this.getFlag(key);
     if (!flag) throw new Error(`Flag "${key}" not found`);
 
-    const newStatus = flag.status === 'active' ? 'inactive' : 'active';
+    const oldStatus = flag.status;
+    const newStatus = oldStatus === 'active' ? 'inactive' : 'active';
 
     const { data, error } = await supabase
       .from('feature_flags')
@@ -61,10 +137,20 @@ export class SupabaseFeatureFlagsService implements IFeatureFlagsService {
       .single();
 
     if (error) throw error;
+
+    await this.logAudit({
+      flagKey: key,
+      flagName: flag.name,
+      action: 'toggled',
+      oldValue: oldStatus,
+      newValue: newStatus,
+    });
+
     return data as unknown as FeatureFlag;
   }
 
   async killSwitch(key: string, reason: string): Promise<FeatureFlag> {
+    const flag = await this.getFlag(key);
     const now = new Date().toISOString();
     const userId = (await supabase.auth.getUser()).data.user?.id ?? 'system';
 
@@ -83,10 +169,22 @@ export class SupabaseFeatureFlagsService implements IFeatureFlagsService {
       .single();
 
     if (error) throw error;
+
+    await this.logAudit({
+      flagKey: key,
+      flagName: flag?.name ?? key,
+      action: 'killed',
+      oldValue: flag?.status,
+      newValue: 'killed',
+      details: reason,
+    });
+
     return data as unknown as FeatureFlag;
   }
 
   async unkillSwitch(key: string): Promise<FeatureFlag> {
+    const flag = await this.getFlag(key);
+
     const { data, error } = await supabase
       .from('feature_flags')
       .update({
@@ -102,6 +200,15 @@ export class SupabaseFeatureFlagsService implements IFeatureFlagsService {
       .single();
 
     if (error) throw error;
+
+    await this.logAudit({
+      flagKey: key,
+      flagName: flag?.name ?? key,
+      action: 'unkilled',
+      oldValue: 'killed',
+      newValue: 'active',
+    });
+
     return data as unknown as FeatureFlag;
   }
 
@@ -138,16 +245,44 @@ export class SupabaseFeatureFlagsService implements IFeatureFlagsService {
       .single();
 
     if (error) throw error;
+
+    // Get flag name for audit
+    const flag = await this.getFlag(input.flagKey);
+    await this.logAudit({
+      flagKey: input.flagKey,
+      flagName: flag?.name ?? input.flagKey,
+      action: 'override_added',
+      newValue: `${input.targetType}:${input.targetName} → ${input.enabled ? 'ON' : 'OFF'}`,
+      details: input.reason,
+    });
+
     return data as unknown as FeatureFlagOverride;
   }
 
   async removeOverride(id: string): Promise<void> {
+    // Fetch override before deleting to get flag_key for audit
+    const { data: override } = await supabase
+      .from('feature_flag_overrides')
+      .select('flag_key, target_type, target_name')
+      .eq('id', id)
+      .maybeSingle();
+
     const { error } = await supabase
       .from('feature_flag_overrides')
       .delete()
       .eq('id', id);
 
     if (error) throw error;
+
+    if (override) {
+      const flag = await this.getFlag(override.flag_key);
+      await this.logAudit({
+        flagKey: override.flag_key,
+        flagName: flag?.name ?? override.flag_key,
+        action: 'override_removed',
+        oldValue: `${override.target_type}:${override.target_name}`,
+      });
+    }
   }
 
   async evaluateFlag(key: string, context: EvaluationContext): Promise<boolean> {
@@ -176,6 +311,6 @@ export class SupabaseFeatureFlagsService implements IFeatureFlagsService {
 
     const { data, error } = await query;
     if (error) throw error;
-    return (data ?? []) as unknown as FeatureFlagAudit[];
+    return (data ?? []).map((row: Record<string, unknown>) => normalizeAuditRow(row));
   }
 }

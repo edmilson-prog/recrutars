@@ -95,7 +95,7 @@ export function DiscIncentiveBanner({
 
   const handleCTA = () => {
     onComplete?.();
-    navigate('/candidato/testes');
+    navigate('/candidato/teste-comportamental');
   };
 
   const handleDismiss = () => {

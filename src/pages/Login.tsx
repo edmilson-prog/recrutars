@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Mail, Lock, AlertCircle, ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowRight, Mail, Lock, AlertCircle, ArrowLeft, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,13 +14,14 @@ type View = 'login' | 'magic-link' | 'reset';
 
 export default function Login() {
   const [view, setView] = useState<View>('login');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('savedEmail') ?? '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [resetSent, setResetSent] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('rememberMe') === 'true');
+  const [showPassword, setShowPassword] = useState(false);
   const { login, loginWithMagicLink, resetPassword } = useAuth();
   const navigate = useNavigate();
 
@@ -31,6 +32,11 @@ export default function Login() {
 
     try {
       localStorage.setItem('rememberMe', String(rememberMe));
+      if (rememberMe) {
+        localStorage.setItem('savedEmail', email);
+      } else {
+        localStorage.removeItem('savedEmail');
+      }
       await login(email, password);
       // Redirect handled by AuthContext + RedirectIfAuthenticated
     } catch {
@@ -147,7 +153,7 @@ export default function Login() {
                         placeholder="seu@email.com"
                         className="pl-10"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => setEmail(e.target.value.trim())}
                         required
                         autoComplete="email"
                       />
@@ -169,14 +175,22 @@ export default function Login() {
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <Input
                         id="password"
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
                         placeholder="••••••••"
-                        className="pl-10"
+                        className="pl-10 pr-10"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         autoComplete="current-password"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
                     </div>
                   </div>
 
@@ -184,7 +198,13 @@ export default function Login() {
                     <Checkbox
                       id="remember"
                       checked={rememberMe}
-                      onCheckedChange={(v) => setRememberMe(!!v)}
+                      onCheckedChange={(v) => {
+                        const checked = !!v;
+                        setRememberMe(checked);
+                        if (!checked) {
+                          localStorage.removeItem('savedEmail');
+                        }
+                      }}
                     />
                     <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
                       Lembrar-me
@@ -282,7 +302,7 @@ export default function Login() {
                           placeholder="seu@email.com"
                           className="pl-10"
                           value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          onChange={(e) => setEmail(e.target.value.trim())}
                           required
                           autoComplete="email"
                         />
@@ -349,7 +369,7 @@ export default function Login() {
                           placeholder="seu@email.com"
                           className="pl-10"
                           value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          onChange={(e) => setEmail(e.target.value.trim())}
                           required
                           autoComplete="email"
                         />

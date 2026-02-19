@@ -7,7 +7,8 @@ import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { FileSpreadsheet } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addAuditLog } from '@/utils/auditLog';
+import { useAddTestAuditLog } from '@/hooks/useCompanyTestsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import { DIMENSION_SHORT_NAMES, type GaugeProDimension } from '@/types/gaugePro';
 import { getFitScoreLabel } from '@/utils/fitScore';
 import type { CompanyTest, CompanyTestResult, TestInvitation } from '@/types/companyTest';
@@ -22,6 +23,8 @@ const DIMENSIONS: GaugeProDimension[] = ['D1', 'D2', 'D3', 'D4', 'D5'];
 
 export function ExcelExportHub({ test, results, invitations }: ExcelExportHubProps) {
   const { toast } = useToast();
+  const { currentCompany, user } = useAuth();
+  const addAuditLogMutation = useAddTestAuditLog();
 
   const handleExport = () => {
     const wb = XLSX.utils.book_new();
@@ -108,7 +111,16 @@ export function ExcelExportHub({ test, results, invitations }: ExcelExportHubPro
     const fileName = `recrutars-teste-${test.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.xlsx`;
     XLSX.writeFile(wb, fileName);
 
-    addAuditLog('excel_downloaded', 'user-comp-1', 'Maria Recrutadora', 'test', test.id, test.name, 'Excel consolidado');
+    addAuditLogMutation.mutate({
+      action: 'excel_downloaded',
+      userId: user?.id ?? '',
+      userName: user?.user_metadata?.full_name ?? '',
+      resourceType: 'test',
+      resourceId: test.id,
+      resourceName: test.name,
+      details: 'Excel consolidado',
+      companyId: currentCompany?.id ?? '',
+    });
     toast({ title: 'Excel exportado', description: 'Planilha baixada com sucesso.' });
   };
 

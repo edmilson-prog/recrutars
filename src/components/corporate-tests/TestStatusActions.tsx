@@ -4,9 +4,10 @@
  */
 
 import { Button } from '@/components/ui/button';
-import { Play, Square, Archive, Copy } from 'lucide-react';
+import { Play, Square, Archive, Copy, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addAuditLog } from '@/utils/auditLog';
+import { useUpdateCompanyTest, useAddTestAuditLog } from '@/hooks/useCompanyTestsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import type { CompanyTest, CompanyTestStatus } from '@/types/companyTest';
 
 interface TestStatusActionsProps {
@@ -17,27 +18,57 @@ interface TestStatusActionsProps {
 
 export function TestStatusActions({ test, onStatusChange, onDuplicate }: TestStatusActionsProps) {
   const { toast } = useToast();
+  const { currentCompany, user } = useAuth();
+  const updateTest = useUpdateCompanyTest();
+  const addAuditLogMutation = useAddTestAuditLog();
 
-  const handleActivate = () => {
-    addAuditLog('test_activated', 'user-comp-1', 'Maria Recrutadora', 'test', test.id, test.name);
-    onStatusChange('active');
-    toast({ title: 'Teste ativado', description: `"${test.name}" está agora ativo.` });
+  const logAudit = (action: Parameters<typeof addAuditLogMutation.mutate>[0]['action']) => {
+    addAuditLogMutation.mutate({
+      action,
+      userId: user?.id ?? '',
+      userName: user?.user_metadata?.full_name ?? '',
+      resourceType: 'test',
+      resourceId: test.id,
+      resourceName: test.name,
+      companyId: currentCompany?.id ?? '',
+    });
   };
 
-  const handleClose = () => {
-    addAuditLog('test_closed', 'user-comp-1', 'Maria Recrutadora', 'test', test.id, test.name);
-    onStatusChange('closed');
-    toast({ title: 'Teste encerrado', description: `"${test.name}" foi encerrado.` });
+  const handleActivate = async () => {
+    try {
+      await updateTest.mutateAsync({ id: test.id, updates: { status: 'active', activatedAt: new Date().toISOString() } });
+      logAudit('test_activated');
+      onStatusChange('active');
+      toast({ title: 'Teste ativado', description: `"${test.name}" está agora ativo.` });
+    } catch {
+      // Error toast handled by mutation
+    }
   };
 
-  const handleArchive = () => {
-    addAuditLog('test_archived', 'user-comp-1', 'Maria Recrutadora', 'test', test.id, test.name);
-    onStatusChange('archived');
-    toast({ title: 'Teste arquivado', description: `"${test.name}" foi arquivado.` });
+  const handleClose = async () => {
+    try {
+      await updateTest.mutateAsync({ id: test.id, updates: { status: 'closed', closedAt: new Date().toISOString() } });
+      logAudit('test_closed');
+      onStatusChange('closed');
+      toast({ title: 'Teste encerrado', description: `"${test.name}" foi encerrado.` });
+    } catch {
+      // Error toast handled by mutation
+    }
+  };
+
+  const handleArchive = async () => {
+    try {
+      await updateTest.mutateAsync({ id: test.id, updates: { status: 'archived', archivedAt: new Date().toISOString() } });
+      logAudit('test_archived');
+      onStatusChange('archived');
+      toast({ title: 'Teste arquivado', description: `"${test.name}" foi arquivado.` });
+    } catch {
+      // Error toast handled by mutation
+    }
   };
 
   const handleDuplicate = () => {
-    addAuditLog('test_duplicated', 'user-comp-1', 'Maria Recrutadora', 'test', test.id, test.name);
+    logAudit('test_duplicated');
     toast({ title: 'Teste duplicado', description: `Cópia de "${test.name}" criada como rascunho.` });
     onDuplicate?.();
   };
@@ -45,20 +76,20 @@ export function TestStatusActions({ test, onStatusChange, onDuplicate }: TestSta
   return (
     <div className="flex flex-wrap gap-2">
       {test.status === 'draft' && (
-        <Button size="sm" onClick={handleActivate}>
-          <Play className="h-4 w-4 mr-1" />
+        <Button size="sm" onClick={handleActivate} disabled={updateTest.isPending}>
+          {updateTest.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Play className="h-4 w-4 mr-1" />}
           Ativar
         </Button>
       )}
       {test.status === 'active' && (
-        <Button size="sm" variant="outline" onClick={handleClose}>
-          <Square className="h-4 w-4 mr-1" />
+        <Button size="sm" variant="outline" onClick={handleClose} disabled={updateTest.isPending}>
+          {updateTest.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Square className="h-4 w-4 mr-1" />}
           Encerrar
         </Button>
       )}
       {test.status === 'closed' && (
-        <Button size="sm" variant="outline" onClick={handleArchive}>
-          <Archive className="h-4 w-4 mr-1" />
+        <Button size="sm" variant="outline" onClick={handleArchive} disabled={updateTest.isPending}>
+          {updateTest.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Archive className="h-4 w-4 mr-1" />}
           Arquivar
         </Button>
       )}

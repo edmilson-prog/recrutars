@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPlansService } from '@/services/plans/plansService';
 import type { SubscriptionFilters, CreateSubscriptionData } from '@/services/plans/plansService';
+import type { Subscription, SubscriptionStatus } from '@/types';
 
 const PLANS_KEY = 'plans';
 const CAPABILITIES_KEY = 'plan-capabilities';
@@ -60,6 +61,9 @@ export function useUpdatePlan() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [PLANS_KEY] });
     },
+    onError: (err) => {
+      console.error('[Plans] updatePlan failed:', err);
+    },
   });
 }
 
@@ -74,6 +78,9 @@ export function useCreatePlan() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [PLANS_KEY] });
     },
+    onError: (err) => {
+      console.error('[Plans] createPlan failed:', err);
+    },
   });
 }
 
@@ -87,6 +94,9 @@ export function useDeletePlan() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [PLANS_KEY] });
+    },
+    onError: (err) => {
+      console.error('[Plans] deletePlan failed:', err);
     },
   });
 }
@@ -117,9 +127,98 @@ export function useCapabilityAssignments(planId: string | undefined) {
   });
 }
 
+export function useAllCapabilityAssignments() {
+  return useQuery({
+    queryKey: [CAPABILITIES_KEY, 'assignments', 'all'],
+    queryFn: async () => {
+      const svc = await getPlansService();
+      return svc.getAllCapabilityAssignments();
+    },
+  });
+}
+
+export function useCreateCapability() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Omit<import('@/types/plans').PlanCapability, 'id'>) => {
+      const svc = await getPlansService();
+      return svc.createCapability(data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [CAPABILITIES_KEY] });
+    },
+    onError: (err) => {
+      console.error('[Plans] createCapability failed:', err);
+    },
+  });
+}
+
+export function useDeleteCapability() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (key: string) => {
+      const svc = await getPlansService();
+      return svc.deleteCapability(key);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [CAPABILITIES_KEY] });
+    },
+    onError: (err) => {
+      console.error('[Plans] deleteCapability failed:', err);
+    },
+  });
+}
+
+export function useUpsertAssignment() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ planId, capabilityKey, value }: { planId: string; capabilityKey: string; value: string | number | boolean }) => {
+      const svc = await getPlansService();
+      return svc.upsertCapabilityAssignment(planId, capabilityKey, value);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [CAPABILITIES_KEY] });
+    },
+    onError: (err) => {
+      console.error('[Plans] upsertAssignment failed:', err);
+    },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Subscriptions
 // ---------------------------------------------------------------------------
+
+/** Normalizes a raw subscription row from snake_case to camelCase. */
+function normalizeSubscription(raw: Record<string, unknown>): Subscription {
+  return {
+    id: (raw.id as string) ?? '',
+    userId: (raw.userId ?? raw.user_id ?? '') as string,
+    userType: (raw.userType ?? raw.user_type ?? 'company') as 'candidate' | 'company',
+    userName: (raw.userName ?? raw.user_name ?? '') as string,
+    planId: (raw.planId ?? raw.plan_id ?? '') as string,
+    planSlug: (raw.planSlug ?? raw.plan_slug ?? '') as string,
+    planName: (raw.planName ?? raw.plan_name ?? '') as string,
+    status: (raw.status ?? 'pending') as SubscriptionStatus,
+    period: (raw.period ?? 'monthly') as string,
+    pricePaid: Number(raw.pricePaid ?? raw.price_paid ?? 0),
+    startDate: (raw.startDate ?? raw.start_date ?? '') as string,
+    endDate: (raw.endDate ?? raw.end_date ?? '') as string,
+    renewalDate: (raw.renewalDate ?? raw.renewal_date ?? '') as string,
+    isEarlyAdopter: Boolean(raw.isEarlyAdopter ?? raw.is_early_adopter ?? false),
+    isTrial: Boolean(raw.isTrial ?? raw.is_trial ?? false),
+    trialStartDate: (raw.trialStartDate ?? raw.trial_start_date) as string | undefined,
+    trialEndDate: (raw.trialEndDate ?? raw.trial_end_date) as string | undefined,
+    createdAt: (raw.createdAt ?? raw.created_at ?? '') as string,
+    cancelledAt: (raw.cancelledAt ?? raw.cancelled_at) as string | undefined,
+    cancellationReason: (raw.cancellationReason ?? raw.cancellation_reason) as string | undefined,
+    stripeCustomerId: (raw.stripeCustomerId ?? raw.stripe_customer_id) as string | undefined,
+    stripeSubscriptionId: (raw.stripeSubscriptionId ?? raw.stripe_subscription_id) as string | undefined,
+  } as Subscription;
+}
 
 export function useSubscriptions(filters?: SubscriptionFilters) {
   return useQuery({
@@ -137,7 +236,9 @@ export function useSubscription(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) return null;
       const svc = await getPlansService();
-      return svc.getSubscription(userId);
+      const raw = await svc.getSubscription(userId);
+      if (!raw) return null;
+      return normalizeSubscription(raw as unknown as Record<string, unknown>);
     },
     enabled: !!userId,
   });
@@ -154,6 +255,9 @@ export function useCreateSubscription() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [SUBSCRIPTIONS_KEY] });
     },
+    onError: (err) => {
+      console.error('[Plans] createSubscription failed:', err);
+    },
   });
 }
 
@@ -168,6 +272,9 @@ export function useCancelSubscription() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [SUBSCRIPTIONS_KEY] });
     },
+    onError: (err) => {
+      console.error('[Plans] cancelSubscription failed:', err);
+    },
   });
 }
 
@@ -181,7 +288,9 @@ export function useTrialSubscription(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) return null;
       const svc = await getPlansService();
-      return svc.getTrialSubscription(userId);
+      const raw = await svc.getTrialSubscription(userId);
+      if (!raw) return null;
+      return normalizeSubscription(raw as unknown as Record<string, unknown>);
     },
     enabled: !!userId,
   });
@@ -205,6 +314,9 @@ export function useCreateTrialSubscription() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [SUBSCRIPTIONS_KEY] });
+    },
+    onError: (err) => {
+      console.error('[Plans] createTrialSubscription failed:', err);
     },
   });
 }

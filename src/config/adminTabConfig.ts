@@ -10,7 +10,7 @@ import {
   FolderTree, FileQuestion,
   LayoutDashboard, List, CheckCircle, Calendar, UserCheck,
   DollarSign, TrendingUp, Activity, Rss, Download,
-  Settings, CreditCard, BarChart3, ToggleLeft, Webhook,
+  CreditCard, BarChart3, ToggleLeft, Webhook, FlaskConical, Settings,
 } from 'lucide-react';
 
 export interface AdminTab {
@@ -45,6 +45,33 @@ export const ADMIN_TAB_GROUPS: AdminTabGroup[] = [
     ],
   },
   {
+    id: 'planos',
+    parentHref: '/admin/planos',
+    tabs: [
+      { href: '/admin/planos', label: 'Planos', icon: CreditCard },
+      { href: '/admin/planos/capabilities', label: 'Features por Plano', icon: List },
+      { href: '/admin/assinaturas', label: 'Assinaturas', icon: UserCheck },
+    ],
+  },
+  {
+    id: 'financeiro',
+    parentHref: '/admin/assinaturas/dashboard',
+    tabs: [
+      { href: '/admin/assinaturas/dashboard', label: 'Dashboard', icon: BarChart3 },
+      { href: '/admin/assinaturas/billing', label: 'Financeiro', icon: DollarSign },
+      { href: '/admin/assinaturas/webhooks', label: 'Webhooks', icon: Webhook },
+    ],
+  },
+  {
+    id: 'feature-flags',
+    parentHref: '/admin/feature-flags',
+    tabs: [
+      { href: '/admin/feature-flags', label: 'Feature Flags', icon: ToggleLeft },
+      { href: '/admin/feature-flags/simulador', label: 'Simulador', icon: FlaskConical },
+      { href: '/admin/feature-flags/auditoria', label: 'Auditoria', icon: ScrollText },
+    ],
+  },
+  {
     id: 'vagas',
     parentHref: '/admin/vagas',
     tabs: [
@@ -54,6 +81,7 @@ export const ADMIN_TAB_GROUPS: AdminTabGroup[] = [
       { href: '/admin/vagas/finalizadas', label: 'Finalizadas', icon: CheckCircle },
       { href: '/admin/vagas/entrevistas', label: 'Entrevistas', icon: Calendar },
       { href: '/admin/vagas/contratacoes', label: 'Contratações', icon: UserCheck },
+      { href: '/admin/vagas/configuracoes', label: 'Config. Moderação', icon: Settings },
     ],
   },
   {
@@ -65,21 +93,6 @@ export const ADMIN_TAB_GROUPS: AdminTabGroup[] = [
       { href: '/admin/relatorios/operacional', label: 'Operacional', icon: Activity },
       { href: '/admin/relatorios/activity-feed', label: 'Activity Feed', icon: Rss },
       { href: '/admin/relatorios/exportar', label: 'Exportar', icon: Download },
-    ],
-  },
-  {
-    id: 'configuracoes',
-    parentHref: '/admin/configuracoes',
-    tabs: [
-      { href: '/admin/configuracoes', label: 'Geral', icon: Settings },
-      { href: '/admin/planos', label: 'Planos', icon: CreditCard },
-      { href: '/admin/planos/capabilities', label: 'Features por Plano', icon: List },
-      { href: '/admin/assinaturas', label: 'Assinaturas', icon: UserCheck },
-      { href: '/admin/assinaturas/dashboard', label: 'Dash Assinaturas', icon: BarChart3 },
-      { href: '/admin/assinaturas/webhooks', label: 'Webhooks', icon: Webhook },
-      { href: '/admin/assinaturas/billing', label: 'Billing', icon: DollarSign },
-      { href: '/admin/feature-flags', label: 'Feature Flags', icon: ToggleLeft },
-      { href: '/admin/vagas/configuracoes', label: 'Moderação', icon: Shield },
     ],
   },
 ];

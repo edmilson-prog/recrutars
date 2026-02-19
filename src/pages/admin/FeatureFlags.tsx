@@ -165,27 +165,35 @@ export default function FeatureFlags() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              <ToggleLeft className="w-8 h-8 text-cyan-600" />
-              Feature Flags
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Gerencie flags de funcionalidades, rollouts e kill switches
-            </p>
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <ToggleLeft className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Feature Flags</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Gerencie flags de funcionalidades, rollouts progressivos e kill switches da plataforma.
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate('/admin/feature-flags/new')}
+              className="bg-cyan-600 hover:bg-cyan-700 shrink-0"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Flag
+            </Button>
           </div>
-          <Button
-            onClick={() => navigate('/admin/feature-flags/new')}
-            className="bg-cyan-600 hover:bg-cyan-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Flag
-          </Button>
-        </div>
+        </motion.div>
+
+        <AdminTabNav />
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

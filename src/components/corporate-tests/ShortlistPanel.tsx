@@ -9,15 +9,20 @@ import { Badge } from '@/components/ui/badge';
 import { Star } from 'lucide-react';
 import { ShortlistCard } from './ShortlistCard';
 import { useToast } from '@/hooks/use-toast';
-import { addAuditLog } from '@/utils/auditLog';
+import { useUpdateShortlist, useAddTestAuditLog } from '@/hooks/useCompanyTestsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import type { CompanyTestResult } from '@/types/companyTest';
 
 interface ShortlistPanelProps {
   results: CompanyTestResult[];
+  testId: string;
 }
 
-export function ShortlistPanel({ results }: ShortlistPanelProps) {
+export function ShortlistPanel({ results, testId }: ShortlistPanelProps) {
   const { toast } = useToast();
+  const { currentCompany, user } = useAuth();
+  const updateShortlist = useUpdateShortlist();
+  const addAuditLogMutation = useAddTestAuditLog();
   const [shortlistedIds, setShortlistedIds] = useState<Set<string>>(() => {
     const auto = new Set<string>();
     [...results]
@@ -42,7 +47,16 @@ export function ShortlistPanel({ results }: ShortlistPanelProps) {
       return next;
     });
     if (result) {
-      addAuditLog('shortlist_removed', 'user-comp-1', 'Maria Recrutadora', 'result', id, result.candidateName);
+      updateShortlist.mutate({ resultId: id, shortlisted: false, testId });
+      addAuditLogMutation.mutate({
+        action: 'shortlist_removed',
+        userId: user?.id ?? '',
+        userName: user?.user_metadata?.full_name ?? '',
+        resourceType: 'result',
+        resourceId: id,
+        resourceName: result.candidateName,
+        companyId: currentCompany?.id ?? '',
+      });
       toast({ title: 'Removido da shortlist', description: `${result.candidateName} removido.` });
     }
   };

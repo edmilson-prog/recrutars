@@ -41,17 +41,19 @@ export default function AdminSettings() {
 
   return (
     <DashboardLayout userType="admin">
-      <AdminTabNav />
-      <ConfigLayout
-        title="Configuracoes"
-        subtitle="Gerencie os parametros e preferencias do sistema"
-        categories={adminSettingsCategories}
-        values={values}
-        history={history}
-        onValueChange={updateValue}
-        onSave={saveSection}
-        onRestoreDefaults={restoreDefaults}
-      />
+      <div className="space-y-6">
+        <AdminTabNav />
+        <ConfigLayout
+          title="Configuracoes"
+          subtitle="Gerencie os parametros e preferencias do sistema"
+          categories={adminSettingsCategories}
+          values={values}
+          history={history}
+          onValueChange={updateValue}
+          onSave={saveSection}
+          onRestoreDefaults={restoreDefaults}
+        />
+      </div>
     </DashboardLayout>
   );
 }

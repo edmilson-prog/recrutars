@@ -7,10 +7,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Users, CalendarDays, ChevronRight } from 'lucide-react';
+import { Users, CalendarDays, ChevronRight, Loader2 } from 'lucide-react';
 import { TestStatusBadge } from './TestStatusBadge';
-// TODO: PRD-072 — migrate to service layer
-import { mockTestInvitations, mockTestResults } from '@/data/companyTestData';
+import { useTestInvitations, useTestResults } from '@/hooks/useCompanyTestsQuery';
 import type { CompanyTest } from '@/types/companyTest';
 
 interface TestCardProps {
@@ -19,9 +18,13 @@ interface TestCardProps {
 
 export function TestCard({ test }: TestCardProps) {
   const navigate = useNavigate();
-  const invitations = mockTestInvitations.filter(i => i.testId === test.id);
-  const results = mockTestResults.filter(r => r.testId === test.id);
-  const completed = invitations.filter(i => i.status === 'completed').length;
+  const { data: invitations, isLoading: loadingInvitations } = useTestInvitations(test.id);
+  const { data: results, isLoading: loadingResults } = useTestResults(test.id);
+
+  const invitationsList = invitations ?? [];
+  const resultsList = results ?? [];
+  const completed = invitationsList.filter(i => i.status === 'completed').length;
+  const isLoading = loadingInvitations || loadingResults;
 
   return (
     <Card
@@ -42,8 +45,14 @@ export function TestCard({ test }: TestCardProps) {
             )}
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                {invitations.length} convidados · {completed} concluídos
+                {isLoading ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <>
+                    <Users className="h-3 w-3" />
+                    {invitationsList.length} convidados · {completed} concluídos
+                  </>
+                )}
               </span>
               {test.deadline && (
                 <span className="flex items-center gap-1">
@@ -52,14 +61,14 @@ export function TestCard({ test }: TestCardProps) {
                 </span>
               )}
             </div>
-            {results.length > 0 && (
+            {!isLoading && resultsList.length > 0 && (
               <div className="flex gap-1 mt-2">
                 <Badge variant="outline" className="text-[10px]">
-                  {results.length} resultado{results.length !== 1 ? 's' : ''}
+                  {resultsList.length} resultado{resultsList.length !== 1 ? 's' : ''}
                 </Badge>
-                {results.filter(r => r.shortlisted).length > 0 && (
+                {resultsList.filter(r => r.shortlisted).length > 0 && (
                   <Badge variant="default" className="text-[10px]">
-                    {results.filter(r => r.shortlisted).length} shortlist
+                    {resultsList.filter(r => r.shortlisted).length} shortlist
                   </Badge>
                 )}
               </div>

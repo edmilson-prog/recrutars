@@ -1,14 +1,17 @@
 /**
- * AI Agent Settings Loader (PRD-051 + Supabase migration)
+ * AI Agent Settings Loader (PRD-051 + PRD-080)
  * Lê configurações do agente do Supabase (com fallback localStorage)
+ * PRD-080: dual-read — integrations.llmProviders (novo) + ai.analysisAgent (fallback)
  */
 
-import type { AIAgentSettings } from '@/types/aiAnalysis';
+import type { AIAgentSettings, LLMProvider } from '@/types/aiAnalysis';
 
 const SETTINGS_KEY = 'recrutars-settings-admin';
 
 const DEFAULT_SETTINGS: AIAgentSettings = {
   agentEnabled: true,
+  provider: 'anthropic',
+  model: 'claude-sonnet-4-20250514',
   claudeModel: 'claude-sonnet-4-20250514',
   apiKey: '',
   practicalAnalysisEnabled: true,
@@ -17,10 +20,13 @@ const DEFAULT_SETTINGS: AIAgentSettings = {
   maxTokens: 2000,
 };
 
-function parseAgentSettings(agentSettings: Record<string, unknown>): AIAgentSettings {
+function parseAgentSettingsLegacy(agentSettings: Record<string, unknown>): AIAgentSettings {
+  const model = (agentSettings.claudeModel as string) ?? DEFAULT_SETTINGS.model;
   return {
     agentEnabled: (agentSettings.agentEnabled as boolean) ?? DEFAULT_SETTINGS.agentEnabled,
-    claudeModel: (agentSettings.claudeModel as string) ?? DEFAULT_SETTINGS.claudeModel,
+    provider: 'anthropic',
+    model,
+    claudeModel: model,
     apiKey: (agentSettings.apiKey as string) ?? DEFAULT_SETTINGS.apiKey,
     practicalAnalysisEnabled:
       (agentSettings.practicalAnalysisEnabled as boolean) ??
@@ -46,7 +52,7 @@ export function loadAgentSettings(): AIAgentSettings {
     const agentSettings = allSettings?.ai?.analysisAgent;
     if (!agentSettings) return DEFAULT_SETTINGS;
 
-    return parseAgentSettings(agentSettings);
+    return parseAgentSettingsLegacy(agentSettings);
   } catch {
     return DEFAULT_SETTINGS;
   }
@@ -54,7 +60,8 @@ export function loadAgentSettings(): AIAgentSettings {
 
 /**
  * Async loader — reads from Supabase (unmasked, protected by RLS).
- * Used by AI analysis generation where the real API key is needed.
+ * PRD-080: reads from new integrations.llmProviders location first,
+ * falls back to ai.analysisAgent for backward compatibility.
  */
 export async function loadAgentSettingsAsync(): Promise<AIAgentSettings> {
   try {
@@ -62,14 +69,41 @@ export async function loadAgentSettingsAsync(): Promise<AIAgentSettings> {
       '@/services/settings/settingsService.supabase'
     );
     const service = new SettingsServiceSupabase();
-    const rawValues = await service.getSettingsRaw('admin', 'ai');
 
-    if (!rawValues) return loadAgentSettings();
+    // Try new location first (PRD-080: integrations.llmProviders)
+    const integrationsValues = await service.getSettingsRaw('admin', 'integrations');
+    const llm = integrationsValues?.llmProviders as Record<string, unknown> | undefined;
 
-    const agentSettings = rawValues.analysisAgent;
-    if (!agentSettings) return loadAgentSettings();
+    // Read analysis mode toggles (stay in ai.analysisAgent)
+    const aiValues = await service.getSettingsRaw('admin', 'ai');
+    const agent = aiValues?.analysisAgent as Record<string, unknown> | undefined;
 
-    return parseAgentSettings(agentSettings as Record<string, unknown>);
+    if (llm && (llm.anthropicApiKey || llm.openaiApiKey)) {
+      const provider = (llm.defaultProvider as LLMProvider) || 'anthropic';
+      const prefix = provider === 'openai' ? 'openai' : 'anthropic';
+      const model = (llm[`${prefix}Model`] as string) ?? DEFAULT_SETTINGS.model;
+
+      return {
+        agentEnabled: (llm.agentEnabled as boolean) ?? DEFAULT_SETTINGS.agentEnabled,
+        provider,
+        model,
+        claudeModel: model,
+        apiKey: (llm[`${prefix}ApiKey`] as string) ?? '',
+        practicalAnalysisEnabled:
+          (agent?.practicalAnalysisEnabled as boolean) ?? DEFAULT_SETTINGS.practicalAnalysisEnabled,
+        technicalAnalysisEnabled:
+          (agent?.technicalAnalysisEnabled as boolean) ?? DEFAULT_SETTINGS.technicalAnalysisEnabled,
+        temperature: (llm[`${prefix}Temperature`] as number) ?? DEFAULT_SETTINGS.temperature,
+        maxTokens: (llm[`${prefix}MaxTokens`] as number) ?? DEFAULT_SETTINGS.maxTokens,
+      };
+    }
+
+    // Fallback to legacy location (ai.analysisAgent)
+    if (agent) {
+      return parseAgentSettingsLegacy(agent);
+    }
+
+    return DEFAULT_SETTINGS;
   } catch {
     return loadAgentSettings();
   }
