@@ -22,6 +22,7 @@ import { ConfigSection } from './ConfigSection';
 import type { ConfigCategory, ConfigSubcategory } from '@/types/settings';
 
 const LLMProvidersPanel = lazy(() => import('./custom/LLMProvidersPanel'));
+const ChatbotDashboard = lazy(() => import('./custom/ChatbotDashboard'));
 
 interface ConfigContentProps {
   category: ConfigCategory;
@@ -62,6 +63,26 @@ export function ConfigContent({
         }
       >
         <LLMProvidersPanel
+          values={values}
+          onValueChange={onValueChange}
+          onSave={onSave}
+        />
+      </Suspense>
+    );
+  }
+
+  if (subcategory.customComponent === 'ChatbotDashboard') {
+    return (
+      <Suspense
+        fallback={
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </CardContent>
+          </Card>
+        }
+      >
+        <ChatbotDashboard
           values={values}
           onValueChange={onValueChange}
           onSave={onSave}
