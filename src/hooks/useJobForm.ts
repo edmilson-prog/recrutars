@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Job, JobStatus } from '@/types';
 import { useJob, useCreateJob, useUpdateJob } from '@/hooks/useJobsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import { useJobAnalyzer, createJobFormData } from '@/hooks/useJobAnalyzer';
 import { toast } from 'sonner';
 
@@ -41,6 +42,7 @@ interface UseJobFormOptions {
 
 export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
   const navigate = useNavigate();
+  const { currentCompany } = useAuth();
   const isEditing = !!jobId;
 
   // React Query hooks for CRUD
@@ -266,11 +268,8 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     } else {
       const newJob: Partial<Job> = {
         ...jobData,
-        companyId: 'company-1',
-        companyName: 'Tech Solutions',
+        companyId: currentCompany?.id ?? '',
         status: 'active',
-        applicationsCount: 0,
-        createdAt: new Date().toISOString().split('T')[0],
       };
       createJobMutation.mutate(newJob, {
         onSuccess: (createdJob) => {
