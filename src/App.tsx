@@ -147,6 +147,9 @@ import TeamCulture from "./pages/empresa/TeamCulture";
 import TeamEvolution from "./pages/empresa/TeamEvolution";
 import TeamReports from "./pages/empresa/TeamReports";
 
+// Auth confirmation (email verify link handler)
+import AuthConfirm from "./pages/AuthConfirm";
+
 // Help pages
 import HelpPage from "./pages/Help";
 import TicketDetailsPage from "./pages/TicketDetails";
@@ -207,6 +210,9 @@ const App = () => (
             <Route path="/para-empresas" element={<ForCompanies />} />
             <Route path="/para-candidatos" element={<ForCandidates />} />
             <Route path="/testes-corporativos" element={<CorporateTests />} />
+
+            {/* Email confirmation link handler (public — no wrappers) */}
+            <Route path="/auth/confirm" element={<AuthConfirm />} />
 
             {/* Team invite acceptance (public — no wrappers) */}
             <Route path="/aceitar-convite" element={<AceitarConvite />} />

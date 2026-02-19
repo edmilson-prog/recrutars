@@ -9,3 +9,12 @@ export const APP_CODENAME = "Refine";
 export const APP_NAME = "RecrutaRS";
 export const APP_COMPANY = "AILA - Sistemas Inteligentes";
 export const APP_COMPANY_URL = "https://aila.com.br";
+
+/**
+ * Retorna a URL base canônica da aplicação.
+ * Usa VITE_APP_URL (variável de ambiente) se definida,
+ * caso contrário usa o origin atual do browser.
+ */
+export function getAppBaseUrl(): string {
+  return (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, '') || window.location.origin;
+}

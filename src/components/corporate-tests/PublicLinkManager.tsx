@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Link2, Copy, Check, Unlink, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUpdatePublicLink } from '@/hooks/useCompanyTestsQuery';
+import { getAppBaseUrl } from '@/constants/app';
 
 interface PublicLinkManagerProps {
   testId: string;
@@ -27,7 +28,7 @@ export function PublicLinkManager({ testId, testName, existingSlug, isActive = f
   const updatePublicLink = useUpdatePublicLink();
 
   const hasLink = !!existingSlug;
-  const link = `${window.location.origin}/teste/${existingSlug || slug}`;
+  const link = `${getAppBaseUrl()}/teste/${existingSlug || slug}`;
 
   const generateLink = async () => {
     const newSlug = slug.trim() || `teste-${Date.now().toString(36)}`;
