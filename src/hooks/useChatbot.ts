@@ -3,7 +3,7 @@
  * PRD-040: Chatbot de Suporte
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type {
   ChatbotMessage,
   ChatbotStatus,
@@ -19,6 +19,7 @@ import {
   createSystemMessage,
 } from '@/lib/chatbot';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 const STORAGE_KEY = 'recruta_chatbot_history';
 const TYPING_DELAY = 500; // ms
@@ -67,6 +68,12 @@ export function useChatbot(): UseChatbotReturn {
   const [messages, setMessages] = useState<ChatbotMessage[]>([]);
   const [isEscalating, setIsEscalating] = useState(false);
   const [initialized, setInitialized] = useState(false);
+
+  // Keep a ref to messages so sendMessage can read them without being recreated
+  const messagesRef = useRef<ChatbotMessage[]>([]);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   // Load history from localStorage
   useEffect(() => {
@@ -140,26 +147,60 @@ export function useChatbot(): UseChatbotReturn {
   const sendMessage = useCallback((content: string) => {
     if (!content.trim()) return;
 
+    const trimmedContent = content.trim();
+
     // Add user message
-    const userMessage = createUserMessage(content.trim());
+    const userMessage = createUserMessage(trimmedContent);
     setMessages(prev => [...prev, userMessage]);
 
     // Show typing indicator
     setStatus('typing');
 
-    // Generate response with small delay
-    setTimeout(() => {
-      const botResponse = generateResponse(content, userContext);
-      setMessages(prev => [...prev, botResponse]);
+    // Try Edge Function (real AI), fallback to local knowledge base
+    (async () => {
+      let botMessage: ChatbotMessage;
+
+      try {
+        // Build conversation history (last 10 turns, excluding system messages)
+        const history = messagesRef.current
+          .filter(m => m.type === 'user' || m.type === 'bot')
+          .slice(-10)
+          .map(m => ({
+            role: m.type === 'user' ? 'user' : 'assistant',
+            content: m.content,
+          }));
+
+        const { data, error } = await supabase.functions.invoke('chatbot-ai', {
+          body: { message: trimmedContent, history, userContext },
+        });
+
+        if (error || !data?.content) {
+          throw new Error(error?.message ?? 'empty_response');
+        }
+
+        botMessage = {
+          id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          type: 'bot',
+          content: data.content,
+          timestamp: new Date().toISOString(),
+        };
+      } catch {
+        // Fallback: local knowledge base (fuzzy matching)
+        botMessage = generateResponse(trimmedContent, userContext);
+      }
+
+      setMessages(prev => [...prev, botMessage]);
       setStatus('idle');
 
-      // Check if response suggests escalation
-      if (content.toLowerCase().includes('escalonar') ||
-          content.toLowerCase().includes('atendente') ||
-          content.toLowerCase().includes('humano')) {
+      // Check if message suggests escalation
+      if (
+        trimmedContent.toLowerCase().includes('escalonar') ||
+        trimmedContent.toLowerCase().includes('atendente') ||
+        trimmedContent.toLowerCase().includes('humano')
+      ) {
         setIsEscalating(true);
       }
-    }, TYPING_DELAY + Math.random() * 500);
+    })();
   }, [userContext]);
 
   // Handle suggestion click
