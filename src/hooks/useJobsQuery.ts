@@ -18,6 +18,7 @@ export const jobKeys = {
   detail: (id: string) => [...jobKeys.details(), id] as const,
   byCompany: (companyId: string) => [...jobKeys.all, 'company', companyId] as const,
   search: (query: string, filters?: JobFilters) => [...jobKeys.all, 'search', query, filters] as const,
+  locations: () => [...jobKeys.all, 'locations'] as const,
 };
 
 export function useJobs(filters?: JobFilters, pagination?: PaginationConfig, sort?: SortConfig) {
@@ -100,5 +101,16 @@ export function useDeleteJob() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: jobKeys.all });
     },
+  });
+}
+
+export function useJobLocations() {
+  return useQuery({
+    queryKey: jobKeys.locations(),
+    queryFn: async () => {
+      const service = await getJobsService();
+      return service.getJobLocations();
+    },
+    staleTime: 5 * 60 * 1000, // 5 min — localizações mudam raramente
   });
 }

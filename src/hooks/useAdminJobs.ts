@@ -1,12 +1,16 @@
 /**
  * Hook for Admin Jobs Management
- * PRD-058: Vagas & Moderação "Sentinel"
+ * PRD-058: Vagas & Moderacao "Sentinel"
  *
- * Core data (jobs, moderation actions) now fetched from Supabase.
- * Secondary features (hires, interviews, alerts) remain as mock pending dedicated services.
+ * Core data (jobs, moderation actions) fetched from Supabase via React Query.
+ * Hires and interviews still use reference data pending dedicated services.
+ * Alerts are generated client-side from real job data.
  */
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getJobsService } from '@/services/jobs/jobsService';
+import { useAuth } from '@/contexts/AuthContext';
 import type {
   AdminJob,
   ModerationStatus,
@@ -17,39 +21,103 @@ import type {
 import {
   mockAdminHires,
   mockAdminInterviews,
-  mockJobAlerts,
 } from '@/data/adminJobsData';
-import { getJobsService } from '@/services/jobs/jobsService';
+
+const ADMIN_JOB_KEYS = {
+  all: ['admin-jobs'] as const,
+  list: () => [...ADMIN_JOB_KEYS.all, 'list'] as const,
+};
+
+/** Max hours a job can remain in the moderation queue before an alert fires. */
+const MAX_PENDING_HOURS = 48;
+
+/** Generate alerts client-side from real job data. */
+function generateAlerts(jobs: AdminJob[]): JobAlert[] {
+  const alerts: JobAlert[] = [];
+  const now = new Date();
+
+  for (const job of jobs) {
+    if (job.moderationStatus === 'pending') {
+      const hoursInQueue =
+        (now.getTime() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60);
+      if (hoursInQueue > MAX_PENDING_HOURS) {
+        alerts.push({
+          id: `alert-pending-${job.id}`,
+          type: 'moderation_pending',
+          jobId: job.id,
+          jobTitle: job.title,
+          companyName: job.companyName,
+          message: `Vaga aguardando moderacao ha mais de ${Math.floor(hoursInQueue)} horas.`,
+          severity: hoursInQueue > MAX_PENDING_HOURS * 2 ? 'critical' : 'warning',
+          createdAt: job.createdAt,
+        });
+      }
+    }
+
+    if (job.moderationStatus === 'approved' && job.status === 'active' && job.publishedAt) {
+      const daysPublished =
+        (now.getTime() - new Date(job.publishedAt).getTime()) / (1000 * 60 * 60 * 24);
+
+      if (daysPublished > 3 && job.applicationsCount === 0) {
+        alerts.push({
+          id: `alert-zero-${job.id}`,
+          type: 'zero_applications',
+          jobId: job.id,
+          jobTitle: job.title,
+          companyName: job.companyName,
+          message: `Vaga publicada ha ${Math.floor(daysPublished)} dias sem nenhuma candidatura.`,
+          severity: daysPublished > 7 ? 'critical' : 'warning',
+          createdAt: job.publishedAt,
+        });
+      } else if (daysPublished > 7 && job.applicationsCount > 0 && job.applicationsCount < 5) {
+        alerts.push({
+          id: `alert-stagnant-${job.id}`,
+          type: 'stagnant',
+          jobId: job.id,
+          jobTitle: job.title,
+          companyName: job.companyName,
+          message: `Vaga publicada ha ${Math.floor(daysPublished)} dias com apenas ${job.applicationsCount} candidatura${job.applicationsCount !== 1 ? 's' : ''}.`,
+          severity: 'warning',
+          createdAt: job.publishedAt,
+        });
+      }
+    }
+  }
+
+  return alerts.sort(
+    (a, b) => (a.severity === 'critical' ? 0 : 1) - (b.severity === 'critical' ? 0 : 1),
+  );
+}
 
 export function useAdminJobs() {
-  const [jobs, setJobs] = useState<AdminJob[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hires] = useState<AdminHire[]>(mockAdminHires);
-  const [interviews] = useState<AdminInterview[]>(mockAdminInterviews);
-  const [alerts] = useState<JobAlert[]>(mockJobAlerts);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  // Load real jobs from Supabase on mount
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const service = await getJobsService();
-        const adminJobs = await service.getAdminJobs();
-        if (!cancelled) setJobs(adminJobs);
-      } catch (err) {
-        console.error('[useAdminJobs] Failed to load jobs from Supabase:', err);
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  // ---- Data fetching ----
+  const {
+    data: jobs = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ADMIN_JOB_KEYS.list(),
+    queryFn: async () => {
+      const service = await getJobsService();
+      return service.getAdminJobs();
+    },
+  });
 
-  // Dashboard stats — computed from real jobs
+  // Hires & Interviews — reference data pending dedicated service methods
+  const hires: AdminHire[] = mockAdminHires;
+  const interviews: AdminInterview[] = mockAdminInterviews;
+
+  // Alerts — generated client-side from real job data
+  const alerts = useMemo(() => generateAlerts(jobs), [jobs]);
+
+  // ---- Computed values ----
   const stats = useMemo(
     () => ({
       totalActive: jobs.filter(
-        (j) => j.status === 'active' || j.status === 'published'
+        (j) => j.status === 'active' || j.status === 'published',
       ).length,
       publishedThisMonth: jobs.filter((j) => {
         const d = new Date(j.publishedAt || j.createdAt);
@@ -67,13 +135,12 @@ export function useAdminJobs() {
       highlighted: jobs.filter((j) => j.isHighlighted).length,
       avgApplications: Math.round(
         jobs.reduce((s, j) => s + j.applicationsCount, 0) /
-          Math.max(jobs.length, 1)
+          Math.max(jobs.length, 1),
       ),
     }),
-    [jobs]
+    [jobs],
   );
 
-  // Filter — operates on real data
   const filterJobs = useCallback(
     (filters: {
       status?: string;
@@ -110,119 +177,101 @@ export function useAdminJobs() {
         return true;
       });
     },
-    [jobs]
+    [jobs],
   );
 
-  // Moderation actions — call Supabase then optimistically update local state
-
-  const approveJob = useCallback(async (id: string) => {
-    try {
-      const service = await getJobsService();
-      await service.approveJob(id);
-    } catch (err) {
-      console.error('[useAdminJobs] approveJob failed:', err);
-    }
-    setJobs((prev) =>
-      prev.map((j) =>
-        j.id === id
-          ? {
-              ...j,
-              moderationStatus: 'approved' as ModerationStatus,
-              moderatedAt: new Date().toISOString(),
-              status: 'active',
-            }
-          : j
-      )
-    );
-  }, []);
-
-  const rejectJob = useCallback(async (id: string, reason: string) => {
-    try {
-      const service = await getJobsService();
-      await service.rejectJob(id, reason);
-    } catch (err) {
-      console.error('[useAdminJobs] rejectJob failed:', err);
-    }
-    setJobs((prev) =>
-      prev.map((j) =>
-        j.id === id
-          ? {
-              ...j,
-              moderationStatus: 'rejected' as ModerationStatus,
-              moderatedAt: new Date().toISOString(),
-              rejectionReason: reason,
-              status: 'rejected',
-            }
-          : j
-      )
-    );
-  }, []);
-
-  const requestCorrection = useCallback(async (id: string, fields: string[]) => {
-    try {
-      const service = await getJobsService();
-      await service.requestCorrectionJob(id, fields);
-    } catch (err) {
-      console.error('[useAdminJobs] requestCorrection failed:', err);
-    }
-    setJobs((prev) =>
-      prev.map((j) =>
-        j.id === id
-          ? {
-              ...j,
-              moderationStatus: 'correction_requested' as ModerationStatus,
-              moderatedAt: new Date().toISOString(),
-              correctionFields: fields,
-            }
-          : j
-      )
-    );
-  }, []);
-
-  // Secondary actions — local only (secondary features, no Supabase yet)
-
-  const toggleHighlight = useCallback((id: string) => {
-    setJobs((prev) =>
-      prev.map((j) =>
-        j.id === id ? { ...j, isHighlighted: !j.isHighlighted } : j
-      )
-    );
-  }, []);
-
-  const addNote = useCallback((id: string, note: string) => {
-    setJobs((prev) =>
-      prev.map((j) =>
-        j.id === id
-          ? {
-              ...j,
-              adminNotes: (j.adminNotes ? j.adminNotes + '\n' : '') + note,
-            }
-          : j
-      )
-    );
-  }, []);
-
-  // Pending moderation queue (oldest first)
   const moderationQueue = useMemo(
     () =>
       jobs
         .filter((j) => j.moderationStatus === 'pending')
         .sort(
           (a, b) =>
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
         ),
-    [jobs]
+    [jobs],
   );
 
-  // Finalized jobs
   const finalizedJobs = useMemo(
     () => jobs.filter((j) => j.finalizedAt),
-    [jobs]
+    [jobs],
+  );
+
+  // ---- Helper to invalidate caches after mutations ----
+  const invalidateAll = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ADMIN_JOB_KEYS.all });
+    queryClient.invalidateQueries({ queryKey: ['jobs'] });
+  }, [queryClient]);
+
+  // ---- Mutations ----
+  const approveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const service = await getJobsService();
+      return service.approveJob(id, user?.id);
+    },
+    onSuccess: invalidateAll,
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const service = await getJobsService();
+      return service.rejectJob(id, reason, user?.id);
+    },
+    onSuccess: invalidateAll,
+  });
+
+  const correctionMutation = useMutation({
+    mutationFn: async ({ id, fields }: { id: string; fields: string[] }) => {
+      const service = await getJobsService();
+      return service.requestCorrectionJob(id, fields, user?.id);
+    },
+    onSuccess: invalidateAll,
+  });
+
+  const highlightMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const job = jobs.find((j) => j.id === id);
+      const service = await getJobsService();
+      return service.toggleHighlight(id, !job?.isHighlighted);
+    },
+    onSuccess: invalidateAll,
+  });
+
+  const noteMutation = useMutation({
+    mutationFn: async ({ id, note }: { id: string; note: string }) => {
+      const service = await getJobsService();
+      return service.addAdminNote(id, note);
+    },
+    onSuccess: invalidateAll,
+  });
+
+  // ---- Wrapper callbacks (preserve original hook API signatures) ----
+  const approveJob = useCallback(
+    (id: string) => approveMutation.mutate(id),
+    [approveMutation],
+  );
+
+  const rejectJob = useCallback(
+    (id: string, reason: string) => rejectMutation.mutate({ id, reason }),
+    [rejectMutation],
+  );
+
+  const requestCorrection = useCallback(
+    (id: string, fields: string[]) => correctionMutation.mutate({ id, fields }),
+    [correctionMutation],
+  );
+
+  const toggleHighlight = useCallback(
+    (id: string) => highlightMutation.mutate(id),
+    [highlightMutation],
+  );
+
+  const addNote = useCallback(
+    (id: string, note: string) => noteMutation.mutate({ id, note }),
+    [noteMutation],
   );
 
   return {
     jobs,
-    isLoading,
     stats,
     filterJobs,
     approveJob,
@@ -235,5 +284,7 @@ export function useAdminJobs() {
     hires,
     interviews,
     alerts,
+    isLoading,
+    isError,
   };
 }

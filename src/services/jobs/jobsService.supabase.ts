@@ -279,14 +279,19 @@ export class JobsServiceSupabase implements IJobsService {
     return (data ?? []).map((row) => jobRowToAdminJob(row as Parameters<typeof jobRowToAdminJob>[0]));
   }
 
-  async approveJob(id: string): Promise<void> {
+  async approveJob(id: string, moderatedBy?: string): Promise<void> {
+    const now = new Date().toISOString();
+    const payload: Record<string, unknown> = {
+      moderation_status: 'approved',
+      status: 'active',
+      moderated_at: now,
+      published_at: now,
+    };
+    if (moderatedBy) payload.moderated_by = moderatedBy;
+
     const { error } = await supabase
       .from('jobs')
-      .update({
-        moderation_status: 'approved',
-        status: 'active',
-        moderated_at: new Date().toISOString(),
-      })
+      .update(payload)
       .eq('id', id);
 
     if (error) {
@@ -294,14 +299,18 @@ export class JobsServiceSupabase implements IJobsService {
     }
   }
 
-  async rejectJob(id: string, reason: string): Promise<void> {
+  async rejectJob(id: string, reason: string, moderatedBy?: string): Promise<void> {
+    const payload: Record<string, unknown> = {
+      moderation_status: 'rejected',
+      status: 'rejected',
+      rejection_reason: reason,
+      moderated_at: new Date().toISOString(),
+    };
+    if (moderatedBy) payload.moderated_by = moderatedBy;
+
     const { error } = await supabase
       .from('jobs')
-      .update({
-        moderation_status: 'rejected',
-        rejection_reason: reason,
-        moderated_at: new Date().toISOString(),
-      })
+      .update(payload)
       .eq('id', id);
 
     if (error) {
@@ -309,19 +318,83 @@ export class JobsServiceSupabase implements IJobsService {
     }
   }
 
-  async requestCorrectionJob(id: string, fields: string[]): Promise<void> {
+  async requestCorrectionJob(id: string, fields: string[], moderatedBy?: string): Promise<void> {
+    const payload: Record<string, unknown> = {
+      moderation_status: 'correction_requested',
+      correction_fields: fields,
+      moderated_at: new Date().toISOString(),
+    };
+    if (moderatedBy) payload.moderated_by = moderatedBy;
+
     const { error } = await supabase
       .from('jobs')
-      .update({
-        moderation_status: 'correction_requested',
-        correction_fields: fields,
-        moderated_at: new Date().toISOString(),
-      })
+      .update(payload)
       .eq('id', id);
 
     if (error) {
       throw new Error(`Failed to request correction: ${error.message}`);
     }
+  }
+
+  async toggleHighlight(id: string, isHighlighted: boolean, highlightedUntil?: string): Promise<void> {
+    const { error } = await supabase
+      .from('jobs')
+      .update({
+        is_highlighted: isHighlighted,
+        highlighted_until: isHighlighted ? (highlightedUntil ?? null) : null,
+      })
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`Failed to toggle highlight: ${error.message}`);
+    }
+  }
+
+  async addAdminNote(id: string, note: string): Promise<void> {
+    const { data: current, error: selectError } = await supabase
+      .from('jobs')
+      .select('admin_notes')
+      .eq('id', id)
+      .single();
+
+    if (selectError) {
+      throw new Error(`Failed to fetch current admin notes: ${selectError.message}`);
+    }
+
+    const existingNotes = current?.admin_notes ?? '';
+    const timestamp = new Date().toLocaleString('pt-BR');
+    const newNotes = existingNotes
+      ? `${existingNotes}\n[${timestamp}] ${note}`
+      : `[${timestamp}] ${note}`;
+
+    const { error } = await supabase
+      .from('jobs')
+      .update({ admin_notes: newNotes })
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`Failed to add admin note: ${error.message}`);
+    }
+  }
+
+  // --- Filter helpers ---
+
+  async getJobLocations(): Promise<string[]> {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('location')
+      .eq('status', 'active')
+      .eq('moderation_status', 'approved')
+      .not('location', 'is', null);
+
+    if (error) {
+      throw new Error(`Failed to fetch job locations: ${error.message}`);
+    }
+
+    const unique = [...new Set(
+      (data ?? []).map((row) => row.location).filter(Boolean) as string[]
+    )];
+    return unique.sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }
 
   // --- Private helpers ---

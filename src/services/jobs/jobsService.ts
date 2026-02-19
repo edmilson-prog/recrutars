@@ -33,6 +33,8 @@ export interface IJobsService {
   requestCorrectionJob(id: string, fields: string[], moderatedBy?: string): Promise<void>;
   toggleHighlight(id: string, isHighlighted: boolean, highlightedUntil?: string): Promise<void>;
   addAdminNote(id: string, note: string): Promise<void>;
+  // Filter helpers
+  getJobLocations(): Promise<string[]>;
 }
 
 let _instance: IJobsService | null = null;

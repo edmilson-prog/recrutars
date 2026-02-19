@@ -35,7 +35,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { useJobs } from '@/hooks/useJobsQuery';
+import { useJobs, useJobLocations } from '@/hooks/useJobsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { getOrGenerateIdealProfile } from '@/lib/behavioralProfiles';
 import type { Job } from '@/types';
@@ -49,7 +49,6 @@ import { useMemo } from 'react';
 import { getMatchScoreColor } from '@/types/disc';
 import { Loader2 } from 'lucide-react';
 
-const locations = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 'Curitiba, PR', 'Porto Alegre, RS'];
 const areas = ['Tecnologia', 'Produto', 'Design', 'Dados', 'Marketing', 'Comercial', 'RH', 'Financeiro'];
 const levels = ['Estágio', 'Junior', 'Pleno', 'Senior', 'Especialista', 'Gerente'];
 
@@ -65,6 +64,9 @@ export default function CandidateJobSearch() {
   // Fetch all jobs from service layer
   const { data: jobsResult, isLoading: isLoadingJobs } = useJobs({ status: 'active' });
   const allJobs = jobsResult?.data ?? [];
+
+  // Dynamic locations derived from actual job data in the database
+  const { data: locations = [] } = useJobLocations();
 
   // Applications hook for checking applied status
   const { hasApplied } = useApplications(candidateId);
