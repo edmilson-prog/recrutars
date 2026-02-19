@@ -1,12 +1,50 @@
 {
   "versions": [
     {
+      "version": "1.20.0",
+      "codename": "Forge",
+      "type": "minor",
+      "releaseDate": "2026-02-19",
+      "description": "Migracao completa do Hub de Testes Comportamentais de dados mock para backend real com Supabase. Novas tabelas, service layer, Edge Function para convites, hooks React Query e pagina publica para candidatos externos.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "4 novas tabelas Supabase: company_tests, test_invitations, test_results, test_audit_logs com RLS completo",
+            "Edge Function send-test-invitation com acoes send, resend e cancel",
+            "Service layer completo para testes (interface + implementacao Supabase)",
+            "10 React Query hooks e 8 mutations com cache invalidation e toasts",
+            "Pagina publica /teste/:slug para candidatos externos se cadastrarem e iniciarem avaliacao",
+            "Rota publica /teste/:slug registrada no App.tsx"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Hub de Testes 100% migrado de mock para Supabase real (25+ componentes e paginas)",
+            "Audit log de testes migrado de localStorage para tabela test_audit_logs no Supabase",
+            "PublicLinkManager persiste slug no banco (company_tests) em vez de estado local",
+            "InternalCandidateInvite busca candidatos reais da empresa via servico Supabase",
+            "Dashboard de metricas e KPIs calculados a partir de dados reais"
+          ]
+        },
+        {
+          "type": "removed",
+          "items": [
+            "companyTestData.ts (312 linhas de dados mock) removido apos migracao completa",
+            "Funcoes de localStorage (getAuditLogs, addAuditLog) removidas de auditLog.ts"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.19.0",
       "codename": "Cockpit",
       "type": "minor",
       "releaseDate": "2026-02-18",
       "description": "Reestruturacao das configuracoes de IA no painel admin. Novo painel Provedores LLM em Integracoes com suporte a Anthropic e OpenAI, teste de conexao real via Edge Functions, selecao dinamica de modelos e painel de consumo. Agente de Analise simplificado para apenas toggles comportamentais.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
