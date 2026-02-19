@@ -1970,6 +1970,7 @@ export type Database = {
           finalized_at: string | null
           highlighted_until: string | null
           id: string
+          is_anonymous: boolean
           is_highlighted: boolean
           level: string | null
           location: string | null
@@ -1999,6 +2000,7 @@ export type Database = {
           finalized_at?: string | null
           highlighted_until?: string | null
           id?: string
+          is_anonymous?: boolean
           is_highlighted?: boolean
           level?: string | null
           location?: string | null
@@ -2028,6 +2030,7 @@ export type Database = {
           finalized_at?: string | null
           highlighted_until?: string | null
           id?: string
+          is_anonymous?: boolean
           is_highlighted?: boolean
           level?: string | null
           location?: string | null

@@ -93,12 +93,17 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
   const currentShuffledOrder = currentDimension ? (shuffledWordOrders[currentDimension] || []) : [];
 
   // Check cooldown
-  const isInCooldown = useCallback(() => {
+  const getCooldownInfo = useCallback((): { inCooldown: boolean; daysRemaining: number } => {
     const last = localStorage.getItem(lastCompletedKey);
-    if (!last) return false;
+    if (!last) return { inCooldown: false, daysRemaining: 0 };
     const daysSince = (Date.now() - new Date(last).getTime()) / (1000 * 60 * 60 * 24);
-    return daysSince < GAUGE_PRO_CONFIG.cooldownDays;
+    if (daysSince < GAUGE_PRO_CONFIG.cooldownDays) {
+      return { inCooldown: true, daysRemaining: Math.ceil(GAUGE_PRO_CONFIG.cooldownDays - daysSince) };
+    }
+    return { inCooldown: false, daysRemaining: 0 };
   }, [lastCompletedKey]);
+
+  const isInCooldown = useCallback(() => getCooldownInfo().inCooldown, [getCooldownInfo]);
 
   // Load existing session (localStorage sync, then Supabase async)
   useEffect(() => {
@@ -538,6 +543,7 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
     result,
     elapsedSeconds,
     isInCooldown: isInCooldown(),
+    cooldownDaysRemaining: getCooldownInfo().daysRemaining,
 
     // Part 1 — Word steps
     blockTransitionInfo,

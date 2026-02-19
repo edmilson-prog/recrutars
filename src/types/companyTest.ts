@@ -52,11 +52,32 @@ export interface TestInvitation {
   candidateEmail: string;
   method: InvitationMethod;
   status: InvitationStatus;
+  token?: string;
+  assessmentId?: string;
   sentAt: string;
   viewedAt?: string;
   startedAt?: string;
   completedAt?: string;
   expiresAt: string;
+  sentBy?: string;
+}
+
+// --- Create Invitation Input ---
+export interface CreateInvitationInput {
+  candidateId?: string;
+  candidateName: string;
+  candidateEmail: string;
+  method: InvitationMethod;
+  expiresInDays?: number; // default 30
+}
+
+// --- Company Candidate (for "Da Base" tab) ---
+export interface CompanyCandidate {
+  id: string;
+  name: string;
+  email: string;
+  title?: string;
+  avatarUrl?: string;
 }
 
 // --- Test Result ---
@@ -121,6 +142,7 @@ export interface AuditLog {
   resourceId: string;
   resourceName?: string;
   details?: string;
+  companyId?: string;
   timestamp: string;
 }
 

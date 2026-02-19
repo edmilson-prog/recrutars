@@ -1,6 +1,6 @@
 /**
  * Public Link Manager
- * PRD-052: Geração/gestão de link público
+ * PRD-052: Geração/gestão de link público — Supabase-backed
  */
 
 import { useState } from 'react';
@@ -9,9 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Link2, Copy, Check, Unlink } from 'lucide-react';
+import { Link2, Copy, Check, Unlink, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addAuditLog } from '@/utils/auditLog';
+import { useUpdatePublicLink } from '@/hooks/useCompanyTestsQuery';
 
 interface PublicLinkManagerProps {
   testId: string;
@@ -23,19 +23,20 @@ interface PublicLinkManagerProps {
 export function PublicLinkManager({ testId, testName, existingSlug, isActive = false }: PublicLinkManagerProps) {
   const { toast } = useToast();
   const [slug, setSlug] = useState(existingSlug || '');
-  const [active, setActive] = useState(isActive);
   const [copied, setCopied] = useState(false);
-  const [generated, setGenerated] = useState(!!existingSlug);
+  const updatePublicLink = useUpdatePublicLink();
 
-  const link = `${window.location.origin}/t/${slug}`;
+  const hasLink = !!existingSlug;
+  const link = `${window.location.origin}/teste/${existingSlug || slug}`;
 
-  const generateLink = () => {
+  const generateLink = async () => {
     const newSlug = slug.trim() || `teste-${Date.now().toString(36)}`;
+    await updatePublicLink.mutateAsync({
+      testId,
+      slug: newSlug,
+      active: true,
+    });
     setSlug(newSlug);
-    setGenerated(true);
-    setActive(true);
-    addAuditLog('link_generated', 'user-comp-1', 'Maria Recrutadora', 'test', testId, testName, `Slug: ${newSlug}`);
-    toast({ title: 'Link gerado', description: 'Link público criado com sucesso.' });
   };
 
   const copyLink = async () => {
@@ -45,21 +46,17 @@ export function PublicLinkManager({ testId, testName, existingSlug, isActive = f
     toast({ title: 'Link copiado' });
   };
 
-  const toggleActive = () => {
-    const newActive = !active;
-    setActive(newActive);
-    if (!newActive) {
-      addAuditLog('link_deactivated', 'user-comp-1', 'Maria Recrutadora', 'test', testId, testName);
-    }
-    toast({
-      title: newActive ? 'Link ativado' : 'Link desativado',
-      description: newActive ? 'Candidatos podem usar o link.' : 'O link não aceita mais acessos.',
+  const toggleActive = async () => {
+    await updatePublicLink.mutateAsync({
+      testId,
+      slug: existingSlug || slug,
+      active: !isActive,
     });
   };
 
   return (
     <div className="space-y-4">
-      {!generated ? (
+      {!hasLink ? (
         <div className="space-y-3">
           <div className="space-y-2">
             <Label>Slug personalizado (opcional)</Label>
@@ -67,10 +64,15 @@ export function PublicLinkManager({ testId, testName, existingSlug, isActive = f
               value={slug}
               onChange={(e) => setSlug(e.target.value.replace(/[^a-z0-9-]/g, ''))}
               placeholder="ex: gerente-projetos-2026"
+              disabled={updatePublicLink.isPending}
             />
           </div>
-          <Button onClick={generateLink}>
-            <Link2 className="h-4 w-4 mr-2" />
+          <Button onClick={generateLink} disabled={updatePublicLink.isPending}>
+            {updatePublicLink.isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Link2 className="h-4 w-4 mr-2" />
+            )}
             Gerar Link Público
           </Button>
         </div>
@@ -78,8 +80,8 @@ export function PublicLinkManager({ testId, testName, existingSlug, isActive = f
         <Card>
           <CardContent className="pt-4 space-y-3">
             <div className="flex items-center gap-2">
-              <Badge variant={active ? 'default' : 'secondary'}>
-                {active ? 'Ativo' : 'Inativo'}
+              <Badge variant={isActive ? 'default' : 'secondary'}>
+                {isActive ? 'Ativo' : 'Inativo'}
               </Badge>
             </div>
             <div className="flex gap-2">
@@ -88,9 +90,18 @@ export function PublicLinkManager({ testId, testName, existingSlug, isActive = f
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
-            <Button variant="ghost" size="sm" onClick={toggleActive}>
-              <Unlink className="h-4 w-4 mr-2" />
-              {active ? 'Desativar link' : 'Reativar link'}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleActive}
+              disabled={updatePublicLink.isPending}
+            >
+              {updatePublicLink.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Unlink className="h-4 w-4 mr-2" />
+              )}
+              {isActive ? 'Desativar link' : 'Reativar link'}
             </Button>
           </CardContent>
         </Card>

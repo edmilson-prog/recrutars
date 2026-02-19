@@ -30,7 +30,7 @@ export const GAUGE_PRO_CONFIG = {
     xpReward: 150,
     badgeId: 'gauge_pro_behavioral',
   },
-  cooldownDays: 180,
+  cooldownDays: 90,
   sessionValidDays: 7,
   storageKeys: {
     assessment: (candidateId: string) => `gauge-pro-assessment-${candidateId}`,

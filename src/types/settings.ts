@@ -14,7 +14,8 @@ export type ConfigFieldType =
   | 'model-select'
   | 'color'
   | 'image'
-  | 'password';
+  | 'password'
+  | 'info-banner';
 
 // Tipo de painel
 export type ConfigPanel = 'admin' | 'company' | 'candidate';
@@ -48,6 +49,8 @@ export interface ConfigField {
   validation?: ConfigFieldValidation;
   sensitive?: boolean;
   order: number;
+  link?: string;
+  linkText?: string;
 }
 
 // Subcategoria de configuração
@@ -58,6 +61,7 @@ export interface ConfigSubcategory {
   description: string;
   fields: ConfigField[];
   order: number;
+  customComponent?: string;
 }
 
 // Categoria de configuração

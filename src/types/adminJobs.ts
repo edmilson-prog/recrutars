@@ -25,6 +25,7 @@ export interface AdminJob {
   rejectionReason?: string;
   correctionFields?: string[];
   adminNotes?: string;
+  isAnonymous: boolean;
   isHighlighted: boolean;
   highlightedUntil?: string;
   publishedAt?: string;

@@ -72,14 +72,48 @@ export interface ClaudeApiError {
 
 // --- Agent Settings ---
 
+export type LLMProvider = 'anthropic' | 'openai';
+
 export interface AIAgentSettings {
   agentEnabled: boolean;
-  claudeModel: string;
+  provider: LLMProvider;
+  model: string;
   apiKey: string;
   practicalAnalysisEnabled: boolean;
   technicalAnalysisEnabled: boolean;
   temperature: number;
   maxTokens: number;
+  /** @deprecated Use `model` instead */
+  claudeModel: string;
+}
+
+// --- LLM Provider Config (PRD-080) ---
+
+export interface LLMProviderConfig {
+  apiKey: string;
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  lastTestAt: string;
+  lastTestStatus: 'success' | 'error' | '';
+}
+
+export interface LLMProvidersState {
+  agentEnabled: boolean;
+  defaultProvider: LLMProvider;
+  anthropic: LLMProviderConfig;
+  openai: LLMProviderConfig;
+}
+
+export interface ConnectionTestResult {
+  success: boolean;
+  error?: string;
+  latencyMs: number;
+}
+
+export interface LLMModelInfo {
+  id: string;
+  name: string;
 }
 
 // Re-export for convenience

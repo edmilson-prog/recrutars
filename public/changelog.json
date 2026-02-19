@@ -1,12 +1,43 @@
 {
   "versions": [
     {
+      "version": "1.19.0",
+      "codename": "Cockpit",
+      "type": "minor",
+      "releaseDate": "2026-02-18",
+      "description": "Reestruturacao das configuracoes de IA no painel admin. Novo painel Provedores LLM em Integracoes com suporte a Anthropic e OpenAI, teste de conexao real via Edge Functions, selecao dinamica de modelos e painel de consumo. Agente de Analise simplificado para apenas toggles comportamentais.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Novo painel 'Provedores LLM' em Integracoes com cards individuais para Anthropic e OpenAI",
+            "Teste de conexao real via Edge Function test-llm-connection (chamada minima a API do provedor)",
+            "Listagem dinamica de modelos via Edge Function list-llm-models (Anthropic e OpenAI)",
+            "Seletor de provedor padrao (Anthropic ou OpenAI) para todas as funcionalidades de IA",
+            "Painel de consumo mensal com visao consolidada e por provedor (dados mockados)",
+            "Parametros de geracao colapsaveis por provedor: temperatura (slider) e max tokens",
+            "Campo tipo info-banner no sistema de configuracoes com navegacao entre categorias",
+            "Componente customizado no engine de configuracoes via propriedade customComponent"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Agente de Analise simplificado: apenas toggles de Analise Pratica e Tecnica + banner informativo",
+            "Settings loader com dual-read: busca configs em Provedores LLM com fallback para localizacao antiga",
+            "Chaves API de LLM (Anthropic e OpenAI) mascaradas via SENSITIVE_KEYS no servico de configuracoes"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.18.0",
       "codename": "Refine",
       "type": "minor",
       "releaseDate": "2026-02-18",
       "description": "Polimento geral de UX: banners descritivos em todas as paginas da empresa, melhorias na tela de login, correcao do modal de contratacao e identificacao do candidato nos cards de entrevista.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

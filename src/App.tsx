@@ -124,6 +124,7 @@ import JobTestManager from "./pages/empresa/JobTestManager";
 import CandidateTestReport from "./pages/empresa/CandidateTestReport";
 import CompareCandidates from "./pages/empresa/CompareCandidates";
 import MagicLinkLanding from "./pages/MagicLinkLanding";
+import PublicTestLanding from "./pages/PublicTestLanding";
 
 // PRD-052, 053, 054: Corporate Tests Hub
 import CorporateTestsHub from "./pages/empresa/CorporateTestsHub";
@@ -212,6 +213,9 @@ const App = () => (
 
             {/* PRD-048: Magic Link Route (public) */}
             <Route path="/t/:token" element={<MagicLinkLanding />} />
+
+            {/* Public Test Landing (via company public link) */}
+            <Route path="/teste/:slug" element={<PublicTestLanding />} />
 
             {/* Help Routes */}
             <Route path="/ajuda" element={<HelpPage />} />

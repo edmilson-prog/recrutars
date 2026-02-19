@@ -3,14 +3,14 @@
  * PRD-052: Detalhe de um teste específico
  */
 
-import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Users, Clock, CalendarDays, Link2, Send, FileText, GitCompare, AlertTriangle, TimerOff } from 'lucide-react';
-import { mockCompanyTests, mockTestInvitations, mockTestResults } from '@/data/companyTestData';
+import { useCompanyTest, useTestInvitations, useTestResults, useUpdateCompanyTest } from '@/hooks/useCompanyTestsQuery';
 import { DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 import {
   TestStatusBadge,
@@ -21,16 +21,33 @@ import {
 export default function CorporateTestDetail() {
   const { testId } = useParams<{ testId: string }>();
   const navigate = useNavigate();
-  const [test, setTest] = useState(() => mockCompanyTests.find(t => t.id === testId));
 
-  const invitations = useMemo(
-    () => mockTestInvitations.filter(inv => inv.testId === testId),
-    [testId]
-  );
-  const results = useMemo(
-    () => mockTestResults.filter(r => r.testId === testId),
-    [testId]
-  );
+  const { data: test, isLoading: isLoadingTest } = useCompanyTest(testId);
+  const { data: invitations = [], isLoading: isLoadingInvitations } = useTestInvitations(testId);
+  const { data: results = [], isLoading: isLoadingResults } = useTestResults(testId);
+  const updateTest = useUpdateCompanyTest();
+
+  const isLoading = isLoadingTest || isLoadingInvitations || isLoadingResults;
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-lg" />
+            ))}
+          </div>
+          <Skeleton className="h-32 w-full rounded-lg" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!test) {
     return (
@@ -51,7 +68,7 @@ export default function CorporateTestDetail() {
   const expiredCount = invitations.filter(i => i.status === 'expired').length;
 
   const handleStatusChange = (newStatus: typeof test.status) => {
-    setTest(prev => prev ? { ...prev, status: newStatus, updatedAt: new Date().toISOString() } : prev);
+    updateTest.mutate({ id: test.id, updates: { status: newStatus } });
   };
 
   return (

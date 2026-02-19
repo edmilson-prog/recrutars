@@ -10,6 +10,7 @@ import {
   XCircle,
   Clock,
   Archive,
+  EyeOff,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAdminJobs } from '@/hooks/useAdminJobs';
@@ -194,6 +195,9 @@ export default function FinalizedJobs() {
                               </AvatarFallback>
                             </Avatar>
                             <span className="text-sm">{job.companyName}</span>
+                            {job.isAnonymous && (
+                              <EyeOff className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" title="Empresa confidencial para candidatos" />
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>

@@ -1,6 +1,6 @@
 /**
  * Email Invite Form
- * PRD-052: Convite por email
+ * PRD-052: Convite por email — Supabase-backed
  */
 
 import { useState } from 'react';
@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { X, Send } from 'lucide-react';
+import { X, Send, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addAuditLog } from '@/utils/auditLog';
+import { useSendTestInvitations } from '@/hooks/useCompanyTestsQuery';
 
 interface EmailInviteFormProps {
   testId: string;
@@ -21,6 +21,7 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
   const { toast } = useToast();
   const [emailInput, setEmailInput] = useState('');
   const [emails, setEmails] = useState<string[]>([]);
+  const sendInvitations = useSendTestInvitations();
 
   const addEmail = () => {
     const email = emailInput.trim().toLowerCase();
@@ -49,18 +50,21 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
     }
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (emails.length === 0) {
       toast({ title: 'Adicione pelo menos um email', variant: 'destructive' });
       return;
     }
-    emails.forEach(email => {
-      addAuditLog('invite_sent', 'user-comp-1', 'Maria Recrutadora', 'invitation', `inv-${Date.now()}`, email, `Teste: ${testName}`);
+
+    await sendInvitations.mutateAsync({
+      testId,
+      invitations: emails.map(email => ({
+        candidateName: email.split('@')[0],
+        candidateEmail: email,
+        method: 'email' as const,
+      })),
     });
-    toast({
-      title: 'Convites enviados',
-      description: `${emails.length} convite${emails.length > 1 ? 's' : ''} enviado${emails.length > 1 ? 's' : ''} com sucesso.`,
-    });
+
     setEmails([]);
   };
 
@@ -74,8 +78,11 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
             onChange={(e) => setEmailInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Digite o email e pressione Enter"
+            disabled={sendInvitations.isPending}
           />
-          <Button variant="outline" onClick={addEmail}>Adicionar</Button>
+          <Button variant="outline" onClick={addEmail} disabled={sendInvitations.isPending}>
+            Adicionar
+          </Button>
         </div>
       </div>
 
@@ -87,6 +94,7 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
               <button
                 onClick={() => removeEmail(email)}
                 className="ml-1 hover:text-destructive"
+                disabled={sendInvitations.isPending}
               >
                 <X className="h-3 w-3" />
               </button>
@@ -95,8 +103,12 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
         </div>
       )}
 
-      <Button onClick={handleSend} disabled={emails.length === 0}>
-        <Send className="h-4 w-4 mr-2" />
+      <Button onClick={handleSend} disabled={emails.length === 0 || sendInvitations.isPending}>
+        {sendInvitations.isPending ? (
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        ) : (
+          <Send className="h-4 w-4 mr-2" />
+        )}
         Enviar {emails.length > 0 ? `${emails.length} convite${emails.length > 1 ? 's' : ''}` : 'convites'}
       </Button>
     </div>

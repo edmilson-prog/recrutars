@@ -44,6 +44,7 @@ import { useFavoriteJobs, formatSavedAt, getDaysUntilDeadline } from '@/hooks/us
 import { useApplications } from '@/hooks/useApplications';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Job } from '@/types';
+import { getDisplayCompanyName } from '@/lib/anonymousJob';
 
 type SortOption = 'recent' | 'match' | 'deadline';
 
@@ -153,7 +154,7 @@ export default function SavedJobs() {
                     </Badge>
                   )}
                 </div>
-                <p className="text-muted-foreground">{job.companyName}</p>
+                <p className="text-muted-foreground">{getDisplayCompanyName(job)}</p>
               </div>
 
               <button

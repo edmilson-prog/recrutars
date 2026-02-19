@@ -26,6 +26,8 @@ const SENSITIVE_KEYS = new Set([
   'stripeLivePublishableKey',
   'stripeLiveSecretKey',
   'stripeLiveWebhookSecret',
+  'anthropicApiKey',
+  'openaiApiKey',
 ]);
 const MASK_PLACEHOLDER = '••••';
 

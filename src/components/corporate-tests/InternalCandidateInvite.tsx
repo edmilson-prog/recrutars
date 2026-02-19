@@ -1,39 +1,30 @@
 /**
  * Internal Candidate Invite
- * PRD-052: Seleção de candidatos internos (da base)
+ * PRD-052: Seleção de candidatos internos (da base) — Supabase-backed
  */
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Search, Send } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { addAuditLog } from '@/utils/auditLog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Search, Send, Loader2 } from 'lucide-react';
+import { useCompanyCandidates, useSendTestInvitations } from '@/hooks/useCompanyTestsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface InternalCandidateInviteProps {
   testId: string;
   testName: string;
 }
 
-const mockCandidates = [
-  { id: 'cand-1', name: 'Ana Silva', email: 'ana.silva@email.com', title: 'Gerente de Projetos' },
-  { id: 'cand-2', name: 'Bruno Costa', email: 'bruno.costa@email.com', title: 'Coordenador' },
-  { id: 'cand-3', name: 'Carla Mendes', email: 'carla.mendes@email.com', title: 'Analista Sênior' },
-  { id: 'cand-4', name: 'Eduardo Lima', email: 'edu.lima@email.com', title: 'Executivo de Vendas' },
-  { id: 'cand-5', name: 'Fernanda Rocha', email: 'fer.rocha@email.com', title: 'Consultora' },
-];
-
 export function InternalCandidateInvite({ testId, testName }: InternalCandidateInviteProps) {
-  const { toast } = useToast();
+  const { currentCompany } = useAuth();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const filtered = mockCandidates.filter(
-    c => c.name.toLowerCase().includes(search.toLowerCase()) ||
-         c.email.toLowerCase().includes(search.toLowerCase())
-  );
+  const { data: candidates, isLoading } = useCompanyCandidates(currentCompany?.id, search);
+  const sendInvitations = useSendTestInvitations();
 
   const toggleCandidate = (id: string) => {
     setSelected(prev => {
@@ -44,18 +35,21 @@ export function InternalCandidateInvite({ testId, testName }: InternalCandidateI
     });
   };
 
-  const handleSend = () => {
-    if (selected.size === 0) return;
-    selected.forEach(id => {
-      const cand = mockCandidates.find(c => c.id === id);
-      if (cand) {
-        addAuditLog('invite_sent', 'user-comp-1', 'Maria Recrutadora', 'invitation', `inv-${Date.now()}`, cand.name, `Teste: ${testName}`);
-      }
+  const handleSend = async () => {
+    if (selected.size === 0 || !candidates) return;
+
+    const selectedCandidates = candidates.filter(c => selected.has(c.id));
+
+    await sendInvitations.mutateAsync({
+      testId,
+      invitations: selectedCandidates.map(c => ({
+        candidateId: c.id,
+        candidateName: c.name,
+        candidateEmail: c.email,
+        method: 'internal' as const,
+      })),
     });
-    toast({
-      title: 'Convites enviados',
-      description: `${selected.size} candidato${selected.size > 1 ? 's' : ''} convidado${selected.size > 1 ? 's' : ''}.`,
-    });
+
     setSelected(new Set());
   };
 
@@ -72,30 +66,53 @@ export function InternalCandidateInvite({ testId, testName }: InternalCandidateI
       </div>
 
       <div className="space-y-2 max-h-[300px] overflow-y-auto">
-        {filtered.map(cand => (
-          <label
-            key={cand.id}
-            className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
-          >
-            <Checkbox
-              checked={selected.has(cand.id)}
-              onCheckedChange={() => toggleCandidate(cand.id)}
-            />
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-xs">
-                {cand.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">{cand.name}</p>
-              <p className="text-xs text-muted-foreground">{cand.title} · {cand.email}</p>
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 p-2">
+              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-48" />
+              </div>
             </div>
-          </label>
-        ))}
+          ))
+        ) : (candidates ?? []).length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4 text-center">
+            {search ? 'Nenhum candidato encontrado.' : 'Nenhum candidato na base desta empresa.'}
+          </p>
+        ) : (
+          (candidates ?? []).map(cand => (
+            <label
+              key={cand.id}
+              className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
+            >
+              <Checkbox
+                checked={selected.has(cand.id)}
+                onCheckedChange={() => toggleCandidate(cand.id)}
+                disabled={sendInvitations.isPending}
+              />
+              <Avatar className="h-8 w-8">
+                {cand.avatarUrl && <AvatarImage src={cand.avatarUrl} />}
+                <AvatarFallback className="text-xs">
+                  {cand.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">{cand.name}</p>
+                <p className="text-xs text-muted-foreground">{cand.title ? `${cand.title} · ` : ''}{cand.email}</p>
+              </div>
+            </label>
+          ))
+        )}
       </div>
 
-      <Button onClick={handleSend} disabled={selected.size === 0}>
-        <Send className="h-4 w-4 mr-2" />
+      <Button onClick={handleSend} disabled={selected.size === 0 || sendInvitations.isPending}>
+        {sendInvitations.isPending ? (
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        ) : (
+          <Send className="h-4 w-4 mr-2" />
+        )}
         Convidar {selected.size > 0 ? `${selected.size} selecionado${selected.size > 1 ? 's' : ''}` : ''}
       </Button>
     </div>

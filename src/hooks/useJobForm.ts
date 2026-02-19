@@ -28,6 +28,7 @@ export const INITIAL_FORM_STATE = {
   salaryNegotiable: false,
   requirements: '',
   positionsCount: '1',
+  isAnonymous: false,
 };
 
 export const DESCRIPTION_LIMIT = 2000;
@@ -78,6 +79,7 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       salaryNegotiable: (job as Job).salary.min === 0 && (job as Job).salary.max === 0,
       requirements: (job as Job).requirements.join('\n'),
       positionsCount: ((job as Job).positionsCount ?? 1).toString(),
+      isAnonymous: (job as Job).isAnonymous ?? false,
     });
     const common = (job as Job).benefits.filter(b => COMMON_BENEFITS.includes(b));
     const other = (job as Job).benefits.filter(b => !COMMON_BENEFITS.includes(b));
@@ -246,6 +248,7 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       requirements: formData.requirements.split('\n').filter(r => r.trim()),
       benefits: allBenefits,
       positionsCount: Math.max(1, parseInt(formData.positionsCount) || 1),
+      isAnonymous: formData.isAnonymous,
     };
 
     if (isEditing && jobId) {

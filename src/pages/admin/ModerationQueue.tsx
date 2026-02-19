@@ -11,6 +11,7 @@ import {
   Building2,
   Inbox,
   Eye,
+  EyeOff,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAdminJobs } from '@/hooks/useAdminJobs';
@@ -115,6 +116,9 @@ export default function ModerationQueue() {
                             <span className="flex items-center gap-1">
                               <Building2 className="w-3.5 h-3.5" />
                               {job.companyName}
+                              {job.isAnonymous && (
+                                <EyeOff className="w-3 h-3 text-muted-foreground" title="Empresa confidencial para candidatos" />
+                              )}
                             </span>
                             <Badge variant="outline" className="text-[10px]">
                               {job.companyPlan}

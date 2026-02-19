@@ -7,19 +7,36 @@ import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, FileDown } from 'lucide-react';
-import { mockCompanyTests, mockTestResults } from '@/data/companyTestData';
+import { useCompanyTest, useTestResults } from '@/hooks/useCompanyTestsQuery';
 import { CandidateResultView } from '@/components/corporate-tests';
 
 export default function CorporateTestResult() {
   const { testId, candidateId } = useParams<{ testId: string; candidateId: string }>();
   const navigate = useNavigate();
 
-  const test = useMemo(() => mockCompanyTests.find(t => t.id === testId), [testId]);
+  const { data: test, isLoading: isLoadingTest } = useCompanyTest(testId);
+  const { data: results = [], isLoading: isLoadingResults } = useTestResults(testId);
+
   const result = useMemo(
-    () => mockTestResults.find(r => r.testId === testId && r.candidateId === candidateId),
-    [testId, candidateId]
+    () => results.find(r => r.candidateId === candidateId),
+    [results, candidateId]
   );
+
+  const isLoading = isLoadingTest || isLoadingResults;
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-64 w-full rounded-lg" />
+          <Skeleton className="h-48 w-full rounded-lg" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!test || !result) {
     return (

@@ -8,24 +8,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollText, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { AuditLogFilters } from './AuditLogFilters';
 import { LGPDReport } from './LGPDReport';
-// TODO: PRD-072 — migrate to service layer
-import { mockAuditLogs } from '@/data/companyTestData';
 import { getActionLabel } from '@/utils/auditLog';
+import { useTestAuditLogs } from '@/hooks/useCompanyTestsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type { AuditAction } from '@/types/companyTest';
 
 export function AuditLogTable() {
   const { toast } = useToast();
+  const { currentCompany } = useAuth();
+  const { data: auditLogs = [], isLoading } = useTestAuditLogs(currentCompany?.id);
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState<AuditAction | 'all'>('all');
   const [resourceFilter, setResourceFilter] = useState('all');
 
   const filtered = useMemo(() => {
-    return mockAuditLogs.filter(log => {
+    return auditLogs.filter(log => {
       const matchesSearch = search === '' ||
         log.resourceName?.toLowerCase().includes(search.toLowerCase()) ||
         log.userName.toLowerCase().includes(search.toLowerCase()) ||
@@ -34,7 +37,7 @@ export function AuditLogTable() {
       const matchesResource = resourceFilter === 'all' || log.resourceType === resourceFilter;
       return matchesSearch && matchesAction && matchesResource;
     }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [search, actionFilter, resourceFilter]);
+  }, [auditLogs, search, actionFilter, resourceFilter]);
 
   const handleExportLog = () => {
     const wb = XLSX.utils.book_new();
@@ -92,7 +95,17 @@ export function AuditLogTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map(log => (
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={`skeleton-${i}`}>
+                      <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : filtered.map(log => (
                   <TableRow key={log.id}>
                     <TableCell className="text-xs text-muted-foreground">
                       {new Date(log.timestamp).toLocaleString('pt-BR')}

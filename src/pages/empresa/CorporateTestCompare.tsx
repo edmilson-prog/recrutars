@@ -3,23 +3,34 @@
  * PRD-053: Comparativo lado a lado
  */
 
-import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
-import { mockCompanyTests, mockTestResults } from '@/data/companyTestData';
+import { useCompanyTest, useTestResults } from '@/hooks/useCompanyTestsQuery';
 import { ComparisonView } from '@/components/corporate-tests';
 
 export default function CorporateTestCompare() {
   const { testId } = useParams<{ testId: string }>();
   const navigate = useNavigate();
 
-  const test = useMemo(() => mockCompanyTests.find(t => t.id === testId), [testId]);
-  const results = useMemo(
-    () => mockTestResults.filter(r => r.testId === testId),
-    [testId]
-  );
+  const { data: test, isLoading: isLoadingTest } = useCompanyTest(testId);
+  const { data: results = [], isLoading: isLoadingResults } = useTestResults(testId);
+
+  const isLoading = isLoadingTest || isLoadingResults;
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-96 w-full rounded-lg" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!test || results.length < 2) {
     return (

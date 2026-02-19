@@ -12,6 +12,7 @@ import {
   Star,
   MoreHorizontal,
   Eye,
+  EyeOff,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -230,6 +231,9 @@ export default function JobsList() {
                                   </AvatarFallback>
                                 </Avatar>
                                 <span className="text-sm truncate max-w-[100px]">{job.companyName}</span>
+                                {job.isAnonymous && (
+                                  <EyeOff className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" title="Empresa confidencial para candidatos" />
+                                )}
                               </div>
                             </TableCell>
                             <TableCell className="hidden md:table-cell text-sm text-muted-foreground">

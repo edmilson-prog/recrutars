@@ -10,13 +10,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Save, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Save, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { TemplateSelector } from './TemplateSelector';
 import { DimensionWeightSliders } from './DimensionWeightSliders';
 import type { TestTemplate } from '@/types/companyTest';
 import type { GaugeProDimension } from '@/types/gaugePro';
 import { COMPANY_TEST_TEMPLATES } from '@/data/companyTestTemplates';
-import { addAuditLog } from '@/utils/auditLog';
+import { useCreateCompanyTest, useAddTestAuditLog } from '@/hooks/useCompanyTestsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TestCreateFormProps {
   onCreated?: () => void;
@@ -24,6 +25,9 @@ interface TestCreateFormProps {
 
 export function TestCreateForm({ onCreated }: TestCreateFormProps) {
   const { toast } = useToast();
+  const { currentCompany, user } = useAuth();
+  const createTest = useCreateCompanyTest();
+  const addAuditLogMutation = useAddTestAuditLog();
   const [step, setStep] = useState(1);
   const [selectedTemplate, setSelectedTemplate] = useState<TestTemplate>(COMPANY_TEST_TEMPLATES[0]);
   const [weights, setWeights] = useState<Record<GaugeProDimension, number>>(COMPANY_TEST_TEMPLATES[0].weights);
@@ -40,27 +44,44 @@ export function TestCreateForm({ onCreated }: TestCreateFormProps) {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) {
       toast({ title: 'Erro', description: 'Nome do teste é obrigatório.', variant: 'destructive' });
       return;
     }
+    if (!currentCompany?.id) {
+      toast({ title: 'Erro', description: 'Empresa não identificada.', variant: 'destructive' });
+      return;
+    }
 
-    addAuditLog(
-      'test_created',
-      'user-comp-1',
-      'Maria Recrutadora',
-      'test',
-      `ct-${Date.now()}`,
-      name,
-      `Template: ${selectedTemplate.name}`
-    );
+    try {
+      const created = await createTest.mutateAsync({
+        companyId: currentCompany.id,
+        name,
+        templateId: selectedTemplate.id,
+        description,
+        weights,
+        jobTitle: jobTitle || undefined,
+        deadline: deadline || undefined,
+        instructions: instructions || undefined,
+        status: 'draft',
+      });
 
-    toast({
-      title: 'Teste criado',
-      description: `"${name}" salvo como rascunho com sucesso.`,
-    });
-    onCreated?.();
+      addAuditLogMutation.mutate({
+        action: 'test_created',
+        userId: user?.id ?? '',
+        userName: user?.user_metadata?.full_name ?? '',
+        resourceType: 'test',
+        resourceId: created.id,
+        resourceName: name,
+        details: `Template: ${selectedTemplate.name}`,
+        companyId: currentCompany.id,
+      });
+
+      onCreated?.();
+    } catch {
+      // Error toast is handled by the mutation's onError
+    }
   };
 
   return (
@@ -193,8 +214,12 @@ export function TestCreateForm({ onCreated }: TestCreateFormProps) {
                 <ChevronLeft className="h-4 w-4 mr-2" />
                 Voltar
               </Button>
-              <Button onClick={handleSave}>
-                <Save className="h-4 w-4 mr-2" />
+              <Button onClick={handleSave} disabled={createTest.isPending}>
+                {createTest.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
                 Salvar como Rascunho
               </Button>
             </div>

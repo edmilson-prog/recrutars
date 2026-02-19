@@ -8,6 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { EyeOff } from 'lucide-react';
 
 interface JobFormBasicInfoProps {
   formData: {
@@ -17,6 +19,7 @@ interface JobFormBasicInfoProps {
     location: string;
     level: string;
     positionsCount: string;
+    isAnonymous: boolean;
   };
   onUpdate: (updates: Partial<JobFormBasicInfoProps['formData']>) => void;
 }
@@ -100,6 +103,24 @@ export function JobFormBasicInfo({ formData, onUpdate }: JobFormBasicInfoProps) 
               value={formData.positionsCount}
               onChange={(e) => onUpdate({ positionsCount: e.target.value })}
               placeholder="1"
+            />
+          </div>
+        </div>
+        <div className="border-t pt-4 mt-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="isAnonymous" className="flex items-center gap-2 cursor-pointer">
+                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                Empresa confidencial
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                O nome e logo da empresa não serão exibidos aos candidatos
+              </p>
+            </div>
+            <Switch
+              id="isAnonymous"
+              checked={formData.isAnonymous}
+              onCheckedChange={(checked) => onUpdate({ isAnonymous: checked })}
             />
           </div>
         </div>

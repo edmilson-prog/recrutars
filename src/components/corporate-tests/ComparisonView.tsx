@@ -115,7 +115,7 @@ export function ComparisonView({ test, results }: ComparisonViewProps) {
           <CompatibilityRanking results={selectedResults} />
 
           {/* Shortlist */}
-          <ShortlistPanel results={results} />
+          <ShortlistPanel results={results} testId={test.id} />
         </>
       )}
     </div>

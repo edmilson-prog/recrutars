@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -18,21 +19,28 @@ import {
   TestList,
   InvitePanel,
 } from '@/components/corporate-tests';
-import { mockCompanyTests } from '@/data/companyTestData';
+import { useCompanyTests } from '@/hooks/useCompanyTestsQuery';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function CorporateTestsHub() {
   const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();
+  const { currentCompany } = useAuth();
+  const { data: companyTests = [], isLoading } = useCompanyTests(currentCompany?.id);
 
   return (
     <DashboardLayout userType="company">
       <div className="space-y-6">
         {/* Onboarding Banner */}
-        <GaugeProOnboardingBanner
-          hasTests={mockCompanyTests.length > 0}
-          onNavigateToCreate={() => setActiveTab('create')}
-          onNavigateToTests={() => setActiveTab('tests')}
-        />
+        {isLoading ? (
+          <Skeleton className="h-24 w-full rounded-xl" />
+        ) : (
+          <GaugeProOnboardingBanner
+            hasTests={companyTests.length > 0}
+            onNavigateToCreate={() => setActiveTab('create')}
+            onNavigateToTests={() => setActiveTab('tests')}
+          />
+        )}
 
         {/* Header */}
         <motion.div
