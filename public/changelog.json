@@ -1,12 +1,37 @@
 {
   "versions": [
     {
+      "version": "1.21.0",
+      "codename": "Verify",
+      "type": "minor",
+      "releaseDate": "2026-02-19",
+      "description": "Fluxo completo de confirmacao de email implementado. Nova pagina /auth/confirm processa token do link de verificacao, confirma a sessao via Supabase verifyOtp e redireciona para o dashboard correto. Templates de email corrigidos com variaveis reais do GoTrue.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Nova pagina AuthConfirm (/auth/confirm) para processar links de confirmacao de email",
+            "Pagina exibe estados: verificando, confirmado e erro com opcao de reenvio",
+            "Rota publica /auth/confirm registrada no App.tsx"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Template de email de confirmacao corrigido: token_hash=abc123 substituido por variaveis GoTrue reais",
+            "Link do email agora aponta para rota real da aplicacao (/auth/confirm) em vez de placeholder"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.20.0",
       "codename": "Forge",
       "type": "minor",
       "releaseDate": "2026-02-19",
       "description": "Migracao completa do Hub de Testes Comportamentais de dados mock para backend real com Supabase. Novas tabelas, service layer, Edge Function para convites, hooks React Query e pagina publica para candidatos externos.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
