@@ -13,6 +13,7 @@ import { ConfigLayout } from '@/components/settings/ConfigLayout';
 import { candidateSettingsCategories } from '@/data/settingsConfig';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -83,6 +84,8 @@ export default function CandidateSettings() {
     confirmPassword: '',
   });
   const [newEmail, setNewEmail] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [changingEmail, setChangingEmail] = useState(false);
 
   // Mask email for display
   const maskEmail = (email: string) => {
@@ -97,8 +100,8 @@ export default function CandidateSettings() {
     toast.success('Seus dados estão sendo preparados. Você receberá um email em breve.');
   };
 
-  // Handle change password (mock)
-  const handleChangePassword = () => {
+  // Handle change password
+  const handleChangePassword = async () => {
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       toast.error('As senhas não coincidem');
       return;
@@ -107,20 +110,48 @@ export default function CandidateSettings() {
       toast.error('A nova senha deve ter pelo menos 6 caracteres');
       return;
     }
-    setShowPasswordModal(false);
-    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    toast.success('Senha alterada com sucesso');
+    setChangingPassword(true);
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email ?? '',
+        password: passwordForm.currentPassword,
+      });
+      if (signInError) {
+        toast.error('Senha atual incorreta');
+        return;
+      }
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: passwordForm.newPassword,
+      });
+      if (updateError) throw updateError;
+      setShowPasswordModal(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      toast.success('Senha alterada com sucesso');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao alterar senha');
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
-  // Handle change email (mock)
-  const handleChangeEmail = () => {
+  // Handle change email
+  const handleChangeEmail = async () => {
     if (!newEmail || !newEmail.includes('@')) {
       toast.error('Digite um email válido');
       return;
     }
-    setShowEmailModal(false);
-    setNewEmail('');
-    toast.success('Email de confirmação enviado para o novo endereço');
+    setChangingEmail(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      if (error) throw error;
+      setShowEmailModal(false);
+      setNewEmail('');
+      toast.success('Email de confirmação enviado para o novo endereço');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao alterar email');
+    } finally {
+      setChangingEmail(false);
+    }
   };
 
   // Handle deactivate account (mock)
@@ -301,7 +332,10 @@ export default function CandidateSettings() {
             <Button variant="outline" onClick={() => setShowEmailModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleChangeEmail}>Enviar confirmação</Button>
+            <Button onClick={handleChangeEmail} disabled={changingEmail}>
+              {changingEmail && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Enviar confirmação
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -351,7 +385,10 @@ export default function CandidateSettings() {
             <Button variant="outline" onClick={() => setShowPasswordModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleChangePassword}>Salvar</Button>
+            <Button onClick={handleChangePassword} disabled={changingPassword}>
+              {changingPassword && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Salvar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

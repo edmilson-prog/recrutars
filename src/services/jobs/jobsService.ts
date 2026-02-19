@@ -4,6 +4,7 @@
  */
 
 import type { Job } from '@/types';
+import type { AdminJob } from '@/types/adminJobs';
 import type { PaginatedResult, SortConfig, PaginationConfig } from '../types';
 
 export interface JobFilters {
@@ -25,6 +26,13 @@ export interface IJobsService {
   updateJob(id: string, updates: Partial<Job>): Promise<Job>;
   deleteJob(id: string): Promise<void>;
   searchJobs(query: string, filters?: JobFilters): Promise<Job[]>;
+  // Admin moderation methods
+  getAdminJobs(): Promise<AdminJob[]>;
+  approveJob(id: string, moderatedBy?: string): Promise<void>;
+  rejectJob(id: string, reason: string, moderatedBy?: string): Promise<void>;
+  requestCorrectionJob(id: string, fields: string[], moderatedBy?: string): Promise<void>;
+  toggleHighlight(id: string, isHighlighted: boolean, highlightedUntil?: string): Promise<void>;
+  addAdminNote(id: string, note: string): Promise<void>;
 }
 
 let _instance: IJobsService | null = null;

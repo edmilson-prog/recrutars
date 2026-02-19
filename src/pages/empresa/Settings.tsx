@@ -213,6 +213,8 @@ export default function CompanySettings() {
     newPassword: '',
     confirmPassword: '',
   });
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [changingEmail, setChangingEmail] = useState(false);
 
   // Plan data — fetched dynamically from Supabase (PRD-075)
   const { data: companyPlans = [] } = usePlans('company');
@@ -364,19 +366,28 @@ export default function CompanySettings() {
     toast.success('Preferências salvas');
   };
 
-  // Handle change email (mock)
-  const handleChangeEmail = () => {
+  // Handle change email
+  const handleChangeEmail = async () => {
     if (!newEmail || !newEmail.includes('@')) {
       toast.error('Digite um email válido');
       return;
     }
-    setShowEmailModal(false);
-    setNewEmail('');
-    toast.success('Email de confirmação enviado para o novo endereço');
+    setChangingEmail(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      if (error) throw error;
+      setShowEmailModal(false);
+      setNewEmail('');
+      toast.success('Email de confirmação enviado para o novo endereço');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao alterar email');
+    } finally {
+      setChangingEmail(false);
+    }
   };
 
-  // Handle change password (mock)
-  const handleChangePassword = () => {
+  // Handle change password
+  const handleChangePassword = async () => {
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       toast.error('As senhas não coincidem');
       return;
@@ -385,9 +396,30 @@ export default function CompanySettings() {
       toast.error('A nova senha deve ter pelo menos 6 caracteres');
       return;
     }
-    setShowPasswordModal(false);
-    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    toast.success('Senha alterada com sucesso');
+    setChangingPassword(true);
+    try {
+      // Verify current password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email ?? '',
+        password: passwordForm.currentPassword,
+      });
+      if (signInError) {
+        toast.error('Senha atual incorreta');
+        return;
+      }
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: passwordForm.newPassword,
+      });
+      if (updateError) throw updateError;
+      setShowPasswordModal(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      toast.success('Senha alterada com sucesso');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao alterar senha');
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   // Handle deactivate account (mock)
@@ -1216,7 +1248,10 @@ export default function CompanySettings() {
             <Button variant="outline" onClick={() => setShowEmailModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleChangeEmail}>Enviar confirmação</Button>
+            <Button onClick={handleChangeEmail} disabled={changingEmail}>
+              {changingEmail && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Enviar confirmação
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1266,7 +1301,10 @@ export default function CompanySettings() {
             <Button variant="outline" onClick={() => setShowPasswordModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleChangePassword}>Salvar</Button>
+            <Button onClick={handleChangePassword} disabled={changingPassword}>
+              {changingPassword && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Salvar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

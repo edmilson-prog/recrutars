@@ -1,9 +1,12 @@
 /**
  * Hook for Admin Jobs Management
- * PRD-058: Vagas & Moderacao "Sentinel"
+ * PRD-058: Vagas & Moderação "Sentinel"
+ *
+ * Core data (jobs, moderation actions) now fetched from Supabase.
+ * Secondary features (hires, interviews, alerts) remain as mock pending dedicated services.
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import type {
   AdminJob,
   ModerationStatus,
@@ -12,19 +15,37 @@ import type {
   JobAlert,
 } from '@/types';
 import {
-  mockAdminJobs,
   mockAdminHires,
   mockAdminInterviews,
   mockJobAlerts,
 } from '@/data/adminJobsData';
+import { getJobsService } from '@/services/jobs/jobsService';
 
 export function useAdminJobs() {
-  const [jobs, setJobs] = useState<AdminJob[]>(mockAdminJobs);
+  const [jobs, setJobs] = useState<AdminJob[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [hires] = useState<AdminHire[]>(mockAdminHires);
   const [interviews] = useState<AdminInterview[]>(mockAdminInterviews);
   const [alerts] = useState<JobAlert[]>(mockJobAlerts);
 
-  // Dashboard stats
+  // Load real jobs from Supabase on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const service = await getJobsService();
+        const adminJobs = await service.getAdminJobs();
+        if (!cancelled) setJobs(adminJobs);
+      } catch (err) {
+        console.error('[useAdminJobs] Failed to load jobs from Supabase:', err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Dashboard stats — computed from real jobs
   const stats = useMemo(
     () => ({
       totalActive: jobs.filter(
@@ -52,7 +73,7 @@ export function useAdminJobs() {
     [jobs]
   );
 
-  // Filter
+  // Filter — operates on real data
   const filterJobs = useCallback(
     (filters: {
       status?: string;
@@ -92,8 +113,15 @@ export function useAdminJobs() {
     [jobs]
   );
 
-  // Moderation actions
-  const approveJob = useCallback((id: string) => {
+  // Moderation actions — call Supabase then optimistically update local state
+
+  const approveJob = useCallback(async (id: string) => {
+    try {
+      const service = await getJobsService();
+      await service.approveJob(id);
+    } catch (err) {
+      console.error('[useAdminJobs] approveJob failed:', err);
+    }
     setJobs((prev) =>
       prev.map((j) =>
         j.id === id
@@ -101,7 +129,6 @@ export function useAdminJobs() {
               ...j,
               moderationStatus: 'approved' as ModerationStatus,
               moderatedAt: new Date().toISOString(),
-              moderatedBy: 'Admin',
               status: 'active',
             }
           : j
@@ -109,7 +136,13 @@ export function useAdminJobs() {
     );
   }, []);
 
-  const rejectJob = useCallback((id: string, reason: string) => {
+  const rejectJob = useCallback(async (id: string, reason: string) => {
+    try {
+      const service = await getJobsService();
+      await service.rejectJob(id, reason);
+    } catch (err) {
+      console.error('[useAdminJobs] rejectJob failed:', err);
+    }
     setJobs((prev) =>
       prev.map((j) =>
         j.id === id
@@ -117,7 +150,6 @@ export function useAdminJobs() {
               ...j,
               moderationStatus: 'rejected' as ModerationStatus,
               moderatedAt: new Date().toISOString(),
-              moderatedBy: 'Admin',
               rejectionReason: reason,
               status: 'rejected',
             }
@@ -126,7 +158,13 @@ export function useAdminJobs() {
     );
   }, []);
 
-  const requestCorrection = useCallback((id: string, fields: string[]) => {
+  const requestCorrection = useCallback(async (id: string, fields: string[]) => {
+    try {
+      const service = await getJobsService();
+      await service.requestCorrectionJob(id, fields);
+    } catch (err) {
+      console.error('[useAdminJobs] requestCorrection failed:', err);
+    }
     setJobs((prev) =>
       prev.map((j) =>
         j.id === id
@@ -134,13 +172,14 @@ export function useAdminJobs() {
               ...j,
               moderationStatus: 'correction_requested' as ModerationStatus,
               moderatedAt: new Date().toISOString(),
-              moderatedBy: 'Admin',
               correctionFields: fields,
             }
           : j
       )
     );
   }, []);
+
+  // Secondary actions — local only (secondary features, no Supabase yet)
 
   const toggleHighlight = useCallback((id: string) => {
     setJobs((prev) =>
@@ -183,6 +222,7 @@ export function useAdminJobs() {
 
   return {
     jobs,
+    isLoading,
     stats,
     filterJobs,
     approveJob,

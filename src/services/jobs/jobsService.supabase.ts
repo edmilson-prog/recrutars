@@ -8,10 +8,59 @@
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 import type { Job } from '@/types';
+import type { AdminJob, ModerationStatus, FinalizationReason } from '@/types/adminJobs';
 import type { PaginatedResult, SortConfig, PaginationConfig } from '../types';
 import type { IJobsService, JobFilters } from './jobsService';
 
 type JobRow = Database['public']['Tables']['jobs']['Row'];
+
+/** Formata salário para exibição no admin (ex: "R$ 3.000 - R$ 5.000"). */
+function formatSalary(min: number | null, max: number | null): string | undefined {
+  if (!min && !max) return undefined;
+  const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  if (min && max) return `${fmt(min)} - ${fmt(max)}`;
+  if (min) return `A partir de ${fmt(min)}`;
+  if (max) return `Até ${fmt(max)}`;
+  return undefined;
+}
+
+/** Maps a Supabase job row (with company + moderator join) to the AdminJob type used by the admin panel. */
+function jobRowToAdminJob(
+  row: JobRow & {
+    companies?: { name: string; logo_url?: string | null; plan?: string | null } | null;
+    moderator?: { name: string } | null;
+  },
+): AdminJob {
+  return {
+    id: row.id,
+    title: row.title,
+    companyId: row.company_id,
+    companyName: row.companies?.name ?? '',
+    companyLogo: row.companies?.logo_url ?? undefined,
+    companyPlan: row.companies?.plan ?? 'Essencial Empresas',
+    location: row.location ?? '',
+    type: row.type,
+    salary: formatSalary(Number(row.salary_min) || null, Number(row.salary_max) || null),
+    area: row.area ?? '',
+    status: row.status,
+    moderationStatus: (row.moderation_status as ModerationStatus) ?? 'pending',
+    moderatedBy: (row as Record<string, unknown>).moderator
+      ? ((row as Record<string, unknown>).moderator as { name: string }).name
+      : undefined,
+    moderatedAt: row.moderated_at ?? undefined,
+    rejectionReason: row.rejection_reason ?? undefined,
+    correctionFields: (row.correction_fields as string[] | null) ?? undefined,
+    adminNotes: row.admin_notes ?? undefined,
+    isAnonymous: (row as Record<string, unknown>).is_anonymous as boolean ?? false,
+    isHighlighted: row.is_highlighted ?? false,
+    highlightedUntil: row.highlighted_until ?? undefined,
+    publishedAt: row.published_at ?? undefined,
+    finalizedAt: row.finalized_at ?? undefined,
+    finalizationReason: (row.finalization_reason as FinalizationReason | null) ?? undefined,
+    applicationsCount: row.applications_count,
+    createdAt: row.created_at,
+  };
+}
 
 /** Maps a Supabase job row (with optional company join) to the app-level Job type. */
 function jobRowToJob(
@@ -32,6 +81,7 @@ function jobRowToJob(
     level: row.level ?? '',
     salary: { min: Number(row.salary_min) || 0, max: Number(row.salary_max) || 0 },
     status: row.status as Job['status'],
+    moderationStatus: (row.moderation_status as Job['moderationStatus']) ?? 'approved',
     applicationsCount: row.applications_count,
     positionsCount: (row as Record<string, unknown>).positions_count as number ?? 1,
     createdAt: row.created_at,
@@ -138,6 +188,7 @@ export class JobsServiceSupabase implements IJobsService {
         salary_min: job.salary?.min ?? 0,
         salary_max: job.salary?.max ?? 0,
         status: job.status ?? 'active',
+        moderation_status: 'approved',
         area: job.area ?? '',
         positions_count: job.positionsCount ?? 1,
         is_anonymous: job.isAnonymous ?? false,
@@ -211,6 +262,66 @@ export class JobsServiceSupabase implements IJobsService {
     }
 
     return (data ?? []).map(jobRowToJob);
+  }
+
+  // --- Admin moderation methods ---
+
+  async getAdminJobs(): Promise<AdminJob[]> {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*, companies!jobs_company_id_fkey(name, logo_url, plan), moderator:profiles!jobs_moderated_by_fkey(name)')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch admin jobs: ${error.message}`);
+    }
+
+    return (data ?? []).map((row) => jobRowToAdminJob(row as Parameters<typeof jobRowToAdminJob>[0]));
+  }
+
+  async approveJob(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('jobs')
+      .update({
+        moderation_status: 'approved',
+        status: 'active',
+        moderated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`Failed to approve job: ${error.message}`);
+    }
+  }
+
+  async rejectJob(id: string, reason: string): Promise<void> {
+    const { error } = await supabase
+      .from('jobs')
+      .update({
+        moderation_status: 'rejected',
+        rejection_reason: reason,
+        moderated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`Failed to reject job: ${error.message}`);
+    }
+  }
+
+  async requestCorrectionJob(id: string, fields: string[]): Promise<void> {
+    const { error } = await supabase
+      .from('jobs')
+      .update({
+        moderation_status: 'correction_requested',
+        correction_fields: fields,
+        moderated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`Failed to request correction: ${error.message}`);
+    }
   }
 
   // --- Private helpers ---

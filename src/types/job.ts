@@ -5,6 +5,7 @@
 
 export type JobType = 'remote' | 'hybrid' | 'onsite';
 export type JobStatus = 'active' | 'paused' | 'closed';
+export type JobModerationStatus = 'pending' | 'approved' | 'rejected' | 'correction_requested';
 
 export interface SalaryRange {
   min: number;
@@ -26,6 +27,7 @@ export interface Job {
   level: string;
   salary: SalaryRange;
   status: JobStatus;
+  moderationStatus: JobModerationStatus;
   applicationsCount: number;
   positionsCount: number;
   createdAt: string;
