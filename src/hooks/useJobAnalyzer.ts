@@ -136,7 +136,7 @@ export function createJobFormData(
     title: string;
     description: string;
     location: string;
-    type: 'remote' | 'hybrid' | 'onsite';
+    type: '' | 'remote' | 'hybrid' | 'onsite';
     level: string;
     area: string;
     salaryMin: string;

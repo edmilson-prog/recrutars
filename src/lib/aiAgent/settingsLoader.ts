@@ -78,9 +78,9 @@ export async function loadAgentSettingsAsync(): Promise<AIAgentSettings> {
     const aiValues = await service.getSettingsRaw('admin', 'ai');
     const agent = aiValues?.analysisAgent as Record<string, unknown> | undefined;
 
-    if (llm && (llm.anthropicApiKey || llm.openaiApiKey)) {
+    if (llm && (llm.anthropicApiKey || llm.openaiApiKey || llm.openrouterApiKey)) {
       const provider = (llm.defaultProvider as LLMProvider) || 'anthropic';
-      const prefix = provider === 'openai' ? 'openai' : 'anthropic';
+      const prefix = provider === 'openai' ? 'openai' : provider === 'openrouter' ? 'openrouter' : 'anthropic';
       const model = (llm[`${prefix}Model`] as string) ?? DEFAULT_SETTINGS.model;
 
       return {

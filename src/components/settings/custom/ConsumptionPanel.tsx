@@ -26,7 +26,8 @@ export function ConsumptionPanel({ activeProvider }: ConsumptionPanelProps) {
     toast({ title: 'Dados atualizados', description: 'Métricas de consumo atualizadas.' });
   };
 
-  const providerLabel = activeProvider === 'anthropic' ? 'Anthropic' : 'OpenAI';
+  const providerLabels: Record<string, string> = { anthropic: 'Anthropic', openai: 'OpenAI', openrouter: 'OpenRouter' };
+  const providerLabel = providerLabels[activeProvider] ?? activeProvider;
 
   return (
     <Card>
@@ -123,16 +124,18 @@ export function ConsumptionPanel({ activeProvider }: ConsumptionPanelProps) {
         ) : (
           <>
             {/* Per-Provider */}
-            <div className="grid grid-cols-2 divide-x border-t border-b">
-              {(['anthropic', 'openai'] as const).map((provider) => {
+            <div className="grid grid-cols-3 divide-x border-t border-b">
+              {(['anthropic', 'openai', 'openrouter'] as const).map((provider) => {
                 const p = data.byProvider[provider];
-                const color = provider === 'anthropic' ? 'text-primary' : 'text-blue-500';
-                const bgColor = provider === 'anthropic' ? 'bg-primary' : 'bg-blue-500';
+                const colorMap = { anthropic: 'text-primary', openai: 'text-blue-500', openrouter: 'text-orange-500' };
+                const bgMap = { anthropic: 'bg-primary', openai: 'bg-blue-500', openrouter: 'bg-orange-500' };
+                const color = colorMap[provider];
+                const bgColor = bgMap[provider];
                 return (
                   <div key={provider} className="px-4 py-3">
                     <div className={`flex items-center gap-2 text-xs font-bold mb-3 ${color}`}>
                       <div className={`w-2 h-2 rounded-full ${bgColor}`} />
-                      {provider === 'anthropic' ? 'Anthropic' : 'OpenAI'}
+                      {providerLabels[provider]}
                     </div>
                     {[
                       ['Chamadas', p.calls.toString()],
@@ -167,8 +170,9 @@ export function ConsumptionPanel({ activeProvider }: ConsumptionPanelProps) {
                 >
                   <span className="text-muted-foreground min-w-[130px]">{week.period}</span>
                   <div className="flex gap-4 text-[11px]">
-                    <span className="text-primary">Anthropic: {week.byProvider?.anthropic ?? 0} calls</span>
-                    <span className="text-blue-500">OpenAI: {week.byProvider?.openai ?? 0} calls</span>
+                    <span className="text-primary">Anthropic: {week.byProvider?.anthropic ?? 0}</span>
+                    <span className="text-blue-500">OpenAI: {week.byProvider?.openai ?? 0}</span>
+                    <span className="text-orange-500">OpenRouter: {week.byProvider?.openrouter ?? 0}</span>
                   </div>
                   <span className="text-muted-foreground font-mono text-[11px]">
                     R$ {week.cost.toFixed(2)}

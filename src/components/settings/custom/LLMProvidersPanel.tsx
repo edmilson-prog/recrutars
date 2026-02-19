@@ -51,14 +51,24 @@ function LLMProvidersPanel({ values, onValueChange, onSave }: LLMProvidersPanelP
   const openaiLastTestAt = (values.openaiLastTestAt as string) ?? '';
   const openaiLastTestStatus = (values.openaiLastTestStatus as string) ?? '';
 
+  const openrouterApiKey = (values.openrouterApiKey as string) ?? '';
+  const openrouterModel = (values.openrouterModel as string) ?? 'anthropic/claude-sonnet-4-20250514';
+  const openrouterTemperature = (values.openrouterTemperature as number) ?? 0.7;
+  const openrouterMaxTokens = (values.openrouterMaxTokens as number) ?? 2000;
+  const openrouterLastTestAt = (values.openrouterLastTestAt as string) ?? '';
+  const openrouterLastTestStatus = (values.openrouterLastTestStatus as string) ?? '';
+
   // Model queries
   const anthropicModels = useLLMModels('anthropic', anthropicApiKey);
   const openaiModels = useLLMModels('openai', openaiApiKey);
+  const openrouterModels = useLLMModels('openrouter', openrouterApiKey);
 
   const handleTestConnection = async (provider: LLMProvider) => {
-    const apiKey = provider === 'anthropic' ? anthropicApiKey : openaiApiKey;
-    const model = provider === 'anthropic' ? anthropicModel : openaiModel;
-    const prefix = provider === 'anthropic' ? 'anthropic' : 'openai';
+    const apiKeyMap = { anthropic: anthropicApiKey, openai: openaiApiKey, openrouter: openrouterApiKey };
+    const modelMap = { anthropic: anthropicModel, openai: openaiModel, openrouter: openrouterModel };
+    const apiKey = apiKeyMap[provider];
+    const model = modelMap[provider];
+    const prefix = provider;
 
     if (!apiKey || apiKey.includes('••••')) {
       toast({
@@ -76,9 +86,10 @@ function LLMProvidersPanel({ values, onValueChange, onSave }: LLMProvidersPanelP
 
       if (result.success) {
         onValueChange(`${prefix}LastTestStatus`, 'success');
+        const providerLabels: Record<LLMProvider, string> = { anthropic: 'Anthropic', openai: 'OpenAI', openrouter: 'OpenRouter' };
         toast({
           title: 'Conexão bem-sucedida',
-          description: `${provider === 'anthropic' ? 'Anthropic' : 'OpenAI'} conectado em ${result.latencyMs}ms.`,
+          description: `${providerLabels[provider]} conectado em ${result.latencyMs}ms.`,
         });
       } else {
         onValueChange(`${prefix}LastTestStatus`, 'error');
@@ -159,6 +170,7 @@ function LLMProvidersPanel({ values, onValueChange, onSave }: LLMProvidersPanelP
                 <SelectContent>
                   <SelectItem value="anthropic" className="text-xs">Anthropic (Claude)</SelectItem>
                   <SelectItem value="openai" className="text-xs">OpenAI (GPT)</SelectItem>
+                  <SelectItem value="openrouter" className="text-xs">OpenRouter (Multi-Provider)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -217,6 +229,31 @@ function LLMProvidersPanel({ values, onValueChange, onSave }: LLMProvidersPanelP
           onMaxTokensChange={(val) => onValueChange('openaiMaxTokens', val)}
           onTestConnection={() => handleTestConnection('openai')}
           onRefreshModels={() => openaiModels.refresh()}
+          isTestingConnection={testMutation.isPending}
+        />
+
+        <ProviderCard
+          provider="openrouter"
+          providerName="OpenRouter"
+          providerIcon="🔀"
+          subtitle="Multi-provider · Anthropic, OpenAI, Meta, Google via API unificada"
+          apiKey={openrouterApiKey}
+          model={openrouterModel}
+          temperature={openrouterTemperature}
+          maxTokens={openrouterMaxTokens}
+          lastTestAt={openrouterLastTestAt}
+          lastTestStatus={openrouterLastTestStatus}
+          isAgentActive={agentEnabled}
+          models={openrouterModels.data ?? []}
+          isLoadingModels={openrouterModels.isLoading}
+          tempRange={{ min: 0, max: 2, step: 0.1 }}
+          maxTokensRange={{ min: 500, max: 16384 }}
+          onApiKeyChange={(val) => onValueChange('openrouterApiKey', val)}
+          onModelChange={(val) => onValueChange('openrouterModel', val)}
+          onTemperatureChange={(val) => onValueChange('openrouterTemperature', val)}
+          onMaxTokensChange={(val) => onValueChange('openrouterMaxTokens', val)}
+          onTestConnection={() => handleTestConnection('openrouter')}
+          onRefreshModels={() => openrouterModels.refresh()}
           isTestingConnection={testMutation.isPending}
         />
       </div>

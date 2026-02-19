@@ -98,7 +98,7 @@ export function JobAssistant({
           </div>
 
           <div className="flex items-center gap-4">
-            {!isAnalyzing && analysis && (
+            {analysis && (
               <JobScoreRing score={score} size="sm" showLabel={false} />
             )}
             {isExpanded ? (
@@ -121,8 +121,11 @@ export function JobAssistant({
             >
               <div className="px-4 pb-4 space-y-4 border-t pt-4">
                 {/* Score display with comparison */}
-                {analysis && !isAnalyzing && (
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                {analysis && (
+                  <div className={cn(
+                    "flex items-center justify-between p-3 bg-muted/50 rounded-lg transition-opacity",
+                    isAnalyzing && "opacity-60"
+                  )}>
                     <div className="flex items-center gap-4">
                       <JobScoreRing score={score} size="md" />
                       <div>
@@ -148,8 +151,8 @@ export function JobAssistant({
                   </div>
                 )}
 
-                {/* Loading state */}
-                {isAnalyzing && (
+                {/* Loading state — only on first analysis */}
+                {isAnalyzing && !analysis && (
                   <div className="flex items-center justify-center py-8">
                     <div className="text-center">
                       <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
@@ -161,7 +164,7 @@ export function JobAssistant({
                 )}
 
                 {/* Suggestions list */}
-                {analysis && !isAnalyzing && (
+                {analysis && (
                   <SuggestionList
                     suggestions={analysis.suggestions}
                     onSuggestionClick={handleSuggestionClick}

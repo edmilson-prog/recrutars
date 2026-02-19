@@ -15,7 +15,7 @@ interface JobFormBasicInfoProps {
   formData: {
     title: string;
     area: string;
-    type: 'remote' | 'hybrid' | 'onsite';
+    type: '' | 'remote' | 'hybrid' | 'onsite';
     location: string;
     level: string;
     positionsCount: string;
@@ -58,7 +58,7 @@ export function JobFormBasicInfo({ formData, onUpdate }: JobFormBasicInfoProps) 
           </div>
           <div className="space-y-2">
             <Label>Modalidade *</Label>
-            <Select value={formData.type} onValueChange={(v: 'remote' | 'hybrid' | 'onsite') => onUpdate({ type: v })}>
+            <Select value={formData.type || undefined} onValueChange={(v: 'remote' | 'hybrid' | 'onsite') => onUpdate({ type: v })}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>

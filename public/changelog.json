@@ -1,12 +1,39 @@
 {
   "versions": [
     {
+      "version": "1.24.0",
+      "codename": "Prism",
+      "type": "minor",
+      "releaseDate": "2026-02-19",
+      "description": "OpenRouter como terceiro provedor LLM (multi-provider: Anthropic, OpenAI, Meta, Google via API unificada). Correcao critica no Assistente de Redacao: metricas agora permanecem visiveis em tempo real durante a digitacao (stale-while-revalidate). Beneficios customizados passam a ser contabilizados na analise. Score inicial corrigido para 0 pontos em formularios vazios.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "OpenRouter como terceiro provedor LLM no painel admin de Integracoes",
+            "Suporte a modelos multi-provider (Anthropic, OpenAI, Meta, Google) via OpenRouter",
+            "Teste de conexao e listagem de modelos para OpenRouter (Edge Functions v2)",
+            "Painel de consumo expandido para 3 provedores com cores distintas"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Assistente de Redacao: score e sugestoes desapareciam a cada tecla digitada (flickering) — agora usam padrao stale-while-revalidate",
+            "Assistente de Redacao: beneficios customizados (campo 'outros') nao eram contabilizados na analise",
+            "Assistente de Redacao: formulario vazio comecava com 5 pontos indevidos (default 'remote' no tipo de modalidade)"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.23.0",
       "codename": "Beacon",
       "type": "minor",
       "releaseDate": "2026-02-19",
       "description": "Painel admin de gestao do Assistente IA: toggles para habilitar/desabilitar por tipo de usuario (candidatos e empresas), dashboard com KPIs, grafico de conversas, distribuicao por tipo de usuario, perguntas mais frequentes, escalacoes recentes e feed de atividade. Edge Function chatbot-ai atualizada com verificacao dos flags por userContext.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

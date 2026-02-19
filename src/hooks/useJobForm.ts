@@ -22,7 +22,7 @@ export const INITIAL_FORM_STATE = {
   title: '',
   description: '',
   location: '',
-  type: 'remote' as 'remote' | 'hybrid' | 'onsite',
+  type: '' as '' | 'remote' | 'hybrid' | 'onsite',
   level: '',
   area: '',
   salaryMin: '',
@@ -98,10 +98,14 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     setIsDirty(true);
   }, []);
 
-  // Job analyzer
+  // Job analyzer — include custom benefits (otherBenefits) in analysis
   const jobFormData = useMemo(() => {
-    return createJobFormData(formData, selectedBenefits, skills);
-  }, [formData, selectedBenefits, skills]);
+    const allBenefits = [
+      ...selectedBenefits,
+      ...otherBenefits.split('\n').filter(b => b.trim()),
+    ];
+    return createJobFormData(formData, allBenefits, skills);
+  }, [formData, selectedBenefits, otherBenefits, skills]);
 
   const { analysis, isAnalyzing } = useJobAnalyzer(jobFormData, {
     enabled: true,
@@ -242,7 +246,7 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       title: formData.title,
       description: formData.description,
       location: formData.location,
-      type: formData.type,
+      type: (formData.type || 'remote') as Job['type'],
       level: formData.level,
       area: formData.area,
       salary: formData.salaryNegotiable

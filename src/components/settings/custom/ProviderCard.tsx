@@ -120,7 +120,7 @@ export function ProviderCard({
 }: ProviderCardProps) {
   const [paramsOpen, setParamsOpen] = useState(false);
   const isMasked = apiKey.includes('••••');
-  const accentColor = provider === 'anthropic' ? 'text-primary' : 'text-blue-500';
+  const accentColor = provider === 'anthropic' ? 'text-primary' : provider === 'openrouter' ? 'text-orange-500' : 'text-blue-500';
 
   return (
     <Card className={cn('relative transition-opacity', !isAgentActive && 'opacity-50')}>
@@ -231,7 +231,7 @@ export function ProviderCard({
                   max={tempRange.max}
                   step={tempRange.step}
                   onValueChange={([val]) => onTemperatureChange(val)}
-                  className={cn('flex-1', provider === 'anthropic' ? '[&_[role=slider]]:bg-primary' : '[&_[role=slider]]:bg-blue-500')}
+                  className={cn('flex-1', provider === 'anthropic' ? '[&_[role=slider]]:bg-primary' : provider === 'openrouter' ? '[&_[role=slider]]:bg-orange-500' : '[&_[role=slider]]:bg-blue-500')}
                 />
                 <div className="w-14 text-center py-1 px-2 bg-muted rounded-md font-mono text-xs">
                   {temperature.toFixed(1)}

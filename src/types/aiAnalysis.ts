@@ -72,7 +72,7 @@ export interface ClaudeApiError {
 
 // --- Agent Settings ---
 
-export type LLMProvider = 'anthropic' | 'openai';
+export type LLMProvider = 'anthropic' | 'openai' | 'openrouter';
 
 export interface AIAgentSettings {
   agentEnabled: boolean;
@@ -103,6 +103,7 @@ export interface LLMProvidersState {
   defaultProvider: LLMProvider;
   anthropic: LLMProviderConfig;
   openai: LLMProviderConfig;
+  openrouter: LLMProviderConfig;
 }
 
 export interface ConnectionTestResult {
