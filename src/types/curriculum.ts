@@ -142,6 +142,15 @@ export interface Curriculum {
   skills: SkillWithLevel[];
   courses: Course[];
 
+  // Documentos (null = coluna limpa no DB, undefined = não atualizar)
+  resumePdfUrl?: string | null;
+  resumePdfName?: string | null;
+  resumePdfSize?: number | null;
+  resumePdfUploadedAt?: string | null;
+  presentationVideoUrl?: string | null;
+  presentationVideoType?: 'upload' | 'external' | null;
+  presentationVideoName?: string | null;
+
   // Metadados
   createdAt: string;
   updatedAt: string;

@@ -1,12 +1,34 @@
 {
   "versions": [
     {
+      "version": "1.22.0",
+      "codename": "Dossier",
+      "type": "minor",
+      "releaseDate": "2026-02-19",
+      "description": "Aba Documentos adicionada ao perfil profissional do candidato. Upload de curriculo em PDF com drag-and-drop, card com metadados e visualizacao. Video de apresentacao por upload ou link externo (YouTube/Vimeo com thumbnail automatico). Migration DB + bucket Supabase Storage.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Aba Documentos no perfil profissional do candidato",
+            "Upload de curriculo em PDF com drag-and-drop e progresso visual",
+            "Card de curriculo salvo com nome, tamanho, data de envio e botoes Visualizar/Remover",
+            "Video de apresentacao: toggle entre upload de arquivo e link externo",
+            "Preview automatico de thumbnail para videos do YouTube",
+            "Bucket Supabase Storage candidate-documents com policies RLS por candidato",
+            "7 novos campos na tabela curriculums (resume_pdf_*, presentation_video_*)"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.21.0",
       "codename": "Verify",
       "type": "minor",
       "releaseDate": "2026-02-19",
       "description": "Fluxo completo de confirmacao de email implementado. Nova pagina /auth/confirm processa token do link de verificacao, confirma a sessao via Supabase verifyOtp e redireciona para o dashboard correto. Templates de email corrigidos com variaveis reais do GoTrue.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
