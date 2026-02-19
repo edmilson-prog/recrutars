@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 
 export const COMMON_BENEFITS = [
   'Vale Refeição',
+  'Vale Alimentação',
   'Plano de Saúde',
   'Vale Transporte',
   'Home Office',
