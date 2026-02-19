@@ -5,6 +5,15 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.24.1] - 2026-02-19 "Prism"
+
+### Fixed
+- **Análise IA do teste comportamental aparece sem precisar de F5** — `useAIAnalysis` agora faz polling automático a cada 3s (via `refetchInterval`) enquanto a análise não está disponível; para automaticamente quando chega
+- **Indicador de "Gerando análise inteligente..." exibido corretamente** — Ao ser redirecionado após concluir o teste, o spinner é mostrado enquanto a geração ocorre em background (via `location.state.analysisGenerating`)
+
+### Removed
+- **Botão "Regenerar" removido da Análise Técnica IA** — Props `showRegenerate` e `gaugeProResult` eliminadas do `TechnicalAnalysisCard`; lógica de regeneração removida
+
 ## [1.18.0] - 2026-02-18 "Refine"
 
 ### Added
