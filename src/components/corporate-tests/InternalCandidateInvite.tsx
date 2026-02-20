@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Send, Loader2 } from 'lucide-react';
 import { useCompanyCandidates, useSendTestInvitations } from '@/hooks/useCompanyTestsQuery';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 interface InternalCandidateInviteProps {
   testId: string;
@@ -39,6 +40,28 @@ export function InternalCandidateInvite({ testId, testName }: InternalCandidateI
     if (selected.size === 0 || !candidates) return;
 
     const selectedCandidates = candidates.filter(c => selected.has(c.id));
+
+    // PRD-081: Create team_members for each selected candidate (invite_base)
+    if (currentCompany?.id) {
+      for (const c of selectedCandidates) {
+        // Check if team_member already exists
+        const { data: existing } = await supabase
+          .from('team_members')
+          .select('id')
+          .eq('company_id', currentCompany.id)
+          .eq('email', c.email)
+          .maybeSingle();
+
+        if (!existing) {
+          await supabase.from('team_members').insert({
+            company_id: currentCompany.id,
+            name: c.name,
+            email: c.email,
+            gauge_status: 'invited',
+          });
+        }
+      }
+    }
 
     await sendInvitations.mutateAsync({
       testId,

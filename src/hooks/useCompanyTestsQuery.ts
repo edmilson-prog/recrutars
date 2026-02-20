@@ -15,6 +15,11 @@ import type {
 } from '@/types/companyTest';
 import { useToast } from '@/hooks/use-toast';
 
+interface DepartmentOption {
+  id: string;
+  name: string;
+}
+
 // ============================================================
 // Query Keys
 // ============================================================
@@ -136,6 +141,31 @@ export function useTestBySlug(slug: string | undefined) {
       return service.getTestBySlug(slug!);
     },
     enabled: !!slug,
+  });
+}
+
+/**
+ * PRD-081: Fetch departments for a test by slug
+ * Resolves slug → test → company_id → departments
+ */
+export function useDepartmentsByTestSlug(slug: string | undefined) {
+  const { data: test } = useTestBySlug(slug);
+  const companyId = test?.companyId ?? (test as Record<string, unknown>)?.company_id as string | undefined;
+
+  return useQuery<DepartmentOption[]>({
+    queryKey: [...companyTestKeys.all, 'departments', companyId ?? ''],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('id, name')
+        .eq('company_id', companyId!)
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      return (data || []) as DepartmentOption[];
+    },
+    enabled: !!companyId,
   });
 }
 
