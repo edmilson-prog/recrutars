@@ -5,21 +5,30 @@
       "codename": "Oracle",
       "type": "patch",
       "releaseDate": "2026-02-20",
-      "description": "Correcao do botao 'Enviar Mensagem' no detalhe do candidato: agora abre automaticamente a conversa na pagina de mensagens. Corrigido erro Radix Select no filtro de vagas para conversas sem vaga vinculada.",
+      "description": "Correcoes e melhorias pos-PRD-082: auto-selecao de conversa ao enviar mensagem, cards de analise IA com regenerate/collapsible/scrollbar, fixes criticos no detalhe do candidato admin (Gauge-Pro, hooks crash, 405 IA), moderacao admin e correcao de visibilidade de vagas.",
       "isCurrent": true,
       "changes": [
         {
           "type": "added",
           "items": [
             "Auto-selecao de conversa ao navegar para Mensagens via ?candidato= ou ?to= (perfil do candidato, candidaturas, candidatos salvos)",
-            "Hook useCreateConversation para criar ou encontrar conversa existente (idempotente)"
+            "Hook useCreateConversation para criar ou encontrar conversa existente (idempotente)",
+            "Botao 'Regerar' no topo dos cards de analise IA com nome do provedor nos metadados e collapsible unificado em ambos os cards",
+            "Scrollbar nos cards de analise IA para melhor legibilidade em conteudos extensos",
+            "Controles de moderacao no detalhe da empresa admin com acoes de ativar/desativar"
           ]
         },
         {
           "type": "fixed",
           "items": [
             "Botao 'Enviar Mensagem' no detalhe do candidato agora abre a conversa corretamente na pagina de mensagens",
-            "Erro Radix Select 'value must not be empty string' no filtro de vagas quando conversa nao tem vaga vinculada"
+            "Erro Radix Select 'value must not be empty string' no filtro de vagas quando conversa nao tem vaga vinculada",
+            "Aba Teste no detalhe do candidato (admin) agora exibe resultado Gauge-Pro em vez de DISC legado",
+            "Crash 'Rendered more hooks' ao abrir detalhe do candidato admin (useMemo apos early return)",
+            "Erro 405 na analise IA causado por fire-and-forget com API key vazia (fallback DEFAULT_SETTINGS)",
+            "Cards de analise IA agora permitem geracao on-demand com botao 'Gerar Analise' e retry em caso de erro",
+            "Bug de visibilidade de vagas corrigido e moderacao admin conectada ao Supabase",
+            "KPIs hardcoded no dashboard admin substituidos por dados reais"
           ]
         }
       ]
@@ -59,18 +68,13 @@
             "Tipos TS de tickets alinhados com DB (status, priority, sender_type, is_internal_note)",
             "Service layer de tickets estendida com 12 novos metodos admin",
             "TicketThread e TicketCard atualizados para novos status (in_progress, waiting_user, closed)",
-            "LLM API service refatorado para suporte multi-provider unificado (Anthropic, OpenAI, OpenRouter)",
-            "Cards de analise IA com botao 'Regerar' no topo, nome do provedor nos metadados e collapsible unificado em ambos os cards"
+            "LLM API service refatorado para suporte multi-provider unificado (Anthropic, OpenAI, OpenRouter)"
           ]
         },
         {
           "type": "fixed",
           "items": [
-            "API key dinamica agora e passada diretamente ao provedor LLM (nao depende mais de Vite proxy)",
-            "Aba Teste no detalhe do candidato (admin) agora exibe resultado Gauge-Pro em vez de DISC legado",
-            "Crash 'Rendered more hooks' ao abrir detalhe do candidato (useMemo apos early return)",
-            "Erro 405 na analise IA causado por fire-and-forget com API key vazia (fallback DEFAULT_SETTINGS)",
-            "Cards de analise IA agora permitem geracao on-demand com botao 'Gerar Analise' e retry em caso de erro"
+            "API key dinamica agora e passada diretamente ao provedor LLM (nao depende mais de Vite proxy)"
           ]
         }
       ]
@@ -121,6 +125,23 @@
       ]
     },
     {
+      "version": "1.24.1",
+      "codename": "Prism",
+      "type": "patch",
+      "releaseDate": "2026-02-19",
+      "description": "Botao de regenerar analise IA removido e analise agora exibida automaticamente sem necessidade de F5.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Removido botao de regenerar analise IA que causava confusao — analise agora e exibida automaticamente apos geracao",
+            "Analise IA aparece sem necessidade de recarregar a pagina (F5)"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.24.0",
       "codename": "Prism",
       "type": "minor",
@@ -165,7 +186,8 @@
             "Grafico donut com distribuicao de conversas por tipo de usuario",
             "Lista das 10 perguntas mais frequentes com categoria badge",
             "Tabela de escalacoes recentes com status Aberto/Resolvido",
-            "Feed de atividade recente com badge de origem (IA / Base Local / Escalacao)"
+            "Feed de atividade recente com badge de origem (IA / Base Local / Escalacao)",
+            "Vale Alimentacao adicionado a lista de beneficios comuns na criacao de vagas"
           ]
         },
         {
@@ -306,6 +328,12 @@
             "Settings loader com dual-read: busca configs em Provedores LLM com fallback para localizacao antiga",
             "Chaves API de LLM (Anthropic e OpenAI) mascaradas via SENSITIVE_KEYS no servico de configuracoes"
           ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Botao 'Entrar com link magico' desabilitado na tela de login (feature temporariamente removida)"
+          ]
         }
       ]
     },
@@ -386,6 +414,23 @@
           "items": [
             "Nova pagina /aceitar-convite para membros convidados definirem sua senha ao aceitar o convite",
             "Fluxo completo de aceitacao: validacao do token, formulario de senha e redirecionamento automatico para o painel da empresa"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.16.1",
+      "codename": "Verify",
+      "type": "patch",
+      "releaseDate": "2026-02-17",
+      "description": "Deteccao de cadastro duplicado por CNPJ e melhoria na UX do cooldown entre consultas.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Deteccao de signup repetido: CNPJ ja cadastrado agora exibe mensagem orientativa em vez de erro generico",
+            "UX do cooldown de consulta CNPJ melhorada com contador visual e feedback mais claro"
           ]
         }
       ]
