@@ -4,7 +4,7 @@
       "version": "1.26.0",
       "codename": "Oracle",
       "type": "minor",
-      "releaseDate": "2026-02-19",
+      "releaseDate": "2026-02-20",
       "prd": "PRD-082",
       "description": "Central de Helpdesk admin inteligente com listagem de tickets, semaforo SLA, detalhe com thread de mensagens e notas internas, painel de contexto do solicitante, auditoria e CSAT in-app. Fases 1+2 do PRD-082.",
       "isCurrent": true,
@@ -22,7 +22,9 @@
             "CSAT in-app: modal na proxima visita do usuario apos ticket resolvido (1-5 estrelas + comentario)",
             "Tabelas ticket_csat e ticket_audit_log com RLS admin-only",
             "Funcao calculate_sla_deadline e triggers para auto-calculo de SLA e deteccao de requester_type",
-            "Busca full-text (portugues) no assunto dos tickets"
+            "Busca full-text (portugues) no assunto dos tickets",
+            "Prompts de analise comportamental configuraveis pelo admin (system, pratico, tecnico) com fallback para defaults",
+            "Playground LLM em Configuracoes > IA para testar conexao com provedor e validar prompts com dados de candidato ficticio"
           ]
         },
         {
@@ -31,7 +33,14 @@
             "Nav admin: Central de Ajuda substituida por Helpdesk com icone Headset",
             "Tipos TS de tickets alinhados com DB (status, priority, sender_type, is_internal_note)",
             "Service layer de tickets estendida com 12 novos metodos admin",
-            "TicketThread e TicketCard atualizados para novos status (in_progress, waiting_user, closed)"
+            "TicketThread e TicketCard atualizados para novos status (in_progress, waiting_user, closed)",
+            "LLM API service refatorado para suporte multi-provider unificado (Anthropic, OpenAI, OpenRouter)"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "API key dinamica agora e passada diretamente ao provedor LLM (nao depende mais de Vite proxy)"
           ]
         }
       ]
