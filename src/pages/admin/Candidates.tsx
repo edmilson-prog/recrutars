@@ -315,7 +315,7 @@ export default function AdminCandidates() {
   // Data
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [actions, setActions] = useState<CandidateAdminAction[]>(initialCandidateAdminActions);
-  const { data: applicationsResult } = useApplications();
+  const { data: applicationsResult } = useApplications(undefined, { page: 1, pageSize: 1000 });
   const applications = applicationsResult?.data ?? [];
 
   // Sync service data to local state

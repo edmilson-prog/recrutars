@@ -63,7 +63,7 @@ export function useCandidateRecommendations(
   const jobs = jobsResult?.data ?? [];
   const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
   const candidates = candidatesResult?.data ?? [];
-  const { data: applicationsResult } = useApplications();
+  const { data: applicationsResult } = useApplications(undefined, { page: 1, pageSize: 1000 });
   const applications = applicationsResult?.data ?? [];
 
   // Estado local

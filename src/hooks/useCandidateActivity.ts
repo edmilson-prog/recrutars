@@ -33,7 +33,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export function useCandidateActivity(candidateId: string, pageSize = 5) {
   const [visibleCount, setVisibleCount] = useState(pageSize);
-  const { data: applicationsResult } = useApplications();
+  const { data: applicationsResult } = useApplications(undefined, { page: 1, pageSize: 1000 });
   const allApplications = applicationsResult?.data ?? [];
 
   const allActivities = useMemo(() => {

@@ -189,7 +189,7 @@ export default function CandidateProfile() {
   const allJobs = jobsResult?.data ?? [];
   const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
   const allCandidates = candidatesResult?.data ?? [];
-  const { data: applicationsResult } = useApplications();
+  const { data: applicationsResult } = useApplications(undefined, { page: 1, pageSize: 1000 });
   const allApplications = applicationsResult?.data ?? [];
 
   const candidate = allCandidates.find((c) => c.id === id);

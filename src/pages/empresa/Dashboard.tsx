@@ -42,7 +42,10 @@ export default function CompanyDashboard() {
 
   // Fetch data from service layer
   const { data: companyJobs = [], isLoading: isLoadingJobs } = useJobsByCompany(companyId);
-  const { data: applicationsResult, isLoading: isLoadingApps } = useApplicationsQuery({ companyId });
+  const { data: applicationsResult, isLoading: isLoadingApps } = useApplicationsQuery(
+    { companyId },
+    { page: 1, pageSize: 1000 }
+  );
   const { data: companyInterviews = [], isLoading: isLoadingInterviews } = useInterviewsByCompany(companyId);
   const { data: unreadCount = 0 } = useUnreadCount(currentCompany?.userId ?? '', 'company');
   const { data: companyTests = [] } = useBehavioralTests({ companyId });

@@ -40,7 +40,7 @@ export default function AdminDashboard() {
   const { data: jobsResult } = useJobs();
   const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
   const { data: companiesResult } = useCompanies();
-  const { data: applicationsResult } = useApplications();
+  const { data: applicationsResult } = useApplications(undefined, { page: 1, pageSize: 1000 });
   const { data: testsResult } = useBehavioralTests();
 
   const jobs = jobsResult?.data ?? [];
