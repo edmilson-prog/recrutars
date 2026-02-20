@@ -41,6 +41,9 @@ import { useCandidate } from '@/hooks/useCandidatesQuery';
 import { useApplicationsByCandidate } from '@/hooks/useApplicationsQuery';
 import { useProfile } from '@/hooks/useCurriculumsQuery';
 import { useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
+import { GaugeProRadarChart } from '@/components/corporate-tests/GaugeProRadarChart';
+import { DimensionBarsGaugePro } from '@/components/corporate-tests/DimensionBarsGaugePro';
+import { DIMENSION_NAMES } from '@/types/gaugePro';
 import { formatRelativeDate, formatDateBR, formatBRL } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -114,12 +117,6 @@ const APP_STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: strin
   talent_pool: { label: 'Banco de Talentos', color: 'bg-primary/10 text-primary', icon: Star },
 };
 
-const DISC_BARS = [
-  { key: 'dominance' as const, label: 'Dominancia', color: 'bg-red-500' },
-  { key: 'influence' as const, label: 'Influencia', color: 'bg-yellow-500' },
-  { key: 'steadiness' as const, label: 'Estabilidade', color: 'bg-green-500' },
-  { key: 'compliance' as const, label: 'Conformidade', color: 'bg-blue-500' },
-];
 
 const SKILL_LEVEL_COLORS: Record<string, string> = {
   basic: 'bg-gray-200 dark:bg-gray-700',
@@ -362,9 +359,6 @@ export default function AdminCandidateDetail() {
     (a, b) => new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime(),
   );
 
-  // Test result from candidate (for DISC bars)
-  const testResult = mergedCandidate.testResult?.result;
-
   // Location display
   const locationDisplay = mergedCandidate.city && mergedCandidate.state
     ? `${mergedCandidate.city}/${mergedCandidate.state}`
@@ -528,7 +522,7 @@ export default function AdminCandidateDetail() {
                 <KPICard
                   icon={Brain}
                   label="Teste"
-                  value={mergedCandidate.hasTest ? 'Sim' : 'Nao'}
+                  value={gaugeProResult ? 'Sim' : 'Nao'}
                   iconColor="text-purple-500"
                   bgColor="bg-purple-500/10"
                 />
@@ -724,7 +718,7 @@ export default function AdminCandidateDetail() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              {mergedCandidate.hasTest && testResult ? (
+              {gaugeProResult ? (
                 <>
                   {/* Result header */}
                   <div className="bg-card rounded-xl p-6 shadow-soft space-y-6">
@@ -733,49 +727,72 @@ export default function AdminCandidateDetail() {
                         <h3 className="text-lg font-semibold text-foreground">Resultado Comportamental</h3>
                         <Badge variant="secondary" className="mt-2 bg-primary/10 text-primary">
                           <Brain className="w-3 h-3 mr-1" />
-                          {testResult.profile}
+                          {gaugeProResult.archetype.name}
                         </Badge>
                       </div>
-                      {mergedCandidate.testResult?.completedAt && (
-                        <p className="text-sm text-muted-foreground">
-                          Concluido em {formatDateBR(mergedCandidate.testResult.completedAt)}
-                        </p>
-                      )}
+                      <p className="text-sm text-muted-foreground">
+                        Concluido em {formatDateBR(gaugeProResult.generatedAt)}
+                      </p>
                     </div>
 
-                    {/* DISC Bars */}
-                    <div className="space-y-4">
-                      {DISC_BARS.map((bar) => {
-                        const value = testResult[bar.key] ?? 0;
-                        return (
-                          <div key={bar.key} className="space-y-1">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-foreground font-medium">{bar.label}</span>
-                              <span className="text-muted-foreground">{value}%</span>
-                            </div>
-                            <div className="h-3 bg-muted rounded-full overflow-hidden">
-                              <div
-                                className={cn('h-full rounded-full transition-all duration-500', bar.color)}
-                                style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
+                    {/* Radar Chart + Dimension Bars */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="flex items-center justify-center">
+                        <GaugeProRadarChart
+                          scores={gaugeProResult.finalScores}
+                          candidateName={mergedCandidate.name}
+                          size="md"
+                        />
+                      </div>
+                      <div className="flex flex-col justify-center">
+                        <DimensionBarsGaugePro scores={gaugeProResult.finalScores} />
+                      </div>
                     </div>
 
                     <Separator />
 
-                    {/* Strengths & Watch Points */}
+                    {/* Archetype details */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Arquetipo</p>
+                        <p className="text-sm font-semibold">{gaugeProResult.archetype.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{gaugeProResult.archetype.description}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">Dimensao Primaria</p>
+                          <p className="text-sm">{DIMENSION_NAMES[gaugeProResult.primaryDimension]} ({Math.round(gaugeProResult.finalScores[gaugeProResult.primaryDimension])})</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">Dimensao Secundaria</p>
+                          <p className="text-sm">{DIMENSION_NAMES[gaugeProResult.secondaryDimension]} ({Math.round(gaugeProResult.finalScores[gaugeProResult.secondaryDimension])})</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Estilo de Trabalho</p>
+                        <p className="text-sm text-foreground">{gaugeProResult.archetype.workStyle}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Estilo de Comunicacao</p>
+                        <p className="text-sm text-foreground">{gaugeProResult.archetype.communicationStyle}</p>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Strengths & Development Areas */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                           <Star className="w-4 h-4 text-emerald-500" />
                           Pontos Fortes
                         </h4>
-                        {testResult.strengths && testResult.strengths.length > 0 ? (
+                        {gaugeProResult.strengths.length > 0 ? (
                           <ul className="space-y-2">
-                            {testResult.strengths.map((strength, idx) => (
+                            {gaugeProResult.strengths.map((strength, idx) => (
                               <li key={idx} className="text-sm text-foreground flex items-start gap-2">
                                 <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                                 {strength}
@@ -789,22 +806,42 @@ export default function AdminCandidateDetail() {
                       <div>
                         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                           <AlertTriangle className="w-4 h-4 text-amber-500" />
-                          Pontos de Atencao
+                          Areas de Desenvolvimento
                         </h4>
-                        {testResult.watchPoints && testResult.watchPoints.length > 0 ? (
+                        {gaugeProResult.developmentAreas.length > 0 ? (
                           <ul className="space-y-2">
-                            {testResult.watchPoints.map((point, idx) => (
+                            {gaugeProResult.developmentAreas.map((area, idx) => (
                               <li key={idx} className="text-sm text-foreground flex items-start gap-2">
                                 <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                                {point}
+                                {area}
                               </li>
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-sm text-muted-foreground italic">Nenhum ponto de atencao registrado.</p>
+                          <p className="text-sm text-muted-foreground italic">Nenhuma area registrada.</p>
                         )}
                       </div>
                     </div>
+
+                    {/* Career Recommendations */}
+                    {gaugeProResult.careerRecommendations.length > 0 && (
+                      <>
+                        <Separator />
+                        <div>
+                          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+                            <Briefcase className="w-4 h-4 text-primary" />
+                            Funcoes Recomendadas
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            {gaugeProResult.careerRecommendations.map((rec, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {rec}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* AI Technical Analysis */}
