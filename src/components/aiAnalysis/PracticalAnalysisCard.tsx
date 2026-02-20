@@ -1,13 +1,21 @@
-import { Sparkles, Bot } from 'lucide-react';
+import { useState } from 'react';
+import { Sparkles, Bot, ChevronDown, ChevronUp, Clock, Cpu, Hash } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAIAnalysis } from '@/hooks/useAIAnalysis';
 import { AnalysisLoadingState } from './AnalysisLoadingState';
 import { AnalysisErrorState } from './AnalysisErrorState';
 import { renderAnalysisContent } from '@/lib/renderAnalysisContent';
 import type { GaugeProResult } from '@/types/gaugePro';
+
+function getProviderLabel(modelUsed: string): string {
+  if (modelUsed.startsWith('claude-')) return 'Anthropic';
+  if (modelUsed.startsWith('gpt-') || modelUsed.startsWith('o1') || modelUsed.startsWith('o3')) return 'OpenAI';
+  return 'OpenRouter';
+}
 
 interface PracticalAnalysisCardProps {
   candidateId: string;
@@ -22,7 +30,8 @@ export function PracticalAnalysisCard({
   jobTitle,
   gaugeProResult,
 }: PracticalAnalysisCardProps) {
-  const { practicalAnalysis, isGenerating, error, canGenerate, generateAnalyses } =
+  const [metadataOpen, setMetadataOpen] = useState(false);
+  const { practicalAnalysis, isGenerating, isRegenerating, error, canGenerate, generateAnalyses, regenerateAnalysis } =
     useAIAnalysis({
       candidateId,
       candidateName,
@@ -47,10 +56,24 @@ export function PracticalAnalysisCard({
               <Sparkles className="w-5 h-5 text-primary" />
               Análise Inteligente
             </CardTitle>
-            <Badge variant="outline" className="gap-1 text-xs font-normal">
-              <Bot className="w-3 h-3" />
-              Gerado por IA
-            </Badge>
+            <div className="flex items-center gap-2">
+              {canGenerate && gaugeProResult && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-xs h-6"
+                  onClick={() => regenerateAnalysis('practical', gaugeProResult)}
+                  disabled={isRegenerating}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {isRegenerating ? 'Regerando...' : 'Regerar'}
+                </Button>
+              )}
+              <Badge variant="outline" className="gap-1 text-xs font-normal">
+                <Bot className="w-3 h-3" />
+                Gerado por IA
+              </Badge>
+            </div>
           </div>
         </CardHeader>
         <Separator />
@@ -59,11 +82,43 @@ export function PracticalAnalysisCard({
             {renderAnalysisContent(practicalAnalysis.content)}
           </div>
           <Separator className="my-3" />
-          <p className="text-[11px] text-muted-foreground/50">
-            Modelo: {practicalAnalysis.modelUsed} | Gerado em{' '}
-            {new Date(practicalAnalysis.createdAt).toLocaleDateString('pt-BR')}{' '}
-            {new Date(practicalAnalysis.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-          </p>
+
+          <Collapsible open={metadataOpen} onOpenChange={setMetadataOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-1 h-6 text-[11px] text-muted-foreground/50 px-1">
+                {metadataOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                Metadados da geração
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground/50">
+                <span className="flex items-center gap-1">
+                  <Cpu className="w-3 h-3" />
+                  {getProviderLabel(practicalAnalysis.modelUsed)} / {practicalAnalysis.modelUsed}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Hash className="w-3 h-3" />
+                  {practicalAnalysis.tokensInput + practicalAnalysis.tokensOutput} tokens
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {(practicalAnalysis.generationTimeMs / 1000).toFixed(1)}s
+                </span>
+                <span>
+                  Gerado em{' '}
+                  {new Date(practicalAnalysis.createdAt).toLocaleDateString('pt-BR')}{' '}
+                  {new Date(practicalAnalysis.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+                {practicalAnalysis.regeneratedAt && (
+                  <span>
+                    Regenerado em{' '}
+                    {new Date(practicalAnalysis.regeneratedAt).toLocaleDateString('pt-BR')}{' '}
+                    {new Date(practicalAnalysis.regeneratedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
       </Card>
     );

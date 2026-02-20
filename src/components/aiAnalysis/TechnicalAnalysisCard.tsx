@@ -11,6 +11,12 @@ import { AnalysisErrorState } from './AnalysisErrorState';
 import { renderAnalysisContent } from '@/lib/renderAnalysisContent';
 import type { GaugeProResult } from '@/types/gaugePro';
 
+function getProviderLabel(modelUsed: string): string {
+  if (modelUsed.startsWith('claude-')) return 'Anthropic';
+  if (modelUsed.startsWith('gpt-') || modelUsed.startsWith('o1') || modelUsed.startsWith('o3')) return 'OpenAI';
+  return 'OpenRouter';
+}
+
 interface TechnicalAnalysisCardProps {
   candidateId: string;
   candidateName?: string;
@@ -23,7 +29,7 @@ export function TechnicalAnalysisCard({
   gaugeProResult,
 }: TechnicalAnalysisCardProps) {
   const [metadataOpen, setMetadataOpen] = useState(false);
-  const { technicalAnalysis, isGenerating, error, canGenerate, generateAnalyses } =
+  const { technicalAnalysis, isGenerating, isRegenerating, error, canGenerate, generateAnalyses, regenerateAnalysis } =
     useAIAnalysis({
       candidateId,
       candidateName,
@@ -47,10 +53,24 @@ export function TechnicalAnalysisCard({
               <Sparkles className="w-5 h-5 text-primary" />
               Análise Técnica IA
             </CardTitle>
-            <Badge variant="outline" className="gap-1 text-xs font-normal">
-              <Bot className="w-3 h-3" />
-              Gerado por IA
-            </Badge>
+            <div className="flex items-center gap-2">
+              {canGenerate && gaugeProResult && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-xs h-6"
+                  onClick={() => regenerateAnalysis('technical', gaugeProResult)}
+                  disabled={isRegenerating}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {isRegenerating ? 'Regerando...' : 'Regerar'}
+                </Button>
+              )}
+              <Badge variant="outline" className="gap-1 text-xs font-normal">
+                <Bot className="w-3 h-3" />
+                Gerado por IA
+              </Badge>
+            </div>
           </div>
         </CardHeader>
         <Separator />
@@ -72,7 +92,7 @@ export function TechnicalAnalysisCard({
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground/50">
                 <span className="flex items-center gap-1">
                   <Cpu className="w-3 h-3" />
-                  {technicalAnalysis.modelUsed}
+                  {getProviderLabel(technicalAnalysis.modelUsed)} / {technicalAnalysis.modelUsed}
                 </span>
                 <span className="flex items-center gap-1">
                   <Hash className="w-3 h-3" />
