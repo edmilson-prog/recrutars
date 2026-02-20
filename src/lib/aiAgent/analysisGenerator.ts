@@ -10,9 +10,9 @@ import type {
   AnalysisType,
 } from '@/types/aiAnalysis';
 import type { GaugeProResult } from '@/types/gaugePro';
-import { callClaudeApi } from './claudeApiService';
+import { callLLMApi } from './llmApiService';
 import {
-  SYSTEM_PROMPT,
+  DEFAULT_SYSTEM_PROMPT,
   buildPracticalPrompt,
   buildTechnicalPrompt,
 } from './prompts';
@@ -31,21 +31,24 @@ export async function generateSingleAnalysis(
   const startTime = performance.now();
   const id = createAnalysisId(type);
 
+  const systemPrompt = settings.systemPrompt || DEFAULT_SYSTEM_PROMPT;
+
   const userMessage =
     type === 'practical'
-      ? buildPracticalPrompt(result, candidateName, jobTitle)
-      : buildTechnicalPrompt(result, candidateName);
+      ? buildPracticalPrompt(result, candidateName, jobTitle, settings.practicalPromptTemplate)
+      : buildTechnicalPrompt(result, candidateName, settings.technicalPromptTemplate);
 
   try {
-    const response = await callClaudeApi(
+    const response = await callLLMApi(
       {
         model: settings.model,
         max_tokens: settings.maxTokens,
         temperature: settings.temperature,
-        system: SYSTEM_PROMPT,
+        system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       },
       settings.apiKey,
+      settings.provider,
     );
 
     const content =

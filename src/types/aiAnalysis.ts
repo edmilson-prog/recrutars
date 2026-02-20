@@ -85,6 +85,10 @@ export interface AIAgentSettings {
   maxTokens: number;
   /** @deprecated Use `model` instead */
   claudeModel: string;
+  // Custom prompts (optional — fallback to hardcoded defaults)
+  systemPrompt?: string;
+  practicalPromptTemplate?: string;
+  technicalPromptTemplate?: string;
 }
 
 // --- LLM Provider Config (PRD-080) ---

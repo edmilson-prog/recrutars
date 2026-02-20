@@ -78,6 +78,9 @@ export async function loadAgentSettingsAsync(): Promise<AIAgentSettings> {
     const aiValues = await service.getSettingsRaw('admin', 'ai');
     const agent = aiValues?.analysisAgent as Record<string, unknown> | undefined;
 
+    // Read custom prompts (ai.prompts)
+    const promptSettings = aiValues?.prompts as Record<string, unknown> | undefined;
+
     if (llm && (llm.anthropicApiKey || llm.openaiApiKey || llm.openrouterApiKey)) {
       const provider = (llm.defaultProvider as LLMProvider) || 'anthropic';
       const prefix = provider === 'openai' ? 'openai' : provider === 'openrouter' ? 'openrouter' : 'anthropic';
@@ -95,6 +98,9 @@ export async function loadAgentSettingsAsync(): Promise<AIAgentSettings> {
           (agent?.technicalAnalysisEnabled as boolean) ?? DEFAULT_SETTINGS.technicalAnalysisEnabled,
         temperature: (llm[`${prefix}Temperature`] as number) ?? DEFAULT_SETTINGS.temperature,
         maxTokens: (llm[`${prefix}MaxTokens`] as number) ?? DEFAULT_SETTINGS.maxTokens,
+        systemPrompt: (promptSettings?.systemPrompt as string) || undefined,
+        practicalPromptTemplate: (promptSettings?.practicalPromptTemplate as string) || undefined,
+        technicalPromptTemplate: (promptSettings?.technicalPromptTemplate as string) || undefined,
       };
     }
 
