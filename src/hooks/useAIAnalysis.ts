@@ -26,6 +26,7 @@ interface UseAIAnalysisReturn {
   isRegenerating: boolean;
   error: string | null;
   agentEnabled: boolean;
+  canGenerate: boolean;
   generateAnalyses: (result: GaugeProResult) => Promise<void>;
   regenerateAnalysis: (type: AnalysisType, result: GaugeProResult) => Promise<void>;
 }
@@ -161,6 +162,7 @@ export function useAIAnalysis({
     isRegenerating,
     error,
     agentEnabled: settings?.agentEnabled ?? false,
+    canGenerate: !!(settings?.agentEnabled && settings?.apiKey),
     generateAnalyses,
     regenerateAnalysis,
   };

@@ -38,6 +38,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { PracticalAnalysisCard } from '@/components/aiAnalysis';
+import { TechnicalAnalysisCard } from '@/components/aiAnalysis/TechnicalAnalysisCard';
 import {
   Dialog,
   DialogContent,
@@ -578,13 +579,18 @@ export default function CandidateProfile() {
               </motion.div>
             )}
 
-            {/* AI Practical Analysis - PRD-051 */}
+            {/* AI Analysis - PRD-051 */}
             {(gaugeProResult || candidate.hasTest) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
+                className="space-y-4"
               >
+                <TechnicalAnalysisCard
+                  candidateId={candidate.id}
+                  candidateName={getCandidateDisplayName(candidate)}
+                />
                 <PracticalAnalysisCard
                   candidateId={candidate.id}
                   candidateName={getCandidateDisplayName(candidate)}

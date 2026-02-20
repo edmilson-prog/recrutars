@@ -18,6 +18,8 @@ import { EmotionalFactorsCard } from './EmotionalFactorsCard';
 import { RiskScoreCard } from './RiskScoreCard';
 import { AIRecommendationsTab } from './AIRecommendationsTab';
 import { TestResponsesTab } from './TestResponsesTab';
+import { TechnicalAnalysisCard } from '@/components/aiAnalysis/TechnicalAnalysisCard';
+import { PracticalAnalysisCard } from '@/components/aiAnalysis/PracticalAnalysisCard';
 import { DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 import type { CompanyTestResult, CompanyTest } from '@/types/companyTest';
 
@@ -135,7 +137,15 @@ export function CandidateResultView({ result, test }: CandidateResultViewProps) 
         </TabsContent>
 
         {/* Tab 3: IA & Recomendações */}
-        <TabsContent value="ia">
+        <TabsContent value="ia" className="space-y-6">
+          <TechnicalAnalysisCard
+            candidateId={result.candidateId}
+            candidateName={result.candidateName}
+          />
+          <PracticalAnalysisCard
+            candidateId={result.candidateId}
+            candidateName={result.candidateName}
+          />
           <AIRecommendationsTab result={result} />
         </TabsContent>
 

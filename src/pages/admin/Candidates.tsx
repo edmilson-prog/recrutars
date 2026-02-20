@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { TechnicalAnalysisCard } from '@/components/aiAnalysis';
+import { PracticalAnalysisCard } from '@/components/aiAnalysis/PracticalAnalysisCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -225,6 +226,9 @@ const initialCandidateAdminActions: CandidateAdminAction[] = [
 ];
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useApplications } from '@/hooks/useApplicationsQuery';
+import { useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
+import { GaugeProRadarChart } from '@/components/corporate-tests/GaugeProRadarChart';
+import { DimensionBarsGaugePro } from '@/components/corporate-tests/DimensionBarsGaugePro';
 import type { Candidate, CandidateStatus, CandidateAdminAction } from '@/types';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -301,6 +305,9 @@ export default function AdminCandidates() {
   const [resetTestDialogOpen, setResetTestDialogOpen] = useState(false);
   const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
+
+  // Gauge-Pro result for selected candidate (side panel)
+  const { data: selectedGaugeResult } = useGaugeProResultByCandidate(selectedCandidate?.id || '');
 
   // Data
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -615,7 +622,7 @@ export default function AdminCandidates() {
                 {candidate.hasTest ? (
                   <Badge variant="default" className="bg-success/10 text-success">
                     <Brain className="h-3 w-3 mr-1" />
-                    Teste: {candidate.testResult?.result?.profile}
+                    Teste realizado
                   </Badge>
                 ) : (
                   <Badge variant="secondary" className="bg-warning/10 text-warning">
@@ -827,125 +834,42 @@ export default function AdminCandidates() {
 
             {/* Tab: Teste */}
             <TabsContent value="test" className="space-y-6 mt-6">
-              {selectedCandidate.hasTest && selectedCandidate.testResult ? (
+              {selectedGaugeResult ? (
                 <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Resultado Comportamental</h3>
-                    <Badge variant="default" className="text-lg">
-                      {selectedCandidate.testResult.result?.profile}
-                    </Badge>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">Resultado Comportamental</h3>
+                    <Badge variant="default">{selectedGaugeResult.archetype.name}</Badge>
                   </div>
 
-                  <div>
-                    <h3 className="font-semibold mb-2">Pontuações</h3>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Dominância</span>
-                          <span className="font-medium">
-                            {selectedCandidate.testResult.result?.dominance}%
-                          </span>
-                        </div>
-                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-red-500"
-                            style={{
-                              width: `${selectedCandidate.testResult.result?.dominance}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
+                  <GaugeProRadarChart
+                    scores={selectedGaugeResult.finalScores}
+                    candidateName={selectedCandidate.name}
+                    size="sm"
+                  />
+                  <DimensionBarsGaugePro scores={selectedGaugeResult.finalScores} compact />
 
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Influência</span>
-                          <span className="font-medium">
-                            {selectedCandidate.testResult.result?.influence}%
-                          </span>
-                        </div>
-                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-yellow-500"
-                            style={{
-                              width: `${selectedCandidate.testResult.result?.influence}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
+                  <p className="text-xs text-muted-foreground">
+                    Completado em {new Date(selectedGaugeResult.generatedAt).toLocaleDateString('pt-BR')}
+                  </p>
 
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Estabilidade</span>
-                          <span className="font-medium">
-                            {selectedCandidate.testResult.result?.steadiness}%
-                          </span>
-                        </div>
-                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-green-500"
-                            style={{
-                              width: `${selectedCandidate.testResult.result?.steadiness}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Conformidade</span>
-                          <span className="font-medium">
-                            {selectedCandidate.testResult.result?.compliance}%
-                          </span>
-                        </div>
-                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-blue-500"
-                            style={{
-                              width: `${selectedCandidate.testResult.result?.compliance}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2">Pontos Fortes</h3>
-                    <ul className="list-disc list-inside space-y-1 text-sm">
-                      {selectedCandidate.testResult.result?.strengths?.map((strength, i) => (
-                        <li key={i}>{strength}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2">Pontos de Atenção</h3>
-                    <ul className="list-disc list-inside space-y-1 text-sm">
-                      {selectedCandidate.testResult.result?.watchPoints?.map((point, i) => (
-                        <li key={i}>{point}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="text-xs text-muted-foreground">
-                    <div>
-                      Realizado em:{' '}
-                      {new Date(selectedCandidate.testResult.completedAt!).toLocaleDateString('pt-BR')}
-                    </div>
-                  </div>
-
-                  {/* AI Technical Analysis - PRD-051 */}
+                  {/* AI Analysis - PRD-051 */}
                   <TechnicalAnalysisCard
                     candidateId={selectedCandidate.id}
                     candidateName={selectedCandidate.name}
+                    gaugeProResult={selectedGaugeResult}
+                  />
+                  <PracticalAnalysisCard
+                    candidateId={selectedCandidate.id}
+                    candidateName={selectedCandidate.name}
+                    gaugeProResult={selectedGaugeResult}
                   />
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="mb-2">Teste comportamental não realizado</p>
+                  <p className="mb-2">Teste comportamental nao realizado</p>
                   <p className="text-sm">
-                    Este candidato ainda não completou o teste comportamental Gauge-Pro.
+                    Este candidato ainda nao completou o teste comportamental Gauge-Pro.
                   </p>
                 </div>
               )}

@@ -9,23 +9,25 @@ import { useAIAnalysis } from '@/hooks/useAIAnalysis';
 import { AnalysisLoadingState } from './AnalysisLoadingState';
 import { AnalysisErrorState } from './AnalysisErrorState';
 import { renderAnalysisContent } from '@/lib/renderAnalysisContent';
+import type { GaugeProResult } from '@/types/gaugePro';
+
 interface TechnicalAnalysisCardProps {
   candidateId: string;
   candidateName?: string;
+  gaugeProResult?: GaugeProResult | null;
 }
 
 export function TechnicalAnalysisCard({
   candidateId,
   candidateName,
+  gaugeProResult,
 }: TechnicalAnalysisCardProps) {
   const [metadataOpen, setMetadataOpen] = useState(false);
-  const { technicalAnalysis, isGenerating, error, agentEnabled } =
+  const { technicalAnalysis, isGenerating, error, canGenerate, generateAnalyses } =
     useAIAnalysis({
       candidateId,
       candidateName,
     });
-
-  if (!agentEnabled) return null;
 
   if (isGenerating) {
     return <AnalysisLoadingState type="technical" />;
@@ -35,72 +37,105 @@ export function TechnicalAnalysisCard({
     return <AnalysisErrorState errorMessage={error} />;
   }
 
-  if (!technicalAnalysis || technicalAnalysis.status === 'error') {
-    if (technicalAnalysis?.errorMessage) {
-      return <AnalysisErrorState errorMessage={technicalAnalysis.errorMessage} />;
+  // Has data — render card
+  if (technicalAnalysis && technicalAnalysis.status !== 'error') {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="w-5 h-5 text-primary" />
+              Análise Técnica IA
+            </CardTitle>
+            <Badge variant="outline" className="gap-1 text-xs font-normal">
+              <Bot className="w-3 h-3" />
+              Gerado por IA
+            </Badge>
+          </div>
+        </CardHeader>
+        <Separator />
+        <CardContent className="pt-4">
+          <div className="prose prose-sm max-w-none">
+            {renderAnalysisContent(technicalAnalysis.content)}
+          </div>
+
+          <Separator className="my-3" />
+
+          <Collapsible open={metadataOpen} onOpenChange={setMetadataOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-1 h-6 text-[11px] text-muted-foreground/50 px-1">
+                {metadataOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                Metadados da geração
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground/50">
+                <span className="flex items-center gap-1">
+                  <Cpu className="w-3 h-3" />
+                  {technicalAnalysis.modelUsed}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Hash className="w-3 h-3" />
+                  {technicalAnalysis.tokensInput + technicalAnalysis.tokensOutput} tokens
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {(technicalAnalysis.generationTimeMs / 1000).toFixed(1)}s
+                </span>
+                <span>
+                  Gerado em{' '}
+                  {new Date(technicalAnalysis.createdAt).toLocaleDateString('pt-BR')}{' '}
+                  {new Date(technicalAnalysis.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+                {technicalAnalysis.regeneratedAt && (
+                  <span>
+                    Regenerado em{' '}
+                    {new Date(technicalAnalysis.regeneratedAt).toLocaleDateString('pt-BR')}{' '}
+                    {new Date(technicalAnalysis.regeneratedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Error record from DB — show retry if admin can generate, hide for viewers
+  if (technicalAnalysis?.status === 'error') {
+    if (canGenerate && gaugeProResult) {
+      return (
+        <AnalysisErrorState
+          errorMessage={technicalAnalysis.errorMessage}
+          onRetry={() => generateAnalyses(gaugeProResult)}
+        />
+      );
     }
     return null;
   }
 
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Sparkles className="w-5 h-5 text-primary" />
-            Análise Técnica IA
-          </CardTitle>
-          <Badge variant="outline" className="gap-1 text-xs font-normal">
-            <Bot className="w-3 h-3" />
-            Gerado por IA
-          </Badge>
-        </div>
-      </CardHeader>
-      <Separator />
-      <CardContent className="pt-4">
-        <div className="prose prose-sm max-w-none">
-          {renderAnalysisContent(technicalAnalysis.content)}
-        </div>
+  // No data — show generate button if possible
+  if (canGenerate && gaugeProResult) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-8 text-center">
+          <Sparkles className="w-8 h-8 text-muted-foreground/50 mb-3" />
+          <p className="text-sm font-medium mb-1">Análise Técnica IA</p>
+          <p className="text-xs text-muted-foreground mb-4">
+            Nenhuma análise gerada para este candidato
+          </p>
+          <Button
+            size="sm"
+            onClick={() => generateAnalyses(gaugeProResult)}
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Gerar Análise
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
-        <Separator className="my-3" />
-
-        <Collapsible open={metadataOpen} onOpenChange={setMetadataOpen}>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-1 h-6 text-[11px] text-muted-foreground/50 px-1">
-              {metadataOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              Metadados da geração
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-2">
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground/50">
-              <span className="flex items-center gap-1">
-                <Cpu className="w-3 h-3" />
-                {technicalAnalysis.modelUsed}
-              </span>
-              <span className="flex items-center gap-1">
-                <Hash className="w-3 h-3" />
-                {technicalAnalysis.tokensInput + technicalAnalysis.tokensOutput} tokens
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {(technicalAnalysis.generationTimeMs / 1000).toFixed(1)}s
-              </span>
-              <span>
-                Gerado em{' '}
-                {new Date(technicalAnalysis.createdAt).toLocaleDateString('pt-BR')}{' '}
-                {new Date(technicalAnalysis.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-              </span>
-              {technicalAnalysis.regeneratedAt && (
-                <span>
-                  Regenerado em{' '}
-                  {new Date(technicalAnalysis.regeneratedAt).toLocaleDateString('pt-BR')}{' '}
-                  {new Date(technicalAnalysis.regeneratedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              )}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </CardContent>
-    </Card>
-  );
+  return null;
 }

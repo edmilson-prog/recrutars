@@ -76,6 +76,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { TechnicalAnalysisCard } from '@/components/aiAnalysis';
+import { PracticalAnalysisCard } from '@/components/aiAnalysis/PracticalAnalysisCard';
 import type { Candidate, CandidateAdminAction, CandidateStatus, ApplicationStatus } from '@/types';
 import { skillLevelLabels, educationStatusLabels } from '@/types/curriculum';
 import type { SkillLevel, EducationStatus } from '@/types/curriculum';
@@ -489,7 +490,7 @@ export default function AdminCandidateDetail() {
               <span className="hidden sm:inline">Enviar Notificacao</span>
               <span className="sm:hidden">Notificar</span>
             </Button>
-            {mergedCandidate.hasTest && (
+            {!!gaugeProResult && (
               <Button
                 variant="outline"
                 size="sm"
@@ -901,10 +902,16 @@ export default function AdminCandidateDetail() {
                     )}
                   </div>
 
-                  {/* AI Technical Analysis */}
+                  {/* AI Analysis */}
                   <TechnicalAnalysisCard
                     candidateId={mergedCandidate.id}
                     candidateName={mergedCandidate.name}
+                    gaugeProResult={gaugeProResult}
+                  />
+                  <PracticalAnalysisCard
+                    candidateId={mergedCandidate.id}
+                    candidateName={mergedCandidate.name}
+                    gaugeProResult={gaugeProResult}
                   />
                 </>
               ) : (

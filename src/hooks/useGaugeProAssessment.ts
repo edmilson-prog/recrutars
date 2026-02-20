@@ -510,7 +510,7 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
       // Fire-and-forget: gerar análises IA em background (PRD-051)
       import('@/lib/aiAgent').then(({ loadAgentSettingsAsync, generateBothAnalyses, saveAnalysisResult }) => {
         loadAgentSettingsAsync().then((agentSettings) => {
-          if (agentSettings.agentEnabled) {
+          if (agentSettings.agentEnabled && agentSettings.apiKey) {
             generateBothAnalyses(gaugeResult, 'Candidato', agentSettings)
               .then((analysisResult) => {
                 const hasValidAnalysis =
