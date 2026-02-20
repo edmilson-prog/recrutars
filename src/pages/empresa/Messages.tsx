@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -43,6 +43,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useMessages } from '@/hooks/useMessages';
+import { useCreateConversation } from '@/hooks/useMessagesQuery';
 import { useMessageTemplates } from '@/hooks/useMessageTemplates';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -58,14 +59,45 @@ export default function CompanyMessages() {
   const { currentCompany } = useAuth();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
 
+  const [searchParams] = useSearchParams();
+  const navigateTo = useNavigate();
+  const createConversationMutation = useCreateConversation();
+  const [candidateParamProcessed, setCandidateParamProcessed] = useState(false);
+
   const {
     conversations,
+    isLoading,
     getConversationMessages,
     getLastMessage,
     markAsRead,
     sendMessage,
     totalUnreadCount,
   } = useMessages({ userId: currentCompany?.id ?? '', userType: 'company', selectedConversationId });
+
+  // Auto-select conversation from URL query param (?candidato=XXX or ?to=XXX)
+  useEffect(() => {
+    const candidateIdParam = searchParams.get('candidato') || searchParams.get('to');
+    if (!candidateIdParam || candidateParamProcessed || isLoading) return;
+
+    setCandidateParamProcessed(true);
+
+    const existing = conversations.find(c => c.candidateId === candidateIdParam);
+    if (existing) {
+      setSelectedConversationId(existing.id);
+    } else if (currentCompany?.id) {
+      createConversationMutation.mutate(
+        { candidateId: candidateIdParam, companyId: currentCompany.id },
+        {
+          onSuccess: (conv) => setSelectedConversationId(conv.id),
+          onError: () => toast.error('Erro ao abrir conversa com o candidato.'),
+        }
+      );
+    }
+
+    navigateTo('/empresa/mensagens', { replace: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, candidateParamProcessed, isLoading, conversations, currentCompany?.id]);
+
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedJobFilter, setSelectedJobFilter] = useState<string>('all');
@@ -87,9 +119,11 @@ export default function CompanyMessages() {
     deleteCustomTemplate,
   } = useMessageTemplates({ companyId: currentCompany?.id ?? '' });
 
-  // Get unique jobs from conversations for filter
+  // Get unique jobs from conversations for filter (skip empty jobId to avoid Radix Select error)
   const jobOptions = useMemo(() => {
-    const jobs = conversations.map(c => ({ id: c.jobId, title: c.jobTitle }));
+    const jobs = conversations
+      .filter(c => c.jobId && c.jobId !== '')
+      .map(c => ({ id: c.jobId, title: c.jobTitle }));
     return [...new Map(jobs.map(j => [j.id, j])).values()];
   }, [conversations]);
 

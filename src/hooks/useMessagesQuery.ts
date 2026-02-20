@@ -113,3 +113,26 @@ export function useMarkAsRead() {
     },
   });
 }
+
+/** Create or find an existing conversation (idempotent) */
+export function useCreateConversation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      candidateId,
+      companyId,
+      jobId,
+    }: {
+      candidateId: string;
+      companyId: string;
+      jobId?: string;
+    }) => {
+      const service = await getMessagesService();
+      return service.createConversation(candidateId, companyId, jobId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
