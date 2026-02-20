@@ -187,7 +187,7 @@ export default function CandidateProfile() {
   // Fetch data from service layer
   const { data: jobsResult } = useJobs();
   const allJobs = jobsResult?.data ?? [];
-  const { data: candidatesResult } = useCandidates();
+  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
   const allCandidates = candidatesResult?.data ?? [];
   const { data: applicationsResult } = useApplications();
   const allApplications = applicationsResult?.data ?? [];

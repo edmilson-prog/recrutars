@@ -60,7 +60,7 @@ export function useJobRecommendations(
   // Buscar dados via service layer
   const { data: jobsResult } = useJobs();
   const jobs = jobsResult?.data ?? [];
-  const { data: candidatesResult } = useCandidates();
+  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
   const candidates = candidatesResult?.data ?? [];
   const { data: applications = [] } = useApplicationsByCandidate(candidateId);
 

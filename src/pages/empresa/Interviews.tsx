@@ -62,7 +62,7 @@ export default function CompanyInterviews() {
   } = useCompanyInterviews(companyId);
 
   const { data: jobsData, isLoading: jobsLoading } = useJobsByCompany(companyId);
-  const { data: candidatesData } = useCandidates();
+  const { data: candidatesData } = useCandidates(undefined, { page: 1, pageSize: 1000 });
 
   const [activeTab, setActiveTab] = useState<TabValue>('pending');
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);

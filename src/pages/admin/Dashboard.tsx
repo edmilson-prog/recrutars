@@ -38,7 +38,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 export default function AdminDashboard() {
   // Fetch data via React Query hooks
   const { data: jobsResult } = useJobs();
-  const { data: candidatesResult } = useCandidates();
+  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
   const { data: companiesResult } = useCompanies();
   const { data: applicationsResult } = useApplications();
   const { data: testsResult } = useBehavioralTests();

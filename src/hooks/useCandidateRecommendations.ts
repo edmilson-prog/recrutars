@@ -61,7 +61,7 @@ export function useCandidateRecommendations(
   // Buscar dados via service layer (extrair .data do PaginatedResult)
   const { data: jobsResult } = useJobs();
   const jobs = jobsResult?.data ?? [];
-  const { data: candidatesResult } = useCandidates();
+  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
   const candidates = candidatesResult?.data ?? [];
   const { data: applicationsResult } = useApplications();
   const applications = applicationsResult?.data ?? [];

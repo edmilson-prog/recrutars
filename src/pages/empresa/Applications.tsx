@@ -244,7 +244,10 @@ export default function CompanyApplications() {
     { companyId },
     { page: 1, pageSize: 500 }
   );
-  const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates();
+  const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates(
+    undefined,
+    { page: 1, pageSize: 1000 }
+  );
   const { data: behavioralTests = [] } = useBehavioralTests();
   const { data: allGaugeResults = [] } = useAllGaugeProResults();
 

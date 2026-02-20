@@ -20,7 +20,7 @@ export function useFavoriteCandidates() {
   const toggleMutation = useToggleFavorite();
 
   // Also fetch all candidates to support getFavoriteCandidates enrichment
-  const { data: candidatesResult } = useCandidates();
+  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
   const allCandidates = useMemo(() => candidatesResult?.data ?? [], [candidatesResult]);
 
   // Verificar se um candidato está nos favoritos

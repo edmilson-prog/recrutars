@@ -145,7 +145,7 @@ export default function CompanyCandidates() {
   // Fetch data from service layer
   const { data: jobsResult } = useJobs();
   const jobs = jobsResult?.data ?? [];
-  const { data: candidatesResult } = useCandidates();
+  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
   const allCandidates = candidatesResult?.data ?? [];
   const { data: behavioralTests = [] } = useBehavioralTests();
   const { data: allGaugeResults = [] } = useAllGaugeProResults();

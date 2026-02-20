@@ -279,7 +279,10 @@ export default function AdminCandidates() {
   const navigate = useNavigate();
 
   // Fetch candidates via service layer
-  const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates();
+  const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates(
+    undefined,
+    { page: 1, pageSize: 1000 }
+  );
 
   // Search with debounce
   const [searchTerm, setSearchTerm] = useState('');
