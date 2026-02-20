@@ -35,7 +35,7 @@ export function useTickets(userId: string) {
         userId,
         category,
         subject,
-        description,
+        content: description,
         attachmentUrl: attachment?.url,
         attachmentName: attachment?.name,
       });
@@ -50,7 +50,7 @@ export function useTickets(userId: string) {
       ticketId: string,
       content: string,
       attachment?: { url: string; name: string },
-      _sender: 'user' | 'support' = 'user'
+      _sender: 'user' | 'admin' | 'system' = 'user'
     ) => {
       sendMessageMutation.mutate({
         ticketId,

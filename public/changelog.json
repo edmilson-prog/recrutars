@@ -1,12 +1,83 @@
 {
   "versions": [
     {
+      "version": "1.26.0",
+      "codename": "Oracle",
+      "type": "minor",
+      "releaseDate": "2026-02-19",
+      "prd": "PRD-082",
+      "description": "Central de Helpdesk admin inteligente com listagem de tickets, semaforo SLA, detalhe com thread de mensagens e notas internas, painel de contexto do solicitante, auditoria e CSAT in-app. Fases 1+2 do PRD-082.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Pagina admin /admin/helpdesk com dashboard de KPIs e listagem de tickets com filtros",
+            "Semaforo SLA visual (verde/ambar/vermelho) com tempo restante e botao estender",
+            "Detalhe do ticket com thread cronologica, notas internas e painel de contexto do solicitante",
+            "Notas internas visiveis apenas para admins (RLS split em ticket_messages)",
+            "Painel de contexto: perfil, plano, trial, engajamento e historico de tickets do solicitante",
+            "Composer com tabs Resposta/Nota Interna e atalho Ctrl+Enter",
+            "Registro de auditoria automatico para mudancas de status, prioridade, respostas e notas",
+            "CSAT in-app: modal na proxima visita do usuario apos ticket resolvido (1-5 estrelas + comentario)",
+            "Tabelas ticket_csat e ticket_audit_log com RLS admin-only",
+            "Funcao calculate_sla_deadline e triggers para auto-calculo de SLA e deteccao de requester_type",
+            "Busca full-text (portugues) no assunto dos tickets"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Nav admin: Central de Ajuda substituida por Helpdesk com icone Headset",
+            "Tipos TS de tickets alinhados com DB (status, priority, sender_type, is_internal_note)",
+            "Service layer de tickets estendida com 12 novos metodos admin",
+            "TicketThread e TicketCard atualizados para novos status (in_progress, waiting_user, closed)"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.25.0",
+      "codename": "Onboard",
+      "type": "minor",
+      "releaseDate": "2026-02-19",
+      "prd": "PRD-081",
+      "description": "Fluxo completo de convite, semi-cadastro e vinculacao de colaboradores para testes comportamentais. Tres canais de entrada (link publico, email direto, da base) convergem em pagina standalone de teste com ativacao de conta pos-avaliacao. Colaboradores convidados aparecem em 'Minha Equipe' com status 'Convite Pendente'.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Pagina standalone de teste para colaboradores convidados (/convite/teste/:token) — sem sidebar, reutiliza componentes Gauge-Pro",
+            "Tela de conclusao com ativacao de conta (criar senha + indicador de forca) apos avaliacao",
+            "Edge Function process-collaborator-invite: pre-cadastro silencioso via admin.createUser + magic link",
+            "Canal Link Publico: campo departamento na identificacao + redirecionamento para teste standalone",
+            "Canal Email Direto: link no email aponta para pagina standalone com dados pre-preenchidos",
+            "Canal Da Base: selecao de candidatos existentes cria team_members com status 'invited'",
+            "Pagina de ativacao de conta via email fallback (/ativar-conta) com link de 72h",
+            "Hook useDepartmentsByTestSlug para carregar departamentos via slug do teste",
+            "Template de email para ativacao de conta (email-activate-account.html)"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "team_members.department_id agora nullable (suporta empresas sem departamentos)",
+            "test_invitations expandida com colunas department_id, team_member_id e invite_origin",
+            "Trigger handle_new_user detecta metadata 'invited' para criar perfil com status 'pending'",
+            "Edge Function send-test-invitation atualizada com invite_origin por metodo de convite",
+            "PublicTestLanding.tsx integrado ao fluxo de semi-cadastro com seletor de departamento"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.24.0",
       "codename": "Prism",
       "type": "minor",
       "releaseDate": "2026-02-19",
       "description": "OpenRouter como terceiro provedor LLM (multi-provider: Anthropic, OpenAI, Meta, Google via API unificada). Correcao critica no Assistente de Redacao: metricas agora permanecem visiveis em tempo real durante a digitacao (stale-while-revalidate). Beneficios customizados passam a ser contabilizados na analise. Score inicial corrigido para 0 pontos em formularios vazios.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

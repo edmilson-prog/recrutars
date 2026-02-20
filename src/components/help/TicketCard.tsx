@@ -22,15 +22,17 @@ interface TicketCardProps {
 }
 
 export function TicketCard({ ticket, onViewDetails }: TicketCardProps) {
-  // Usando CSS variables do design system
-  const statusColorMap = {
+  // Status color mapping using CSS variables
+  const statusColorMap: Record<string, string> = {
     yellow: 'bg-warning/10 text-warning border-warning/20',
+    blue: 'bg-blue-500/10 text-blue-600 border-blue-200',
+    orange: 'bg-orange-500/10 text-orange-600 border-orange-200',
     green: 'bg-success/10 text-success border-success/20',
     gray: 'bg-muted text-muted-foreground border-border',
   };
 
   const statusColor =
-    statusColorMap[ticketStatusColors[ticket.status] as keyof typeof statusColorMap];
+    statusColorMap[ticketStatusColors[ticket.status]] ?? statusColorMap.gray;
 
   return (
     <Card className="bg-card rounded-2xl shadow-soft border-border/50 transition-all duration-300 hover:shadow-lg">

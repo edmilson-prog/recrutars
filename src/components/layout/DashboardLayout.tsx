@@ -6,13 +6,13 @@
  * - Bottom Navigation Bar em mobile
  */
 
-import { ReactNode } from 'react';
+import { ReactNode, useState, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, Users, Settings, LogOut,
   Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart, Calendar, HelpCircle, Bell,
   ChevronLeft, ChevronRight, Sparkles, Info, UsersRound,
-  ShieldCheck, BarChart3, CreditCard, DollarSign, ToggleLeft,
+  ShieldCheck, BarChart3, CreditCard, DollarSign, ToggleLeft, Headset,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdminNavItemActive, getTabLabelForPath } from '@/config/adminTabConfig';
@@ -47,6 +47,8 @@ import { useTrialStatus } from '@/hooks/useTrialStatus';
 import { TrialBadge, TrialIndicator, TrialGuard } from '@/components/trial';
 import { PaymentFailedBanner } from '@/components/billing/PaymentFailedBanner';
 import { usePlans } from '@/hooks/usePlans';
+import { usePendingCSAT, useSubmitCSAT } from '@/hooks/useAdminTicketsQuery';
+import { CSATPrompt } from '@/components/helpdesk/CSATPrompt';
 
 interface NavItem {
   href: string;
@@ -67,7 +69,7 @@ const adminNav: NavItem[] = [
   { href: '/admin/vagas', label: 'Vagas', icon: Briefcase },
   { href: '/admin/relatorios/financeiro', label: 'Relatórios', icon: BarChart3 },
   { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
-  { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
+  { href: '/admin/helpdesk', label: 'Helpdesk', icon: Headset },
   { href: '/sobre', label: 'Sobre', icon: Info },
 ];
 
@@ -162,6 +164,24 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const companyPlanObj = currentCompany?.plan
     ? companyPlans.find(p => p.name === currentCompany.plan)
     : undefined;
+
+  // PRD-082: CSAT prompt for candidate/company
+  const { data: pendingCsat } = usePendingCSAT(
+    (userType === 'candidate' || userType === 'company') ? (user?.id ?? '') : ''
+  );
+  const submitCsatMutation = useSubmitCSAT();
+  const [csatDismissed, setCsatDismissed] = useState(false);
+
+  const handleCsatSubmit = useCallback(async (rating: number, comment?: string) => {
+    if (!pendingCsat || !user?.id) return;
+    await submitCsatMutation.mutateAsync({
+      ticketId: pendingCsat.ticketId,
+      userId: user.id,
+      rating,
+      comment,
+    });
+    setCsatDismissed(true);
+  }, [pendingCsat, user?.id, submitCsatMutation]);
 
   const navItems = userType === 'admin'
     ? adminNav
@@ -449,6 +469,15 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         {/* PRD-043: Footer com Glassmorphism */}
         <GlassFooter />
       </div>
+
+      {/* PRD-082: CSAT Prompt for candidate/company */}
+      {pendingCsat && !csatDismissed && (userType === 'candidate' || userType === 'company') && (
+        <CSATPrompt
+          ticketSubject={pendingCsat.subject}
+          onSubmit={handleCsatSubmit}
+          onDismiss={() => setCsatDismissed(true)}
+        />
+      )}
 
       {/* PRD-003-dgn: Bottom Navigation Bar - mobile only */}
       <BottomNav

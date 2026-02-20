@@ -23,6 +23,8 @@ import ForCompanies from "./pages/ForCompanies";
 import ForCandidates from "./pages/ForCandidates";
 import CorporateTests from "./pages/CorporateTests";
 import AceitarConvite from "./pages/AceitarConvite";
+import CollaboratorTestSession from "./pages/CollaboratorTestSession";
+import AtivarConta from "./pages/AtivarConta";
 import NotFound from "./pages/NotFound";
 
 // Admin pages
@@ -73,6 +75,10 @@ import AdminFinalizedJobs from "./pages/admin/FinalizedJobs";
 import AdminHiresPage from "./pages/admin/AdminHires";
 import AdminInterviewsPage from "./pages/admin/AdminInterviews";
 import AdminModerationConfig from "./pages/admin/ModerationConfig";
+
+// PRD-082: Admin Helpdesk Intelligence
+import AdminHelpdesk from "./pages/admin/Helpdesk";
+import AdminHelpdeskTicketDetail from "./pages/admin/HelpdeskTicketDetail";
 
 // PRD-062: Feature Flags "Switch"
 import AdminFeatureFlags from "./pages/admin/FeatureFlags";
@@ -222,6 +228,12 @@ const App = () => (
 
             {/* Public Test Landing (via company public link) */}
             <Route path="/teste/:slug" element={<PublicTestLanding />} />
+
+            {/* PRD-081: Collaborator Test Session (standalone, no sidebar) */}
+            <Route path="/convite/teste/:token" element={<CollaboratorTestSession />} />
+
+            {/* PRD-081: Account Activation (fallback email link) */}
+            <Route path="/ativar-conta" element={<AtivarConta />} />
 
             {/* Help Routes */}
             <Route path="/ajuda" element={<HelpPage />} />
@@ -415,6 +427,18 @@ const App = () => (
             <Route path="/admin/vagas/:id" element={
               <ProtectedRoute allowedTypes={['admin']}>
                 <AdminJobDetail />
+              </ProtectedRoute>
+            } />
+
+            {/* PRD-082: Admin Helpdesk Intelligence Routes */}
+            <Route path="/admin/helpdesk" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminHelpdesk />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/helpdesk/tickets/:id" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminHelpdeskTicketDetail />
               </ProtectedRoute>
             } />
 

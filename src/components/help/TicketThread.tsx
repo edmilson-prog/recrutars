@@ -27,7 +27,7 @@ export function TicketThread({ messages }: TicketThreadProps) {
   return (
     <div className="space-y-6">
       {messages.map((message, index) => {
-        const isUser = message.sender === 'user';
+        const isUser = message.senderType === 'user';
         const isFirst = index === 0;
 
         return (

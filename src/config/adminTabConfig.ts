@@ -11,6 +11,7 @@ import {
   LayoutDashboard, List, CheckCircle, Calendar, UserCheck,
   DollarSign, TrendingUp, Activity, Rss, Download,
   CreditCard, BarChart3, ToggleLeft, Webhook, FlaskConical, Settings,
+  Headset, MessageSquare, BookOpen, Phone,
 } from 'lucide-react';
 
 export interface AdminTab {
@@ -82,6 +83,13 @@ export const ADMIN_TAB_GROUPS: AdminTabGroup[] = [
       { href: '/admin/vagas/entrevistas', label: 'Entrevistas', icon: Calendar },
       { href: '/admin/vagas/contratacoes', label: 'Contratações', icon: UserCheck },
       { href: '/admin/vagas/configuracoes', label: 'Config. Moderação', icon: Settings },
+    ],
+  },
+  {
+    id: 'helpdesk',
+    parentHref: '/admin/helpdesk',
+    tabs: [
+      { href: '/admin/helpdesk', label: 'Tickets', icon: Headset },
     ],
   },
   {

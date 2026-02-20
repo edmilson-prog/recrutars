@@ -28,8 +28,8 @@ export function TicketsList({ tickets, onViewDetails }: TicketsListProps) {
   const counts = {
     all: tickets.length,
     open: tickets.filter((t) => t.status === 'open').length,
-    answered: tickets.filter((t) => t.status === 'answered').length,
-    resolved: tickets.filter((t) => t.status === 'resolved').length,
+    in_progress: tickets.filter((t) => t.status === 'in_progress' || t.status === 'waiting_user').length,
+    resolved: tickets.filter((t) => t.status === 'resolved' || t.status === 'closed').length,
   };
 
   return (
@@ -43,8 +43,8 @@ export function TicketsList({ tickets, onViewDetails }: TicketsListProps) {
           <TabsTrigger value="open">
             Abertos ({counts.open})
           </TabsTrigger>
-          <TabsTrigger value="answered">
-            Respondidos ({counts.answered})
+          <TabsTrigger value="in_progress">
+            Em Andamento ({counts.in_progress})
           </TabsTrigger>
           <TabsTrigger value="resolved">
             Resolvidos ({counts.resolved})
@@ -92,8 +92,8 @@ export function TicketsList({ tickets, onViewDetails }: TicketsListProps) {
                     : `Nenhum ticket ${
                         activeTab === 'open'
                           ? 'aberto'
-                          : activeTab === 'answered'
-                          ? 'respondido'
+                          : activeTab === 'in_progress'
+                          ? 'em andamento'
                           : 'resolvido'
                       }`}
                 </h3>
