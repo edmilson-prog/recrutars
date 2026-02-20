@@ -3,7 +3,7 @@
  * PRD-021: Detalhe do candidato com abas de visao geral, perfil, teste, candidaturas, curriculo e historico
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -36,7 +36,10 @@ import {
   BookOpen,
   Wrench,
 } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 import { useCandidate } from '@/hooks/useCandidatesQuery';
 import { useApplicationsByCandidate } from '@/hooks/useApplicationsQuery';
 import { useProfile } from '@/hooks/useCurriculumsQuery';
@@ -171,17 +174,68 @@ function formatDateOfBirth(dateStr: string | undefined): string {
 }
 
 // ---------------------------------------------------------------------------
+// Audit Log Helper
+// ---------------------------------------------------------------------------
+
+async function insertAuditLog(params: {
+  action: string;
+  targetUserId: string;
+  targetUserName: string;
+  details: string;
+  performedBy: string;
+  performedByName: string;
+  oldValue?: string;
+  newValue?: string;
+}) {
+  await supabase.from('audit_logs').insert({
+    action: params.action,
+    target_user_id: params.targetUserId,
+    target_user_name: params.targetUserName,
+    details: params.details,
+    performed_by: params.performedBy,
+    performed_by_name: params.performedByName,
+    old_value: params.oldValue ?? null,
+    new_value: params.newValue ?? null,
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Main Component
 // ---------------------------------------------------------------------------
 
 export default function AdminCandidateDetail() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   // Data hooks
   const { data: candidate, isLoading: isLoadingCandidate } = useCandidate(id || '');
   const { data: applicationsData } = useApplicationsByCandidate(id || '');
   const { data: profile, isLoading: isLoadingProfile } = useProfile(id || '');
   const { data: gaugeProResult } = useGaugeProResultByCandidate(id || '');
+
+  // Audit logs from Supabase
+  const { data: auditLogs = [] } = useQuery({
+    queryKey: ['audit-logs', 'candidate', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .eq('target_user_id', id!)
+        .order('performed_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((row: Record<string, unknown>) => ({
+        id: row.id as string,
+        candidateId: row.target_user_id as string,
+        candidateName: row.target_user_name as string,
+        action: row.action as CandidateAdminAction['action'],
+        performedBy: (row.performed_by_name as string) || 'Admin',
+        performedAt: row.performed_at as string,
+        details: row.details as string,
+      }));
+    },
+    enabled: !!id,
+  });
 
   const applications = useMemo(() => {
     if (!applicationsData) return [];
@@ -215,9 +269,52 @@ export default function AdminCandidateDetail() {
   const [deactivateReason, setDeactivateReason] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
 
+  // Combine local (optimistic) + DB actions, deduplicated
+  const allActions = useMemo(() => {
+    const localIds = new Set(adminActions.map((a) => a.id));
+    const dbOnly = auditLogs.filter((a) => !localIds.has(a.id));
+    return [...adminActions, ...dbOnly].sort(
+      (a, b) => new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime(),
+    );
+  }, [adminActions, auditLogs]);
+
   // ---------------------------------------------------------------------------
   // Action handlers
   // ---------------------------------------------------------------------------
+
+  const adminName = user?.user_metadata?.name || user?.email || 'Admin';
+
+  const logAction = useCallback(
+    (action: CandidateAdminAction['action'], details: string, oldValue?: string, newValue?: string) => {
+      if (!mergedCandidate || !user) return;
+
+      const newEntry: CandidateAdminAction = {
+        id: `action-${Date.now()}`,
+        candidateId: mergedCandidate.id,
+        candidateName: mergedCandidate.name,
+        action,
+        performedBy: adminName,
+        performedAt: new Date().toISOString(),
+        details,
+      };
+      setAdminActions((prev) => [newEntry, ...prev]);
+
+      // Persist to Supabase (fire-and-forget, optimistic)
+      insertAuditLog({
+        action,
+        targetUserId: mergedCandidate.id,
+        targetUserName: mergedCandidate.name,
+        details,
+        performedBy: user.id,
+        performedByName: adminName,
+        oldValue,
+        newValue,
+      }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['audit-logs', 'candidate', id] });
+      });
+    },
+    [mergedCandidate, user, adminName, queryClient, id],
+  );
 
   const handleDeactivate = () => {
     if (!mergedCandidate) return;
@@ -228,16 +325,7 @@ export default function AdminCandidateDetail() {
       deactivatedAt: new Date().toISOString(),
     }));
 
-    const newAction: CandidateAdminAction = {
-      id: `action-${Date.now()}`,
-      candidateId: mergedCandidate.id,
-      candidateName: mergedCandidate.name,
-      action: 'deactivated',
-      performedBy: 'Voce',
-      performedAt: new Date().toISOString(),
-      details: deactivateReason || 'Candidato desativado',
-    };
-    setAdminActions((prev) => [newAction, ...prev]);
+    logAction('deactivated', deactivateReason || 'Candidato desativado', 'active', 'inactive');
 
     toast.success(`Candidato ${mergedCandidate.name} desativado`);
     setDeactivateDialogOpen(false);
@@ -253,16 +341,7 @@ export default function AdminCandidateDetail() {
       deactivatedAt: undefined,
     }));
 
-    const newAction: CandidateAdminAction = {
-      id: `action-${Date.now()}`,
-      candidateId: mergedCandidate.id,
-      candidateName: mergedCandidate.name,
-      action: 'activated',
-      performedBy: 'Voce',
-      performedAt: new Date().toISOString(),
-      details: 'Candidato reativado',
-    };
-    setAdminActions((prev) => [newAction, ...prev]);
+    logAction('activated', 'Candidato reativado', 'inactive', 'active');
 
     toast.success(`Candidato ${mergedCandidate.name} reativado`);
     setReactivateDialogOpen(false);
@@ -277,16 +356,7 @@ export default function AdminCandidateDetail() {
       testResult: undefined,
     }));
 
-    const newAction: CandidateAdminAction = {
-      id: `action-${Date.now()}`,
-      candidateId: mergedCandidate.id,
-      candidateName: mergedCandidate.name,
-      action: 'test_reset',
-      performedBy: 'Voce',
-      performedAt: new Date().toISOString(),
-      details: 'Teste comportamental resetado',
-    };
-    setAdminActions((prev) => [newAction, ...prev]);
+    logAction('test_reset', 'Teste comportamental resetado');
 
     toast.success(`Teste de ${mergedCandidate.name} resetado`);
     setResetTestDialogOpen(false);
@@ -295,16 +365,8 @@ export default function AdminCandidateDetail() {
   const handleSendNotification = () => {
     if (!mergedCandidate || !notificationMessage.trim()) return;
 
-    const newAction: CandidateAdminAction = {
-      id: `action-${Date.now()}`,
-      candidateId: mergedCandidate.id,
-      candidateName: mergedCandidate.name,
-      action: 'notification_sent',
-      performedBy: 'Voce',
-      performedAt: new Date().toISOString(),
-      details: `Notificacao enviada: ${notificationMessage.substring(0, 50)}${notificationMessage.length > 50 ? '...' : ''}`,
-    };
-    setAdminActions((prev) => [newAction, ...prev]);
+    const details = `Notificacao enviada: ${notificationMessage.substring(0, 50)}${notificationMessage.length > 50 ? '...' : ''}`;
+    logAction('notification_sent', details);
 
     toast.success(`Notificacao enviada para ${mergedCandidate.name}`);
     setNotifyModalOpen(false);
@@ -353,11 +415,6 @@ export default function AdminCandidateDetail() {
   const StatusIcon = statusConfig.icon;
 
   const daysOnPlatform = calculateDaysOnPlatform(mergedCandidate.createdAt);
-
-  // Sorted admin actions
-  const sortedActions = [...adminActions].sort(
-    (a, b) => new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime(),
-  );
 
   // Location display
   const locationDisplay = mergedCandidate.city && mergedCandidate.state
@@ -1143,7 +1200,7 @@ export default function AdminCandidateDetail() {
                 Acoes administrativas realizadas neste candidato.
               </p>
 
-              {sortedActions.length === 0 ? (
+              {allActions.length === 0 ? (
                 <div className="text-center py-12">
                   <Calendar className="w-10 h-10 mx-auto mb-2 text-muted-foreground opacity-50" />
                   <p className="text-muted-foreground">Nenhuma acao registrada</p>
@@ -1154,7 +1211,7 @@ export default function AdminCandidateDetail() {
                   <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary/20" />
 
                   <div className="space-y-6 pl-6">
-                    {sortedActions.map((action) => {
+                    {allActions.map((action) => {
                       const actionConfig = ACTION_ICON_CONFIG[action.action];
                       const ActionIcon = actionConfig.icon;
 
