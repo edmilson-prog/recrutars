@@ -35,7 +35,8 @@
             "Tipos TS de tickets alinhados com DB (status, priority, sender_type, is_internal_note)",
             "Service layer de tickets estendida com 12 novos metodos admin",
             "TicketThread e TicketCard atualizados para novos status (in_progress, waiting_user, closed)",
-            "LLM API service refatorado para suporte multi-provider unificado (Anthropic, OpenAI, OpenRouter)"
+            "LLM API service refatorado para suporte multi-provider unificado (Anthropic, OpenAI, OpenRouter)",
+            "Cards de analise IA com botao 'Regerar' no topo, nome do provedor nos metadados e collapsible unificado em ambos os cards"
           ]
         },
         {
@@ -43,7 +44,9 @@
           "items": [
             "API key dinamica agora e passada diretamente ao provedor LLM (nao depende mais de Vite proxy)",
             "Aba Teste no detalhe do candidato (admin) agora exibe resultado Gauge-Pro em vez de DISC legado",
-            "Crash 'Rendered more hooks' ao abrir detalhe do candidato (useMemo apos early return)"
+            "Crash 'Rendered more hooks' ao abrir detalhe do candidato (useMemo apos early return)",
+            "Erro 405 na analise IA causado por fire-and-forget com API key vazia (fallback DEFAULT_SETTINGS)",
+            "Cards de analise IA agora permitem geracao on-demand com botao 'Gerar Analise' e retry em caso de erro"
           ]
         }
       ]
