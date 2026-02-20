@@ -1,13 +1,37 @@
 {
   "versions": [
     {
+      "version": "1.26.1",
+      "codename": "Oracle",
+      "type": "patch",
+      "releaseDate": "2026-02-20",
+      "description": "Correcao do botao 'Enviar Mensagem' no detalhe do candidato: agora abre automaticamente a conversa na pagina de mensagens. Corrigido erro Radix Select no filtro de vagas para conversas sem vaga vinculada.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Auto-selecao de conversa ao navegar para Mensagens via ?candidato= ou ?to= (perfil do candidato, candidaturas, candidatos salvos)",
+            "Hook useCreateConversation para criar ou encontrar conversa existente (idempotente)"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Botao 'Enviar Mensagem' no detalhe do candidato agora abre a conversa corretamente na pagina de mensagens",
+            "Erro Radix Select 'value must not be empty string' no filtro de vagas quando conversa nao tem vaga vinculada"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.26.0",
       "codename": "Oracle",
       "type": "minor",
       "releaseDate": "2026-02-20",
       "prd": "PRD-082",
       "description": "Central de Helpdesk admin inteligente com listagem de tickets, semaforo SLA, detalhe com thread de mensagens e notas internas, painel de contexto do solicitante, auditoria e CSAT in-app. Fases 1+2 do PRD-082.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
