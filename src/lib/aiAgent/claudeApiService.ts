@@ -5,7 +5,8 @@
 
 import type { ClaudeApiRequest, ClaudeApiResponse } from '@/types/aiAnalysis';
 
-const API_URL = '/api/anthropic/v1/messages';
+const PROXY_URL = '/api/anthropic/v1/messages';
+const DIRECT_URL = 'https://api.anthropic.com/v1/messages';
 const TIMEOUT_MS = 30_000;
 const MAX_RETRIES = 2;
 const INITIAL_BACKOFF_MS = 1000;
@@ -50,6 +51,7 @@ async function sleep(ms: number): Promise<void> {
 
 export async function callClaudeApi(
   request: ClaudeApiRequest,
+  apiKey?: string,
 ): Promise<ClaudeApiResponse> {
   let lastError: Error | null = null;
 
@@ -60,15 +62,22 @@ export async function callClaudeApi(
     }
 
     try {
+      const url = apiKey ? DIRECT_URL : PROXY_URL;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      };
+
+      if (apiKey) {
+        headers['x-api-key'] = apiKey;
+      }
+
       const response = await fetchWithTimeout(
-        API_URL,
+        url,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true',
-          },
+          headers,
           body: JSON.stringify(request),
         },
         TIMEOUT_MS,

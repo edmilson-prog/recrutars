@@ -37,13 +37,16 @@ export async function generateSingleAnalysis(
       : buildTechnicalPrompt(result, candidateName);
 
   try {
-    const response = await callClaudeApi({
-      model: settings.model,
-      max_tokens: settings.maxTokens,
-      temperature: settings.temperature,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userMessage }],
-    });
+    const response = await callClaudeApi(
+      {
+        model: settings.model,
+        max_tokens: settings.maxTokens,
+        temperature: settings.temperature,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userMessage }],
+      },
+      settings.apiKey,
+    );
 
     const content =
       response.content
