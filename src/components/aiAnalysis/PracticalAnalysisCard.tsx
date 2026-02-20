@@ -78,7 +78,7 @@ export function PracticalAnalysisCard({
         </CardHeader>
         <Separator />
         <CardContent className="pt-4">
-          <div className="prose prose-sm max-w-none">
+          <div className="prose prose-sm max-w-none max-h-[400px] overflow-y-auto pr-2">
             {renderAnalysisContent(practicalAnalysis.content)}
           </div>
           <Separator className="my-3" />
