@@ -75,7 +75,17 @@
             "test_invitations expandida com colunas department_id, team_member_id e invite_origin",
             "Trigger handle_new_user detecta metadata 'invited' para criar perfil com status 'pending'",
             "Edge Function send-test-invitation atualizada com invite_origin por metodo de convite",
-            "PublicTestLanding.tsx integrado ao fluxo de semi-cadastro com seletor de departamento"
+            "PublicTestLanding.tsx integrado ao fluxo de semi-cadastro com seletor de departamento",
+            "Tela de conclusao alinhada com referencia visual (processing pill, section label, textos atualizados)"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Formulario de criacao de senha nao aparecia para usuarios novos apos completar teste (isNewUser perdido entre navegacoes)",
+            "Estado isNewUser agora passado via navigate state de PublicTestLanding para CollaboratorTestSession",
+            "Auto-proceed expandido para pular identificacao redundante quando usuario ja autenticado",
+            "Canal Da Base e login explicitam isNewUser=false para nao exibir formulario de senha indevidamente"
           ]
         }
       ]
