@@ -24,7 +24,8 @@
             "Funcao calculate_sla_deadline e triggers para auto-calculo de SLA e deteccao de requester_type",
             "Busca full-text (portugues) no assunto dos tickets",
             "Prompts de analise comportamental configuraveis pelo admin (system, pratico, tecnico) com fallback para defaults",
-            "Playground LLM em Configuracoes > IA para testar conexao com provedor e validar prompts com dados de candidato ficticio"
+            "Playground LLM em Configuracoes > IA para testar conexao com provedor e validar prompts com dados de candidato ficticio",
+            "Historico de acoes admin no detalhe do candidato persistido na tabela audit_logs (Supabase)"
           ]
         },
         {
@@ -40,7 +41,9 @@
         {
           "type": "fixed",
           "items": [
-            "API key dinamica agora e passada diretamente ao provedor LLM (nao depende mais de Vite proxy)"
+            "API key dinamica agora e passada diretamente ao provedor LLM (nao depende mais de Vite proxy)",
+            "Aba Teste no detalhe do candidato (admin) agora exibe resultado Gauge-Pro em vez de DISC legado",
+            "Crash 'Rendered more hooks' ao abrir detalhe do candidato (useMemo apos early return)"
           ]
         }
       ]
