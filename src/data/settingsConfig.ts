@@ -399,6 +399,15 @@ export const adminSettingsCategories: ConfigCategory[] = [
           },
         ],
       },
+      {
+        id: 'admin-ai-playground',
+        key: 'playground',
+        name: 'Playground LLM',
+        description: 'Teste de conexao e prompts de analise com dados de exemplo',
+        order: 7,
+        customComponent: 'LLMTestPlayground',
+        fields: [],
+      },
     ],
   },
   {
