@@ -58,16 +58,7 @@ const initialFilters: Filters = {
   availability: 'all',
 };
 
-// Localizações disponíveis (extraídas dos candidatos mock)
-const LOCATIONS = [
-  'São Paulo, SP',
-  'Rio de Janeiro, RJ',
-  'Belo Horizonte, MG',
-  'Porto Alegre, RS',
-  'Curitiba, PR',
-  'Brasília, DF',
-  'Florianópolis, SC',
-];
+// LOCATIONS é derivado dinamicamente dos candidatos recomendados (ver useMemo no componente)
 
 // Opções de disponibilidade
 const AVAILABILITY_OPTIONS = [
@@ -103,6 +94,12 @@ export default function SuggestedCandidates() {
     limit: 50, // Carregar mais para a página
     minScore: 60,
   });
+
+  // Localizações extraídas dinamicamente dos candidatos recomendados
+  const dynamicLocations = useMemo(() => {
+    const locs = new Set(recommendations.map(r => r.candidate.location).filter(Boolean));
+    return Array.from(locs).sort();
+  }, [recommendations]);
 
   // Filtrar recomendações
   const filteredRecommendations = useMemo(() => {
@@ -259,7 +256,7 @@ export default function SuggestedCandidates() {
                   <FilterFields
                     filters={filters}
                     updateFilter={updateFilter}
-                    locations={LOCATIONS}
+                    locations={dynamicLocations}
                   />
                   <div className="flex gap-3">
                     <Button
@@ -307,7 +304,7 @@ export default function SuggestedCandidates() {
           <FilterFields
             filters={filters}
             updateFilter={updateFilter}
-            locations={LOCATIONS}
+            locations={dynamicLocations}
             inline
           />
           {hasActiveFilters && (

@@ -83,9 +83,10 @@ type SortOption = 'recent' | 'match' | 'experience';
 const getUniqueAreas = (candidates: Candidate[]): string[] => {
   const areas = new Set<string>();
   candidates.forEach((c) => {
+    if (!c.title) return;
     // Usar o título do candidato como área
     const area = c.title.split(' ')[0]; // Pegar primeira palavra
-    areas.add(area);
+    if (area) areas.add(area);
   });
   return Array.from(areas).sort();
 };

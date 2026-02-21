@@ -150,7 +150,7 @@ export function useBreadcrumbs(
     if (isDynamicSegment(segment)) {
       crumbs.push({
         label: 'Detalhes',
-        href: isLast ? undefined : currentPath,
+        href: undefined,
       });
     } else if (SEGMENT_LABELS[segment]) {
       crumbs.push({

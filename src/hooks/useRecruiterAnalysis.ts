@@ -2,15 +2,18 @@
  * Hook: useRecruiterAnalysis
  * PRD-048: Teste por Vaga
  *
- * Análise de resultados com ajustes do recrutador
+ * Análise de resultados com ajustes do recrutador.
+ * Now uses Supabase via React Query hooks.
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import { mockJobAssessmentResults } from '@/data/behavioralAssessmentData';
+import { useCallback, useMemo } from 'react';
 import { assessmentCategories } from '@/data/assessmentData';
+import {
+  useJobAssessmentResults,
+  useUpdateRecruiterDecision,
+} from '@/hooks/useJobAssessmentsQuery';
 import type {
   JobAssessmentResult,
-  RecruiterAdjustments,
   RecruiterDecision,
   CandidateComparisonData,
 } from '@/types/assessment';
@@ -18,121 +21,39 @@ import type {
 export interface UseRecruiterAnalysisReturn {
   // Data
   results: JobAssessmentResult[];
+  isLoading: boolean;
 
   // Actions
   getResultById: (id: string) => JobAssessmentResult | undefined;
-  getResultsByAssessmentId: (assessmentId: string) => JobAssessmentResult[];
-  adjustScore: (resultId: string, questionId: string, newScore: number, note?: string) => void;
-  setDecision: (resultId: string, decision: RecruiterDecision, notes?: string) => void;
-  addNote: (resultId: string, note: string) => void;
+  setDecision: (resultId: string, decision: RecruiterDecision, notes?: string) => Promise<void>;
 
   // Comparison
   getComparisonData: (resultIds: string[]) => CandidateComparisonData[];
 }
 
-export function useRecruiterAnalysis(): UseRecruiterAnalysisReturn {
-  const [results, setResults] = useState<JobAssessmentResult[]>(mockJobAssessmentResults);
+export function useRecruiterAnalysis(assessmentId: string): UseRecruiterAnalysisReturn {
+  const { data: results = [], isLoading } = useJobAssessmentResults(assessmentId);
+  const updateDecision = useUpdateRecruiterDecision();
 
-  // Buscar resultado por ID
   const getResultById = useCallback(
     (id: string): JobAssessmentResult | undefined => {
       return results.find((r) => r.id === id);
     },
-    [results]
+    [results],
   );
 
-  // Buscar resultados por assessment
-  const getResultsByAssessmentId = useCallback(
-    (assessmentId: string): JobAssessmentResult[] => {
-      return results.filter((r) => r.jobAssessmentId === assessmentId);
-    },
-    [results]
-  );
-
-  // Ajustar score de uma resposta
-  const adjustScore = useCallback(
-    (resultId: string, questionId: string, newScore: number, note?: string) => {
-      setResults((prev) =>
-        prev.map((r) => {
-          if (r.id !== resultId) return r;
-
-          const existingAdjustments = r.recruiterAdjustments || {
-            adjustedScores: [],
-          };
-
-          // Encontrar ajuste existente ou criar novo
-          const existingIndex = existingAdjustments.adjustedScores.findIndex(
-            (adj) => adj.questionId === questionId
-          );
-
-          const response = r.responses.find((resp) => resp.questionId === questionId);
-          const originalScore = response?.score || 50;
-
-          const newAdjustment = {
-            questionId,
-            originalScore,
-            adjustedScore: newScore,
-            note,
-          };
-
-          let newAdjustedScores = [...existingAdjustments.adjustedScores];
-          if (existingIndex >= 0) {
-            newAdjustedScores[existingIndex] = newAdjustment;
-          } else {
-            newAdjustedScores.push(newAdjustment);
-          }
-
-          return {
-            ...r,
-            recruiterAdjustments: {
-              ...existingAdjustments,
-              adjustedScores: newAdjustedScores,
-            },
-            updatedAt: new Date().toISOString(),
-          };
-        })
-      );
-    },
-    []
-  );
-
-  // Definir decisão do recrutador
   const setDecision = useCallback(
-    (resultId: string, decision: RecruiterDecision, notes?: string) => {
-      setResults((prev) =>
-        prev.map((r) =>
-          r.id === resultId
-            ? {
-                ...r,
-                recruiterDecision: decision,
-                recruiterNotes: notes || r.recruiterNotes,
-                updatedAt: new Date().toISOString(),
-              }
-            : r
-        )
-      );
+    async (resultId: string, decision: RecruiterDecision, notes?: string) => {
+      await updateDecision.mutateAsync({
+        resultId,
+        assessmentId,
+        decision,
+        notes,
+      });
     },
-    []
+    [assessmentId, updateDecision],
   );
 
-  // Adicionar nota
-  const addNote = useCallback((resultId: string, note: string) => {
-    setResults((prev) =>
-      prev.map((r) =>
-        r.id === resultId
-          ? {
-              ...r,
-              recruiterNotes: r.recruiterNotes
-                ? `${r.recruiterNotes}\n\n${note}`
-                : note,
-              updatedAt: new Date().toISOString(),
-            }
-          : r
-      )
-    );
-  }, []);
-
-  // Gerar dados para comparação
   const getComparisonData = useCallback(
     (resultIds: string[]): CandidateComparisonData[] => {
       return resultIds
@@ -145,24 +66,22 @@ export function useRecruiterAnalysis(): UseRecruiterAnalysisReturn {
             candidateName: result.candidateName || result.candidateId,
             overallScore: result.overallScore,
             competencyScores: result.competencyScores,
-            strengths: result.aiAnalysis.strengthsForRole,
-            concerns: result.aiAnalysis.concernsForRole,
+            strengths: result.aiAnalysis.strengthsForRole || [],
+            concerns: result.aiAnalysis.concernsForRole || [],
             aiRecommendation: result.aiRecommendation,
             recruiterDecision: result.recruiterDecision,
           };
         })
         .filter(Boolean) as CandidateComparisonData[];
     },
-    [results]
+    [results],
   );
 
   return {
     results,
+    isLoading,
     getResultById,
-    getResultsByAssessmentId,
-    adjustScore,
     setDecision,
-    addNote,
     getComparisonData,
   };
 }

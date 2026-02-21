@@ -16,7 +16,7 @@ import {
   RecommendationSignals,
   RecommendationData,
 } from '@/lib/jobRecommendation';
-import { idealBehavioralProfiles } from '@/lib/behavioralProfiles';
+import { getOrGenerateIdealProfile } from '@/lib/behavioralProfiles';
 
 export interface UseJobRecommendationsOptions {
   candidateId: string;
@@ -74,7 +74,9 @@ export function useJobRecommendations(
     jobs,
     candidates,
     applications: applications.map(a => ({ candidateId: a.candidateId, jobId: a.jobId })),
-    idealProfiles: idealBehavioralProfiles,
+    idealProfiles: Object.fromEntries(
+      jobs.map(job => [job.id, getOrGenerateIdealProfile(job)])
+    ),
   }), [jobs, candidates, applications]);
 
   // Montar sinais de recomendação

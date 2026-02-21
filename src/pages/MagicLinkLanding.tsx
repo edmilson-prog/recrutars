@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Briefcase,
@@ -23,7 +23,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useMagicLink } from '@/hooks/useMagicLink';
 
@@ -31,20 +30,9 @@ type PageState = 'loading' | 'valid' | 'expired' | 'completed' | 'form' | 'test'
 
 export default function MagicLinkLanding() {
   const { token } = useParams<{ token: string }>();
-  const navigate = useNavigate();
-  const { validateToken, getMagicLinkInfo } = useMagicLink();
+  const { invite, isLoading, isError } = useMagicLink(token || '');
 
   const [pageState, setPageState] = useState<PageState>('loading');
-  const [linkInfo, setLinkInfo] = useState<{
-    jobTitle: string;
-    companyName: string;
-    testTitle: string;
-    estimatedMinutes: number;
-    totalQuestions: number;
-    expiresAt: string;
-    externalName?: string;
-    externalEmail?: string;
-  } | null>(null);
 
   // Form state
   const [name, setName] = useState('');
@@ -53,52 +41,39 @@ export default function MagicLinkLanding() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Validar token ao carregar
+  // Derive page state from invite data
   useEffect(() => {
-    const checkToken = async () => {
-      if (!token) {
-        setPageState('expired');
-        return;
-      }
+    if (isLoading) {
+      setPageState('loading');
+      return;
+    }
 
-      // Simular validação
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (!token || isError || !invite) {
+      setPageState('expired');
+      return;
+    }
 
-      // Mock de validação - em produção seria uma chamada API
-      const isValid = token.length > 10;
-      const isExpired = false; // Mock
-      const isCompleted = false; // Mock
+    // Check if expired
+    if (invite.expiresAt && new Date(invite.expiresAt) < new Date()) {
+      setPageState('expired');
+      return;
+    }
 
-      if (!isValid || isExpired) {
-        setPageState('expired');
-        return;
-      }
+    // Check if already completed
+    if (invite.status === 'completed') {
+      setPageState('completed');
+      return;
+    }
 
-      if (isCompleted) {
-        setPageState('completed');
-        return;
-      }
+    // Pre-fill name/email if available
+    if (invite.externalName) setName(invite.externalName);
+    if (invite.externalEmail) setEmail(invite.externalEmail);
 
-      // Mock de dados do link
-      setLinkInfo({
-        jobTitle: 'Desenvolvedor Frontend Senior',
-        companyName: 'TechCorp Brasil',
-        testTitle: 'Avaliação Comportamental',
-        estimatedMinutes: 20,
-        totalQuestions: 20,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        externalName: undefined,
-        externalEmail: undefined,
-      });
-
-      setPageState('valid');
-    };
-
-    checkToken();
-  }, [token]);
+    setPageState('valid');
+  }, [token, invite, isLoading, isError]);
 
   const handleStartTest = () => {
-    if (linkInfo?.externalName && linkInfo?.externalEmail) {
+    if (invite?.externalName && invite?.externalEmail) {
       // Já tem dados, ir direto para o teste
       setPageState('test');
     } else {
@@ -198,7 +173,7 @@ export default function MagicLinkLanding() {
   }
 
   // Form state
-  if (pageState === 'form' && linkInfo) {
+  if (pageState === 'form' && invite) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <motion.div
@@ -314,7 +289,8 @@ export default function MagicLinkLanding() {
   }
 
   // Valid state - show intro
-  if (pageState === 'valid' && linkInfo) {
+  // TODO: Enrich invite data with job/assessment details via Edge Function or join query
+  if (pageState === 'valid' && invite) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <motion.div
@@ -328,13 +304,10 @@ export default function MagicLinkLanding() {
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <Briefcase className="w-8 h-8 text-primary" />
               </div>
-              <Badge variant="secondary" className="mb-2">
-                {linkInfo.companyName}
-              </Badge>
               <h1 className="text-2xl font-bold text-foreground">
-                {linkInfo.jobTitle}
+                Avaliação Comportamental
               </h1>
-              <p className="text-muted-foreground mt-1">{linkInfo.testTitle}</p>
+              <p className="text-muted-foreground mt-1">Teste por Vaga</p>
             </div>
 
             {/* Info cards */}
@@ -342,14 +315,14 @@ export default function MagicLinkLanding() {
               <div className="bg-muted/50 rounded-lg p-3 text-center">
                 <FileQuestion className="w-5 h-5 mx-auto mb-1 text-primary" />
                 <div className="text-lg font-bold text-foreground">
-                  {linkInfo.totalQuestions}
+                  15-25
                 </div>
                 <div className="text-xs text-muted-foreground">Perguntas</div>
               </div>
               <div className="bg-muted/50 rounded-lg p-3 text-center">
                 <Clock className="w-5 h-5 mx-auto mb-1 text-primary" />
                 <div className="text-lg font-bold text-foreground">
-                  ~{linkInfo.estimatedMinutes}
+                  ~20
                 </div>
                 <div className="text-xs text-muted-foreground">Minutos</div>
               </div>
@@ -375,13 +348,15 @@ export default function MagicLinkLanding() {
             </div>
 
             {/* Expiration warning */}
-            <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-500/10 rounded-lg p-3 mb-6">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-              <span>
-                Este link expira em{' '}
-                <strong>{formatDate(linkInfo.expiresAt)}</strong>
-              </span>
-            </div>
+            {invite.expiresAt && (
+              <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-500/10 rounded-lg p-3 mb-6">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <span>
+                  Este link expira em{' '}
+                  <strong>{formatDate(invite.expiresAt)}</strong>
+                </span>
+              </div>
+            )}
 
             {/* Start button */}
             <Button onClick={handleStartTest} className="w-full gradient-primary">

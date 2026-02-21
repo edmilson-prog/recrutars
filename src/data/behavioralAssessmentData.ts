@@ -1,8 +1,10 @@
 /**
- * Behavioral Assessment Data - Mock
+ * Behavioral Assessment Data
  * PRD-047: Teste Geral do Candidato
+ * PRD-048: Teste por Vaga (configs only — data moved to Supabase)
  *
- * Dados de sessões, respostas e resultados de avaliação comportamental
+ * Configurations, templates, and helpers for behavioral assessments.
+ * Mock data for job assessments (PRD-048) has been removed — now served by Supabase.
  */
 
 import type {
@@ -10,9 +12,6 @@ import type {
   BehavioralResponse,
   BehavioralResult,
   BehavioralTestConfig,
-  JobAssessment,
-  JobAssessmentInvite,
-  JobAssessmentResult,
   JobTestConfig,
 } from '@/types/assessment';
 
@@ -53,7 +52,7 @@ export const JOB_TEST_CONFIG: JobTestConfig = {
 };
 
 // =============================================================================
-// MOCK: SESSÕES DE AVALIAÇÃO
+// MOCK: SESSÕES DE AVALIAÇÃO (PRD-047 — still used by candidate behavioral test)
 // =============================================================================
 
 const now = new Date().toISOString();
@@ -62,28 +61,28 @@ const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOStrin
 export const mockBehavioralAssessments: BehavioralAssessment[] = [
   {
     id: 'ba-completed-1',
-    candidateId: 'candidate-2', // Outro candidato com teste completo
+    candidateId: 'candidate-2',
     status: 'completed',
-    questionsIds: [], // Seria populado com 55 IDs
+    questionsIds: [],
     totalQuestions: 55,
     currentQuestionIndex: 54,
     answeredCount: 55,
     startedAt: '2024-12-01T10:00:00Z',
     lastActivityAt: '2024-12-01T11:30:00Z',
     completedAt: '2024-12-01T11:30:00Z',
-    totalTimeSeconds: 5400, // 90 minutos
+    totalTimeSeconds: 5400,
     expiresAt: '2024-12-08T10:00:00Z',
   },
 ];
 
 // =============================================================================
-// MOCK: RESPOSTAS
+// MOCK: RESPOSTAS (PRD-047)
 // =============================================================================
 
 export const mockBehavioralResponses: BehavioralResponse[] = [];
 
 // =============================================================================
-// MOCK: RESULTADOS
+// MOCK: RESULTADOS (PRD-047)
 // =============================================================================
 
 export const mockBehavioralResults: BehavioralResult[] = [
@@ -98,26 +97,26 @@ export const mockBehavioralResults: BehavioralResult[] = [
     competencyScore: 71,
 
     categoryScores: {
-      'cat-1': 80,  // Abertura à Experiência
-      'cat-2': 85,  // Conscienciosidade
-      'cat-3': 75,  // Extroversão
-      'cat-4': 88,  // Amabilidade
-      'cat-5': 82,  // Estabilidade Emocional
-      'cat-6': 90,  // Integridade
-      'cat-7': 85,  // Responsabilidade
-      'cat-8': 88,  // Honestidade
-      'cat-9': 82,  // Ética Profissional
-      'cat-10': 80, // Confiabilidade
-      'cat-11': 72, // Liderança
-      'cat-12': 78, // Comunicação
-      'cat-13': 82, // Trabalho em Equipe
-      'cat-14': 68, // Resolução de Problemas
-      'cat-15': 75, // Adaptabilidade
-      'cat-16': 70, // Organização
-      'cat-17': 65, // Proatividade
-      'cat-18': 72, // Foco em Resultados
-      'cat-19': 68, // Tomada de Decisão
-      'cat-20': 70, // Gestão do Tempo
+      'cat-1': 80,
+      'cat-2': 85,
+      'cat-3': 75,
+      'cat-4': 88,
+      'cat-5': 82,
+      'cat-6': 90,
+      'cat-7': 85,
+      'cat-8': 88,
+      'cat-9': 82,
+      'cat-10': 80,
+      'cat-11': 72,
+      'cat-12': 78,
+      'cat-13': 82,
+      'cat-14': 68,
+      'cat-15': 75,
+      'cat-16': 70,
+      'cat-17': 65,
+      'cat-18': 72,
+      'cat-19': 68,
+      'cat-20': 70,
     },
 
     strengths: ['Integridade', 'Amabilidade', 'Honestidade'],
@@ -143,163 +142,6 @@ export const mockBehavioralResults: BehavioralResult[] = [
     xpAwarded: 50,
     badgeAwarded: 'self_knowledge',
     generatedAt: '2024-12-01T11:35:00Z',
-  },
-];
-
-// =============================================================================
-// MOCK: TESTES POR VAGA (PRD-048)
-// =============================================================================
-
-export const mockJobAssessments: JobAssessment[] = [
-  {
-    id: 'ja-1',
-    jobId: 'job-1',
-    companyId: 'company-1',
-    title: 'Avaliação para Desenvolvedor Frontend',
-    status: 'published',
-    competencies: {
-      critical: ['cat-14', 'cat-15'], // Resolução de Problemas, Adaptabilidade
-      important: ['cat-12', 'cat-13', 'cat-17'], // Comunicação, Trabalho em Equipe, Proatividade
-      weights: {
-        'cat-14': 5,
-        'cat-15': 5,
-        'cat-12': 4,
-        'cat-13': 4,
-        'cat-17': 3,
-      },
-    },
-    questionsIds: [], // Seria populado com 20 IDs
-    totalQuestions: 20,
-    estimatedMinutes: 25,
-    expirationDays: 7,
-    createdBy: 'user-company-1',
-    createdAt: '2024-12-10T09:00:00Z',
-    updatedAt: '2024-12-10T09:00:00Z',
-  },
-  {
-    id: 'ja-2',
-    jobId: 'job-2',
-    companyId: 'company-1',
-    title: 'Avaliação para Líder de Equipe',
-    status: 'draft',
-    competencies: {
-      critical: ['cat-11', 'cat-19'], // Liderança, Tomada de Decisão
-      important: ['cat-12', 'cat-18', 'cat-5'], // Comunicação, Foco em Resultados, Estabilidade Emocional
-      weights: {
-        'cat-11': 5,
-        'cat-19': 5,
-        'cat-12': 4,
-        'cat-18': 4,
-        'cat-5': 3,
-      },
-    },
-    questionsIds: [],
-    totalQuestions: 22,
-    estimatedMinutes: 28,
-    expirationDays: 10,
-    createdBy: 'user-company-1',
-    createdAt: '2024-12-15T14:00:00Z',
-    updatedAt: '2024-12-15T14:00:00Z',
-  },
-];
-
-// =============================================================================
-// MOCK: CONVITES PARA TESTE
-// =============================================================================
-
-export const mockJobAssessmentInvites: JobAssessmentInvite[] = [
-  {
-    id: 'jai-1',
-    jobAssessmentId: 'ja-1',
-    type: 'internal',
-    candidateId: 'candidate-1',
-    status: 'pending',
-    sentAt: '2024-12-11T10:00:00Z',
-    expiresAt: '2024-12-18T10:00:00Z',
-  },
-  {
-    id: 'jai-2',
-    jobAssessmentId: 'ja-1',
-    type: 'magic_link',
-    externalName: 'Carlos Silva',
-    externalEmail: 'carlos.silva@email.com',
-    magicToken: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    status: 'started',
-    sentAt: '2024-12-11T11:00:00Z',
-    startedAt: '2024-12-12T09:00:00Z',
-    expiresAt: '2024-12-18T11:00:00Z',
-  },
-  {
-    id: 'jai-3',
-    jobAssessmentId: 'ja-1',
-    type: 'magic_link',
-    externalName: 'Ana Rodrigues',
-    externalEmail: 'ana.rodrigues@email.com',
-    magicToken: 'b2c3d4e5-f6a7-8901-bcde-f2345678901a',
-    status: 'completed',
-    sentAt: '2024-12-10T14:00:00Z',
-    startedAt: '2024-12-11T08:00:00Z',
-    completedAt: '2024-12-11T08:45:00Z',
-    expiresAt: '2024-12-17T14:00:00Z',
-  },
-];
-
-// =============================================================================
-// MOCK: RESULTADOS DE TESTE POR VAGA
-// =============================================================================
-
-export const mockJobAssessmentResults: JobAssessmentResult[] = [
-  {
-    id: 'jar-1',
-    inviteId: 'jai-3',
-    jobAssessmentId: 'ja-1',
-    candidateId: 'external-ana',
-    candidateName: 'Ana Rodrigues',
-    candidateEmail: 'ana.rodrigues@email.com',
-
-    overallScore: 85,
-    competencyScores: {
-      'cat-14': 88, // Resolução de Problemas
-      'cat-15': 92, // Adaptabilidade
-      'cat-12': 82, // Comunicação
-      'cat-13': 85, // Trabalho em Equipe
-      'cat-17': 78, // Proatividade
-    },
-
-    aiAnalysis: {
-      overallFit: 87,
-      competencyFit: {
-        'cat-14': 92,
-        'cat-15': 95,
-        'cat-12': 85,
-        'cat-13': 88,
-        'cat-17': 80,
-      },
-      strengthsForRole: [
-        'Excelente capacidade de adaptação a mudanças',
-        'Forte habilidade analítica para resolução de problemas',
-        'Boa comunicação em equipe',
-      ],
-      concernsForRole: [
-        'Proatividade levemente abaixo do esperado para o cargo',
-      ],
-      interviewSuggestions: [
-        'Peça exemplos de situações onde precisou tomar iniciativa sem supervisão',
-        'Explore casos de adaptação a tecnologias novas',
-        'Discuta como lida com prazos apertados e múltiplas prioridades',
-      ],
-      summary: 'Candidata com excelente fit para a vaga. Pontos fortes em adaptabilidade e resolução de problemas compensam área de desenvolvimento em proatividade.',
-    },
-
-    aiRecommendation: 'approve',
-    recruiterDecision: undefined,
-    recruiterNotes: undefined,
-
-    redFlags: [],
-    responses: [],
-
-    createdAt: '2024-12-11T08:50:00Z',
-    updatedAt: '2024-12-11T08:50:00Z',
   },
 ];
 
@@ -330,7 +172,6 @@ export const INSIGHT_TEMPLATES = {
 // =============================================================================
 
 export const CAREER_RECOMMENDATIONS_MAP: Record<string, string[]> = {
-  // Perfis com alta personalidade
   high_personality: [
     'Consultoria',
     'Gestão de Pessoas',
@@ -338,7 +179,6 @@ export const CAREER_RECOMMENDATIONS_MAP: Record<string, string[]> = {
     'Vendas Consultivas',
     'Coaching e Mentoria',
   ],
-  // Perfis com alto caráter
   high_character: [
     'Compliance',
     'Auditoria',
@@ -346,7 +186,6 @@ export const CAREER_RECOMMENDATIONS_MAP: Record<string, string[]> = {
     'Gestão de Qualidade',
     'Atendimento ao Cliente',
   ],
-  // Perfis com altas competências
   high_competencies: [
     'Gestão de Projetos',
     'Liderança de Equipes',
@@ -354,7 +193,6 @@ export const CAREER_RECOMMENDATIONS_MAP: Record<string, string[]> = {
     'Análise de Dados',
     'Operações',
   ],
-  // Perfis equilibrados
   balanced: [
     'Analista de Negócios',
     'Coordenação de Projetos',
@@ -390,8 +228,8 @@ export function canTakeTest(candidateId: string): { canTake: boolean; daysRemain
   }
 
   const lastDate = new Date(lastCompleted);
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+  const now2 = new Date();
+  const diffDays = Math.floor((now2.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
 
   if (diffDays >= BEHAVIORAL_TEST_CONFIG.cooldownDays) {
     return { canTake: true };
@@ -433,29 +271,5 @@ export function hasActiveSession(candidateId: string): BehavioralAssessment | nu
  * Gera um magic token UUID v4
  */
 export function generateMagicToken(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-/**
- * Valida um magic token
- */
-export function validateMagicToken(token: string): JobAssessmentInvite | null {
-  const invite = mockJobAssessmentInvites.find(
-    (inv) => inv.magicToken === token && inv.status !== 'expired'
-  );
-
-  if (!invite) {
-    return null;
-  }
-
-  // Verificar expiração
-  if (new Date(invite.expiresAt) < new Date()) {
-    return null;
-  }
-
-  return invite;
+  return crypto.randomUUID();
 }

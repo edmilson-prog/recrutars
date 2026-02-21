@@ -17,7 +17,7 @@ import {
   CandidateSignals,
   NotSuitableReason,
 } from '@/lib/candidateRecommendation';
-import { idealBehavioralProfiles } from '@/lib/behavioralProfiles';
+import { getOrGenerateIdealProfile } from '@/lib/behavioralProfiles';
 
 export interface UseCandidateRecommendationsOptions {
   jobId: string;
@@ -79,7 +79,9 @@ export function useCandidateRecommendations(
     jobs,
     candidates,
     applications: applications.map(a => ({ candidateId: a.candidateId, jobId: a.jobId })),
-    idealProfiles: idealBehavioralProfiles,
+    idealProfiles: Object.fromEntries(
+      jobs.map(job => [job.id, getOrGenerateIdealProfile(job)])
+    ),
   }), [jobs, candidates, applications]);
 
   // Montar sinais de recomendação

@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { TestWizard } from '@/components/job-assessment';
 import { useAuth } from '@/contexts/AuthContext';
 import { useJob } from '@/hooks/useJobsQuery';
+import { useCreateJobAssessment } from '@/hooks/useJobAssessmentsQuery';
 import type { JobAssessment } from '@/types/assessment';
 import { useToast } from '@/hooks/use-toast';
 
@@ -24,6 +25,7 @@ export default function CreateJobTest() {
 
   // Fetch data from service layer
   const { data: job } = useJob(jobId || '');
+  const createAssessment = useCreateJobAssessment();
 
   if (!job) {
     return (
@@ -44,23 +46,40 @@ export default function CreateJobTest() {
     );
   }
 
-  const handleComplete = (assessment: JobAssessment) => {
-    // Aqui salvaria no backend
-    console.log('Assessment criado:', assessment);
+  const handleComplete = async (assessment: JobAssessment) => {
+    try {
+      await createAssessment.mutateAsync({
+        jobId: assessment.jobId,
+        companyId: assessment.companyId,
+        title: assessment.title,
+        status: assessment.status,
+        competencies: assessment.competencies,
+        questionsIds: assessment.questionsIds,
+        totalQuestions: assessment.totalQuestions,
+        estimatedMinutes: assessment.estimatedMinutes,
+        expirationDays: assessment.expirationDays,
+        createdBy: user?.id || '',
+      });
 
-    toast({
-      title:
-        assessment.status === 'published'
-          ? 'Teste publicado!'
-          : 'Rascunho salvo!',
-      description:
-        assessment.status === 'published'
-          ? 'O teste está pronto para receber candidatos.'
-          : 'Você pode continuar editando depois.',
-    });
+      toast({
+        title:
+          assessment.status === 'published'
+            ? 'Teste publicado!'
+            : 'Rascunho salvo!',
+        description:
+          assessment.status === 'published'
+            ? 'O teste está pronto para receber candidatos.'
+            : 'Você pode continuar editando depois.',
+      });
 
-    // Navegar para a página de gestão do teste
-    navigate(`/empresa/vagas/${jobId}/teste`);
+      navigate(`/empresa/vagas/${jobId}/teste`);
+    } catch (err) {
+      toast({
+        title: 'Erro ao salvar teste',
+        description: 'Não foi possível salvar o teste. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -107,7 +126,7 @@ export default function CreateJobTest() {
             jobId={jobId!}
             jobTitle={job.title}
             companyId={job.companyId}
-            userId={user?.id || 'user-1'}
+            userId={user?.id || ''}
             onComplete={handleComplete}
             onCancel={handleCancel}
           />

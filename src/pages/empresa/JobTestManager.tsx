@@ -18,7 +18,7 @@ import {
   Plus,
   Settings,
   Play,
-  Archive,
+  Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -31,54 +31,70 @@ import {
 } from '@/components/job-assessment';
 import type { InternalCandidate } from '@/components/job-assessment';
 import { useJob } from '@/hooks/useJobsQuery';
-import { mockJobAssessments, mockJobAssessmentInvites } from '@/data/behavioralAssessmentData';
+import { useApplicationsByJob } from '@/hooks/useApplicationsQuery';
+import {
+  useJobAssessmentByJob,
+  useJobAssessmentInvites,
+  useCreateBulkJobAssessmentInvites,
+  useCreateJobAssessmentInvite,
+  useCancelJobAssessmentInvite,
+  useResendJobAssessmentInvite,
+} from '@/hooks/useJobAssessmentsQuery';
 import { JOB_TEST_CONFIG } from '@/data/behavioralAssessmentData';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock de candidatos da vaga
-const mockCandidates: InternalCandidate[] = [
-  {
-    id: 'cand-1',
-    name: 'Ana Silva',
-    email: 'ana.silva@email.com',
-    appliedAt: '2024-01-15',
-    status: 'screening',
-  },
-  {
-    id: 'cand-2',
-    name: 'Carlos Oliveira',
-    email: 'carlos.oliveira@email.com',
-    appliedAt: '2024-01-14',
-    status: 'interview',
-  },
-  {
-    id: 'cand-3',
-    name: 'Maria Santos',
-    email: 'maria.santos@email.com',
-    appliedAt: '2024-01-13',
-    status: 'new',
-  },
-  {
-    id: 'cand-4',
-    name: 'Pedro Costa',
-    email: 'pedro.costa@email.com',
-    appliedAt: '2024-01-12',
-    status: 'offer',
-  },
-];
+/** Maps application status to InternalCandidate status */
+function mapApplicationStatus(status: string): InternalCandidate['status'] {
+  const map: Record<string, InternalCandidate['status']> = {
+    pending: 'new',
+    reviewing: 'screening',
+    interview: 'interview',
+    offer: 'offer',
+    hired: 'hired',
+    rejected: 'rejected',
+    withdrawn: 'rejected',
+    talent_pool: 'screening',
+  };
+  return map[status] ?? 'new';
+}
 
 export default function JobTestManager() {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('invites');
-  const [invites, setInvites] = useState(mockJobAssessmentInvites);
 
-  // Fetch data from service layer
+  // Fetch job data
   const { data: job } = useJob(jobId || '');
 
-  // Buscar dados do assessment
-  const assessment = mockJobAssessments.find((a) => a.jobId === jobId);
+  // Fetch assessment for this job (from Supabase)
+  const { data: assessment, isLoading: isLoadingAssessment } = useJobAssessmentByJob(jobId || '');
+
+  // Fetch invites (from Supabase)
+  const { data: invites = [], isLoading: isLoadingInvites } = useJobAssessmentInvites(
+    assessment?.id || '',
+  );
+
+  // Fetch real candidates who applied to this job
+  const { data: applications = [] } = useApplicationsByJob(jobId || '');
+
+  // Map applications to InternalCandidate format
+  const candidates: InternalCandidate[] = useMemo(() => {
+    return applications.map((app) => ({
+      id: app.candidateId,
+      name: app.candidateName,
+      email: '', // Email not available in Application type, kept empty
+      avatar: app.candidateAvatar,
+      appliedAt: app.appliedAt,
+      status: mapApplicationStatus(app.status),
+    }));
+  }, [applications]);
+
+  // Mutations
+  const createBulkInvites = useCreateBulkJobAssessmentInvites();
+  const createInvite = useCreateJobAssessmentInvite();
+  const cancelInvite = useCancelJobAssessmentInvite();
+  const resendInvite = useResendJobAssessmentInvite();
 
   if (!job) {
     return (
@@ -91,6 +107,17 @@ export default function JobTestManager() {
           <Button onClick={() => navigate('/empresa/vagas')}>
             Voltar para Vagas
           </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (isLoadingAssessment) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex flex-col items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Carregando teste...</p>
         </div>
       </DashboardLayout>
     );
@@ -148,66 +175,73 @@ export default function JobTestManager() {
   const completedCount = invites.filter((i) => i.status === 'completed').length;
 
   // Handlers
-  const handleSendInvites = (candidateIds: string[]) => {
-    const newInvites = candidateIds.map((candidateId) => ({
-      id: `inv-${Date.now()}-${candidateId}`,
-      jobAssessmentId: assessment.id,
-      type: 'internal' as const,
-      candidateId,
-      status: 'pending' as const,
-      sentAt: new Date().toISOString(),
-      expiresAt: new Date(
-        Date.now() + assessment.expirationDays * 24 * 60 * 60 * 1000
-      ).toISOString(),
-    }));
+  const handleSendInvites = async (candidateIds: string[]) => {
+    try {
+      const inviteData = candidateIds.map((candidateId) => ({
+        jobAssessmentId: assessment.id,
+        type: 'internal' as const,
+        candidateId,
+        expirationDays: assessment.expirationDays,
+      }));
 
-    setInvites((prev) => [...prev, ...newInvites]);
-    toast({
-      title: 'Convites enviados!',
-      description: `${candidateIds.length} convite(s) enviado(s) com sucesso.`,
-    });
+      await createBulkInvites.mutateAsync(inviteData);
+
+      toast({
+        title: 'Convites enviados!',
+        description: `${candidateIds.length} convite(s) enviado(s) com sucesso.`,
+      });
+    } catch {
+      toast({
+        title: 'Erro ao enviar convites',
+        description: 'Não foi possível enviar os convites. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleGenerateMagicLink = async (data: {
     externalName?: string;
     externalEmail?: string;
     expirationDays: number;
-  }) => {
-    const token = crypto.randomUUID();
-    const baseUrl = window.location.origin;
-    const link = `${baseUrl}/t/${token}`;
-
-    const newInvite = {
-      id: `inv-${Date.now()}`,
+  }): Promise<string> => {
+    const invite = await createInvite.mutateAsync({
       jobAssessmentId: assessment.id,
-      type: 'magic_link' as const,
+      type: 'magic_link',
       externalName: data.externalName,
       externalEmail: data.externalEmail,
-      magicToken: token,
-      status: 'pending' as const,
-      sentAt: new Date().toISOString(),
-      expiresAt: new Date(
-        Date.now() + data.expirationDays * 24 * 60 * 60 * 1000
-      ).toISOString(),
-    };
+      expirationDays: data.expirationDays,
+    });
 
-    setInvites((prev) => [...prev, newInvite]);
-    return link;
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/t/${invite.magicToken}`;
   };
 
   const handleResend = (inviteId: string) => {
-    toast({
-      title: 'Convite reenviado',
-      description: 'O candidato receberá um novo e-mail.',
-    });
+    resendInvite.mutate(
+      { inviteId, assessmentId: assessment.id },
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Convite reenviado',
+            description: 'O candidato receberá um novo e-mail.',
+          });
+        },
+      },
+    );
   };
 
   const handleCancel = (inviteId: string) => {
-    setInvites((prev) => prev.filter((i) => i.id !== inviteId));
-    toast({
-      title: 'Convite cancelado',
-      description: 'O convite foi removido.',
-    });
+    cancelInvite.mutate(
+      { inviteId, assessmentId: assessment.id },
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Convite cancelado',
+            description: 'O convite foi removido.',
+          });
+        },
+      },
+    );
   };
 
   const handleViewResult = (inviteId: string) => {
@@ -265,9 +299,11 @@ export default function JobTestManager() {
                 Comparar
               </Link>
             </Button>
-            <Button variant="outline" size="sm">
-              <Settings className="w-4 h-4 mr-2" />
-              Configurações
+            <Button variant="outline" size="sm" asChild>
+              <Link to={`/empresa/vagas/${jobId}/criar-teste`}>
+                <Settings className="w-4 h-4 mr-2" />
+                Configurações
+              </Link>
             </Button>
           </div>
         </motion.div>
@@ -345,9 +381,10 @@ export default function JobTestManager() {
             <TabsContent value="internal" className="mt-4">
               <div className="bg-card rounded-xl p-4 border">
                 <InternalCandidateList
-                  candidates={mockCandidates}
+                  candidates={candidates}
                   existingInvites={invites}
                   onSendInvites={handleSendInvites}
+                  isSending={createBulkInvites.isPending}
                 />
               </div>
             </TabsContent>

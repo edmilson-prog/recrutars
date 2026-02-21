@@ -8,49 +8,19 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Briefcase, FileQuestion, User } from 'lucide-react';
+import { ArrowLeft, Briefcase, FileQuestion, User, Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { CandidateReport } from '@/components/job-assessment';
-import { useJobs } from '@/hooks/useJobsQuery';
+import { useJob } from '@/hooks/useJobsQuery';
 import {
-  mockJobAssessments,
-  mockJobAssessmentResults,
-} from '@/data/behavioralAssessmentData';
+  useJobAssessmentByJob,
+  useJobAssessmentResults,
+  useUpdateRecruiterDecision,
+} from '@/hooks/useJobAssessmentsQuery';
 import { assessmentQuestions } from '@/data/assessmentData';
 import { useToast } from '@/hooks/use-toast';
 import type { JobAssessmentResult } from '@/types/assessment';
-
-// Mock de candidatos
-const mockCandidateInfo: Record<
-  string,
-  { id: string; name: string; email: string; avatar?: string }
-> = {
-  'cand-1': {
-    id: 'cand-1',
-    name: 'Ana Silva',
-    email: 'ana.silva@email.com',
-  },
-  'cand-2': {
-    id: 'cand-2',
-    name: 'Carlos Oliveira',
-    email: 'carlos.oliveira@email.com',
-  },
-  'cand-3': {
-    id: 'cand-3',
-    name: 'Maria Santos',
-    email: 'maria.santos@email.com',
-  },
-};
-
-// Mock de respostas
-function generateMockResponses(questionIds: string[]) {
-  return questionIds.map((qId) => ({
-    questionId: qId,
-    response: Math.random() > 0.5 ? '4' : '3',
-    aiScore: Math.floor(Math.random() * 3) + 3, // 3-5
-  }));
-}
 
 export default function CandidateTestReport() {
   const { jobId, candidateId } = useParams<{
@@ -59,38 +29,65 @@ export default function CandidateTestReport() {
   }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch data from service layer
-  const { data: jobsResult } = useJobs();
-  const allJobs = jobsResult?.data ?? [];
-
-  // Buscar dados
-  const job = allJobs.find((j) => j.id === jobId);
-  const assessment = mockJobAssessments.find((a) => a.jobId === jobId);
-  const result = mockJobAssessmentResults.find(
-    (r) => r.candidateId === candidateId
+  // Fetch real data from Supabase
+  const { data: job } = useJob(jobId || '');
+  const { data: assessment, isLoading: isLoadingAssessment } = useJobAssessmentByJob(jobId || '');
+  const { data: allResults = [], isLoading: isLoadingResults } = useJobAssessmentResults(
+    assessment?.id || '',
   );
-  const candidate = candidateId ? mockCandidateInfo[candidateId] : null;
 
-  // State para ajustes
-  const [localResult, setLocalResult] = useState<JobAssessmentResult | null>(
-    result || null
-  );
-  const [responses, setResponses] = useState(() => {
-    if (assessment) {
-      return generateMockResponses(assessment.questionsIds);
-    }
-    return [];
-  });
+  const updateDecision = useUpdateRecruiterDecision();
 
-  // Questões do teste
+  // Find result for this candidate
+  const result = useMemo(() => {
+    return allResults.find((r) => r.candidateId === candidateId) || null;
+  }, [allResults, candidateId]);
+
+  // Local state for adjustments (optimistic)
+  const [localResult, setLocalResult] = useState<JobAssessmentResult | null>(null);
+  const activeResult = localResult || result;
+
+  // Questions from the assessment
   const testQuestions = useMemo(() => {
     if (!assessment) return [];
     return assessmentQuestions.filter((q) =>
-      assessment.questionsIds.includes(q.id)
+      assessment.questionsIds.includes(q.id),
     );
   }, [assessment]);
+
+  // Mock responses until real response data is available
+  const responses = useMemo(() => {
+    if (activeResult?.responses && activeResult.responses.length > 0) {
+      return activeResult.responses.map((r) => ({
+        questionId: r.questionId,
+        response: r.response,
+        aiScore: r.score ? Math.round(r.score / 20) : 3,
+      }));
+    }
+    // Generate placeholder responses for display
+    if (assessment) {
+      return assessment.questionsIds.map((qId) => ({
+        questionId: qId,
+        response: '3',
+        aiScore: 3,
+      }));
+    }
+    return [];
+  }, [activeResult, assessment]);
+
+  const isLoading = isLoadingAssessment || isLoadingResults;
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex flex-col items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Carregando relatório...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!job || !assessment) {
     return (
@@ -108,13 +105,13 @@ export default function CandidateTestReport() {
     );
   }
 
-  if (!candidate || !localResult) {
+  if (!activeResult) {
     return (
       <DashboardLayout userType="company">
         <div className="flex flex-col items-center justify-center py-16">
           <User className="w-16 h-16 text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold text-foreground mb-2">
-            Candidato não encontrado
+            Resultado não encontrado
           </h2>
           <p className="text-muted-foreground mb-4">
             Este candidato não completou o teste ou não existe.
@@ -127,91 +124,83 @@ export default function CandidateTestReport() {
     );
   }
 
+  // Candidate info from result
+  const candidate = {
+    id: activeResult.candidateId,
+    name: activeResult.candidateName || activeResult.candidateId,
+    email: activeResult.candidateEmail || '',
+  };
+
   // Handlers
   const handleAdjustScore = (
     questionId: string,
     newScore: number,
-    note?: string
+    note?: string,
   ) => {
-    setResponses((prev) =>
-      prev.map((r) =>
-        r.questionId === questionId
-          ? { ...r, recruiterScore: newScore, recruiterNote: note }
-          : r
-      )
-    );
+    setLocalResult((prev) => {
+      const base = prev || activeResult;
+      if (!base) return prev;
 
-    // Recalcular score geral (simplificado)
-    const allScores = responses.map((r) =>
-      r.questionId === questionId
-        ? newScore
-        : r.recruiterScore ?? r.aiScore
-    );
-    const avgScore = Math.round(
-      (allScores.reduce((sum, s) => sum + s, 0) / allScores.length) * 20
-    );
-
-    setLocalResult((prev) =>
-      prev
-        ? {
-            ...prev,
-            overallScore: avgScore,
-            recruiterAdjustments: {
-              ...prev.recruiterAdjustments,
-              adjustedScores: [
-                ...(prev.recruiterAdjustments?.adjustedScores || []).filter(
-                  (a) => a.questionId !== questionId
-                ),
-                {
-                  questionId,
-                  aiScore:
-                    responses.find((r) => r.questionId === questionId)
-                      ?.aiScore || 0,
-                  recruiterScore: newScore,
-                  note,
-                },
-              ],
+      return {
+        ...base,
+        recruiterAdjustments: {
+          ...base.recruiterAdjustments,
+          adjustedScores: [
+            ...(base.recruiterAdjustments?.adjustedScores || []).filter(
+              (a) => a.questionId !== questionId,
+            ),
+            {
+              questionId,
+              originalScore:
+                responses.find((r) => r.questionId === questionId)?.aiScore || 0,
+              adjustedScore: newScore,
+              note,
             },
-          }
-        : prev
-    );
+          ],
+        },
+      };
+    });
   };
 
   const handleDecision = async (
     decision: 'approved' | 'pending' | 'rejected',
-    notes?: string
+    notes?: string,
   ) => {
-    setIsSubmitting(true);
+    try {
+      await updateDecision.mutateAsync({
+        resultId: activeResult.id,
+        assessmentId: assessment.id,
+        decision,
+        notes,
+      });
 
-    // Simular delay de salvamento
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      setLocalResult((prev) => {
+        const base = prev || activeResult;
+        if (!base) return prev;
+        return { ...base, recruiterDecision: decision, recruiterNotes: notes };
+      });
 
-    setLocalResult((prev) =>
-      prev
-        ? {
-            ...prev,
-            recruiterDecision: decision,
-            recruiterNotes: notes,
-          }
-        : prev
-    );
-
-    toast({
-      title:
-        decision === 'approved'
-          ? 'Candidato aprovado!'
-          : decision === 'rejected'
-          ? 'Candidato reprovado'
-          : 'Decisão salva',
-      description:
-        decision === 'approved'
-          ? 'O candidato foi marcado como aprovado.'
-          : decision === 'rejected'
-          ? 'O candidato foi marcado como reprovado.'
-          : 'A decisão será tomada posteriormente.',
-    });
-
-    setIsSubmitting(false);
+      toast({
+        title:
+          decision === 'approved'
+            ? 'Candidato aprovado!'
+            : decision === 'rejected'
+              ? 'Candidato reprovado'
+              : 'Decisão salva',
+        description:
+          decision === 'approved'
+            ? 'O candidato foi marcado como aprovado.'
+            : decision === 'rejected'
+              ? 'O candidato foi marcado como reprovado.'
+              : 'A decisão será tomada posteriormente.',
+      });
+    } catch {
+      toast({
+        title: 'Erro ao salvar decisão',
+        description: 'Não foi possível salvar. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -253,14 +242,14 @@ export default function CandidateTestReport() {
         >
           <CandidateReport
             candidate={candidate}
-            result={localResult}
+            result={activeResult}
             questions={testQuestions}
             responses={responses}
-            completedAt={localResult.createdAt}
+            completedAt={activeResult.createdAt}
             timeSpentMinutes={Math.floor(assessment.estimatedMinutes * 0.8)}
             onAdjustScore={handleAdjustScore}
             onDecision={handleDecision}
-            isSubmitting={isSubmitting}
+            isSubmitting={updateDecision.isPending}
           />
         </motion.div>
       </div>

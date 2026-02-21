@@ -8,93 +8,44 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Briefcase, FileQuestion, Users, Plus } from 'lucide-react';
+import { ArrowLeft, Briefcase, FileQuestion, Users, Plus, Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { CandidateComparison } from '@/components/job-assessment';
-import { useJobs } from '@/hooks/useJobsQuery';
+import { useJob } from '@/hooks/useJobsQuery';
 import {
-  mockJobAssessments,
-  mockJobAssessmentResults,
-} from '@/data/behavioralAssessmentData';
-
-// Mock de candidatos com resultados
-const mockCandidatesWithResults = [
-  {
-    id: 'cand-1',
-    name: 'Ana Silva',
-    email: 'ana.silva@email.com',
-    overallScore: 82,
-    competencyScores: {
-      'cat-openness': 85,
-      'cat-conscientiousness': 78,
-      'cat-communication': 88,
-      'cat-leadership': 75,
-      'cat-teamwork': 80,
-    },
-    completedAt: '2024-01-20T14:30:00Z',
-  },
-  {
-    id: 'cand-2',
-    name: 'Carlos Oliveira',
-    email: 'carlos.oliveira@email.com',
-    overallScore: 75,
-    competencyScores: {
-      'cat-openness': 70,
-      'cat-conscientiousness': 85,
-      'cat-communication': 72,
-      'cat-leadership': 80,
-      'cat-teamwork': 68,
-    },
-    completedAt: '2024-01-19T10:15:00Z',
-  },
-  {
-    id: 'cand-3',
-    name: 'Maria Santos',
-    email: 'maria.santos@email.com',
-    overallScore: 88,
-    competencyScores: {
-      'cat-openness': 90,
-      'cat-conscientiousness': 82,
-      'cat-communication': 92,
-      'cat-leadership': 85,
-      'cat-teamwork': 91,
-    },
-    completedAt: '2024-01-18T16:45:00Z',
-  },
-  {
-    id: 'cand-4',
-    name: 'Pedro Costa',
-    email: 'pedro.costa@email.com',
-    overallScore: 70,
-    competencyScores: {
-      'cat-openness': 65,
-      'cat-conscientiousness': 75,
-      'cat-communication': 68,
-      'cat-leadership': 72,
-      'cat-teamwork': 70,
-    },
-    completedAt: '2024-01-17T09:00:00Z',
-  },
-];
+  useJobAssessmentByJob,
+  useJobAssessmentResults,
+} from '@/hooks/useJobAssessmentsQuery';
 
 export default function CompareCandidates() {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  // Fetch data from service layer
-  const { data: jobsResult } = useJobs();
-  const allJobs = jobsResult?.data ?? [];
+  // Fetch real data from Supabase
+  const { data: job } = useJob(jobId || '');
+  const { data: assessment, isLoading: isLoadingAssessment } = useJobAssessmentByJob(jobId || '');
+  const { data: results = [], isLoading: isLoadingResults } = useJobAssessmentResults(
+    assessment?.id || '',
+  );
 
-  // Buscar dados
-  const job = allJobs.find((j) => j.id === jobId);
-  const assessment = mockJobAssessments.find((a) => a.jobId === jobId);
+  // Map results to candidate comparison format
+  const candidatesWithResults = useMemo(() => {
+    return results.map((r) => ({
+      id: r.candidateId,
+      name: r.candidateName || r.candidateId,
+      email: r.candidateEmail || '',
+      overallScore: r.overallScore,
+      competencyScores: r.competencyScores,
+      completedAt: r.createdAt,
+    }));
+  }, [results]);
 
-  // Competências do teste
+  // Competencies from the assessment
   const competencyIds = useMemo(() => {
     if (!assessment) return [];
     return [
@@ -103,10 +54,23 @@ export default function CompareCandidates() {
     ];
   }, [assessment]);
 
-  // Candidatos selecionados para comparação
+  // Selected candidates for comparison
   const selectedCandidates = useMemo(() => {
-    return mockCandidatesWithResults.filter((c) => selectedIds.includes(c.id));
-  }, [selectedIds]);
+    return candidatesWithResults.filter((c) => selectedIds.includes(c.id));
+  }, [selectedIds, candidatesWithResults]);
+
+  const isLoading = isLoadingAssessment || isLoadingResults;
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="company">
+        <div className="flex flex-col items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Carregando dados...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!job || !assessment) {
     return (
@@ -130,7 +94,6 @@ export default function CompareCandidates() {
         return prev.filter((i) => i !== id);
       }
       if (prev.length >= 4) {
-        // Limite de 4 candidatos
         return prev;
       }
       return [...prev, id];
@@ -172,125 +135,143 @@ export default function CompareCandidates() {
           </div>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Lista de candidatos para selecionar */}
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="lg:col-span-1"
-          >
-            <div className="bg-card rounded-xl border p-4 sticky top-4">
-              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary" />
-                Candidatos ({mockCandidatesWithResults.length})
-              </h3>
+        {candidatesWithResults.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 bg-card rounded-xl border">
+            <Users className="w-16 h-16 text-muted-foreground mb-4" />
+            <h2 className="text-xl font-semibold text-foreground mb-2">
+              Nenhum resultado disponível
+            </h2>
+            <p className="text-muted-foreground mb-6 text-center max-w-md">
+              Ainda não há candidatos que completaram o teste para comparação.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/empresa/vagas/${jobId}/teste`)}
+            >
+              Voltar para Gestão
+            </Button>
+          </div>
+        ) : (
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Lista de candidatos para selecionar */}
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="lg:col-span-1"
+            >
+              <div className="bg-card rounded-xl border p-4 sticky top-4">
+                <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  Candidatos ({candidatesWithResults.length})
+                </h3>
 
-              <p className="text-sm text-muted-foreground mb-4">
-                Selecione até 4 candidatos para comparar lado a lado.
-              </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Selecione até 4 candidatos para comparar lado a lado.
+                </p>
 
-              <div className="space-y-2">
-                {mockCandidatesWithResults.map((candidate) => {
-                  const isSelected = selectedIds.includes(candidate.id);
-                  const canSelect = selectedIds.length < 4 || isSelected;
+                <div className="space-y-2">
+                  {candidatesWithResults.map((candidate) => {
+                    const isSelected = selectedIds.includes(candidate.id);
+                    const canSelect = selectedIds.length < 4 || isSelected;
 
-                  return (
-                    <motion.div
-                      key={candidate.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className={`
-                        flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer
-                        ${
-                          isSelected
-                            ? 'border-primary bg-primary/5'
-                            : canSelect
-                            ? 'hover:border-primary/50'
-                            : 'opacity-50 cursor-not-allowed'
-                        }
-                      `}
-                      onClick={() => canSelect && toggleCandidate(candidate.id)}
-                    >
-                      <Checkbox
-                        checked={isSelected}
-                        disabled={!canSelect}
-                        onCheckedChange={() =>
-                          canSelect && toggleCandidate(candidate.id)
-                        }
-                      />
-
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback className="text-xs">
-                          {candidate.name
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')
-                            .slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground text-sm truncate">
-                          {candidate.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Score: {candidate.overallScore}%
-                        </p>
-                      </div>
-
-                      <Badge
-                        variant={
-                          candidate.overallScore >= 80
-                            ? 'default'
-                            : candidate.overallScore >= 60
-                            ? 'secondary'
-                            : 'outline'
-                        }
-                        className={
-                          candidate.overallScore >= 80 ? 'bg-success' : ''
-                        }
+                    return (
+                      <motion.div
+                        key={candidate.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className={`
+                          flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer
+                          ${
+                            isSelected
+                              ? 'border-primary bg-primary/5'
+                              : canSelect
+                                ? 'hover:border-primary/50'
+                                : 'opacity-50 cursor-not-allowed'
+                          }
+                        `}
+                        onClick={() => canSelect && toggleCandidate(candidate.id)}
                       >
-                        {candidate.overallScore}%
-                      </Badge>
-                    </motion.div>
-                  );
-                })}
-              </div>
+                        <Checkbox
+                          checked={isSelected}
+                          disabled={!canSelect}
+                          onCheckedChange={() =>
+                            canSelect && toggleCandidate(candidate.id)
+                          }
+                        />
 
-              {selectedIds.length === 0 && (
-                <div className="mt-4 p-4 bg-muted/50 rounded-lg text-center">
-                  <Plus className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    Selecione candidatos para iniciar a comparação
-                  </p>
+                        <Avatar className="w-8 h-8">
+                          <AvatarFallback className="text-xs">
+                            {candidate.name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')
+                              .slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground text-sm truncate">
+                            {candidate.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Score: {candidate.overallScore}%
+                          </p>
+                        </div>
+
+                        <Badge
+                          variant={
+                            candidate.overallScore >= 80
+                              ? 'default'
+                              : candidate.overallScore >= 60
+                                ? 'secondary'
+                                : 'outline'
+                          }
+                          className={
+                            candidate.overallScore >= 80 ? 'bg-success' : ''
+                          }
+                        >
+                          {candidate.overallScore}%
+                        </Badge>
+                      </motion.div>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-          </motion.div>
 
-          {/* Área de comparação */}
-          <motion.div
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-2"
-          >
-            <div className="bg-card rounded-xl border p-4 min-h-[500px]">
-              <CandidateComparison
-                candidates={selectedCandidates}
-                competencyIds={
-                  competencyIds.length > 0
-                    ? competencyIds
-                    : Object.keys(
-                        mockCandidatesWithResults[0]?.competencyScores || {}
-                      )
-                }
-                onRemoveCandidate={handleRemoveCandidate}
-              />
-            </div>
-          </motion.div>
-        </div>
+                {selectedIds.length === 0 && (
+                  <div className="mt-4 p-4 bg-muted/50 rounded-lg text-center">
+                    <Plus className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      Selecione candidatos para iniciar a comparação
+                    </p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Área de comparação */}
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="lg:col-span-2"
+            >
+              <div className="bg-card rounded-xl border p-4 min-h-[500px]">
+                <CandidateComparison
+                  candidates={selectedCandidates}
+                  competencyIds={
+                    competencyIds.length > 0
+                      ? competencyIds
+                      : Object.keys(
+                          candidatesWithResults[0]?.competencyScores || {},
+                        )
+                  }
+                  onRemoveCandidate={handleRemoveCandidate}
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
