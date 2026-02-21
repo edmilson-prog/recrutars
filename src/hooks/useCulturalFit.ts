@@ -1,9 +1,12 @@
 /**
  * Hook for Cultural Fit
  * PRD-042: Fit Cultural
+ *
+ * Manages company cultural profile form state and compatibility calculations.
+ * Data is persisted to Supabase via the culturalProfiles service layer.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type {
   CulturalProfile,
   CompanyCulturalProfile,
@@ -12,14 +15,18 @@ import type {
   DimensionValue,
   CulturalDimension,
 } from '@/types/culturalFit';
-import { mockCompanyCulturalProfiles } from '@/data/culturalDimensions';
 import {
   calculateCompatibility,
   deriveCulturalProfileFromBehavioral,
   getQuickCompatibilityScore,
 } from '@/lib/culturalFit';
+import {
+  useCulturalProfile,
+  useUpsertCulturalProfile,
+} from '@/hooks/useCulturalProfileQuery';
 
-const STORAGE_KEY = 'recruta_company_cultural_profiles';
+// Legacy localStorage key — used only for one-time migration
+const LEGACY_STORAGE_KEY = 'recruta_company_cultural_profiles';
 
 interface UseCulturalFitOptions {
   companyId?: string;
@@ -31,7 +38,7 @@ interface UseCulturalFitReturn {
   updateCompanyProfile: (profile: Partial<CulturalProfile>) => void;
   updateCompanyValues: (values: string[]) => void;
   updateCompanyDescription: (description: string) => void;
-  saveCompanyProfile: () => void;
+  saveCompanyProfile: () => Promise<void>;
 
   // Candidate compatibility
   getCandidateCompatibility: (
@@ -51,6 +58,7 @@ interface UseCulturalFitReturn {
   setFormDimension: (dimension: CulturalDimension, value: DimensionValue) => void;
   resetForm: () => void;
   isModified: boolean;
+  isSaving: boolean;
 }
 
 const DEFAULT_PROFILE: CulturalProfile = {
@@ -64,36 +72,79 @@ const DEFAULT_PROFILE: CulturalProfile = {
 export function useCulturalFit(
   options: UseCulturalFitOptions = {}
 ): UseCulturalFitReturn {
-  const { companyId = 'company-1' } = options;
+  const { companyId = '' } = options;
 
-  // Load company profile from localStorage or mock
-  const loadCompanyProfile = (): CompanyCulturalProfile | null => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const profiles = JSON.parse(stored) as CompanyCulturalProfile[];
-        const found = profiles.find(p => p.companyId === companyId);
-        if (found) return found;
-      }
-    } catch {
-      // Ignore parsing errors
+  // Supabase data via React Query
+  const { data: serverProfile, isLoading } = useCulturalProfile(companyId);
+  const upsertMutation = useUpsertCulturalProfile();
+
+  // Derived company profile from server data
+  const companyProfile = serverProfile ?? null;
+
+  // Form state
+  const [formProfile, setFormProfile] = useState<CulturalProfile>(DEFAULT_PROFILE);
+  const [formValues, setFormValues] = useState<string[]>([]);
+  const [formDescription, setFormDescription] = useState<string>('');
+
+  // Track whether form has been synced with server data
+  const hasSyncedRef = useRef(false);
+
+  // Sync form state when server data loads (or changes after save)
+  useEffect(() => {
+    if (serverProfile) {
+      setFormProfile({
+        innovation: serverProfile.innovation,
+        collaboration: serverProfile.collaboration,
+        hierarchy: serverProfile.hierarchy,
+        pace: serverProfile.pace,
+        direction: serverProfile.direction,
+      });
+      setFormValues(serverProfile.values || []);
+      setFormDescription(serverProfile.description || '');
+      hasSyncedRef.current = true;
     }
+  }, [serverProfile]);
 
-    // Fallback to mock data
-    return mockCompanyCulturalProfiles.find(p => p.companyId === companyId) || null;
-  };
+  // One-time migration: localStorage → Supabase
+  useEffect(() => {
+    if (!companyId || isLoading || serverProfile || hasSyncedRef.current) return;
 
-  // State
-  const [companyProfile, setCompanyProfile] = useState<CompanyCulturalProfile | null>(
-    loadCompanyProfile
-  );
-  const [formProfile, setFormProfile] = useState<CulturalProfile>(
-    companyProfile || DEFAULT_PROFILE
-  );
-  const [formValues, setFormValues] = useState<string[]>(companyProfile?.values || []);
-  const [formDescription, setFormDescription] = useState<string>(
-    companyProfile?.description || ''
-  );
+    try {
+      const stored = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (!stored) return;
+
+      const profiles = JSON.parse(stored) as CompanyCulturalProfile[];
+      const found = profiles.find(p => p.companyId === companyId);
+      if (!found) return;
+
+      // Migrate to Supabase
+      upsertMutation.mutate(
+        {
+          companyId: found.companyId,
+          innovation: found.innovation,
+          collaboration: found.collaboration,
+          hierarchy: found.hierarchy,
+          pace: found.pace,
+          direction: found.direction,
+          description: found.description,
+          values: found.values,
+        },
+        {
+          onSuccess: () => {
+            // Clean up legacy localStorage entry
+            const remaining = profiles.filter(p => p.companyId !== companyId);
+            if (remaining.length > 0) {
+              localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(remaining));
+            } else {
+              localStorage.removeItem(LEGACY_STORAGE_KEY);
+            }
+          },
+        },
+      );
+    } catch {
+      // Ignore migration errors — user can re-enter data
+    }
+  }, [companyId, isLoading, serverProfile]);
 
   // Check if form has been modified
   const isModified = useMemo(() => {
@@ -158,30 +209,17 @@ export function useCulturalFit(
     setFormDescription(description);
   }, []);
 
-  // Save company profile
-  const saveCompanyProfile = useCallback(() => {
-    const newProfile: CompanyCulturalProfile = {
-      ...formProfile,
+  // Save company profile to Supabase
+  const saveCompanyProfile = useCallback(async () => {
+    if (!companyId) return;
+
+    await upsertMutation.mutateAsync({
       companyId,
+      ...formProfile,
       values: formValues,
       description: formDescription,
-      updatedAt: new Date().toISOString(),
-    };
-
-    // Save to localStorage
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const profiles = stored ? JSON.parse(stored) : [];
-      const filtered = profiles.filter(
-        (p: CompanyCulturalProfile) => p.companyId !== companyId
-      );
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...filtered, newProfile]));
-    } catch {
-      // Ignore storage errors
-    }
-
-    setCompanyProfile(newProfile);
-  }, [companyId, formProfile, formValues, formDescription]);
+    });
+  }, [companyId, formProfile, formValues, formDescription, upsertMutation]);
 
   // Get candidate cultural profile from behavioral profile
   const getCandidateCulturalProfile = useCallback(
@@ -228,5 +266,6 @@ export function useCulturalFit(
     setFormDimension,
     resetForm,
     isModified,
+    isSaving: upsertMutation.isPending,
   };
 }

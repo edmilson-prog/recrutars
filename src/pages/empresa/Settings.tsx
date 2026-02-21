@@ -223,6 +223,7 @@ export default function CompanySettings() {
     companyProfile: culturalCompanyProfile,
     formValues: culturalValues,
     formDescription: culturalDescription,
+    isSaving: isSavingCulture,
   } = useCulturalFit({ companyId });
 
   // Handle logo change
@@ -423,9 +424,14 @@ export default function CompanySettings() {
   };
 
   // PRD-042: Handle save cultural profile
-  const handleSaveCulturalProfile = () => {
-    saveCulturalProfile();
-    toast.success('Perfil cultural salvo com sucesso!');
+  const handleSaveCulturalProfile = async () => {
+    try {
+      await saveCulturalProfile();
+      toast.success('Perfil cultural salvo com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar perfil cultural:', error);
+      toast.error('Erro ao salvar perfil cultural. Tente novamente.');
+    }
   };
 
   // Notification options
