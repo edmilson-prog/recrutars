@@ -7,7 +7,9 @@
  */
 
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import { chatbotConfigKeys } from '@/hooks/useChatbotConfig';
 import {
   Bot,
   Users,
@@ -166,6 +168,7 @@ export default function ChatbotDashboard({
   onSave,
   isSaving = false,
 }: ChatbotDashboardProps) {
+  const queryClient = useQueryClient();
   const [localSaving, setLocalSaving] = useState(false);
 
   const enabledCandidates = (values.chatbotEnabledCandidates ?? true) as boolean;
@@ -175,6 +178,8 @@ export default function ChatbotDashboard({
     setLocalSaving(true);
     try {
       await Promise.resolve(onSave());
+      // Invalidate the chatbot config cache so ChatbotWidget picks up changes immediately
+      queryClient.invalidateQueries({ queryKey: chatbotConfigKeys.all });
     } finally {
       setLocalSaving(false);
     }
