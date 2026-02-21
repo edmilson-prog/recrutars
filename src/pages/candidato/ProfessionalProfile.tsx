@@ -1,7 +1,7 @@
 // PRD-073: Página de Perfil Profissional Unificado
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useNavigate, useBlocker } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -58,6 +58,15 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from 'sonner';
@@ -199,11 +208,15 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
   // Reseta naturalmente ao desmontar/remontar o componente.
   const initializedRef = useRef(false);
 
+  // Snapshot do ultimo estado salvo — para detectar mudancas nao salvas nos campos de texto
+  const savedSnapshotRef = useRef<Curriculum | null>(null);
+
   // Carregar perfil ou garantir que existe (apenas na inicializacao)
   useEffect(() => {
     if (!fetchLoading) {
       if (fetchedProfile && !initializedRef.current) {
         setCurriculum({ ...fetchedProfile });
+        savedSnapshotRef.current = fetchedProfile;
         setLoading(false);
         initializedRef.current = true;
       } else if (!fetchedProfile && candidateId && !ensureProfileMutation.isPending) {
@@ -216,10 +229,51 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
   useEffect(() => {
     if (ensureProfileMutation.data) {
       setCurriculum({ ...ensureProfileMutation.data });
+      savedSnapshotRef.current = ensureProfileMutation.data;
       setLoading(false);
       initializedRef.current = true;
     }
   }, [ensureProfileMutation.data]);
+
+  // Detectar mudancas nao salvas nos campos de texto (sub-entidades sao auto-saved)
+  const hasUnsavedChanges = useMemo(() => {
+    if (!curriculum || !savedSnapshotRef.current) return false;
+    const saved = savedSnapshotRef.current;
+    return (
+      curriculum.title !== saved.title ||
+      curriculum.email !== saved.email ||
+      curriculum.phone !== saved.phone ||
+      curriculum.linkedin !== saved.linkedin ||
+      curriculum.about !== saved.about ||
+      curriculum.availability !== saved.availability ||
+      curriculum.city !== saved.city ||
+      curriculum.state !== saved.state ||
+      (curriculum.salary?.min ?? 0) !== (saved.salary?.min ?? 0) ||
+      (curriculum.salary?.max ?? 0) !== (saved.salary?.max ?? 0) ||
+      curriculum.openToRelocation !== saved.openToRelocation ||
+      curriculum.salaryNegotiable !== saved.salaryNegotiable ||
+      JSON.stringify(curriculum.preferredSectors) !== JSON.stringify(saved.preferredSectors) ||
+      JSON.stringify(curriculum.preferredRoles) !== JSON.stringify(saved.preferredRoles) ||
+      JSON.stringify(curriculum.workModel) !== JSON.stringify(saved.workModel) ||
+      JSON.stringify(curriculum.contractType) !== JSON.stringify(saved.contractType)
+    );
+  }, [curriculum]);
+
+  // Bloquear navegacao in-app quando ha mudancas nao salvas (desativado no onboarding)
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      !onboardingMode && hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  // Proteger contra refresh/fechar aba do navegador
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasUnsavedChanges]);
 
   // Handler genérico para atualizar campos
   const updateField = useCallback(
@@ -482,6 +536,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
     try {
       const saved = await updateMutation.mutateAsync({ id: curriculum.id, updates: updatedCurriculum });
       setCurriculum({ ...saved });
+      savedSnapshotRef.current = saved;
       toast.success('Perfil salvo com sucesso!');
     } catch {
       toast.error('Erro ao salvar perfil.');
@@ -1447,6 +1502,32 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
           </div>
         )}
       </div>
+
+      {/* Dialog de aviso de mudancas nao salvas */}
+      <AlertDialog open={blocker.state === 'blocked'}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Alterações não salvas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem alterações no perfil que ainda não foram salvas. O que deseja fazer?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel onClick={() => blocker.reset?.()}>
+              Cancelar
+            </AlertDialogCancel>
+            <Button variant="outline" onClick={() => blocker.proceed?.()}>
+              Sair sem Salvar
+            </Button>
+            <Button onClick={async () => {
+              await handleSave();
+              blocker.proceed?.();
+            }}>
+              Salvar e Sair
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </LayoutWrapper>
   );
 }
