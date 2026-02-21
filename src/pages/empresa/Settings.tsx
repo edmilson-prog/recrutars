@@ -20,8 +20,10 @@ import {
   Heart,
   Fingerprint,
   Copy,
-  ChevronsUpDown,
   Loader2,
+  FileText,
+  Lock,
+  Phone,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -72,24 +74,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { brazilianStates } from '@/data/settingsConfig';
-import { brazilianCitiesByState } from '@/data/brazilianCities';
 import type { CompanyNotificationPreferences, CompanyUser, TeamMemberRole } from '@/types/company';
 import { usePlans, useSubscription } from '@/hooks/usePlansQuery';
 import { formatBRL } from '@/lib/formatters';
@@ -105,19 +92,26 @@ import {
 
 import { useUpdateCompany } from '@/hooks/useCompaniesQuery';
 import { supabase } from '@/lib/supabase';
+import { formatCNPJ } from '@/lib/cnpj';
 import { useCulturalFit } from '@/hooks/useCulturalFit';
 import { CultureProfileForm } from '@/components/cultural';
 
 // Constants
 const INDUSTRY_OPTIONS = [
-  'Tecnologia',
-  'Marketing Digital',
-  'Fintech',
-  'E-commerce',
-  'Saúde',
-  'Educação',
-  'Indústria',
+  'Agronegócio',
+  'Comércio',
   'Consultoria',
+  'Educação',
+  'E-commerce',
+  'Fintech',
+  'Indústria',
+  'Logística',
+  'Marketing Digital',
+  'Mercado Financeiro',
+  'Saúde',
+  'Serviços',
+  'Setor Público',
+  'Tecnologia',
   'Outro',
 ];
 
@@ -129,8 +123,6 @@ const SIZE_OPTIONS = [
   '501-1000 funcionários',
   '1000+ funcionários',
 ];
-
-// STATE_OPTIONS removido — agora usa brazilianStates de settingsConfig.ts
 
 // Plan data is now fetched dynamically via usePlans hook (PRD-075 fix)
 
@@ -171,12 +163,11 @@ export default function CompanySettings() {
     city: currentCompany?.city ?? '',
     state: currentCompany?.state ?? '',
     address: currentCompany?.address || '',
+    phone: currentCompany?.phone || '',
   });
   const [logoPreview, setLogoPreview] = useState<string | null>(currentCompany?.logo || null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [cityOpen, setCityOpen] = useState(false);
-
   const updateCompanyMutation = useUpdateCompany();
 
   // Team state (real Supabase data)
@@ -285,6 +276,7 @@ export default function CompanySettings() {
           city: companyProfile.city,
           state: companyProfile.state,
           address: companyProfile.address,
+          phone: companyProfile.phone,
           logo: logoUrl,
         },
       });
@@ -518,21 +510,187 @@ export default function CompanySettings() {
               </CardContent>
             </Card>
 
-            {/* Informações Básicas */}
+            {/* Dados Cadastrais (Receita Federal) */}
             <Card>
               <CardHeader>
-                <CardTitle>Informações Básicas</CardTitle>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle>Dados Cadastrais</CardTitle>
+                    <CardDescription>
+                      Informações oficiais da Receita Federal — preenchidas automaticamente durante o cadastro
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="companyName">Nome da Empresa *</Label>
-                  <Input
-                    id="companyName"
-                    value={companyProfile.name}
-                    onChange={e => setCompanyProfile(prev => ({ ...prev, name: e.target.value }))}
-                  />
+                {currentCompany?.cnpj ? (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">CNPJ</p>
+                        <p className="mt-0.5 text-sm text-foreground font-mono">
+                          {formatCNPJ(currentCompany.cnpj)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">
+                          Situação Cadastral
+                        </p>
+                        <div className="mt-0.5">
+                          {currentCompany.situacaoCadastral ? (
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-xs',
+                                currentCompany.situacaoCadastral.toUpperCase() === 'ATIVA'
+                                  ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400'
+                                  : 'bg-yellow-500/10 text-yellow-700 border-yellow-500/30 dark:text-yellow-400'
+                              )}
+                            >
+                              {currentCompany.situacaoCadastral}
+                            </Badge>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Não informado</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="sm:col-span-2">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Razão Social</p>
+                        <p className="mt-0.5 text-sm text-foreground">
+                          {currentCompany.razaoSocial || 'Não informado'}
+                        </p>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Nome Fantasia</p>
+                        <p className="mt-0.5 text-sm text-foreground">
+                          {currentCompany.nomeFantasia || 'Não informado'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Endereço Registrado
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">CEP</p>
+                        <p className="mt-0.5 text-sm text-foreground">
+                          {currentCompany.cep || 'Não informado'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Bairro</p>
+                        <p className="mt-0.5 text-sm text-foreground">
+                          {currentCompany.bairro || 'Não informado'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Logradouro</p>
+                        <p className="mt-0.5 text-sm text-foreground">
+                          {[currentCompany.logradouro, currentCompany.numero].filter(Boolean).join(', ') || 'Não informado'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Complemento</p>
+                        <p className="mt-0.5 text-sm text-foreground">
+                          {currentCompany.complemento || 'Não informado'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 pt-2">
+                      <Lock className="w-3 h-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">
+                        Dados obtidos da Receita Federal durante o cadastro. Para correções, atualize o cadastro no portal da Receita.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Dados cadastrais não disponíveis. Esses dados são preenchidos automaticamente ao cadastrar a empresa com CNPJ.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Contato */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                    <Phone className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle>Contato</CardTitle>
+                    <CardDescription>Informações de contato da empresa</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <p className="text-sm text-foreground py-2">
+                      {user?.email || 'Não informado'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Para alterar o email, acesse a aba <span className="font-medium text-foreground">Conta</span>.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Telefone</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="(XX) XXXXX-XXXX"
+                      value={companyProfile.phone}
+                      onChange={e => setCompanyProfile(prev => ({ ...prev, phone: e.target.value }))}
+                    />
+                  </div>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      type="url"
+                      placeholder="https://exemplo.com.br"
+                      value={companyProfile.website}
+                      onChange={e => setCompanyProfile(prev => ({ ...prev, website: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="linkedin">LinkedIn</Label>
+                    <Input
+                      id="linkedin"
+                      type="url"
+                      placeholder="https://linkedin.com/company/..."
+                      value={companyProfile.linkedin}
+                      onChange={e => setCompanyProfile(prev => ({ ...prev, linkedin: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Perfil da Empresa */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Perfil da Empresa</CardTitle>
+                <CardDescription>Informações que aparecem para os candidatos</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="industry">Setor de Atuação *</Label>
@@ -573,142 +731,21 @@ export default function CompanySettings() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="website">Website</Label>
-                    <Input
-                      id="website"
-                      type="url"
-                      placeholder="https://exemplo.com.br"
-                      value={companyProfile.website}
-                      onChange={e => setCompanyProfile(prev => ({ ...prev, website: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="linkedin">LinkedIn</Label>
-                    <Input
-                      id="linkedin"
-                      type="url"
-                      placeholder="https://linkedin.com/company/..."
-                      value={companyProfile.linkedin}
-                      onChange={e => setCompanyProfile(prev => ({ ...prev, linkedin: e.target.value }))}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Sobre a Empresa */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Sobre a Empresa *</CardTitle>
-                <CardDescription>Descreva sua empresa para os candidatos</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Textarea
-                  value={companyProfile.description}
-                  onChange={e => setCompanyProfile(prev => ({ ...prev, description: e.target.value }))}
-                  rows={5}
-                  maxLength={1000}
-                  placeholder="Conte sobre a história, cultura e valores da empresa..."
-                />
-                <p className="text-xs text-muted-foreground text-right">
-                  {companyProfile.description.length}/1000 caracteres
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Localização */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Localização</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Estado (primeiro) */}
-                  <div className="space-y-2">
-                    <Label htmlFor="company-state">Estado *</Label>
-                    <Select
-                      value={companyProfile.state || '__none__'}
-                      onValueChange={value => {
-                        const newState = value === '__none__' ? '' : value;
-                        setCompanyProfile(prev => ({ ...prev, state: newState, city: '' }));
-                      }}
-                    >
-                      <SelectTrigger id="company-state">
-                        <SelectValue placeholder="Selecione o estado" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {brazilianStates.map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Cidade (combobox pesquisável) */}
-                  <div className="space-y-2">
-                    <Label htmlFor="company-city">Cidade *</Label>
-                    <Popover open={cityOpen} onOpenChange={setCityOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          id="company-city"
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={cityOpen}
-                          className="w-full justify-between font-normal"
-                          disabled={!companyProfile.state}
-                        >
-                          {companyProfile.city || 'Selecione a cidade...'}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Buscar cidade..." />
-                          <CommandList>
-                            <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
-                            <CommandGroup>
-                              {(brazilianCitiesByState[companyProfile.state || ''] || []).map(city => (
-                                <CommandItem
-                                  key={city}
-                                  value={city}
-                                  onSelect={() => {
-                                    setCompanyProfile(prev => ({ ...prev, city }));
-                                    setCityOpen(false);
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      'mr-2 h-4 w-4',
-                                      companyProfile.city === city ? 'opacity-100' : 'opacity-0'
-                                    )}
-                                  />
-                                  {city}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    {!companyProfile.state && (
-                      <p className="text-xs text-muted-foreground">Selecione um estado primeiro</p>
-                    )}
-                  </div>
-                </div>
+                <Separator />
 
                 <div className="space-y-2">
-                  <Label htmlFor="address">Endereço (opcional)</Label>
-                  <Input
-                    id="address"
-                    placeholder="Rua, número, bairro"
-                    value={companyProfile.address}
-                    onChange={e => setCompanyProfile(prev => ({ ...prev, address: e.target.value }))}
+                  <Label htmlFor="description">Sobre a Empresa *</Label>
+                  <Textarea
+                    id="description"
+                    value={companyProfile.description}
+                    onChange={e => setCompanyProfile(prev => ({ ...prev, description: e.target.value }))}
+                    rows={5}
+                    maxLength={1000}
+                    placeholder="Conte sobre a história, cultura e valores da empresa..."
                   />
+                  <p className="text-xs text-muted-foreground text-right">
+                    {companyProfile.description.length}/1000 caracteres
+                  </p>
                 </div>
               </CardContent>
             </Card>
