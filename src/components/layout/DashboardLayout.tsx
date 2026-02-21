@@ -46,6 +46,7 @@ import { TEST_CONFIG } from '@/data/testConfig';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
 import { TrialBadge, TrialIndicator, TrialGuard } from '@/components/trial';
 import { PaymentFailedBanner } from '@/components/billing/PaymentFailedBanner';
+import { DashboardBreadcrumbs } from '@/components/navigation/DashboardBreadcrumbs';
 import { usePlans } from '@/hooks/usePlans';
 import { usePendingCSAT, useSubmitCSAT } from '@/hooks/useAdminTicketsQuery';
 import { CSATPrompt } from '@/components/helpdesk/CSATPrompt';
@@ -457,6 +458,10 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                 className="mb-4"
               />
             )}
+
+            {/* Breadcrumbs — automatic navigation derived from URL */}
+            <DashboardBreadcrumbs userType={userType} navItems={navItems} />
+
             {/* PRD-074: Block expired trials from accessing company features */}
             {userType === 'company' ? (
               <TrialGuard>{children}</TrialGuard>
