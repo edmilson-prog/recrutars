@@ -266,7 +266,7 @@ export default function CompanyApplications() {
     return map;
   }, [allGaugeResults]);
 
-  // Update module-level refs for calculateMatch
+  // Update module-level refs for calculateMatch (synchronous during render)
   _candidatesMap = candidatesMap;
   _companyJobs = fetchedCompanyJobs;
   _behavioralTests = behavioralTests;
@@ -310,6 +310,9 @@ export default function CompanyApplications() {
   const [matchFilter, setMatchFilter] = useState<string>('all');
   const [profileFilter, setProfileFilter] = useState<string>('all');
   const [testFilter, setTestFilter] = useState<string>('all');
+
+  // PRD-035: Sync selectedJobId to module-level ref for calculateMatch (synchronous during render)
+  currentSelectedJobId = selectedJobId;
 
   // Local state for applications (to allow status changes within the session)
   const [localStatusOverrides, setLocalStatusOverrides] = useState<Record<string, Partial<Application>>>({});
@@ -377,11 +380,6 @@ export default function CompanyApplications() {
     }
   }, [companyJobs, selectedJobId]);
 
-  // PRD-035: Atualiza o jobId global para cálculo de match
-  useEffect(() => {
-    currentSelectedJobId = selectedJobId;
-  }, [selectedJobId]);
-
   // Filter applications for selected job
   const jobApplications = applications.filter(
     (app) => app.jobId === selectedJobId
@@ -438,7 +436,7 @@ export default function CompanyApplications() {
   };
 
   const handleNavigateToProfile = (candidateId: string) => {
-    navigate(`/empresa/candidatos/${candidateId}`);
+    navigate(`/empresa/candidatos/${candidateId}?jobId=${selectedJobId}`);
   };
 
   // --- Drag-and-Drop (dnd-kit) ---

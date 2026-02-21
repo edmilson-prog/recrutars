@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -160,6 +160,8 @@ function formatActivityTimestamp(timestamp: string): string {
 export default function CandidateProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const jobIdFromUrl = searchParams.get('jobId');
   const { currentCompany } = useAuth();
   const companyId = currentCompany?.id ?? '';
 
@@ -250,7 +252,10 @@ export default function CandidateProfile() {
   }
 
   // PRD-035: Cálculo dinâmico de match (com perfil Gauge-Pro real)
-  const firstJob = companyJobs[0];
+  // Usa a vaga do query param (vindo do kanban) ou fallback para primeira vaga
+  const firstJob = (jobIdFromUrl
+    ? companyJobs.find(j => j.id === jobIdFromUrl)
+    : null) || companyJobs[0];
   const idealProfile = firstJob ? getOrGenerateIdealProfile(firstJob) : undefined;
   const candidateBehavioralProfile = gaugeProResult
     ? gaugeProToBehavioralProfile(gaugeProResult.finalScores)

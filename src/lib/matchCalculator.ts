@@ -111,8 +111,11 @@ export function calculateSkillsScore(
   candidateSkills: string[],
   jobRequirements: string[]
 ): number {
-  if (!candidateSkills?.length || !jobRequirements?.length) {
-    return 50; // Score neutro se nao houver dados
+  if (!candidateSkills?.length) {
+    return 20; // Candidato sem skills = score baixo
+  }
+  if (!jobRequirements?.length) {
+    return 50; // Vaga sem requisitos = neutro (nao penaliza candidato)
   }
 
   // Normaliza e resolve aliases das skills do candidato
@@ -175,7 +178,7 @@ export function calculateExperienceScore(
     // Quanto mais próximo do ideal, maior o score
     const distanceFromIdeal = Math.abs(candidateExperience - idealExperience);
     const maxDistance = (max - min) / 2;
-    const score = 100 - (distanceFromIdeal / maxDistance) * 15;
+    const score = 100 - (distanceFromIdeal / maxDistance) * 40;
     return Math.round(score);
   }
 
@@ -200,8 +203,11 @@ export function calculateBehavioralScore(
   candidateProfile: BehavioralProfile,
   idealProfile: BehavioralProfile
 ): number {
-  if (!candidateProfile || !idealProfile) {
-    return 50; // Score neutro se não houver dados
+  if (!candidateProfile) {
+    return 20; // Candidato sem teste comportamental = score baixo
+  }
+  if (!idealProfile) {
+    return 50; // Vaga sem perfil ideal = neutro
   }
 
   // Calcula a distância euclidiana normalizada
@@ -249,6 +255,12 @@ export function calculateLocationScore(
   const [candidateCity, candidateState] = candidateLoc.split(',').map(s => s?.trim());
   const [jobCity, jobState] = jobLoc.split(',').map(s => s?.trim());
 
+  // Se um dos lados nao tem estado, compara apenas cidade
+  if (!jobState || !candidateState) {
+    if (candidateCity === jobCity) return 100;
+    return jobType === 'hybrid' ? 50 : 30;
+  }
+
   // Mesma cidade = 100%
   if (candidateCity === jobCity && candidateState === jobState) {
     return 100;
@@ -292,7 +304,7 @@ export function generateStrengths(
 
   // Experience - pontos fortes
   const expCategory = categories.find(c => c.id === 'experience');
-  if (expCategory && expCategory.score >= 75) {
+  if (expCategory && expCategory.score >= 80 && (candidate.experience || 0) > 0) {
     strengths.push({
       id: 'str-exp-1',
       text: `Seus ${candidate.experience || 'anos de'} anos de experiência atendem perfeitamente ao nível ${job.level}`,
@@ -458,7 +470,7 @@ export function calculateMatchBreakdown(
 
   const behavioralScore = candidateProfile && idealProfile
     ? calculateBehavioralScore(candidateProfile, idealProfile)
-    : 50; // Score neutro se não houver perfil comportamental
+    : (!candidateProfile ? 20 : 50); // Sem teste = baixo; sem perfil ideal = neutro
 
   const locationScore = calculateLocationScore(
     candidate.location || '',
