@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Search, MoreVertical, Users, Eye, Pause, Play, Trash2, Edit, Copy, XCircle, X, Briefcase, Brain, Loader2, Sparkles } from 'lucide-react';
+import { Plus, Search, MoreVertical, Users, Eye, Pause, Play, Trash2, Edit, Copy, XCircle, X, Briefcase, Brain, Loader2, Sparkles, List, LayoutGrid, MapPin } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,10 +29,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useJobsByCompany, useUpdateJob, useDeleteJob, useCreateJob } from '@/hooks/useJobsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { Job, JobStatus } from '@/types';
 import { toast } from 'sonner';
+
+type ViewMode = 'list' | 'grid';
 
 export default function CompanyJobs() {
   const navigate = useNavigate();
@@ -57,7 +61,8 @@ export default function CompanyJobs() {
   }, [fetchedJobs, localOverrides, localDeleted, localAdded]);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | JobStatus>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | JobStatus>('active');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   // Confirmation dialogs states
   const [jobToPause, setJobToPause] = useState<Job | null>(null);
@@ -265,94 +270,255 @@ export default function CompanyJobs() {
           ))}
         </div>
 
-        {/* Search */}
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            placeholder="Buscar vagas..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          {searchTerm && (
+        {/* Search + View Toggle */}
+        <div className="flex items-center gap-3">
+          <div className="relative max-w-md flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              placeholder="Buscar vagas..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                onClick={() => setSearchTerm('')}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+
+          {/* View mode toggle */}
+          <div className="flex items-center border rounded-md">
             <Button
-              variant="ghost"
+              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
               size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-              onClick={() => setSearchTerm('')}
+              className="h-9 w-9 rounded-r-none"
+              onClick={() => setViewMode('list')}
+              aria-label="Visualização em lista"
             >
-              <X className="w-4 h-4" />
+              <List className="h-4 w-4" />
             </Button>
-          )}
+            <Button
+              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              size="icon"
+              className="h-9 w-9 rounded-l-none"
+              onClick={() => setViewMode('grid')}
+              aria-label="Visualização em grid"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
-        {/* Jobs List */}
+        {/* Jobs List / Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : (
-        <div className="space-y-4">
-          {filteredJobs.map((job, index) => (
-            <motion.div
-              key={job.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium transition-shadow"
-            >
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Briefcase className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3
-                        className="text-xl font-semibold text-foreground hover:text-primary cursor-pointer transition-colors"
-                        onClick={() => navigate(`/empresa/vagas/${job.id}/editar`)}
-                      >
-                        {job.title}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={
-                          job.status === 'active' ? 'default' :
-                          job.status === 'paused' ? 'secondary' : 'outline'
-                        } className={
-                          job.status === 'active' ? 'bg-success text-success-foreground' :
-                          job.status === 'paused' ? 'bg-warning text-warning-foreground' : ''
-                        }>
-                          {job.status === 'active' ? '● Ativa' :
-                           job.status === 'paused' ? '● Pausada' : '● Encerrada'}
-                        </Badge>
+        ) : filteredJobs.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+              <Search className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma vaga encontrada</h3>
+            <p className="text-muted-foreground">Tente ajustar os filtros ou crie uma nova vaga</p>
+          </div>
+        ) : viewMode === 'list' ? (
+          <div className="space-y-4">
+            {filteredJobs.map((job, index) => (
+              <motion.div
+                key={job.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium transition-shadow"
+              >
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Briefcase className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3
+                          className="text-xl font-semibold text-foreground hover:text-primary cursor-pointer transition-colors"
+                          onClick={() => navigate(`/empresa/vagas/${job.id}/editar`)}
+                        >
+                          {job.title}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant={
+                            job.status === 'active' ? 'default' :
+                            job.status === 'paused' ? 'secondary' : 'outline'
+                          } className={
+                            job.status === 'active' ? 'bg-success text-success-foreground' :
+                            job.status === 'paused' ? 'bg-warning text-warning-foreground' : ''
+                          }>
+                            {job.status === 'active' ? '● Ativa' :
+                             job.status === 'paused' ? '● Pausada' : '● Encerrada'}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex flex-wrap gap-2 text-sm text-muted-foreground ml-12">
+                      <span>{job.type === 'remote' ? 'Remoto' : job.type === 'hybrid' ? 'Híbrido' : 'Presencial'}</span>
+                      <span>•</span>
+                      <span>{job.location}</span>
+                      <span>•</span>
+                      {job.salary.min === 0 && job.salary.max === 0 ? (
+                        <span>A combinar</span>
+                      ) : (
+                        <span>R$ {job.salary.min.toLocaleString('pt-BR')} - {job.salary.max.toLocaleString('pt-BR')}</span>
+                      )}
+                      <span>•</span>
+                      <span>Criada em {job.createdAt}</span>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2 text-sm text-muted-foreground ml-12">
-                    <span>{job.type === 'remote' ? 'Remoto' : job.type === 'hybrid' ? 'Híbrido' : 'Presencial'}</span>
-                    <span>•</span>
-                    <span>{job.location}</span>
-                    <span>•</span>
-                    {job.salary.min === 0 && job.salary.max === 0 ? (
-                      <span>A combinar</span>
-                    ) : (
-                      <span>R$ {job.salary.min.toLocaleString('pt-BR')} - {job.salary.max.toLocaleString('pt-BR')}</span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => navigate(`/empresa/candidaturas?jobId=${job.id}`)}
+                      className="flex items-center gap-2 px-4 py-2 bg-muted rounded-xl cursor-pointer hover:bg-muted/80 transition-colors"
+                      aria-label={`Ver ${job.applicationsCount} candidaturas para ${job.title}`}
+                    >
+                      <Users className="w-5 h-5 text-primary" />
+                      <div className="text-center">
+                        <div className="font-semibold text-foreground">{job.applicationsCount}</div>
+                        <div className="text-xs text-muted-foreground">candidatos</div>
+                      </div>
+                    </button>
+                    {job.status !== 'closed' && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => navigate(`/empresa/vagas/${job.id}/candidatos-sugeridos`)}
+                              className="text-muted-foreground hover:text-secondary"
+                              aria-label="Candidatos Sugeridos"
+                            >
+                              <Sparkles className="w-5 h-5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Candidatos Sugeridos</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
-                    <span>•</span>
-                    <span>Criada em {job.createdAt}</span>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="w-5 h-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => navigate(`/empresa/vagas/${job.id}/editar`)}>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Ver detalhes
+                        </DropdownMenuItem>
+                        {getJobActions(job)}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <p className="mt-4 text-muted-foreground line-clamp-2 ml-12">{job.description}</p>
+                <div className="flex flex-wrap gap-2 mt-4 ml-12">
+                  {job.requirements.slice(0, 3).map((req, i) => (
+                    <span key={i} className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">
+                      {req}
+                    </span>
+                  ))}
+                  {job.requirements.length > 3 && (
+                    <span className="px-3 py-1 bg-muted text-muted-foreground text-sm rounded-full">
+                      +{job.requirements.length - 3}
+                    </span>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          /* Grid View */
+          <motion.div
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
+            {filteredJobs.map((job) => (
+              <motion.div
+                key={job.id}
+                variants={staggerItem}
+                className="bg-card rounded-2xl shadow-soft hover:shadow-medium transition-shadow cursor-pointer flex flex-col"
+                onClick={() => navigate(`/empresa/vagas/${job.id}/editar`)}
+              >
+                <div className="p-5 flex-1">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <h3 className="text-base font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors">
+                      {job.title}
+                    </h3>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/empresa/vagas/${job.id}/editar`); }}>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Ver detalhes
+                        </DropdownMenuItem>
+                        {getJobActions(job)}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  <Badge variant={
+                    job.status === 'active' ? 'default' :
+                    job.status === 'paused' ? 'secondary' : 'outline'
+                  } className={cn(
+                    'mb-3',
+                    job.status === 'active' ? 'bg-success text-success-foreground' :
+                    job.status === 'paused' ? 'bg-warning text-warning-foreground' : ''
+                  )}>
+                    {job.status === 'active' ? '● Ativa' :
+                     job.status === 'paused' ? '● Pausada' : '● Encerrada'}
+                  </Badge>
+
+                  <div className="space-y-1.5 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 shrink-0" />
+                      <span>{job.type === 'remote' ? 'Remoto' : job.type === 'hybrid' ? 'Híbrido' : 'Presencial'}</span>
+                    </div>
+                    {job.location && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 shrink-0" />
+                        <span className="truncate">{job.location}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t px-5 py-3 flex items-center justify-between">
                   <button
-                    onClick={() => navigate(`/empresa/candidaturas?jobId=${job.id}`)}
-                    className="flex items-center gap-2 px-4 py-2 bg-muted rounded-xl cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={(e) => { e.stopPropagation(); navigate(`/empresa/candidaturas?jobId=${job.id}`); }}
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                     aria-label={`Ver ${job.applicationsCount} candidaturas para ${job.title}`}
                   >
-                    <Users className="w-5 h-5 text-primary" />
-                    <div className="text-center">
-                      <div className="font-semibold text-foreground">{job.applicationsCount}</div>
-                      <div className="text-xs text-muted-foreground">candidatos</div>
-                    </div>
+                    <Users className="w-4 h-4 text-primary" />
+                    <span className="font-medium text-foreground">{job.applicationsCount}</span>
+                    <span>candidatos</span>
                   </button>
                   {job.status !== 'closed' && (
                     <TooltipProvider>
@@ -361,11 +527,11 @@ export default function CompanyJobs() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => navigate(`/empresa/vagas/${job.id}/candidatos-sugeridos`)}
-                            className="text-muted-foreground hover:text-secondary"
+                            className="h-8 w-8 text-muted-foreground hover:text-secondary"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/empresa/vagas/${job.id}/candidatos-sugeridos`); }}
                             aria-label="Candidatos Sugeridos"
                           >
-                            <Sparkles className="w-5 h-5" />
+                            <Sparkles className="w-4 h-4" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -374,48 +540,10 @@ export default function CompanyJobs() {
                       </Tooltip>
                     </TooltipProvider>
                   )}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="w-5 h-5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => navigate(`/empresa/vagas/${job.id}/editar`)}>
-                        <Eye className="w-4 h-4 mr-2" />
-                        Ver detalhes
-                      </DropdownMenuItem>
-                      {getJobActions(job)}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
-              </div>
-              <p className="mt-4 text-muted-foreground line-clamp-2 ml-12">{job.description}</p>
-              <div className="flex flex-wrap gap-2 mt-4 ml-12">
-                {job.requirements.slice(0, 3).map((req, i) => (
-                  <span key={i} className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">
-                    {req}
-                  </span>
-                ))}
-                {job.requirements.length > 3 && (
-                  <span className="px-3 py-1 bg-muted text-muted-foreground text-sm rounded-full">
-                    +{job.requirements.length - 3}
-                  </span>
-                )}
-              </div>
-            </motion.div>
-          ))}
-
-          {filteredJobs.length === 0 && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <Search className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma vaga encontrada</h3>
-              <p className="text-muted-foreground">Tente ajustar os filtros ou crie uma nova vaga</p>
-            </div>
-          )}
-        </div>
+              </motion.div>
+            ))}
+          </motion.div>
         )}
       </div>
 
