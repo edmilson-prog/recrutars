@@ -1,10 +1,11 @@
 // PRD-073: Página de Perfil Profissional Unificado
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
+  ArrowRight,
   Save,
   User,
   Briefcase,
@@ -94,6 +95,7 @@ import {
 import { calculateCompleteness, getProgressColor } from '@/utils/curriculumCompleteness';
 import { Progress } from '@/components/ui/progress';
 import DocumentsTab from '@/components/profile/DocumentsTab';
+import { OnboardingStepIndicator } from '@/components/onboarding/OnboardingStepIndicator';
 
 // Componente de nível de habilidade visual
 function SkillLevelSelector({
@@ -155,7 +157,12 @@ function SkillLevelSelector({
   );
 }
 
-export default function ProfessionalProfile() {
+interface ProfessionalProfileProps {
+  onboardingMode?: boolean;
+  onOnboardingComplete?: () => void;
+}
+
+export default function ProfessionalProfile({ onboardingMode = false, onOnboardingComplete }: ProfessionalProfileProps = {}) {
   const navigate = useNavigate();
   const { currentCandidate } = useAuth();
   const candidateId = currentCandidate?.id ?? '';
@@ -188,13 +195,18 @@ export default function ProfessionalProfile() {
   const [editingSkill, setEditingSkill] = useState<SkillWithLevel | null>(null);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 
-  // Carregar perfil ou garantir que existe
+  // Guard: evita que refetches background do React Query sobrescrevam estado local nao salvo.
+  // Reseta naturalmente ao desmontar/remontar o componente.
+  const initializedRef = useRef(false);
+
+  // Carregar perfil ou garantir que existe (apenas na inicializacao)
   useEffect(() => {
     if (!fetchLoading) {
-      if (fetchedProfile) {
+      if (fetchedProfile && !initializedRef.current) {
         setCurriculum({ ...fetchedProfile });
         setLoading(false);
-      } else if (candidateId && !ensureProfileMutation.isPending) {
+        initializedRef.current = true;
+      } else if (!fetchedProfile && candidateId && !ensureProfileMutation.isPending) {
         ensureProfileMutation.mutate({ candidateId });
       }
     }
@@ -205,6 +217,7 @@ export default function ProfessionalProfile() {
     if (ensureProfileMutation.data) {
       setCurriculum({ ...ensureProfileMutation.data });
       setLoading(false);
+      initializedRef.current = true;
     }
   }, [ensureProfileMutation.data]);
 
@@ -233,8 +246,8 @@ export default function ProfessionalProfile() {
     []
   );
 
-  // Handlers para experiência
-  const handleSaveExperience = (experience: ExperienceWithCurrent) => {
+  // Handlers para experiência (auto-save: persiste no banco imediatamente)
+  const handleSaveExperience = async (experience: ExperienceWithCurrent) => {
     if (!curriculum) return;
 
     const existingIndex = curriculum.experiences.findIndex((e) => e.id === experience.id);
@@ -247,23 +260,45 @@ export default function ProfessionalProfile() {
       updatedExperiences = [...curriculum.experiences, experience];
     }
 
+    const previousExperiences = curriculum.experiences;
     updateField('experiences', updatedExperiences);
     setExperienceDialogOpen(false);
     setEditingExperience(null);
-    toast.success(existingIndex >= 0 ? 'Experiência atualizada!' : 'Experiência adicionada!');
+
+    try {
+      const saved = await updateMutation.mutateAsync({
+        id: curriculum.id,
+        updates: { experiences: updatedExperiences },
+      });
+      setCurriculum((prev) => prev ? { ...prev, experiences: saved.experiences } : null);
+      toast.success(existingIndex >= 0 ? 'Experiência atualizada!' : 'Experiência adicionada!');
+    } catch {
+      updateField('experiences', previousExperiences);
+      toast.error('Erro ao salvar experiência.');
+    }
   };
 
-  const handleDeleteExperience = (experienceId: string) => {
+  const handleDeleteExperience = async (experienceId: string) => {
     if (!curriculum) return;
-    updateField(
-      'experiences',
-      curriculum.experiences.filter((e) => e.id !== experienceId)
-    );
-    toast.success('Experiência removida.');
+    const previousExperiences = curriculum.experiences;
+    const updatedExperiences = curriculum.experiences.filter((e) => e.id !== experienceId);
+    updateField('experiences', updatedExperiences);
+
+    try {
+      const saved = await updateMutation.mutateAsync({
+        id: curriculum.id,
+        updates: { experiences: updatedExperiences },
+      });
+      setCurriculum((prev) => prev ? { ...prev, experiences: saved.experiences } : null);
+      toast.success('Experiência removida.');
+    } catch {
+      updateField('experiences', previousExperiences);
+      toast.error('Erro ao remover experiência.');
+    }
   };
 
-  // Handlers para formação
-  const handleSaveEducation = (education: EducationWithStatus) => {
+  // Handlers para formação (auto-save)
+  const handleSaveEducation = async (education: EducationWithStatus) => {
     if (!curriculum) return;
 
     const existingIndex = curriculum.education.findIndex((e) => e.id === education.id);
@@ -276,23 +311,45 @@ export default function ProfessionalProfile() {
       updatedEducation = [...curriculum.education, education];
     }
 
+    const previousEducation = curriculum.education;
     updateField('education', updatedEducation);
     setEducationDialogOpen(false);
     setEditingEducation(null);
-    toast.success(existingIndex >= 0 ? 'Formação atualizada!' : 'Formação adicionada!');
+
+    try {
+      const saved = await updateMutation.mutateAsync({
+        id: curriculum.id,
+        updates: { education: updatedEducation },
+      });
+      setCurriculum((prev) => prev ? { ...prev, education: saved.education } : null);
+      toast.success(existingIndex >= 0 ? 'Formação atualizada!' : 'Formação adicionada!');
+    } catch {
+      updateField('education', previousEducation);
+      toast.error('Erro ao salvar formação.');
+    }
   };
 
-  const handleDeleteEducation = (educationId: string) => {
+  const handleDeleteEducation = async (educationId: string) => {
     if (!curriculum) return;
-    updateField(
-      'education',
-      curriculum.education.filter((e) => e.id !== educationId)
-    );
-    toast.success('Formação removida.');
+    const previousEducation = curriculum.education;
+    const updatedEducation = curriculum.education.filter((e) => e.id !== educationId);
+    updateField('education', updatedEducation);
+
+    try {
+      const saved = await updateMutation.mutateAsync({
+        id: curriculum.id,
+        updates: { education: updatedEducation },
+      });
+      setCurriculum((prev) => prev ? { ...prev, education: saved.education } : null);
+      toast.success('Formação removida.');
+    } catch {
+      updateField('education', previousEducation);
+      toast.error('Erro ao remover formação.');
+    }
   };
 
-  // Handlers para habilidades
-  const handleSaveSkill = (skill: SkillWithLevel) => {
+  // Handlers para habilidades (auto-save)
+  const handleSaveSkill = async (skill: SkillWithLevel) => {
     if (!curriculum) return;
 
     const existingIndex = curriculum.skills.findIndex((s) => s.id === skill.id);
@@ -305,33 +362,65 @@ export default function ProfessionalProfile() {
       updatedSkills = [...curriculum.skills, skill];
     }
 
+    const previousSkills = curriculum.skills;
     updateField('skills', updatedSkills);
     setSkillDialogOpen(false);
     setEditingSkill(null);
-    toast.success(existingIndex >= 0 ? 'Habilidade atualizada!' : 'Habilidade adicionada!');
+
+    try {
+      const saved = await updateMutation.mutateAsync({
+        id: curriculum.id,
+        updates: { skills: updatedSkills },
+      });
+      setCurriculum((prev) => prev ? { ...prev, skills: saved.skills } : null);
+      toast.success(existingIndex >= 0 ? 'Habilidade atualizada!' : 'Habilidade adicionada!');
+    } catch {
+      updateField('skills', previousSkills);
+      toast.error('Erro ao salvar habilidade.');
+    }
   };
 
-  const handleDeleteSkill = (skillId: string) => {
+  const handleDeleteSkill = async (skillId: string) => {
     if (!curriculum) return;
-    updateField(
-      'skills',
-      curriculum.skills.filter((s) => s.id !== skillId)
-    );
-    toast.success('Habilidade removida.');
+    const previousSkills = curriculum.skills;
+    const updatedSkills = curriculum.skills.filter((s) => s.id !== skillId);
+    updateField('skills', updatedSkills);
+
+    try {
+      const saved = await updateMutation.mutateAsync({
+        id: curriculum.id,
+        updates: { skills: updatedSkills },
+      });
+      setCurriculum((prev) => prev ? { ...prev, skills: saved.skills } : null);
+      toast.success('Habilidade removida.');
+    } catch {
+      updateField('skills', previousSkills);
+      toast.error('Erro ao remover habilidade.');
+    }
   };
 
-  const handleChangeSkillLevel = (skillId: string, newLevel: SkillLevel) => {
+  const handleChangeSkillLevel = async (skillId: string, newLevel: SkillLevel) => {
     if (!curriculum) return;
-    updateField(
-      'skills',
-      curriculum.skills.map((s) =>
-        s.id === skillId ? { ...s, level: newLevel } : s
-      )
+    const previousSkills = curriculum.skills;
+    const updatedSkills = curriculum.skills.map((s) =>
+      s.id === skillId ? { ...s, level: newLevel } : s
     );
+    updateField('skills', updatedSkills);
+
+    try {
+      const saved = await updateMutation.mutateAsync({
+        id: curriculum.id,
+        updates: { skills: updatedSkills },
+      });
+      setCurriculum((prev) => prev ? { ...prev, skills: saved.skills } : null);
+    } catch {
+      updateField('skills', previousSkills);
+      toast.error('Erro ao atualizar nível da habilidade.');
+    }
   };
 
-  // Handlers para cursos
-  const handleSaveCourse = (course: Course) => {
+  // Handlers para cursos (auto-save)
+  const handleSaveCourse = async (course: Course) => {
     if (!curriculum) return;
 
     const existingIndex = curriculum.courses.findIndex((c) => c.id === course.id);
@@ -344,19 +433,41 @@ export default function ProfessionalProfile() {
       updatedCourses = [...curriculum.courses, course];
     }
 
+    const previousCourses = curriculum.courses;
     updateField('courses', updatedCourses);
     setCourseDialogOpen(false);
     setEditingCourse(null);
-    toast.success(existingIndex >= 0 ? 'Curso atualizado!' : 'Curso adicionado!');
+
+    try {
+      const saved = await updateMutation.mutateAsync({
+        id: curriculum.id,
+        updates: { courses: updatedCourses },
+      });
+      setCurriculum((prev) => prev ? { ...prev, courses: saved.courses } : null);
+      toast.success(existingIndex >= 0 ? 'Curso atualizado!' : 'Curso adicionado!');
+    } catch {
+      updateField('courses', previousCourses);
+      toast.error('Erro ao salvar curso.');
+    }
   };
 
-  const handleDeleteCourse = (courseId: string) => {
+  const handleDeleteCourse = async (courseId: string) => {
     if (!curriculum) return;
-    updateField(
-      'courses',
-      curriculum.courses.filter((c) => c.id !== courseId)
-    );
-    toast.success('Curso removido.');
+    const previousCourses = curriculum.courses;
+    const updatedCourses = curriculum.courses.filter((c) => c.id !== courseId);
+    updateField('courses', updatedCourses);
+
+    try {
+      const saved = await updateMutation.mutateAsync({
+        id: curriculum.id,
+        updates: { courses: updatedCourses },
+      });
+      setCurriculum((prev) => prev ? { ...prev, courses: saved.courses } : null);
+      toast.success('Curso removido.');
+    } catch {
+      updateField('courses', previousCourses);
+      toast.error('Erro ao remover curso.');
+    }
   };
 
   // Salvar perfil
@@ -369,7 +480,8 @@ export default function ProfessionalProfile() {
 
     setSaving(true);
     try {
-      await updateMutation.mutateAsync({ id: curriculum.id, updates: updatedCurriculum });
+      const saved = await updateMutation.mutateAsync({ id: curriculum.id, updates: updatedCurriculum });
+      setCurriculum({ ...saved });
       toast.success('Perfil salvo com sucesso!');
     } catch {
       toast.error('Erro ao salvar perfil.');
@@ -378,44 +490,79 @@ export default function ProfessionalProfile() {
     }
   };
 
+  // Layout wrapper: DashboardLayout in normal mode, bare div in onboarding mode
+  const LayoutWrapper = onboardingMode
+    ? ({ children }: { children: React.ReactNode }) => <div className="min-h-screen bg-background">{children}</div>
+    : ({ children }: { children: React.ReactNode }) => <DashboardLayout userType="candidate">{children}</DashboardLayout>;
+
   if (loading) {
     return (
-      <DashboardLayout userType="candidate">
+      <LayoutWrapper>
         <div className="flex items-center justify-center h-64">
           <p className="text-muted-foreground">Carregando...</p>
         </div>
-      </DashboardLayout>
+      </LayoutWrapper>
     );
   }
 
   if (!curriculum) {
     return (
-      <DashboardLayout userType="candidate">
+      <LayoutWrapper>
         <div className="flex flex-col items-center justify-center h-64">
           <p className="text-muted-foreground mb-4">Currículo não encontrado.</p>
           <Button onClick={() => navigate('/candidato')}>
             Voltar ao Dashboard
           </Button>
         </div>
-      </DashboardLayout>
+      </LayoutWrapper>
     );
   }
 
   const completeness = calculateCompleteness(curriculum);
 
+  // Onboarding-specific completeness: stricter requirements for mandatory tabs
+  const onboardingComplete = onboardingMode ? (() => {
+    const hasBasic = Boolean(curriculum.title?.trim() && curriculum.availability?.trim());
+    const hasLocation = Boolean(curriculum.city?.trim() || curriculum.state?.trim());
+    const hasSalary = Boolean(curriculum.salary?.min && curriculum.salary?.max);
+    const hasInterests = Boolean(
+      (curriculum.preferredSectors?.length ?? 0) > 0 &&
+      (curriculum.preferredRoles?.length ?? 0) > 0 &&
+      (curriculum.workModel?.length ?? 0) > 0 &&
+      (curriculum.contractType?.length ?? 0) > 0
+    );
+    const hasExperience = (curriculum.experiences?.length ?? 0) > 0;
+    const hasEducation = (curriculum.education?.length ?? 0) > 0;
+    const hasSkills = (curriculum.skills?.length ?? 0) > 0;
+    return hasBasic && hasLocation && hasSalary && hasInterests && hasExperience && hasEducation && hasSkills;
+  })() : false;
+
   return (
-    <DashboardLayout userType="candidate">
-      <div className="space-y-6">
+    <LayoutWrapper>
+      {/* Onboarding header */}
+      {onboardingMode && (
+        <div className="border-b bg-card">
+          <div className="max-w-4xl mx-auto px-4 py-6">
+            <div className="flex items-center justify-center mb-6">
+              <img src="/images/logo-horizontal.png" alt="RecrutaRS" className="h-10 w-auto" />
+            </div>
+            <OnboardingStepIndicator currentStep={3} />
+          </div>
+        </div>
+      )}
+      <div className={cn("space-y-6", onboardingMode && "max-w-4xl mx-auto px-4 py-8")}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/candidato')}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+            {!onboardingMode && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/candidato')}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            )}
             <div>
               <h1 className="text-2xl font-bold">
                 Perfil Profissional
@@ -1276,8 +1423,31 @@ export default function ProfessionalProfile() {
           course={editingCourse}
           onSave={handleSaveCourse}
         />
+
+        {/* Onboarding: Next button */}
+        {onboardingMode && (
+          <div className="pt-6 border-t">
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={async () => {
+                await handleSave();
+                onOnboardingComplete?.();
+              }}
+              disabled={!onboardingComplete || saving}
+            >
+              {saving ? 'Salvando...' : 'Proximo — Teste Comportamental'}
+              {!saving && <ArrowRight className="h-4 w-4 ml-2" />}
+            </Button>
+            {!onboardingComplete && (
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                Complete todas as abas obrigatorias para avancar.
+              </p>
+            )}
+          </div>
+        )}
       </div>
-    </DashboardLayout>
+    </LayoutWrapper>
   );
 }
 

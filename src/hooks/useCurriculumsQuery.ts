@@ -74,8 +74,8 @@ export function useUpdateCurriculum() {
       return service.updateCurriculum(id, updates);
     },
     onSuccess: (updated, { id }) => {
-      queryClient.invalidateQueries({ queryKey: profileKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+      queryClient.setQueryData(profileKeys.byCandidate(updated.candidateId), updated);
+      queryClient.setQueryData(profileKeys.detail(id), updated);
     },
   });
 }
