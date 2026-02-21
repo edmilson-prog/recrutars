@@ -84,6 +84,14 @@ export function candidateRowToCandidate(row: CandidateRow): Candidate {
     // Privacidade
     showSalaryExpectation: (row as CandidateRow & { show_salary_expectation?: boolean }).show_salary_expectation ?? false,
     resumeVisibility: (row as CandidateRow & { resume_visibility?: string }).resume_visibility ?? 'companies',
+    // PRD-083: Onboarding
+    onboardingStep: (row as CandidateRow & { onboarding_step?: string }).onboarding_step as Candidate['onboardingStep'] ?? 'completed',
+    gender: (row as CandidateRow & { gender?: string }).gender ?? undefined,
+    maritalStatus: (row as CandidateRow & { marital_status?: string }).marital_status ?? undefined,
+    nationality: (row as CandidateRow & { nationality?: string }).nationality ?? undefined,
+    termsAcceptedAt: (row as CandidateRow & { terms_accepted_at?: string }).terms_accepted_at ?? undefined,
+    privacyAcceptedAt: (row as CandidateRow & { privacy_accepted_at?: string }).privacy_accepted_at ?? undefined,
+    lgpdConsentAt: (row as CandidateRow & { lgpd_consent_at?: string }).lgpd_consent_at ?? undefined,
   };
 }
 

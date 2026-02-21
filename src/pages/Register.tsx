@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { ForceLightTheme } from '@/components/theme/ForceLightTheme';
 import { maskCNPJInput, stripCNPJ, isValidCNPJ, lookupCNPJ } from '@/lib/cnpj';
 import type { CnpjLookupData } from '@/lib/cnpj';
+import { CandidateRegistrationForm } from '@/components/onboarding/CandidateRegistrationForm';
 
 type AccountType = 'company' | 'candidate';
 type CompanyStep = 'cnpj' | 'confirm' | 'credentials';
@@ -32,8 +33,8 @@ export default function Register() {
   const [registeredEmail, setRegisteredEmail] = useState('');
   const [resending, setResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
-  // Candidate only
-  const [name, setName] = useState('');
+  // Candidate only (name state kept for company flow display name fallback)
+  const [name] = useState('');
   // Company CNPJ flow (PRD-078)
   const [companyStep, setCompanyStep] = useState<CompanyStep>('cnpj');
   const [cnpjInput, setCnpjInput] = useState('');
@@ -500,111 +501,9 @@ export default function Register() {
     </form>
   );
 
-  // ── Candidate Form (unchanged) ──
+  // ── Candidate Form (PRD-083: Replaced with progressive registration) ──
   const renderCandidateForm = () => (
-    <form onSubmit={handleRegister} className="space-y-4">
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="space-y-2">
-        <Label htmlFor="name">Nome completo</Label>
-        <div className="relative">
-          <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            id="name"
-            type="text"
-            placeholder="Joao da Silva"
-            className="pl-10"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            autoComplete="name"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="email">E-mail</Label>
-        <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            id="email"
-            type="email"
-            placeholder="seu@email.com"
-            className="pl-10"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="phone">Telefone</Label>
-        <div className="relative">
-          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            id="phone"
-            type="tel"
-            placeholder="(11) 99999-9999"
-            className="pl-10"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            autoComplete="tel"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="password">Senha</Label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            className="pl-10"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">Minimo 6 caracteres</p>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirmar senha</Label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            id="confirmPassword"
-            type="password"
-            placeholder="••••••••"
-            className="pl-10"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-          />
-        </div>
-      </div>
-
-      <Button
-        type="submit"
-        className="w-full"
-        size="lg"
-        disabled={submitting}
-      >
-        {submitting ? 'Criando conta...' : 'Criar conta'}
-        {!submitting && <ArrowRight className="w-5 h-5" />}
-      </Button>
-    </form>
+    <CandidateRegistrationForm onBack={() => setAccountType(null)} />
   );
 
   // ── Company step title/subtitle ──

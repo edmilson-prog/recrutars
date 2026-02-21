@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RedirectIfAuthenticated } from "@/components/auth/RedirectIfAuthenticated";
+import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
 
 // Public pages
 import Landing from "./pages/Landing";
@@ -19,6 +20,7 @@ import QuemSomos from "./pages/QuemSomos";
 import MissaoVisaoValores from "./pages/MissaoVisaoValores";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import TermosUso from "./pages/TermosUso";
+import LGPD from "./pages/LGPD";
 import ForCompanies from "./pages/ForCompanies";
 import ForCandidates from "./pages/ForCandidates";
 import CorporateTests from "./pages/CorporateTests";
@@ -124,6 +126,11 @@ import CandidateBehavioralTestResult from "./pages/candidato/BehavioralTestResul
 import CandidateGaugeProAssessment from "./pages/candidato/GaugeProAssessment";
 import CandidateGaugeProResult from "./pages/candidato/GaugeProResult";
 
+// PRD-083-086: Candidate Onboarding
+import OnboardingPersonalProfile from "./pages/candidato/OnboardingPersonalProfile";
+import OnboardingProfessionalProfile from "./pages/candidato/OnboardingProfessionalProfile";
+import OnboardingGaugeProTest from "./pages/candidato/OnboardingGaugeProTest";
+
 // PRD-048: Job Assessment pages
 import CreateJobTest from "./pages/empresa/CreateJobTest";
 import JobTestManager from "./pages/empresa/JobTestManager";
@@ -213,6 +220,7 @@ const App = () => (
             <Route path="/missao-visao-valores" element={<MissaoVisaoValores />} />
             <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
             <Route path="/termos-de-uso" element={<TermosUso />} />
+            <Route path="/lgpd" element={<LGPD />} />
             <Route path="/para-empresas" element={<ForCompanies />} />
             <Route path="/para-candidatos" element={<ForCandidates />} />
             <Route path="/testes-corporativos" element={<CorporateTests />} />
@@ -657,104 +665,159 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            {/* Candidate Routes */}
+            {/* PRD-083-086: Candidate Onboarding Routes (outside OnboardingGuard to avoid loops) */}
+            <Route path="/candidato/onboarding/perfil-pessoal" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <OnboardingPersonalProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/onboarding/perfil-profissional" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <OnboardingProfessionalProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/onboarding/teste-gauge-pro" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <OnboardingGaugeProTest />
+              </ProtectedRoute>
+            } />
+
+            {/* Candidate Routes (wrapped with OnboardingGuard) */}
             <Route path="/candidato" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateDashboard />
+                <OnboardingGuard>
+                  <CandidateDashboard />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/perfil" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateProfessionalProfile />
+                <OnboardingGuard>
+                  <CandidateProfessionalProfile />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/conta" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateAccount />
+                <OnboardingGuard>
+                  <CandidateAccount />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/vagas" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateJobSearch />
+                <OnboardingGuard>
+                  <CandidateJobSearch />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/vagas/:id" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateJobDetails />
+                <OnboardingGuard>
+                  <CandidateJobDetails />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/vagas-salvas" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateSavedJobs />
+                <OnboardingGuard>
+                  <CandidateSavedJobs />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/vagas-recomendadas" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateRecommendedJobs />
+                <OnboardingGuard>
+                  <CandidateRecommendedJobs />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/candidaturas" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateApplications />
+                <OnboardingGuard>
+                  <CandidateApplications />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/testes" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateTests />
+                <OnboardingGuard>
+                  <CandidateTests />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/mensagens" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateMessages />
+                <OnboardingGuard>
+                  <CandidateMessages />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/configuracoes" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateSettings />
+                <OnboardingGuard>
+                  <CandidateSettings />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/meu-plano" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateMyPlan />
+                <OnboardingGuard>
+                  <CandidateMyPlan />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/curriculos" element={<Navigate to="/candidato/perfil" replace />} />
             <Route path="/candidato/curriculos/:id" element={<Navigate to="/candidato/perfil" replace />} />
             <Route path="/candidato/notificacoes" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateNotifications />
+                <OnboardingGuard>
+                  <CandidateNotifications />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/entrevistas" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateInterviews />
+                <OnboardingGuard>
+                  <CandidateInterviews />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/importar-cv" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateImportCV />
+                <OnboardingGuard>
+                  <CandidateImportCV />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/teste-comportamental" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateBehavioralTest />
+                <OnboardingGuard>
+                  <CandidateBehavioralTest />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/teste-comportamental/resultado" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateBehavioralTestResult />
+                <OnboardingGuard>
+                  <CandidateBehavioralTestResult />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
 
             {/* PRD-049 & PRD-050: Gauge-Pro */}
             <Route path="/candidato/gauge-pro" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateGaugeProAssessment />
+                <OnboardingGuard>
+                  <CandidateGaugeProAssessment />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/candidato/gauge-pro/resultado" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <CandidateGaugeProResult />
+                <OnboardingGuard>
+                  <CandidateGaugeProResult />
+                </OnboardingGuard>
               </ProtectedRoute>
             } />
 

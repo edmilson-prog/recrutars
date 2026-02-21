@@ -40,6 +40,11 @@ interface SignUpParams {
   phone?: string;
   type: 'candidate' | 'company';
   cnpjData?: CnpjSignUpData;
+  // PRD-083: Candidate onboarding
+  cpf?: string;
+  termsAcceptedAt?: string;
+  privacyAcceptedAt?: string;
+  lgpdConsentAt?: string;
 }
 
 // ── Context Interface ──
@@ -262,11 +267,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // State is cleared automatically by onAuthStateChange
   };
 
-  const signUp = async ({ email, password, name, phone, type, cnpjData }: SignUpParams) => {
+  const signUp = async ({ email, password, name, phone, type, cnpjData, cpf, termsAcceptedAt, privacyAcceptedAt, lgpdConsentAt }: SignUpParams) => {
     // The handle_new_user() trigger creates profiles + candidates/companies
     // atomically on auth.users INSERT — no manual INSERT needed here.
     // For companies with CNPJ data, all fields are passed via metadata to the trigger.
     const metadata: Record<string, unknown> = { name, type, phone: phone || null };
+
+    // PRD-083: Pass CPF for candidates
+    if (type === 'candidate' && cpf) {
+      metadata.cpf = cpf;
+    }
 
     if (type === 'company' && cnpjData) {
       metadata.name = cnpjData.nomeFantasia || cnpjData.razaoSocial;

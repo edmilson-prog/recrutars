@@ -189,6 +189,14 @@ export class CandidatesServiceSupabase implements ICandidatesService {
     // Privacidade
     if (updates.showSalaryExpectation !== undefined) dbUpdates.show_salary_expectation = updates.showSalaryExpectation;
     if (updates.resumeVisibility !== undefined) dbUpdates.resume_visibility = updates.resumeVisibility;
+    // PRD-083: Onboarding
+    if (updates.onboardingStep !== undefined) dbUpdates.onboarding_step = updates.onboardingStep;
+    if (updates.gender !== undefined) dbUpdates.gender = updates.gender;
+    if (updates.maritalStatus !== undefined) dbUpdates.marital_status = updates.maritalStatus;
+    if (updates.nationality !== undefined) dbUpdates.nationality = updates.nationality;
+    if (updates.termsAcceptedAt !== undefined) dbUpdates.terms_accepted_at = updates.termsAcceptedAt;
+    if (updates.privacyAcceptedAt !== undefined) dbUpdates.privacy_accepted_at = updates.privacyAcceptedAt;
+    if (updates.lgpdConsentAt !== undefined) dbUpdates.lgpd_consent_at = updates.lgpdConsentAt;
 
     const { data, error } = await supabase
       .from('candidates')

@@ -166,6 +166,17 @@ function SkillLevelSelector({
   );
 }
 
+// Stable layout components — defined OUTSIDE the main component to prevent
+// React from creating new component references on every render (which would
+// unmount/remount all children and destroy input focus).
+function OnboardingLayout({ children }: { children: React.ReactNode }) {
+  return <div className="min-h-screen bg-background">{children}</div>;
+}
+
+function DashboardLayoutWrapper({ children }: { children: React.ReactNode }) {
+  return <DashboardLayout userType="candidate">{children}</DashboardLayout>;
+}
+
 interface ProfessionalProfileProps {
   onboardingMode?: boolean;
   onOnboardingComplete?: () => void;
@@ -191,6 +202,9 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
 
   // Estado do combobox de cidade
   const [cityOpen, setCityOpen] = useState(false);
+
+  // Validacao visual no onboarding
+  const [showOnboardingErrors, setShowOnboardingErrors] = useState(false);
 
   // Estados para modais
   const [experienceDialogOpen, setExperienceDialogOpen] = useState(false);
@@ -545,10 +559,8 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
     }
   };
 
-  // Layout wrapper: DashboardLayout in normal mode, bare div in onboarding mode
-  const LayoutWrapper = onboardingMode
-    ? ({ children }: { children: React.ReactNode }) => <div className="min-h-screen bg-background">{children}</div>
-    : ({ children }: { children: React.ReactNode }) => <DashboardLayout userType="candidate">{children}</DashboardLayout>;
+  // Pick stable layout component (defined outside this function to avoid re-renders)
+  const LayoutWrapper = onboardingMode ? OnboardingLayout : DashboardLayoutWrapper;
 
   if (loading) {
     return (
@@ -576,7 +588,8 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
   const completeness = calculateCompleteness(curriculum);
 
   // Onboarding-specific completeness: stricter requirements for mandatory tabs
-  const onboardingComplete = onboardingMode ? (() => {
+  const onboardingTabStatus = useMemo(() => {
+    if (!onboardingMode || !curriculum) return { complete: false, incomplete: [] as string[] };
     const hasBasic = Boolean(curriculum.title?.trim() && curriculum.availability?.trim());
     const hasLocation = Boolean(curriculum.city?.trim() || curriculum.state?.trim());
     const hasSalary = Boolean(curriculum.salary?.min && curriculum.salary?.max);
@@ -589,8 +602,18 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
     const hasExperience = (curriculum.experiences?.length ?? 0) > 0;
     const hasEducation = (curriculum.education?.length ?? 0) > 0;
     const hasSkills = (curriculum.skills?.length ?? 0) > 0;
-    return hasBasic && hasLocation && hasSalary && hasInterests && hasExperience && hasEducation && hasSkills;
-  })() : false;
+    const incomplete: string[] = [];
+    if (!hasBasic) incomplete.push('basic');
+    if (!hasLocation) incomplete.push('location');
+    if (!hasSalary) incomplete.push('salary');
+    if (!hasInterests) incomplete.push('interests');
+    if (!hasExperience) incomplete.push('experience');
+    if (!hasEducation) incomplete.push('education');
+    if (!hasSkills) incomplete.push('skills');
+    return { complete: incomplete.length === 0, incomplete };
+  }, [onboardingMode, curriculum]);
+
+  const onboardingComplete = onboardingTabStatus.complete;
 
   return (
     <LayoutWrapper>
@@ -642,23 +665,23 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex-wrap">
-            <TabsTrigger value="basic" className="gap-2">
+            <TabsTrigger value="basic" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('basic') && "ring-2 ring-destructive")}>
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Informações</span>
             </TabsTrigger>
-            <TabsTrigger value="location" className="gap-2">
+            <TabsTrigger value="location" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('location') && "ring-2 ring-destructive")}>
               <MapPin className="h-4 w-4" />
               <span className="hidden sm:inline">Localização</span>
             </TabsTrigger>
-            <TabsTrigger value="salary" className="gap-2">
+            <TabsTrigger value="salary" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('salary') && "ring-2 ring-destructive")}>
               <DollarSign className="h-4 w-4" />
               <span className="hidden sm:inline">Salário</span>
             </TabsTrigger>
-            <TabsTrigger value="interests" className="gap-2">
+            <TabsTrigger value="interests" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('interests') && "ring-2 ring-destructive")}>
               <Target className="h-4 w-4" />
               <span className="hidden sm:inline">Interesses</span>
             </TabsTrigger>
-            <TabsTrigger value="experience" className="gap-2">
+            <TabsTrigger value="experience" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('experience') && "ring-2 ring-destructive")}>
               <Briefcase className="h-4 w-4" />
               <span className="hidden sm:inline">Experiência</span>
               {curriculum.experiences.length > 0 && (
@@ -667,7 +690,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="education" className="gap-2">
+            <TabsTrigger value="education" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('education') && "ring-2 ring-destructive")}>
               <GraduationCap className="h-4 w-4" />
               <span className="hidden sm:inline">Formação</span>
               {curriculum.education.length > 0 && (
@@ -676,7 +699,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="skills" className="gap-2">
+            <TabsTrigger value="skills" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('skills') && "ring-2 ring-destructive")}>
               <Code className="h-4 w-4" />
               <span className="hidden sm:inline">Habilidades</span>
               {curriculum.skills.length > 0 && (
@@ -1486,17 +1509,24 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
               className="w-full"
               size="lg"
               onClick={async () => {
+                if (!onboardingComplete) {
+                  setShowOnboardingErrors(true);
+                  // Navigate to first incomplete tab
+                  const firstIncomplete = onboardingTabStatus.incomplete[0];
+                  if (firstIncomplete) setActiveTab(firstIncomplete);
+                  return;
+                }
                 await handleSave();
                 onOnboardingComplete?.();
               }}
-              disabled={!onboardingComplete || saving}
+              disabled={saving}
             >
               {saving ? 'Salvando...' : 'Proximo — Teste Comportamental'}
               {!saving && <ArrowRight className="h-4 w-4 ml-2" />}
             </Button>
-            {!onboardingComplete && (
-              <p className="text-xs text-muted-foreground text-center mt-2">
-                Complete todas as abas obrigatorias para avancar.
+            {showOnboardingErrors && !onboardingComplete && (
+              <p className="text-xs text-destructive text-center mt-2">
+                Complete as abas destacadas para avancar.
               </p>
             )}
           </div>

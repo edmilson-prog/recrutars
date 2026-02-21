@@ -100,6 +100,15 @@ export interface Candidate {
   // Privacidade
   showSalaryExpectation?: boolean;
   resumeVisibility?: string;
+
+  // PRD-083: Onboarding
+  onboardingStep?: 'registration' | 'personal_profile' | 'professional_profile' | 'gauge_pro_test' | 'completed';
+  gender?: string;
+  maritalStatus?: string;
+  nationality?: string;
+  termsAcceptedAt?: string;
+  privacyAcceptedAt?: string;
+  lgpdConsentAt?: string;
 }
 
 // PRD-026: Perfil anônimo para empresas (modo partial)

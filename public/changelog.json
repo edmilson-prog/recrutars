@@ -1,12 +1,51 @@
 {
   "versions": [
     {
+      "version": "1.30.0",
+      "codename": "Gateway",
+      "type": "minor",
+      "releaseDate": "2026-02-21",
+      "prd": "PRD-083, PRD-084, PRD-085, PRD-086",
+      "description": "Fluxo completo de onboarding para novos candidatos em 4 etapas obrigatorias: cadastro com CPF e senha forte, perfil pessoal, perfil profissional e teste comportamental Gauge-Pro.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "PRD-083: Cadastro progressivo de candidato em 4 sub-etapas (CPF, dados, senha forte, termos LGPD)",
+            "PRD-083: Validacao de CPF com verificacao de unicidade via RPC e mascara de entrada",
+            "PRD-083: Indicador de forca de senha com 5 criterios (8+ chars, maiuscula, minuscula, numero, especial)",
+            "PRD-083: Aceite obrigatorio de Termos de Uso, Politica de Privacidade e consentimento LGPD com timestamps",
+            "PRD-083: OnboardingGuard que redireciona candidatos para etapa pendente do onboarding",
+            "PRD-083: OnboardingStepIndicator reutilizavel com 4 etapas e indicadores visuais de progresso",
+            "PRD-084: Tela de perfil pessoal com 7 campos obrigatorios (nascimento, genero, estado, cidade, foto, estado civil, nacionalidade)",
+            "PRD-084: Upload de foto de perfil direto para Supabase Storage com validacao de formato e tamanho",
+            "PRD-084: Salvamento progressivo automatico ao sair de cada campo",
+            "PRD-085: Perfil profissional no onboarding reutilizando ProfessionalProfile com modo onboarding (sem sidebar)",
+            "PRD-085: Verificacao de completude estrita para 7 abas obrigatorias antes de avancar",
+            "PRD-086: Tela de introducao do teste Gauge-Pro com explicacao e informacoes praticas",
+            "PRD-086: Teste Gauge-Pro integrado no fluxo de onboarding com retomada de sessao",
+            "PRD-086: Tela de conclusao com lista de verificacao e botao para acessar a plataforma"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Pagina de cadastro agora usa formulario progressivo para candidatos (empresa inalterada)",
+            "Rotas de candidato protegidas com OnboardingGuard (candidatos existentes nao afetados)",
+            "Trigger handle_new_user() atualizado para salvar CPF e definir onboarding_step=personal_profile",
+            "ProfessionalProfile aceita prop onboardingMode para renderizar sem DashboardLayout"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.26.1",
       "codename": "Oracle",
       "type": "patch",
       "releaseDate": "2026-02-20",
       "description": "Correcoes e melhorias pos-PRD-082: auto-selecao de conversa ao enviar mensagem, cards de analise IA com regenerate/collapsible/scrollbar, fixes criticos no detalhe do candidato admin (Gauge-Pro, hooks crash, 405 IA), moderacao admin e correcao de visibilidade de vagas.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
