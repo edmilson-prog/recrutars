@@ -12,6 +12,7 @@ interface WordGridProps {
   stepNumber: number;
   totalSteps: number;
   onToggle: (wordId: number) => void;
+  overallProgress?: number;
 }
 
 export function WordGrid({
@@ -24,6 +25,7 @@ export function WordGrid({
   stepNumber,
   totalSteps,
   onToggle,
+  overallProgress,
 }: WordGridProps) {
   const isMaxReached = selectedIds.length >= maxSelections;
   const isComplete = selectedIds.length === maxSelections;
@@ -31,18 +33,45 @@ export function WordGrid({
   const wordMap = new Map(words.map(w => [w.id, w]));
   const orderedWords = shuffledOrder.map(id => wordMap.get(id)).filter(Boolean) as AdjectiveWord[];
 
+  const progressPercent = ((stepNumber - 1) / totalSteps) * 100;
+
   return (
     <div className="space-y-5">
-      <div>
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">
-            {dimensionName}
-          </h3>
-          <span className="text-xs text-gray-400 font-medium">
-            Etapa {stepNumber} de {totalSteps}
-          </span>
+      {/* Progress bar */}
+      <div className="space-y-1.5">
+        <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-500 ease-out"
+            style={{ width: `${progressPercent}%` }}
+          />
         </div>
-        <p className="text-sm text-gray-500">{perspectiveLabel}</p>
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>{dimensionName}</span>
+          <span>{Math.round(progressPercent)}%</span>
+        </div>
+      </div>
+
+      {/* Overall progress */}
+      {overallProgress !== undefined && (
+        <div className="space-y-1">
+          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-primary to-emerald-400 transition-all duration-700 ease-out"
+              style={{ width: `${overallProgress}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+            <span>Progresso geral</span>
+            <span>{overallProgress}%</span>
+          </div>
+        </div>
+      )}
+
+      {/* Perspective label */}
+      <div className="rounded-lg bg-cyan-500/10 border border-cyan-500/20 px-4 py-2.5">
+        <p className="text-base font-semibold text-cyan-400 tracking-tight">
+          {perspectiveLabel}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">

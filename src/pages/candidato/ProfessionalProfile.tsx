@@ -1,7 +1,7 @@
 // PRD-073: Página de Perfil Profissional Unificado
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useNavigate, useBlocker } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -58,15 +58,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from 'sonner';
@@ -272,12 +263,6 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
       JSON.stringify(curriculum.contractType) !== JSON.stringify(saved.contractType)
     );
   }, [curriculum]);
-
-  // Bloquear navegacao in-app quando ha mudancas nao salvas (desativado no onboarding)
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      !onboardingMode && hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname
-  );
 
   // Proteger contra refresh/fechar aba do navegador
   useEffect(() => {
@@ -559,6 +544,35 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
     }
   };
 
+  // Onboarding-specific completeness: stricter requirements for mandatory tabs
+  // Must be before early returns to satisfy React hooks ordering rules.
+  const onboardingTabStatus = useMemo(() => {
+    if (!onboardingMode || !curriculum) return { complete: false, incomplete: [] as string[] };
+    const hasBasic = Boolean(curriculum.title?.trim() && curriculum.availability?.trim());
+    const hasLocation = Boolean(curriculum.city?.trim() || curriculum.state?.trim());
+    const hasSalary = Boolean(curriculum.salary?.min && curriculum.salary?.max);
+    const hasInterests = Boolean(
+      (curriculum.preferredSectors?.length ?? 0) > 0 &&
+      (curriculum.preferredRoles?.length ?? 0) > 0 &&
+      (curriculum.workModel?.length ?? 0) > 0 &&
+      (curriculum.contractType?.length ?? 0) > 0
+    );
+    const hasExperience = (curriculum.experiences?.length ?? 0) > 0;
+    const hasEducation = (curriculum.education?.length ?? 0) > 0;
+    const hasSkills = (curriculum.skills?.length ?? 0) > 0;
+    const incomplete: string[] = [];
+    if (!hasBasic) incomplete.push('basic');
+    if (!hasLocation) incomplete.push('location');
+    if (!hasSalary) incomplete.push('salary');
+    if (!hasInterests) incomplete.push('interests');
+    if (!hasExperience) incomplete.push('experience');
+    if (!hasEducation) incomplete.push('education');
+    if (!hasSkills) incomplete.push('skills');
+    return { complete: incomplete.length === 0, incomplete };
+  }, [onboardingMode, curriculum]);
+
+  const onboardingComplete = onboardingTabStatus.complete;
+
   // Pick stable layout component (defined outside this function to avoid re-renders)
   const LayoutWrapper = onboardingMode ? OnboardingLayout : DashboardLayoutWrapper;
 
@@ -586,34 +600,6 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
   }
 
   const completeness = calculateCompleteness(curriculum);
-
-  // Onboarding-specific completeness: stricter requirements for mandatory tabs
-  const onboardingTabStatus = useMemo(() => {
-    if (!onboardingMode || !curriculum) return { complete: false, incomplete: [] as string[] };
-    const hasBasic = Boolean(curriculum.title?.trim() && curriculum.availability?.trim());
-    const hasLocation = Boolean(curriculum.city?.trim() || curriculum.state?.trim());
-    const hasSalary = Boolean(curriculum.salary?.min && curriculum.salary?.max);
-    const hasInterests = Boolean(
-      (curriculum.preferredSectors?.length ?? 0) > 0 &&
-      (curriculum.preferredRoles?.length ?? 0) > 0 &&
-      (curriculum.workModel?.length ?? 0) > 0 &&
-      (curriculum.contractType?.length ?? 0) > 0
-    );
-    const hasExperience = (curriculum.experiences?.length ?? 0) > 0;
-    const hasEducation = (curriculum.education?.length ?? 0) > 0;
-    const hasSkills = (curriculum.skills?.length ?? 0) > 0;
-    const incomplete: string[] = [];
-    if (!hasBasic) incomplete.push('basic');
-    if (!hasLocation) incomplete.push('location');
-    if (!hasSalary) incomplete.push('salary');
-    if (!hasInterests) incomplete.push('interests');
-    if (!hasExperience) incomplete.push('experience');
-    if (!hasEducation) incomplete.push('education');
-    if (!hasSkills) incomplete.push('skills');
-    return { complete: incomplete.length === 0, incomplete };
-  }, [onboardingMode, curriculum]);
-
-  const onboardingComplete = onboardingTabStatus.complete;
 
   return (
     <LayoutWrapper>
@@ -1502,62 +1488,71 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
           onSave={handleSaveCourse}
         />
 
-        {/* Onboarding: Next button */}
-        {onboardingMode && (
-          <div className="pt-6 border-t">
-            <Button
-              className="w-full"
-              size="lg"
-              onClick={async () => {
-                if (!onboardingComplete) {
-                  setShowOnboardingErrors(true);
-                  // Navigate to first incomplete tab
-                  const firstIncomplete = onboardingTabStatus.incomplete[0];
-                  if (firstIncomplete) setActiveTab(firstIncomplete);
-                  return;
-                }
-                await handleSave();
-                onOnboardingComplete?.();
-              }}
-              disabled={saving}
-            >
-              {saving ? 'Salvando...' : 'Proximo — Teste Comportamental'}
-              {!saving && <ArrowRight className="h-4 w-4 ml-2" />}
-            </Button>
-            {showOnboardingErrors && !onboardingComplete && (
-              <p className="text-xs text-destructive text-center mt-2">
-                Complete as abas destacadas para avancar.
-              </p>
-            )}
-          </div>
-        )}
+        {/* Onboarding: Navigation buttons (Previous / Next) */}
+        {onboardingMode && (() => {
+          const ONBOARDING_TAB_ORDER = ['basic', 'location', 'salary', 'interests', 'experience', 'education', 'skills', 'courses', 'documents'];
+          const currentTabIndex = ONBOARDING_TAB_ORDER.indexOf(activeTab);
+          const isLastTab = currentTabIndex === ONBOARDING_TAB_ORDER.length - 1;
+          const isFirstTab = currentTabIndex <= 0;
+
+          return (
+            <div className="pt-6 border-t space-y-3">
+              <div className="flex gap-3">
+                {!isFirstTab && (
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setActiveTab(ONBOARDING_TAB_ORDER[currentTabIndex - 1])}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Anterior
+                  </Button>
+                )}
+                <Button
+                  className="flex-1"
+                  size="lg"
+                  onClick={async () => {
+                    if (!isLastTab) {
+                      // Validate current tab before advancing (only for mandatory tabs)
+                      const currentTab = ONBOARDING_TAB_ORDER[currentTabIndex];
+                      if (onboardingTabStatus.incomplete.includes(currentTab)) {
+                        setShowOnboardingErrors(true);
+                        toast.error('Preencha os campos obrigatórios desta aba antes de avançar.');
+                        return;
+                      }
+                      setActiveTab(ONBOARDING_TAB_ORDER[currentTabIndex + 1]);
+                      return;
+                    }
+                    // Last tab — validate and advance to Gauge-Pro test
+                    if (!onboardingComplete) {
+                      setShowOnboardingErrors(true);
+                      const firstIncomplete = onboardingTabStatus.incomplete[0];
+                      if (firstIncomplete) setActiveTab(firstIncomplete);
+                      return;
+                    }
+                    await handleSave();
+                    onOnboardingComplete?.();
+                  }}
+                  disabled={saving}
+                >
+                  {saving
+                    ? 'Salvando...'
+                    : isLastTab
+                      ? 'Próximo — Teste Comportamental'
+                      : 'Próximo'}
+                  {!saving && <ArrowRight className="h-4 w-4 ml-2" />}
+                </Button>
+              </div>
+              {showOnboardingErrors && !onboardingComplete && (
+                <p className="text-xs text-destructive text-center">
+                  Complete as abas destacadas para avançar.
+                </p>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
-      {/* Dialog de aviso de mudancas nao salvas */}
-      <AlertDialog open={blocker.state === 'blocked'}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Alterações não salvas</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você tem alterações no perfil que ainda não foram salvas. O que deseja fazer?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel onClick={() => blocker.reset?.()}>
-              Cancelar
-            </AlertDialogCancel>
-            <Button variant="outline" onClick={() => blocker.proceed?.()}>
-              Sair sem Salvar
-            </Button>
-            <Button onClick={async () => {
-              await handleSave();
-              blocker.proceed?.();
-            }}>
-              Salvar e Sair
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </LayoutWrapper>
   );
 }

@@ -12,8 +12,8 @@ export function Part1Complete({ onContinue }: Part1CompleteProps) {
         <CheckCircle className="w-8 h-8" />
       </div>
       <div className="space-y-2">
-        <h2 className="text-xl font-bold text-gray-900">Parte 1 Concluída!</h2>
-        <p className="text-gray-600">
+        <h2 className="text-xl font-bold text-emerald-400">Parte 1 Concluída!</h2>
+        <p className="text-muted-foreground">
           Suas seleções de palavras foram registradas. Agora vamos para a segunda parte: cenários situacionais.
         </p>
       </div>

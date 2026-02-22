@@ -178,12 +178,14 @@ export default function OnboardingGaugeProTest() {
             <WordGrid
               words={gaugePro.currentDimensionWords}
               shuffledOrder={gaugePro.currentShuffledOrder}
-              selectedIndices={gaugePro.currentStepSelections}
-              selectionLimit={gaugePro.selectionLimit}
-              onToggleWord={gaugePro.toggleWord}
+              selectedIds={gaugePro.currentStepSelections}
+              maxSelections={gaugePro.selectionLimit}
+              onToggle={gaugePro.toggleWord}
               dimensionName={gaugePro.currentDimensionName}
-              perspective={gaugePro.currentPerspective}
               perspectiveLabel={gaugePro.currentPerspectiveLabel}
+              stepNumber={gaugePro.currentWordStep + 1}
+              totalSteps={gaugePro.totalWordSteps}
+              overallProgress={overallProgress}
             />
             <div className="flex items-center justify-between">
               <Button
@@ -201,7 +203,7 @@ export default function OnboardingGaugeProTest() {
                 onClick={gaugePro.submitCurrentStep}
                 disabled={gaugePro.currentStepSelections.length !== gaugePro.selectionLimit}
               >
-                {gaugePro.currentWordStep === gaugePro.totalWordSteps - 1 ? 'Finalizar Parte 1' : 'Proximo'}
+                {gaugePro.currentWordStep === gaugePro.totalWordSteps - 1 ? 'Finalizar Parte 1' : 'Próximo'}
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
@@ -231,48 +233,23 @@ export default function OnboardingGaugeProTest() {
 
       case 'part2_scenarios':
         return gaugePro.currentScenario ? (
-          <div className="space-y-4">
-            <ScenarioCard
-              scenario={gaugePro.currentScenario}
-              selectedOptionId={gaugePro.currentScenarioResponse?.selectedOptionId}
-              onSelectOption={(optionId) => {
-                gaugePro.submitScenarioResponse({
-                  scenarioId: gaugePro.currentScenario!.id,
-                  selectedOptionId: optionId,
-                });
-              }}
-            />
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                onClick={gaugePro.goPreviousScenario}
-                disabled={gaugePro.currentScenarioIndex === 0}
-              >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Anterior
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Cenario {gaugePro.currentScenarioIndex + 1} de {gaugePro.totalScenarios}
-              </span>
-              {gaugePro.currentScenarioIndex === gaugePro.totalScenarios - 1 ? (
-                <Button
-                  onClick={gaugePro.finishAssessment}
-                  disabled={gaugePro.scenarioResponses.length < gaugePro.totalScenarios}
-                >
-                  Finalizar
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={gaugePro.goNextScenario}
-                  disabled={!gaugePro.currentScenarioResponse}
-                >
-                  Proximo
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
-              )}
-            </div>
-          </div>
+          <ScenarioCard
+            scenario={gaugePro.currentScenario}
+            currentIndex={gaugePro.currentScenarioIndex}
+            totalScenarios={gaugePro.totalScenarios}
+            selectedOption={gaugePro.currentScenarioResponse?.selectedOption}
+            onSelectOption={(option) => {
+              gaugePro.submitScenarioResponse(option);
+            }}
+            onNext={gaugePro.goNextScenario}
+            onPrevious={gaugePro.goPreviousScenario}
+            onFinish={gaugePro.finishAssessment}
+            canGoNext={!!gaugePro.currentScenarioResponse}
+            canGoPrevious={gaugePro.currentScenarioIndex > 0}
+            isLast={gaugePro.currentScenarioIndex === gaugePro.totalScenarios - 1}
+            allAnswered={gaugePro.scenarioResponses.length >= gaugePro.totalScenarios}
+            overallProgress={overallProgress}
+          />
         ) : null;
 
       case 'analyzing':
@@ -287,18 +264,36 @@ export default function OnboardingGaugeProTest() {
     }
   };
 
+  // Overall progress: Part 1 (10 word steps) + Part 2 (15 scenarios) = 25 total steps
+  const totalSteps = gaugePro.totalWordSteps + gaugePro.totalScenarios;
+  const completedSteps = (() => {
+    const phase = gaugePro.phase;
+    if (phase === 'intro') return 0;
+    if (phase === 'part1_words') return gaugePro.currentWordStep;
+    if (phase === 'part1_block_transition') return gaugePro.currentWordStep;
+    if (phase === 'part1_complete') return gaugePro.totalWordSteps;
+    if (phase === 'part2_intro') return gaugePro.totalWordSteps;
+    if (phase === 'part2_scenarios') return gaugePro.totalWordSteps + gaugePro.currentScenarioIndex;
+    if (phase === 'analyzing' || phase === 'completed') return totalSteps;
+    return 0;
+  })();
+  const overallProgress = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+  const showOverallProgress = gaugePro.phase !== 'intro' && gaugePro.phase !== 'completed';
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Minimal header with timer */}
+      {/* Header with timer and overall progress */}
       <div className="border-b bg-card">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <img src="/images/logo-horizontal.png" alt="RecrutaRS" className="h-8 w-auto" />
-          {gaugePro.phase !== 'intro' && gaugePro.phase !== 'completed' && (
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Clock className="w-4 h-4" />
-              {formatTime(gaugePro.elapsedSeconds)}
-            </div>
-          )}
+        <div className="max-w-3xl mx-auto px-4 py-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <img src="/images/logo-horizontal.png" alt="RecrutaRS" className="h-8 w-auto" />
+            {showOverallProgress && (
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Clock className="w-4 h-4" />
+                {formatTime(gaugePro.elapsedSeconds)}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

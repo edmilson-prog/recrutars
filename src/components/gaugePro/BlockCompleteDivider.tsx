@@ -27,21 +27,21 @@ export function BlockCompleteDivider({
 
         {/* Title */}
         <div className="space-y-1">
-          <h2 className="text-xl font-bold text-gray-900">Bloco Completo!</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-xl font-bold text-emerald-400">Bloco Completo!</h2>
+          <p className="text-sm text-muted-foreground">
             Dimensão: {DIMENSION_SHORT_NAMES[completedDimension]}
           </p>
         </div>
 
         {/* Divider */}
-        <div className="border-t border-gray-200 mx-8" />
+        <div className="border-t border-border mx-8" />
 
         {/* Next block info */}
         <div className="space-y-1">
-          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
             Próximo bloco
           </p>
-          <p className="text-lg font-semibold text-cyan-600">
+          <p className="text-lg font-semibold text-cyan-400">
             {DIMENSION_SHORT_NAMES[nextDimension]}
           </p>
         </div>
@@ -54,11 +54,11 @@ export function BlockCompleteDivider({
               className={`w-2.5 h-2.5 rounded-full transition-all ${
                 i < completedBlockNumber
                   ? 'bg-emerald-400'
-                  : 'bg-gray-200'
+                  : 'bg-muted'
               }`}
             />
           ))}
-          <span className="text-xs text-gray-400 ml-1">
+          <span className="text-xs text-muted-foreground ml-1">
             {completedBlockNumber}/{totalBlocks}
           </span>
         </div>
