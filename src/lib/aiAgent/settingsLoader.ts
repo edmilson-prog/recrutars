@@ -5,6 +5,7 @@
  */
 
 import type { AIAgentSettings, LLMProvider } from '@/types/aiAnalysis';
+import { supabase } from '@/lib/supabase';
 
 const SETTINGS_KEY = 'recrutars-settings-admin';
 
@@ -65,20 +66,17 @@ export function loadAgentSettings(): AIAgentSettings {
  */
 export async function loadAgentSettingsAsync(): Promise<AIAgentSettings> {
   try {
+    // Load LLM config via SECURITY DEFINER RPC (bypasses RLS for all user types)
+    const { data: llm } = await supabase.rpc('get_llm_config');
+
+    // Load analysis mode toggles + custom prompts (admin-only via SettingsService)
+    // These may return null for non-admin users — that's OK, defaults apply
     const { SettingsServiceSupabase } = await import(
       '@/services/settings/settingsService.supabase'
     );
     const service = new SettingsServiceSupabase();
-
-    // Try new location first (PRD-080: integrations.llmProviders)
-    const integrationsValues = await service.getSettingsRaw('admin', 'integrations');
-    const llm = integrationsValues?.llmProviders as Record<string, unknown> | undefined;
-
-    // Read analysis mode toggles (stay in ai.analysisAgent)
     const aiValues = await service.getSettingsRaw('admin', 'ai');
     const agent = aiValues?.analysisAgent as Record<string, unknown> | undefined;
-
-    // Read custom prompts (ai.prompts)
     const promptSettings = aiValues?.prompts as Record<string, unknown> | undefined;
 
     if (llm && (llm.anthropicApiKey || llm.openaiApiKey || llm.openrouterApiKey)) {

@@ -299,23 +299,30 @@ export default function GaugeProResult() {
 
         {/* AI Analysis Indicator */}
         {!hasAnalysis && (
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/60 py-2">
+          <div className="flex flex-col items-center gap-2 py-2">
             {(aiAnalysis.isGenerating || analysisGenerating) ? (
-              <>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 <span>Gerando análise inteligente...</span>
-              </>
+              </div>
             ) : (
               <>
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Análise inteligente</span>
-                <button
-                  onClick={() => result && aiAnalysis.generateAnalyses(result)}
-                  className="inline-flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-700 hover:underline transition-colors"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  Gerar agora
-                </button>
+                {aiAnalysis.error && (
+                  <p className="text-xs text-destructive text-center max-w-sm">
+                    {aiAnalysis.error}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Análise inteligente</span>
+                  <button
+                    onClick={() => result && aiAnalysis.generateAnalyses(result)}
+                    className="inline-flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-700 hover:underline transition-colors"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Gerar agora
+                  </button>
+                </div>
               </>
             )}
           </div>

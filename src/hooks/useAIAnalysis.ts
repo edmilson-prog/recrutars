@@ -41,6 +41,7 @@ export function useAIAnalysis({
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<AIAgentSettings | null>(null);
+  const [generationAttempted, setGenerationAttempted] = useState(false);
 
   // Load settings from Supabase (async, with localStorage fallback)
   useEffect(() => {
@@ -69,8 +70,9 @@ export function useAIAnalysis({
     enabled: !!candidateId,
     // Use localStorage as instant placeholder while Supabase loads
     placeholderData: () => candidateId ? loadAnalysisResult(candidateId) : null,
-    // Poll every 3s until analysis arrives (stops automatically when ready)
+    // Poll every 3s until analysis arrives (stops after generation attempt or when ready)
     refetchInterval: (query) => {
+      if (generationAttempted) return false;
       const data = query.state.data;
       const hasResult = !!(data?.practical || data?.technical);
       return hasResult ? false : 3000;
@@ -81,7 +83,17 @@ export function useAIAnalysis({
   const generateAnalyses = useCallback(
     async (result: GaugeProResult) => {
       const currentSettings = settings ?? (await loadAgentSettingsAsync());
-      if (!currentSettings.agentEnabled) return;
+
+      if (!currentSettings.agentEnabled) {
+        setError('Agente de análise desabilitado nas configurações.');
+        setGenerationAttempted(true);
+        return;
+      }
+      if (!currentSettings.apiKey) {
+        setError('Chave de API não configurada. Solicite ao administrador.');
+        setGenerationAttempted(true);
+        return;
+      }
 
       setIsGenerating(true);
       setError(null);
@@ -102,6 +114,7 @@ export function useAIAnalysis({
         setError(err instanceof Error ? err.message : 'Erro ao gerar análises');
       } finally {
         setIsGenerating(false);
+        setGenerationAttempted(true);
       }
     },
     [candidateId, candidateName, jobTitle, settings, queryClient],
