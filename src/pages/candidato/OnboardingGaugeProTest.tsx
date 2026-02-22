@@ -183,6 +183,7 @@ export default function OnboardingGaugeProTest() {
               onToggle={gaugePro.toggleWord}
               dimensionName={gaugePro.currentDimensionName}
               perspectiveLabel={gaugePro.currentPerspectiveLabel}
+              perspective={gaugePro.currentPerspective}
               stepNumber={gaugePro.currentWordStep + 1}
               totalSteps={gaugePro.totalWordSteps}
               overallProgress={overallProgress}

@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
-import { Check } from 'lucide-react';
-import type { AdjectiveWord } from '@/types/gaugePro';
+import { Check, Eye, Users } from 'lucide-react';
+import type { AdjectiveWord, Perspective } from '@/types/gaugePro';
 
 interface WordGridProps {
   words: AdjectiveWord[];
@@ -9,6 +9,7 @@ interface WordGridProps {
   maxSelections: number;
   dimensionName: string;
   perspectiveLabel: string;
+  perspective: Perspective;
   stepNumber: number;
   totalSteps: number;
   onToggle: (wordId: number) => void;
@@ -22,6 +23,7 @@ export function WordGrid({
   maxSelections,
   dimensionName,
   perspectiveLabel,
+  perspective,
   stepNumber,
   totalSteps,
   onToggle,
@@ -29,6 +31,7 @@ export function WordGrid({
 }: WordGridProps) {
   const isMaxReached = selectedIds.length >= maxSelections;
   const isComplete = selectedIds.length === maxSelections;
+  const isSelf = perspective === 'self';
 
   const wordMap = new Map(words.map(w => [w.id, w]));
   const orderedWords = shuffledOrder.map(id => wordMap.get(id)).filter(Boolean) as AdjectiveWord[];
@@ -67,11 +70,36 @@ export function WordGrid({
         </div>
       )}
 
-      {/* Perspective label */}
-      <div className="rounded-lg bg-cyan-500/10 border border-cyan-500/20 px-4 py-2.5">
-        <p className="text-base font-semibold text-cyan-400 tracking-tight">
-          {perspectiveLabel}
-        </p>
+      {/* Perspective card */}
+      <div className={cn(
+        'rounded-xl border px-5 py-4 flex items-start gap-4 transition-colors',
+        isSelf
+          ? 'bg-cyan-500/10 border-cyan-500/30'
+          : 'bg-indigo-500/10 border-indigo-500/30'
+      )}>
+        <div className={cn(
+          'shrink-0 w-10 h-10 rounded-full flex items-center justify-center',
+          isSelf ? 'bg-cyan-500/20' : 'bg-indigo-500/20'
+        )}>
+          {isSelf
+            ? <Eye className="w-5 h-5 text-cyan-400" />
+            : <Users className="w-5 h-5 text-indigo-400" />
+          }
+        </div>
+        <div className="space-y-1 min-w-0">
+          <p className={cn(
+            'text-base font-bold tracking-tight',
+            isSelf ? 'text-cyan-400' : 'text-indigo-400'
+          )}>
+            {perspectiveLabel}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {isSelf
+              ? <>Escolha <strong>EXATAMENTE {maxSelections}</strong> palavras que melhor descrevem o seu jeito de ser naturalmente.</>
+              : <>Escolha <strong>EXATAMENTE {maxSelections}</strong> palavras que outras pessoas usariam para descrever você.</>
+            }
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
@@ -87,7 +115,9 @@ export function WordGrid({
               className={cn(
                 'flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all',
                 isSelected
-                  ? 'bg-cyan-50 border-cyan-400'
+                  ? isSelf
+                    ? 'bg-cyan-50 border-cyan-400'
+                    : 'bg-indigo-50 border-indigo-400'
                   : isDisabled
                     ? 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
                     : 'bg-white border-gray-200 hover:border-gray-300 cursor-pointer'
@@ -97,7 +127,9 @@ export function WordGrid({
               <span className={cn(
                 'shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all',
                 isSelected
-                  ? 'bg-cyan-500 border-cyan-500'
+                  ? isSelf
+                    ? 'bg-cyan-500 border-cyan-500'
+                    : 'bg-indigo-500 border-indigo-500'
                   : 'border-gray-300 bg-white'
               )}>
                 {isSelected && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
@@ -106,7 +138,9 @@ export function WordGrid({
               {/* Word */}
               <span className={cn(
                 'text-sm font-medium',
-                isSelected ? 'text-cyan-800' : 'text-gray-700'
+                isSelected
+                  ? isSelf ? 'text-cyan-800' : 'text-indigo-800'
+                  : 'text-gray-700'
               )}>
                 {word.text}
               </span>

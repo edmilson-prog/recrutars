@@ -133,6 +133,7 @@ export default function GaugeProAssessment() {
               maxSelections={gaugePro.selectionLimit}
               dimensionName={gaugePro.currentDimensionName}
               perspectiveLabel={gaugePro.currentPerspectiveLabel}
+              perspective={gaugePro.currentPerspective}
               stepNumber={gaugePro.currentWordStep + 1}
               totalSteps={gaugePro.totalWordSteps}
               onToggle={gaugePro.toggleWord}

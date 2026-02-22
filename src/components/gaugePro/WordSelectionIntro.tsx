@@ -1,4 +1,4 @@
-import { FileText, ArrowRight } from 'lucide-react';
+import { FileText, ArrowRight, Eye, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -21,19 +21,29 @@ export function WordSelectionIntro({ onStart }: WordSelectionIntroProps) {
 
       <div className="space-y-3">
         <Card className="border-cyan-200 bg-cyan-50">
-          <CardContent className="p-4">
-            <p className="text-sm font-medium text-cyan-800">Lista A — Como você realmente é</p>
-            <p className="text-sm text-cyan-600 mt-1">
-              Escolha 5 palavras que melhor descrevem quem você é de verdade no trabalho.
-            </p>
+          <CardContent className="p-4 flex items-start gap-3">
+            <div className="shrink-0 w-8 h-8 rounded-full bg-cyan-200/60 flex items-center justify-center">
+              <Eye className="w-4 h-4 text-cyan-700" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-cyan-800">Lista A — Como VOCÊ se vê</p>
+              <p className="text-sm text-cyan-600 mt-1">
+                Escolha <strong>EXATAMENTE 5</strong> palavras que melhor descrevem o seu jeito de ser naturalmente.
+              </p>
+            </div>
           </CardContent>
         </Card>
         <Card className="border-indigo-200 bg-indigo-50">
-          <CardContent className="p-4">
-            <p className="text-sm font-medium text-indigo-800">Lista B — Como outros esperam que você seja</p>
-            <p className="text-sm text-indigo-600 mt-1">
-              Escolha 5 palavras que descrevem como você acredita que colegas e gestores esperam que você seja.
-            </p>
+          <CardContent className="p-4 flex items-start gap-3">
+            <div className="shrink-0 w-8 h-8 rounded-full bg-indigo-200/60 flex items-center justify-center">
+              <Users className="w-4 h-4 text-indigo-700" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-indigo-800">Lista B — Como OUTROS te veem</p>
+              <p className="text-sm text-indigo-600 mt-1">
+                Escolha <strong>EXATAMENTE 5</strong> palavras que outras pessoas usariam para descrever você.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -83,8 +83,8 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
   const currentPerspective: Perspective = currentWordStep % 2 === 0 ? 'self' : 'others';
   const currentDimensionName = currentDimension ? DIMENSION_SHORT_NAMES[currentDimension] : '';
   const currentPerspectiveLabel = currentPerspective === 'self'
-    ? 'Como você realmente é'
-    : 'Como outros esperam que você seja';
+    ? 'Como VOCÊ se vê'
+    : 'Como OUTROS te veem';
 
   // Get words for current dimension
   const currentDimensionWords = currentDimension
