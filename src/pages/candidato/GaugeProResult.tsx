@@ -105,7 +105,7 @@ export default function GaugeProResult() {
 
   return (
     <DashboardLayout userType="candidate">
-      <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
+      <div className="p-4 md:p-6 max-w-[1400px] mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => navigate('/candidato/teste-comportamental')}>
@@ -120,7 +120,7 @@ export default function GaugeProResult() {
               <div className="space-y-2">
                 <p className="text-sm text-slate-300 uppercase tracking-wide">Seu Perfil Comportamental</p>
                 <h1 className="text-2xl md:text-3xl font-bold">{result.archetype.name}</h1>
-                <p className="text-slate-300 max-w-lg">{result.archetype.description}</p>
+                <p className="text-slate-300 max-w-2xl">{result.archetype.description}</p>
               </div>
               <div className="shrink-0 w-16 h-16 rounded-full bg-cyan-500/20 flex items-center justify-center">
                 <Brain className="w-8 h-8 text-cyan-400" />
@@ -177,9 +177,9 @@ export default function GaugeProResult() {
                       </Badge>
                     </div>
                   </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2.5">
+                  <div className="w-full bg-gray-100 rounded-full h-3">
                     <div
-                      className="h-2.5 rounded-full transition-all duration-500"
+                      className="h-3 rounded-full transition-all duration-500"
                       style={{
                         width: `${score}%`,
                         backgroundColor: DIMENSION_COLORS[dim],
@@ -193,7 +193,7 @@ export default function GaugeProResult() {
             <Separator className="my-4" />
 
             {/* Part 1 vs Part 2 comparison */}
-            <div className="grid grid-cols-2 gap-4 text-center text-sm">
+            <div className="grid grid-cols-2 gap-6 text-center text-sm">
               <div className="p-3 bg-cyan-50 rounded-lg">
                 <p className="font-medium text-cyan-800">Parte 1 — Palavras</p>
                 <p className="text-cyan-600 text-xs mt-1">Peso: 60%</p>
@@ -207,7 +207,7 @@ export default function GaugeProResult() {
         </Card>
 
         {/* Strengths & Development */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -248,7 +248,7 @@ export default function GaugeProResult() {
         </div>
 
         {/* Work & Communication Style */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
