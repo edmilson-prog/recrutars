@@ -196,7 +196,7 @@ export function ScheduleInterviewModal({
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Entrevista Tecnica, Entrevista com RH..."
+              placeholder="Ex: Entrevista com RH, Entrevista com Gestor..."
             />
           </div>
 

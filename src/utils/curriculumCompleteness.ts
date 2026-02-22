@@ -71,7 +71,7 @@ export function calculateCompleteness(curriculum: Curriculum): CompletenessResul
   if (hasInterests) completedCount++;
 
   // 5. Experiência profissional (tab: experience)
-  const hasExperience = (curriculum.experiences?.length ?? 0) > 0;
+  const hasExperience = curriculum.isFirstJob || (curriculum.experiences?.length ?? 0) > 0;
   sections.push({
     name: 'Experiência profissional',
     key: 'experience',
@@ -82,7 +82,7 @@ export function calculateCompleteness(curriculum: Curriculum): CompletenessResul
   if (hasExperience) completedCount++;
 
   // 6. Formação acadêmica (tab: education)
-  const hasEducation = (curriculum.education?.length ?? 0) > 0;
+  const hasEducation = Boolean(curriculum.educationLevel) || (curriculum.education?.length ?? 0) > 0;
   sections.push({
     name: 'Formação acadêmica',
     key: 'education',

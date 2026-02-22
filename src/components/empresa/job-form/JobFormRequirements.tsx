@@ -19,7 +19,7 @@ export function JobFormRequirements({ requirements, onUpdate }: JobFormRequireme
         <Label htmlFor="requirements">Requisitos *</Label>
         <Textarea
           id="requirements"
-          placeholder={"5+ anos de experiência\nConhecimento em React\nInglês avançado"}
+          placeholder={"5+ anos de experiência\nConhecimento em Excel e ERP\nInglês avançado"}
           className="min-h-[180px]"
           maxLength={REQUIREMENTS_LIMIT}
           value={requirements}

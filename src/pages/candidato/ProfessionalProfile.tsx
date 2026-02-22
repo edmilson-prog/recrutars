@@ -26,6 +26,7 @@ import {
   ChevronsUpDown,
   Target,
   AlertCircle,
+  Lightbulb,
 } from 'lucide-react';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -71,6 +72,7 @@ import {
 } from '@/data/settingsConfig';
 import { brazilianCitiesByState } from '@/data/brazilianCities';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -196,6 +198,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
 
   // Validacao visual no onboarding
   const [showOnboardingErrors, setShowOnboardingErrors] = useState(false);
+  const [blinkErrors, setBlinkErrors] = useState(false);
 
   // Estados para modais
   const [experienceDialogOpen, setExperienceDialogOpen] = useState(false);
@@ -557,8 +560,8 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
       (curriculum.workModel?.length ?? 0) > 0 &&
       (curriculum.contractType?.length ?? 0) > 0
     );
-    const hasExperience = (curriculum.experiences?.length ?? 0) > 0;
-    const hasEducation = (curriculum.education?.length ?? 0) > 0;
+    const hasExperience = curriculum.isFirstJob || (curriculum.experiences?.length ?? 0) > 0;
+    const hasEducation = Boolean(curriculum.educationLevel) || (curriculum.education?.length ?? 0) > 0;
     const hasSkills = (curriculum.skills?.length ?? 0) > 0;
     const incomplete: string[] = [];
     if (!hasBasic) incomplete.push('basic');
@@ -651,23 +654,23 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex-wrap">
-            <TabsTrigger value="basic" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('basic') && "ring-2 ring-destructive")}>
+            <TabsTrigger value="basic" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('basic') && cn("ring-1 ring-destructive", blinkErrors && "animate-blink-destructive"))}>
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Informações</span>
             </TabsTrigger>
-            <TabsTrigger value="location" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('location') && "ring-2 ring-destructive")}>
+            <TabsTrigger value="location" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('location') && cn("ring-1 ring-destructive", blinkErrors && "animate-blink-destructive"))}>
               <MapPin className="h-4 w-4" />
               <span className="hidden sm:inline">Localização</span>
             </TabsTrigger>
-            <TabsTrigger value="salary" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('salary') && "ring-2 ring-destructive")}>
+            <TabsTrigger value="salary" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('salary') && cn("ring-1 ring-destructive", blinkErrors && "animate-blink-destructive"))}>
               <DollarSign className="h-4 w-4" />
               <span className="hidden sm:inline">Salário</span>
             </TabsTrigger>
-            <TabsTrigger value="interests" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('interests') && "ring-2 ring-destructive")}>
+            <TabsTrigger value="interests" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('interests') && cn("ring-1 ring-destructive", blinkErrors && "animate-blink-destructive"))}>
               <Target className="h-4 w-4" />
               <span className="hidden sm:inline">Interesses</span>
             </TabsTrigger>
-            <TabsTrigger value="experience" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('experience') && "ring-2 ring-destructive")}>
+            <TabsTrigger value="experience" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('experience') && cn("ring-1 ring-destructive", blinkErrors && "animate-blink-destructive"))}>
               <Briefcase className="h-4 w-4" />
               <span className="hidden sm:inline">Experiência</span>
               {curriculum.experiences.length > 0 && (
@@ -676,7 +679,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="education" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('education') && "ring-2 ring-destructive")}>
+            <TabsTrigger value="education" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('education') && cn("ring-1 ring-destructive", blinkErrors && "animate-blink-destructive"))}>
               <GraduationCap className="h-4 w-4" />
               <span className="hidden sm:inline">Formação</span>
               {curriculum.education.length > 0 && (
@@ -685,7 +688,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="skills" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('skills') && "ring-2 ring-destructive")}>
+            <TabsTrigger value="skills" className={cn("gap-2", showOnboardingErrors && onboardingTabStatus.incomplete.includes('skills') && cn("ring-1 ring-destructive", blinkErrors && "animate-blink-destructive"))}>
               <Code className="h-4 w-4" />
               <span className="hidden sm:inline">Habilidades</span>
               {curriculum.skills.length > 0 && (
@@ -731,7 +734,8 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                       id="title"
                       value={curriculum.title}
                       onChange={(e) => updateField('title', e.target.value)}
-                      placeholder="Ex: Desenvolvedor Full Stack Senior"
+                      placeholder="Ex: Analista Administrativo, Vendedor, Enfermeiro..."
+                      className={cn(showOnboardingErrors && !curriculum.title?.trim() && "border-destructive", showOnboardingErrors && !curriculum.title?.trim() && blinkErrors && "animate-blink-destructive")}
                     />
                   </div>
                 </div>
@@ -745,6 +749,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                       value={curriculum.email}
                       onChange={(e) => updateField('email', e.target.value)}
                       placeholder="seu@email.com"
+                      className={cn(showOnboardingErrors && !curriculum.email?.trim() && "border-destructive", showOnboardingErrors && !curriculum.email?.trim() && blinkErrors && "animate-blink-destructive")}
                     />
                   </div>
                   <div className="space-y-2">
@@ -778,6 +783,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                     onChange={(e) => updateField('about', e.target.value)}
                     placeholder="Descreva brevemente sua experiência e objetivos profissionais..."
                     rows={4}
+                    className={cn(showOnboardingErrors && !curriculum.about?.trim() && "border-destructive", showOnboardingErrors && !curriculum.about?.trim() && blinkErrors && "animate-blink-destructive")}
                   />
                 </div>
 
@@ -788,7 +794,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                       value={curriculum.availability}
                       onValueChange={(v) => updateField('availability', v)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={cn(showOnboardingErrors && !curriculum.availability?.trim() && "border-destructive", showOnboardingErrors && !curriculum.availability?.trim() && blinkErrors && "animate-blink-destructive")}>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
@@ -828,7 +834,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                         );
                       }}
                     >
-                      <SelectTrigger id="prof-state">
+                      <SelectTrigger id="prof-state" className={cn(showOnboardingErrors && !curriculum.state?.trim() && !curriculum.city?.trim() && "border-destructive", showOnboardingErrors && !curriculum.state?.trim() && !curriculum.city?.trim() && blinkErrors && "animate-blink-destructive")}>
                         <SelectValue placeholder="Selecione o estado" />
                       </SelectTrigger>
                       <SelectContent>
@@ -849,7 +855,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                           variant="outline"
                           role="combobox"
                           aria-expanded={cityOpen}
-                          className="w-full justify-between font-normal"
+                          className={cn("w-full justify-between font-normal", showOnboardingErrors && !curriculum.state?.trim() && !curriculum.city?.trim() && "border-destructive", showOnboardingErrors && !curriculum.state?.trim() && !curriculum.city?.trim() && blinkErrors && "animate-blink-destructive")}
                           disabled={!curriculum.state}
                         >
                           {curriculum.city || 'Selecione a cidade...'}
@@ -935,6 +941,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                           min: parseInt(e.target.value) || 0,
                         })
                       }
+                      className={cn(showOnboardingErrors && !curriculum.salary?.min && "border-destructive", showOnboardingErrors && !curriculum.salary?.min && blinkErrors && "animate-blink-destructive")}
                     />
                     <p className="text-xs text-muted-foreground">Valor mínimo pretendido</p>
                   </div>
@@ -953,6 +960,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                           max: parseInt(e.target.value) || 0,
                         })
                       }
+                      className={cn(showOnboardingErrors && !curriculum.salary?.max && "border-destructive", showOnboardingErrors && !curriculum.salary?.max && blinkErrors && "animate-blink-destructive")}
                     />
                     <p className="text-xs text-muted-foreground">Valor máximo pretendido</p>
                   </div>
@@ -977,55 +985,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
           {/* Tab: Interesses */}
           <TabsContent value="interests" className="mt-6">
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Áreas de Interesse</CardTitle>
-                  <CardDescription>
-                    Selecione os setores e funções que mais te interessam.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Setores Preferidos</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {jobSectorOptions.map((option) => (
-                        <div key={option.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`sector-${option.value}`}
-                            checked={(curriculum.preferredSectors || []).includes(option.value)}
-                            onCheckedChange={() => toggleArrayField('preferredSectors', option.value)}
-                          />
-                          <Label htmlFor={`sector-${option.value}`} className="text-sm font-normal cursor-pointer">
-                            {option.label}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Funções Desejadas</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {jobRoleOptions.map((option) => (
-                        <div key={option.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`role-${option.value}`}
-                            checked={(curriculum.preferredRoles || []).includes(option.value)}
-                            onCheckedChange={() => toggleArrayField('preferredRoles', option.value)}
-                          />
-                          <Label htmlFor={`role-${option.value}`} className="text-sm font-normal cursor-pointer">
-                            {option.label}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
+              <Card className={cn(showOnboardingErrors && ((curriculum.workModel?.length ?? 0) === 0 || (curriculum.contractType?.length ?? 0) === 0) && "border-destructive", showOnboardingErrors && ((curriculum.workModel?.length ?? 0) === 0 || (curriculum.contractType?.length ?? 0) === 0) && blinkErrors && "animate-blink-destructive")}>
                 <CardHeader>
                   <CardTitle>Modelo de Trabalho</CardTitle>
                   <CardDescription>
@@ -1072,177 +1032,329 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                   </div>
                 </CardContent>
               </Card>
+
+              <Card className={cn(showOnboardingErrors && ((curriculum.preferredSectors?.length ?? 0) === 0 || (curriculum.preferredRoles?.length ?? 0) === 0) && "border-destructive", showOnboardingErrors && ((curriculum.preferredSectors?.length ?? 0) === 0 || (curriculum.preferredRoles?.length ?? 0) === 0) && blinkErrors && "animate-blink-destructive")}>
+                <CardHeader>
+                  <CardTitle>Áreas de Interesse</CardTitle>
+                  <CardDescription>
+                    Selecione os setores e funções que mais te interessam.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Setores Preferidos</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {jobSectorOptions.map((option) => (
+                        <div key={option.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`sector-${option.value}`}
+                            checked={(curriculum.preferredSectors || []).includes(option.value)}
+                            onCheckedChange={() => toggleArrayField('preferredSectors', option.value)}
+                          />
+                          <Label htmlFor={`sector-${option.value}`} className="text-sm font-normal cursor-pointer">
+                            {option.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Funções Desejadas</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {jobRoleOptions.map((option) => (
+                        <div key={option.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`role-${option.value}`}
+                            checked={(curriculum.preferredRoles || []).includes(option.value)}
+                            onCheckedChange={() => toggleArrayField('preferredRoles', option.value)}
+                          />
+                          <Label htmlFor={`role-${option.value}`} className="text-sm font-normal cursor-pointer">
+                            {option.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
           {/* Tab: Experiência */}
           <TabsContent value="experience" className="mt-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+            <div className="space-y-6">
+              {/* Toggle Primeiro Emprego */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
                 <div>
-                  <CardTitle>Experiência Profissional</CardTitle>
-                  <CardDescription>
-                    Adicione suas experiências mais relevantes.
-                  </CardDescription>
+                  <Label htmlFor="first-job" className="text-sm font-medium">Primeiro Emprego</Label>
+                  <p className="text-xs text-muted-foreground">Ainda não possuo experiência profissional.</p>
                 </div>
-                <Button
-                  onClick={() => {
-                    setEditingExperience(null);
-                    setExperienceDialogOpen(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {curriculum.experiences.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Nenhuma experiência adicionada.
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {curriculum.experiences.map((exp, index) => (
-                      <motion.div
-                        key={exp.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="p-4 border rounded-lg"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="font-medium flex items-center gap-2">
-                              {exp.role}
-                              {exp.current && (
-                                <Badge className="bg-green-500">Atual</Badge>
-                              )}
-                            </h4>
-                            <p className="text-sm text-muted-foreground">
-                              {exp.company}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {exp.startDate}
-                              {exp.current ? ' - Atual' : exp.endDate ? ` - ${exp.endDate}` : ''}
-                            </p>
-                            {exp.description && (
-                              <p className="text-sm mt-2">{exp.description}</p>
-                            )}
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setEditingExperience(exp);
-                                setExperienceDialogOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteExperience(exp.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                <Switch
+                  id="first-job"
+                  checked={curriculum.isFirstJob || false}
+                  onCheckedChange={(checked) => updateField('isFirstJob', checked)}
+                />
+              </div>
+
+              {!curriculum.isFirstJob && (
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>Experiência Profissional</CardTitle>
+                      <CardDescription>
+                        Adicione suas experiências mais relevantes.
+                      </CardDescription>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        setEditingExperience(null);
+                        setExperienceDialogOpen(true);
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {curriculum.experiences.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Nenhuma experiência adicionada.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {curriculum.experiences.map((exp, index) => (
+                          <motion.div
+                            key={exp.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="p-4 border rounded-lg"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h4 className="font-medium flex items-center gap-2">
+                                  {exp.role}
+                                  {exp.current && (
+                                    <Badge className="bg-green-500">Atual</Badge>
+                                  )}
+                                </h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {exp.company}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {exp.startDate}
+                                  {exp.current ? ' - Atual' : exp.endDate ? ` - ${exp.endDate}` : ''}
+                                </p>
+                                {exp.description && (
+                                  <p className="text-sm mt-2">{exp.description}</p>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setEditingExperience(exp);
+                                    setExperienceDialogOpen(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteExperience(exp.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
 
           {/* Tab: Formação */}
           <TabsContent value="education" className="mt-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Formação Acadêmica</CardTitle>
+            <div className="space-y-6">
+              {/* Card: Escolaridade */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Escolaridade</CardTitle>
                   <CardDescription>
-                    Adicione sua formação educacional.
+                    Selecione seu nível de escolaridade e status.
                   </CardDescription>
-                </div>
-                <Button
-                  onClick={() => {
-                    setEditingEducation(null);
-                    setEducationDialogOpen(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {curriculum.education.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Nenhuma formação adicionada.
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {curriculum.education.map((edu, index) => (
-                      <motion.div
-                        key={edu.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="p-4 border rounded-lg"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="font-medium">
-                              {edu.degree} em {edu.field}
-                            </h4>
-                            <p className="text-sm text-muted-foreground">
-                              {edu.institution}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {edu.startYear}
-                              {edu.endYear ? ` - ${edu.endYear}` : ''}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              variant={edu.status === 'completed' ? 'default' : 'secondary'}
-                              className={
-                                edu.status === 'completed'
-                                  ? 'bg-green-500'
-                                  : edu.status === 'in_progress'
-                                  ? 'bg-blue-500'
-                                  : ''
-                              }
-                            >
-                              {educationStatusLabels[edu.status]}
-                            </Badge>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setEditingEducation(edu);
-                                setEducationDialogOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteEducation(edu.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </div>
+                </CardHeader>
+                <CardContent>
+                  <RadioGroup
+                    value={curriculum.educationLevel || ''}
+                    onValueChange={(value) => {
+                      updateField('educationLevel', value);
+                      if (!curriculum.educationLevelStatus) {
+                        updateField('educationLevelStatus', 'completo');
+                      }
+                    }}
+                  >
+                    {[
+                      { value: 'fundamental_i', label: 'Ensino Fundamental I (1º ao 5º)' },
+                      { value: 'fundamental_ii', label: 'Ensino Fundamental II (6º ao 9º)' },
+                      { value: 'medio', label: 'Ensino Médio (1º ao 3º)' },
+                      { value: 'superior', label: 'Ensino Superior' },
+                    ].map((level, index, arr) => {
+                      const isSelected = curriculum.educationLevel === level.value;
+                      const isFirst = index === 0;
+                      const isLast = index === arr.length - 1;
+                      return (
+                        <div
+                          key={level.value}
+                          className={cn(
+                            'relative flex items-center gap-3 border px-4 py-3 -mt-px first:mt-0 transition-colors',
+                            isFirst && 'rounded-t-lg',
+                            isLast && 'rounded-b-lg',
+                            isSelected
+                              ? 'z-10 border-primary bg-primary/5 dark:bg-primary/10'
+                              : 'hover:bg-muted/50'
+                          )}
+                        >
+                          <RadioGroupItem value={level.value} id={`edu-level-${level.value}`} />
+                          <Label
+                            htmlFor={`edu-level-${level.value}`}
+                            className="flex-1 cursor-pointer font-medium text-sm"
+                          >
+                            {level.label}
+                          </Label>
+                          {isSelected && (
+                            <div className="flex items-center rounded-full border p-0.5 gap-0">
+                              <button
+                                type="button"
+                                onClick={() => updateField('educationLevelStatus', 'completo')}
+                                className={cn(
+                                  'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                                  (curriculum.educationLevelStatus || 'completo') === 'completo'
+                                    ? 'bg-green-500 text-white'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                )}
+                              >
+                                Completo
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => updateField('educationLevelStatus', 'incompleto')}
+                                className={cn(
+                                  'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                                  curriculum.educationLevelStatus === 'incompleto'
+                                    ? 'bg-amber-500 text-white'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                )}
+                              >
+                                Incompleto
+                              </button>
+                            </div>
+                          )}
                         </div>
-                      </motion.div>
-                    ))}
+                      );
+                    })}
+                  </RadioGroup>
+                </CardContent>
+              </Card>
+
+              {/* Card: Formação Acadêmica (Opcional) */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>
+                      Formação Acadêmica
+                      <Badge variant="outline" className="ml-2 text-xs font-normal">Opcional</Badge>
+                    </CardTitle>
+                    <CardDescription>
+                      Adicione cursos de graduação, pós ou técnico, se houver.
+                    </CardDescription>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  <Button
+                    onClick={() => {
+                      setEditingEducation(null);
+                      setEducationDialogOpen(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {curriculum.education.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Nenhuma formação adicionada.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {curriculum.education.map((edu, index) => (
+                        <motion.div
+                          key={edu.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="p-4 border rounded-lg"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h4 className="font-medium">
+                                {edu.degree} em {edu.field}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {edu.institution}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {edu.startYear}
+                                {edu.endYear ? ` - ${edu.endYear}` : ''}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant={edu.status === 'completed' ? 'default' : 'secondary'}
+                                className={
+                                  edu.status === 'completed'
+                                    ? 'bg-green-500'
+                                    : edu.status === 'in_progress'
+                                    ? 'bg-blue-500'
+                                    : ''
+                                }
+                              >
+                                {educationStatusLabels[edu.status]}
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setEditingEducation(edu);
+                                  setEducationDialogOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteEducation(edu.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Tab: Habilidades */}
@@ -1252,7 +1364,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                 <div>
                   <CardTitle>Habilidades</CardTitle>
                   <CardDescription>
-                    Adicione suas habilidades técnicas e comportamentais.
+                    Informe o que você domina — ferramentas, linguagens, metodologias e competências interpessoais.
                   </CardDescription>
                 </div>
                 <Button
@@ -1267,24 +1379,60 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
               </CardHeader>
               <CardContent>
                 {curriculum.skills.length < 3 && (
-                  <div className="mb-4 flex items-center gap-2 rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">
-                    <AlertCircle className="h-4 w-4 shrink-0" />
-                    <span>Adicione pelo menos 3 habilidades para completar esta seção do perfil. Você tem {curriculum.skills.length} de 3.</span>
+                  <div className="mb-4 rounded-lg border border-dashed p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Lightbulb className="h-4 w-4 shrink-0 text-amber-500" />
+                      <span>Adicione pelo menos 3 habilidades para completar esta seção. Você tem {curriculum.skills.length} de 3.</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                          <Code className="h-3 w-3 text-cyan-500" />
+                          Exemplos técnicas
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['Excel', 'Pacote Office', 'Atendimento ao cliente', 'Gestão de estoque', 'Vendas', 'Logística'].map((ex) => (
+                            <span key={ex} className="rounded-full bg-cyan-500/10 px-2.5 py-0.5 text-xs text-cyan-700 dark:text-cyan-400">
+                              {ex}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                          <User className="h-3 w-3 text-pink-500" />
+                          Exemplos comportamentais
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['Liderança', 'Comunicação', 'Trabalho em equipe', 'Resolução de problemas', 'Proatividade', 'Organização'].map((ex) => (
+                            <span key={ex} className="rounded-full bg-pink-500/10 px-2.5 py-0.5 text-xs text-pink-700 dark:text-pink-400">
+                              {ex}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
-                {curriculum.skills.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Nenhuma habilidade adicionada.
-                  </div>
-                ) : (
+                {curriculum.skills.length > 0 && (
                   <div className="space-y-6">
                     {/* Habilidades Técnicas */}
                     {curriculum.skills.filter((s) => s.type === 'technical').length > 0 && (
                       <div>
-                        <h4 className="font-medium mb-3 flex items-center gap-2">
-                          <Code className="h-4 w-4 text-cyan-500" />
-                          Técnicas
-                        </h4>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <h4 className="font-medium mb-3 flex items-center gap-2 cursor-help w-fit">
+                                <Code className="h-4 w-4 text-cyan-500" />
+                                Técnicas
+                                <AlertCircle className="h-3.5 w-3.5 text-muted-foreground/50" />
+                              </h4>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" className="max-w-xs">
+                              Ferramentas, softwares, metodologias e conhecimentos específicos da sua área de atuação.
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <div className="grid gap-3 md:grid-cols-2">
                           {curriculum.skills
                             .filter((s) => s.type === 'technical')
@@ -1319,10 +1467,20 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                     {/* Habilidades Comportamentais */}
                     {curriculum.skills.filter((s) => s.type === 'behavioral').length > 0 && (
                       <div>
-                        <h4 className="font-medium mb-3 flex items-center gap-2">
-                          <User className="h-4 w-4 text-pink-500" />
-                          Comportamentais
-                        </h4>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <h4 className="font-medium mb-3 flex items-center gap-2 cursor-help w-fit">
+                                <User className="h-4 w-4 text-pink-500" />
+                                Comportamentais
+                                <AlertCircle className="h-3.5 w-3.5 text-muted-foreground/50" />
+                              </h4>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" className="max-w-xs">
+                              Competências interpessoais como comunicação, liderança, trabalho em equipe e gestão do tempo.
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <div className="grid gap-3 md:grid-cols-2">
                           {curriculum.skills
                             .filter((s) => s.type === 'behavioral')
@@ -1517,6 +1675,8 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                       const currentTab = ONBOARDING_TAB_ORDER[currentTabIndex];
                       if (onboardingTabStatus.incomplete.includes(currentTab)) {
                         setShowOnboardingErrors(true);
+                        setBlinkErrors(true);
+                        setTimeout(() => setBlinkErrors(false), 1200);
                         toast.error('Preencha os campos obrigatórios desta aba antes de avançar.');
                         return;
                       }
@@ -1526,6 +1686,8 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                     // Last tab — validate and advance to Gauge-Pro test
                     if (!onboardingComplete) {
                       setShowOnboardingErrors(true);
+                      setBlinkErrors(true);
+                      setTimeout(() => setBlinkErrors(false), 1200);
                       const firstIncomplete = onboardingTabStatus.incomplete[0];
                       if (firstIncomplete) setActiveTab(firstIncomplete);
                       return;
@@ -1800,7 +1962,7 @@ function EducationDialog({
               id="edu-field"
               value={form.field}
               onChange={(e) => setForm({ ...form, field: e.target.value })}
-              placeholder="Ex: Ciência da Computação"
+              placeholder="Ex: Administração, Enfermagem, Direito..."
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -1896,7 +2058,7 @@ function SkillDialog({
               id="skill-name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Ex: React, Liderança, Python..."
+              placeholder="Ex: Excel, Liderança, Atendimento ao cliente..."
             />
           </div>
           <div className="space-y-2">
@@ -2031,7 +2193,7 @@ function CourseDialog({
               id="course-name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Ex: AWS Solutions Architect"
+              placeholder="Ex: NR-10, Gestão de Projetos, Excel Avançado..."
             />
           </div>
           <div className="space-y-2">
@@ -2040,7 +2202,7 @@ function CourseDialog({
               id="course-institution"
               value={form.institution}
               onChange={(e) => setForm({ ...form, institution: e.target.value })}
-              placeholder="Ex: Amazon Web Services"
+              placeholder="Ex: Senai, Sebrae, Coursera..."
             />
           </div>
           <div className="grid grid-cols-2 gap-4">

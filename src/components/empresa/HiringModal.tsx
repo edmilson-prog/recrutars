@@ -238,7 +238,7 @@ export function HiringModal({
                 id="position"
                 value={positionTitle}
                 onChange={(e) => setPositionTitle(e.target.value)}
-                placeholder="Ex: Desenvolvedor Full Stack Senior"
+                placeholder="Ex: Analista Financeiro, Vendedor Externo..."
               />
             </div>
 

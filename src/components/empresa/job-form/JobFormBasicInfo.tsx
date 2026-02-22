@@ -37,7 +37,7 @@ export function JobFormBasicInfo({ formData, onUpdate }: JobFormBasicInfoProps) 
             <Label htmlFor="title">Título da vaga *</Label>
             <Input
               id="title"
-              placeholder="Ex: Desenvolvedor Full Stack Senior"
+              placeholder="Ex: Analista Financeiro, Vendedor Externo..."
               value={formData.title}
               onChange={(e) => onUpdate({ title: e.target.value })}
             />

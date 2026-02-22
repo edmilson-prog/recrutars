@@ -135,6 +135,11 @@ export interface Curriculum {
   preferredRoles?: string[];
   workModel?: string[];
   contractType?: string[];
+  isFirstJob?: boolean;
+
+  // Escolaridade
+  educationLevel?: string;
+  educationLevelStatus?: string;
 
   // Seções do currículo
   experiences: ExperienceWithCurrent[];

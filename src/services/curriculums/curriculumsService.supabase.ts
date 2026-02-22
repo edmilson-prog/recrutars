@@ -113,6 +113,9 @@ function rowToCurriculum(row: Record<string, unknown>): Curriculum {
     preferredRoles: (row.preferred_roles as string[]) || [],
     workModel: (row.work_model as string[]) || [],
     contractType: (row.contract_type as string[]) || [],
+    isFirstJob: (row.is_first_job as boolean) || false,
+    educationLevel: (row.education_level as string) || undefined,
+    educationLevelStatus: (row.education_level_status as string) || 'completo',
     experiences,
     education,
     skills,
@@ -187,6 +190,9 @@ export class SupabaseCurriculumsService implements ICurriculumsService {
         preferred_roles: initialData?.preferredRoles ?? [],
         work_model: initialData?.workModel ?? [],
         contract_type: initialData?.contractType ?? [],
+        is_first_job: initialData?.isFirstJob ?? false,
+        education_level: initialData?.educationLevel ?? null,
+        education_level_status: initialData?.educationLevelStatus ?? 'completo',
       })
       .select()
       .single();
@@ -237,6 +243,9 @@ export class SupabaseCurriculumsService implements ICurriculumsService {
     if (updates.preferredRoles !== undefined) mainUpdates.preferred_roles = updates.preferredRoles;
     if (updates.workModel !== undefined) mainUpdates.work_model = updates.workModel;
     if (updates.contractType !== undefined) mainUpdates.contract_type = updates.contractType;
+    if (updates.isFirstJob !== undefined) mainUpdates.is_first_job = updates.isFirstJob;
+    if (updates.educationLevel !== undefined) mainUpdates.education_level = updates.educationLevel;
+    if (updates.educationLevelStatus !== undefined) mainUpdates.education_level_status = updates.educationLevelStatus;
     if (updates.salary !== undefined) {
       mainUpdates.salary_min = updates.salary.min;
       mainUpdates.salary_max = updates.salary.max;

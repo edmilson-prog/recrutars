@@ -334,6 +334,15 @@
   }
 }
 
+@keyframes blink-destructive {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+.animate-blink-destructive {
+  animation: blink-destructive 0.4s ease-in-out 3;
+}
+
 /* PRD-003-dgn: Respeitar preferência de movimento reduzido */
 @media (prefers-reduced-motion: reduce) {
   *,
