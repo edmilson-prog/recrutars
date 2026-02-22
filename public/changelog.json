@@ -1,12 +1,32 @@
 {
   "versions": [
     {
+      "version": "1.31.0",
+      "codename": "Insight",
+      "type": "minor",
+      "releaseDate": "2026-02-22",
+      "description": "Tooltips descritivos nas 5 dimensoes comportamentais do Gauge-Pro, explicando o que cada dimensao mede na pratica (alta vs baixa). Aplicado nas telas de resultado do candidato, perfil no Banco de Talentos e componente reutilizavel de barras.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Tooltips descritivos para as 5 dimensoes comportamentais (D1-D5) com explicacao pratica de alta e baixa pontuacao",
+            "Constante DIMENSION_DESCRIPTIONS centralizada em gaugePro.ts para reuso em toda a aplicacao",
+            "Tooltips nas barras de dimensao da pagina de resultado do candidato (GaugeProResult)",
+            "Tooltips nas barras de dimensao do perfil do candidato na visao da empresa (Banco de Talentos > Detalhes)",
+            "Tooltips enriquecidos no componente reutilizavel DimensionBarsGaugePro (testes corporativos, admin, equipes)"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.30.1",
       "codename": "Gateway",
       "type": "patch",
       "releaseDate": "2026-02-22",
       "description": "Redesign visual dos componentes do teste Gauge-Pro e tela de conclusao do onboarding, correcao critica na selecao de respostas dos cenarios situacionais e na geracao de analise inteligente para candidatos.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "changed",
