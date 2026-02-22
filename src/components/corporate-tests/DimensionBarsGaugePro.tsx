@@ -3,7 +3,7 @@
  * PRD-053: Barras horizontais com código de cores
  */
 
-import { DIMENSION_NAMES, DIMENSION_SHORT_NAMES, type GaugeProDimension, type DimensionScores } from '@/types/gaugePro';
+import { DIMENSION_NAMES, DIMENSION_SHORT_NAMES, DIMENSION_DESCRIPTIONS, type GaugeProDimension, type DimensionScores } from '@/types/gaugePro';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface DimensionBarsGaugeProProps {
@@ -40,7 +40,10 @@ export function DimensionBarsGaugePro({ scores, compact }: DimensionBarsGaugePro
                     {compact ? DIMENSION_SHORT_NAMES[dim] : `${dim} - ${DIMENSION_NAMES[dim]}`}
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>{DIMENSION_NAMES[dim]}</TooltipContent>
+                <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                  <p className="font-semibold mb-1">{DIMENSION_NAMES[dim]}</p>
+                  <p>{DIMENSION_DESCRIPTIONS[dim]}</p>
+                </TooltipContent>
               </Tooltip>
               <span className="font-semibold" style={{ color: getBarColorHex(score) }}>
                 {score}

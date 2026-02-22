@@ -25,12 +25,13 @@ import {
 } from 'lucide-react';
 import { GAUGE_PRO_CONFIG } from '@/data/gaugeProConfig';
 import { TEST_CONFIG } from '@/data/testConfig';
-import { DIMENSION_NAMES, DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
+import { DIMENSION_NAMES, DIMENSION_SHORT_NAMES, DIMENSION_DESCRIPTIONS } from '@/types/gaugePro';
 import type { GaugeProResult as GaugeProResultType, GaugeProDimension } from '@/types/gaugePro';
 import { useEffect, useState } from 'react';
 import { useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
 import { useAIAnalysis } from '@/hooks/useAIAnalysis';
 import { PracticalAnalysisCard, TechnicalAnalysisCard } from '@/components/aiAnalysis';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const DIMENSION_COLORS: Record<GaugeProDimension, string> = {
   D1: '#ef4444',
@@ -151,14 +152,22 @@ export default function GaugeProResult() {
               return (
                 <div key={dim} className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-700">
-                        {DIMENSION_SHORT_NAMES[dim]}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {DIMENSION_NAMES[dim]}
-                      </span>
-                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-2 cursor-help">
+                          <span className="text-sm font-medium text-gray-700">
+                            {DIMENSION_SHORT_NAMES[dim]}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {DIMENSION_NAMES[dim]}
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                        <p className="font-semibold mb-1">{DIMENSION_NAMES[dim]}</p>
+                        <p>{DIMENSION_DESCRIPTIONS[dim]}</p>
+                      </TooltipContent>
+                    </Tooltip>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold" style={{ color: DIMENSION_COLORS[dim] }}>
                         {score}%

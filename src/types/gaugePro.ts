@@ -22,6 +22,14 @@ export const DIMENSION_SHORT_NAMES: Record<GaugeProDimension, string> = {
   D5: 'Relacional',
 };
 
+export const DIMENSION_DESCRIPTIONS: Record<GaugeProDimension, string> = {
+  D1: 'Mede o grau de assertividade e iniciativa. Pessoas com alta dominância tendem a assumir o controle, tomar decisões rápidas e buscar resultados de forma direta. Baixa dominância indica preferência por colaboração e consenso.',
+  D2: 'Mede a facilidade de interação social e comunicação. Alta sociabilidade indica pessoas comunicativas, persuasivas e que energizam ambientes. Baixa sociabilidade indica preferência por trabalho focado e independente.',
+  D3: 'Mede a constância no ritmo de trabalho e tolerância a rotinas. Alta paciência indica pessoas metódicas, persistentes e que preferem ambientes estáveis. Baixa paciência indica preferência por variedade e mudanças frequentes.',
+  D4: 'Mede a adesão a regras, processos e padrões de qualidade. Alta conformidade indica pessoas detalhistas, analíticas e que valorizam precisão. Baixa conformidade indica preferência por flexibilidade e abordagens informais.',
+  D5: 'Mede a sensibilidade interpessoal e empatia no ambiente de trabalho. Alta orientação relacional indica pessoas acolhedoras, que priorizam harmonia e bem-estar da equipe. Baixa indica foco em objetividade e resultados.',
+};
+
 // --- Word Selection (PRD-049) ---
 
 export interface AdjectiveWord {
