@@ -223,12 +223,25 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
   useEffect(() => {
     if (!fetchLoading) {
       if (fetchedProfile && !initializedRef.current) {
-        setCurriculum({ ...fetchedProfile });
+        const profileWithDefaults = { ...fetchedProfile };
+        if (!profileWithDefaults.email && currentCandidate?.email) {
+          profileWithDefaults.email = currentCandidate.email;
+        }
+        if (!profileWithDefaults.phone && currentCandidate?.phone) {
+          profileWithDefaults.phone = currentCandidate.phone;
+        }
+        setCurriculum(profileWithDefaults);
         savedSnapshotRef.current = fetchedProfile;
         setLoading(false);
         initializedRef.current = true;
       } else if (!fetchedProfile && candidateId && !ensureProfileMutation.isPending) {
-        ensureProfileMutation.mutate({ candidateId });
+        ensureProfileMutation.mutate({
+          candidateId,
+          initialData: {
+            email: currentCandidate?.email ?? '',
+            phone: currentCandidate?.phone ?? undefined,
+          },
+        });
       }
     }
   }, [fetchLoading, fetchedProfile, candidateId]);
