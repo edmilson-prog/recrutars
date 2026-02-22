@@ -8,7 +8,7 @@ export const APP_VERSION = "1.31.0";
 export const APP_CODENAME = "Insight";
 export const APP_NAME = "RecrutaRS";
 export const APP_COMPANY = "AILA - Sistemas Inteligentes";
-export const APP_COMPANY_URL = "https://aila.com.br";
+export const APP_COMPANY_URL = "https://ailainteligente.com";
 
 /**
  * Retorna a URL base canônica da aplicação.
