@@ -17,6 +17,7 @@ import { TEST_CONFIG } from '@/data/testConfig';
 import { useDiscBannerDismiss, type DiscBannerContext } from '@/hooks/useDiscBannerDismiss';
 import { getCandidateBehavioralProfile } from '@/lib/behavioralProfiles';
 import { useBehavioralTestsByCandidate } from '@/hooks/useBehavioralTestsQuery';
+import { useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Configurações de texto por contexto
@@ -83,8 +84,9 @@ export function DiscIncentiveBanner({
   // Verificar se o candidato já completou o teste
   const candidateId = currentCandidate?.id || '';
   const { data: candidateTests = [] } = useBehavioralTestsByCandidate(candidateId);
+  const { data: gaugeProResult } = useGaugeProResultByCandidate(candidateId);
   const behavioralProfile = getCandidateBehavioralProfile(candidateId, candidateTests);
-  const hasCompletedTest = !!behavioralProfile;
+  const hasCompletedTest = !!behavioralProfile || !!gaugeProResult;
 
   // Não exibir se já completou o teste ou se já foi dispensado
   if (hasCompletedTest || isDismissed) {
