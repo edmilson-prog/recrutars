@@ -106,12 +106,12 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
     const digits = stripCPF(cpfInput);
 
     if (digits.length !== 11) {
-      setCpfError('CPF deve ter 11 digitos.');
+      setCpfError('CPF deve ter 11 dígitos.');
       return;
     }
 
     if (!isValidCPF(digits)) {
-      setCpfError('CPF invalido. Verifique os digitos.');
+      setCpfError('CPF inválido. Verifique os dígitos.');
       return;
     }
 
@@ -121,7 +121,7 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
     try {
       const exists = await checkCPFExists(digits);
       if (exists) {
-        setCpfError('CPF ja cadastrado. Faca login ou recupere sua senha.');
+        setCpfError('CPF já cadastrado. Faça login ou recupere sua senha.');
         return;
       }
       setStep('data');
@@ -201,9 +201,9 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
       const message = err instanceof Error ? err.message : '';
 
       if (message.includes('already registered') || message.includes('already been registered')) {
-        setError('Este email ja possui uma conta. Use a pagina de login ou clique em "Esqueci minha senha".');
+        setError('Este email já possui uma conta. Use a página de login ou clique em "Esqueci minha senha".');
       } else if (message.includes('Invalid email')) {
-        setError('Email invalido. Verifique o formato.');
+        setError('Email inválido. Verifique o formato.');
       } else {
         setError('Erro ao criar conta. Tente novamente.');
       }
@@ -263,7 +263,7 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
           autoFocus
         />
         <p className="text-xs text-muted-foreground">
-          Seu CPF sera usado como identificacao unica na plataforma.
+          Seu CPF será usado como identificação única na plataforma.
         </p>
       </div>
 
@@ -272,7 +272,7 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {cpfError}
-            {cpfError.includes('ja cadastrado') && (
+            {cpfError.includes('já cadastrado') && (
               <span className="block mt-1">
                 <Link to="/login" className="font-medium underline">Fazer login</Link>
                 {' ou '}
@@ -300,7 +300,7 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
             </>
           ) : (
             <>
-              Proximo
+              Próximo
               <ArrowRight className="w-4 h-4" />
             </>
           )}
@@ -320,7 +320,7 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
           <Input
             id="name"
             type="text"
-            placeholder="Joao da Silva"
+            placeholder="João da Silva"
             className="pl-10"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -413,16 +413,16 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
         <PasswordStrengthIndicator password={password} />
         <div className="text-xs text-muted-foreground space-y-0.5">
           <p className={cn(password.length >= 8 && 'text-green-600')}>
-            {password.length >= 8 ? '\u2713' : '\u2022'} Minimo 8 caracteres
+            {password.length >= 8 ? '\u2713' : '\u2022'} Mínimo 8 caracteres
           </p>
           <p className={cn(/[A-Z]/.test(password) && 'text-green-600')}>
-            {/[A-Z]/.test(password) ? '\u2713' : '\u2022'} Uma letra maiuscula
+            {/[A-Z]/.test(password) ? '\u2713' : '\u2022'} Uma letra maiúscula
           </p>
           <p className={cn(/[a-z]/.test(password) && 'text-green-600')}>
-            {/[a-z]/.test(password) ? '\u2713' : '\u2022'} Uma letra minuscula
+            {/[a-z]/.test(password) ? '\u2713' : '\u2022'} Uma letra minúscula
           </p>
           <p className={cn(/[0-9]/.test(password) && 'text-green-600')}>
-            {/[0-9]/.test(password) ? '\u2713' : '\u2022'} Um numero
+            {/[0-9]/.test(password) ? '\u2713' : '\u2022'} Um número
           </p>
           <p className={cn(/[^A-Za-z0-9]/.test(password) && 'text-green-600')}>
             {/[^A-Za-z0-9]/.test(password) ? '\u2713' : '\u2022'} Um caractere especial
@@ -448,13 +448,13 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             tabIndex={-1}
-            aria-label={showConfirmPassword ? 'Ocultar confirmacao de senha' : 'Mostrar confirmacao de senha'}
+            aria-label={showConfirmPassword ? 'Ocultar confirmação de senha' : 'Mostrar confirmação de senha'}
           >
             {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
         {confirmPassword && !passwordsMatch && (
-          <p className="text-xs text-destructive">As senhas nao coincidem.</p>
+          <p className="text-xs text-destructive">As senhas não coincidem.</p>
         )}
       </div>
 
@@ -517,12 +517,12 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
           <div className="grid gap-1 leading-none">
             <label htmlFor="privacy" className="text-sm font-medium leading-snug cursor-pointer flex items-center gap-1.5">
               <Shield className="w-4 h-4 text-primary flex-shrink-0" />
-              Politica de Privacidade
+              Política de Privacidade
             </label>
             <p className="text-xs text-muted-foreground">
               Li e aceito a{' '}
               <Link to="/politica-de-privacidade" target="_blank" className="text-primary underline">
-                Politica de Privacidade
+                Política de Privacidade
               </Link>{' '}
               e o tratamento dos meus dados pessoais.
             </p>
@@ -543,9 +543,9 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
             <p className="text-xs text-muted-foreground">
               Autorizo o tratamento dos meus dados pessoais conforme a{' '}
               <Link to="/lgpd" target="_blank" className="text-primary underline">
-                Lei Geral de Protecao de Dados (LGPD - Lei 13.709/2018)
+                Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018)
               </Link>{' '}
-              para fins de recrutamento e selecao.
+              para fins de recrutamento e seleção.
             </p>
           </div>
         </div>
@@ -583,9 +583,9 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
   const getStepInfo = () => {
     switch (step) {
       case 'cpf':
-        return { title: 'Cadastro de Candidato', subtitle: 'Informe seu CPF para comecar.' };
+        return { title: 'Cadastro de Candidato', subtitle: 'Informe seu CPF para começar.' };
       case 'data':
-        return { title: 'Seus dados', subtitle: 'Preencha suas informacoes basicas.' };
+        return { title: 'Seus dados', subtitle: 'Preencha suas informações básicas.' };
       case 'password':
         return { title: 'Crie sua senha', subtitle: 'Sua senha deve ser forte e segura.' };
       case 'terms':

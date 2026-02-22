@@ -51,7 +51,7 @@ export default function OnboardingGaugeProTest() {
     onXPAwarded: (xp) => {
       toast({
         title: `+${xp} XP conquistados!`,
-        description: `Parabens por completar a avaliacao ${TEST_CONFIG.name}.`,
+        description: `Parabéns por completar a avaliação ${TEST_CONFIG.name}.`,
       });
     },
     onBadgeAwarded: () => {
@@ -108,7 +108,7 @@ export default function OnboardingGaugeProTest() {
             <div className="text-center space-y-2">
               <h1 className="text-2xl font-bold text-foreground">Teste Comportamental</h1>
               <p className="text-muted-foreground">
-                Ultima etapa! Descubra seu perfil comportamental.
+                Última etapa! Descubra seu perfil comportamental.
               </p>
             </div>
 
@@ -118,10 +118,10 @@ export default function OnboardingGaugeProTest() {
               </div>
 
               <div className="text-center space-y-2">
-                <h2 className="text-lg font-semibold">O que e o Gauge-Pro?</h2>
+                <h2 className="text-lg font-semibold">O que é o Gauge-Pro?</h2>
                 <p className="text-sm text-muted-foreground">
-                  O Gauge-Pro e uma avaliacao comportamental que identifica seu perfil profissional
-                  em 5 dimensoes. Os resultados ajudam empresas a encontrar candidatos compativeis.
+                  O Gauge-Pro é uma avaliação comportamental que identifica seu perfil profissional
+                  em 5 dimensões. Os resultados ajudam empresas a encontrar candidatos compatíveis.
                 </p>
               </div>
 
@@ -140,7 +140,7 @@ export default function OnboardingGaugeProTest() {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                  <span>Voce pode sair e retomar</span>
+                  <span>Você pode sair e retomar</span>
                 </div>
               </div>
             </div>

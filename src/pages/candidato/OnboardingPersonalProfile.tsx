@@ -36,12 +36,12 @@ import { toast } from 'sonner';
 const STATES = Object.keys(brazilianCitiesByState).sort();
 
 const STATE_NAMES: Record<string, string> = {
-  AC: 'Acre', AL: 'Alagoas', AP: 'Amapa', AM: 'Amazonas', BA: 'Bahia',
-  CE: 'Ceara', DF: 'Distrito Federal', ES: 'Espirito Santo', GO: 'Goias',
-  MA: 'Maranhao', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', MG: 'Minas Gerais',
-  PA: 'Para', PB: 'Paraiba', PR: 'Parana', PE: 'Pernambuco', PI: 'Piaui',
+  AC: 'Acre', AL: 'Alagoas', AP: 'Amapá', AM: 'Amazonas', BA: 'Bahia',
+  CE: 'Ceará', DF: 'Distrito Federal', ES: 'Espírito Santo', GO: 'Goiás',
+  MA: 'Maranhão', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', MG: 'Minas Gerais',
+  PA: 'Pará', PB: 'Paraíba', PR: 'Paraná', PE: 'Pernambuco', PI: 'Piauí',
   RJ: 'Rio de Janeiro', RN: 'Rio Grande do Norte', RS: 'Rio Grande do Sul',
-  RO: 'Rondonia', RR: 'Roraima', SC: 'Santa Catarina', SP: 'Sao Paulo',
+  RO: 'Rondônia', RR: 'Roraima', SC: 'Santa Catarina', SP: 'São Paulo',
   SE: 'Sergipe', TO: 'Tocantins',
 };
 
@@ -49,15 +49,15 @@ const GENDER_OPTIONS = [
   { value: 'masculino', label: 'Masculino' },
   { value: 'feminino', label: 'Feminino' },
   { value: 'outro', label: 'Outro' },
-  { value: 'nao_informar', label: 'Prefiro nao informar' },
+  { value: 'nao_informar', label: 'Prefiro não informar' },
 ];
 
 const MARITAL_STATUS_OPTIONS = [
   { value: 'solteiro', label: 'Solteiro(a)' },
   { value: 'casado', label: 'Casado(a)' },
   { value: 'divorciado', label: 'Divorciado(a)' },
-  { value: 'viuvo', label: 'Viuvo(a)' },
-  { value: 'uniao_estavel', label: 'Uniao Estavel' },
+  { value: 'viuvo', label: 'Viúvo(a)' },
+  { value: 'uniao_estavel', label: 'União Estável' },
   { value: 'outro', label: 'Outro' },
 ];
 
@@ -147,11 +147,11 @@ export default function OnboardingPersonalProfile() {
     // Validate file type and size
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      toast.error('Formato invalido. Use JPG, PNG ou WebP.');
+      toast.error('Formato inválido. Use JPG, PNG ou WebP.');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Arquivo muito grande. Maximo 5MB.');
+      toast.error('Arquivo muito grande. Máximo 5MB.');
       return;
     }
 
@@ -332,7 +332,7 @@ export default function OnboardingPersonalProfile() {
                   className={cn(showErrors && (!dateOfBirth || !isAgeValid()) && 'border-destructive')}
                 />
                 {dateOfBirth && !isAgeValid() && (
-                  <p className="text-xs text-destructive">Voce deve ter pelo menos 16 anos.</p>
+                  <p className="text-xs text-destructive">Você deve ter pelo menos 16 anos.</p>
                 )}
               </div>
 
@@ -340,7 +340,7 @@ export default function OnboardingPersonalProfile() {
               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5">
                   <User className="w-4 h-4 text-primary" />
-                  Genero
+                  Gênero
                 </Label>
                 <Select value={gender} onValueChange={(v) => { setGender(v); saveField('gender', v); }}>
                   <SelectTrigger className={cn(showErrors && !gender && 'border-destructive')}>
@@ -444,7 +444,7 @@ export default function OnboardingPersonalProfile() {
                 </>
               ) : (
                 <>
-                  Proximo — Perfil Profissional
+                  Próximo — Perfil Profissional
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
