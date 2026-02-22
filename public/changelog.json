@@ -1,13 +1,50 @@
 {
   "versions": [
     {
+      "version": "1.30.1",
+      "codename": "Gateway",
+      "type": "patch",
+      "releaseDate": "2026-02-22",
+      "description": "Redesign visual dos componentes do teste Gauge-Pro e tela de conclusao do onboarding, correcao critica na selecao de respostas dos cenarios situacionais e na geracao de analise inteligente para candidatos.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Redesign dos componentes WordGrid, ScenarioCard, ScenarioIntro e BlockCompleteDivider com hierarquia visual aprimorada",
+            "Redesign da tela de conclusao do onboarding com confetti real, checkmark animado SVG, gradient text e orbs decorativos",
+            "Barra de progresso geral no teste Gauge-Pro cobrindo Parte 1 (palavras) e Parte 2 (cenarios)",
+            "Logo monocromatica para dark mode na tela de conclusao do onboarding",
+            "Checklist de etapas concluidas redesenhada como mini-cards com labels de etapa",
+            "Layout e espacamento do perfil profissional ajustados"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Selecao de respostas nos cenarios situacionais (Parte 2) nao funcionava — passava objeto em vez de string para submitScenarioResponse",
+            "Campo selectedOption lia propriedade inexistente (selectedOptionId) do tipo ScenarioResponse",
+            "Erro 401 na geracao de analise inteligente para candidatos — RLS bloqueava leitura das configuracoes de LLM do admin",
+            "Loop infinito de polling de ai_analyses no DevTools apos falha na geracao",
+            "Mensagem de erro da analise inteligente nao era exibida na UI — candidato nao recebia feedback"
+          ]
+        },
+        {
+          "type": "security",
+          "items": [
+            "RPC get_llm_config() com SECURITY DEFINER permite acesso seguro as configuracoes de LLM sem expor toda a tabela system_settings"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.30.0",
       "codename": "Gateway",
       "type": "minor",
       "releaseDate": "2026-02-21",
       "prd": "PRD-083, PRD-084, PRD-085, PRD-086",
       "description": "Fluxo completo de onboarding para novos candidatos em 4 etapas obrigatorias: cadastro com CPF e senha forte, perfil pessoal, perfil profissional e teste comportamental Gauge-Pro.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
