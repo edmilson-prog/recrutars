@@ -68,7 +68,8 @@ import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCa
 import { useProfile } from '@/hooks/useCurriculumsQuery';
 import { useApplicationHighlights } from '@/hooks/useHighlightsQuery';
 import { HighlightBadge } from '@/components/match/HighlightBadge';
-import { DIMENSION_NAMES, DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
+import { DIMENSION_NAMES, DIMENSION_SHORT_NAMES, DIMENSION_DESCRIPTIONS } from '@/types/gaugePro';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { GaugeProDimension } from '@/types/gaugePro';
 import type { Job, ApplicationNote } from '@/types';
 import { toast } from 'sonner';
@@ -476,10 +477,18 @@ export default function CandidateProfile() {
                         return (
                           <div key={dim} className="space-y-1.5">
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium">{DIMENSION_SHORT_NAMES[dim]}</span>
-                                <span className="text-xs text-muted-foreground">{DIMENSION_NAMES[dim]}</span>
-                              </div>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center gap-2 cursor-help">
+                                    <span className="text-sm font-medium">{DIMENSION_SHORT_NAMES[dim]}</span>
+                                    <span className="text-xs text-muted-foreground">{DIMENSION_NAMES[dim]}</span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                                  <p className="font-semibold mb-1">{DIMENSION_NAMES[dim]}</p>
+                                  <p>{DIMENSION_DESCRIPTIONS[dim]}</p>
+                                </TooltipContent>
+                              </Tooltip>
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-semibold" style={{ color: barColors[dim] }}>
                                   {score}%
