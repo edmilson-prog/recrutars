@@ -21,8 +21,8 @@ export function formatShortName(fullName: string): string {
 export function getCandidateDisplayName(
   candidate: { name: string; displayName?: string }
 ): string {
-  if (candidate.displayName?.trim()) return candidate.displayName.trim();
-  return formatShortName(candidate.name);
+  if (candidate.displayName?.trim()) return candidate.displayName.trim().toUpperCase();
+  return formatShortName(candidate.name).toUpperCase();
 }
 
 /**
