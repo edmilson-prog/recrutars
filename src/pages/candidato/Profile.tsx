@@ -32,6 +32,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { calculateProfileCompletion } from '@/utils/profileCompleteness';
 import { useCandidateByProfile, useUpdateCandidate } from '@/hooks/useCandidatesQuery';
+import { useApplicationsByCandidate } from '@/hooks/useApplicationsQuery';
+import { useProfile as useCurriculumProfile } from '@/hooks/useCurriculumsQuery';
 import { supabase } from '@/lib/supabase';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -196,6 +198,8 @@ export default function CandidateProfile() {
   // Dynamic plan data from Supabase (PRD-075)
   const { data: candidatePlans = [] } = usePlans('candidate');
   const { data: candidateSubscription } = useSubscription(user?.id);
+  const { data: applications = [] } = useApplicationsByCandidate(candidate?.id || '');
+  const { data: curriculum } = useCurriculumProfile(candidate?.id || '');
   const currentPlanObj = candidatePlans.find((p) => {
     const row = p as Record<string, unknown>;
     const planName = (row.name as string) ?? '';
@@ -218,9 +222,17 @@ export default function CandidateProfile() {
     );
   }
 
-  // Mock usage data
-  const usedApplications = 3;
-  const usedResumes = 1;
+  // Real usage data from Supabase
+  const now = new Date();
+  const usedApplications = applications.filter((a) => {
+    const raw = a as Record<string, unknown>;
+    const dateStr = (raw.createdAt ?? raw.created_at) as string;
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+  const usedResumes = curriculum ? 1 : 0;
+  const applicationLimit = isCurrentFree ? 5 : 50;
 
   const getInitials = (name: string) => {
     return name
@@ -992,11 +1004,11 @@ export default function CandidateProfile() {
                   <div className="flex items-center justify-between text-sm">
                     <span>Candidaturas este mês</span>
                     <span className="font-medium">
-                      {usedApplications}
+                      {usedApplications}/{applicationLimit}
                     </span>
                   </div>
                   <Progress
-                    value={Math.min(usedApplications * 10, 100)}
+                    value={Math.min((usedApplications / applicationLimit) * 100, 100)}
                     className="h-2"
                   />
                 </div>
