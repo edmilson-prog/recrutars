@@ -15,7 +15,6 @@ import {
   Star,
   TrendingUp,
   Briefcase,
-  ArrowLeft,
   Award,
   MessageSquare,
   Users,
@@ -106,13 +105,6 @@ export default function GaugeProResult() {
   return (
     <DashboardLayout userType="candidate">
       <div className="p-4 md:p-6 max-w-[1400px] mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/candidato/teste-comportamental')}>
-            <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
-          </Button>
-        </div>
-
         {/* Result Banner */}
         <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0">
           <CardContent className="p-6 space-y-4">
@@ -337,12 +329,6 @@ export default function GaugeProResult() {
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex justify-center gap-3 pt-2 pb-6">
-          <Button variant="outline" onClick={() => navigate('/candidato/teste-comportamental')}>
-            Voltar aos Testes
-          </Button>
-        </div>
       </div>
     </DashboardLayout>
   );
