@@ -11,6 +11,11 @@ import { AnalysisErrorState } from './AnalysisErrorState';
 import { renderAnalysisContent } from '@/lib/renderAnalysisContent';
 import type { GaugeProResult } from '@/types/gaugePro';
 
+function formatAnalysisDate(iso: string): string {
+  const d = new Date(iso);
+  return `${d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}, ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+}
+
 function getProviderLabel(modelUsed: string): string {
   if (modelUsed.startsWith('claude-')) return 'Anthropic';
   if (modelUsed.startsWith('gpt-') || modelUsed.startsWith('o1') || modelUsed.startsWith('o3')) return 'OpenAI';
@@ -51,28 +56,36 @@ export function PracticalAnalysisCard({
     return (
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-4">
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="w-5 h-5 text-primary" />
               Análise Inteligente
             </CardTitle>
-            <div className="flex items-center gap-2">
-              {canGenerate && gaugeProResult && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1 text-xs h-6"
-                  onClick={() => regenerateAnalysis('practical', gaugeProResult)}
-                  disabled={isRegenerating}
-                >
-                  <Sparkles className="w-3 h-3" />
-                  {isRegenerating ? 'Regerando...' : 'Regerar'}
-                </Button>
-              )}
-              <Badge variant="outline" className="gap-1 text-xs font-normal">
-                <Bot className="w-3 h-3" />
-                Gerado por IA
-              </Badge>
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2">
+                {canGenerate && gaugeProResult && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs h-6"
+                    onClick={() => regenerateAnalysis('practical', gaugeProResult)}
+                    disabled={isRegenerating}
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    {isRegenerating ? 'Regerando...' : 'Regerar'}
+                  </Button>
+                )}
+                <Badge variant="outline" className="gap-1 text-xs font-normal">
+                  <Bot className="w-3 h-3" />
+                  Gerado por IA
+                </Badge>
+              </div>
+              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Clock className="w-3 h-3" />
+                {practicalAnalysis.regeneratedAt
+                  ? `Atualizado em ${formatAnalysisDate(practicalAnalysis.regeneratedAt)}`
+                  : formatAnalysisDate(practicalAnalysis.createdAt)}
+              </span>
             </div>
           </div>
         </CardHeader>
