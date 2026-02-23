@@ -1581,35 +1581,6 @@ export const candidateSettingsCategories: ConfigCategory[] = [
       },
     ],
   },
-  {
-    id: 'candidate-security',
-    key: 'security',
-    name: 'Segurança',
-    icon: 'Shield',
-    description: 'Conta e autenticação',
-    panel: 'candidate',
-    order: 6,
-    subcategories: [
-      {
-        id: 'candidate-security-account',
-        key: 'account',
-        name: 'Conta',
-        description: 'Gerenciamento de email e senha',
-        order: 1,
-        fields: [
-          {
-            id: 'account-email',
-            key: 'email',
-            name: 'Email',
-            description: 'Seu email de acesso à plataforma',
-            type: 'text',
-            defaultValue: '',
-            order: 1,
-          },
-        ],
-      },
-    ],
-  },
 ];
 
 // Função auxiliar para obter valores padrão de uma categoria
