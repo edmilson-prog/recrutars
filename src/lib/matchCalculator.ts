@@ -278,6 +278,71 @@ export function calculateLocationScore(
 }
 
 /**
+ * Retorna skills do candidato que correspondem aos requisitos da vaga
+ */
+function getMatchedSkills(candidateSkills: string[], jobRequirements: string[], max: number): string[] {
+  if (!candidateSkills?.length || !jobRequirements?.length) return [];
+
+  const requirementTokens = new Set<string>();
+  for (const req of jobRequirements) {
+    for (const token of extractTokens(req)) {
+      requirementTokens.add(token);
+    }
+  }
+
+  const normalizedSkills = candidateSkills.map(s => ({
+    original: s,
+    normalized: resolveAlias(normalizeString(s)),
+  }));
+
+  const matched: string[] = [];
+  for (const { original, normalized } of normalizedSkills) {
+    const isMatch = requirementTokens.has(normalized)
+      || (normalized.length >= 4 && [...requirementTokens].some(
+        t => t.length >= 4 && (t.includes(normalized) || normalized.includes(t))
+      ));
+    if (isMatch) matched.push(original);
+    if (matched.length >= max) break;
+  }
+
+  return matched;
+}
+
+/**
+ * Retorna requisitos da vaga que NAO correspondem as skills do candidato
+ */
+function getMissingSkills(candidateSkills: string[], jobRequirements: string[], max: number): string[] {
+  if (!jobRequirements?.length) return [];
+
+  const normalizedSkills = new Set(
+    (candidateSkills || []).map(s => resolveAlias(normalizeString(s)))
+  );
+
+  const missing: string[] = [];
+  const seen = new Set<string>();
+
+  for (const req of jobRequirements) {
+    const tokens = extractTokens(req);
+    for (const token of tokens) {
+      if (seen.has(token)) continue;
+      seen.add(token);
+
+      const isMatched = normalizedSkills.has(token)
+        || (token.length >= 4 && [...normalizedSkills].some(
+          s => s.length >= 4 && (s.includes(token) || token.includes(s))
+        ));
+
+      if (!isMatched && token.length >= 3) {
+        missing.push(token);
+        if (missing.length >= max) return missing;
+      }
+    }
+  }
+
+  return missing;
+}
+
+/**
  * Gera os pontos fortes (strengths) baseado no breakdown
  */
 export function generateStrengths(
@@ -293,10 +358,13 @@ export function generateStrengths(
   // Skills - pontos fortes
   const skillsCategory = categories.find(c => c.id === 'skills');
   if (skillsCategory && skillsCategory.score >= 70) {
-    const matchedSkills = candidate.skills?.slice(0, 3).join(', ');
+    const matched = getMatchedSkills(candidate.skills || [], job.requirements || [], 4);
+    const skillsText = matched.length > 0
+      ? `Suas habilidades em ${matched.join(', ')} atendem aos requisitos da vaga`
+      : 'Suas habilidades técnicas são altamente relevantes para esta posição';
     strengths.push({
       id: 'str-skills-1',
-      text: `Suas habilidades em ${matchedSkills || 'tecnologia'} são altamente relevantes para esta posição`,
+      text: skillsText,
       category: 'skills',
       impact: skillsCategory.score >= 85 ? 'high' : 'medium',
     });
@@ -307,7 +375,7 @@ export function generateStrengths(
   if (expCategory && expCategory.score >= 80 && (candidate.experience || 0) > 0) {
     strengths.push({
       id: 'str-exp-1',
-      text: `Seus ${candidate.experience || 'anos de'} anos de experiência atendem perfeitamente ao nível ${job.level}`,
+      text: `Seus ${candidate.experience} anos de experiência atendem ao nível ${job.level || 'exigido'}`,
       category: 'experience',
       impact: expCategory.score >= 90 ? 'high' : 'medium',
     });
@@ -316,9 +384,10 @@ export function generateStrengths(
   // Behavioral - pontos fortes
   const behavioralCategory = categories.find(c => c.id === 'behavioral');
   if (behavioralCategory && behavioralCategory.score >= 70) {
+    const jobRef = job.title ? `para ${job.title}` : 'para esta posição';
     strengths.push({
       id: 'str-behavioral-1',
-      text: 'Seu perfil comportamental demonstra alinhamento com a cultura e as demandas da posição',
+      text: `Perfil comportamental com ${behavioralCategory.score}% de compatibilidade com o perfil ideal ${jobRef}`,
       category: 'behavioral',
       impact: behavioralCategory.score >= 85 ? 'high' : 'medium',
     });
@@ -367,9 +436,18 @@ export function generateOpportunities(
   // Skills - oportunidades
   const skillsCategory = categories.find(c => c.id === 'skills');
   if (skillsCategory && skillsCategory.score < 70) {
-    const missingSkillsText = skillsCategory.score < 50
-      ? 'Desenvolver as habilidades técnicas listadas nos requisitos da vaga'
-      : 'Adicionar certificações ou projetos nas tecnologias requisitadas';
+    const missing = getMissingSkills(candidate.skills || [], job.requirements || [], 4);
+    let missingSkillsText: string;
+    if (missing.length > 0) {
+      const skillsList = missing.join(', ');
+      missingSkillsText = skillsCategory.score < 50
+        ? `Desenvolver habilidades em ${skillsList} para atender aos requisitos da vaga`
+        : `Fortalecer conhecimento em ${skillsList} com certificações ou projetos`;
+    } else {
+      missingSkillsText = skillsCategory.score < 50
+        ? 'Desenvolver as habilidades técnicas exigidas pela vaga'
+        : 'Adicionar certificações ou projetos nas tecnologias requisitadas';
+    }
 
     opportunities.push({
       id: 'opp-skills-1',
@@ -383,8 +461,9 @@ export function generateOpportunities(
   // Experience - oportunidades
   const expCategory = categories.find(c => c.id === 'experience');
   if (expCategory && expCategory.score < 70) {
+    const level = job.level || 'exigido';
     const expText = (candidate.experience || 0) < 3
-      ? 'Ganhar mais experiência prática na área através de projetos ou freelas'
+      ? `A vaga exige nível ${level} — ganhar mais experiência prática na área`
       : 'Destacar projetos relevantes e liderança técnica no seu perfil';
 
     opportunities.push({
@@ -401,7 +480,7 @@ export function generateOpportunities(
   if (behavioralCategory && behavioralCategory.score < 65) {
     opportunities.push({
       id: 'opp-behavioral-1',
-      text: 'Refazer o teste comportamental para um perfil mais atualizado e preciso',
+      text: `Perfil comportamental com ${behavioralCategory.score}% de aderência — considere complementar a avaliação`,
       category: 'behavioral',
       potentialIncrease: Math.min(12, Math.round((65 - behavioralCategory.score) * 0.4)),
       actionable: true,
