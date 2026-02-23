@@ -20,12 +20,21 @@
         {
           "type": "changed",
           "items": [
+            "Renderizacao da analise IA redesenhada com secoes semanticas coloridas, tabelas de scores com badges e barras de progresso, icones tematicos e callouts destacados",
+            "Scroll wrapper aprimorado nos cards de analise pratica, tecnica e corporativa com fade-out gradiente e scrollbar estilizada",
+            "Prompts de IA atualizados com instrucoes de formatacao markdown para gerar conteudo mais estruturado",
             "Layout da pagina de resultado Gauge-Pro ampliado de 896px para 1400px (+56%)",
             "Redesign da tela de conclusao da Parte 1 do Gauge-Pro com barra de progresso e estatisticas",
             "Redesign do intro de cenarios situacionais com grid de estatisticas e preview de formato",
             "Redesign dos labels de perspectiva do Gauge-Pro com cards visuais distintos",
             "Uso do plano do candidato agora exibe dados reais do Supabase em vez de valores fixos",
             "Barra de candidaturas mostra formato X/Y com limite real do plano (5 gratuito, 50 pago)"
+          ]
+        },
+        {
+          "type": "removed",
+          "items": [
+            "Botoes 'Voltar' e 'Voltar aos Testes' da pagina de resultado Gauge-Pro do candidato"
           ]
         },
         {
