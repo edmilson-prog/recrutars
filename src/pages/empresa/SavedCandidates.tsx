@@ -274,9 +274,11 @@ export default function SavedCandidates() {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-semibold text-foreground">
-                    {displayName}
-                  </h3>
+                  <Link to={`/empresa/candidatos/${candidate.id}`}>
+                    <h3 className="text-xl font-semibold text-foreground hover:text-primary hover:underline transition-colors cursor-pointer">
+                      {displayName}
+                    </h3>
+                  </Link>
                   {candidateIsAnonymous && (
                     <Tooltip>
                       <TooltipTrigger asChild>
