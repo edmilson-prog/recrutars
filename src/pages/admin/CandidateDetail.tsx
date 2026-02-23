@@ -1,6 +1,6 @@
 /**
  * Admin Candidate Detail Page
- * PRD-021: Detalhe do candidato com abas de visao geral, perfil, teste, candidaturas, curriculo e historico
+ * PRD-021: Detalhe do candidato com abas de visão geral, perfil, teste, candidaturas, currículo e histórico
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -35,6 +35,8 @@ import {
   AlertTriangle,
   BookOpen,
   Wrench,
+  UserCircle,
+  DollarSign,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -80,6 +82,7 @@ import { PracticalAnalysisCard } from '@/components/aiAnalysis/PracticalAnalysis
 import type { Candidate, CandidateAdminAction, CandidateStatus, ApplicationStatus } from '@/types';
 import { skillLevelLabels, educationStatusLabels } from '@/types/curriculum';
 import type { SkillLevel, EducationStatus } from '@/types/curriculum';
+import { workModelOptions, contractTypeOptions } from '@/data/settingsConfig';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -112,12 +115,12 @@ const ACTION_ICON_CONFIG: Record<
 
 const APP_STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: string; icon: typeof Clock }> = {
   pending: { label: 'Pendente', color: 'bg-muted text-muted-foreground', icon: Clock },
-  reviewing: { label: 'Em analise', color: 'bg-warning/10 text-warning', icon: Eye },
+  reviewing: { label: 'Em análise', color: 'bg-warning/10 text-warning', icon: Eye },
   interview: { label: 'Entrevista', color: 'bg-secondary/10 text-secondary', icon: Calendar },
   offer: { label: 'Proposta', color: 'bg-success/10 text-success', icon: CheckCircle2 },
   rejected: { label: 'Reprovado', color: 'bg-destructive/10 text-destructive', icon: XCircle },
   hired: { label: 'Contratado', color: 'bg-success/10 text-success', icon: Award },
-  withdrawn: { label: 'Desistencia', color: 'bg-muted text-muted-foreground', icon: Ban },
+  withdrawn: { label: 'Desistência', color: 'bg-muted text-muted-foreground', icon: Ban },
   talent_pool: { label: 'Banco de Talentos', color: 'bg-primary/10 text-primary', icon: Star },
 };
 
@@ -162,6 +165,10 @@ function formatCPF(cpf: string): string {
     /^(\d{3})(\d{3})(\d{3})(\d{2})$/,
     '$1.$2.$3-$4',
   );
+}
+
+function lookupLabel(options: { value: string; label: string }[], value: string): string {
+  return options.find(o => o.value === value)?.label || value;
 }
 
 function formatDateOfBirth(dateStr: string | undefined): string {
@@ -366,10 +373,10 @@ export default function AdminCandidateDetail() {
   const handleSendNotification = () => {
     if (!mergedCandidate || !notificationMessage.trim()) return;
 
-    const details = `Notificacao enviada: ${notificationMessage.substring(0, 50)}${notificationMessage.length > 50 ? '...' : ''}`;
+    const details = `Notificação enviada: ${notificationMessage.substring(0, 50)}${notificationMessage.length > 50 ? '...' : ''}`;
     logAction('notification_sent', details);
 
-    toast.success(`Notificacao enviada para ${mergedCandidate.name}`);
+    toast.success(`Notificação enviada para ${mergedCandidate.name}`);
     setNotifyModalOpen(false);
     setNotificationMessage('');
   };
@@ -396,7 +403,7 @@ export default function AdminCandidateDetail() {
     return (
       <DashboardLayout userType="admin">
         <div className="flex flex-col items-center justify-center py-20">
-          <p className="text-lg text-muted-foreground">Candidato nao encontrado.</p>
+          <p className="text-lg text-muted-foreground">Candidato não encontrado.</p>
           <Link to="/admin/candidatos" className="mt-4">
             <Button variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -472,7 +479,7 @@ export default function AdminCandidateDetail() {
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
-              {mergedCandidate.title || 'Sem titulo profissional'}
+              {mergedCandidate.title || 'Sem título profissional'}
             </p>
             <p className="text-sm text-muted-foreground">
               {mergedCandidate.email}
@@ -487,7 +494,7 @@ export default function AdminCandidateDetail() {
               onClick={() => setNotifyModalOpen(true)}
             >
               <Bell className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Enviar Notificacao</span>
+              <span className="hidden sm:inline">Enviar Notificação</span>
               <span className="sm:hidden">Notificar</span>
             </Button>
             {!!gaugeProResult && (
@@ -528,7 +535,7 @@ export default function AdminCandidateDetail() {
           <TabsList className="flex-wrap h-auto gap-1">
             <TabsTrigger value="visao-geral" className="gap-1.5">
               <LayoutDashboard className="w-4 h-4" />
-              <span className="hidden sm:inline ml-2">Visao Geral</span>
+              <span className="hidden sm:inline ml-2">Visão Geral</span>
             </TabsTrigger>
             <TabsTrigger value="perfil" className="gap-1.5">
               <User className="w-4 h-4" />
@@ -544,16 +551,16 @@ export default function AdminCandidateDetail() {
             </TabsTrigger>
             <TabsTrigger value="curriculo" className="gap-1.5">
               <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline ml-2">Curriculo</span>
+              <span className="hidden sm:inline ml-2">Currículo</span>
             </TabsTrigger>
             <TabsTrigger value="historico" className="gap-1.5">
               <Clock className="w-4 h-4" />
-              <span className="hidden sm:inline ml-2">Historico</span>
+              <span className="hidden sm:inline ml-2">Histórico</span>
             </TabsTrigger>
           </TabsList>
 
           {/* ================================================================
-              Tab 1: Visao Geral
+              Tab 1: Visão Geral
               ================================================================ */}
           <TabsContent value="visao-geral">
             <motion.div
@@ -580,7 +587,7 @@ export default function AdminCandidateDetail() {
                 <KPICard
                   icon={Brain}
                   label="Teste"
-                  value={gaugeProResult ? 'Sim' : 'Nao'}
+                  value={gaugeProResult ? 'Sim' : 'Não'}
                   iconColor="text-purple-500"
                   bgColor="bg-purple-500/10"
                 />
@@ -593,12 +600,21 @@ export default function AdminCandidateDetail() {
                 />
               </div>
 
-              {/* Info + Contact */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Quick info */}
-                <div className="bg-card rounded-xl p-6 shadow-soft space-y-4">
-                  <h3 className="text-lg font-semibold text-foreground">Informacoes Rapidas</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              {/* Row 1: Dados Pessoais (2/3) + Contato (1/3) */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Dados Pessoais */}
+                <div className="lg:col-span-2 bg-card rounded-xl p-6 shadow-soft space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <UserCircle className="w-5 h-5 text-muted-foreground" />
+                    Dados Pessoais
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                    <InfoItem label="Nome Completo" value={mergedCandidate.displayName || mergedCandidate.name} />
+                    <InfoItem label="CPF" value={formatCPF(mergedCandidate.cpf || '')} />
+                    <InfoItem label="Data de Nascimento" value={formatDateOfBirth(mergedCandidate.dateOfBirth)} />
+                    <InfoItem label="Gênero" value={mergedCandidate.gender || '---'} />
+                    <InfoItem label="Estado Civil" value={mergedCandidate.maritalStatus || '---'} />
+                    <InfoItem label="Nacionalidade" value={mergedCandidate.nationality || '---'} />
                     <InfoItem
                       label="Status"
                       value={
@@ -611,28 +627,16 @@ export default function AdminCandidateDetail() {
                         </Badge>
                       }
                     />
-                    <InfoItem
-                      label="Localizacao"
-                      value={locationDisplay}
-                    />
-                    <InfoItem
-                      label="Experiencia"
-                      value={mergedCandidate.experience ? `${mergedCandidate.experience} ano${mergedCandidate.experience !== 1 ? 's' : ''}` : '---'}
-                    />
-                    <InfoItem
-                      label="Disponibilidade"
-                      value={mergedCandidate.availability || '---'}
-                    />
-                    <InfoItem
-                      label="Data de Cadastro"
-                      value={formatDateBR(mergedCandidate.createdAt)}
-                    />
+                    <InfoItem label="Data de Cadastro" value={formatDateBR(mergedCandidate.createdAt)} />
                   </div>
                 </div>
 
-                {/* Contact */}
+                {/* Contato */}
                 <div className="bg-card rounded-xl p-6 shadow-soft space-y-4">
-                  <h3 className="text-lg font-semibold text-foreground">Contato</h3>
+                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <Mail className="w-5 h-5 text-muted-foreground" />
+                    Contato
+                  </h3>
                   <div className="space-y-3 text-sm">
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -666,6 +670,112 @@ export default function AdminCandidateDetail() {
                   </div>
                 </div>
               </div>
+
+              {/* Row 2: Informações Profissionais (2/3) + Localização (1/3) */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Informações Profissionais */}
+                <div className="lg:col-span-2 bg-card rounded-xl p-6 shadow-soft space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <Briefcase className="w-5 h-5 text-muted-foreground" />
+                    Informações Profissionais
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                    <InfoItem
+                      label="Experiência"
+                      value={mergedCandidate.experience ? `${mergedCandidate.experience} ano${mergedCandidate.experience !== 1 ? 's' : ''}` : '---'}
+                    />
+                    <InfoItem label="Educação" value={mergedCandidate.education || '---'} />
+                    <InfoItem label="Disponibilidade" value={mergedCandidate.availability || '---'} />
+                  </div>
+                  <Separator />
+                  {/* Modelo de Trabalho */}
+                  <div className="text-sm">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Modelo de Trabalho</span>
+                    <div className="mt-1">
+                      {mergedCandidate.workModel && mergedCandidate.workModel.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {mergedCandidate.workModel.map((model) => (
+                            <Badge key={model} variant="secondary" className="text-xs">
+                              {lookupLabel(workModelOptions, model)}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground italic">Não informado</span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Tipo de Contrato */}
+                  <div className="text-sm">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Tipo de Contrato</span>
+                    <div className="mt-1">
+                      {mergedCandidate.contractType && mergedCandidate.contractType.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {mergedCandidate.contractType.map((ct) => (
+                            <Badge key={ct} variant="secondary" className="text-xs">
+                              {lookupLabel(contractTypeOptions, ct)}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground italic">Não informado</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Localização */}
+                <div className="bg-card rounded-xl p-6 shadow-soft space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-muted-foreground" />
+                    Localização
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4 text-sm">
+                    <InfoItem label="Cidade / Estado" value={locationDisplay} />
+                    <InfoItem
+                      label="Aberto a Realocação"
+                      value={
+                        mergedCandidate.openToRelocation != null
+                          ? mergedCandidate.openToRelocation ? 'Sim' : 'Não'
+                          : '---'
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Sobre (condicional) */}
+              {mergedCandidate.about && (
+                <div className="bg-card rounded-xl p-6 shadow-soft space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-muted-foreground" />
+                    Sobre
+                  </h3>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">
+                    {mergedCandidate.about}
+                  </p>
+                </div>
+              )}
+
+              {/* Pretensão Salarial (condicional) */}
+              {mergedCandidate.salary && (
+                <div className="bg-card rounded-xl p-6 shadow-soft space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-muted-foreground" />
+                    Pretensão Salarial
+                  </h3>
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm text-foreground">
+                      {formatBRL(mergedCandidate.salary.min)} - {formatBRL(mergedCandidate.salary.max)}
+                    </p>
+                    {mergedCandidate.salaryNegotiable && (
+                      <Badge variant="outline" className="text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
+                        Negociável
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
             </motion.div>
           </TabsContent>
 
@@ -680,13 +790,13 @@ export default function AdminCandidateDetail() {
             >
               {/* Informacoes Pessoais */}
               <div className="bg-card rounded-xl p-6 shadow-soft space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Informacoes Pessoais</h3>
+                <h3 className="text-lg font-semibold text-foreground">Informações Pessoais</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <InfoItem label="Nome" value={mergedCandidate.displayName || mergedCandidate.name} />
                   <InfoItem label="E-mail" value={mergedCandidate.email} />
                   <InfoItem label="Telefone" value={mergedCandidate.phone || '---'} />
                   <InfoItem
-                    label="Localizacao"
+                    label="Localização"
                     value={
                       mergedCandidate.city && mergedCandidate.state
                         ? `${mergedCandidate.city} / ${mergedCandidate.state}`
@@ -711,19 +821,19 @@ export default function AdminCandidateDetail() {
 
               {/* Experiencia & Formacao */}
               <div className="bg-card rounded-xl p-6 shadow-soft space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Experiencia & Formacao</h3>
+                <h3 className="text-lg font-semibold text-foreground">Experiência & Formação</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <InfoItem
-                    label="Anos de Experiencia"
+                    label="Anos de Experiência"
                     value={mergedCandidate.experience ? `${mergedCandidate.experience} ano${mergedCandidate.experience !== 1 ? 's' : ''}` : '---'}
                   />
-                  <InfoItem label="Educacao" value={mergedCandidate.education || '---'} />
+                  <InfoItem label="Educação" value={mergedCandidate.education || '---'} />
                   <InfoItem label="Disponibilidade" value={mergedCandidate.availability || '---'} />
                   <InfoItem
-                    label="Aberto a Realocacao"
+                    label="Aberto a Realocação"
                     value={
                       mergedCandidate.openToRelocation != null
-                        ? mergedCandidate.openToRelocation ? 'Sim' : 'Nao'
+                        ? mergedCandidate.openToRelocation ? 'Sim' : 'Não'
                         : '---'
                     }
                   />
@@ -748,7 +858,7 @@ export default function AdminCandidateDetail() {
 
               {/* Pretensao Salarial */}
               <div className="bg-card rounded-xl p-6 shadow-soft space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Pretensao Salarial</h3>
+                <h3 className="text-lg font-semibold text-foreground">Pretensão Salarial</h3>
                 {mergedCandidate.salary ? (
                   <div className="flex items-center gap-3">
                     <p className="text-sm text-foreground">
@@ -756,12 +866,12 @@ export default function AdminCandidateDetail() {
                     </p>
                     {mergedCandidate.salaryNegotiable && (
                       <Badge variant="outline" className="text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
-                        Negociavel
+                        Negociável
                       </Badge>
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground italic">Nao informada.</p>
+                  <p className="text-sm text-muted-foreground italic">Não informada.</p>
                 )}
               </div>
             </motion.div>
@@ -789,7 +899,7 @@ export default function AdminCandidateDetail() {
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Concluido em {formatDateBR(gaugeProResult.generatedAt)}
+                        Concluído em {formatDateBR(gaugeProResult.generatedAt)}
                       </p>
                     </div>
 
@@ -812,17 +922,17 @@ export default function AdminCandidateDetail() {
                     {/* Archetype details */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs font-medium text-muted-foreground mb-1">Arquetipo</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Arquétipo</p>
                         <p className="text-sm font-semibold">{gaugeProResult.archetype.name}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">{gaugeProResult.archetype.description}</p>
                       </div>
                       <div className="space-y-2">
                         <div>
-                          <p className="text-xs font-medium text-muted-foreground">Dimensao Primaria</p>
+                          <p className="text-xs font-medium text-muted-foreground">Dimensão Primária</p>
                           <p className="text-sm">{DIMENSION_NAMES[gaugeProResult.primaryDimension]} ({Math.round(gaugeProResult.finalScores[gaugeProResult.primaryDimension])})</p>
                         </div>
                         <div>
-                          <p className="text-xs font-medium text-muted-foreground">Dimensao Secundaria</p>
+                          <p className="text-xs font-medium text-muted-foreground">Dimensão Secundária</p>
                           <p className="text-sm">{DIMENSION_NAMES[gaugeProResult.secondaryDimension]} ({Math.round(gaugeProResult.finalScores[gaugeProResult.secondaryDimension])})</p>
                         </div>
                       </div>
@@ -834,7 +944,7 @@ export default function AdminCandidateDetail() {
                         <p className="text-sm text-foreground">{gaugeProResult.archetype.workStyle}</p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-muted-foreground mb-1">Estilo de Comunicacao</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Estilo de Comunicação</p>
                         <p className="text-sm text-foreground">{gaugeProResult.archetype.communicationStyle}</p>
                       </div>
                     </div>
@@ -864,7 +974,7 @@ export default function AdminCandidateDetail() {
                       <div>
                         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                           <AlertTriangle className="w-4 h-4 text-amber-500" />
-                          Areas de Desenvolvimento
+                          Áreas de Desenvolvimento
                         </h4>
                         {gaugeProResult.developmentAreas.length > 0 ? (
                           <ul className="space-y-2">
@@ -876,7 +986,7 @@ export default function AdminCandidateDetail() {
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-sm text-muted-foreground italic">Nenhuma area registrada.</p>
+                          <p className="text-sm text-muted-foreground italic">Nenhuma área registrada.</p>
                         )}
                       </div>
                     </div>
@@ -888,7 +998,7 @@ export default function AdminCandidateDetail() {
                         <div>
                           <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                             <Briefcase className="w-4 h-4 text-primary" />
-                            Funcoes Recomendadas
+                            Funções Recomendadas
                           </h4>
                           <div className="flex flex-wrap gap-2">
                             {gaugeProResult.careerRecommendations.map((rec, idx) => (
@@ -919,10 +1029,10 @@ export default function AdminCandidateDetail() {
                   <div className="text-center py-12">
                     <Brain className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
                     <p className="text-lg font-medium text-muted-foreground">
-                      Teste nao realizado
+                      Teste não realizado
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Este candidato ainda nao completou o teste comportamental Gauge-Pro.
+                      Este candidato ainda não completou o teste comportamental Gauge-Pro.
                     </p>
                   </div>
                 </div>
@@ -992,7 +1102,7 @@ export default function AdminCandidateDetail() {
           </TabsContent>
 
           {/* ================================================================
-              Tab 5: Curriculo
+              Tab 5: Currículo
               ================================================================ */}
           <TabsContent value="curriculo">
             <motion.div
@@ -1009,10 +1119,10 @@ export default function AdminCandidateDetail() {
                   <div className="text-center py-12">
                     <FileText className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
                     <p className="text-lg font-medium text-muted-foreground">
-                      Perfil profissional nao cadastrado
+                      Perfil profissional não cadastrado
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Este candidato ainda nao preencheu seu perfil profissional.
+                      Este candidato ainda não preencheu seu perfil profissional.
                     </p>
                   </div>
                 </div>
@@ -1022,7 +1132,7 @@ export default function AdminCandidateDetail() {
                   <div className="bg-card rounded-xl p-6 shadow-soft space-y-4">
                     <div className="flex items-center gap-2">
                       <Briefcase className="w-5 h-5 text-primary" />
-                      <h3 className="text-lg font-semibold text-foreground">Experiencias</h3>
+                      <h3 className="text-lg font-semibold text-foreground">Experiências</h3>
                     </div>
                     {profile.experiences && profile.experiences.length > 0 ? (
                       <div className="space-y-4">
@@ -1054,7 +1164,7 @@ export default function AdminCandidateDetail() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground italic">Nenhuma experiencia cadastrada.</p>
+                      <p className="text-sm text-muted-foreground italic">Nenhuma experiência cadastrada.</p>
                     )}
                   </div>
 
@@ -1062,7 +1172,7 @@ export default function AdminCandidateDetail() {
                   <div className="bg-card rounded-xl p-6 shadow-soft space-y-4">
                     <div className="flex items-center gap-2">
                       <GraduationCap className="w-5 h-5 text-primary" />
-                      <h3 className="text-lg font-semibold text-foreground">Formacao</h3>
+                      <h3 className="text-lg font-semibold text-foreground">Formação</h3>
                     </div>
                     {profile.education && profile.education.length > 0 ? (
                       <div className="space-y-4">
@@ -1092,7 +1202,7 @@ export default function AdminCandidateDetail() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground italic">Nenhuma formacao cadastrada.</p>
+                      <p className="text-sm text-muted-foreground italic">Nenhuma formação cadastrada.</p>
                     )}
                   </div>
 
@@ -1100,7 +1210,7 @@ export default function AdminCandidateDetail() {
                   <div className="bg-card rounded-xl p-6 shadow-soft space-y-4">
                     <div className="flex items-center gap-2">
                       <BookOpen className="w-5 h-5 text-primary" />
-                      <h3 className="text-lg font-semibold text-foreground">Cursos & Certificacoes</h3>
+                      <h3 className="text-lg font-semibold text-foreground">Cursos & Certificações</h3>
                     </div>
                     {profile.courses && profile.courses.length > 0 ? (
                       <div className="space-y-3">
@@ -1133,7 +1243,7 @@ export default function AdminCandidateDetail() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground italic">Nenhum curso ou certificacao cadastrado.</p>
+                      <p className="text-sm text-muted-foreground italic">Nenhum curso ou certificação cadastrado.</p>
                     )}
                   </div>
 
@@ -1194,7 +1304,7 @@ export default function AdminCandidateDetail() {
           </TabsContent>
 
           {/* ================================================================
-              Tab 6: Historico
+              Tab 6: Histórico
               ================================================================ */}
           <TabsContent value="historico">
             <motion.div
@@ -1202,15 +1312,15 @@ export default function AdminCandidateDetail() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-card rounded-xl p-6 shadow-soft space-y-4"
             >
-              <h3 className="text-lg font-semibold text-foreground">Historico de Acoes</h3>
+              <h3 className="text-lg font-semibold text-foreground">Histórico de Ações</h3>
               <p className="text-sm text-muted-foreground">
-                Acoes administrativas realizadas neste candidato.
+                Ações administrativas realizadas neste candidato.
               </p>
 
               {allActions.length === 0 ? (
                 <div className="text-center py-12">
                   <Calendar className="w-10 h-10 mx-auto mb-2 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground">Nenhuma acao registrada</p>
+                  <p className="text-muted-foreground">Nenhuma ação registrada</p>
                 </div>
               ) : (
                 <div className="relative ml-3">
@@ -1273,17 +1383,17 @@ export default function AdminCandidateDetail() {
           <AlertDialogHeader>
             <AlertDialogTitle>Desativar candidato</AlertDialogTitle>
             <AlertDialogDescription>
-              Voce tem certeza que deseja desativar {mergedCandidate.name}?
-              O candidato nao podera acessar a plataforma.
+              Você tem certeza que deseja desativar {mergedCandidate.name}?
+              O candidato não poderá acessar a plataforma.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
             <Label htmlFor="deactivateReason" className="sr-only">
-              Motivo da desativacao
+              Motivo da desativação
             </Label>
             <Textarea
               id="deactivateReason"
-              placeholder="Motivo da desativacao (opcional)"
+              placeholder="Motivo da desativação (opcional)"
               value={deactivateReason}
               onChange={(e) => setDeactivateReason(e.target.value)}
               className="resize-none"
@@ -1308,7 +1418,7 @@ export default function AdminCandidateDetail() {
           <AlertDialogHeader>
             <AlertDialogTitle>Reativar candidato</AlertDialogTitle>
             <AlertDialogDescription>
-              Voce tem certeza que deseja reativar {mergedCandidate.name}?
+              Você tem certeza que deseja reativar {mergedCandidate.name}?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1326,8 +1436,8 @@ export default function AdminCandidateDetail() {
           <AlertDialogHeader>
             <AlertDialogTitle>Resetar teste comportamental</AlertDialogTitle>
             <AlertDialogDescription>
-              Voce tem certeza que deseja resetar o teste de {mergedCandidate.name}?
-              O candidato precisara refazer o teste Gauge-Pro.
+              Você tem certeza que deseja resetar o teste de {mergedCandidate.name}?
+              O candidato precisará refazer o teste Gauge-Pro.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1346,9 +1456,9 @@ export default function AdminCandidateDetail() {
       <Dialog open={notifyModalOpen} onOpenChange={setNotifyModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Enviar Notificacao</DialogTitle>
+            <DialogTitle>Enviar Notificação</DialogTitle>
             <DialogDescription>
-              Enviar notificacao para: {mergedCandidate.name}
+              Enviar notificação para: {mergedCandidate.name}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -1356,7 +1466,7 @@ export default function AdminCandidateDetail() {
               <Label htmlFor="notificationMessage">Mensagem</Label>
               <Textarea
                 id="notificationMessage"
-                placeholder="Escreva a mensagem da notificacao..."
+                placeholder="Escreva a mensagem da notificação..."
                 value={notificationMessage}
                 onChange={(e) => setNotificationMessage(e.target.value)}
                 maxLength={500}
@@ -1377,7 +1487,7 @@ export default function AdminCandidateDetail() {
               disabled={!notificationMessage.trim()}
             >
               <Bell className="w-4 h-4 mr-2" />
-              Enviar Notificacao
+              Enviar Notificação
             </Button>
           </DialogFooter>
         </DialogContent>
