@@ -62,7 +62,8 @@ import { useCandidateActivity, type ActivityType } from '@/hooks/useCandidateAct
 import { getOrGenerateIdealProfile, gaugeProToBehavioralProfile } from '@/lib/behavioralProfiles';
 import { useJobs } from '@/hooks/useJobsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
-import { useApplications, useApplicationNotes, useAddApplicationNote } from '@/hooks/useApplicationsQuery';
+import { useApplications, useApplicationNotes, useAddApplicationNote, useCreateApplication } from '@/hooks/useApplicationsQuery';
+import { useCreateConversation, useSendMessage } from '@/hooks/useMessagesQuery';
 import { useGaugeProResultByCandidate, useGaugeProSessionByCandidate } from '@/hooks/useGaugeProQuery';
 import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
 import { useProfile } from '@/hooks/useCurriculumsQuery';
@@ -163,7 +164,7 @@ export default function CandidateProfile() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const jobIdFromUrl = searchParams.get('jobId');
-  const { currentCompany } = useAuth();
+  const { user, currentCompany } = useAuth();
   const companyId = currentCompany?.id ?? '';
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -186,6 +187,9 @@ export default function CandidateProfile() {
   // Hooks
   const { activities, hasMore, remaining, showMore, totalCount } = useCandidateActivity(id || '');
   const { createInterview } = useCompanyInterviews(companyId);
+  const createApplicationMutation = useCreateApplication();
+  const createConversationMutation = useCreateConversation();
+  const sendMessageMutation = useSendMessage();
 
   // Fetch data from service layer
   const { data: jobsResult } = useJobs();
@@ -272,15 +276,56 @@ export default function CandidateProfile() {
     setIsInviteModalOpen(true);
   };
 
-  const handleSendInvite = () => {
-    if (!selectedJob) return;
+  const handleSendInvite = async () => {
+    if (!selectedJob || !candidate || !currentCompany) return;
 
-    toast.success(
-      `Convite enviado para ${getCandidateDisplayName(candidate)} para a vaga "${selectedJob.title}"`
-    );
-    setIsInviteModalOpen(false);
-    setSelectedJob(null);
-    setInviteMessage('');
+    try {
+      // 1) Create application (invitation)
+      await createApplicationMutation.mutateAsync({
+        jobId: selectedJob.id,
+        candidateId: candidate.id,
+        candidateName: getCandidateDisplayName(candidate),
+        jobTitle: selectedJob.title,
+        companyName: currentCompany.name ?? '',
+        message: inviteMessage || undefined,
+      });
+
+      // 2) Create/find conversation and send invitation message
+      try {
+        const conversation = await createConversationMutation.mutateAsync({
+          candidateId: candidate.id,
+          companyId: currentCompany.id,
+          jobId: selectedJob.id,
+        });
+
+        const messageContent = inviteMessage.trim()
+          || `Olá! Você foi convidado(a) a se candidatar à vaga "${selectedJob.title}". Acesse suas candidaturas para mais detalhes.`;
+
+        await sendMessageMutation.mutateAsync({
+          conversationId: conversation.id,
+          message: {
+            senderId: user?.id ?? '',
+            senderName: currentCompany.name ?? '',
+            senderType: 'company',
+            receiverName: getCandidateDisplayName(candidate),
+            subject: `Convite: ${selectedJob.title}`,
+            content: messageContent,
+          },
+        });
+      } catch (msgError) {
+        console.warn('[handleSendInvite] Candidatura criada, mas erro ao enviar mensagem:', msgError);
+      }
+
+      toast.success(
+        `Convite enviado para ${getCandidateDisplayName(candidate)} para a vaga "${selectedJob.title}"`
+      );
+      setIsInviteModalOpen(false);
+      setSelectedJob(null);
+      setInviteMessage('');
+    } catch (error) {
+      console.error('[handleSendInvite] Erro:', error);
+      toast.error('Erro ao enviar convite. Tente novamente.');
+    }
   };
 
   const handleSendMessage = () => {
@@ -1202,9 +1247,15 @@ export default function CandidateProfile() {
             <Button variant="outline" onClick={() => setIsInviteModalOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSendInvite}>
-              <Send className="w-4 h-4 mr-2" />
-              Enviar convite
+            <Button onClick={handleSendInvite} disabled={createApplicationMutation.isPending}>
+              {createApplicationMutation.isPending ? (
+                'Enviando...'
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Enviar convite
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

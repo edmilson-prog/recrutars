@@ -748,9 +748,7 @@ const App = () => (
             } />
             <Route path="/candidato/mensagens" element={
               <ProtectedRoute allowedTypes={['candidate']}>
-                <OnboardingGuard>
-                  <CandidateMessages />
-                </OnboardingGuard>
+                <CandidateMessages />
               </ProtectedRoute>
             } />
             <Route path="/candidato/configuracoes" element={

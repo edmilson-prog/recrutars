@@ -34,6 +34,8 @@ export function useConversations(userId: string, userType: string) {
       return service.getConversations(userId, userType);
     },
     enabled: !!userId && !!userType,
+    refetchInterval: 15_000, // poll every 15s for new conversations
+    staleTime: 0, // always fetch fresh data (override global 30s staleTime)
   });
 }
 
@@ -46,6 +48,8 @@ export function useConversationMessages(conversationId: string | null) {
       return service.getMessages(conversationId!);
     },
     enabled: !!conversationId,
+    refetchInterval: 10_000, // poll every 10s for new messages in active conversation
+    staleTime: 0, // always fetch fresh data (override global 30s staleTime)
   });
 }
 
