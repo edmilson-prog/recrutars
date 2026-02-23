@@ -11,6 +11,7 @@
         {
           "type": "added",
           "items": [
+            "Data/hora da analise IA exibida de forma visivel no header dos cards (abaixo do badge 'Gerado por IA')",
             "Crop e zoom de imagem (react-easy-crop) no upload de avatar do onboarding pessoal",
             "Crop e zoom de imagem no upload de logo da empresa nas configuracoes",
             "Exportacao de dados pessoais em JSON na aba Conta do candidato (LGPD Art. 18)",
@@ -40,6 +41,7 @@
         {
           "type": "fixed",
           "items": [
+            "Textos de 'Por que voce combina' e 'Oportunidades de melhoria' agora exibem dados reais do candidato e da vaga (skills especificas, nivel exigido, % de compatibilidade) em vez de mensagens genericas",
             "Banner 'Descubra seu Perfil Comportamental' aparecia mesmo apos completar o Gauge-Pro",
             "Acentos faltando em textos do fluxo de onboarding",
             "Secoes duplicadas de seguranca removidas das configuracoes do candidato (ja existiam em Conta)"
