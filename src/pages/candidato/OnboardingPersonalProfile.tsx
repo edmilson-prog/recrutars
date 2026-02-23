@@ -8,6 +8,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import Cropper from 'react-easy-crop';
+import type { Area, Point } from 'react-easy-crop';
 import {
   Calendar,
   MapPin,
@@ -26,6 +28,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -61,6 +71,36 @@ const MARITAL_STATUS_OPTIONS = [
   { value: 'outro', label: 'Outro' },
 ];
 
+// Helper functions for image cropping
+function createImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', reject);
+    image.src = url;
+  });
+}
+
+async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+  ctx?.drawImage(
+    image,
+    pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height,
+    0, 0, pixelCrop.width, pixelCrop.height
+  );
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => { if (blob) resolve(blob); else reject(new Error('Canvas is empty')); },
+      'image/jpeg',
+      0.9
+    );
+  });
+}
+
 function getMinDateOfBirth(): string {
   const today = new Date();
   today.setFullYear(today.getFullYear() - 16);
@@ -84,6 +124,13 @@ export default function OnboardingPersonalProfile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [showErrors, setShowErrors] = useState(false);
+
+  // Image cropper states
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropperImage, setCropperImage] = useState<string | null>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
 
   const candidateId = currentCandidate?.id;
 
@@ -139,32 +186,43 @@ export default function OnboardingPersonalProfile() {
     }
   }, [candidateId]);
 
-  // Avatar upload
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Avatar upload — open crop modal
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file type and size
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
       toast.error('Formato inválido. Use JPG, PNG ou WebP.');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Arquivo muito grande. Máximo 5MB.');
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo 2MB.');
       return;
     }
 
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropperImage(reader.result as string);
+      setShowCropModal(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  // Confirm crop and upload
+  const handleCropConfirm = async () => {
+    if (!cropperImage || !croppedAreaPixels || !user || !candidateId) return;
+
     setUploading(true);
+    setShowCropModal(false);
+
     try {
-      const ext = file.name.split('.').pop() || 'jpg';
-      const fileName = `${user.id}/${Date.now()}.${ext}`;
+      const croppedBlob = await getCroppedImg(cropperImage, croppedAreaPixels);
+      const fileName = `${user.id}/${Date.now()}.jpg`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, {
-          upsert: true,
-          contentType: file.type,
-        });
+        .upload(fileName, croppedBlob, { upsert: true, contentType: 'image/jpeg' });
 
       if (uploadError) throw uploadError;
 
@@ -175,23 +233,17 @@ export default function OnboardingPersonalProfile() {
       const publicUrl = urlData.publicUrl;
       setAvatarUrl(publicUrl);
 
-      // Save to DB
-      await supabase
-        .from('candidates')
-        .update({ avatar_url: publicUrl })
-        .eq('id', candidateId);
+      await supabase.from('candidates').update({ avatar_url: publicUrl }).eq('id', candidateId);
+      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
 
-      await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', user.id);
-
-      toast.success('Foto enviada com sucesso!');
+      toast.success('Foto atualizada com sucesso!');
     } catch {
       toast.error('Erro ao enviar foto. Tente novamente.');
     } finally {
       setUploading(false);
-      e.target.value = '';
+      setCropperImage(null);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
     }
   };
 
@@ -311,7 +363,7 @@ export default function OnboardingPersonalProfile() {
                 onChange={handleAvatarChange}
               />
               <p className="text-xs text-muted-foreground">
-                {avatarUrl ? 'Foto enviada' : 'Clique para enviar foto (JPG, PNG ou WebP, max 5MB)'}
+                {avatarUrl ? 'Foto enviada' : 'Clique para enviar foto (JPG, PNG ou WebP, max 2MB)'}
               </p>
             </div>
 
@@ -452,6 +504,63 @@ export default function OnboardingPersonalProfile() {
           </div>
         </motion.div>
       </div>
+
+      {/* Modal de Crop de Avatar */}
+      <Dialog open={showCropModal} onOpenChange={setShowCropModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Ajustar foto</DialogTitle>
+            <DialogDescription>
+              Arraste para posicionar e use o zoom para enquadrar seu rosto.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="relative h-64 w-full bg-muted rounded-lg overflow-hidden">
+            {cropperImage && (
+              <Cropper
+                image={cropperImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(_, croppedPixels) => setCroppedAreaPixels(croppedPixels)}
+              />
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Zoom</Label>
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-full accent-primary"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCropModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCropConfirm} disabled={uploading}>
+              {uploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                'Confirmar'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

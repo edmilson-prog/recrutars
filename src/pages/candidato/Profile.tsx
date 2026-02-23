@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  User, Save, Camera, FileText, ArrowRight,
+  User, Save, Camera, FileText, ArrowRight, Download,
   Shield, Bell, AlertTriangle, CreditCard, Palette, Check, X, Star, Loader2,
   Eye,
   Copy, Fingerprint,
@@ -142,6 +142,7 @@ export default function CandidateProfile() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
 
   const [profile, setProfile] = useState({
     name: '',
@@ -349,6 +350,59 @@ export default function CandidateProfile() {
       toast.error('Erro ao salvar perfil. Tente novamente.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // LGPD Data Export
+  const handleExportData = async () => {
+    if (!candidate) return;
+    setIsExporting(true);
+    try {
+      const exportData = {
+        exportadoEm: new Date().toISOString(),
+        plataforma: 'RecrutaRS',
+        lgpd: 'Exportação conforme Art. 18 da Lei Geral de Proteção de Dados',
+        dadosPessoais: {
+          nome: candidate.name,
+          email: candidate.email,
+          cpf: candidate.cpf || null,
+          telefone: candidate.phone || null,
+          dataNascimento: candidate.dateOfBirth || null,
+          genero: candidate.gender || null,
+          estadoCivil: candidate.maritalStatus || null,
+          nacionalidade: candidate.nationality || null,
+          cidade: candidate.city || null,
+          estado: candidate.state || null,
+          avatar: candidate.avatar || null,
+        },
+        preferencias: {
+          visibilidadePerfil: profile.profileVisibility,
+          exibirPretensaoSalarial: profile.showSalaryExpectation,
+          visibilidadeCurriculo: profile.resumeVisibility,
+          notificacoes: notifications,
+        },
+        conta: {
+          id: candidate.id,
+          membroDesde: candidate.createdAt || null,
+        },
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const date = new Date().toISOString().split('T')[0];
+      link.href = url;
+      link.download = `recrutars-meus-dados-${date}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('Dados exportados com sucesso!');
+    } catch {
+      toast.error('Erro ao exportar dados. Tente novamente.');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -803,6 +857,35 @@ export default function CandidateProfile() {
                     checked={notifications.messages}
                     onCheckedChange={(checked) => setNotifications({ ...notifications, messages: checked })}
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Exportar Dados — LGPD */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                    <Download className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle>Exportar Dados</CardTitle>
+                    <CardDescription>Portabilidade de dados (LGPD Art. 18)</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Baixar meus dados</p>
+                    <p className="text-xs text-muted-foreground">
+                      Exporte todos os seus dados pessoais em formato JSON
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleExportData} disabled={isExporting}>
+                    {isExporting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+                    Baixar dados
+                  </Button>
                 </div>
               </CardContent>
             </Card>

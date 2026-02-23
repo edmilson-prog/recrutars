@@ -3,7 +3,7 @@
  * PRD-018: Configurações da Empresa
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Building2,
@@ -95,6 +95,8 @@ import { supabase } from '@/lib/supabase';
 import { formatCNPJ } from '@/lib/cnpj';
 import { useCulturalFit } from '@/hooks/useCulturalFit';
 import { CultureProfileForm } from '@/components/cultural';
+import Cropper from 'react-easy-crop';
+import type { Area, Point } from 'react-easy-crop';
 
 // Constants
 const INDUSTRY_OPTIONS = [
@@ -145,6 +147,36 @@ const companyFaq = [
   },
 ];
 
+// Helper functions for image cropping
+function createImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', reject);
+    image.src = url;
+  });
+}
+
+async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+  ctx?.drawImage(
+    image,
+    pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height,
+    0, 0, pixelCrop.width, pixelCrop.height
+  );
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => { if (blob) resolve(blob); else reject(new Error('Canvas is empty')); },
+      'image/jpeg',
+      0.9
+    );
+  });
+}
+
 export default function CompanySettings() {
   const { user, logout, currentCompany, companyRole, refreshCurrentCompany } = useAuth();
   const navigate = useNavigate();
@@ -166,8 +198,16 @@ export default function CompanySettings() {
     phone: currentCompany?.phone || '',
   });
   const [logoPreview, setLogoPreview] = useState<string | null>(currentCompany?.logo || null);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoFile, setLogoFile] = useState<Blob | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Image cropper states
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropperImage, setCropperImage] = useState<string | null>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
   const updateCompanyMutation = useUpdateCompany();
 
   // Team state (real Supabase data)
@@ -226,16 +266,45 @@ export default function CompanySettings() {
     isSaving: isSavingCulture,
   } = useCulturalFit({ companyId });
 
-  // Handle logo change
+  // Handle logo change — open crop modal
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setLogoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Formato inválido. Use JPG, PNG ou WebP.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo 2MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropperImage(reader.result as string);
+      setShowCropModal(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  // Confirm crop — prepare blob for save
+  const handleCropConfirm = async () => {
+    if (!cropperImage || !croppedAreaPixels) return;
+    try {
+      const croppedBlob = await getCroppedImg(cropperImage, croppedAreaPixels);
+      setLogoFile(croppedBlob);
+      setLogoPreview(URL.createObjectURL(croppedBlob));
+      setShowCropModal(false);
+      toast.success('Logo ajustado! Clique em "Salvar" para aplicar.');
+    } catch {
+      toast.error('Erro ao processar imagem.');
+    } finally {
+      setCropperImage(null);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
     }
   };
 
@@ -246,15 +315,14 @@ export default function CompanySettings() {
     try {
       let logoUrl = currentCompany.logo;
 
-      // Upload logo se arquivo novo foi selecionado
+      // Upload logo se arquivo novo foi selecionado (cropped blob)
       if (logoFile) {
-        const ext = logoFile.name.split('.').pop() || 'png';
-        const fileName = `${user.id}/${Date.now()}.${ext}`;
+        const fileName = `${user.id}/${Date.now()}.jpg`;
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(fileName, logoFile, {
             upsert: true,
-            contentType: logoFile.type,
+            contentType: 'image/jpeg',
           });
         if (uploadError) throw uploadError;
 
@@ -490,7 +558,7 @@ export default function CompanySettings() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-6">
-                  <div className="w-24 h-24 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center bg-muted/50">
+                  <div className="relative w-24 h-24 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center bg-muted/50">
                     {logoPreview ? (
                       <img
                         src={logoPreview}
@@ -502,14 +570,18 @@ export default function CompanySettings() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Input
+                    <input
+                      ref={fileInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
                       onChange={handleLogoChange}
-                      className="max-w-[250px]"
                     />
+                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                      Alterar logo
+                    </Button>
                     <p className="text-xs text-muted-foreground">
-                      Recomendado: 200x200px, PNG ou JPG
+                      JPG, PNG ou WebP, max 2MB
                     </p>
                   </div>
                 </div>
@@ -1403,6 +1475,66 @@ export default function CompanySettings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal: Crop de Logo */}
+      <Dialog open={showCropModal} onOpenChange={(open) => {
+        if (!open) {
+          setShowCropModal(false);
+          setCropperImage(null);
+          setCrop({ x: 0, y: 0 });
+          setZoom(1);
+        }
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Ajustar logo</DialogTitle>
+            <DialogDescription>
+              Arraste para posicionar e use o zoom para enquadrar.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="relative h-64 w-full bg-muted rounded-lg overflow-hidden">
+            {cropperImage && (
+              <Cropper
+                image={cropperImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(_croppedArea, croppedPixels) =>
+                  setCroppedAreaPixels(croppedPixels)
+                }
+              />
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>Zoom</Label>
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-full accent-primary"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowCropModal(false);
+              setCropperImage(null);
+              setCrop({ x: 0, y: 0 });
+              setZoom(1);
+            }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCropConfirm}>
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
