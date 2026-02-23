@@ -230,6 +230,12 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
         if (!profileWithDefaults.phone && currentCandidate?.phone) {
           profileWithDefaults.phone = currentCandidate.phone;
         }
+        if (!profileWithDefaults.state && currentCandidate?.state) {
+          profileWithDefaults.state = currentCandidate.state;
+        }
+        if (!profileWithDefaults.city && currentCandidate?.city) {
+          profileWithDefaults.city = currentCandidate.city;
+        }
         setCurriculum(profileWithDefaults);
         savedSnapshotRef.current = fetchedProfile;
         setLoading(false);
@@ -240,6 +246,8 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
           initialData: {
             email: currentCandidate?.email ?? '',
             phone: currentCandidate?.phone ?? undefined,
+            state: currentCandidate?.state ?? undefined,
+            city: currentCandidate?.city ?? undefined,
           },
         });
       }
