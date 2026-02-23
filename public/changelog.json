@@ -1,12 +1,50 @@
 {
   "versions": [
     {
+      "version": "1.31.1",
+      "codename": "Insight",
+      "type": "patch",
+      "releaseDate": "2026-02-22",
+      "description": "Melhorias na experiencia do candidato e empresa: crop/zoom de imagens em uploads de avatar e logo, dados reais de uso do plano, redesign visual do teste Gauge-Pro e correcoes de UX.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Crop e zoom de imagem (react-easy-crop) no upload de avatar do onboarding pessoal",
+            "Crop e zoom de imagem no upload de logo da empresa nas configuracoes",
+            "Exportacao de dados pessoais em JSON na aba Conta do candidato (LGPD Art. 18)",
+            "Pre-preenchimento de email e telefone no perfil profissional a partir do cadastro"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Layout da pagina de resultado Gauge-Pro ampliado de 896px para 1400px (+56%)",
+            "Redesign da tela de conclusao da Parte 1 do Gauge-Pro com barra de progresso e estatisticas",
+            "Redesign do intro de cenarios situacionais com grid de estatisticas e preview de formato",
+            "Redesign dos labels de perspectiva do Gauge-Pro com cards visuais distintos",
+            "Uso do plano do candidato agora exibe dados reais do Supabase em vez de valores fixos",
+            "Barra de candidaturas mostra formato X/Y com limite real do plano (5 gratuito, 50 pago)"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Banner 'Descubra seu Perfil Comportamental' aparecia mesmo apos completar o Gauge-Pro",
+            "Acentos faltando em textos do fluxo de onboarding",
+            "Secoes duplicadas de seguranca removidas das configuracoes do candidato (ja existiam em Conta)"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.31.0",
       "codename": "Insight",
       "type": "minor",
       "releaseDate": "2026-02-22",
       "description": "Tooltips descritivos nas 5 dimensoes comportamentais do Gauge-Pro, explicando o que cada dimensao mede na pratica (alta vs baixa). Aplicado nas telas de resultado do candidato, perfil no Banco de Talentos e componente reutilizavel de barras.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
