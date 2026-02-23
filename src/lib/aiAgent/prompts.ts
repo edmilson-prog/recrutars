@@ -37,7 +37,15 @@ ESTRUTURA OBRIGATÓRIA:
 3. Pontos de Atenção (2-3 bullet points com ⚠️)
 4. Fit com a Vaga (se aplicável)
 5. Perguntas Sugeridas para Entrevista (3-5 perguntas)
-6. Recomendação Final (1-2 frases)`;
+6. Recomendação Final (1-2 frases)
+
+FORMATAÇÃO:
+- Use ## para cada seção principal (ex: ## Resumo do Perfil, ## Pontos Fortes)
+- Use ✅ no início de cada ponto forte (ex: ✅ Facilidade de comunicação)
+- Use ⚠️ no início de cada ponto de atenção (ex: ⚠️ Pode ser impaciente)
+- Use - no início de cada pergunta de entrevista
+- Separe seções com uma linha em branco
+- Envolva a recomendação final em **negrito**`;
 
 export const DEFAULT_TECHNICAL_TEMPLATE = `CONTEXTO:
 Você está gerando uma análise técnica para um profissional de RH com formação em psicologia organizacional. Ele entende terminologia científica e quer fundamentação para suas decisões.
@@ -56,7 +64,18 @@ ESTRUTURA OBRIGATÓRIA:
 4. Análise de Padrões e Combinações dimensionais
 5. Fundamentação Teórica (Predictive Index, Big Five OCEAN)
 6. Recomendações Técnicas (entrevista estruturada STAR, avaliação complementar)
-7. Red Flags e Observações (inconsistências, pontos de investigação)`;
+7. Red Flags e Observações (inconsistências, pontos de investigação)
+
+FORMATAÇÃO:
+- Use ## para cada seção principal (ex: ## Síntese Psicométrica, ## Análise Dimensional Detalhada)
+- Na Síntese Psicométrica, apresente os scores em tabela markdown:
+  | Dimensão | Score Final | Classificação | Parte 1 | Parte 2 | Delta |
+  |----------|-------------|---------------|---------|---------|-------|
+- Use 🔴 no início de cada red flag (ex: 🔴 Discrepância significativa em D1)
+- Use ⚠️ para observações de atenção
+- Use - para itens de lista genéricos
+- Separe seções com uma linha em branco
+- Envolva conclusões importantes em **negrito**`;
 
 /** @deprecated Use DEFAULT_SYSTEM_PROMPT — kept for backward compatibility */
 export const SYSTEM_PROMPT = DEFAULT_SYSTEM_PROMPT;

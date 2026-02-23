@@ -44,8 +44,11 @@ export function AIAnalysisSection({ analysis, defaultExpanded = false }: AIAnaly
       </CardHeader>
       {expanded && (
         <CardContent>
-          <div className="prose prose-sm max-w-none">
-            {renderAnalysisContent(analysis)}
+          <div className="relative">
+            <div className="max-w-none max-h-[520px] overflow-y-auto pr-3 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
+              {renderAnalysisContent(analysis)}
+            </div>
+            <div className="absolute bottom-0 left-0 right-3 h-8 bg-gradient-to-t from-card to-transparent pointer-events-none" />
           </div>
         </CardContent>
       )}
