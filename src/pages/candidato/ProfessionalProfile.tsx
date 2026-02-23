@@ -780,7 +780,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                       value={curriculum.title}
                       onChange={(e) => updateField('title', e.target.value)}
                       placeholder="Ex: Analista Administrativo, Vendedor, Enfermeiro..."
-                      className={cn(showOnboardingErrors && !curriculum.title?.trim() && "border-destructive", showOnboardingErrors && !curriculum.title?.trim() && blinkErrors && "animate-blink-destructive")}
+                      className={cn("capitalize", showOnboardingErrors && !curriculum.title?.trim() && "border-destructive", showOnboardingErrors && !curriculum.title?.trim() && blinkErrors && "animate-blink-destructive")}
                     />
                   </div>
                 </div>

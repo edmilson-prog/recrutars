@@ -10,6 +10,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import { toTitleCase } from '@/lib/utils';
 import type {
   Curriculum,
   ExperienceWithCurrent,
@@ -228,7 +229,7 @@ export class SupabaseCurriculumsService implements ICurriculumsService {
     const mainUpdates: Record<string, unknown> = {};
 
     if (updates.name !== undefined) mainUpdates.name = updates.name;
-    if (updates.title !== undefined) mainUpdates.title = updates.title;
+    if (updates.title !== undefined) mainUpdates.title = toTitleCase(updates.title);
     if (updates.location !== undefined) mainUpdates.location = updates.location;
     if (updates.city !== undefined) mainUpdates.city = updates.city;
     if (updates.state !== undefined) mainUpdates.state = updates.state;
@@ -296,7 +297,7 @@ export class SupabaseCurriculumsService implements ICurriculumsService {
     }
 
     const candidateSync: Record<string, unknown> = {};
-    if (updates.title !== undefined) candidateSync.title = updates.title;
+    if (updates.title !== undefined) candidateSync.title = toTitleCase(updates.title);
     if (updates.location !== undefined) candidateSync.location = updates.location;
     if (updates.city !== undefined) candidateSync.city = updates.city;
     if (updates.state !== undefined) candidateSync.state = updates.state;

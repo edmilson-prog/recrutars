@@ -7,6 +7,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import { toTitleCase } from '@/lib/utils';
 import { candidateRowToCandidate } from '@/lib/supabaseConverters';
 import type { Candidate } from '@/types/candidate';
 import type { PaginatedResult, PaginationConfig, SortConfig } from '../types';
@@ -149,10 +150,10 @@ export class CandidatesServiceSupabase implements ICandidatesService {
     // Convert camelCase updates to snake_case DB columns
     const dbUpdates: Record<string, unknown> = {};
 
-    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.name !== undefined) dbUpdates.name = updates.name.toUpperCase().trim();
     if (updates.email !== undefined) dbUpdates.email = updates.email;
     if (updates.avatar !== undefined) dbUpdates.avatar_url = updates.avatar;
-    if (updates.title !== undefined) dbUpdates.title = updates.title;
+    if (updates.title !== undefined) dbUpdates.title = toTitleCase(updates.title);
     if (updates.location !== undefined) dbUpdates.location = updates.location;
     if (updates.experience !== undefined) dbUpdates.experience_years = updates.experience;
     if (updates.education !== undefined) dbUpdates.education = updates.education;

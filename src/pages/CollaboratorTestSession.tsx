@@ -225,7 +225,7 @@ export default function CollaboratorTestSession() {
         body: {
           action: 'identify',
           test_id: invitation.testId,
-          name: formName.trim(),
+          name: formName.trim().toUpperCase(),
           email: formEmail.trim(),
           department_id: formDepartmentId || null,
           method: invitation.method || 'public_link',
@@ -390,9 +390,10 @@ export default function CollaboratorTestSession() {
               <Label htmlFor="name">Nome completo</Label>
               <Input
                 id="name"
+                className="uppercase"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder="Digite seu nome completo"
+                placeholder="DIGITE SEU NOME COMPLETO"
                 required
                 disabled={submitting}
               />

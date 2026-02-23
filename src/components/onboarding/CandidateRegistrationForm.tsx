@@ -166,7 +166,7 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
       const result = await signUp({
         email,
         password,
-        name: name.trim(),
+        name: name.trim().toUpperCase(),
         phone: phone.replace(/\D/g, ''),
         type: 'candidate',
         cpf: stripCPF(cpfInput),
@@ -320,8 +320,8 @@ export function CandidateRegistrationForm({ onBack }: CandidateRegistrationFormP
           <Input
             id="name"
             type="text"
-            placeholder="João da Silva"
-            className="pl-10"
+            placeholder="JOAO DA SILVA"
+            className="pl-10 uppercase"
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoFocus

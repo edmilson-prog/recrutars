@@ -573,6 +573,7 @@ export default function CandidateProfile() {
                   <Label htmlFor="name">Nome completo</Label>
                   <Input
                     id="name"
+                    className="uppercase"
                     value={profile.name}
                     onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                   />

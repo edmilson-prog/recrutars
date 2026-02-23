@@ -83,7 +83,46 @@
       "mcp__supabase__list_edge_functions",
       "mcp__supabase__get_edge_function",
       "Bash(del \"D:\\\\claude\\\\recrutars-maike\\\\src\\\\components\\\\admin\\\\plans\\\\PlanEditor.tsx\")",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash:*)",
+      "Bash(git stash pop:*)",
+      "Bash(cd:*)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "Bash(git diff:*)",
+      "mcp__claude_ai_Supabase__get_logs",
+      "Bash(node:*)",
+      "Bash(git pull:*)",
+      "mcp__claude_ai_Supabase__list_tables",
+      "mcp__claude_ai_Supabase__list_edge_functions",
+      "mcp__claude_ai_Supabase__deploy_edge_function",
+      "WebFetch(domain:minhareceita.org)",
+      "mcp__claude_ai_Supabase__get_advisors",
+      "Bash(head:*)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npm run build:*)",
+      "Bash(git diff-tree:*)",
+      "Bash(git ls-tree:*)",
+      "mcp__chrome-devtools__select_page",
+      "Bash(fi:*)",
+      "Bash(start http://localhost:3000)",
+      "WebFetch(domain:localhost)",
+      "Bash(start:*)",
+      "mcp__claude_ai_Supabase__list_migrations",
+      "Bash(for f in /d/claude/recrutars-maike/sql/migrations/*.sql)",
+      "Bash(do grep -l \"system_settings\" \"$f\")",
+      "Bash(break)",
+      "mcp__claude_ai_Supabase__get_edge_function",
+      "Bash(git -C /d/claude/recrutars-maike log --oneline --all --grep=\"[Mm]essage\\\\|[Mm]ensagem\")",
+      "Bash(git -C /d/claude/recrutars-maike log --oneline src/pages/empresa/Messages.tsx)",
+      "mcp__chrome-devtools__handle_dialog",
+      "mcp__chrome-devtools__resize_page"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }

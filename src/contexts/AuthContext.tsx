@@ -271,7 +271,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // The handle_new_user() trigger creates profiles + candidates/companies
     // atomically on auth.users INSERT — no manual INSERT needed here.
     // For companies with CNPJ data, all fields are passed via metadata to the trigger.
-    const metadata: Record<string, unknown> = { name, type, phone: phone || null };
+    const normalizedName = type === 'candidate' ? name.toUpperCase().trim() : name;
+    const metadata: Record<string, unknown> = { name: normalizedName, type, phone: phone || null };
 
     // PRD-083: Pass CPF for candidates
     if (type === 'candidate' && cpf) {

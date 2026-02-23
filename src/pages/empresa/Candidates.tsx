@@ -100,7 +100,6 @@ import type { ExportContext } from '@/types/export';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Filter options
-const locations = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 'Curitiba, PR', 'Porto Alegre, RS'];
 const legacyBehavioralProfiles = ['Executor', 'Influenciador', 'Analítico', 'Estável'];
 const experienceRanges = [
   { value: '0-2', label: '0-2 anos' },
@@ -167,6 +166,16 @@ export default function CompanyCandidates() {
     legacyBehavioralProfiles.forEach(p => names.add(p));
     return Array.from(names).sort();
   }, [allGaugeResults]);
+
+  // Dynamic location options from real candidate data
+  const allLocations = useMemo(() =>
+    Array.from(new Set(
+      allCandidates
+        .map((c) => c.location)
+        .filter((loc) => loc && loc.trim() !== '')
+    )).sort(),
+    [allCandidates]
+  );
 
   // Helper to extract all unique skills from candidates
   const allSkills = useMemo(() =>
@@ -360,7 +369,7 @@ export default function CompanyCandidates() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as cidades</SelectItem>
-            {locations.map((loc) => (
+            {allLocations.map((loc) => (
               <SelectItem key={loc} value={loc}>
                 {loc}
               </SelectItem>
