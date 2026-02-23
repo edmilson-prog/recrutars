@@ -418,17 +418,37 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
   };
 
   // Handlers para habilidades (auto-save)
-  const handleSaveSkill = async (skill: SkillWithLevel) => {
-    if (!curriculum) return;
+  const handleSaveSkill = async (skills: SkillWithLevel[]) => {
+    if (!curriculum || skills.length === 0) return;
 
-    const existingIndex = curriculum.skills.findIndex((s) => s.id === skill.id);
-    let updatedSkills: SkillWithLevel[];
+    const existingNames = new Set(
+      curriculum.skills.map((s) => s.name.toLowerCase().trim())
+    );
 
-    if (existingIndex >= 0) {
-      updatedSkills = [...curriculum.skills];
-      updatedSkills[existingIndex] = skill;
-    } else {
-      updatedSkills = [...curriculum.skills, skill];
+    let updatedSkills = [...curriculum.skills];
+    let addedCount = 0;
+    let updatedCount = 0;
+
+    for (const skill of skills) {
+      const existingIndex = updatedSkills.findIndex((s) => s.id === skill.id);
+      if (existingIndex >= 0) {
+        // Editing existing skill
+        updatedSkills[existingIndex] = skill;
+        updatedCount++;
+      } else {
+        // Skip duplicates (case-insensitive)
+        if (existingNames.has(skill.name.toLowerCase().trim())) continue;
+        existingNames.add(skill.name.toLowerCase().trim());
+        updatedSkills = [...updatedSkills, skill];
+        addedCount++;
+      }
+    }
+
+    if (addedCount === 0 && updatedCount === 0) {
+      toast.info('Habilidades já existentes no perfil.');
+      setSkillDialogOpen(false);
+      setEditingSkill(null);
+      return;
     }
 
     const previousSkills = curriculum.skills;
@@ -442,7 +462,11 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
         updates: { skills: updatedSkills },
       });
       setCurriculum((prev) => prev ? { ...prev, skills: saved.skills } : null);
-      toast.success(existingIndex >= 0 ? 'Habilidade atualizada!' : 'Habilidade adicionada!');
+      if (updatedCount > 0) {
+        toast.success('Habilidade atualizada!');
+      } else {
+        toast.success(addedCount > 1 ? `${addedCount} habilidades adicionadas!` : 'Habilidade adicionada!');
+      }
     } catch {
       updateField('skills', previousSkills);
       toast.error('Erro ao salvar habilidade.');
@@ -2023,7 +2047,7 @@ function SkillDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   skill: SkillWithLevel | null;
-  onSave: (skill: SkillWithLevel) => void;
+  onSave: (skills: SkillWithLevel[]) => void;
 }) {
   const [form, setForm] = useState<SkillWithLevel>({
     id: '',
@@ -2050,7 +2074,27 @@ function SkillDialog({
       toast.error('Informe o nome da habilidade.');
       return;
     }
-    onSave(form);
+
+    // Editing existing skill — no splitting
+    if (skill) {
+      onSave([form]);
+      return;
+    }
+
+    // Adding new — split by comma for multiple skills
+    const names = form.name
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
+    const skills: SkillWithLevel[] = names.map((name) => ({
+      id: `skill-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name,
+      level: form.level,
+      type: form.type,
+    }));
+
+    onSave(skills);
   };
 
   return (
