@@ -35,6 +35,7 @@ import { useCandidateByProfile, useUpdateCandidate } from '@/hooks/useCandidates
 import { useApplicationsByCandidate } from '@/hooks/useApplicationsQuery';
 import { useProfile as useCurriculumProfile } from '@/hooks/useCurriculumsQuery';
 import { supabase } from '@/lib/supabase';
+import { maskCPFInput, stripCPF, isValidCPF, checkCPFExists } from '@/lib/cpf';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { profileVisibilityOptions, resumeVisibilityOptions } from '@/data/settingsConfig';
@@ -145,6 +146,12 @@ export default function CandidateProfile() {
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
+
+  // CPF edit states
+  const [cpfInput, setCpfInput] = useState('');
+  const [cpfError, setCpfError] = useState('');
+  const [cpfSaving, setCpfSaving] = useState(false);
+  const hasCpf = !!(candidate?.cpf && isValidCPF(candidate.cpf));
 
   const [profile, setProfile] = useState({
     name: '',
@@ -318,6 +325,42 @@ export default function CandidateProfile() {
       setCropperImage(null);
       setCrop({ x: 0, y: 0 });
       setZoom(1);
+    }
+  };
+
+  const handleSaveCpf = async () => {
+    if (!candidate) return;
+    setCpfError('');
+    const digits = stripCPF(cpfInput);
+
+    if (digits.length !== 11) {
+      setCpfError('CPF deve ter 11 dígitos.');
+      return;
+    }
+    if (!isValidCPF(digits)) {
+      setCpfError('CPF inválido. Verifique os dígitos.');
+      return;
+    }
+
+    setCpfSaving(true);
+    try {
+      const exists = await checkCPFExists(digits);
+      if (exists) {
+        setCpfError('Este CPF já está cadastrado por outro usuário.');
+        return;
+      }
+
+      await updateCandidateMutation.mutateAsync({
+        id: candidate.id,
+        updates: { cpf: digits },
+      });
+
+      await refreshCurrentCandidate();
+      toast.success('CPF salvo com sucesso!');
+    } catch {
+      setCpfError('Erro ao salvar CPF. Tente novamente.');
+    } finally {
+      setCpfSaving(false);
     }
   };
 
@@ -547,14 +590,44 @@ export default function CandidateProfile() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cpf">CPF</Label>
-                  <Input
-                    id="cpf"
-                    value={formatCPF(profile.cpf)}
-                    disabled
-                    className="bg-muted cursor-not-allowed"
-                    placeholder="000.000.000-00"
-                  />
-                  <p className="text-xs text-muted-foreground">O CPF não pode ser alterado</p>
+                  {hasCpf ? (
+                    <>
+                      <Input
+                        id="cpf"
+                        value={formatCPF(profile.cpf)}
+                        disabled
+                        className="bg-muted cursor-not-allowed"
+                        placeholder="000.000.000-00"
+                      />
+                      <p className="text-xs text-muted-foreground">O CPF não pode ser alterado</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex gap-2">
+                        <Input
+                          id="cpf"
+                          value={maskCPFInput(cpfInput)}
+                          onChange={(e) => {
+                            setCpfInput(stripCPF(e.target.value));
+                            setCpfError('');
+                          }}
+                          placeholder="000.000.000-00"
+                          inputMode="numeric"
+                          maxLength={14}
+                          className={cpfError ? 'border-destructive' : ''}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleSaveCpf}
+                          disabled={cpfSaving || stripCPF(cpfInput).length !== 11}
+                        >
+                          {cpfSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar'}
+                        </Button>
+                      </div>
+                      {cpfError && <p className="text-xs text-destructive">{cpfError}</p>}
+                      {!cpfError && <p className="text-xs text-muted-foreground">Informe seu CPF. Após salvar, não poderá ser alterado.</p>}
+                    </>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Telefone</Label>

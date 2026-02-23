@@ -197,6 +197,7 @@ export class CandidatesServiceSupabase implements ICandidatesService {
     if (updates.termsAcceptedAt !== undefined) dbUpdates.terms_accepted_at = updates.termsAcceptedAt;
     if (updates.privacyAcceptedAt !== undefined) dbUpdates.privacy_accepted_at = updates.privacyAcceptedAt;
     if (updates.lgpdConsentAt !== undefined) dbUpdates.lgpd_consent_at = updates.lgpdConsentAt;
+    if (updates.cpf !== undefined) dbUpdates.cpf = updates.cpf;
 
     const { data, error } = await supabase
       .from('candidates')
