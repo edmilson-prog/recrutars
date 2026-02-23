@@ -38,7 +38,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { PracticalAnalysisCard } from '@/components/aiAnalysis';
-import { TechnicalAnalysisCard } from '@/components/aiAnalysis/TechnicalAnalysisCard';
 import {
   Dialog,
   DialogContent,
@@ -646,10 +645,6 @@ export default function CandidateProfile() {
                 transition={{ delay: 0.15 }}
                 className="space-y-4"
               >
-                <TechnicalAnalysisCard
-                  candidateId={candidate.id}
-                  candidateName={getCandidateDisplayName(candidate)}
-                />
                 <PracticalAnalysisCard
                   candidateId={candidate.id}
                   candidateName={getCandidateDisplayName(candidate)}
