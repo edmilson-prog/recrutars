@@ -28,6 +28,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import DateOfBirthSelect from '@/components/onboarding/DateOfBirthSelect';
 import {
   Dialog,
   DialogContent,
@@ -101,11 +102,6 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
   });
 }
 
-function getMinDateOfBirth(): string {
-  const today = new Date();
-  today.setFullYear(today.getFullYear() - 16);
-  return today.toISOString().split('T')[0];
-}
 
 export default function OnboardingPersonalProfile() {
   const { currentCandidate, user, refreshCurrentCandidate } = useAuth();
@@ -370,21 +366,18 @@ export default function OnboardingPersonalProfile() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Date of birth */}
               <div className="space-y-2">
-                <Label htmlFor="dateOfBirth" className="flex items-center gap-1.5">
+                <Label className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-primary" />
                   Data de nascimento
                 </Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  max={getMinDateOfBirth()}
+                <DateOfBirthSelect
                   value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  onChange={(isoDate) => setDateOfBirth(isoDate)}
                   onBlur={() => dateOfBirth && saveField('date_of_birth', dateOfBirth)}
-                  className={cn(showErrors && (!dateOfBirth || !isAgeValid()) && 'border-destructive')}
+                  hasError={showErrors && (!dateOfBirth || !isAgeValid())}
                 />
                 {dateOfBirth && !isAgeValid() && (
-                  <p className="text-xs text-destructive">Você deve ter pelo menos 16 anos.</p>
+                  <p className="text-xs text-destructive" role="alert">Você deve ter pelo menos 16 anos.</p>
                 )}
               </div>
 
