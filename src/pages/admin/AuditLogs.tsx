@@ -235,7 +235,7 @@ export default function AdminAuditLogs() {
   // KPI counts
   const kpis = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
-    const todayLogs = sortedLogs.filter(l => l.performedAt.startsWith(today));
+    const todayLogs = sortedLogs.filter(l => l.performedAt?.startsWith(today) ?? false);
     const loginCount = sortedLogs.filter(l => l.action === 'login').length;
     const permChanges = sortedLogs.filter(l =>
       ['permission_granted', 'permission_denied', 'role_assigned', 'role_removed'].includes(l.action)

@@ -97,7 +97,21 @@ export class SupabaseRBACService implements IRBACService {
 
     const { data, error } = await query;
     if (error) throw error;
-    return (data ?? []) as unknown as PermissionAuditLog[];
+    return (data ?? []).map(row => ({
+      id: row.id,
+      action: row.action,
+      targetUserId: row.target_user_id,
+      targetUserName: row.target_user_name,
+      targetRoleId: row.target_role_id,
+      targetGroupId: row.target_group_id,
+      permissionCode: row.permission_code,
+      oldValue: row.old_value,
+      newValue: row.new_value,
+      performedBy: row.performed_by,
+      performedByName: row.performed_by_name,
+      performedAt: row.performed_at,
+      details: row.details,
+    })) as PermissionAuditLog[];
   }
 
   async assignRole(userId: string, roleId: string): Promise<void> {
