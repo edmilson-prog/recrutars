@@ -22,6 +22,11 @@ import {
   Info,
   Heart,
   FileDown,
+  TrendingUp,
+  Brain,
+  List,
+  LayoutGrid,
+  ArrowUpDown,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -108,7 +113,8 @@ const experienceRanges = [
   { value: '10+', label: '10+ anos' },
 ];
 
-const ITEMS_PER_PAGE = 10;
+const PAGE_SIZE_OPTIONS = [12, 24, 48];
+const DEFAULT_PAGE_SIZE = 12;
 
 // Helper to extract all unique skills from candidates (will be computed inside component)
 
@@ -135,6 +141,30 @@ const calculateMatch = (
   const matchResult = calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile);
 
   return matchResult.totalScore;
+};
+
+// Match score ring indicator
+const MatchRing = ({ score }: { score: number }) => {
+  const radius = 16;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+  const color = score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : score >= 40 ? 'text-sky-500' : 'text-muted-foreground';
+
+  return (
+    <div className="relative w-10 h-10 flex-shrink-0">
+      <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
+        <circle cx="18" cy="18" r={radius} fill="none" stroke="currentColor"
+          className="text-muted/20" strokeWidth="3" />
+        <circle cx="18" cy="18" r={radius} fill="none" stroke="currentColor"
+          className={color} strokeWidth="3"
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          strokeLinecap="round" />
+      </svg>
+      <span className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${color}`}>
+        {score}
+      </span>
+    </div>
+  );
 };
 
 export default function CompanyCandidates() {
@@ -195,6 +225,7 @@ export default function CompanyCandidates() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   // UI state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -216,6 +247,12 @@ export default function CompanyCandidates() {
   // PRD-032: Estado do modal de exportação
   const [showExportModal, setShowExportModal] = useState(false);
 
+  // View mode toggle
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+
+  // Sort order
+  const [sortBy, setSortBy] = useState<string>('match');
+
   // PRD-030: Hook de candidatos favoritos
   const { isFavorite, toggleFavorite } = useFavoriteCandidates();
 
@@ -224,6 +261,17 @@ export default function CompanyCandidates() {
     jobs.filter((job) => job.companyId === companyId && job.status === 'active'),
     [jobs]
   );
+
+  // Job skills set for matching highlight (stores lowercase)
+  const jobSkillsSet = useMemo(() => {
+    if (companyJobs.length === 0) return new Set<string>();
+    const reqText = companyJobs[0].requirements.join(' ').toLowerCase();
+    return new Set(
+      allSkills
+        .filter(skill => reqText.includes(skill.toLowerCase()))
+        .map(skill => skill.toLowerCase())
+    );
+  }, [companyJobs, allSkills]);
 
   // Filter candidates (PRD-026: respeita visibilidade)
   const filteredCandidates = allCandidates.filter((candidate) => {
@@ -269,17 +317,41 @@ export default function CompanyCandidates() {
     );
   });
 
+  // Sorting
+  const sortedCandidates = useMemo(() => {
+    const sorted = [...filteredCandidates];
+    switch (sortBy) {
+      case 'match':
+        return sorted.sort((a, b) =>
+          calculateMatch(b, companyJobs, behavioralTests, gaugeResultsByCandidate) -
+          calculateMatch(a, companyJobs, behavioralTests, gaugeResultsByCandidate)
+        );
+      case 'name':
+        return sorted.sort((a, b) =>
+          getDisplayName(a).localeCompare(getDisplayName(b), 'pt-BR')
+        );
+      case 'experience':
+        return sorted.sort((a, b) => b.experience - a.experience);
+      case 'recent':
+        return sorted.sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      default:
+        return sorted;
+    }
+  }, [filteredCandidates, sortBy, companyJobs, behavioralTests, gaugeResultsByCandidate]);
+
   // Pagination
-  const totalPages = Math.ceil(filteredCandidates.length / ITEMS_PER_PAGE);
-  const paginatedCandidates = filteredCandidates.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+  const totalPages = Math.ceil(sortedCandidates.length / pageSize);
+  const paginatedCandidates = sortedCandidates.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
   );
 
-  // Reset page when filters change
+  // Reset page when filters, sort, or page size change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, locationFilter, profileFilter, experienceFilter, skillsFilter]);
+  }, [debouncedSearch, locationFilter, profileFilter, experienceFilter, skillsFilter, sortBy, pageSize]);
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -295,6 +367,45 @@ export default function CompanyCandidates() {
     profileFilter !== 'all' ||
     experienceFilter !== 'all' ||
     skillsFilter.length > 0;
+
+  // Stats bar metrics
+  const statsMetrics = useMemo(() => {
+    const withGauge = filteredCandidates.filter(c => gaugeResultsByCandidate.has(c.id)).length;
+    const favCount = filteredCandidates.filter(c => isFavorite(c.id)).length;
+    const matchScores = filteredCandidates
+      .map(c => calculateMatch(c, companyJobs, behavioralTests, gaugeResultsByCandidate))
+      .filter(s => s > 0);
+    const avgMatch = matchScores.length > 0
+      ? Math.round(matchScores.reduce((a, b) => a + b, 0) / matchScores.length)
+      : 0;
+
+    return [
+      { label: 'Total Candidatos', value: filteredCandidates.length, icon: Users, iconBg: 'bg-primary/10' },
+      { label: 'Com Gauge-Pro', value: withGauge, icon: Brain, iconBg: 'bg-emerald-500/10' },
+      { label: 'Match Médio', value: avgMatch > 0 ? `${avgMatch}%` : '—', icon: TrendingUp, iconBg: 'bg-amber-500/10' },
+      { label: 'Favoritos', value: favCount, icon: Heart, iconBg: 'bg-rose-500/10' },
+    ];
+  }, [filteredCandidates, gaugeResultsByCandidate, companyJobs, behavioralTests, isFavorite]);
+
+  // Active filter chips
+  const activeFilterChips = useMemo(() => {
+    const chips: { key: string; label: string; onRemove: () => void }[] = [];
+    if (locationFilter !== 'all') chips.push({
+      key: 'location', label: locationFilter, onRemove: () => setLocationFilter('all')
+    });
+    if (profileFilter !== 'all') chips.push({
+      key: 'profile', label: profileFilter, onRemove: () => setProfileFilter('all')
+    });
+    if (experienceFilter !== 'all') chips.push({
+      key: 'experience',
+      label: experienceRanges.find(r => r.value === experienceFilter)?.label ?? experienceFilter,
+      onRemove: () => setExperienceFilter('all')
+    });
+    skillsFilter.forEach(skill => chips.push({
+      key: `skill-${skill}`, label: skill, onRemove: () => setSkillsFilter(prev => prev.filter(s => s !== skill))
+    }));
+    return chips;
+  }, [locationFilter, profileFilter, experienceFilter, skillsFilter]);
 
   const handleOpenInviteModal = (candidate: Candidate, job: Job) => {
     setSelectedCandidate(candidate);
@@ -495,6 +606,28 @@ export default function CompanyCandidates() {
           </div>
         </motion.div>
 
+        {/* Stats Bar */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {statsMetrics.map((m, i) => (
+            <motion.div key={m.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="bg-card rounded-xl p-4 shadow-soft border border-border/50"
+            >
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${m.iconBg}`}>
+                  <m.icon className="w-4 h-4 text-foreground" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{m.value}</p>
+                  <p className="text-xs text-muted-foreground">{m.label}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
         {/* Search Bar */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
@@ -555,26 +688,93 @@ export default function CompanyCandidates() {
 
           {/* Candidates List */}
           <div className="flex-1 space-y-4">
-            {/* Results count */}
+            {/* Active filter chips */}
+            {activeFilterChips.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                {activeFilterChips.map(chip => (
+                  <Badge key={chip.key} variant="secondary"
+                    className="pl-3 pr-1 py-1 gap-1 cursor-pointer hover:bg-secondary/80 transition-colors">
+                    {chip.label}
+                    <button onClick={chip.onRemove}
+                      className="ml-1 p-0.5 rounded-full hover:bg-foreground/10">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
+                <button onClick={clearFilters}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  Limpar todos
+                </button>
+              </div>
+            )}
+
+            {/* Results count + controls */}
             <div className="flex items-center justify-between">
-              <p className="text-muted-foreground">
-                {filteredCandidates.length} candidato
-                {filteredCandidates.length !== 1 ? 's' : ''} encontrado
-                {filteredCandidates.length !== 1 ? 's' : ''}
-              </p>
-              {/* PRD-032: Botão de exportar */}
-              {filteredCandidates.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowExportModal(true)}
-                >
-                  <FileDown className="w-4 h-4 mr-2" />
-                  Exportar
-                </Button>
-              )}
+              <div className="flex items-center gap-3">
+                <p className="text-muted-foreground">
+                  {filteredCandidates.length} candidato
+                  {filteredCandidates.length !== 1 ? 's' : ''} encontrado
+                  {filteredCandidates.length !== 1 ? 's' : ''}
+                </p>
+                <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                  <SelectTrigger className="w-[100px] h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAGE_SIZE_OPTIONS.map(size => (
+                      <SelectItem key={size} value={String(size)}>{size} por página</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* Sort select */}
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[180px] h-9">
+                    <ArrowUpDown className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="match">Maior Match</SelectItem>
+                    <SelectItem value="name">Nome A-Z</SelectItem>
+                    <SelectItem value="experience">Mais Experiência</SelectItem>
+                    <SelectItem value="recent">Mais Recentes</SelectItem>
+                  </SelectContent>
+                </Select>
+                {/* View mode toggle */}
+                <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                  <button onClick={() => setViewMode('list')}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      viewMode === 'list' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                    }`}>
+                    <List className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => setViewMode('grid')}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      viewMode === 'grid' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                    }`}>
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                </div>
+                {/* PRD-032: Botão de exportar */}
+                {filteredCandidates.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowExportModal(true)}
+                  >
+                    <FileDown className="w-4 h-4 mr-2" />
+                    Exportar
+                  </Button>
+                )}
+              </div>
             </div>
 
+            {/* Candidate cards container */}
+            <div className={viewMode === 'grid'
+              ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4'
+              : 'space-y-4'
+            }>
             {paginatedCandidates.map((candidate, index) => {
               const matchScore = calculateMatch(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate);
               // PRD-026: Verificar se candidato é anônimo
@@ -585,18 +785,190 @@ export default function CompanyCandidates() {
               const isSelectedCompare = isSelectedForComparison(candidate.id);
               const canSelectMore = canSelect;
 
+              // Avatar ring color based on behavioral profile
+              const hasGaugeResult = gaugeResultsByCandidate.has(candidate.id);
+              const hasLegacyTest = !!candidate.testResult;
+              const avatarRingClass = hasGaugeResult
+                ? 'ring-2 ring-secondary'
+                : hasLegacyTest
+                  ? 'ring-2 ring-primary/50'
+                  : '';
+
+              // --- GRID MODE ---
+              if (viewMode === 'grid') {
+                return (
+                  <motion.div
+                    key={candidate.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.03 }}
+                    className={`bg-card rounded-2xl p-5 shadow-soft hover:shadow-medium hover:scale-[1.01] hover:border-primary/20 transition-all border border-transparent ${
+                      isSelectedCompare ? 'ring-2 ring-primary' : ''
+                    }`}
+                  >
+                    <div className="flex flex-col items-center text-center gap-3">
+                      {/* Top row: checkbox + favorite */}
+                      <div className="flex items-center justify-between w-full">
+                        <Checkbox
+                          checked={isSelectedCompare}
+                          disabled={!isSelectedCompare && !canSelectMore}
+                          onCheckedChange={() => toggleCompareCandidate(candidate.id)}
+                          title={
+                            !isSelectedCompare && !canSelectMore
+                              ? 'Máximo de 3 candidatos para comparação'
+                              : 'Selecionar para comparar'
+                          }
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const isNowFavorite = toggleFavorite(candidate.id);
+                            toast.success(
+                              isNowFavorite ? 'Candidato salvo!' : 'Candidato removido dos salvos'
+                            );
+                          }}
+                        >
+                          <Heart className={`w-4 h-4 transition-colors ${
+                            isFavorite(candidate.id)
+                              ? 'fill-destructive text-destructive'
+                              : 'text-muted-foreground hover:text-destructive'
+                          }`} />
+                        </Button>
+                      </div>
+
+                      {/* Avatar */}
+                      <Avatar className={`w-16 h-16 ${avatarRingClass}`}>
+                        {candidateIsAnonymous ? (
+                          <AvatarFallback className="text-lg bg-muted text-muted-foreground">
+                            <EyeOff className="w-6 h-6" />
+                          </AvatarFallback>
+                        ) : (
+                          <>
+                            <AvatarImage src={displayAvatar || undefined} />
+                            <AvatarFallback className="text-lg bg-primary/10 text-primary">
+                              {candidate.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                            </AvatarFallback>
+                          </>
+                        )}
+                      </Avatar>
+
+                      {/* Name + match ring */}
+                      <div className="flex items-center gap-2">
+                        {matchScore > 0 && <MatchRing score={matchScore} />}
+                        <div className="min-w-0">
+                          <Link to={`/empresa/candidatos/${candidate.id}`}>
+                            <h3 className="text-sm font-semibold text-foreground hover:text-primary hover:underline transition-colors truncate">
+                              {displayName}
+                            </h3>
+                          </Link>
+                          <p className="text-xs text-muted-foreground truncate">{candidate.title}</p>
+                        </div>
+                      </div>
+
+                      {/* Profile badge + anonymous indicator */}
+                      <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                        {(() => {
+                          const gr = gaugeResultsByCandidate.get(candidate.id);
+                          if (gr) return <Badge className="bg-secondary text-secondary-foreground text-xs">{gr.archetype.name}</Badge>;
+                          if (candidate.testResult) return <Badge className="bg-secondary text-secondary-foreground text-xs">{candidate.testResult.result.profile}</Badge>;
+                          return null;
+                        })()}
+                        {candidateIsAnonymous && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            <EyeOff className="w-2.5 h-2.5 mr-0.5" />
+                            Anônimo
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Compact info */}
+                      <div className="flex flex-col gap-1 w-full text-xs text-muted-foreground">
+                        <div className="flex items-center justify-center gap-1">
+                          <MapPin className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{candidate.location}</span>
+                        </div>
+                        <div className="flex items-center justify-center gap-3">
+                          <span className="flex items-center gap-1">
+                            <Briefcase className="w-3 h-3 flex-shrink-0" />
+                            {candidate.experience}a
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <GraduationCap className="w-3 h-3 flex-shrink-0" />
+                            {candidate.education}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Skills (max 4) */}
+                      <div className="flex flex-wrap justify-center gap-1.5">
+                        {candidate.skills.slice(0, 4).map((skill) => (
+                          <Badge key={skill}
+                            variant="outline"
+                            className={`text-xs ${
+                              jobSkillsSet.has(skill.toLowerCase())
+                                ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400'
+                                : ''
+                            }`}
+                          >
+                            {skill}
+                          </Badge>
+                        ))}
+                        {candidate.skills.length > 4 && (
+                          <Badge variant="outline" className="text-xs">+{candidate.skills.length - 4}</Badge>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2 w-full mt-1">
+                        <Button variant="outline" size="sm" className="flex-1 text-xs" asChild>
+                          <Link to={`/empresa/candidatos/${candidate.id}`}>
+                            Ver perfil
+                          </Link>
+                        </Button>
+                        {companyJobs.length > 0 ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="sm" className="flex-1 text-xs">
+                                <Send className="w-3 h-3 mr-1" />
+                                Convidar
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                              {companyJobs.map((job) => (
+                                <DropdownMenuItem key={job.id} onClick={() => handleOpenInviteModal(candidate, job)}>
+                                  {job.title}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : (
+                          <Button size="sm" className="flex-1 text-xs" disabled>
+                            <Send className="w-3 h-3 mr-1" />
+                            Sem vagas
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              }
+
+              // --- LIST MODE (redesigned) ---
               return (
                 <motion.div
                   key={candidate.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className={`bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium transition-all ${
+                  className={`bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium hover:scale-[1.01] hover:border-primary/20 transition-all border border-transparent ${
                     isSelectedCompare ? 'ring-2 ring-primary' : ''
                   }`}
                 >
                   <div className="flex flex-col md:flex-row md:items-start gap-4">
-                    {/* PRD-002-dgn: Checkbox para comparação */}
+                    {/* Checkbox + Avatar + Match Ring */}
                     <div className="flex items-start gap-3">
                       <Checkbox
                         checked={isSelectedCompare}
@@ -610,24 +982,22 @@ export default function CompanyCandidates() {
                         }
                       />
                       {/* PRD-026: Avatar ou ícone anônimo */}
-                      <Avatar className="w-16 h-16 flex-shrink-0">
-                      {candidateIsAnonymous ? (
-                        <AvatarFallback className="text-lg bg-muted text-muted-foreground">
-                          <EyeOff className="w-6 h-6" />
-                        </AvatarFallback>
-                      ) : (
-                        <>
-                          <AvatarImage src={displayAvatar || undefined} />
-                          <AvatarFallback className="text-lg bg-primary/10 text-primary">
-                            {candidate.name
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')
-                              .slice(0, 2)}
+                      <Avatar className={`w-16 h-16 flex-shrink-0 ${avatarRingClass}`}>
+                        {candidateIsAnonymous ? (
+                          <AvatarFallback className="text-lg bg-muted text-muted-foreground">
+                            <EyeOff className="w-6 h-6" />
                           </AvatarFallback>
-                        </>
-                      )}
-                    </Avatar>
+                        ) : (
+                          <>
+                            <AvatarImage src={displayAvatar || undefined} />
+                            <AvatarFallback className="text-lg bg-primary/10 text-primary">
+                              {candidate.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                            </AvatarFallback>
+                          </>
+                        )}
+                      </Avatar>
+                      {/* Match ring */}
+                      {matchScore > 0 && <MatchRing score={matchScore} />}
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -662,14 +1032,6 @@ export default function CompanyCandidates() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {matchScore > 0 && (
-                            <Badge
-                              className={`${getMatchScoreColor(matchScore).bg} ${getMatchScoreColor(matchScore).text} border ${getMatchScoreColor(matchScore).border}`}
-                            >
-                              <Star className="w-3 h-3 mr-1" />
-                              {matchScore}% match
-                            </Badge>
-                          )}
                           {/* PRD-030: Botão de favoritar */}
                           <Button
                             variant="ghost"
@@ -712,10 +1074,17 @@ export default function CompanyCandidates() {
                         </span>
                       </div>
 
-                      {/* Skills */}
+                      {/* Skills with matching highlight */}
                       <div className="flex flex-wrap gap-2 mt-4">
                         {candidate.skills.slice(0, 5).map((skill) => (
-                          <Badge key={skill} variant="outline">
+                          <Badge key={skill}
+                            variant="outline"
+                            className={
+                              jobSkillsSet.has(skill.toLowerCase())
+                                ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400'
+                                : ''
+                            }
+                          >
                             {skill}
                           </Badge>
                         ))}
@@ -795,6 +1164,8 @@ export default function CompanyCandidates() {
                 </motion.div>
               );
             })}
+
+            </div>
 
             {filteredCandidates.length === 0 && (
               <div className="text-center py-12 bg-card rounded-2xl shadow-soft">

@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Briefcase, DollarSign, Building2, Clock, Heart, Filter, X, ArrowUpDown, CheckCircle } from 'lucide-react';
+import { Search, MapPin, Briefcase, DollarSign, Building2, Clock, Heart, Filter, X, ArrowUpDown, CheckCircle, TrendingUp, Brain, List, LayoutGrid } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,9 +52,51 @@ import { Loader2 } from 'lucide-react';
 const areas = ['Tecnologia', 'Produto', 'Design', 'Dados', 'Marketing', 'Comercial', 'RH', 'Financeiro'];
 const levels = ['Estágio', 'Junior', 'Pleno', 'Senior', 'Especialista', 'Gerente'];
 
-const ITEMS_PER_PAGE = 10;
+const PAGE_SIZE_OPTIONS = [12, 24, 48];
+const DEFAULT_PAGE_SIZE = 12;
 
 type SortOption = 'recent' | 'salary-high' | 'salary-low' | 'match-high';
+
+// Match score ring indicator
+const MatchRing = ({ score }: { score: number }) => {
+  const radius = 16;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+  const color = score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : score >= 40 ? 'text-sky-500' : 'text-muted-foreground';
+
+  return (
+    <div className="relative w-10 h-10 flex-shrink-0">
+      <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
+        <circle cx="18" cy="18" r={radius} fill="none" stroke="currentColor"
+          className="text-muted/20" strokeWidth="3" />
+        <circle cx="18" cy="18" r={radius} fill="none" stroke="currentColor"
+          className={color} strokeWidth="3"
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          strokeLinecap="round" />
+      </svg>
+      <span className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${color}`}>
+        {score}
+      </span>
+    </div>
+  );
+};
+
+// Format ISO date to relative or localized string
+const formatRelativeDate = (isoDate: string): string => {
+  const date = new Date(isoDate);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Hoje';
+  if (diffDays === 1) return 'Ontem';
+  if (diffDays < 7) return `há ${diffDays} dias`;
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return `há ${weeks} semana${weeks > 1 ? 's' : ''}`;
+  }
+  return date.toLocaleDateString('pt-BR');
+};
 
 export default function CandidateJobSearch() {
   const navigate = useNavigate();
@@ -88,9 +130,11 @@ export default function CandidateJobSearch() {
   // Sorting and pagination
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   // UI state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const activeJobs = allJobs;
 
@@ -105,6 +149,23 @@ export default function CandidateJobSearch() {
     }
     return scores;
   }, [currentCandidate, activeJobs]);
+
+  // Stats bar metrics
+  const statsMetrics = useMemo(() => {
+    const withMatch = activeJobs.filter(j => (matchScores[j.id] || 0) > 0).length;
+    const favCount = activeJobs.filter(j => isFavorite(j.id)).length;
+    const scores = Object.values(matchScores).filter(s => s > 0);
+    const avgMatch = scores.length > 0
+      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+      : 0;
+
+    return [
+      { label: 'Total Vagas', value: activeJobs.length, icon: Briefcase, iconBg: 'bg-primary/10' },
+      { label: 'Com Match', value: withMatch, icon: TrendingUp, iconBg: 'bg-emerald-500/10' },
+      { label: 'Match Médio', value: avgMatch > 0 ? `${avgMatch}%` : '—', icon: Brain, iconBg: 'bg-amber-500/10' },
+      { label: 'Favoritas', value: favCount, icon: Heart, iconBg: 'bg-rose-500/10' },
+    ];
+  }, [activeJobs, matchScores, isFavorite]);
 
   // Filter jobs
   const filteredJobs = activeJobs.filter(job => {
@@ -136,16 +197,16 @@ export default function CandidateJobSearch() {
   });
 
   // Pagination
-  const totalPages = Math.ceil(sortedJobs.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(sortedJobs.length / pageSize);
   const paginatedJobs = sortedJobs.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
   );
 
-  // Reset page when filters change
+  // Reset page when filters, sort, or page size change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, locationFilter, typeFilter, areaFilter, levelFilter, salaryRange, sortBy]);
+  }, [debouncedSearch, locationFilter, typeFilter, areaFilter, levelFilter, salaryRange, sortBy, pageSize]);
 
   const toggleSaveJob = (jobId: string) => {
     const isNowFavorite = toggleFavorite(jobId);
@@ -164,6 +225,31 @@ export default function CandidateJobSearch() {
   const hasActiveFilters = searchTerm !== '' || locationFilter !== 'all' || typeFilter !== 'all' ||
                            areaFilter !== 'all' || levelFilter !== 'all' ||
                            salaryRange[0] > 0 || salaryRange[1] < 30000;
+
+  // Active filter chips
+  const activeFilterChips = useMemo(() => {
+    const chips: { key: string; label: string; onRemove: () => void }[] = [];
+    if (locationFilter !== 'all') chips.push({
+      key: 'location', label: locationFilter, onRemove: () => setLocationFilter('all')
+    });
+    if (typeFilter !== 'all') chips.push({
+      key: 'type',
+      label: typeFilter === 'remote' ? 'Remoto' : typeFilter === 'hybrid' ? 'Híbrido' : 'Presencial',
+      onRemove: () => setTypeFilter('all')
+    });
+    if (areaFilter !== 'all') chips.push({
+      key: 'area', label: areaFilter, onRemove: () => setAreaFilter('all')
+    });
+    if (levelFilter !== 'all') chips.push({
+      key: 'level', label: levelFilter, onRemove: () => setLevelFilter('all')
+    });
+    if (salaryRange[0] > 0 || salaryRange[1] < 30000) chips.push({
+      key: 'salary',
+      label: `R$ ${salaryRange[0].toLocaleString('pt-BR')} - ${salaryRange[1].toLocaleString('pt-BR')}`,
+      onRemove: () => setSalaryRange([0, 30000])
+    });
+    return chips;
+  }, [locationFilter, typeFilter, areaFilter, levelFilter, salaryRange]);
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -295,9 +381,45 @@ export default function CandidateJobSearch() {
     <DashboardLayout userType="candidate">
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Buscar Vagas</h1>
-          <p className="text-muted-foreground">Encontre a oportunidade ideal para sua carreira</p>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
+              <Briefcase className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">Buscar Vagas</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Encontre a oportunidade ideal para sua carreira
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Stats Bar */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {statsMetrics.map((m, i) => (
+            <motion.div key={m.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="bg-card rounded-xl p-4 shadow-soft border border-border/50"
+            >
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${m.iconBg}`}>
+                  <m.icon className="w-4 h-4 text-foreground" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{m.value}</p>
+                  <p className="text-xs text-muted-foreground">{m.label}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
 
         {/* Search Bar */}
@@ -369,108 +491,239 @@ export default function CandidateJobSearch() {
               </div>
             )}
 
-            {/* Results count and sorting */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <p className="text-muted-foreground">
-                {sortedJobs.length} vaga{sortedJobs.length !== 1 ? 's' : ''} encontrada{sortedJobs.length !== 1 ? 's' : ''}
-              </p>
+            {/* Active filter chips */}
+            {activeFilterChips.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                {activeFilterChips.map(chip => (
+                  <Badge key={chip.key} variant="secondary"
+                    className="pl-3 pr-1 py-1 gap-1 cursor-pointer hover:bg-secondary/80 transition-colors">
+                    {chip.label}
+                    <button onClick={chip.onRemove}
+                      className="ml-1 p-0.5 rounded-full hover:bg-foreground/10">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
+                <button onClick={clearFilters}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  Limpar todos
+                </button>
+              </div>
+            )}
 
-              <div className="flex items-center gap-2">
-                <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
-                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Ordenar por" />
+            {/* Results count + controls */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <p className="text-muted-foreground">
+                  {sortedJobs.length} vaga{sortedJobs.length !== 1 ? 's' : ''} encontrada{sortedJobs.length !== 1 ? 's' : ''}
+                </p>
+                <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                  <SelectTrigger className="w-[100px] h-8 text-xs">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="match-high">Maior match</SelectItem>
-                    <SelectItem value="recent">Mais recentes</SelectItem>
-                    <SelectItem value="salary-high">Maior salário</SelectItem>
-                    <SelectItem value="salary-low">Menor salário</SelectItem>
+                    {PAGE_SIZE_OPTIONS.map(size => (
+                      <SelectItem key={size} value={String(size)}>{size} por página</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex items-center gap-3">
+                {/* Sort */}
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                  <SelectTrigger className="w-[180px] h-9">
+                    <ArrowUpDown className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="match-high">Maior Match</SelectItem>
+                    <SelectItem value="recent">Mais Recentes</SelectItem>
+                    <SelectItem value="salary-high">Maior Salário</SelectItem>
+                    <SelectItem value="salary-low">Menor Salário</SelectItem>
+                  </SelectContent>
+                </Select>
+                {/* View mode toggle */}
+                <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                  <button onClick={() => setViewMode('list')}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      viewMode === 'list' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                    }`}>
+                    <List className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => setViewMode('grid')}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      viewMode === 'grid' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                    }`}>
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {paginatedJobs.map((job, index) => (
-              <motion.div
-                key={job.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium transition-all cursor-pointer group"
-                onClick={() => navigate(`/candidato/vagas/${job.id}`)}
-              >
-                <div className="flex flex-col md:flex-row md:items-start gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                    <Building2 className="w-7 h-7 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
-                          {job.title}
-                        </h3>
-                        <p className="text-muted-foreground">{getDisplayCompanyName(job)}</p>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleSaveJob(job.id);
-                        }}
-                        className="p-2 hover:bg-muted rounded-lg transition-colors"
-                      >
-                        <Heart
-                          className={`w-5 h-5 transition-colors ${isFavorite(job.id) ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`}
-                        />
-                      </button>
-                    </div>
+            {/* Job cards container */}
+            <div className={viewMode === 'grid'
+              ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4'
+              : 'space-y-4'
+            }>
+            {paginatedJobs.map((job, index) => {
+              const jobMatchScore = matchScores[job.id] || 0;
+              const typeLabel = job.type === 'remote' ? 'Remoto' : job.type === 'hybrid' ? 'Híbrido' : 'Presencial';
 
-                    <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        {job.location}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Briefcase className="w-4 h-4" />
-                        {job.type === 'remote' ? 'Remoto' : job.type === 'hybrid' ? 'Híbrido' : 'Presencial'}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <DollarSign className="w-4 h-4" />
-                        R$ {job.salary.min.toLocaleString('pt-BR')} - {job.salary.max.toLocaleString('pt-BR')}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {job.createdAt}
-                      </span>
-                    </div>
-
-                    <p className="mt-3 text-muted-foreground line-clamp-2">{job.description}</p>
-
-                    <div className="flex flex-wrap gap-2 mt-4">
-                      {/* PRD-035: Badge de match score */}
-                      {matchScores[job.id] !== undefined && (
-                        <Badge
-                          className={`${getMatchScoreColor(matchScores[job.id]).bg} ${getMatchScoreColor(matchScores[job.id]).text} border ${getMatchScoreColor(matchScores[job.id]).border}`}
+              // --- GRID MODE ---
+              if (viewMode === 'grid') {
+                return (
+                  <motion.div
+                    key={job.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.03 }}
+                    className="bg-card rounded-2xl p-5 shadow-soft hover:shadow-medium hover:scale-[1.01] hover:border-primary/20 transition-all border border-transparent cursor-pointer group"
+                    onClick={() => navigate(`/candidato/vagas/${job.id}`)}
+                  >
+                    <div className="flex flex-col gap-3">
+                      {/* Top: icon + favorite */}
+                      <div className="flex items-center justify-between">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                          <Building2 className="w-5 h-5 text-primary" />
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleSaveJob(job.id); }}
+                          className="p-1.5 hover:bg-muted rounded-lg transition-colors"
                         >
-                          {matchScores[job.id]}% match
-                        </Badge>
-                      )}
-                      {hasApplied(job.id) && (
-                        <Badge className="bg-success/20 text-success border-success/30 hover:bg-success/30">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Candidatado
-                        </Badge>
-                      )}
-                      <Badge variant="secondary">{job.level}</Badge>
-                      <Badge variant="secondary">{job.area}</Badge>
-                      {job.requirements.slice(0, 2).map((req, i) => (
-                        <Badge key={i} variant="outline">{req}</Badge>
-                      ))}
+                          <Heart className={`w-4 h-4 transition-colors ${isFavorite(job.id) ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`} />
+                        </button>
+                      </div>
+
+                      {/* Title + company + match ring */}
+                      <div className="flex items-center gap-2">
+                        {jobMatchScore > 0 && <MatchRing score={jobMatchScore} />}
+                        <div className="min-w-0">
+                          <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                            {job.title}
+                          </h3>
+                          <p className="text-xs text-muted-foreground truncate">{getDisplayCompanyName(job)}</p>
+                        </div>
+                      </div>
+
+                      {/* Compact info */}
+                      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{job.location}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center gap-1">
+                            <Briefcase className="w-3 h-3 flex-shrink-0" />
+                            {typeLabel}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <DollarSign className="w-3 h-3 flex-shrink-0" />
+                            R$ {job.salary.min.toLocaleString('pt-BR')}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Badges */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {hasApplied(job.id) && (
+                          <Badge className="bg-success/20 text-success border-success/30 text-xs">
+                            <CheckCircle className="w-2.5 h-2.5 mr-0.5" />
+                            Candidatado
+                          </Badge>
+                        )}
+                        <Badge variant="secondary" className="text-xs">{job.level}</Badge>
+                        <Badge variant="secondary" className="text-xs">{job.area}</Badge>
+                      </div>
+
+                      {/* Date */}
+                      <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatRelativeDate(job.createdAt)}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              }
+
+              // --- LIST MODE (redesigned) ---
+              return (
+                <motion.div
+                  key={job.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium hover:scale-[1.01] hover:border-primary/20 transition-all border border-transparent cursor-pointer group"
+                  onClick={() => navigate(`/candidato/vagas/${job.id}`)}
+                >
+                  <div className="flex flex-col md:flex-row md:items-start gap-4">
+                    {/* Company icon + Match ring */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                        <Building2 className="w-7 h-7 text-primary" />
+                      </div>
+                      {jobMatchScore > 0 && <MatchRing score={jobMatchScore} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
+                            {job.title}
+                          </h3>
+                          <p className="text-muted-foreground">{getDisplayCompanyName(job)}</p>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSaveJob(job.id);
+                          }}
+                          className="p-2 hover:bg-muted rounded-lg transition-colors"
+                        >
+                          <Heart
+                            className={`w-5 h-5 transition-colors ${isFavorite(job.id) ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`}
+                          />
+                        </button>
+                      </div>
+
+                      <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          {job.location}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Briefcase className="w-4 h-4" />
+                          {typeLabel}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <DollarSign className="w-4 h-4" />
+                          R$ {job.salary.min.toLocaleString('pt-BR')} - {job.salary.max.toLocaleString('pt-BR')}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          {formatRelativeDate(job.createdAt)}
+                        </span>
+                      </div>
+
+                      <p className="mt-3 text-muted-foreground line-clamp-2">{job.description}</p>
+
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        {hasApplied(job.id) && (
+                          <Badge className="bg-success/20 text-success border-success/30 hover:bg-success/30">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Candidatado
+                          </Badge>
+                        )}
+                        <Badge variant="secondary">{job.level}</Badge>
+                        <Badge variant="secondary">{job.area}</Badge>
+                        {job.requirements.slice(0, 2).map((req, i) => (
+                          <Badge key={i} variant="outline">{req}</Badge>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
+            </div>
 
             {sortedJobs.length === 0 && (
               <div className="text-center py-12 bg-card rounded-2xl shadow-soft">
