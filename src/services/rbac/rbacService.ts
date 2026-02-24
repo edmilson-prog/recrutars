@@ -28,6 +28,31 @@ export interface CreatePermissionGroupData {
   memberUserIds?: string[];
 }
 
+export interface CreateRoleData {
+  name: string;
+  slug: string;
+  type: 'admin' | 'company';
+  level: number;
+  description: string;
+  permissions: string[];
+}
+
+export interface UpdateRoleData {
+  name?: string;
+  slug?: string;
+  type?: 'admin' | 'company';
+  level?: number;
+  description?: string;
+  permissions?: string[];
+}
+
+export interface UpdatePermissionGroupData {
+  name?: string;
+  description?: string;
+  permissionCodes?: string[];
+  memberUserIds?: string[];
+}
+
 export interface IRBACService {
   /** List all roles. */
   getRoles(): Promise<Role[]>;
@@ -58,6 +83,24 @@ export interface IRBACService {
 
   /** Create a new permission group. */
   createPermissionGroup(data: CreatePermissionGroupData): Promise<PermissionGroup>;
+
+  /** Update a permission group. */
+  updatePermissionGroup(id: string, data: UpdatePermissionGroupData): Promise<PermissionGroup>;
+
+  /** Delete a permission group. */
+  deletePermissionGroup(id: string): Promise<void>;
+
+  /** Create a new role. */
+  createRole(data: CreateRoleData): Promise<Role>;
+
+  /** Update a role (non-system only). */
+  updateRole(id: string, data: UpdateRoleData): Promise<Role>;
+
+  /** Delete a role (non-system only). */
+  deleteRole(id: string): Promise<void>;
+
+  /** Remove a permission override. */
+  removePermissionOverride(id: string): Promise<void>;
 
   /** Resolve all effective permissions for a user. */
   resolvePermissions(userId: string): Promise<PermissionResolution[]>;

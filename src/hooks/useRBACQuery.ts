@@ -5,7 +5,13 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getRBACService } from '@/services/rbac/rbacService';
-import type { AuditLogFilters, CreatePermissionGroupData } from '@/services/rbac/rbacService';
+import type {
+  AuditLogFilters,
+  CreatePermissionGroupData,
+  UpdatePermissionGroupData,
+  CreateRoleData,
+  UpdateRoleData,
+} from '@/services/rbac/rbacService';
 
 const ROLES_KEY = 'rbac-roles';
 const PERMISSIONS_KEY = 'rbac-permissions';
@@ -185,6 +191,101 @@ export function useCreatePermissionGroup() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [GROUPS_KEY] });
       qc.invalidateQueries({ queryKey: [AUDIT_KEY] });
+    },
+  });
+}
+
+export function useUpdatePermissionGroup() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdatePermissionGroupData }) => {
+      const svc = await getRBACService();
+      return svc.updatePermissionGroup(id, data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [GROUPS_KEY] });
+      qc.invalidateQueries({ queryKey: [AUDIT_KEY] });
+    },
+  });
+}
+
+export function useDeletePermissionGroup() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const svc = await getRBACService();
+      return svc.deletePermissionGroup(id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [GROUPS_KEY] });
+      qc.invalidateQueries({ queryKey: [AUDIT_KEY] });
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Role Mutations
+// ---------------------------------------------------------------------------
+
+export function useCreateRole() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreateRoleData) => {
+      const svc = await getRBACService();
+      return svc.createRole(data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [ROLES_KEY] });
+      qc.invalidateQueries({ queryKey: [AUDIT_KEY] });
+    },
+  });
+}
+
+export function useUpdateRole() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateRoleData }) => {
+      const svc = await getRBACService();
+      return svc.updateRole(id, data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [ROLES_KEY] });
+      qc.invalidateQueries({ queryKey: [AUDIT_KEY] });
+    },
+  });
+}
+
+export function useDeleteRole() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const svc = await getRBACService();
+      return svc.deleteRole(id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [ROLES_KEY] });
+      qc.invalidateQueries({ queryKey: [AUDIT_KEY] });
+    },
+  });
+}
+
+export function useRemovePermissionOverride() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const svc = await getRBACService();
+      return svc.removePermissionOverride(id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [OVERRIDES_KEY] });
+      qc.invalidateQueries({ queryKey: [AUDIT_KEY] });
+      qc.invalidateQueries({ queryKey: [RESOLVED_KEY] });
     },
   });
 }

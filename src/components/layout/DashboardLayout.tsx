@@ -50,6 +50,9 @@ import { DashboardBreadcrumbs } from '@/components/navigation/DashboardBreadcrum
 import { usePlans } from '@/hooks/usePlans';
 import { usePendingCSAT, useSubmitCSAT } from '@/hooks/useAdminTicketsQuery';
 import { CSATPrompt } from '@/components/helpdesk/CSATPrompt';
+import { useRBAC } from '@/contexts/RBACContext';
+import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
+import { useUser } from '@/hooks/useUsersQuery';
 
 interface NavItem {
   href: string;
@@ -156,6 +159,21 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   // PRD-074: Trial status for company users
   const { isTrial, isExpired, daysRemaining, warningLevel } = useTrialStatus();
+
+  // PRD-061: Impersonation banner support
+  const { isImpersonating, impersonationSession, stopImpersonation, impersonationRemainingTime } = useRBAC();
+  const { data: impersonatedUser } = useUser(
+    isImpersonating && impersonationSession?.targetUserId ? impersonationSession.targetUserId : ''
+  );
+
+  // PRD-061: Wrap stopImpersonation to navigate back to admin user detail
+  const handleStopImpersonation = useCallback(() => {
+    const targetId = impersonationSession?.targetUserId;
+    stopImpersonation();
+    if (targetId) {
+      navigate(`/admin/usuarios/${targetId}`);
+    }
+  }, [impersonationSession, stopImpersonation, navigate]);
 
   // Planos dinamicos para badge de plano no header
   const { candidatePlans, companyPlans } = usePlans();
@@ -351,6 +369,16 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col bg-background relative">
+        {/* PRD-061: Impersonation Banner */}
+        {isImpersonating && impersonationSession && (
+          <ImpersonationBanner
+            targetName={impersonatedUser?.name || 'Usuario'}
+            targetType={impersonationSession.targetUserType}
+            remainingTimeMs={impersonationRemainingTime()}
+            onStop={handleStopImpersonation}
+          />
+        )}
+
         {/* Glass Header */}
         <GlassHeader>
           <div className="flex items-center justify-between w-full">

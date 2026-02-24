@@ -5,12 +5,22 @@
       "codename": "Prism",
       "type": "minor",
       "releaseDate": "2026-02-23",
-      "description": "Redesign UX/UI do Banco de Talentos e Busca de Vagas com stats bar, MatchRing SVG, toggle lista/grid, paginacao flexivel (12/24/48), ordenacao e filter chips removiveis. Formatacao de datas e melhorias de navegacao.",
+      "description": "Redesign UX/UI do Banco de Talentos e Busca de Vagas, sistema RBAC Guardian completo com impersonacao real via AuthContext overlay, audit triggers, CSV export e CRUD de roles/permissoes/grupos.",
       "isCurrent": true,
       "changes": [
         {
           "type": "added",
           "items": [
+            "Impersonacao real (PRD-061): admin visualiza a plataforma como o usuario-alvo — sidebar, dashboard e dados refletem o target",
+            "AuthContext overlay: campo `realUser` sempre retorna o admin, `user` retorna o target durante impersonacao",
+            "Persistencia de sessao de impersonacao via localStorage — sobrevive refresh da pagina",
+            "Redirecionamento automatico ao iniciar impersonacao (candidato → /candidato, empresa → /empresa)",
+            "Retorno automatico para /admin/usuarios/:id ao encerrar impersonacao",
+            "Bypass do OnboardingGuard durante impersonacao — admin ve candidatos sem onboarding completo",
+            "RBAC bridge: validacao de niveis de role + ativacao do overlay no AuthContext em sequencia",
+            "Audit triggers PostgreSQL (SECURITY DEFINER) para roles, permission_groups, group_members e user_permission_overrides",
+            "Exportacao CSV com BOM UTF-8 para usuarios e logs de auditoria (compativel com Excel)",
+            "CRUD completo para roles, permissoes e grupos de permissao com mutations React Query",
             "Redesign UX/UI do Banco de Talentos e Busca de Vagas: stats bar, MatchRing SVG, toggle lista/grid, seletor de cards por pagina (12/24/48), ordenacao e filter chips removiveis",
             "Nome do candidato clicavel na pagina de candidatos salvos — navega direto para o perfil",
             "Aba Visao Geral do admin exibe dados pessoais completos do candidato (CPF, genero, estado civil, nacionalidade, endereco)",
@@ -22,6 +32,8 @@
         {
           "type": "changed",
           "items": [
+            "RBACContext usa `realUser` para configurar engine RBAC — permissoes do admin preservadas durante impersonacao",
+            "startImpersonation agora e async — retorna Promise com validacao + carregamento de dados",
             "Nomes de candidatos normalizados para MAIUSCULAS e cargos para Titulo (padrao BR)",
             "Analise Tecnica IA restrita a visao admin — empresas veem apenas a Analise Inteligente no perfil do candidato",
             "Datas ISO cruas na busca de vagas formatadas para formato relativo em portugues (ha X dias, dd/mm/yyyy)"
@@ -30,6 +42,8 @@
         {
           "type": "fixed",
           "items": [
+            "Migracao de role_id legado: valores slug antigos (role-super-admin) convertidos para UUID real",
+            "Profiles sem role_id recebem role padrao baseado no tipo (candidate/company)",
             "Exibicao de nomes em maiusculas forcada tambem para dados pre-normalizacao no banco",
             "Polling assimetrico de mensagens corrigido e fluxo de convite-para-vaga conectado corretamente",
             "Input de skills agora aceita valores separados por virgula no dialog de adicionar habilidade",

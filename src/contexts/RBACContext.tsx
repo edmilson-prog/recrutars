@@ -3,7 +3,7 @@
  * PRD-061: Sistema RBAC "Guardian"
  */
 
-import React, { createContext, useContext, useMemo, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, useEffect, useCallback, ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission, getEffectivePermissions, configureRBAC } from '@/lib/rbac';
 import { useImpersonation } from '@/hooks/useImpersonation';
@@ -16,31 +16,50 @@ interface RBACContextType {
   effectivePermissions: PermissionResolution[];
   isImpersonating: boolean;
   impersonationSession: ImpersonationSession | null;
-  startImpersonation: (targetUserId: string, reason: string) => { success: boolean; error?: string };
+  startImpersonation: (targetUserId: string, targetUserRoleId: string | undefined, targetUserType: string, reason: string) => Promise<{ success: boolean; error?: string }>;
   stopImpersonation: () => void;
   impersonationRemainingTime: () => number;
 }
 
 const RBACContext = createContext<RBACContextType | undefined>(undefined);
 
-export function RBACProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  const userId = user?.id || '';
+const noopImpersonation = {
+  session: null as ImpersonationSession | null,
+  isImpersonating: false,
+  startImpersonation: () => ({ success: false, error: 'Not authenticated' }) as { success: boolean; error?: string },
+  stopImpersonation: () => {},
+  remainingTime: () => 0,
+};
 
+export function RBACProvider({ children }: { children: ReactNode }) {
+  const {
+    realUser,
+    user,
+    activateImpersonation,
+    deactivateImpersonation,
+  } = useAuth();
+
+  // For RBAC, always use the real admin user (not the impersonated target)
+  const rbacUser = realUser || user;
+  const userId = rbacUser?.id || '';
+  const isAdmin = rbacUser?.type === 'admin';
+
+  // Only load impersonation for admin users (avoids loading all profiles)
+  const impersonation = useImpersonation(isAdmin ? userId : '', isAdmin ? rbacUser?.roleId : undefined);
   const {
     session: impersonationSession,
     isImpersonating,
-    startImpersonation,
-    stopImpersonation,
+    startImpersonation: rawStartImpersonation,
+    stopImpersonation: rawStopImpersonation,
     remainingTime: impersonationRemainingTime,
-  } = useImpersonation(userId);
+  } = isAdmin ? impersonation : noopImpersonation;
 
-  // Fetch RBAC data via service layer
+  // Fetch RBAC data via service layer (roles/permissions are open SELECT, lightweight)
   const { data: roles = [] } = useRoles();
   const { data: groups = [] } = usePermissionGroups();
   const { data: overrides = [] } = useUserPermissionOverrides(userId);
 
-  // Configure RBAC engine when data is available
+  // Configure RBAC engine when data is available — always use real admin user
   useEffect(() => {
     if (roles.length === 0) return;
 
@@ -50,13 +69,41 @@ export function RBACProvider({ children }: { children: ReactNode }) {
     }
 
     configureRBAC({
-      users: user ? [{ id: user.id, roleId: user.roleId, groupIds: user.groupIds }] : [],
+      users: rbacUser ? [{ id: rbacUser.id, roleId: rbacUser.roleId, groupIds: rbacUser.groupIds }] : [],
       roles,
       rolePermissions,
       groups,
       overrides,
     });
-  }, [user, roles, groups, overrides]);
+  }, [rbacUser, roles, groups, overrides]);
+
+  // Bridge: validate via useImpersonation, then activate overlay in AuthContext
+  const startImpersonation = useCallback(async (
+    targetUserId: string,
+    targetUserRoleId: string | undefined,
+    targetUserType: string,
+    reason: string,
+  ): Promise<{ success: boolean; error?: string }> => {
+    // Step 1: Validate role levels via useImpersonation hook
+    const result = rawStartImpersonation(targetUserId, targetUserRoleId, targetUserType, reason);
+    if (!result.success) return result;
+
+    // Step 2: Activate AuthContext overlay (loads target user data)
+    try {
+      await activateImpersonation(targetUserId);
+      return { success: true };
+    } catch (err) {
+      // Rollback session if AuthContext activation fails
+      rawStopImpersonation();
+      return { success: false, error: err instanceof Error ? err.message : 'Falha ao carregar dados do usuario' };
+    }
+  }, [rawStartImpersonation, activateImpersonation, rawStopImpersonation]);
+
+  // Bridge: deactivate both session metadata and AuthContext overlay
+  const stopImpersonation = useCallback(() => {
+    rawStopImpersonation();
+    deactivateImpersonation();
+  }, [rawStopImpersonation, deactivateImpersonation]);
 
   const can = (code: string): boolean => {
     if (!userId) return false;

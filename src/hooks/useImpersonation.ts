@@ -1,47 +1,69 @@
 /**
- * Hook de Impersonation (PRD-071 Migration)
+ * Hook de Impersonation (PRD-061)
  *
- * Backward-compatible wrapper that uses service layer hooks (useUsers, useRoles)
- * instead of directly importing mockUsers and mockRoles.
+ * Manages impersonation session metadata, validation, and localStorage persistence.
+ * Target user data loading is handled by AuthContext overlay.
  */
 
-import { useState, useCallback } from 'react';
-import { useUsers } from './useUsersQuery';
+import { useState, useCallback, useEffect } from 'react';
 import { useRoles } from './useRBACQuery';
 import type { ImpersonationSession } from '@/types/rbac';
-import type { User } from '@/types/user';
 import type { Role } from '@/types/rbac';
 
 const IMPERSONATION_DURATION_MS = 60 * 60 * 1000; // 1 hora
+const STORAGE_KEY = 'recrutars-impersonation-session';
 
-export function useImpersonation(currentUserId: string) {
-  const [session, setSession] = useState<ImpersonationSession | null>(null);
-  const [originalUserId, setOriginalUserId] = useState<string | null>(null);
+function restoreSession(): ImpersonationSession | null {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return null;
+    const parsed: ImpersonationSession = JSON.parse(stored);
+    if (parsed.endedAt || new Date(parsed.expiresAt).getTime() < Date.now()) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
 
-  // Fetch users and roles via service layer
-  const { data: usersResult } = useUsers();
+export function useImpersonation(currentUserId: string, currentUserRoleId: string | undefined) {
+  const [session, setSession] = useState<ImpersonationSession | null>(restoreSession);
+  const [originalUserId, setOriginalUserId] = useState<string | null>(() => {
+    const restored = restoreSession();
+    return restored?.adminId ?? null;
+  });
+
   const { data: roles = [] } = useRoles();
 
-  const users: User[] = usersResult?.data ?? [];
+  // Persist session to localStorage
+  useEffect(() => {
+    if (session && !session.endedAt) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, [session]);
 
-  const getUserLevel = (userId: string): number => {
-    const user = users.find(u => u.id === userId);
-    if (!user?.roleId) return 0;
-    const role = roles.find((r: Role) => r.id === user.roleId);
+  const getRoleLevel = (roleId: string | undefined): number => {
+    if (!roleId) return 0;
+    const role = roles.find((r: Role) => r.id === roleId);
     return role?.level || 0;
   };
 
-  const startImpersonation = useCallback((targetUserId: string, reason: string): { success: boolean; error?: string } => {
-    const currentLevel = getUserLevel(currentUserId);
-    const targetLevel = getUserLevel(targetUserId);
-    const targetUser = users.find(u => u.id === targetUserId);
-
-    if (!targetUser) {
-      return { success: false, error: 'Usuario nao encontrado' };
-    }
+  const startImpersonation = useCallback((
+    targetUserId: string,
+    targetUserRoleId: string | undefined,
+    targetUserType: string,
+    reason: string,
+  ): { success: boolean; error?: string } => {
+    const currentLevel = getRoleLevel(currentUserRoleId);
+    const targetLevel = getRoleLevel(targetUserRoleId);
 
     // Nao pode impersonar super_admin
-    const targetRole = roles.find((r: Role) => r.id === targetUser.roleId);
+    const targetRole = roles.find((r: Role) => r.id === targetUserRoleId);
     if (targetRole?.slug === 'super_admin') {
       return { success: false, error: 'Nao e possivel visualizar como Super Admin' };
     }
@@ -56,7 +78,7 @@ export function useImpersonation(currentUserId: string) {
       id: `imp-${Date.now()}`,
       adminId: currentUserId,
       targetUserId,
-      targetUserType: targetUser.type,
+      targetUserType: targetUserType as 'admin' | 'company' | 'candidate',
       startedAt: now.toISOString(),
       expiresAt: new Date(now.getTime() + IMPERSONATION_DURATION_MS).toISOString(),
       reason,
@@ -66,7 +88,7 @@ export function useImpersonation(currentUserId: string) {
     setSession(newSession);
 
     return { success: true };
-  }, [currentUserId, users, roles]);
+  }, [currentUserId, currentUserRoleId, roles]);
 
   const stopImpersonation = useCallback(() => {
     if (session) {

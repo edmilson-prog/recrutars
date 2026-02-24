@@ -10,7 +10,8 @@ import {
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
-import { useRoles, usePermissions } from '@/hooks/useRBACQuery';
+import { useRoles, usePermissions, useCreateRole, useUpdateRole, useDeleteRole } from '@/hooks/useRBACQuery';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -79,6 +80,10 @@ const emptyRoleForm: RoleFormData = {
 export default function AdminRolesPermissions() {
   const { data: fetchedRoles = [], isLoading: rolesLoading, error: rolesError } = useRoles();
   const { data: fetchedPermissions = [], isLoading: permsLoading, error: permsError } = usePermissions();
+  const createRoleMutation = useCreateRole();
+  const updateRoleMutation = useUpdateRole();
+  const deleteRoleMutation = useDeleteRole();
+  const { toast } = useToast();
 
   const [roles, setRoles] = useState<Role[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -102,16 +107,39 @@ export default function AdminRolesPermissions() {
   const customRoles = roles.filter(r => !r.isSystem);
 
   const handleTogglePermission = (roleId: string, permCode: string) => {
-    setRoles(prev => prev.map(role => {
-      if (role.id !== roleId || role.isSystem) return role;
-      const hasIt = role.permissions.includes(permCode);
-      return {
-        ...role,
-        permissions: hasIt
-          ? role.permissions.filter(p => p !== permCode)
-          : [...role.permissions, permCode],
-      };
-    }));
+    const role = roles.find(r => r.id === roleId);
+    if (!role || role.isSystem) return;
+
+    const hasIt = role.permissions.includes(permCode);
+    const updatedPermissions = hasIt
+      ? role.permissions.filter(p => p !== permCode)
+      : [...role.permissions, permCode];
+
+    // Optimistic local update
+    setRoles(prev => prev.map(r =>
+      r.id === roleId ? { ...r, permissions: updatedPermissions } : r
+    ));
+
+    // Persist via Supabase
+    updateRoleMutation.mutate(
+      { id: roleId, data: { permissions: updatedPermissions } },
+      {
+        onSuccess: () => {
+          toast({ title: 'Permissao atualizada com sucesso' });
+        },
+        onError: (err) => {
+          // Revert optimistic update
+          setRoles(prev => prev.map(r =>
+            r.id === roleId ? { ...r, permissions: role.permissions } : r
+          ));
+          toast({
+            title: 'Erro ao atualizar permissao',
+            description: (err as Error).message,
+            variant: 'destructive',
+          });
+        },
+      }
+    );
   };
 
   const openCreate = () => {
@@ -137,7 +165,17 @@ export default function AdminRolesPermissions() {
   const handleSave = () => {
     if (!form.name.trim() || !form.slug.trim()) return;
 
+    const payload = {
+      name: form.name,
+      slug: form.slug,
+      description: form.description,
+      type: form.type,
+      level: form.level,
+      permissions: form.permissions,
+    };
+
     if (editingId) {
+      // Optimistic local update
       setRoles(prev => prev.map(r =>
         r.id === editingId
           ? {
@@ -151,8 +189,26 @@ export default function AdminRolesPermissions() {
             }
           : r
       ));
+
+      updateRoleMutation.mutate(
+        { id: editingId, data: payload },
+        {
+          onSuccess: () => {
+            toast({ title: 'Papel atualizado com sucesso' });
+            setDialogOpen(false);
+          },
+          onError: (err) => {
+            toast({
+              title: 'Erro ao salvar papel',
+              description: (err as Error).message,
+              variant: 'destructive',
+            });
+          },
+        }
+      );
     } else {
-      const newRole: Role = {
+      // Optimistic local update
+      const tempRole: Role = {
         id: `role-${Date.now()}`,
         name: form.name,
         slug: form.slug,
@@ -163,15 +219,52 @@ export default function AdminRolesPermissions() {
         permissions: form.permissions,
         createdAt: new Date().toISOString(),
       };
-      setRoles(prev => [...prev, newRole]);
+      setRoles(prev => [...prev, tempRole]);
+
+      createRoleMutation.mutate(
+        payload,
+        {
+          onSuccess: () => {
+            toast({ title: 'Papel criado com sucesso' });
+            setDialogOpen(false);
+          },
+          onError: (err) => {
+            // Revert optimistic add
+            setRoles(prev => prev.filter(r => r.id !== tempRole.id));
+            toast({
+              title: 'Erro ao salvar papel',
+              description: (err as Error).message,
+              variant: 'destructive',
+            });
+          },
+        }
+      );
     }
-    setDialogOpen(false);
   };
 
   const handleDelete = (roleId: string) => {
     const role = roles.find(r => r.id === roleId);
     if (role?.isSystem) return;
+
+    // Optimistic local update
     setRoles(prev => prev.filter(r => r.id !== roleId));
+
+    deleteRoleMutation.mutate(roleId, {
+      onSuccess: () => {
+        toast({ title: 'Papel excluido com sucesso' });
+      },
+      onError: (err) => {
+        // Revert optimistic delete
+        if (role) {
+          setRoles(prev => [...prev, role]);
+        }
+        toast({
+          title: 'Erro ao excluir papel',
+          description: (err as Error).message,
+          variant: 'destructive',
+        });
+      },
+    });
   };
 
   const toggleFormPermission = (code: string) => {
@@ -259,8 +352,18 @@ export default function AdminRolesPermissions() {
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(role)}>
                       <Edit className="w-3.5 h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(role.id)}>
-                      <Trash2 className="w-3.5 h-3.5" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive"
+                      disabled={deleteRoleMutation.isPending}
+                      onClick={() => handleDelete(role.id)}
+                    >
+                      {deleteRoleMutation.isPending ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
                     </Button>
                   </div>
                 )}
@@ -470,7 +573,18 @@ export default function AdminRolesPermissions() {
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSave} disabled={!form.name.trim() || !form.slug.trim()}>
+              <Button
+                onClick={handleSave}
+                disabled={
+                  !form.name.trim() ||
+                  !form.slug.trim() ||
+                  createRoleMutation.isPending ||
+                  updateRoleMutation.isPending
+                }
+              >
+                {(createRoleMutation.isPending || updateRoleMutation.isPending) && (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                )}
                 {editingId ? 'Salvar' : 'Criar Papel'}
               </Button>
             </DialogFooter>

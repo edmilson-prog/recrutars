@@ -4,15 +4,18 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Save, User, Shield, Clock, CreditCard, StickyNote,
-  Plus, Trash2, Loader2,
+  Plus, Trash2, Loader2, Eye,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useUser } from '@/hooks/useUsersQuery';
-import { useRoles, useAuditLogs, usePermissionGroups } from '@/hooks/useRBACQuery';
+import { useUser, useUpdateUser } from '@/hooks/useUsersQuery';
+import { useRoles, useAuditLogs, usePermissionGroups, useAssignRole } from '@/hooks/useRBACQuery';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRBAC } from '@/contexts/RBACContext';
+import { useToast } from '@/hooks/use-toast';
 import { formatRelativeDate } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -30,6 +33,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { PermissionsTab } from '@/components/admin/users/PermissionsTab';
 import type { UserStatus, AuditAction } from '@/types/rbac';
 
@@ -99,16 +111,25 @@ interface AdminNote {
 
 export default function AdminUserDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: originalUser, isLoading: isLoadingUser } = useUser(id || '');
   const { data: rolesData } = useRoles();
   const { data: auditLogsData } = useAuditLogs();
   const { data: groupsData } = usePermissionGroups();
+  const { user: currentUser } = useAuth();
+  const { startImpersonation } = useRBAC();
+  const { toast } = useToast();
+  const assignRoleMutation = useAssignRole();
+  const updateUserMutation = useUpdateUser();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [type, setType] = useState<string>('candidate');
   const [status, setStatus] = useState<UserStatus>('active');
   const [noteText, setNoteText] = useState('');
+  const [impersonateDialogOpen, setImpersonateDialogOpen] = useState(false);
+  const [impersonateReason, setImpersonateReason] = useState('');
+  const [impersonateLoading, setImpersonateLoading] = useState(false);
   const [notes, setNotes] = useState<AdminNote[]>([
     {
       id: 'note-1',
@@ -186,9 +207,74 @@ export default function AdminUserDetail() {
     setNotes(prev => prev.filter(n => n.id !== noteId));
   };
 
-  const handlePermissionsSave = (updates: { roleId?: string; groupIds?: string[] }) => {
-    // Mock save - in real app would call API
-    console.log('Saving permissions:', updates);
+  const handlePermissionsSave = async (updates: { roleId?: string; groupIds?: string[] }) => {
+    if (!id) return;
+
+    try {
+      const promises: Promise<unknown>[] = [];
+
+      if (updates.roleId && updates.roleId !== originalUser?.roleId) {
+        promises.push(assignRoleMutation.mutateAsync({ userId: id, roleId: updates.roleId }));
+      }
+
+      if (updates.groupIds !== undefined) {
+        promises.push(updateUserMutation.mutateAsync({ id, updates: { groupIds: updates.groupIds } }));
+      }
+
+      await Promise.all(promises);
+
+      toast({
+        title: 'Permissoes atualizadas',
+        description: 'As permissoes do usuario foram salvas com sucesso.',
+      });
+    } catch {
+      toast({
+        title: 'Erro ao salvar permissoes',
+        description: 'Nao foi possivel atualizar as permissoes. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Impersonation: determine if button should be visible
+  const targetUserRole = rolesData?.find(r => r.id === originalUser?.roleId);
+  const isSuperAdmin = originalUser?.type === 'admin' && targetUserRole?.slug === 'super_admin';
+  const isOwnProfile = currentUser?.id === id;
+  const canImpersonate = !isSuperAdmin && !isOwnProfile;
+
+  const handleImpersonate = async () => {
+    if (!id || !impersonateReason.trim()) return;
+    setImpersonateLoading(true);
+    try {
+      const result = await startImpersonation(id, originalUser?.roleId, originalUser?.type || 'candidate', impersonateReason.trim());
+      if (result.success) {
+        toast({
+          title: 'Impersonacao iniciada',
+          description: `Visualizando como ${originalUser?.name}. A sessao expira em 1 hora.`,
+        });
+        setImpersonateDialogOpen(false);
+        setImpersonateReason('');
+
+        // Redirect to the target user's dashboard
+        const targetType = originalUser?.type || 'candidate';
+        if (targetType === 'candidate') navigate('/candidato');
+        else if (targetType === 'company') navigate('/empresa');
+      } else {
+        toast({
+          title: 'Erro ao iniciar impersonacao',
+          description: result.error || 'Nao foi possivel iniciar a impersonacao.',
+          variant: 'destructive',
+        });
+      }
+    } catch {
+      toast({
+        title: 'Erro ao iniciar impersonacao',
+        description: 'Ocorreu um erro inesperado. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setImpersonateLoading(false);
+    }
   };
 
   // Mock plan data
@@ -207,17 +293,28 @@ export default function AdminUserDetail() {
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
-          <div>
+          <div className="flex-1">
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
                 <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                   {getInitials(originalUser.name)}
                 </AvatarFallback>
               </Avatar>
-              <div>
+              <div className="flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-foreground">{originalUser.name}</h1>
                 <p className="text-sm text-muted-foreground">{originalUser.email}</p>
               </div>
+              {canImpersonate && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 text-amber-600 border-amber-300 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-700 dark:hover:bg-amber-950"
+                  onClick={() => setImpersonateDialogOpen(true)}
+                >
+                  <Eye className="w-4 h-4" />
+                  <span className="hidden sm:inline">Impersonar</span>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -531,6 +628,62 @@ export default function AdminUserDetail() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Impersonation Dialog */}
+      <AlertDialog open={impersonateDialogOpen} onOpenChange={(open) => {
+        setImpersonateDialogOpen(open);
+        if (!open) {
+          setImpersonateReason('');
+          setImpersonateLoading(false);
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-amber-500" />
+              Impersonar Usuario
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Voce esta prestes a visualizar a plataforma como <strong>{originalUser.name}</strong>.
+              A sessao de impersonacao expira automaticamente em <strong>1 hora</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="my-4 space-y-3">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
+              <p className="font-medium">Atencao</p>
+              <p className="mt-1">
+                Todas as acoes realizadas durante a impersonacao serao registradas no log de auditoria.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="impersonate-reason">Motivo (obrigatorio)</Label>
+              <Textarea
+                id="impersonate-reason"
+                placeholder="Descreva o motivo da impersonacao..."
+                value={impersonateReason}
+                onChange={(e) => setImpersonateReason(e.target.value)}
+                rows={3}
+                className="resize-none"
+              />
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button
+              onClick={handleImpersonate}
+              disabled={!impersonateReason.trim() || impersonateLoading}
+              className="bg-amber-500 hover:bg-amber-600 text-white"
+            >
+              {impersonateLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              <Eye className="w-4 h-4 mr-2" />
+              Iniciar Impersonacao
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

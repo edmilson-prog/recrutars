@@ -1,9 +1,12 @@
 /**
  * AuthContext - Supabase Auth Provider
  * PRD-063: Fundacao Supabase + Autenticacao
+ * PRD-061: Impersonation overlay support
  *
  * Replaces the mock AuthContext with real Supabase Auth.
  * Maintains backward compatibility with all existing consumers.
+ * Supports impersonation overlay: during impersonation, `user`, `currentCompany`,
+ * and `currentCandidate` return the target user's data. Use `realUser` for the admin.
  */
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
@@ -49,7 +52,6 @@ interface SignUpParams {
 
 // ── Context Interface ──
 // Existing fields preserved for backward compatibility.
-// New fields: loading, signUp, resetPassword.
 
 interface AuthContextType {
   user: User | null;
@@ -65,9 +67,16 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<void>;
   refreshCurrentCandidate: () => Promise<void>;
   refreshCurrentCompany: () => Promise<void>;
+  // PRD-061: Impersonation overlay
+  realUser: User | null;
+  isImpersonationActive: boolean;
+  activateImpersonation: (targetUserId: string) => Promise<void>;
+  deactivateImpersonation: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const IMPERSONATION_STORAGE_KEY = 'recrutars-impersonation-target';
 
 // ── Provider ──
 
@@ -77,6 +86,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentCandidate, setCurrentCandidate] = useState<Candidate | null>(null);
   const [companyRole, setCompanyRole] = useState<TeamMemberRole | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // PRD-061: Impersonation overlay state
+  const [impersonatingUser, setImpersonatingUser] = useState<User | null>(null);
+  const [impersonatingCandidate, setImpersonatingCandidate] = useState<Candidate | null>(null);
+  const [impersonatingCompany, setImpersonatingCompany] = useState<Company | null>(null);
+  const [impersonatingCompanyRole, setImpersonatingCompanyRole] = useState<TeamMemberRole | null>(null);
+  const [isImpersonationActive, setIsImpersonationActive] = useState(false);
 
   // Load profile + type-specific data from Supabase
   const loadUserData = useCallback(async (session: Session | null) => {
@@ -239,10 +255,103 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCompanyRole(companyData ? role : null);
   }, [user]);
 
+  // ── PRD-061: Impersonation Overlay ──
+
+  const activateImpersonation = useCallback(async (targetUserId: string) => {
+    // Fetch target profile (admin has SELECT on all profiles)
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', targetUserId)
+      .single();
+
+    if (profileError || !profileData) {
+      throw new Error('Falha ao carregar perfil do usuario alvo');
+    }
+
+    const targetUser = profileRowToUser(profileData);
+    setImpersonatingUser(targetUser);
+
+    // Load type-specific data
+    if (targetUser.type === 'candidate') {
+      const { data: candidateData } = await supabase
+        .from('candidates')
+        .select('*')
+        .eq('profile_id', targetUserId)
+        .single();
+
+      setImpersonatingCandidate(candidateData ? candidateRowToCandidate(candidateData) : null);
+      setImpersonatingCompany(null);
+      setImpersonatingCompanyRole(null);
+    } else if (targetUser.type === 'company') {
+      let { data: companyData } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('profile_id', targetUserId)
+        .single();
+
+      let role: TeamMemberRole = 'admin';
+
+      if (!companyData) {
+        const { data: memberData } = await supabase
+          .from('company_users')
+          .select('company_id, role')
+          .eq('profile_id', targetUserId)
+          .single();
+
+        if (memberData) {
+          role = memberData.role as TeamMemberRole;
+          const { data: memberCompanyData } = await supabase
+            .from('companies')
+            .select('*')
+            .eq('id', memberData.company_id)
+            .single();
+          companyData = memberCompanyData;
+        }
+      } else {
+        const { data: ownerRole } = await supabase
+          .from('company_users')
+          .select('role')
+          .eq('profile_id', targetUserId)
+          .single();
+        if (ownerRole) role = ownerRole.role as TeamMemberRole;
+      }
+
+      setImpersonatingCompany(companyData ? companyRowToCompany(companyData) : null);
+      setImpersonatingCompanyRole(companyData ? role : null);
+      setImpersonatingCandidate(null);
+    } else {
+      setImpersonatingCompany(null);
+      setImpersonatingCandidate(null);
+      setImpersonatingCompanyRole(null);
+    }
+
+    // Persist for refresh survival
+    localStorage.setItem(IMPERSONATION_STORAGE_KEY, targetUserId);
+    setIsImpersonationActive(true);
+  }, []);
+
+  const deactivateImpersonation = useCallback(() => {
+    setImpersonatingUser(null);
+    setImpersonatingCandidate(null);
+    setImpersonatingCompany(null);
+    setImpersonatingCompanyRole(null);
+    setIsImpersonationActive(false);
+    localStorage.removeItem(IMPERSONATION_STORAGE_KEY);
+  }, []);
+
   // Initialize: check existing session + listen for changes
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      loadUserData(session);
+      loadUserData(session).then(() => {
+        // Restore impersonation if it was active before refresh
+        const storedTargetId = localStorage.getItem(IMPERSONATION_STORAGE_KEY);
+        if (storedTargetId && session) {
+          activateImpersonation(storedTargetId).catch(() => {
+            localStorage.removeItem(IMPERSONATION_STORAGE_KEY);
+          });
+        }
+      });
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -252,7 +361,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
-  }, [loadUserData]);
+  }, [loadUserData, activateImpersonation]);
 
   // ── Auth Operations ──
 
@@ -263,6 +372,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    deactivateImpersonation();
     await supabase.auth.signOut();
     // State is cleared automatically by onAuthStateChange
   };
@@ -342,19 +452,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: isImpersonationActive ? impersonatingUser : user,
+        realUser: user,
         isAuthenticated: !!user,
         login,
         loginWithMagicLink,
         logout,
-        currentCompany,
-        currentCandidate,
-        companyRole,
+        currentCompany: isImpersonationActive ? impersonatingCompany : currentCompany,
+        currentCandidate: isImpersonationActive ? impersonatingCandidate : currentCandidate,
+        companyRole: isImpersonationActive ? impersonatingCompanyRole : companyRole,
         loading,
         signUp,
         resetPassword,
         refreshCurrentCandidate,
         refreshCurrentCompany,
+        isImpersonationActive,
+        activateImpersonation,
+        deactivateImpersonation,
       }}
     >
       {children}
