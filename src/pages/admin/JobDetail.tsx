@@ -21,10 +21,13 @@ import {
   Clock,
   FileText,
   Save,
+  Users,
+  ExternalLink,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAdminJobs } from '@/hooks/useAdminJobs';
 import { useModeration } from '@/hooks/useModeration';
+import { useApplicationsByJob } from '@/hooks/useApplicationsQuery';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +50,7 @@ export default function JobDetail() {
     addNote,
   } = useAdminJobs();
   const { actions: moderationActions, config: moderationConfig } = useModeration();
+  const { data: applications = [], isLoading: isLoadingApplications } = useApplicationsByJob(id ?? '');
 
   const [noteText, setNoteText] = useState('');
 
@@ -95,6 +99,23 @@ export default function JobDetail() {
       addNote(job.id, noteText.trim());
       setNoteText('');
     }
+  };
+
+  const APPLICATION_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+    pending:     { label: 'Pendente',          className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400' },
+    reviewing:   { label: 'Em Analise',        className: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400' },
+    interview:   { label: 'Entrevista',        className: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400' },
+    offer:       { label: 'Proposta',          className: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-400' },
+    rejected:    { label: 'Rejeitado',         className: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' },
+    hired:       { label: 'Contratado',        className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' },
+    withdrawn:   { label: 'Desistiu',          className: 'bg-gray-100 text-gray-700 dark:bg-gray-500/20 dark:text-gray-400' },
+    talent_pool: { label: 'Banco de Talentos', className: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400' },
+  };
+
+  const TEST_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+    nao_solicitado: { label: 'Nao solicitado', className: 'bg-gray-100 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400' },
+    solicitado:     { label: 'Solicitado',     className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400' },
+    realizado:      { label: 'Realizado',      className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' },
   };
 
   const statusColor =
@@ -211,6 +232,14 @@ export default function JobDetail() {
               <TabsTrigger value="pipeline" className="flex-1">Pipeline</TabsTrigger>
               <TabsTrigger value="moderation" className="flex-1">Moderacao</TabsTrigger>
               <TabsTrigger value="notes" className="flex-1">Notas</TabsTrigger>
+              <TabsTrigger value="candidates" className="flex-1">
+                Candidatos
+                {applications.length > 0 && (
+                  <span className="ml-1.5 text-xs bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 rounded-full px-1.5 py-0.5 font-medium">
+                    {applications.length}
+                  </span>
+                )}
+              </TabsTrigger>
             </TabsList>
 
             {/* Details tab */}
@@ -415,6 +444,110 @@ export default function JobDetail() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Candidates tab */}
+            <TabsContent value="candidates" className="mt-6 space-y-4">
+              <div className="bg-card rounded-2xl p-6 shadow-soft">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <Users className="w-5 h-5 text-cyan-600" />
+                    Candidatos
+                  </h3>
+                  {!isLoadingApplications && applications.length > 0 && (
+                    <Badge variant="secondary" className="bg-cyan-500/20 text-cyan-600 dark:text-cyan-400">
+                      {applications.length} candidatura{applications.length !== 1 ? 's' : ''}
+                    </Badge>
+                  )}
+                </div>
+                <Separator className="my-4" />
+
+                {/* Loading state */}
+                {isLoadingApplications && (
+                  <div className="space-y-3">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-4 p-4 rounded-xl border bg-muted/30 animate-pulse">
+                        <div className="w-10 h-10 rounded-full bg-muted flex-shrink-0" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 w-40 rounded bg-muted" />
+                          <div className="h-3 w-24 rounded bg-muted" />
+                        </div>
+                        <div className="h-6 w-20 rounded-full bg-muted" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Empty state */}
+                {!isLoadingApplications && applications.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Users className="w-12 h-12 text-muted-foreground/50 mb-3" />
+                    <p className="text-sm font-medium text-foreground">Nenhuma candidatura recebida</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Quando candidatos se inscreverem nesta vaga, eles aparecerao aqui.
+                    </p>
+                  </div>
+                )}
+
+                {/* Candidate list */}
+                {!isLoadingApplications && applications.length > 0 && (
+                  <div className="space-y-2">
+                    {applications.map((app) => {
+                      const statusCfg = APPLICATION_STATUS_CONFIG[app.status] ?? APPLICATION_STATUS_CONFIG['pending'];
+                      const testCfg = TEST_STATUS_CONFIG[app.testStatus] ?? TEST_STATUS_CONFIG['nao_solicitado'];
+                      const initials = app.candidateName
+                        .split(' ')
+                        .map((n: string) => n.charAt(0))
+                        .slice(0, 2)
+                        .join('')
+                        .toUpperCase();
+
+                      return (
+                        <div
+                          key={app.id}
+                          className="flex items-center gap-4 p-4 rounded-xl border bg-muted/30 hover:bg-muted/50 transition-colors"
+                        >
+                          <Avatar className="w-10 h-10 flex-shrink-0">
+                            <AvatarImage src={app.candidateAvatar} alt={app.candidateName} />
+                            <AvatarFallback className="text-xs font-medium">{initials}</AvatarFallback>
+                          </Avatar>
+
+                          <div className="flex-1 min-w-0">
+                            <button
+                              type="button"
+                              onClick={() => navigate('/admin/candidatos/' + app.candidateId)}
+                              className="text-sm font-semibold text-foreground hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors text-left truncate block max-w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-sm"
+                            >
+                              {app.candidateName}
+                            </button>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Candidatou-se em {formatDate(app.appliedAt)}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                            <Badge variant="secondary" className={cn('text-[10px] font-medium', testCfg.className)}>
+                              {testCfg.label}
+                            </Badge>
+                            <Badge variant="secondary" className={cn('text-[10px] font-medium', statusCfg.className)}>
+                              {statusCfg.label}
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="w-8 h-8 text-muted-foreground hover:text-cyan-600 dark:hover:text-cyan-400"
+                              onClick={() => navigate('/admin/candidatos/' + app.candidateId)}
+                              aria-label={`Ver perfil de ${app.candidateName}`}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
