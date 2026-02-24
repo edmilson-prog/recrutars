@@ -1,11 +1,11 @@
 {
   "versions": [
     {
-      "version": "1.31.2",
-      "codename": "Insight",
-      "type": "patch",
+      "version": "1.32.0",
+      "codename": "Prism",
+      "type": "minor",
       "releaseDate": "2026-02-23",
-      "description": "Redesign UX/UI do Banco de Talentos e Busca de Vagas com stats bar, MatchRing, toggle lista/grid, paginacao flexivel e filter chips. Normalizacao de nomes, enriquecimento da visao admin e correcoes de UX.",
+      "description": "Redesign UX/UI do Banco de Talentos e Busca de Vagas com stats bar, MatchRing SVG, toggle lista/grid, paginacao flexivel (12/24/48), ordenacao e filter chips removiveis. Formatacao de datas e melhorias de navegacao.",
       "isCurrent": true,
       "changes": [
         {
