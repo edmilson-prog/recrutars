@@ -16,6 +16,9 @@ import type {
   IRBACService,
   AuditLogFilters,
   CreatePermissionGroupData,
+  UpdatePermissionGroupData,
+  CreateRoleData,
+  UpdateRoleData,
 } from './rbacService';
 
 export class SupabaseRBACService implements IRBACService {
@@ -99,8 +102,9 @@ export class SupabaseRBACService implements IRBACService {
 
   async assignRole(userId: string, roleId: string): Promise<void> {
     const { error } = await supabase
-      .from('user_roles')
-      .upsert({ user_id: userId, role_id: roleId });
+      .from('profiles')
+      .update({ role_id: roleId })
+      .eq('id', userId);
 
     if (error) throw error;
   }
@@ -145,15 +149,99 @@ export class SupabaseRBACService implements IRBACService {
     return row as unknown as PermissionGroup;
   }
 
-  async resolvePermissions(userId: string): Promise<PermissionResolution[]> {
-    // In a real implementation, this would call an RPC function on Supabase
-    // that computes the effective permission set for the user by evaluating
-    // overrides, group memberships, and role assignments.
-    const { data, error } = await supabase.rpc('resolve_user_permissions', {
-      p_user_id: userId,
-    });
+  async updatePermissionGroup(id: string, data: UpdatePermissionGroupData): Promise<PermissionGroup> {
+    const dbUpdates: Record<string, unknown> = {};
+    if (data.name !== undefined) dbUpdates.name = data.name;
+    if (data.description !== undefined) dbUpdates.description = data.description;
+    if (data.permissionCodes !== undefined) dbUpdates.permission_codes = data.permissionCodes;
+    if (data.memberUserIds !== undefined) dbUpdates.member_user_ids = data.memberUserIds;
+
+    const { data: row, error } = await supabase
+      .from('permission_groups')
+      .update(dbUpdates)
+      .eq('id', id)
+      .select()
+      .single();
 
     if (error) throw error;
-    return (data ?? []) as unknown as PermissionResolution[];
+    return row as unknown as PermissionGroup;
+  }
+
+  async deletePermissionGroup(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('permission_groups')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  async createRole(data: CreateRoleData): Promise<Role> {
+    const { data: row, error } = await supabase
+      .from('roles')
+      .insert({
+        name: data.name,
+        slug: data.slug,
+        type: data.type,
+        level: data.level,
+        description: data.description,
+        is_system: false,
+        permissions: data.permissions,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return row as unknown as Role;
+  }
+
+  async updateRole(id: string, data: UpdateRoleData): Promise<Role> {
+    const dbUpdates: Record<string, unknown> = {};
+    if (data.name !== undefined) dbUpdates.name = data.name;
+    if (data.slug !== undefined) dbUpdates.slug = data.slug;
+    if (data.type !== undefined) dbUpdates.type = data.type;
+    if (data.level !== undefined) dbUpdates.level = data.level;
+    if (data.description !== undefined) dbUpdates.description = data.description;
+    if (data.permissions !== undefined) dbUpdates.permissions = data.permissions;
+
+    const { data: row, error } = await supabase
+      .from('roles')
+      .update(dbUpdates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return row as unknown as Role;
+  }
+
+  async deleteRole(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('roles')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  async removePermissionOverride(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('user_permission_overrides')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  async resolvePermissions(userId: string): Promise<PermissionResolution[]> {
+    // Uses the client-side RBAC engine (rbac.ts) which is already configured
+    // by RBACProvider with roles, groups, and overrides data.
+    const { getEffectivePermissions, isRBACConfigured } = await import('@/lib/rbac');
+
+    if (!isRBACConfigured()) {
+      return [];
+    }
+
+    return getEffectivePermissions(userId);
   }
 }

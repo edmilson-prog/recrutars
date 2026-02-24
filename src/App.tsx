@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { RBACProvider } from "@/contexts/RBACContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RedirectIfAuthenticated } from "@/components/auth/RedirectIfAuthenticated";
@@ -197,6 +198,7 @@ const App = () => (
       <AccessibilityProvider>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AuthProvider>
+            <RBACProvider>
             <TooltipProvider>
               <Toaster />
               <Sonner />
@@ -823,6 +825,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           </TooltipProvider>
+            </RBACProvider>
         </AuthProvider>
       </BrowserRouter>
       </AccessibilityProvider>

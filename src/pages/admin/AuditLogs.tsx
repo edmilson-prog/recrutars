@@ -13,8 +13,10 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
 import { useUsers } from '@/hooks/useUsersQuery';
 import { useAuditLogs } from '@/hooks/useRBACQuery';
-import { formatRelativeDate } from '@/lib/formatters';
+import { formatRelativeDate, formatDateTimeBR } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
+import { exportToCSV, getExportDateSuffix } from '@/lib/csvExport';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -106,6 +108,8 @@ const actionOptions: { value: AuditAction; label: string }[] = [
 ];
 
 export default function AdminAuditLogs() {
+  const { toast } = useToast();
+
   // Fetch data via service layer
   const { data: usersResult, isLoading: isLoadingUsers } = useUsers();
   const { data: auditLogsData, isLoading: isLoadingLogs } = useAuditLogs();
@@ -184,6 +188,40 @@ export default function AdminAuditLogs() {
     setDateTo('');
   };
 
+  const handleExportCSV = () => {
+    if (filteredLogs.length === 0) {
+      toast({
+        title: 'Nenhum dado para exportar',
+        description: 'Ajuste os filtros para incluir eventos na exportacao.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    exportToCSV(
+      filteredLogs,
+      [
+        { key: 'performedAt', header: 'Data', accessor: (log) => log.performedAt ? formatDateTimeBR(log.performedAt) : '' },
+        { key: 'action', header: 'Acao', accessor: (log) => auditActionLabels[log.action] || log.action },
+        { key: 'performedByName', header: 'Realizado Por', accessor: (log) => log.performedByName || '' },
+        { key: 'targetUserName', header: 'Alvo', accessor: (log) => {
+          const parts: string[] = [];
+          if (log.targetUserName) parts.push(log.targetUserName);
+          if (log.oldValue && log.newValue) parts.push(`${log.oldValue} -> ${log.newValue}`);
+          if (log.permissionCode) parts.push(log.permissionCode);
+          return parts.join(' | ');
+        }},
+        { key: 'details', header: 'Detalhes', accessor: (log) => log.details || '' },
+      ],
+      `auditoria-recrutars-${getExportDateSuffix()}`
+    );
+
+    toast({
+      title: 'Exportacao concluida',
+      description: `${filteredLogs.length} evento${filteredLogs.length !== 1 ? 's' : ''} exportado${filteredLogs.length !== 1 ? 's' : ''} com sucesso.`,
+    });
+  };
+
   // Unique users from logs
   const logUsers = useMemo(() => {
     const userIds = new Set<string>();
@@ -241,7 +279,7 @@ export default function AdminAuditLogs() {
                 Registro de todas as ações realizadas no sistema. Rastreie operações de usuários, alterações e eventos.
               </p>
             </div>
-            <Button variant="outline" size="sm" className="shrink-0">
+            <Button variant="outline" size="sm" className="shrink-0" onClick={handleExportCSV}>
               <Download className="w-4 h-4 mr-2" />
               Exportar
             </Button>

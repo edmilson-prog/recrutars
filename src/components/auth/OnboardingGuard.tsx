@@ -19,7 +19,7 @@ const ONBOARDING_ROUTES: Record<string, string> = {
 };
 
 export function OnboardingGuard({ children }: OnboardingGuardProps) {
-  const { currentCandidate, user, loading } = useAuth();
+  const { currentCandidate, user, loading, isImpersonationActive } = useAuth();
 
   if (loading) {
     return (
@@ -27,6 +27,11 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
+  }
+
+  // PRD-061: Admin impersonation bypasses onboarding checks
+  if (isImpersonationActive) {
+    return <>{children}</>;
   }
 
   // Only applies to candidates

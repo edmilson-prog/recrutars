@@ -16,7 +16,10 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUsers, useUpdateUserStatus } from '@/hooks/useUsersQuery';
 import { useRoles } from '@/hooks/useRBACQuery';
 import { formatRelativeDate } from '@/lib/formatters';
+import { formatDateBR } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
+import { exportToCSV, getExportDateSuffix } from '@/lib/csvExport';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -46,8 +49,22 @@ const emptyFilters: UserFiltersState = {
   dateTo: '',
 };
 
+const userTypeLabels: Record<string, string> = {
+  admin: 'Admin',
+  company: 'Empresa',
+  candidate: 'Candidato',
+};
+
+const userStatusLabels: Record<string, string> = {
+  active: 'Ativo',
+  inactive: 'Inativo',
+  suspended: 'Suspenso',
+  pending: 'Pendente',
+};
+
 export default function AdminUsers() {
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filters, setFilters] = useState<UserFiltersState>(emptyFilters);
@@ -168,6 +185,34 @@ export default function AdminUsers() {
     setSelectedIds([]);
   };
 
+  const handleExportCSV = useCallback(() => {
+    if (filteredUsers.length === 0) {
+      toast({
+        title: 'Nenhum dado para exportar',
+        description: 'Ajuste os filtros para incluir usuarios na exportacao.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    exportToCSV(
+      filteredUsers,
+      [
+        { key: 'name', header: 'Nome', accessor: (u) => u.name },
+        { key: 'email', header: 'Email', accessor: (u) => u.email },
+        { key: 'type', header: 'Tipo', accessor: (u) => userTypeLabels[u.type] || u.type },
+        { key: 'status', header: 'Status', accessor: (u) => userStatusLabels[u.status || 'active'] || (u.status || 'active') },
+        { key: 'createdAt', header: 'Cadastro', accessor: (u) => u.createdAt ? formatDateBR(u.createdAt) : '' },
+      ],
+      `usuarios-recrutars-${getExportDateSuffix()}`
+    );
+
+    toast({
+      title: 'Exportacao concluida',
+      description: `${filteredUsers.length} usuario${filteredUsers.length !== 1 ? 's' : ''} exportado${filteredUsers.length !== 1 ? 's' : ''} com sucesso.`,
+    });
+  }, [filteredUsers, toast]);
+
   if (isLoadingUsers) {
     return (
       <DashboardLayout userType="admin">
@@ -207,7 +252,7 @@ export default function AdminUsers() {
                 Gerencie todos os usuários da plataforma. Visualize perfis, status e tipos de conta.
               </p>
             </div>
-            <Button variant="outline" size="sm" className="shrink-0">
+            <Button variant="outline" size="sm" className="shrink-0" onClick={handleExportCSV}>
               <Download className="w-4 h-4 mr-2" />
               Exportar CSV
             </Button>

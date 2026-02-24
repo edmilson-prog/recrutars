@@ -11,7 +11,14 @@ import {
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
 import { useUsers } from '@/hooks/useUsersQuery';
-import { usePermissionGroups, usePermissions } from '@/hooks/useRBACQuery';
+import {
+  usePermissionGroups,
+  usePermissions,
+  useCreatePermissionGroup,
+  useUpdatePermissionGroup,
+  useDeletePermissionGroup,
+} from '@/hooks/useRBACQuery';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +66,14 @@ export default function AdminPermissionGroups() {
   const { data: groupsData, isLoading: isLoadingGroups } = usePermissionGroups();
   const { data: permissionsData, isLoading: isLoadingPermissions } = usePermissions();
 
+  // Mutation hooks
+  const createGroupMutation = useCreatePermissionGroup();
+  const updateGroupMutation = useUpdatePermissionGroup();
+  const deleteGroupMutation = useDeletePermissionGroup();
+  const { toast } = useToast();
+
+  const isSaving = createGroupMutation.isPending || updateGroupMutation.isPending;
+
   const allUsers = usersResult?.data ?? [];
   const allPermissions = permissionsData ?? [];
 
@@ -103,13 +118,35 @@ export default function AdminPermissionGroups() {
   const handleSave = () => {
     if (!form.name.trim()) return;
 
+    const payload = {
+      name: form.name,
+      description: form.description,
+      permissionCodes: form.permissionCodes,
+      memberUserIds: form.memberUserIds,
+    };
+
     if (editingId) {
+      // Optimistic local update
       setGroups(prev => prev.map(g =>
         g.id === editingId
-          ? { ...g, name: form.name, description: form.description, permissionCodes: form.permissionCodes, memberUserIds: form.memberUserIds }
+          ? { ...g, ...payload }
           : g
       ));
+
+      updateGroupMutation.mutate(
+        { id: editingId, data: payload },
+        {
+          onSuccess: () => {
+            toast({ title: 'Grupo atualizado', description: 'As alterações foram salvas com sucesso.' });
+            setDialogOpen(false);
+          },
+          onError: () => {
+            toast({ title: 'Erro ao salvar grupo', description: 'Não foi possível atualizar o grupo. Tente novamente.', variant: 'destructive' });
+          },
+        },
+      );
     } else {
+      // Optimistic local insert
       const newGroup: PermissionGroup = {
         id: `group-${Date.now()}`,
         name: form.name,
@@ -119,12 +156,34 @@ export default function AdminPermissionGroups() {
         createdAt: new Date().toISOString(),
       };
       setGroups(prev => [...prev, newGroup]);
+
+      createGroupMutation.mutate(
+        payload,
+        {
+          onSuccess: () => {
+            toast({ title: 'Grupo criado com sucesso', description: `O grupo "${form.name}" foi criado.` });
+            setDialogOpen(false);
+          },
+          onError: () => {
+            toast({ title: 'Erro ao salvar grupo', description: 'Não foi possível criar o grupo. Tente novamente.', variant: 'destructive' });
+          },
+        },
+      );
     }
-    setDialogOpen(false);
   };
 
   const handleDelete = (groupId: string) => {
+    // Optimistic local removal
     setGroups(prev => prev.filter(g => g.id !== groupId));
+
+    deleteGroupMutation.mutate(groupId, {
+      onSuccess: () => {
+        toast({ title: 'Grupo excluído', description: 'O grupo de permissão foi removido.' });
+      },
+      onError: () => {
+        toast({ title: 'Erro ao excluir grupo', description: 'Não foi possível excluir o grupo. Tente novamente.', variant: 'destructive' });
+      },
+    });
   };
 
   const togglePermission = (code: string) => {
@@ -382,8 +441,9 @@ export default function AdminPermissionGroups() {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSave} disabled={!form.name.trim()}>
+              <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isSaving}>Cancelar</Button>
+              <Button onClick={handleSave} disabled={!form.name.trim() || isSaving}>
+                {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 {editingId ? 'Salvar' : 'Criar Grupo'}
               </Button>
             </DialogFooter>
