@@ -25,6 +25,7 @@ export interface UserFiltersState {
   types: UserType[];
   statuses: UserStatus[];
   roleId: string;
+  noRole: boolean;
   plan: string;
   dateFrom: string;
   dateTo: string;
@@ -79,6 +80,7 @@ export function UserFilters({ filters, onChange, onClear }: UserFiltersProps) {
     filters.types.length +
     filters.statuses.length +
     (filters.roleId ? 1 : 0) +
+    (filters.noRole ? 1 : 0) +
     (filters.plan ? 1 : 0) +
     (filters.dateFrom ? 1 : 0) +
     (filters.dateTo ? 1 : 0);
@@ -156,6 +158,16 @@ export function UserFilters({ filters, onChange, onClear }: UserFiltersProps) {
             )}
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-2 mt-2">
+          <Checkbox
+            id="no-role"
+            checked={filters.noRole}
+            onCheckedChange={(checked) => onChange({ ...filters, noRole: !!checked, roleId: checked ? '' : filters.roleId })}
+          />
+          <label htmlFor="no-role" className="text-sm cursor-pointer text-amber-600 dark:text-amber-400 font-medium">
+            Sem papel atribuído
+          </label>
+        </div>
       </div>
 
       <Separator />

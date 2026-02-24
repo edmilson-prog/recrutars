@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 import {
   Users, ShieldCheck, Building2, UserCheck, UserX, Search,
   SlidersHorizontal, CheckCircle, Ban, ChevronLeft, ChevronRight,
-  Download, Crown, Loader2,
+  Download, Crown, Loader2, ShieldAlert,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUsers, useUpdateUserStatus } from '@/hooks/useUsersQuery';
@@ -44,6 +44,7 @@ const emptyFilters: UserFiltersState = {
   types: [],
   statuses: [],
   roleId: '',
+  noRole: false,
   plan: '',
   dateFrom: '',
   dateTo: '',
@@ -72,7 +73,7 @@ export default function AdminUsers() {
   const [page, setPage] = useState(1);
 
   // Fetch users via service layer
-  const { data: usersResult, isLoading: isLoadingUsers } = useUsers();
+  const { data: usersResult, isLoading: isLoadingUsers } = useUsers(undefined, { page: 1, pageSize: 9999 });
   const { data: rolesData } = useRoles();
   const updateStatusMutation = useUpdateUserStatus();
 
@@ -119,6 +120,8 @@ export default function AdminUsers() {
       }
       // Role
       if (filters.roleId && user.roleId !== filters.roleId) return false;
+      // No role
+      if (filters.noRole && user.roleId) return false;
       // Date range
       if (filters.dateFrom && user.createdAt < filters.dateFrom) return false;
       if (filters.dateTo && user.createdAt > filters.dateTo) return false;
@@ -141,13 +144,15 @@ export default function AdminUsers() {
     const candidates = users.filter(u => u.type === 'candidate').length;
     const active = users.filter(u => (u.status || 'active') === 'active').length;
     const inactive = users.filter(u => u.status === 'inactive' || u.status === 'suspended' || u.status === 'pending').length;
+    const noRole = users.filter(u => !u.roleId).length;
     return [
-      { label: 'Total Usuarios', value: total, icon: Users, color: 'bg-primary/10 text-primary' },
-      { label: 'Admins', value: admins, icon: ShieldCheck, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
-      { label: 'Empresas', value: companies, icon: Building2, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
-      { label: 'Candidatos', value: candidates, icon: Crown, color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
-      { label: 'Ativos', value: active, icon: UserCheck, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
-      { label: 'Inativos', value: inactive, icon: UserX, color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
+      { label: 'Total Usuarios', value: total, icon: Users, color: 'bg-primary/10 text-primary', clickable: false },
+      { label: 'Admins', value: admins, icon: ShieldCheck, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', clickable: false },
+      { label: 'Empresas', value: companies, icon: Building2, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', clickable: false },
+      { label: 'Candidatos', value: candidates, icon: Crown, color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', clickable: false },
+      { label: 'Ativos', value: active, icon: UserCheck, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300', clickable: false },
+      { label: 'Inativos', value: inactive, icon: UserX, color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', clickable: false },
+      { label: 'Sem Papel', value: noRole, icon: ShieldAlert, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300', clickable: true },
     ];
   }, [users]);
 
@@ -262,14 +267,18 @@ export default function AdminUsers() {
         <AdminTabNav />
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
           {kpis.map((kpi, index) => (
             <motion.div
               key={kpi.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-card rounded-xl p-4 shadow-soft"
+              onClick={kpi.clickable ? () => setFilters(prev => ({ ...emptyFilters, noRole: true })) : undefined}
+              className={cn(
+                'bg-card rounded-xl p-4 shadow-soft',
+                kpi.clickable && 'cursor-pointer hover:ring-2 hover:ring-amber-400 transition-shadow'
+              )}
             >
               <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center mb-3', kpi.color)}>
                 <kpi.icon className="w-5 h-5" />
@@ -299,9 +308,9 @@ export default function AdminUsers() {
                 <Button variant="outline" className="shrink-0">
                   <SlidersHorizontal className="w-4 h-4 mr-2" />
                   Filtros
-                  {(filters.types.length + filters.statuses.length + (filters.roleId ? 1 : 0)) > 0 && (
+                  {(filters.types.length + filters.statuses.length + (filters.roleId ? 1 : 0) + (filters.noRole ? 1 : 0)) > 0 && (
                     <Badge className="ml-2 h-5 min-w-5 px-1.5 text-xs">
-                      {filters.types.length + filters.statuses.length + (filters.roleId ? 1 : 0)}
+                      {filters.types.length + filters.statuses.length + (filters.roleId ? 1 : 0) + (filters.noRole ? 1 : 0)}
                     </Badge>
                   )}
                 </Button>
