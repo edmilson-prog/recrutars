@@ -5,12 +5,14 @@
       "codename": "Insight",
       "type": "patch",
       "releaseDate": "2026-02-23",
-      "description": "Melhorias no onboarding de candidatos, normalizacao de nomes, enriquecimento da visao admin e correcoes de UX em mensagens e skills.",
+      "description": "Redesign UX/UI do Banco de Talentos e Busca de Vagas com stats bar, MatchRing, toggle lista/grid, paginacao flexivel e filter chips. Normalizacao de nomes, enriquecimento da visao admin e correcoes de UX.",
       "isCurrent": true,
       "changes": [
         {
           "type": "added",
           "items": [
+            "Redesign UX/UI do Banco de Talentos e Busca de Vagas: stats bar, MatchRing SVG, toggle lista/grid, seletor de cards por pagina (12/24/48), ordenacao e filter chips removiveis",
+            "Nome do candidato clicavel na pagina de candidatos salvos — navega direto para o perfil",
             "Aba Visao Geral do admin exibe dados pessoais completos do candidato (CPF, genero, estado civil, nacionalidade, endereco)",
             "Candidatos sem CPF podem preenche-lo diretamente na pagina de perfil",
             "Pre-preenchimento de estado e cidade no perfil profissional a partir do perfil pessoal",
@@ -21,12 +23,14 @@
           "type": "changed",
           "items": [
             "Nomes de candidatos normalizados para MAIUSCULAS e cargos para Titulo (padrao BR)",
-            "Analise Tecnica IA restrita a visao admin — empresas veem apenas a Analise Inteligente no perfil do candidato"
+            "Analise Tecnica IA restrita a visao admin — empresas veem apenas a Analise Inteligente no perfil do candidato",
+            "Datas ISO cruas na busca de vagas formatadas para formato relativo em portugues (ha X dias, dd/mm/yyyy)"
           ]
         },
         {
           "type": "fixed",
           "items": [
+            "Exibicao de nomes em maiusculas forcada tambem para dados pre-normalizacao no banco",
             "Polling assimetrico de mensagens corrigido e fluxo de convite-para-vaga conectado corretamente",
             "Input de skills agora aceita valores separados por virgula no dialog de adicionar habilidade",
             "Acentos faltando em labels da aba Visao Geral do admin"
