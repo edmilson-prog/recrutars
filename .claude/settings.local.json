@@ -118,7 +118,8 @@
       "Bash(git -C /d/claude/recrutars-maike log --oneline --all --grep=\"[Mm]essage\\\\|[Mm]ensagem\")",
       "Bash(git -C /d/claude/recrutars-maike log --oneline src/pages/empresa/Messages.tsx)",
       "mcp__chrome-devtools__handle_dialog",
-      "mcp__chrome-devtools__resize_page"
+      "mcp__chrome-devtools__resize_page",
+      "Bash(echo === Searching for $table ===:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
