@@ -18,6 +18,7 @@ import type { PaginatedResult, PaginationConfig, SortConfig } from '@/services/t
 import {
   getUsersService,
   type UserFilters,
+  type CreateUserData,
 } from '@/services/users/usersService';
 
 // ---------------------------------------------------------------------------
@@ -128,6 +129,24 @@ export function useUpdateUserStatus() {
       queryClient.setQueryData(userKeys.detail(updated.id), updated);
       // Invalidate list queries so they refetch
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// useCreateUser — mutation (admin only, via Edge Function)
+// ---------------------------------------------------------------------------
+
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreateUserData) => {
+      const service = await getUsersService();
+      return service.createUser(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
     },
   });
 }

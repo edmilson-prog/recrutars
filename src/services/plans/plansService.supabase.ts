@@ -261,6 +261,9 @@ export class SupabasePlansService implements IPlansService {
     if (filters?.planId) {
       query = query.eq('plan_id', filters.planId);
     }
+    if (filters?.userId) {
+      query = query.eq('user_id', filters.userId);
+    }
 
     const { data, error } = await query;
     if (error) throw error;

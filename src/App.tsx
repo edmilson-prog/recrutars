@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RBACProvider } from "@/contexts/RBACContext";
@@ -186,6 +186,13 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Redirect /empresa/testes/:testId/resultado → /empresa/testes/:testId
+// Fixes breadcrumb 404: the "resultado" segment generates a link to this non-existent route
+function RedirectToTestDetail() {
+  const { testId } = useParams<{ testId: string }>();
+  return <Navigate to={`/empresa/testes/${testId}`} replace />;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -543,6 +550,7 @@ const App = () => (
                 <CorporateTestResult />
               </ProtectedRoute>
             } />
+            <Route path="/empresa/testes/:testId/resultado" element={<RedirectToTestDetail />} />
             <Route path="/empresa/testes/:testId/comparar" element={
               <ProtectedRoute allowedTypes={['company']}>
                 <CorporateTestCompare />

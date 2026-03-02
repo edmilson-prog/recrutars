@@ -225,7 +225,8 @@ export function useSubscriptions(filters?: SubscriptionFilters) {
     queryKey: [SUBSCRIPTIONS_KEY, filters],
     queryFn: async () => {
       const svc = await getPlansService();
-      return svc.getSubscriptions(filters);
+      const raw = await svc.getSubscriptions(filters);
+      return (raw as unknown as Record<string, unknown>[]).map(normalizeSubscription);
     },
   });
 }

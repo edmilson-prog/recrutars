@@ -17,6 +17,7 @@ export interface SubscriptionFilters {
   status?: SubscriptionStatus;
   userType?: 'candidate' | 'company';
   planId?: string;
+  userId?: string;
 }
 
 export interface CreateSubscriptionData {
