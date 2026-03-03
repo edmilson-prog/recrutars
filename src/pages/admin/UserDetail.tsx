@@ -16,8 +16,10 @@ import { useRoles, useAuditLogs, usePermissionGroups, useAssignRole } from '@/ho
 import { useAuth } from '@/contexts/AuthContext';
 import { useRBAC } from '@/contexts/RBACContext';
 import { useToast } from '@/hooks/use-toast';
-import { formatRelativeDate } from '@/lib/formatters';
+import { formatRelativeDate, formatDateBR } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
+import { useSubscription, useSubscriptions } from '@/hooks/usePlansQuery';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -102,6 +104,27 @@ const auditActionColors: Record<string, string> = {
   group_member_removed: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
 };
 
+const subscriptionPeriodLabels: Record<string, string> = {
+  monthly: 'Mensal',
+  quarterly: 'Trimestral',
+  semiannual: 'Semestral',
+  annual: 'Anual',
+};
+
+const subscriptionStatusConfig: Record<string, { label: string; className: string }> = {
+  active:    { label: 'Ativo',        className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
+  trial:     { label: 'Trial',        className: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300' },
+  expired:   { label: 'Expirado',     className: 'bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400' },
+  cancelled: { label: 'Cancelado',    className: 'bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400' },
+  suspended: { label: 'Suspenso',     className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
+  past_due:  { label: 'Inadimplente', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+  pending:   { label: 'Pendente',     className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
+};
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+}
+
 interface AdminNote {
   id: string;
   text: string;
@@ -121,6 +144,11 @@ export default function AdminUserDetail() {
   const { toast } = useToast();
   const assignRoleMutation = useAssignRole();
   const updateUserMutation = useUpdateUser();
+
+  const { data: activeSubscription, isLoading: isLoadingSubscription } =
+    useSubscription(id || '');
+  const { data: allSubscriptions = [], isLoading: isLoadingHistory } =
+    useSubscriptions({ userId: id });
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -276,12 +304,6 @@ export default function AdminUserDetail() {
       setImpersonateLoading(false);
     }
   };
-
-  // Mock plan data
-  const planHistory = [
-    { plan: 'Essencial', startDate: '2024-03-10', endDate: '2024-09-10', status: 'expired' },
-    { plan: 'Profissional', startDate: '2024-09-10', endDate: null, status: 'active' },
-  ];
 
   return (
     <DashboardLayout userType="admin">
@@ -513,55 +535,141 @@ export default function AdminUserDetail() {
             >
               <h2 className="text-lg font-semibold">Assinatura e Plano</h2>
 
-              {/* Current Plan */}
-              <div className="p-4 border rounded-lg bg-muted/30">
-                <div className="flex items-center justify-between">
+              {isLoadingSubscription || isLoadingHistory ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-28 w-full rounded-xl" />
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-14 w-full rounded-lg" />
+                  <Skeleton className="h-14 w-full rounded-lg" />
+                </div>
+              ) : originalUser.type === 'admin' ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                    <CreditCard className="w-6 h-6 text-muted-foreground" />
+                  </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Plano Atual</p>
-                    <p className="text-lg font-semibold text-foreground">
-                      {originalUser.type === 'admin' ? 'N/A (Admin)' : 'Profissional'}
+                    <p className="text-sm font-medium text-foreground">Sem assinatura vinculada</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Administradores nao possuem plano de assinatura.
                     </p>
                   </div>
-                  <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-0">
-                    Ativo
-                  </Badge>
                 </div>
-                {originalUser.type !== 'admin' && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Ativo desde 10/09/2024
-                  </p>
-                )}
-              </div>
-
-              {/* History */}
-              {originalUser.type !== 'admin' && (
-                <div>
-                  <h3 className="text-sm font-semibold mb-3">Historico de Planos</h3>
-                  <div className="space-y-2">
-                    {planHistory.map((entry, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
+              ) : (
+                <>
+                  {/* Plano Atual */}
+                  {activeSubscription ? (
+                    <div className="p-5 border rounded-xl bg-gradient-to-br from-muted/40 to-muted/10 space-y-4">
+                      <div className="flex items-start justify-between gap-3">
                         <div>
-                          <span className="text-sm font-medium">{entry.plan}</span>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(entry.startDate).toLocaleDateString('pt-BR')}
-                            {entry.endDate ? ` - ${new Date(entry.endDate).toLocaleDateString('pt-BR')}` : ' - Atual'}
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-0.5">
+                            Plano Atual
                           </p>
+                          <p className="text-xl font-bold text-foreground">{activeSubscription.planName}</p>
+                          {activeSubscription.isTrial && (
+                            <Badge className="mt-1.5 bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300 border-0 text-xs">
+                              Periodo de Trial
+                            </Badge>
+                          )}
                         </div>
                         <Badge
                           variant="outline"
                           className={cn(
-                            'text-xs border-0',
-                            entry.status === 'active'
-                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-                              : 'bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400'
+                            'text-xs border-0 shrink-0',
+                            subscriptionStatusConfig[activeSubscription.status]?.className
                           )}
                         >
-                          {entry.status === 'active' ? 'Ativo' : 'Expirado'}
+                          {subscriptionStatusConfig[activeSubscription.status]?.label ?? activeSubscription.status}
                         </Badge>
                       </div>
-                    ))}
-                  </div>
-                </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-border/50">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Periodo</p>
+                          <p className="text-sm font-medium mt-0.5">
+                            {subscriptionPeriodLabels[activeSubscription.period] ?? activeSubscription.period}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Valor pago</p>
+                          <p className="text-sm font-medium mt-0.5">
+                            {activeSubscription.pricePaid > 0
+                              ? formatCurrency(activeSubscription.pricePaid)
+                              : 'Gratuito'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Inicio</p>
+                          <p className="text-sm font-medium mt-0.5">
+                            {activeSubscription.startDate ? formatDateBR(activeSubscription.startDate) : '—'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            {activeSubscription.isTrial ? 'Fim do Trial' : 'Renovacao'}
+                          </p>
+                          <p className="text-sm font-medium mt-0.5">
+                            {activeSubscription.isTrial
+                              ? (activeSubscription.trialEndDate ? formatDateBR(activeSubscription.trialEndDate) : '—')
+                              : (activeSubscription.renewalDate ? formatDateBR(activeSubscription.renewalDate) : '—')}
+                          </p>
+                        </div>
+                      </div>
+
+                      {activeSubscription.paymentMethod && (
+                        <p className="text-xs text-muted-foreground pt-1 border-t border-border/50">
+                          Pagamento: {activeSubscription.paymentMethod}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
+                      <CreditCard className="w-8 h-8 text-muted-foreground/50" />
+                      <p className="text-sm text-muted-foreground">Nenhuma assinatura ativa no momento.</p>
+                    </div>
+                  )}
+
+                  {/* Historico */}
+                  {allSubscriptions.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                        Historico de Assinaturas
+                      </h3>
+                      <div className="space-y-2">
+                        {allSubscriptions.map((sub) => {
+                          const statusCfg = subscriptionStatusConfig[sub.status];
+                          return (
+                            <div
+                              key={sub.id}
+                              className="flex items-center justify-between p-3 rounded-lg border bg-muted/20 gap-3"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate">{sub.planName}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {sub.startDate ? formatDateBR(sub.startDate) : '—'}
+                                  {' — '}
+                                  {sub.status === 'active' || sub.status === 'trial'
+                                    ? 'Atual'
+                                    : (sub.endDate ? formatDateBR(sub.endDate) : '—')}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-xs text-muted-foreground hidden sm:block">
+                                  {subscriptionPeriodLabels[sub.period] ?? sub.period}
+                                </span>
+                                <Badge
+                                  variant="outline"
+                                  className={cn('text-xs border-0', statusCfg?.className)}
+                                >
+                                  {statusCfg?.label ?? sub.status}
+                                </Badge>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </motion.div>
           </TabsContent>

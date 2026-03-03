@@ -301,11 +301,22 @@ export default function CollaboratorTestSession() {
   // Gauge-Pro assessment hook
   const gaugePro = useGaugeProAssessment({
     candidateId: candidateId || user?.id || 'temp',
-    onComplete: async () => {
-      // Mark invitation as completed
+    onComplete: async (gaugeResult) => {
+      // Mark invitation as completed and persist result to test_results
       if (invitationId) {
         await supabase.functions.invoke('process-collaborator-invite', {
-          body: { action: 'mark_completed', invitation_id: invitationId },
+          body: {
+            action: 'mark_completed',
+            invitation_id: invitationId,
+            result_data: gaugeResult ? {
+              scores: gaugeResult.finalScores,
+              archetype_id: gaugeResult.archetype?.id,
+              primary_dimension: gaugeResult.primaryDimension,
+              secondary_dimension: gaugeResult.secondaryDimension,
+              strengths: gaugeResult.strengths,
+              development_areas: gaugeResult.developmentAreas,
+            } : undefined,
+          },
         });
       }
       setStep('complete');

@@ -11,7 +11,7 @@ import { profileRowToUser } from '@/lib/supabaseConverters';
 import type { User } from '@/types/user';
 import type { UserStatus } from '@/types/rbac';
 import type { PaginatedResult, PaginationConfig, SortConfig } from '../types';
-import type { UserFilters, IUsersService } from './usersService';
+import type { UserFilters, IUsersService, CreateUserData } from './usersService';
 
 // Map camelCase sort fields to snake_case DB columns
 const SORT_FIELD_MAP: Record<string, string> = {
@@ -150,5 +150,14 @@ export class UsersServiceSupabase implements IUsersService {
 
   async updateUserStatus(id: string, status: UserStatus): Promise<User> {
     return this.updateUser(id, { status });
+  }
+
+  async createUser(data: CreateUserData): Promise<{ userId: string }> {
+    const { data: result, error } = await supabase.functions.invoke('admin-create-user', {
+      body: data,
+    });
+    if (error) throw new Error(error.message ?? 'Erro ao criar usuario');
+    if (result?.error) throw new Error(result.error);
+    return { userId: result.userId };
   }
 }

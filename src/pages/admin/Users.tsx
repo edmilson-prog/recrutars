@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 import {
   Users, ShieldCheck, Building2, UserCheck, UserX, Search,
   SlidersHorizontal, CheckCircle, Ban, ChevronLeft, ChevronRight,
-  Download, Crown, Loader2, ShieldAlert,
+  Download, Crown, Loader2, ShieldAlert, UserPlus,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUsers, useUpdateUserStatus } from '@/hooks/useUsersQuery';
@@ -35,6 +35,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
 import { UserFilters, type UserFiltersState } from '@/components/admin/users/UserFilters';
 import { UserTable } from '@/components/admin/users/UserTable';
+import { CreateUserModal } from '@/components/admin/users/CreateUserModal';
 import type { User } from '@/types';
 import type { UserStatus } from '@/types/rbac';
 
@@ -71,6 +72,7 @@ export default function AdminUsers() {
   const [filters, setFilters] = useState<UserFiltersState>(emptyFilters);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [page, setPage] = useState(1);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   // Fetch users via service layer
   const { data: usersResult, isLoading: isLoadingUsers } = useUsers(undefined, { page: 1, pageSize: 9999 });
@@ -257,10 +259,16 @@ export default function AdminUsers() {
                 Gerencie todos os usuários da plataforma. Visualize perfis, status e tipos de conta.
               </p>
             </div>
-            <Button variant="outline" size="sm" className="shrink-0" onClick={handleExportCSV}>
-              <Download className="w-4 h-4 mr-2" />
-              Exportar CSV
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button variant="outline" size="sm" onClick={handleExportCSV}>
+                <Download className="w-4 h-4 mr-2" />
+                Exportar CSV
+              </Button>
+              <Button size="sm" onClick={() => setCreateModalOpen(true)}>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Novo Usuario
+              </Button>
+            </div>
           </div>
         </motion.div>
 
@@ -435,6 +443,7 @@ export default function AdminUsers() {
           </motion.div>
         </div>
       </div>
+      <CreateUserModal open={createModalOpen} onOpenChange={setCreateModalOpen} />
     </DashboardLayout>
   );
 }

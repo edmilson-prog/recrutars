@@ -21,6 +21,15 @@ export interface UserFilters {
   roleId?: string;
 }
 
+export interface CreateUserData {
+  name: string;
+  email: string;
+  type: 'admin' | 'company' | 'candidate';
+  phone?: string;
+  password?: string;
+  sendInviteEmail?: boolean;
+}
+
 // ---------------------------------------------------------------------------
 // Service Interface
 // ---------------------------------------------------------------------------
@@ -43,6 +52,8 @@ export interface IUsersService {
     id: string,
     status: UserStatus,
   ): Promise<User>;
+
+  createUser(data: CreateUserData): Promise<{ userId: string }>;
 }
 
 // ---------------------------------------------------------------------------
