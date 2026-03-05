@@ -722,6 +722,7 @@ export default function CandidateProfile() {
                   <Select
                     value={profile.profileVisibility}
                     onValueChange={(value) => setProfile({ ...profile, profileVisibility: value })}
+                    disabled={candidate?.visibilityLocked}
                   >
                     <SelectTrigger id="profileVisibility">
                       <SelectValue placeholder="Selecione a visibilidade" />
@@ -734,7 +735,14 @@ export default function CandidateProfile() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">Controle quem pode ver seu perfil completo</p>
+                  {candidate?.visibilityLocked ? (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Sua visibilidade está definida como Privado porque você é colaborador de uma empresa.
+                      Essa configuração não pode ser alterada.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Controle quem pode ver seu perfil completo</p>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">

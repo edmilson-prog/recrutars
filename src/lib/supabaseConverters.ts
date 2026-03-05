@@ -84,6 +84,8 @@ export function candidateRowToCandidate(row: CandidateRow): Candidate {
     // Privacidade
     showSalaryExpectation: (row as CandidateRow & { show_salary_expectation?: boolean }).show_salary_expectation ?? false,
     resumeVisibility: (row as CandidateRow & { resume_visibility?: string }).resume_visibility ?? 'companies',
+    // Visibility lock
+    visibilityLocked: (row as CandidateRow & { visibility_locked?: boolean }).visibility_locked ?? false,
     // PRD-083: Onboarding
     onboardingStep: (row as CandidateRow & { onboarding_step?: string }).onboarding_step as Candidate['onboardingStep'] ?? 'completed',
     gender: (row as CandidateRow & { gender?: string }).gender ?? undefined,
