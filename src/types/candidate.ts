@@ -101,6 +101,9 @@ export interface Candidate {
   showSalaryExpectation?: boolean;
   resumeVisibility?: string;
 
+  // Visibility lock (collaborators cannot change visibility)
+  visibilityLocked?: boolean;
+
   // PRD-083: Onboarding
   onboardingStep?: 'registration' | 'personal_profile' | 'professional_profile' | 'gauge_pro_test' | 'completed';
   gender?: string;

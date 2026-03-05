@@ -199,6 +199,7 @@ export class CandidatesServiceSupabase implements ICandidatesService {
     if (updates.privacyAcceptedAt !== undefined) dbUpdates.privacy_accepted_at = updates.privacyAcceptedAt;
     if (updates.lgpdConsentAt !== undefined) dbUpdates.lgpd_consent_at = updates.lgpdConsentAt;
     if (updates.cpf !== undefined) dbUpdates.cpf = updates.cpf;
+    if (updates.visibilityLocked !== undefined) dbUpdates.visibility_locked = updates.visibilityLocked;
 
     const { data, error } = await supabase
       .from('candidates')
