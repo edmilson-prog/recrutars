@@ -1,12 +1,37 @@
 {
   "versions": [
     {
+      "version": "1.32.1",
+      "codename": "Prism",
+      "type": "patch",
+      "releaseDate": "2026-03-07",
+      "description": "Correcoes de RLS para impersonacao de admin e filtro de perfil comportamental na gestao de candidatos.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Filtro 'Perfil Comportamental' na pagina admin Candidatos agora usa os 16 arquetipos Gauge-Pro reais em vez de perfis DISC antigos",
+            "Filtro conectado aos dados reais de gauge_pro_results via useAllGaugeProResults — antes nao filtrava nenhum candidato",
+            "Candidatura via impersonacao de admin retornava 403 (RLS policy violation) — adicionada policy applications_insert_admin",
+            "Highlights de candidatura via impersonacao falhavam silenciosamente — adicionadas policies application_highlights_insert_admin e application_highlights_delete_admin"
+          ]
+        },
+        {
+          "type": "added",
+          "items": [
+            "RLS policies de INSERT/DELETE para admin nas tabelas applications e application_highlights (suporte a impersonacao)"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.32.0",
       "codename": "Prism",
       "type": "minor",
       "releaseDate": "2026-02-23",
       "description": "Redesign UX/UI do Banco de Talentos e Busca de Vagas, sistema RBAC Guardian completo com impersonacao real via AuthContext overlay, audit triggers, CSV export e CRUD de roles/permissoes/grupos.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
