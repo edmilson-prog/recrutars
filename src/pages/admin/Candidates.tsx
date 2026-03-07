@@ -3,7 +3,7 @@
  * PRD-021: Gestão de Candidatos
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -226,7 +226,8 @@ const initialCandidateAdminActions: CandidateAdminAction[] = [
 ];
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useApplications } from '@/hooks/useApplicationsQuery';
-import { useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
+import { useGaugeProResultByCandidate, useAllGaugeProResults } from '@/hooks/useGaugeProQuery';
+import { ARCHETYPE_PROFILES } from '@/data/gaugeProArchetypes';
 import { GaugeProRadarChart } from '@/components/corporate-tests/GaugeProRadarChart';
 import { DimensionBarsGaugePro } from '@/components/corporate-tests/DimensionBarsGaugePro';
 import type { Candidate, CandidateStatus, CandidateAdminAction } from '@/types';
@@ -258,22 +259,10 @@ const TEST_STATUS_OPTIONS = [
   { value: 'not_completed', label: 'Não Realizado' },
 ];
 
-const BEHAVIORAL_PROFILES = [
-  'Executor',
-  'Influenciador',
-  'Cooperativo',
-  'Analítico',
-  'Executor Analítico',
-  'Executor Estratégico',
-  'Executor Organizador',
-  'Executor Influenciador',
-  'Influenciador Estratégico',
-  'Influenciador Comunicador',
-  'Influenciador Executor',
-  'Cooperativo Influenciador',
-  'Analítico Cooperativo',
-  'Analítico Metódico',
-];
+const BEHAVIORAL_PROFILES = ARCHETYPE_PROFILES.map((a) => ({
+  value: a.id,
+  label: a.name,
+}));
 
 export default function AdminCandidates() {
   const navigate = useNavigate();
@@ -312,6 +301,21 @@ export default function AdminCandidates() {
   // Gauge-Pro result for selected candidate (side panel)
   const { data: selectedGaugeResult } = useGaugeProResultByCandidate(selectedCandidate?.id || '');
 
+  // All Gauge-Pro results for behavioral profile filtering
+  const { data: allGaugeResults } = useAllGaugeProResults();
+  const gaugeResultsMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (allGaugeResults) {
+      for (const r of allGaugeResults) {
+        // Keep latest result per candidate (already sorted by generated_at desc)
+        if (!map.has(r.candidateId)) {
+          map.set(r.candidateId, r.archetype?.id ?? '');
+        }
+      }
+    }
+    return map;
+  }, [allGaugeResults]);
+
   // Data
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [actions, setActions] = useState<CandidateAdminAction[]>(initialCandidateAdminActions);
@@ -346,9 +350,10 @@ export default function AdminCandidates() {
       matchesTestStatus = candidate.hasTest === false;
     }
 
+    const candidateArchetypeId = gaugeResultsMap.get(candidate.id);
     const matchesDiscProfile =
       behavioralProfileFilter === 'all' ||
-      (candidate.testResult?.result?.profile === behavioralProfileFilter);
+      candidateArchetypeId === behavioralProfileFilter;
 
     return matchesSearch && matchesStatus && matchesTestStatus && matchesDiscProfile;
   });
@@ -548,8 +553,8 @@ export default function AdminCandidates() {
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
             {BEHAVIORAL_PROFILES.map((profile) => (
-              <SelectItem key={profile} value={profile}>
-                {profile}
+              <SelectItem key={profile.value} value={profile.value}>
+                {profile.label}
               </SelectItem>
             ))}
           </SelectContent>

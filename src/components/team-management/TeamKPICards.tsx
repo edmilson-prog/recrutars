@@ -13,6 +13,12 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 
@@ -38,6 +44,7 @@ type CardColor = keyof typeof iconColorMap;
 
 interface KPICardDef {
   label: string;
+  tooltip: string;
   icon: typeof Users;
   color: CardColor;
   getValue: (props: TeamKPICardsProps) => string | number;
@@ -47,12 +54,14 @@ interface KPICardDef {
 const cardDefinitions: KPICardDef[] = [
   {
     label: 'Total de Colaboradores',
+    tooltip: 'Numero total de colaboradores cadastrados na equipe, incluindo ativos e inativos.',
     icon: Users,
     color: 'blue',
     getValue: (p) => p.totalMembers,
   },
   {
     label: 'Mapeados',
+    tooltip: 'Percentual de colaboradores com perfil comportamental Gauge-Pro concluido.',
     icon: CheckCircle2,
     color: 'green',
     getValue: (p) =>
@@ -63,24 +72,28 @@ const cardDefinitions: KPICardDef[] = [
   },
   {
     label: 'Pendentes',
+    tooltip: 'Colaboradores que ainda nao completaram o mapeamento comportamental.',
     icon: Clock,
     color: 'amber',
     getValue: (p) => p.pendingMembers,
   },
   {
     label: 'Departamentos',
+    tooltip: 'Quantidade de departamentos com colaboradores ativos na equipe.',
     icon: Building2,
     color: 'purple',
     getValue: (p) => p.activeDepartments,
   },
   {
     label: 'Arquetipo Predominante',
+    tooltip: 'Arquetipo comportamental mais frequente entre os colaboradores mapeados.',
     icon: Star,
     color: 'cyan',
     getValue: (p) => p.predominantArchetype,
   },
   {
     label: 'Retestes Pendentes',
+    tooltip: 'Colaboradores com reteste comportamental agendado ou vencido.',
     icon: RefreshCw,
     color: 'red',
     getValue: (p) => p.retestPending,
@@ -89,48 +102,57 @@ const cardDefinitions: KPICardDef[] = [
 
 export function TeamKPICards(props: TeamKPICardsProps) {
   return (
-    <motion.div
-      className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
-      variants={staggerContainer}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-    >
-      {cardDefinitions.map((card) => {
-        const Icon = card.icon;
-        const value = card.getValue(props);
-        const subtitle = card.getSubtitle?.(props);
+    <TooltipProvider delayDuration={300}>
+      <motion.div
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+      >
+        {cardDefinitions.map((card) => {
+          const Icon = card.icon;
+          const value = card.getValue(props);
+          const subtitle = card.getSubtitle?.(props);
 
-        return (
-          <motion.div key={card.label} variants={staggerItem}>
-            <Card className="h-full">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex flex-col items-start gap-3">
-                  <div
-                    className={cn(
-                      'flex items-center justify-center w-10 h-10 rounded-full',
-                      iconColorMap[card.color]
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold leading-tight">{value}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {card.label}
-                    </p>
-                    {subtitle && (
-                      <p className="text-xs text-muted-foreground/70 mt-0.5">
-                        {subtitle}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        );
-      })}
-    </motion.div>
+          return (
+            <motion.div key={card.label} variants={staggerItem}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Card className="h-full cursor-default">
+                    <CardContent className="pt-4 pb-4">
+                      <div className="flex flex-col items-start gap-3">
+                        <div
+                          className={cn(
+                            'flex items-center justify-center w-10 h-10 rounded-full',
+                            iconColorMap[card.color]
+                          )}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold leading-tight">{value}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {card.label}
+                          </p>
+                          {subtitle && (
+                            <p className="text-xs text-muted-foreground/70 mt-0.5">
+                              {subtitle}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[220px] text-center">
+                  <p>{card.tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+            </motion.div>
+          );
+        })}
+      </motion.div>
+    </TooltipProvider>
   );
 }
