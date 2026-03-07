@@ -17,6 +17,7 @@ import { calculateProfileCompletion } from '@/utils/profileCompleteness';
 import { calculateCompleteness } from '@/utils/curriculumCompleteness';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRBAC } from '@/contexts/RBACContext';
 import { GAUGE_PRO_CONFIG } from '@/data/gaugeProConfig';
 import { DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 import type { GaugeProResult, GaugeProDimension } from '@/types/gaugePro';
@@ -38,6 +39,7 @@ const DIMENSION_COLORS: Record<GaugeProDimension, string> = {
 
 export default function CandidateDashboard() {
   const { currentCandidate, user } = useAuth();
+  const { isImpersonating } = useRBAC();
   const candidate = currentCandidate;
 
   const candidateId = candidate?.id ?? '';
@@ -104,14 +106,15 @@ export default function CandidateDashboard() {
       candidate &&
       candidateId &&
       profileCompletion !== candidate.profileCompletion &&
-      !updateCandidateMutation.isPending
+      !updateCandidateMutation.isPending &&
+      !isImpersonating
     ) {
       updateCandidateMutation.mutate({
         id: candidateId,
         updates: { profileCompletion },
       });
     }
-  }, [candidateId, profileCompletion, candidate?.profileCompletion]);
+  }, [candidateId, profileCompletion, candidate?.profileCompletion, isImpersonating]);
 
   // Loading state while candidate loads
   if (!candidate) {
