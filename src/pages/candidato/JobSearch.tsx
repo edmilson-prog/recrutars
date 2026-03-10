@@ -104,7 +104,10 @@ export default function CandidateJobSearch() {
   const candidateId = currentCandidate?.id ?? '';
 
   // Fetch all jobs from service layer
-  const { data: jobsResult, isLoading: isLoadingJobs } = useJobs({ status: 'active' });
+  const { data: jobsResult, isLoading: isLoadingJobs } = useJobs(
+    { status: 'active' },
+    { page: 1, pageSize: 500 },
+  );
   const allJobs = jobsResult?.data ?? [];
 
   // Dynamic locations derived from actual job data in the database
