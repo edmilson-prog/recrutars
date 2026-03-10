@@ -1,12 +1,29 @@
 {
   "versions": [
     {
+      "version": "1.32.2",
+      "codename": "Prism",
+      "type": "patch",
+      "releaseDate": "2026-03-10",
+      "description": "Correcao de contagens zeradas na pagina admin Empresas e busca de vagas do candidato limitada a 10 resultados.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Contagem de vagas ativas e candidaturas na pagina admin Empresas sempre zerada — adicionados triggers DB para sincronizar companies.active_jobs e total_candidates automaticamente",
+            "Busca de vagas do candidato exibia apenas as 10 mais recentes (pageSize padrao do service) — corrigido para buscar todas as vagas ativas para paginacao client-side"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.32.1",
       "codename": "Prism",
       "type": "patch",
       "releaseDate": "2026-03-07",
       "description": "Correcoes de RLS para impersonacao de admin e filtro de perfil comportamental na gestao de candidatos.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
