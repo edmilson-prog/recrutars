@@ -46,6 +46,7 @@ export interface Position {
 /** A team member with optional Gauge-Pro behavioural data. */
 export interface TeamMember {
   id: string;
+  companyId?: string;
   name: string;
   email: string;
   avatar?: string;

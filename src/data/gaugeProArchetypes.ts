@@ -249,3 +249,12 @@ export function determineArchetype(
   const fallbackId = fallbackMap[key] || 'versatile';
   return ARCHETYPE_PROFILES.find(p => p.id === fallbackId)!;
 }
+
+/**
+ * Resolve an archetype ID to its display name.
+ * Returns the archetype name (e.g., "O Comandante") or the raw ID if not found.
+ */
+export function getArchetypeDisplayName(archetypeId: string): string {
+  const profile = ARCHETYPE_PROFILES.find(p => p.id === archetypeId);
+  return profile?.name ?? archetypeId;
+}

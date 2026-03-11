@@ -9,9 +9,22 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import GaugeStatusBadge from "./GaugeStatusBadge";
+import { getArchetypeDisplayName, determineArchetype } from "@/data/gaugeProArchetypes";
+import { classifyAllDimensions } from "@/lib/gaugeProScoring";
 import { DIMENSION_SHORT_NAMES } from "@/types/gaugePro";
 import type { GaugeProDimension } from "@/types/gaugePro";
 import type { TeamMember, Department, Position } from "@/types/teamManagement";
+
+/** Resolve archetype name: from DB field, or computed from scores as fallback */
+function resolveArchetypeName(member: TeamMember): string | null {
+  if (member.archetype) return getArchetypeDisplayName(member.archetype);
+  if (member.gaugeScores) {
+    const classifications = classifyAllDimensions(member.gaugeScores);
+    const profile = determineArchetype(member.gaugeScores, classifications);
+    return profile.name;
+  }
+  return null;
+}
 
 interface TeamMemberCardProps {
   member: TeamMember;
@@ -81,9 +94,9 @@ export default function TeamMemberCard({
             <GaugeStatusBadge status={member.gaugeStatus} />
 
             {/* Archetype */}
-            {member.gaugeStatus === "mapped" && member.archetype && (
+            {member.gaugeStatus === "mapped" && resolveArchetypeName(member) && (
               <p className="text-xs font-medium text-primary">
-                {member.archetype}
+                {resolveArchetypeName(member)}
               </p>
             )}
 

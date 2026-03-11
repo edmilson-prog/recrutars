@@ -181,6 +181,7 @@ export class TeamsServiceSupabase implements ITeamsService {
     const { data, error } = await supabase
       .from('team_members')
       .insert({
+        company_id: input.companyId,
         name: input.name,
         email: input.email,
         avatar_url: input.avatar ?? null,
@@ -395,6 +396,7 @@ export class TeamsServiceSupabase implements ITeamsService {
   private mapTeamMember(row: any): TeamMember {
     return {
       id: row.id,
+      companyId: row.company_id,
       name: row.name,
       email: row.email,
       avatar: row.avatar_url ?? undefined,

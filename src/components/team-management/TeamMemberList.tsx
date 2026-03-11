@@ -46,6 +46,8 @@ import {
 
 import GaugeStatusBadge from "./GaugeStatusBadge";
 import TeamMemberCard from "./TeamMemberCard";
+import { getArchetypeDisplayName, determineArchetype } from "@/data/gaugeProArchetypes";
+import { classifyAllDimensions } from "@/lib/gaugeProScoring";
 
 import type {
   TeamMember,
@@ -53,6 +55,17 @@ import type {
   Position,
   GaugeStatus,
 } from "@/types/teamManagement";
+
+/** Resolve archetype name: from DB field, or computed from scores as fallback */
+function resolveArchetypeName(member: TeamMember): string | null {
+  if (member.archetype) return getArchetypeDisplayName(member.archetype);
+  if (member.gaugeScores) {
+    const classifications = classifyAllDimensions(member.gaugeScores);
+    const profile = determineArchetype(member.gaugeScores, classifications);
+    return profile.name;
+  }
+  return null;
+}
 
 interface TeamMemberListProps {
   members: TeamMember[];
@@ -301,8 +314,8 @@ export default function TeamMemberList({
                           <GaugeStatusBadge status={member.gaugeStatus} />
                         </TableCell>
                         <TableCell className="text-sm">
-                          {member.gaugeStatus === "mapped" && member.archetype
-                            ? member.archetype
+                          {member.gaugeStatus === "mapped"
+                            ? (resolveArchetypeName(member) ?? "—")
                             : "—"}
                         </TableCell>
                         <TableCell className="text-right">
