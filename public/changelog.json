@@ -1,12 +1,28 @@
 {
   "versions": [
     {
+      "version": "1.32.4",
+      "codename": "Prism",
+      "type": "patch",
+      "releaseDate": "2026-03-11",
+      "description": "Correcao de layout dos cards de candidatos reprovados e contratados na pagina de Candidaturas.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Cards de candidatos reprovados e contratados exibidos em linha horizontal com scroll impossibilitando ver todos — alterado para grid responsivo com multiplas linhas"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.32.3",
       "codename": "Prism",
       "type": "patch",
       "releaseDate": "2026-03-11",
       "description": "Correcao de persistencia de cargo na edicao de colaboradores e exibicao de arquetipo na Gestao de Equipes.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
