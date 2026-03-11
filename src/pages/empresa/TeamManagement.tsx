@@ -28,7 +28,8 @@ import {
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useDepartments, useTeamMembers, usePositions, useCreateDepartment, useUpdateDepartment, useCreatePosition, useUpdatePosition } from '@/hooks/useTeamsQuery';
+import { toast } from 'sonner';
+import { useDepartments, useTeamMembers, usePositions, useCreateDepartment, useUpdateDepartment, useCreatePosition, useUpdatePosition, useCreateTeamMember, useUpdateTeamMember } from '@/hooks/useTeamsQuery';
 import { mockTeamAlerts } from '@/data/teamManagementData';
 import TeamDashboard from '@/components/team-management/TeamDashboard';
 import TeamMemberList from '@/components/team-management/TeamMemberList';
@@ -95,6 +96,8 @@ export default function TeamManagement() {
   const updateDept = useUpdateDepartment();
   const createPos = useCreatePosition();
   const updatePos = useUpdatePosition();
+  const createMember = useCreateTeamMember();
+  const updateMember = useUpdateTeamMember();
 
   const isLoading = deptsLoading || membersLoading || positionsLoading;
 
@@ -160,30 +163,35 @@ export default function TeamManagement() {
     }
   };
 
-  // Member handlers (still local state — out of scope)
-  const handleSaveMember = (data: Partial<TeamMember>) => {
-    if (editingMember) {
-      setMembers(prev => prev.map(m => m.id === editingMember.id ? { ...m, ...data } : m));
-    } else {
-      const newMember: TeamMember = {
-        id: `member-${Date.now()}`,
-        name: data.name || '',
-        email: data.email || '',
-        departmentId: data.departmentId || '',
-        positionId: data.positionId || '',
-        hireDate: data.hireDate || new Date().toISOString().split('T')[0],
-        gaugeStatus: 'unmapped',
-        isActive: true,
-        ...data,
-      };
-      setMembers(prev => [...prev, newMember]);
+  // Member handlers — persisted to Supabase via React Query mutations
+  const handleSaveMember = async (data: Partial<TeamMember>) => {
+    try {
+      if (editingMember) {
+        await updateMember.mutateAsync({ id: editingMember.id, updates: data });
+      } else {
+        await createMember.mutateAsync({
+          companyId,
+          name: data.name || '',
+          email: data.email || '',
+          departmentId: data.departmentId || '',
+          positionId: data.positionId || '',
+          hireDate: data.hireDate || new Date().toISOString().split('T')[0],
+          gaugeStatus: 'unmapped' as const,
+          isActive: data.isActive ?? true,
+        } as Omit<TeamMember, 'id'>);
+      }
+    } catch {
+      toast.error(editingMember
+        ? 'Erro ao atualizar colaborador.'
+        : 'Erro ao criar colaborador.'
+      );
     }
     setEditingMember(null);
     setMemberFormOpen(false);
   };
 
-  const handleImportCandidate = (data: Partial<TeamMember>) => {
-    handleSaveMember({ ...data, gaugeStatus: data.gaugeScores ? 'mapped' : 'unmapped' });
+  const handleImportCandidate = async (data: Partial<TeamMember>) => {
+    await handleSaveMember({ ...data, gaugeStatus: data.gaugeScores ? 'mapped' : 'unmapped' });
     setImportModalOpen(false);
   };
 
@@ -287,7 +295,7 @@ export default function TeamManagement() {
             <SpreadsheetImport
               open={spreadsheetImportOpen}
               onOpenChange={setSpreadsheetImportOpen}
-              onImport={(imported) => imported.forEach(m => handleSaveMember(m))}
+              onImport={async (imported) => { for (const m of imported) { await handleSaveMember(m); } }}
               departments={departments}
               positions={positions}
             />

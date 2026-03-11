@@ -1,12 +1,46 @@
 {
   "versions": [
     {
+      "version": "1.32.4",
+      "codename": "Prism",
+      "type": "patch",
+      "releaseDate": "2026-03-11",
+      "description": "Correcao de layout dos cards de candidatos reprovados e contratados na pagina de Candidaturas.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Cards de candidatos reprovados e contratados exibidos em linha horizontal com scroll impossibilitando ver todos — alterado para grid responsivo com multiplas linhas"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.32.3",
+      "codename": "Prism",
+      "type": "patch",
+      "releaseDate": "2026-03-11",
+      "description": "Correcao de persistencia de cargo na edicao de colaboradores e exibicao de arquetipo na Gestao de Equipes.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Edicao de colaborador (cargo, nome, email, departamento) nao persistia no banco — conectado handleSaveMember as mutations useUpdateTeamMember/useCreateTeamMember do React Query",
+            "Arquetipo nunca exibido na lista de equipes mesmo com status Mapeado — adicionado trigger DB para sincronizar test_results para team_members e backfill de dados existentes",
+            "Arquetipo exibido como ID bruto (ex: commander) em vez do nome legivel (ex: O Comandante) — adicionada funcao getArchetypeDisplayName com fallback de computacao a partir dos scores"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.32.2",
       "codename": "Prism",
       "type": "patch",
       "releaseDate": "2026-03-10",
       "description": "Correcao de contagens zeradas na pagina admin Empresas e busca de vagas do candidato limitada a 10 resultados.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

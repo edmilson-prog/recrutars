@@ -917,7 +917,7 @@ export default function CompanyApplications() {
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <div className="flex gap-4 overflow-x-auto py-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 py-4">
                     {groupedApplications.rejected.map((app) => (
                       <ApplicationCard
                         key={app.id}
@@ -953,7 +953,7 @@ export default function CompanyApplications() {
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <div className="flex gap-4 overflow-x-auto py-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 py-4">
                     {groupedApplications.hired.map((app) => (
                       <ApplicationCard
                         key={app.id}
@@ -1903,7 +1903,6 @@ function ApplicationCard({
       transition={{ delay: isDragOverlay ? 0 : index * 0.05 }}
       className={cn(
         'bg-card rounded-lg p-4 transition-shadow border',
-        compact && 'min-w-[200px]',
         isDragging && 'border-dashed border-primary/50',
         isDragOverlay && 'shadow-xl ring-2 ring-primary/30 rotate-[2deg] scale-105',
       )}
