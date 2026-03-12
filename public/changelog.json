@@ -11,14 +11,26 @@
         {
           "type": "added",
           "items": [
+            "Sistema de competencias padronizadas — 80 habilidades (40 tecnicas + 40 comportamentais) em 12 categorias com selecao por prioridade e drag-to-reorder",
+            "Empresas selecionam ate 5 competencias tecnicas e 5 comportamentais por vaga na aba Competencias",
+            "Candidatos selecionam ate 10 habilidades tecnicas e 10 comportamentais no perfil profissional",
+            "Competencias pontuam no Assistente de Redacao — nova categoria com 10pts substituindo Soft Skills (5pts de busca textual)",
+            "Match padronizado entre candidato e vaga baseado em IDs de competencias com peso por prioridade",
             "Periodo avulso (one_time) para planos — permite criar cobancas nao recorrentes para candidatos e empresas",
             "Botao Duplicar plano no admin — clona todos os dados do plano-fonte com prefixo 'Copia de' e limpeza de campos Stripe",
             "Tooltips informativos em todos os campos do formulario de criacao de planos"
           ]
         },
         {
+          "type": "changed",
+          "items": [
+            "Peso do criterio Faixa Salarial reduzido de 25 para 20 pontos no Assistente de Redacao para acomodar nova categoria Competencias"
+          ]
+        },
+        {
           "type": "fixed",
           "items": [
+            "Acentuacao corrigida em todos os nomes de habilidades, categorias e textos de UI do sistema de competencias",
             "Campos de preco exibiam '0' fixo impossivel de apagar — substituido por placeholder com campo vazio editavel",
             "Botao 'Convidar para vaga' inativo no banco de talentos da Licitare — corrigido hook useJobsByCompany para buscar vagas filtradas por empresa sem paginacao",
             "Erro 403 RLS ao favoritar candidato durante impersonacao admin — adicionadas policies admin para SELECT, INSERT, UPDATE e DELETE na tabela favorites"
