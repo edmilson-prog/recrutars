@@ -8,8 +8,8 @@ import { CriteriaWeight, SuggestionCategory } from '@/types/jobAnalyzer';
 export const CRITERIA_WEIGHTS: CriteriaWeight[] = [
   {
     category: 'salary',
-    weight: 0.25,
-    maxPoints: 25,
+    weight: 0.20,
+    maxPoints: 20,
     label: 'Faixa Salarial',
   },
   {
@@ -37,10 +37,10 @@ export const CRITERIA_WEIGHTS: CriteriaWeight[] = [
     label: 'Requisitos Técnicos',
   },
   {
-    category: 'softSkills',
-    weight: 0.05,
-    maxPoints: 5,
-    label: 'Soft Skills',
+    category: 'competencies',
+    weight: 0.10,
+    maxPoints: 10,
+    label: 'Competências',
   },
   {
     category: 'workType',
@@ -93,13 +93,8 @@ export const CLEAR_TITLE_KEYWORDS = [
   'fullstack', 'full-stack', 'frontend', 'front-end', 'backend', 'back-end',
 ];
 
-// Soft skills keywords to look for in description/requirements
-export const SOFT_SKILLS_KEYWORDS = [
-  'comunicação', 'trabalho em equipe', 'liderança', 'proatividade',
-  'organização', 'adaptabilidade', 'criatividade', 'resolução de problemas',
-  'pensamento crítico', 'empatia', 'colaboração', 'gestão de tempo',
-  'flexibilidade', 'autonomia', 'iniciativa', 'resiliência',
-];
+// Minimum competencies for good score
+export const MIN_COMPETENCIES_PER_TYPE = 3;
 
 export function getCriteriaWeight(category: SuggestionCategory): CriteriaWeight | undefined {
   return CRITERIA_WEIGHTS.find(c => c.category === category);

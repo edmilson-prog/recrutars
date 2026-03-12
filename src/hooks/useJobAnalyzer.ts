@@ -34,7 +34,7 @@ const EMPTY_ANALYSIS: JobAnalysis = {
     benefits: 0,
     title: 0,
     requirements: 0,
-    softSkills: 0,
+    competencies: 0,
     workType: 0,
     location: 0,
     bias: 0,
@@ -145,7 +145,9 @@ export function createJobFormData(
     requirements: string;
   },
   benefits: string[],
-  skills: string[]
+  skills: string[],
+  technicalSkillCount: number = 0,
+  behavioralSkillCount: number = 0
 ): JobFormData {
   return {
     title: formState.title,
@@ -160,5 +162,7 @@ export function createJobFormData(
     requirements: formState.requirements,
     benefits,
     skills,
+    technicalSkillCount,
+    behavioralSkillCount,
   };
 }
