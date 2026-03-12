@@ -1,11 +1,11 @@
 {
   "versions": [
     {
-      "version": "1.33.0",
-      "codename": "Prism",
+      "version": "1.34.0",
+      "codename": "Compass",
       "type": "minor",
       "releaseDate": "2026-03-12",
-      "description": "Cobranca avulsa (one-time), clonagem de planos, correcoes de RLS e botao de convite no banco de talentos.",
+      "description": "Sistema de competencias padronizadas com 80 habilidades, integracao com Assistente de Redacao e match por prioridade.",
       "isCurrent": true,
       "changes": [
         {
@@ -15,10 +15,7 @@
             "Empresas selecionam ate 5 competencias tecnicas e 5 comportamentais por vaga na aba Competencias",
             "Candidatos selecionam ate 10 habilidades tecnicas e 10 comportamentais no perfil profissional",
             "Competencias pontuam no Assistente de Redacao — nova categoria com 10pts substituindo Soft Skills (5pts de busca textual)",
-            "Match padronizado entre candidato e vaga baseado em IDs de competencias com peso por prioridade",
-            "Periodo avulso (one_time) para planos — permite criar cobancas nao recorrentes para candidatos e empresas",
-            "Botao Duplicar plano no admin — clona todos os dados do plano-fonte com prefixo 'Copia de' e limpeza de campos Stripe",
-            "Tooltips informativos em todos os campos do formulario de criacao de planos"
+            "Match padronizado entre candidato e vaga baseado em IDs de competencias com peso por prioridade"
           ]
         },
         {
@@ -30,7 +27,30 @@
         {
           "type": "fixed",
           "items": [
-            "Acentuacao corrigida em todos os nomes de habilidades, categorias e textos de UI do sistema de competencias",
+            "Acentuacao corrigida em todos os nomes de habilidades, categorias e textos de UI do sistema de competencias"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.33.0",
+      "codename": "Prism",
+      "type": "minor",
+      "releaseDate": "2026-03-12",
+      "description": "Cobranca avulsa (one-time), clonagem de planos, correcoes de RLS e botao de convite no banco de talentos.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Periodo avulso (one_time) para planos — permite criar cobancas nao recorrentes para candidatos e empresas",
+            "Botao Duplicar plano no admin — clona todos os dados do plano-fonte com prefixo 'Copia de' e limpeza de campos Stripe",
+            "Tooltips informativos em todos os campos do formulario de criacao de planos"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
             "Campos de preco exibiam '0' fixo impossivel de apagar — substituido por placeholder com campo vazio editavel",
             "Botao 'Convidar para vaga' inativo no banco de talentos da Licitare — corrigido hook useJobsByCompany para buscar vagas filtradas por empresa sem paginacao",
             "Erro 403 RLS ao favoritar candidato durante impersonacao admin — adicionadas policies admin para SELECT, INSERT, UPDATE e DELETE na tabela favorites"
