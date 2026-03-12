@@ -5,29 +5,29 @@
       "codename": "Compass",
       "type": "minor",
       "releaseDate": "2026-03-12",
-      "description": "Sistema de competencias padronizadas com 80 habilidades, integracao com Assistente de Redacao e match por prioridade.",
+      "description": "Sistema de competências padronizadas com 80 habilidades, integração com Assistente de Redação e match por prioridade.",
       "isCurrent": true,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Sistema de competencias padronizadas — 80 habilidades (40 tecnicas + 40 comportamentais) em 12 categorias com selecao por prioridade e drag-to-reorder",
-            "Empresas selecionam ate 5 competencias tecnicas e 5 comportamentais por vaga na aba Competencias",
-            "Candidatos selecionam ate 10 habilidades tecnicas e 10 comportamentais no perfil profissional",
-            "Competencias pontuam no Assistente de Redacao — nova categoria com 10pts substituindo Soft Skills (5pts de busca textual)",
-            "Match padronizado entre candidato e vaga baseado em IDs de competencias com peso por prioridade"
+            "Sistema de competências padronizadas — 80 habilidades (40 técnicas + 40 comportamentais) em 12 categorias com seleção por prioridade e drag-to-reorder",
+            "Empresas selecionam até 5 competências técnicas e 5 comportamentais por vaga na aba Competências",
+            "Candidatos selecionam até 10 habilidades técnicas e 10 comportamentais no perfil profissional",
+            "Competências pontuam no Assistente de Redação — nova categoria com 10pts substituindo Soft Skills (5pts de busca textual)",
+            "Match padronizado entre candidato e vaga baseado em IDs de competências com peso por prioridade"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "Peso do criterio Faixa Salarial reduzido de 25 para 20 pontos no Assistente de Redacao para acomodar nova categoria Competencias"
+            "Peso do critério Faixa Salarial reduzido de 25 para 20 pontos no Assistente de Redação para acomodar nova categoria Competências"
           ]
         },
         {
           "type": "fixed",
           "items": [
-            "Acentuacao corrigida em todos os nomes de habilidades, categorias e textos de UI do sistema de competencias"
+            "Acentuação corrigida em todos os nomes de habilidades, categorias e textos de UI do sistema de competências"
           ]
         }
       ]
@@ -37,23 +37,23 @@
       "codename": "Prism",
       "type": "minor",
       "releaseDate": "2026-03-12",
-      "description": "Cobranca avulsa (one-time), clonagem de planos, correcoes de RLS e botao de convite no banco de talentos.",
+      "description": "Cobrança avulsa (one-time), clonagem de planos, correções de RLS e botão de convite no banco de talentos.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Periodo avulso (one_time) para planos — permite criar cobancas nao recorrentes para candidatos e empresas",
-            "Botao Duplicar plano no admin — clona todos os dados do plano-fonte com prefixo 'Copia de' e limpeza de campos Stripe",
-            "Tooltips informativos em todos os campos do formulario de criacao de planos"
+            "Período avulso (one_time) para planos — permite criar cobranças não recorrentes para candidatos e empresas",
+            "Botão Duplicar plano no admin — clona todos os dados do plano-fonte com prefixo 'Cópia de' e limpeza de campos Stripe",
+            "Tooltips informativos em todos os campos do formulário de criação de planos"
           ]
         },
         {
           "type": "fixed",
           "items": [
-            "Campos de preco exibiam '0' fixo impossivel de apagar — substituido por placeholder com campo vazio editavel",
-            "Botao 'Convidar para vaga' inativo no banco de talentos da Licitare — corrigido hook useJobsByCompany para buscar vagas filtradas por empresa sem paginacao",
-            "Erro 403 RLS ao favoritar candidato durante impersonacao admin — adicionadas policies admin para SELECT, INSERT, UPDATE e DELETE na tabela favorites"
+            "Campos de preço exibiam '0' fixo impossível de apagar — substituído por placeholder com campo vazio editável",
+            "Botão 'Convidar para vaga' inativo no banco de talentos da Licitare — corrigido hook useJobsByCompany para buscar vagas filtradas por empresa sem paginação",
+            "Erro 403 RLS ao favoritar candidato durante impersonação admin — adicionadas policies admin para SELECT, INSERT, UPDATE e DELETE na tabela favorites"
           ]
         }
       ]
@@ -63,13 +63,13 @@
       "codename": "Prism",
       "type": "patch",
       "releaseDate": "2026-03-11",
-      "description": "Correcao de layout dos cards de candidatos reprovados e contratados na pagina de Candidaturas.",
+      "description": "Correção de layout dos cards de candidatos reprovados e contratados na página de Candidaturas.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Cards de candidatos reprovados e contratados exibidos em linha horizontal com scroll impossibilitando ver todos — alterado para grid responsivo com multiplas linhas"
+            "Cards de candidatos reprovados e contratados exibidos em linha horizontal com scroll impossibilitando ver todos — alterado para grid responsivo com múltiplas linhas"
           ]
         }
       ]
@@ -79,15 +79,15 @@
       "codename": "Prism",
       "type": "patch",
       "releaseDate": "2026-03-11",
-      "description": "Correcao de persistencia de cargo na edicao de colaboradores e exibicao de arquetipo na Gestao de Equipes.",
+      "description": "Correção de persistência de cargo na edição de colaboradores e exibição de arquétipo na Gestão de Equipes.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Edicao de colaborador (cargo, nome, email, departamento) nao persistia no banco — conectado handleSaveMember as mutations useUpdateTeamMember/useCreateTeamMember do React Query",
-            "Arquetipo nunca exibido na lista de equipes mesmo com status Mapeado — adicionado trigger DB para sincronizar test_results para team_members e backfill de dados existentes",
-            "Arquetipo exibido como ID bruto (ex: commander) em vez do nome legivel (ex: O Comandante) — adicionada funcao getArchetypeDisplayName com fallback de computacao a partir dos scores"
+            "Edição de colaborador (cargo, nome, email, departamento) não persistia no banco — conectado handleSaveMember as mutations useUpdateTeamMember/useCreateTeamMember do React Query",
+            "Arquétipo nunca exibido na lista de equipes mesmo com status Mapeado — adicionado trigger DB para sincronizar test_results para team_members e backfill de dados existentes",
+            "Arquétipo exibido como ID bruto (ex: commander) em vez do nome legível (ex: O Comandante) — adicionada função getArchetypeDisplayName com fallback de computação a partir dos scores"
           ]
         }
       ]
@@ -97,14 +97,14 @@
       "codename": "Prism",
       "type": "patch",
       "releaseDate": "2026-03-10",
-      "description": "Correcao de contagens zeradas na pagina admin Empresas e busca de vagas do candidato limitada a 10 resultados.",
+      "description": "Correção de contagens zeradas na página admin Empresas e busca de vagas do candidato limitada a 10 resultados.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Contagem de vagas ativas e candidaturas na pagina admin Empresas sempre zerada — adicionados triggers DB para sincronizar companies.active_jobs e total_candidates automaticamente",
-            "Busca de vagas do candidato exibia apenas as 10 mais recentes (pageSize padrao do service) — corrigido para buscar todas as vagas ativas para paginacao client-side"
+            "Contagem de vagas ativas e candidaturas na página admin Empresas sempre zerada — adicionados triggers DB para sincronizar companies.active_jobs e total_candidates automaticamente",
+            "Busca de vagas do candidato exibia apenas as 10 mais recentes (pageSize padrão do service) — corrigido para buscar todas as vagas ativas para paginação client-side"
           ]
         }
       ]
@@ -114,22 +114,22 @@
       "codename": "Prism",
       "type": "patch",
       "releaseDate": "2026-03-07",
-      "description": "Correcoes de RLS para impersonacao de admin e filtro de perfil comportamental na gestao de candidatos.",
+      "description": "Correções de RLS para impersonação de admin e filtro de perfil comportamental na gestão de candidatos.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Filtro 'Perfil Comportamental' na pagina admin Candidatos agora usa os 16 arquetipos Gauge-Pro reais em vez de perfis DISC antigos",
-            "Filtro conectado aos dados reais de gauge_pro_results via useAllGaugeProResults — antes nao filtrava nenhum candidato",
-            "Candidatura via impersonacao de admin retornava 403 (RLS policy violation) — adicionada policy applications_insert_admin",
-            "Highlights de candidatura via impersonacao falhavam silenciosamente — adicionadas policies application_highlights_insert_admin e application_highlights_delete_admin"
+            "Filtro 'Perfil Comportamental' na página admin Candidatos agora usa os 16 arquétipos Gauge-Pro reais em vez de perfis DISC antigos",
+            "Filtro conectado aos dados reais de gauge_pro_results via useAllGaugeProResults — antes não filtrava nenhum candidato",
+            "Candidatura via impersonação de admin retornava 403 (RLS policy violation) — adicionada policy applications_insert_admin",
+            "Highlights de candidatura via impersonação falhavam silenciosamente — adicionadas policies application_highlights_insert_admin e application_highlights_delete_admin"
           ]
         },
         {
           "type": "added",
           "items": [
-            "RLS policies de INSERT/DELETE para admin nas tabelas applications e application_highlights (suporte a impersonacao)"
+            "RLS policies de INSERT/DELETE para admin nas tabelas applications e application_highlights (suporte a impersonação)"
           ]
         }
       ]
@@ -139,49 +139,49 @@
       "codename": "Prism",
       "type": "minor",
       "releaseDate": "2026-02-23",
-      "description": "Redesign UX/UI do Banco de Talentos e Busca de Vagas, sistema RBAC Guardian completo com impersonacao real via AuthContext overlay, audit triggers, CSV export e CRUD de roles/permissoes/grupos.",
+      "description": "Redesign UX/UI do Banco de Talentos e Busca de Vagas, sistema RBAC Guardian completo com impersonação real via AuthContext overlay, audit triggers, CSV export e CRUD de roles/permissões/grupos.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Impersonacao real (PRD-061): admin visualiza a plataforma como o usuario-alvo — sidebar, dashboard e dados refletem o target",
-            "AuthContext overlay: campo `realUser` sempre retorna o admin, `user` retorna o target durante impersonacao",
-            "Persistencia de sessao de impersonacao via localStorage — sobrevive refresh da pagina",
-            "Redirecionamento automatico ao iniciar impersonacao (candidato → /candidato, empresa → /empresa)",
-            "Retorno automatico para /admin/usuarios/:id ao encerrar impersonacao",
-            "Bypass do OnboardingGuard durante impersonacao — admin ve candidatos sem onboarding completo",
-            "RBAC bridge: validacao de niveis de role + ativacao do overlay no AuthContext em sequencia",
+            "Impersonação real (PRD-061): admin visualiza a plataforma como o usuário-alvo — sidebar, dashboard e dados refletem o target",
+            "AuthContext overlay: campo `realUser` sempre retorna o admin, `user` retorna o target durante impersonação",
+            "Persistência de sessão de impersonação via localStorage — sobrevive refresh da página",
+            "Redirecionamento automático ao iniciar impersonação (candidato → /candidato, empresa → /empresa)",
+            "Retorno automático para /admin/usuários/:id ao encerrar impersonação",
+            "Bypass do OnboardingGuard durante impersonação — admin vê candidatos sem onboarding completo",
+            "RBAC bridge: validação de níveis de role + ativação do overlay no AuthContext em sequência",
             "Audit triggers PostgreSQL (SECURITY DEFINER) para roles, permission_groups, group_members e user_permission_overrides",
-            "Exportacao CSV com BOM UTF-8 para usuarios e logs de auditoria (compativel com Excel)",
-            "CRUD completo para roles, permissoes e grupos de permissao com mutations React Query",
-            "Redesign UX/UI do Banco de Talentos e Busca de Vagas: stats bar, MatchRing SVG, toggle lista/grid, seletor de cards por pagina (12/24/48), ordenacao e filter chips removiveis",
-            "Nome do candidato clicavel na pagina de candidatos salvos — navega direto para o perfil",
-            "Aba Visao Geral do admin exibe dados pessoais completos do candidato (CPF, genero, estado civil, nacionalidade, endereco)",
-            "Candidatos sem CPF podem preenche-lo diretamente na pagina de perfil",
-            "Pre-preenchimento de estado e cidade no perfil profissional a partir do perfil pessoal",
-            "Seletores de ano/mes/dia substituem campo de data nativo no onboarding (melhor UX mobile)"
+            "Exportação CSV com BOM UTF-8 para usuários e logs de auditoria (compatível com Excel)",
+            "CRUD completo para roles, permissões e grupos de permissão com mutations React Query",
+            "Redesign UX/UI do Banco de Talentos e Busca de Vagas: stats bar, MatchRing SVG, toggle lista/grid, seletor de cards por página (12/24/48), ordenação e filter chips removíveis",
+            "Nome do candidato clicável na página de candidatos salvos — navega direto para o perfil",
+            "Aba Visão Geral do admin exibe dados pessoais completos do candidato (CPF, gênero, estado civil, nacionalidade, endereço)",
+            "Candidatos sem CPF podem preenche-lo diretamente na página de perfil",
+            "Pré-preenchimento de estado e cidade no perfil profissional a partir do perfil pessoal",
+            "Seletores de ano/mês/dia substituem campo de data nativo no onboarding (melhor UX mobile)"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "RBACContext usa `realUser` para configurar engine RBAC — permissoes do admin preservadas durante impersonacao",
-            "startImpersonation agora e async — retorna Promise com validacao + carregamento de dados",
-            "Nomes de candidatos normalizados para MAIUSCULAS e cargos para Titulo (padrao BR)",
-            "Analise Tecnica IA restrita a visao admin — empresas veem apenas a Analise Inteligente no perfil do candidato",
-            "Datas ISO cruas na busca de vagas formatadas para formato relativo em portugues (ha X dias, dd/mm/yyyy)"
+            "RBACContext usa `realUser` para configurar engine RBAC — permissões do admin preservadas durante impersonação",
+            "startImpersonation agora é async — retorna Promise com validação + carregamento de dados",
+            "Nomes de candidatos normalizados para MAIUSCULAS e cargos para Título (padrão BR)",
+            "Análise Técnica IA restrita a visão admin — empresas veem apenas a Análise Inteligente no perfil do candidato",
+            "Datas ISO cruas na busca de vagas formatadas para formato relativo em português (há X dias, dd/mm/yyyy)"
           ]
         },
         {
           "type": "fixed",
           "items": [
-            "Migracao de role_id legado: valores slug antigos (role-super-admin) convertidos para UUID real",
-            "Profiles sem role_id recebem role padrao baseado no tipo (candidate/company)",
-            "Exibicao de nomes em maiusculas forcada tambem para dados pre-normalizacao no banco",
-            "Polling assimetrico de mensagens corrigido e fluxo de convite-para-vaga conectado corretamente",
-            "Input de skills agora aceita valores separados por virgula no dialog de adicionar habilidade",
-            "Acentos faltando em labels da aba Visao Geral do admin"
+            "Migração de role_id legado: valores slug antigos (role-super-admin) convertidos para UUID real",
+            "Profiles sem role_id recebem role padrão baseado no tipo (candidate/company)",
+            "Exibição de nomes em maiúsculas forçada também para dados pré-normalização no banco",
+            "Polling assimétrico de mensagens corrigido e fluxo de convite-para-vaga conectado corretamente",
+            "Input de skills agora aceita valores separados por vírgula no dialog de adicionar habilidade",
+            "Acentos faltando em labels da aba Visão Geral do admin"
           ]
         }
       ]
@@ -191,28 +191,28 @@
       "codename": "Insight",
       "type": "patch",
       "releaseDate": "2026-02-22",
-      "description": "Melhorias na experiencia do candidato e empresa: crop/zoom de imagens em uploads de avatar e logo, dados reais de uso do plano, redesign visual do teste Gauge-Pro e correcoes de UX.",
+      "description": "Melhorias na experiência do candidato e empresa: crop/zoom de imagens em uploads de avatar e logo, dados reais de uso do plano, redesign visual do teste Gauge-Pro e correções de UX.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Data/hora da analise IA exibida de forma visivel no header dos cards (abaixo do badge 'Gerado por IA')",
+            "Data/hora da análise IA exibida de forma visível no header dos cards (abaixo do badge 'Gerado por IA')",
             "Crop e zoom de imagem (react-easy-crop) no upload de avatar do onboarding pessoal",
-            "Crop e zoom de imagem no upload de logo da empresa nas configuracoes",
-            "Exportacao de dados pessoais em JSON na aba Conta do candidato (LGPD Art. 18)",
-            "Pre-preenchimento de email e telefone no perfil profissional a partir do cadastro"
+            "Crop e zoom de imagem no upload de logo da empresa nas configurações",
+            "Exportação de dados pessoais em JSON na aba Conta do candidato (LGPD Art. 18)",
+            "Pré-preenchimento de email e telefone no perfil profissional a partir do cadastro"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "Renderizacao da analise IA redesenhada com secoes semanticas coloridas, tabelas de scores com badges e barras de progresso, icones tematicos e callouts destacados",
-            "Scroll wrapper aprimorado nos cards de analise pratica, tecnica e corporativa com fade-out gradiente e scrollbar estilizada",
-            "Prompts de IA atualizados com instrucoes de formatacao markdown para gerar conteudo mais estruturado",
-            "Layout da pagina de resultado Gauge-Pro ampliado de 896px para 1400px (+56%)",
-            "Redesign da tela de conclusao da Parte 1 do Gauge-Pro com barra de progresso e estatisticas",
-            "Redesign do intro de cenarios situacionais com grid de estatisticas e preview de formato",
+            "Renderização da análise IA redesenhada com seções semânticas coloridas, tabelas de scores com badges e barras de progresso, ícones temáticos e callouts destacados",
+            "Scroll wrapper aprimorado nos cards de análise prática, técnica e corporativa com fade-out gradiente e scrollbar estilizada",
+            "Prompts de IA atualizados com instruções de formatação markdown para gerar conteúdo mais estruturado",
+            "Layout da página de resultado Gauge-Pro ampliado de 896px para 1400px (+56%)",
+            "Redesign da tela de conclusão da Parte 1 do Gauge-Pro com barra de progresso e estatísticas",
+            "Redesign do intro de cenários situacionais com grid de estatísticas e preview de formato",
             "Redesign dos labels de perspectiva do Gauge-Pro com cards visuais distintos",
             "Uso do plano do candidato agora exibe dados reais do Supabase em vez de valores fixos",
             "Barra de candidaturas mostra formato X/Y com limite real do plano (5 gratuito, 50 pago)"
@@ -221,16 +221,16 @@
         {
           "type": "removed",
           "items": [
-            "Botoes 'Voltar' e 'Voltar aos Testes' da pagina de resultado Gauge-Pro do candidato"
+            "Botões 'Voltar' e 'Voltar aos Testes' da página de resultado Gauge-Pro do candidato"
           ]
         },
         {
           "type": "fixed",
           "items": [
-            "Textos de 'Por que voce combina' e 'Oportunidades de melhoria' agora exibem dados reais do candidato e da vaga (skills especificas, nivel exigido, % de compatibilidade) em vez de mensagens genericas",
-            "Banner 'Descubra seu Perfil Comportamental' aparecia mesmo apos completar o Gauge-Pro",
+            "Textos de 'Por que você combina' e 'Oportunidades de melhoria' agora exibem dados reais do candidato e da vaga (skills específicas, nível exigido, % de compatibilidade) em vez de mensagens genéricas",
+            "Banner 'Descubra seu Perfil Comportamental' aparecia mesmo após completar o Gauge-Pro",
             "Acentos faltando em textos do fluxo de onboarding",
-            "Secoes duplicadas de seguranca removidas das configuracoes do candidato (ja existiam em Conta)"
+            "Seções duplicadas de segurança removidas das configurações do candidato (já existiam em Conta)"
           ]
         }
       ]
@@ -240,17 +240,17 @@
       "codename": "Insight",
       "type": "minor",
       "releaseDate": "2026-02-22",
-      "description": "Tooltips descritivos nas 5 dimensoes comportamentais do Gauge-Pro, explicando o que cada dimensao mede na pratica (alta vs baixa). Aplicado nas telas de resultado do candidato, perfil no Banco de Talentos e componente reutilizavel de barras.",
+      "description": "Tooltips descritivos nas 5 dimensões comportamentais do Gauge-Pro, explicando o que cada dimensão mede na prática (alta vs baixa). Aplicado nas telas de resultado do candidato, perfil no Banco de Talentos e componente reutilizável de barras.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Tooltips descritivos para as 5 dimensoes comportamentais (D1-D5) com explicacao pratica de alta e baixa pontuacao",
-            "Constante DIMENSION_DESCRIPTIONS centralizada em gaugePro.ts para reuso em toda a aplicacao",
-            "Tooltips nas barras de dimensao da pagina de resultado do candidato (GaugeProResult)",
-            "Tooltips nas barras de dimensao do perfil do candidato na visao da empresa (Banco de Talentos > Detalhes)",
-            "Tooltips enriquecidos no componente reutilizavel DimensionBarsGaugePro (testes corporativos, admin, equipes)"
+            "Tooltips descritivos para as 5 dimensões comportamentais (D1-D5) com explicação prática de alta e baixa pontuação",
+            "Constante DIMENSION_DESCRIPTIONS centralizada em gaugePro.ts para reuso em toda a aplicação",
+            "Tooltips nas barras de dimensão da página de resultado do candidato (GaugeProResult)",
+            "Tooltips nas barras de dimensão do perfil do candidato na visão da empresa (Banco de Talentos > Detalhes)",
+            "Tooltips enriquecidos no componente reutilizável DimensionBarsGaugePro (testes corporativos, admin, equipes)"
           ]
         }
       ]
@@ -260,34 +260,34 @@
       "codename": "Gateway",
       "type": "patch",
       "releaseDate": "2026-02-22",
-      "description": "Redesign visual dos componentes do teste Gauge-Pro e tela de conclusao do onboarding, correcao critica na selecao de respostas dos cenarios situacionais e na geracao de analise inteligente para candidatos.",
+      "description": "Redesign visual dos componentes do teste Gauge-Pro e tela de conclusão do onboarding, correção crítica na seleção de respostas dos cenários situacionais e na geração de análise inteligente para candidatos.",
       "isCurrent": false,
       "changes": [
         {
           "type": "changed",
           "items": [
             "Redesign dos componentes WordGrid, ScenarioCard, ScenarioIntro e BlockCompleteDivider com hierarquia visual aprimorada",
-            "Redesign da tela de conclusao do onboarding com confetti real, checkmark animado SVG, gradient text e orbs decorativos",
-            "Barra de progresso geral no teste Gauge-Pro cobrindo Parte 1 (palavras) e Parte 2 (cenarios)",
-            "Logo monocromatica para dark mode na tela de conclusao do onboarding",
-            "Checklist de etapas concluidas redesenhada como mini-cards com labels de etapa",
-            "Layout e espacamento do perfil profissional ajustados"
+            "Redesign da tela de conclusão do onboarding com confetti real, checkmark animado SVG, gradient text e orbs decorativos",
+            "Barra de progresso geral no teste Gauge-Pro cobrindo Parte 1 (palavras) e Parte 2 (cenários)",
+            "Logo monocromática para dark mode na tela de conclusão do onboarding",
+            "Checklist de etapas concluídas redesenhada como mini-cards com labels de etapa",
+            "Layout e espaçamento do perfil profissional ajustados"
           ]
         },
         {
           "type": "fixed",
           "items": [
-            "Selecao de respostas nos cenarios situacionais (Parte 2) nao funcionava — passava objeto em vez de string para submitScenarioResponse",
+            "Seleção de respostas nos cenários situacionais (Parte 2) não funcionava — passava objeto em vez de string para submitScenarioResponse",
             "Campo selectedOption lia propriedade inexistente (selectedOptionId) do tipo ScenarioResponse",
-            "Erro 401 na geracao de analise inteligente para candidatos — RLS bloqueava leitura das configuracoes de LLM do admin",
-            "Loop infinito de polling de ai_analyses no DevTools apos falha na geracao",
-            "Mensagem de erro da analise inteligente nao era exibida na UI — candidato nao recebia feedback"
+            "Erro 401 na geração de análise inteligente para candidatos — RLS bloqueava leitura das configurações de LLM do admin",
+            "Loop infinito de polling de ai_analyses no DevTools após falha na geração",
+            "Mensagem de erro da análise inteligente não era exibida na UI — candidato não recebia feedback"
           ]
         },
         {
           "type": "security",
           "items": [
-            "RPC get_llm_config() com SECURITY DEFINER permite acesso seguro as configuracoes de LLM sem expor toda a tabela system_settings"
+            "RPC get_llm_config() com SECURITY DEFINER permite acesso seguro as configurações de LLM sem expor toda a tabela system_settings"
           ]
         }
       ]
@@ -298,33 +298,33 @@
       "type": "minor",
       "releaseDate": "2026-02-21",
       "prd": "PRD-083, PRD-084, PRD-085, PRD-086",
-      "description": "Fluxo completo de onboarding para novos candidatos em 4 etapas obrigatorias: cadastro com CPF e senha forte, perfil pessoal, perfil profissional e teste comportamental Gauge-Pro.",
+      "description": "Fluxo completo de onboarding para novos candidatos em 4 etapas obrigatórias: cadastro com CPF e senha forte, perfil pessoal, perfil profissional e teste comportamental Gauge-Pro.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
             "PRD-083: Cadastro progressivo de candidato em 4 sub-etapas (CPF, dados, senha forte, termos LGPD)",
-            "PRD-083: Validacao de CPF com verificacao de unicidade via RPC e mascara de entrada",
-            "PRD-083: Indicador de forca de senha com 5 criterios (8+ chars, maiuscula, minuscula, numero, especial)",
-            "PRD-083: Aceite obrigatorio de Termos de Uso, Politica de Privacidade e consentimento LGPD com timestamps",
+            "PRD-083: Validação de CPF com verificação de unicidade via RPC e máscara de entrada",
+            "PRD-083: Indicador de força de senha com 5 critérios (8+ chars, maiúscula, minúscula, número, especial)",
+            "PRD-083: Aceite obrigatório de Termos de Uso, Política de Privacidade e consentimento LGPD com timestamps",
             "PRD-083: OnboardingGuard que redireciona candidatos para etapa pendente do onboarding",
-            "PRD-083: OnboardingStepIndicator reutilizavel com 4 etapas e indicadores visuais de progresso",
-            "PRD-084: Tela de perfil pessoal com 7 campos obrigatorios (nascimento, genero, estado, cidade, foto, estado civil, nacionalidade)",
-            "PRD-084: Upload de foto de perfil direto para Supabase Storage com validacao de formato e tamanho",
-            "PRD-084: Salvamento progressivo automatico ao sair de cada campo",
+            "PRD-083: OnboardingStepIndicator reutilizável com 4 etapas e indicadores visuais de progresso",
+            "PRD-084: Tela de perfil pessoal com 7 campos obrigatorios (nascimento, gênero, estado, cidade, foto, estado civil, nacionalidade)",
+            "PRD-084: Upload de foto de perfil direto para Supabase Storage com validação de formato e tamanho",
+            "PRD-084: Salvamento progressivo automático ao sair de cada campo",
             "PRD-085: Perfil profissional no onboarding reutilizando ProfessionalProfile com modo onboarding (sem sidebar)",
-            "PRD-085: Verificacao de completude estrita para 7 abas obrigatorias antes de avancar",
-            "PRD-086: Tela de introducao do teste Gauge-Pro com explicacao e informacoes praticas",
-            "PRD-086: Teste Gauge-Pro integrado no fluxo de onboarding com retomada de sessao",
-            "PRD-086: Tela de conclusao com lista de verificacao e botao para acessar a plataforma"
+            "PRD-085: Verificação de completude estrita para 7 abas obrigatórias antes de avancar",
+            "PRD-086: Tela de introdução do teste Gauge-Pro com explicação e informações práticas",
+            "PRD-086: Teste Gauge-Pro integrado no fluxo de onboarding com retomada de sessão",
+            "PRD-086: Tela de conclusão com lista de verificação e botão para acessar a plataforma"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "Pagina de cadastro agora usa formulario progressivo para candidatos (empresa inalterada)",
-            "Rotas de candidato protegidas com OnboardingGuard (candidatos existentes nao afetados)",
+            "Página de cadastro agora usa formulário progressivo para candidatos (empresa inalterada)",
+            "Rotas de candidato protegidas com OnboardingGuard (candidatos existentes não afetados)",
             "Trigger handle_new_user() atualizado para salvar CPF e definir onboarding_step=personal_profile",
             "ProfessionalProfile aceita prop onboardingMode para renderizar sem DashboardLayout"
           ]
@@ -336,29 +336,29 @@
       "codename": "Oracle",
       "type": "patch",
       "releaseDate": "2026-02-20",
-      "description": "Correcoes e melhorias pos-PRD-082: auto-selecao de conversa ao enviar mensagem, cards de analise IA com regenerate/collapsible/scrollbar, fixes criticos no detalhe do candidato admin (Gauge-Pro, hooks crash, 405 IA), moderacao admin e correcao de visibilidade de vagas.",
+      "description": "Correções e melhorias pós-PRD-082: auto-seleção de conversa ao enviar mensagem, cards de análise IA com regenerate/collapsible/scrollbar, fixes críticos no detalhe do candidato admin (Gauge-Pro, hooks crash, 405 IA), moderação admin e correção de visibilidade de vagas.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Auto-selecao de conversa ao navegar para Mensagens via ?candidato= ou ?to= (perfil do candidato, candidaturas, candidatos salvos)",
+            "Auto-seleção de conversa ao navegar para Mensagens via ?candidato= ou ?to= (perfil do candidato, candidaturas, candidatos salvos)",
             "Hook useCreateConversation para criar ou encontrar conversa existente (idempotente)",
-            "Botao 'Regerar' no topo dos cards de analise IA com nome do provedor nos metadados e collapsible unificado em ambos os cards",
-            "Scrollbar nos cards de analise IA para melhor legibilidade em conteudos extensos",
-            "Controles de moderacao no detalhe da empresa admin com acoes de ativar/desativar"
+            "Botão 'Regerar' no topo dos cards de análise IA com nome do provedor nos metadados e collapsible unificado em ambos os cards",
+            "Scrollbar nos cards de análise IA para melhor legibilidade em conteúdos extensos",
+            "Controles de moderação no detalhe da empresa admin com ações de ativar/desativar"
           ]
         },
         {
           "type": "fixed",
           "items": [
-            "Botao 'Enviar Mensagem' no detalhe do candidato agora abre a conversa corretamente na pagina de mensagens",
-            "Erro Radix Select 'value must not be empty string' no filtro de vagas quando conversa nao tem vaga vinculada",
+            "Botão 'Enviar Mensagem' no detalhe do candidato agora abre a conversa corretamente na página de mensagens",
+            "Erro Radix Select 'value must not be empty string' no filtro de vagas quando conversa não tem vaga vinculada",
             "Aba Teste no detalhe do candidato (admin) agora exibe resultado Gauge-Pro em vez de DISC legado",
-            "Crash 'Rendered more hooks' ao abrir detalhe do candidato admin (useMemo apos early return)",
-            "Erro 405 na analise IA causado por fire-and-forget com API key vazia (fallback DEFAULT_SETTINGS)",
-            "Cards de analise IA agora permitem geracao on-demand com botao 'Gerar Analise' e retry em caso de erro",
-            "Bug de visibilidade de vagas corrigido e moderacao admin conectada ao Supabase",
+            "Crash 'Rendered more hooks' ao abrir detalhe do candidato admin (useMemo após early return)",
+            "Erro 405 na análise IA causado por fire-and-forget com API key vazia (fallback DEFAULT_SETTINGS)",
+            "Cards de análise IA agora permitem geração on-demand com botão 'Gerar Análise' e retry em caso de erro",
+            "Bug de visibilidade de vagas corrigido e moderação admin conectada ao Supabase",
             "KPIs hardcoded no dashboard admin substituidos por dados reais"
           ]
         }
@@ -370,34 +370,34 @@
       "type": "minor",
       "releaseDate": "2026-02-20",
       "prd": "PRD-082",
-      "description": "Central de Helpdesk admin inteligente com listagem de tickets, semaforo SLA, detalhe com thread de mensagens e notas internas, painel de contexto do solicitante, auditoria e CSAT in-app. Fases 1+2 do PRD-082.",
+      "description": "Central de Helpdesk admin inteligente com listagem de tickets, semáforo SLA, detalhe com thread de mensagens e notas internas, painel de contexto do solicitante, auditoria e CSAT in-app. Fases 1+2 do PRD-082.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Pagina admin /admin/helpdesk com dashboard de KPIs e listagem de tickets com filtros",
-            "Semaforo SLA visual (verde/ambar/vermelho) com tempo restante e botao estender",
-            "Detalhe do ticket com thread cronologica, notas internas e painel de contexto do solicitante",
-            "Notas internas visiveis apenas para admins (RLS split em ticket_messages)",
-            "Painel de contexto: perfil, plano, trial, engajamento e historico de tickets do solicitante",
+            "Página admin /admin/helpdesk com dashboard de KPIs e listagem de tickets com filtros",
+            "Semáforo SLA visual (verde/âmbar/vermelho) com tempo restante e botão estender",
+            "Detalhe do ticket com thread cronológica, notas internas e painel de contexto do solicitante",
+            "Notas internas visíveis apenas para admins (RLS split em ticket_messages)",
+            "Painel de contexto: perfil, plano, trial, engajamento e histórico de tickets do solicitante",
             "Composer com tabs Resposta/Nota Interna e atalho Ctrl+Enter",
-            "Registro de auditoria automatico para mudancas de status, prioridade, respostas e notas",
-            "CSAT in-app: modal na proxima visita do usuario apos ticket resolvido (1-5 estrelas + comentario)",
+            "Registro de auditoria automático para mudanças de status, prioridade, respostas e notas",
+            "CSAT in-app: modal na próxima visita do usuário após ticket resolvido (1-5 estrelas + comentario)",
             "Tabelas ticket_csat e ticket_audit_log com RLS admin-only",
-            "Funcao calculate_sla_deadline e triggers para auto-calculo de SLA e deteccao de requester_type",
-            "Busca full-text (portugues) no assunto dos tickets",
-            "Prompts de analise comportamental configuraveis pelo admin (system, pratico, tecnico) com fallback para defaults",
-            "Playground LLM em Configuracoes > IA para testar conexao com provedor e validar prompts com dados de candidato ficticio",
-            "Historico de acoes admin no detalhe do candidato persistido na tabela audit_logs (Supabase)"
+            "Função calculate_sla_deadline e triggers para auto-cálculo de SLA e detecção de requester_type",
+            "Busca full-text (português) no assunto dos tickets",
+            "Prompts de análise comportamental configuráveis pelo admin (system, prático, técnico) com fallback para defaults",
+            "Playground LLM em Configurações > IA para testar conexão com provedor e validar prompts com dados de candidato fictício",
+            "Histórico de ações admin no detalhe do candidato persistido na tabela audit_logs (Supabase)"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "Nav admin: Central de Ajuda substituida por Helpdesk com icone Headset",
+            "Nav admin: Central de Ajuda substituída por Helpdesk com ícone Headset",
             "Tipos TS de tickets alinhados com DB (status, priority, sender_type, is_internal_note)",
-            "Service layer de tickets estendida com 12 novos metodos admin",
+            "Service layer de tickets estendida com 12 novos métodos admin",
             "TicketThread e TicketCard atualizados para novos status (in_progress, waiting_user, closed)",
             "LLM API service refatorado para suporte multi-provider unificado (Anthropic, OpenAI, OpenRouter)"
           ]
@@ -405,7 +405,7 @@
         {
           "type": "fixed",
           "items": [
-            "API key dinamica agora e passada diretamente ao provedor LLM (nao depende mais de Vite proxy)"
+            "API key dinâmica agora é passada diretamente ao provedor LLM (não depende mais de Vite proxy)"
           ]
         }
       ]
@@ -416,21 +416,21 @@
       "type": "minor",
       "releaseDate": "2026-02-19",
       "prd": "PRD-081",
-      "description": "Fluxo completo de convite, semi-cadastro e vinculacao de colaboradores para testes comportamentais. Tres canais de entrada (link publico, email direto, da base) convergem em pagina standalone de teste com ativacao de conta pos-avaliacao. Colaboradores convidados aparecem em 'Minha Equipe' com status 'Convite Pendente'.",
+      "description": "Fluxo completo de convite, semi-cadastro e vinculação de colaboradores para testes comportamentais. Três canais de entrada (link público, email direto, da base) convergem em página standalone de teste com ativação de conta pós-avaliação. Colaboradores convidados aparecem em 'Minha Equipe' com status 'Convite Pendente'.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Pagina standalone de teste para colaboradores convidados (/convite/teste/:token) — sem sidebar, reutiliza componentes Gauge-Pro",
-            "Tela de conclusao com ativacao de conta (criar senha + indicador de forca) apos avaliacao",
-            "Edge Function process-collaborator-invite: pre-cadastro silencioso via admin.createUser + magic link",
-            "Canal Link Publico: campo departamento na identificacao + redirecionamento para teste standalone",
-            "Canal Email Direto: link no email aponta para pagina standalone com dados pre-preenchidos",
-            "Canal Da Base: selecao de candidatos existentes cria team_members com status 'invited'",
-            "Pagina de ativacao de conta via email fallback (/ativar-conta) com link de 72h",
+            "Página standalone de teste para colaboradores convidados (/convite/teste/:token) — sem sidebar, reutiliza componentes Gauge-Pro",
+            "Tela de conclusão com ativação de conta (criar senha + indicador de força) após avaliação",
+            "Edge Function process-collaborator-invite: pré-cadastro silencioso via admin.createUser + magic link",
+            "Canal Link Público: campo departamento na identificação + redirecionamento para teste standalone",
+            "Canal Email Direto: link no email aponta para página standalone com dados pré-preenchidos",
+            "Canal Da Base: seleção de candidatos existentes cria team_members com status 'invited'",
+            "Página de ativação de conta via email fallback (/ativar-conta) com link de 72h",
             "Hook useDepartmentsByTestSlug para carregar departamentos via slug do teste",
-            "Template de email para ativacao de conta (email-activate-account.html)"
+            "Template de email para ativação de conta (email-activate-account.html)"
           ]
         },
         {
@@ -439,18 +439,18 @@
             "team_members.department_id agora nullable (suporta empresas sem departamentos)",
             "test_invitations expandida com colunas department_id, team_member_id e invite_origin",
             "Trigger handle_new_user detecta metadata 'invited' para criar perfil com status 'pending'",
-            "Edge Function send-test-invitation atualizada com invite_origin por metodo de convite",
+            "Edge Function send-test-invitation atualizada com invite_origin por método de convite",
             "PublicTestLanding.tsx integrado ao fluxo de semi-cadastro com seletor de departamento",
-            "Tela de conclusao alinhada com referencia visual (processing pill, section label, textos atualizados)"
+            "Tela de conclusão alinhada com referência visual (processing pill, section label, textos atualizados)"
           ]
         },
         {
           "type": "fixed",
           "items": [
-            "Formulario de criacao de senha nao aparecia para usuarios novos apos completar teste (isNewUser perdido entre navegacoes)",
+            "Formulário de criação de senha não aparecia para usuários novos após completar teste (isNewUser perdido entre navegações)",
             "Estado isNewUser agora passado via navigate state de PublicTestLanding para CollaboratorTestSession",
-            "Auto-proceed expandido para pular identificacao redundante quando usuario ja autenticado",
-            "Canal Da Base e login explicitam isNewUser=false para nao exibir formulario de senha indevidamente"
+            "Auto-proceed expandido para pular identificação redundante quando usuário já autenticado",
+            "Canal Da Base e login explicitam isNewUser=false para não exibir formulário de senha indevidamente"
           ]
         }
       ]
@@ -460,14 +460,14 @@
       "codename": "Prism",
       "type": "patch",
       "releaseDate": "2026-02-19",
-      "description": "Botao de regenerar analise IA removido e analise agora exibida automaticamente sem necessidade de F5.",
+      "description": "Botão de regenerar análise IA removido e análise agora exibida automaticamente sem necessidade de F5.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Removido botao de regenerar analise IA que causava confusao — analise agora e exibida automaticamente apos geracao",
-            "Analise IA aparece sem necessidade de recarregar a pagina (F5)"
+            "Removido botão de regenerar análise IA que causava confusao — análise agora é exibida automaticamente após geração",
+            "Análise IA aparece sem necessidade de recarregar a página (F5)"
           ]
         }
       ]
@@ -477,24 +477,24 @@
       "codename": "Prism",
       "type": "minor",
       "releaseDate": "2026-02-19",
-      "description": "OpenRouter como terceiro provedor LLM (multi-provider: Anthropic, OpenAI, Meta, Google via API unificada). Correcao critica no Assistente de Redacao: metricas agora permanecem visiveis em tempo real durante a digitacao (stale-while-revalidate). Beneficios customizados passam a ser contabilizados na analise. Score inicial corrigido para 0 pontos em formularios vazios.",
+      "description": "OpenRouter como terceiro provedor LLM (multi-provider: Anthropic, OpenAI, Meta, Google via API unificada). Correção crítica no Assistente de Redação: métricas agora permanecem visíveis em tempo real durante a digitação (stale-while-revalidate). Benefícios customizados passam a ser contabilizados na análise. Score inicial corrigido para 0 pontos em formulários vazios.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "OpenRouter como terceiro provedor LLM no painel admin de Integracoes",
+            "OpenRouter como terceiro provedor LLM no painel admin de Integrações",
             "Suporte a modelos multi-provider (Anthropic, OpenAI, Meta, Google) via OpenRouter",
-            "Teste de conexao e listagem de modelos para OpenRouter (Edge Functions v2)",
+            "Teste de conexão e listagem de modelos para OpenRouter (Edge Functions v2)",
             "Painel de consumo expandido para 3 provedores com cores distintas"
           ]
         },
         {
           "type": "fixed",
           "items": [
-            "Assistente de Redacao: score e sugestoes desapareciam a cada tecla digitada (flickering) — agora usam padrao stale-while-revalidate",
-            "Assistente de Redacao: beneficios customizados (campo 'outros') nao eram contabilizados na analise",
-            "Assistente de Redacao: formulario vazio comecava com 5 pontos indevidos (default 'remote' no tipo de modalidade)"
+            "Assistente de Redação: score e sugestões desapareciam a cada tecla digitada (flickering) — agora usam padrão stale-while-revalidate",
+            "Assistente de Redação: benefícios customizados (campo 'outros') não eram contabilizados na análise",
+            "Assistente de Redação: formulário vazio começava com 5 pontos indevidos (default 'remote' no tipo de modalidade)"
           ]
         }
       ]
@@ -504,27 +504,27 @@
       "codename": "Beacon",
       "type": "minor",
       "releaseDate": "2026-02-19",
-      "description": "Painel admin de gestao do Assistente IA: toggles para habilitar/desabilitar por tipo de usuario (candidatos e empresas), dashboard com KPIs, grafico de conversas, distribuicao por tipo de usuario, perguntas mais frequentes, escalacoes recentes e feed de atividade. Edge Function chatbot-ai atualizada com verificacao dos flags por userContext.",
+      "description": "Painel admin de gestão do Assistente IA: toggles para habilitar/desabilitar por tipo de usuário (candidatos e empresas), dashboard com KPIs, gráfico de conversas, distribuição por tipo de usuário, perguntas mais frequentes, escalações recentes e feed de atividade. Edge Function chatbot-ai atualizada com verificação dos flags por userContext.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Subcategoria 'Assistente IA' em Admin > Configuracoes > Inteligencia Artificial",
+            "Subcategoria 'Assistente IA' em Admin > Configurações > Inteligência Artificial",
             "Toggles para habilitar/desabilitar o assistente com IA por candidatos e empresas separadamente",
-            "Dashboard com 4 KPI cards: conversas, taxa de resposta IA, tempo medio, taxa de escalacao",
-            "Grafico de area com volume de conversas nos ultimos 30 dias",
-            "Grafico donut com distribuicao de conversas por tipo de usuario",
+            "Dashboard com 4 KPI cards: conversas, taxa de resposta IA, tempo médio, taxa de escalação",
+            "Gráfico de área com volume de conversas nos últimos 30 dias",
+            "Gráfico donut com distribuição de conversas por tipo de usuário",
             "Lista das 10 perguntas mais frequentes com categoria badge",
-            "Tabela de escalacoes recentes com status Aberto/Resolvido",
-            "Feed de atividade recente com badge de origem (IA / Base Local / Escalacao)",
-            "Vale Alimentacao adicionado a lista de beneficios comuns na criacao de vagas"
+            "Tabela de escalações recentes com status Aberto/Resolvido",
+            "Feed de atividade recente com badge de origem (IA / Base Local / Escalação)",
+            "Vale Alimentação adicionado a lista de benefícios comuns na criação de vagas"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "Edge Function chatbot-ai (v2): verifica flags chatbotEnabledCandidates e chatbotEnabledCompanies antes de processar — usuarios desabilitados caem no fallback local de forma silenciosa"
+            "Edge Function chatbot-ai (v2): verifica flags chatbotEnabledCandidates e chatbotEnabledCompanies antes de processar — usuários desabilitados caem no fallback local de forma silenciosa"
           ]
         }
       ]
@@ -534,14 +534,14 @@
       "codename": "Dossier",
       "type": "patch",
       "releaseDate": "2026-02-19",
-      "description": "Correcoes criticas: link publico de testes agora usa dominio canonico de producao (VITE_APP_URL), e criacao de vagas substitui companyId mock por empresa real do usuario autenticado.",
+      "description": "Correções críticas: link público de testes agora usa domínio canônico de produção (VITE_APP_URL), e criação de vagas substitui companyId mock por empresa real do usuário autenticado.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Link publico de testes exibia localhost em vez do dominio de producao — adicionada funcao getAppBaseUrl() com VITE_APP_URL",
-            "Criacao de vaga falhava com FK violation — companyId hardcoded 'company-1' substituido por empresa real via useAuth()"
+            "Link público de testes exibia localhost em vez do domínio de produção — adicionada função getAppBaseUrl() com VITE_APP_URL",
+            "Criação de vaga falhava com FK violation — companyId hardcoded 'company-1' substituído por empresa real via useAuth()"
           ]
         }
       ]
@@ -551,7 +551,7 @@
       "codename": "Dossier",
       "type": "minor",
       "releaseDate": "2026-02-19",
-      "description": "Aba Documentos adicionada ao perfil profissional do candidato. Upload de curriculo em PDF com drag-and-drop, card com metadados e visualizacao. Video de apresentacao por upload ou link externo (YouTube/Vimeo com thumbnail automatico). Migration DB + bucket Supabase Storage.",
+      "description": "Aba Documentos adicionada ao perfil profissional do candidato. Upload de curriculo em PDF com drag-and-drop, card com metadados e visualização. Video de apresentação por upload ou link externo (YouTube/Vimeo com thumbnail automático). Migration DB + bucket Supabase Storage.",
       "isCurrent": false,
       "changes": [
         {
@@ -560,8 +560,8 @@
             "Aba Documentos no perfil profissional do candidato",
             "Upload de curriculo em PDF com drag-and-drop e progresso visual",
             "Card de curriculo salvo com nome, tamanho, data de envio e botoes Visualizar/Remover",
-            "Video de apresentacao: toggle entre upload de arquivo e link externo",
-            "Preview automatico de thumbnail para videos do YouTube",
+            "Video de apresentação: toggle entre upload de arquivo e link externo",
+            "Preview automático de thumbnail para videos do YouTube",
             "Bucket Supabase Storage candidate-documents com policies RLS por candidato",
             "7 novos campos na tabela curriculums (resume_pdf_*, presentation_video_*)"
           ]
@@ -573,22 +573,22 @@
       "codename": "Verify",
       "type": "minor",
       "releaseDate": "2026-02-19",
-      "description": "Fluxo completo de confirmacao de email implementado. Nova pagina /auth/confirm processa token do link de verificacao, confirma a sessao via Supabase verifyOtp e redireciona para o dashboard correto. Templates de email corrigidos com variaveis reais do GoTrue.",
+      "description": "Fluxo completo de confirmação de email implementado. Nova página /auth/confirm processa token do link de verificação, confirma a sessão via Supabase verifyOtp e redireciona para o dashboard correto. Templates de email corrigidos com variáveis reais do GoTrue.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Nova pagina AuthConfirm (/auth/confirm) para processar links de confirmacao de email",
-            "Pagina exibe estados: verificando, confirmado e erro com opcao de reenvio",
-            "Rota publica /auth/confirm registrada no App.tsx"
+            "Nova página AuthConfirm (/auth/confirm) para processar links de confirmação de email",
+            "Página exibe estados: verificando, confirmado e erro com opção de reenvio",
+            "Rota pública /auth/confirm registrada no App.tsx"
           ]
         },
         {
           "type": "fixed",
           "items": [
-            "Template de email de confirmacao corrigido: token_hash=abc123 substituido por variaveis GoTrue reais",
-            "Link do email agora aponta para rota real da aplicacao (/auth/confirm) em vez de placeholder"
+            "Template de email de confirmação corrigido: token_hash=abc123 substituído por variáveis GoTrue reais",
+            "Link do email agora aponta para rota real da aplicação (/auth/confirm) em vez de placeholder"
           ]
         }
       ]
@@ -598,35 +598,35 @@
       "codename": "Forge",
       "type": "minor",
       "releaseDate": "2026-02-19",
-      "description": "Migracao completa do Hub de Testes Comportamentais de dados mock para backend real com Supabase. Novas tabelas, service layer, Edge Function para convites, hooks React Query e pagina publica para candidatos externos.",
+      "description": "Migração completa do Hub de Testes Comportamentais de dados mock para backend real com Supabase. Novas tabelas, service layer, Edge Function para convites, hooks React Query e página pública para candidatos externos.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
             "4 novas tabelas Supabase: company_tests, test_invitations, test_results, test_audit_logs com RLS completo",
-            "Edge Function send-test-invitation com acoes send, resend e cancel",
-            "Service layer completo para testes (interface + implementacao Supabase)",
+            "Edge Function send-test-invitation com ações send, resend e cancel",
+            "Service layer completo para testes (interface + implementação Supabase)",
             "10 React Query hooks e 8 mutations com cache invalidation e toasts",
-            "Pagina publica /teste/:slug para candidatos externos se cadastrarem e iniciarem avaliacao",
-            "Rota publica /teste/:slug registrada no App.tsx"
+            "Página pública /teste/:slug para candidatos externos se cadastrarem e iniciarem avaliação",
+            "Rota pública /teste/:slug registrada no App.tsx"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "Hub de Testes 100% migrado de mock para Supabase real (25+ componentes e paginas)",
+            "Hub de Testes 100% migrado de mock para Supabase real (25+ componentes e páginas)",
             "Audit log de testes migrado de localStorage para tabela test_audit_logs no Supabase",
             "PublicLinkManager persiste slug no banco (company_tests) em vez de estado local",
             "InternalCandidateInvite busca candidatos reais da empresa via servico Supabase",
-            "Dashboard de metricas e KPIs calculados a partir de dados reais"
+            "Dashboard de métricas e KPIs calculados a partir de dados reais"
           ]
         },
         {
           "type": "removed",
           "items": [
-            "companyTestData.ts (312 linhas de dados mock) removido apos migracao completa",
-            "Funcoes de localStorage (getAuditLogs, addAuditLog) removidas de auditLog.ts"
+            "companyTestData.ts (312 linhas de dados mock) removido após migração completa",
+            "Funções de localStorage (getAuditLogs, addAuditLog) removidas de auditLog.ts"
           ]
         }
       ]
@@ -636,34 +636,34 @@
       "codename": "Cockpit",
       "type": "minor",
       "releaseDate": "2026-02-18",
-      "description": "Reestruturacao das configuracoes de IA no painel admin. Novo painel Provedores LLM em Integracoes com suporte a Anthropic e OpenAI, teste de conexao real via Edge Functions, selecao dinamica de modelos e painel de consumo. Agente de Analise simplificado para apenas toggles comportamentais.",
+      "description": "Reestruturação das configurações de IA no painel admin. Novo painel Provedores LLM em Integrações com suporte a Anthropic e OpenAI, teste de conexão real via Edge Functions, seleção dinâmica de modelos e painel de consumo. Agente de Análise simplificado para apenas toggles comportamentais.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Novo painel 'Provedores LLM' em Integracoes com cards individuais para Anthropic e OpenAI",
-            "Teste de conexao real via Edge Function test-llm-connection (chamada minima a API do provedor)",
-            "Listagem dinamica de modelos via Edge Function list-llm-models (Anthropic e OpenAI)",
-            "Seletor de provedor padrao (Anthropic ou OpenAI) para todas as funcionalidades de IA",
-            "Painel de consumo mensal com visao consolidada e por provedor (dados mockados)",
-            "Parametros de geracao colapsaveis por provedor: temperatura (slider) e max tokens",
-            "Campo tipo info-banner no sistema de configuracoes com navegacao entre categorias",
-            "Componente customizado no engine de configuracoes via propriedade customComponent"
+            "Novo painel 'Provedores LLM' em Integrações com cards individuais para Anthropic e OpenAI",
+            "Teste de conexão real via Edge Function test-llm-connection (chamada mínima a API do provedor)",
+            "Listagem dinâmica de modelos via Edge Function list-llm-models (Anthropic e OpenAI)",
+            "Seletor de provedor padrão (Anthropic ou OpenAI) para todas as funcionalidades de IA",
+            "Painel de consumo mensal com visão consolidada e por provedor (dados mockados)",
+            "Parâmetros de geração colapsáveis por provedor: temperatura (slider) e max tokens",
+            "Campo tipo info-banner no sistema de configurações com navegação entre categorias",
+            "Componente customizado no engine de configurações via propriedade customComponent"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "Agente de Analise simplificado: apenas toggles de Analise Pratica e Tecnica + banner informativo",
-            "Settings loader com dual-read: busca configs em Provedores LLM com fallback para localizacao antiga",
-            "Chaves API de LLM (Anthropic e OpenAI) mascaradas via SENSITIVE_KEYS no servico de configuracoes"
+            "Agente de Análise simplificado: apenas toggles de Análise Prática e Técnica + banner informativo",
+            "Settings loader com dual-read: busca configs em Provedores LLM com fallback para localização antiga",
+            "Chaves API de LLM (Anthropic e OpenAI) máscaradas via SENSITIVE_KEYS no servico de configurações"
           ]
         },
         {
           "type": "fixed",
           "items": [
-            "Botao 'Entrar com link magico' desabilitado na tela de login (feature temporariamente removida)"
+            "Botão 'Entrar com link mágico' desabilitado na tela de login (feature temporariamente removida)"
           ]
         }
       ]
@@ -673,26 +673,26 @@
       "codename": "Refine",
       "type": "minor",
       "releaseDate": "2026-02-18",
-      "description": "Polimento geral de UX: banners descritivos em todas as paginas da empresa, melhorias na tela de login, correcao do modal de contratacao e identificacao do candidato nos cards de entrevista.",
+      "description": "Polimento geral de UX: banners descritivos em todas as páginas da empresa, melhorias na tela de login, correção do modal de contratação e identificação do candidato nos cards de entrevista.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Banners descritivos animados em 7 paginas do dashboard da empresa: Candidaturas, Entrevistas, Banco de Talentos, Candidatos Salvos, Hub de Testes, Gestao de Equipes e Notificacoes",
-            "Login: toggle de visibilidade de senha (icone olho/olho-fechado) no campo de senha",
+            "Banners descritivos animados em 7 páginas do dashboard da empresa: Candidaturas, Entrevistas, Banco de Talentos, Candidatos Salvos, Hub de Testes, Gestão de Equipes e Notificações",
+            "Login: toggle de visibilidade de senha (ícone olho/olho-fechado) no campo de senha",
             "Login: 'Lembrar-me' agora salva e restaura o email no localStorage",
-            "Login: trim automatico em todos os campos de email (remove espacos acidentais)"
+            "Login: trim automático em todos os campos de email (remove espaços acidentais)"
           ]
         },
         {
           "type": "fixed",
           "items": [
-            "Banner de trial nao aparecia no dashboard — normalizacao snake_case para camelCase em useSubscription() e useTrialSubscription()",
-            "Links dos componentes de trial (TrialAlert, TrialBadge, TrialBanner) corrigidos para /empresa/configuracoes?tab=plano",
-            "Pagina de Configuracoes agora abre diretamente na aba correta via ?tab= na URL",
-            "Modal de contratacao desproporcional — ampliado para sm:max-w-xl; campos Data de inicio e Salario reorganizados em grid 2 colunas",
-            "Cards de entrevista nao exibiam o nome do candidato — agora exibe nome real com iniciais corretas no Avatar (antes mostrava titulo da entrevista e chars do UUID)"
+            "Banner de trial não aparecia no dashboard — normalização snake_case para camelCase em useSubscription() e useTrialSubscription()",
+            "Links dos componentes de trial (TrialAlert, TrialBadge, TrialBanner) corrigidos para /empresa/configurações?tab=plano",
+            "Página de Configurações agora abre diretamente na aba correta via ?tab= na URL",
+            "Modal de contratação desproporcional — ampliado para sm:max-w-xl; campos Data de início e Salário reorganizados em grid 2 colunas",
+            "Cards de entrevista não exibiam o nome do candidato — agora exibe nome real com iniciais corretas no Avatar (antes mostrava título da entrevista e chars do UUID)"
           ]
         }
       ]
@@ -702,16 +702,16 @@
       "codename": "Gatekeeper",
       "type": "minor",
       "releaseDate": "2026-02-18",
-      "description": "Vinculacao obrigatoria de plano e gestao de trial para empresas. Toda empresa nova recebe automaticamente o plano Basico Empresas em modo trial com duracao dinamica. Empresas existentes foram migradas.",
+      "description": "Vinculação obrigatoria de plano e gestão de trial para empresas. Toda empresa nova recebe automaticamente o plano Básico Empresas em modo trial com duração dinâmica. Empresas existentes foram migradas.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Vinculacao automatica: toda empresa nova recebe trial do plano Basico Empresas no cadastro",
-            "Duracao dinamica: trial lido de plans.trial_duration_days, sem hardcode no codigo (RF-003)",
-            "Migracao: empresas existentes sem subscription normalizadas para trial com auditoria",
-            "Bloqueio pos-trial: empresa com trial expirado ve tela de conversao com planos pagos",
+            "Vinculação automática: toda empresa nova recebe trial do plano Básico Empresas no cadastro",
+            "Duração dinâmica: trial lido de plans.trial_duration_days, sem hardcode no código (RF-003)",
+            "Migração: empresas existentes sem subscription normalizadas para trial com auditoria",
+            "Bloqueio pós-trial: empresa com trial expirado vê tela de conversão com planos pagos",
             "Aviso visual progressivo: badge sutil (16+ dias), banner (8-15 dias), alerta (2-7 dias), urgente (0-1 dia)",
             "TrialGuard: paths de checkout e meu-plano acessiveis mesmo com trial expirado"
           ]
@@ -719,8 +719,8 @@
         {
           "type": "fixed",
           "items": [
-            "Query getSubscription() agora inclui status 'trial' — corrigido bug que impedia deteccao de trials",
-            "Trigger handle_new_user() restaurado com criacao automatica de trial subscription (perdido na migracao 030)"
+            "Query getSubscription() agora inclui status 'trial' — corrigido bug que impedia detecção de trials",
+            "Trigger handle_new_user() restaurado com criação automática de trial subscription (perdido na migração 030)"
           ]
         }
       ]
@@ -730,21 +730,21 @@
       "codename": "Verify",
       "type": "patch",
       "releaseDate": "2026-02-17",
-      "description": "Correcao do link de convite de equipe: redirect agora aponta para a URL correta da aplicacao com pagina dedicada para definir senha.",
+      "description": "Correção do link de convite de equipe: redirect agora aponta para a URL correta da aplicação com página dedicada para definir senha.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Convite de equipe: link do email agora redireciona para a porta correta da aplicacao (antes apontava para localhost:3000)",
+            "Convite de equipe: link do email agora redireciona para a porta correta da aplicação (antes apontava para localhost:3000)",
             "Convite de equipe: Edge Function invite-team-member agora aceita redirect_url e repassa como redirectTo ao Supabase Auth"
           ]
         },
         {
           "type": "added",
           "items": [
-            "Nova pagina /aceitar-convite para membros convidados definirem sua senha ao aceitar o convite",
-            "Fluxo completo de aceitacao: validacao do token, formulario de senha e redirecionamento automatico para o painel da empresa"
+            "Nova página /aceitar-convite para membros convidados definirem sua senha ao aceitar o convite",
+            "Fluxo completo de aceitação: validação do token, formulário de senha e redirecionamento automático para o painel da empresa"
           ]
         }
       ]
@@ -754,13 +754,13 @@
       "codename": "Verify",
       "type": "patch",
       "releaseDate": "2026-02-17",
-      "description": "Deteccao de cadastro duplicado por CNPJ e melhoria na UX do cooldown entre consultas.",
+      "description": "Detecção de cadastro duplicado por CNPJ e melhoria na UX do cooldown entre consultas.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Deteccao de signup repetido: CNPJ ja cadastrado agora exibe mensagem orientativa em vez de erro generico",
+            "Detecção de signup repetido: CNPJ já cadastrado agora exibe mensagem orientativa em vez de erro generico",
             "UX do cooldown de consulta CNPJ melhorada com contador visual e feedback mais claro"
           ]
         }
@@ -771,22 +771,22 @@
       "codename": "Verify",
       "type": "minor",
       "releaseDate": "2026-02-16",
-      "description": "Cadastro de empresa com validacao de CNPJ via API Minha Receita. Fluxo progressivo em 3 etapas com preenchimento automatico dos dados oficiais.",
+      "description": "Cadastro de empresa com validação de CNPJ via API Minha Receita. Fluxo progressivo em 3 etapas com preenchimento automático dos dados oficiais.",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Cadastro empresa: fluxo progressivo em 3 etapas — CNPJ, confirmacao de dados e credenciais",
-            "Cadastro empresa: consulta automatica a API Minha Receita para preencher razao social, nome fantasia, endereco completo, setor e porte",
-            "Cadastro empresa: validacao local de CNPJ com digitos verificadores antes de consultar a API",
-            "Cadastro empresa: verificacao de unicidade do CNPJ — impede cadastro duplicado",
-            "Cadastro empresa: bloqueio de cadastro para empresas com situacao cadastral inativa",
+            "Cadastro empresa: fluxo progressivo em 3 etapas — CNPJ, confirmação de dados e credenciais",
+            "Cadastro empresa: consulta automática a API Minha Receita para preencher razao social, nome fantasia, endereço completo, setor e porte",
+            "Cadastro empresa: validação local de CNPJ com digitos verificadores antes de consultar a API",
+            "Cadastro empresa: verificação de unicidade do CNPJ — impede cadastro duplicado",
+            "Cadastro empresa: bloqueio de cadastro para empresas com situação cadastral inativa",
             "Cadastro empresa: cooldown de 15 segundos entre consultas a API com contador visual",
-            "Cadastro empresa: mascara progressiva no campo CNPJ (XX.XXX.XXX/XXXX-XX)",
-            "Edge Function cnpj-lookup: proxy para API Minha Receita com validacao e verificacao de unicidade",
-            "Banco de dados: 8 novos campos na tabela companies (razao_social, nome_fantasia, cep, logradouro, numero, complemento, bairro, situacao_cadastral)",
-            "Banco de dados: constraint UNIQUE no campo cnpj e funcao RPC check_cnpj_available"
+            "Cadastro empresa: máscara progressiva no campo CNPJ (XX.XXX.XXX/XXXX-XX)",
+            "Edge Function cnpj-lookup: proxy para API Minha Receita com validação e verificação de unicidade",
+            "Banco de dados: 8 novos campos na tabela companies (razao_social, nome_fantasia, cep, logradouro, número, complemento, bairro, situacao_cadastral)",
+            "Banco de dados: constraint UNIQUE no campo cnpj e função RPC check_cnpj_available"
           ]
         },
         {
@@ -803,14 +803,14 @@
       "codename": "Nexus",
       "type": "patch",
       "releaseDate": "2026-02-16",
-      "description": "Correcao do redirect de confirmacao de email no cadastro de empresa e candidato.",
+      "description": "Correção do redirect de confirmação de email no cadastro de empresa e candidato.",
       "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
           "items": [
-            "Cadastro: link de confirmacao de email agora redireciona corretamente para a aplicacao (adicionado emailRedirectTo ao signUp e ao reenvio)",
-            "Cadastro: reenvio de email de confirmacao agora tambem inclui URL de redirect consistente com os demais fluxos de autenticacao"
+            "Cadastro: link de confirmação de email agora redireciona corretamente para a aplicação (adicionado emailRedirectTo ao signUp e ao reenvio)",
+            "Cadastro: reenvio de email de confirmação agora também inclui URL de redirect consistente com os demais fluxos de autenticação"
           ]
         }
       ]
@@ -828,18 +828,18 @@
           "items": [
             "Aba Equipe: convites reais via email usando Supabase Auth — convite cria conta e vincula o novo membro a empresa existente",
             "Aba Equipe: seletor de cargo (Admin/Membro) no modal de convite",
-            "Aba Equipe: acoes de alterar cargo (promover/rebaixar) e remover membro com persistencia no banco",
+            "Aba Equipe: ações de alterar cargo (promover/rebaixar) e remover membro com persistência no banco",
             "Aba Equipe: reenvio e cancelamento de convites pendentes",
-            "Edge Function invite-team-member: gerencia convites, remocao e alteracao de cargo com validacao de permissoes",
+            "Edge Function invite-team-member: gerencia convites, remoção e alteração de cargo com validação de permissões",
             "Tabelas company_users e company_invites no Supabase com RLS completo",
-            "AuthContext: suporte a membros convidados — campo companyRole (admin/member) disponivel no contexto"
+            "AuthContext: suporte a membros convidados — campo companyRole (admin/member) disponível no contexto"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "Trigger handle_new_user() atualizado para detectar usuarios convidados via invited_company_id no metadata",
-            "Helper get_company_id() agora busca tambem na tabela company_users para membros convidados"
+            "Trigger handle_new_user() atualizado para detectar usuários convidados via invited_company_id no metadata",
+            "Helper get_company_id() agora busca também na tabela company_users para membros convidados"
           ]
         }
       ]
@@ -1027,7 +1027,7 @@
             "getConversationMessages() e getLastMessage() retornavam stubs vazios — agora usam React Query",
             "Mapper lia colunas inexistentes — corrigido com JOINs PostgREST",
             "sendMessage inseria receiver_id inválido causando FK violation — removido do INSERT",
-            "markAsRead/createConversation referenciavam coluna unread_count inexistente — removido",
+            "markAsRead/createConversation referênciavam coluna unread_count inexistente — removido",
             "metadata JSONB sofria double-stringify — corrigido",
             "Candidato usava profiles.id em vez de candidates.id — corrigido",
             "Sidebar exibe nomes reais, preview da última mensagem e timestamps"
@@ -1266,7 +1266,7 @@
           "items": [
             "applications_count sincronizado com contagem real de rows em applications",
             "Frontend computa contagem real excluindo candidaturas withdrawn",
-            "Páginação: query de applications no Kanban busca até 500 resultados (antes 10)"
+            "Paginação: query de applications no Kanban busca até 500 resultados (antes 10)"
           ]
         }
       ]
@@ -1282,7 +1282,7 @@
         {
           "type": "fixed",
           "items": [
-            "TDZ crash: candidateApplications referenciada antes da declaração — reordenado",
+            "TDZ crash: candidateApplications referênciada antes da declaração — reordenado",
             "HTTP 400: coluna unread_count adicionada a tabela conversations via migration",
             "RLS policy INSERT em application_history para candidato, empresa e admin",
             "Recandidatura: hasApplied/getApplication excluem withdrawn, createApplication reativa em vez de duplicar"
@@ -1364,7 +1364,7 @@
           "items": [
             "Integração Stripe via 11 Supabase Edge Functions (test-connection, sync-plan, sync-all, create-checkout, preview-upgrade, execute-upgrade, schedule-downgrade, cancel-downgrade, cancel-subscription, reactivate-subscription, webhook)",
             "Service layer + React Query hooks para todas operações Stripe",
-            "Configuração de credenciais Stripe (test/live) no admin com mascaramento",
+            "Configuração de credenciais Stripe (test/live) no admin com máscaramento",
             "Sincronização planos → Stripe Products/Prices com badges de status",
             "Checkout via Stripe Checkout hosted page (PCI compliant)",
             "Webhook handler idempotente com log visual no admin",
@@ -1729,7 +1729,7 @@
       "type": "minor",
       "releaseDate": "2026-02-05",
       "prd": "",
-      "description": "Configurações do admin migradas de localStorage para Supabase. Tabelas system_settings e settings_history com RLS, triggers e mascaramento de campos sensíveis.",
+      "description": "Configurações do admin migradas de localStorage para Supabase. Tabelas system_settings e settings_history com RLS, triggers e máscaramento de campos sensíveis.",
       "isCurrent": false,
       "changes": [
         {
@@ -2350,7 +2350,7 @@
             "16 perfis arquetípicos comportamentais baseados nas combinações D1-D5",
             "Página de resultado com scores, classificações e carreiras recomendadas",
             "Persistência via localStorage com auto-save por etapa",
-            "Badge Mestre Comportamental (epico) +150 XP"
+            "Badge Mestre Comportamental (épico) +150 XP"
           ]
         }
       ]
@@ -2375,9 +2375,9 @@
             "Teste por Vaga (PRD-048): Wizard de criação em 3 passos",
             "Seleção de competências com prioridade crítica/importante",
             "Sistema de convites para candidatos internos",
-            "Links magicos para candidatos externos",
-            "Relatorio detalhado com ajuste de score pelo recrutador",
-            "Decisao de aprovar/avaliar depois/reprovar",
+            "Links mágicos para candidatos externos",
+            "Relatório detalhado com ajuste de score pelo recrutador",
+            "Decisão de aprovar/avaliar depois/reprovar",
             "Comparação lado a lado de até 4 candidatos"
           ]
         },
@@ -2404,10 +2404,10 @@
           "items": [
             "Sistema de gerenciamento de perguntas Gauge-Pro 2.0",
             "222 perguntas em 3 dimensões e 20 categorias",
-            "Dimensões: Personalidade (60), Carater (48), Competências (114)",
+            "Dimensões: Personalidade (60), Caráter (48), Competências (114)",
             "Tipos: Comportamental, Situacional, Autoavaliação",
-            "Níveis: Básico, Intermediario, Avançado",
-            "Página Admin de Categorias com arvore hierarquica",
+            "Níveis: Básico, Intermediário, Avançado",
+            "Página Admin de Categorias com árvore hierárquica",
             "Página Admin de Perguntas com busca, filtros e paginação",
             "CRUD completo: criar, editar, duplicar, ativar/desativar",
             "Itens de menu 'Categorias' e 'Perguntas' no painel Admin"
@@ -2434,11 +2434,11 @@
           "type": "added",
           "items": [
             "Página de Configurações para Admin (/admin/configurações)",
-            "Layout duas colunas: Sidebar categorias (30%) + Conteudo (70%)",
+            "Layout duas colunas: Sidebar categorias (30%) + Conteúdo (70%)",
             "8 categorias expansíveis: Geral, IA, Gamificação, Notificações, Integrações, Usuários, Relatórios, Sistema",
             "Busca global com dropdown de resultados por tipo",
             "Histórico de alterações com filtros por categoria e período",
-            "Campos editaveis: TextField, Toggle, Select, ImageUpload, ColorPicker",
+            "Campos editáveis: TextField, Toggle, Select, ImageUpload, ColorPicker",
             "Persistência em localStorage",
             "Responsivo com Drawer mobile para sidebar"
           ]
@@ -2485,9 +2485,9 @@
           "type": "added",
           "items": [
             "Footer fixo nas áreas autenticadas (candidato, empresa, admin)",
-            "Efeito glassmorphism com backdrop-blur e transparencia",
+            "Efeito glassmorphism com backdrop-blur e transparência",
             "Versão do app exibida dinamicamente",
-            "Credito 'AILA Sistemas Inteligentes' no canto direito",
+            "Crédito 'AILA Sistemas Inteligentes' no canto direito",
             "Suporte a dark mode com cores ajustadas"
           ]
         },
@@ -2506,16 +2506,16 @@
       "type": "minor",
       "releaseDate": "2026-01-17",
       "prd": "PRD-034 a PRD-042",
-      "description": "Features IA, agendamento de entrevistas empresariais, transparencia de match, chatbot, templates de mensagem, fit cultural, páginas institucionais e melhorias UX",
+      "description": "Features IA, agendamento de entrevistas empresariais, transparência de match, chatbot, templates de mensagem, fit cultural, páginas institucionais e melhorias UX",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Agendamento de entrevistas pela empresa com calendario e horarios (PRD-034)",
+            "Agendamento de entrevistas pela empresa com calendário e horários (PRD-034)",
             "Banners de incentivo ao teste comportamental para candidatos (PRD-035)",
-            "Transparencia de match com breakdown e explicabilidade para candidatos (PRD-035)",
-            "Sugestoes IA para descrição de vagas (PRD-036)",
+            "Transparência de match com breakdown e explicabilidade para candidatos (PRD-035)",
+            "Sugestões IA para descrição de vagas (PRD-036)",
             "Auto-preenchimento inteligente de formulários (PRD-037)",
             "Análise IA de compatibilidade candidato-vaga (PRD-038)",
             "Insights IA no dashboard da empresa (PRD-039)",
@@ -2525,7 +2525,7 @@
             "Hero com efeito parallax e carousel de imagens",
             "Página Como Funciona com etapas ilustradas",
             "Páginas institucionais (Quem Somos, Termos, Privacidade)",
-            "Menu dropdown do usuario no header de áreas autenticadas"
+            "Menu dropdown do usuário no header de áreas autenticadas"
           ]
         },
         {
@@ -2558,9 +2558,9 @@
         {
           "type": "added",
           "items": [
-            "10 tipos de notificação especificos para empresas",
+            "10 tipos de notificação específicos para empresas",
             "Sino de notificações no header para empresas",
-            "Dropdown com ultimas 5 notificações",
+            "Dropdown com últimas 5 notificações",
             "Badge com contador de não lidas",
             "Página completa de notificações (/empresa/notificações)",
             "Filtros: Todas, Candidaturas, Entrevistas, Mensagens, Vagas",
@@ -2616,7 +2616,7 @@
             "Modal de comparação lado a lado",
             "Métricas expandidas: Match Score, Experiência, Formação, Salário",
             "Perfil comportamental com gráfico radar mini",
-            "Toggle 'Mostrar apenas diferencas'"
+            "Toggle 'Mostrar apenas diferenças'"
           ]
         }
       ]
@@ -2656,7 +2656,7 @@
             "Bottom Navigation Bar para dispositivos móveis",
             "Skip Link para navegação por teclado",
             "Painel de Configurações de Acessibilidade",
-            "Tamanho de fonte ajustavel (12px a 24px)",
+            "Tamanho de fonte ajustável (12px a 24px)",
             "Toggle para reduzir animações",
             "Toggle para alto contraste"
           ]
@@ -2702,7 +2702,7 @@
           "type": "added",
           "items": [
             "Sistema de XP com pontuação por ações",
-            "5 níveis de progressao: Iniciante até Expert",
+            "5 níveis de progressão: Iniciante até Expert",
             "17 badges organizados em 5 categorias",
             "Sistema de Streak com contador de dias consecutivos",
             "Celebrações visuais ao desbloquear badges (confetti)"
@@ -2721,7 +2721,7 @@
         {
           "type": "added",
           "items": [
-            "Tokens de espacamento, border-radius e timing",
+            "Tokens de espaçamento, border-radius e timing",
             "Sistema de animações centralizado",
             "Hook useReducedMotion para acessibilidade",
             "Componentes de skeleton loading",
@@ -2794,8 +2794,8 @@
             "Página 'Minhas Entrevistas' (/candidato/entrevistas)",
             "3 abas: Pendentes, Confirmadas, Realizadas",
             "Aceitar horário proposto pela empresa",
-            "Sugerir horarios alternativos (até 3)",
-            "Mini-calendario com indicadores de entrevistas",
+            "Sugerir horários alternativos (até 3)",
+            "Mini-calendário com indicadores de entrevistas",
             "Badge de entrevistas pendentes no menu lateral"
           ]
         }
@@ -2813,9 +2813,9 @@
           "type": "added",
           "items": [
             "3 modos de visibilidade: Público, Parcial, Privado",
-            "Modo Parcial: aparece como 'Perfil Anonimo #XXXX'",
-            "Indicador visual 'Anonimo' com badge para empresas",
-            "Avatar genérico para candidatos anonimos"
+            "Modo Parcial: aparece como 'Perfil Anônimo #XXXX'",
+            "Indicador visual 'Anônimo' com badge para empresas",
+            "Avatar genérico para candidatos anônimos"
           ]
         }
       ]
@@ -2831,9 +2831,9 @@
         {
           "type": "added",
           "items": [
-            "Icone de sino no header do dashboard do candidato",
+            "Ícone de sino no header do dashboard do candidato",
             "Badge com contador de notificações não lidas",
-            "Dropdown com as 5 ultimas notificações",
+            "Dropdown com as 5 últimas notificações",
             "Página completa de notificações (/candidato/notificações)",
             "6 tipos de notificação diferentes",
             "Formatação de tempo relativo"
@@ -2872,7 +2872,7 @@
         {
           "type": "added",
           "items": [
-            "Tres templates de PDF: Classico, Moderno, Minimalista",
+            "Três templates de PDF: Clássico, Moderno, Minimalista",
             "Modal de exportação com seleção de template",
             "Checkboxes para seleção de seções a incluir",
             "Opção para incluir link do LinkedIn no PDF",
@@ -2886,7 +2886,7 @@
       "codename": "Legendary Lamport",
       "type": "minor",
       "releaseDate": "2026-01-15",
-      "description": "Sistema avancado de múltiplos currículos",
+      "description": "Sistema avançado de múltiplos currículos",
       "isCurrent": false,
       "changes": [
         {
@@ -2953,16 +2953,16 @@
       "codename": "Innovative Iverson",
       "type": "minor",
       "releaseDate": "2026-01-14",
-      "description": "Dashboard administrativo com visualizações avancadas",
+      "description": "Dashboard administrativo com visualizações avançadas",
       "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Grafico de crescimento de empresas e candidatos",
+            "Gráfico de crescimento de empresas e candidatos",
             "Distribuição visual de candidaturas por status",
             "Ranking das top 5 empresas por vagas ativas",
-            "Seção de ações rapidas",
+            "Seção de ações rápidas",
             "Cards de métricas clicáveis"
           ]
         }
@@ -3079,7 +3079,7 @@
           "type": "added",
           "items": [
             "Filtros por status com contadores",
-            "Formulario completo com checkboxes de beneficios",
+            "Formulário completo com checkboxes de benefícios",
             "Edição de vaga existente",
             "Gestão de status (pausar, reativar, encerrar)",
             "Duplicar e excluir vaga"
@@ -3100,8 +3100,8 @@
           "items": [
             "Saudação personalizada com horário",
             "Cards de métricas clicáveis",
-            "Grafico de barras de candidaturas por vaga",
-            "Seção de ações pendentes e rapidas",
+            "Gráfico de barras de candidaturas por vaga",
+            "Seção de ações pendentes e rápidas",
             "Indicadores de match e teste nas candidaturas"
           ]
         }
@@ -3178,10 +3178,10 @@
         {
           "type": "added",
           "items": [
-            "Botão 'Anterior' para navegação entre questoes",
+            "Botão 'Anterior' para navegação entre questões",
             "Persistência de progresso via localStorage",
             "Tela de processamento animada ao finalizar",
-            "Seção 'Caracteristicas Principais' no resultado",
+            "Seção 'Características Principais' no resultado",
             "Botão 'Baixar PDF'"
           ]
         }
@@ -3220,7 +3220,7 @@
           "items": [
             "Busca de vagas com debounce de 300ms",
             "Dropdown de ordenação (recentes, maior/menor salário)",
-            "Páginação de resultados (10 itens por página)",
+            "Paginação de resultados (10 itens por página)",
             "Página de detalhes da vaga",
             "Seção 'Sobre a empresa' na página de detalhes"
           ]
@@ -3300,7 +3300,7 @@
       "codename": "Reliable Ritchie",
       "type": "minor",
       "releaseDate": "2025-01-10",
-      "description": "Proteção de rotas por tipo de usuario",
+      "description": "Proteção de rotas por tipo de usuário",
       "isCurrent": false,
       "changes": [
         {
@@ -3357,7 +3357,7 @@
             "Estrutura inicial do projeto RecrutaRS",
             "Landing page com seções Hero, Features, HowItWorks, CTA",
             "Sistema de autenticação mockado (Admin, Empresa, Candidato)",
-            "Dashboards para cada tipo de usuario",
+            "Dashboards para cada tipo de usuário",
             "Componentes UI baseados em shadcn/ui",
             "Sistema de rotas com React Router v6"
           ]
