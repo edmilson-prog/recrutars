@@ -93,8 +93,8 @@ export const CLEAR_TITLE_KEYWORDS = [
   'fullstack', 'full-stack', 'frontend', 'front-end', 'backend', 'back-end',
 ];
 
-// Minimum competencies for good score
-export const MIN_COMPETENCIES_PER_TYPE = 3;
+// Minimum competencies for good score (max per type is 5)
+export const MIN_COMPETENCIES_PER_TYPE = 5;
 
 export function getCriteriaWeight(category: SuggestionCategory): CriteriaWeight | undefined {
   return CRITERIA_WEIGHTS.find(c => c.category === category);

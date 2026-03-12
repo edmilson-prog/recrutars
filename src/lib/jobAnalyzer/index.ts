@@ -351,6 +351,7 @@ function analyzeCompetencies(formData: JobFormData): { score: number; suggestion
   const { technicalSkillCount, behavioralSkillCount } = formData;
   const total = technicalSkillCount + behavioralSkillCount;
 
+  // Tier 1: No competencies at all → critical
   if (total === 0) {
     return {
       score: 0,
@@ -367,16 +368,17 @@ function analyzeCompetencies(formData: JobFormData): { score: number; suggestion
     };
   }
 
+  // Tier 2: Only one type filled → important
   if (technicalSkillCount === 0 || behavioralSkillCount === 0) {
     const missing = technicalSkillCount === 0 ? 'técnicas' : 'comportamentais';
     return {
-      score: 0.4,
+      score: 0.3,
       suggestion: createSuggestion(
         'competencies',
         'important',
         `Adicione competências ${missing}`,
         `Selecione competências ${missing} na aba "Competências" para um match mais preciso.`,
-        6,
+        7,
         undefined,
         undefined,
         'add'
@@ -384,15 +386,33 @@ function analyzeCompetencies(formData: JobFormData): { score: number; suggestion
     };
   }
 
+  // Tier 3: Both types but some < 3 → important
+  if (technicalSkillCount < 3 || behavioralSkillCount < 3) {
+    return {
+      score: 0.5,
+      suggestion: createSuggestion(
+        'competencies',
+        'important',
+        'Adicione mais competências',
+        `Você selecionou ${technicalSkillCount} técnica(s) e ${behavioralSkillCount} comportamental(is). Selecione pelo menos 3 de cada tipo para melhor precisão no match.`,
+        5,
+        undefined,
+        undefined,
+        'add'
+      ),
+    };
+  }
+
+  // Tier 4: Both types 3+ but some < 5 → ok (stays visible until 5+5)
   if (technicalSkillCount < MIN_COMPETENCIES_PER_TYPE || behavioralSkillCount < MIN_COMPETENCIES_PER_TYPE) {
     return {
-      score: 0.7,
+      score: 0.8,
       suggestion: createSuggestion(
         'competencies',
         'ok',
-        'Adicione mais competências',
-        `Você selecionou ${technicalSkillCount} técnica(s) e ${behavioralSkillCount} comportamental(is). Selecione pelo menos ${MIN_COMPETENCIES_PER_TYPE} de cada tipo para melhor precisão no match.`,
-        3,
+        'Complete as competências',
+        `Você selecionou ${technicalSkillCount} técnica(s) e ${behavioralSkillCount} comportamental(is). Selecione ${MIN_COMPETENCIES_PER_TYPE} de cada tipo para pontuação máxima.`,
+        2,
         undefined,
         undefined,
         'add'
@@ -400,6 +420,7 @@ function analyzeCompetencies(formData: JobFormData): { score: number; suggestion
     };
   }
 
+  // Tier 5: 5 technical + 5 behavioral → perfect score, no suggestion
   return { score: 1 };
 }
 
