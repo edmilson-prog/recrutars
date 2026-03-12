@@ -9,7 +9,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Save, ArrowLeft, CreditCard, Plus, Trash2,
-  Cloud, CloudOff, RefreshCw, Loader2, Info,
+  Cloud, CloudOff, RefreshCw, Loader2, Info, HelpCircle,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -36,6 +37,7 @@ const PERIOD_LABELS: Record<PlanPeriod, string> = {
   quarterly: 'Trimestral',
   semiannual: 'Semestral',
   annual: 'Anual',
+  one_time: 'Avulso',
 };
 
 const BLANK_PLAN: Plan = {
@@ -46,7 +48,7 @@ const BLANK_PLAN: Plan = {
   description: '',
   descriptionShort: '',
   badge: undefined,
-  prices: { monthly: 0, quarterly: 0, semiannual: 0, annual: 0 },
+  prices: { monthly: 0, quarterly: 0, semiannual: 0, annual: 0, one_time: 0 },
   isActive: true,
   isFree: false,
   order: 0,
@@ -223,7 +225,17 @@ export default function PlanDetail() {
                 <CardContent className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="plan-name">Nome *</Label>
+                      <div className="flex items-center gap-1">
+                        <Label htmlFor="plan-name">Nome *</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p>Nome do plano exibido para os usu&#225;rios na p&#225;gina de planos</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <Input
                         id="plan-name"
                         value={editState.name}
@@ -232,7 +244,17 @@ export default function PlanDetail() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="plan-slug">Slug *</Label>
+                      <div className="flex items-center gap-1">
+                        <Label htmlFor="plan-slug">Slug *</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p>Identificador &#250;nico usado na URL e integra&#231;&#245;es. Use letras min&#250;sculas e h&#237;fens</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <Input
                         id="plan-slug"
                         value={editState.slug}
@@ -246,7 +268,17 @@ export default function PlanDetail() {
                   {isNew ? (
                     <div className="grid sm:grid-cols-3 gap-4">
                       <div className="space-y-1.5">
-                        <Label>Tipo</Label>
+                        <div className="flex items-center gap-1">
+                          <Label>Tipo</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p>Define se o plano é para candidatos ou empresas</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                         <Select
                           value={editState.type}
                           onValueChange={(v) => handleFieldChange('type', v as 'candidate' | 'company')}
@@ -259,7 +291,17 @@ export default function PlanDetail() {
                         </Select>
                       </div>
                       <div className="space-y-1.5">
-                        <Label>Ordem</Label>
+                        <div className="flex items-center gap-1">
+                          <Label>Ordem</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p>Define a posição do plano na listagem. Menor número = aparece primeiro</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                         <Input
                           type="number"
                           min="0"
@@ -268,7 +310,17 @@ export default function PlanDetail() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label>Badge</Label>
+                        <div className="flex items-center gap-1">
+                          <Label>Badge</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p>Texto destacado no card do plano, como 'Mais popular' ou 'Melhor custo-benefício'</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                         <Input
                           value={editState.badge || ''}
                           onChange={(e) => handleFieldChange('badge', e.target.value || undefined)}
@@ -279,7 +331,17 @@ export default function PlanDetail() {
                   ) : (
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label>Ordem</Label>
+                        <div className="flex items-center gap-1">
+                          <Label>Ordem</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p>Define a posição do plano na listagem. Menor número = aparece primeiro</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                         <Input
                           type="number"
                           min="0"
@@ -288,7 +350,17 @@ export default function PlanDetail() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label>Badge</Label>
+                        <div className="flex items-center gap-1">
+                          <Label>Badge</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p>Texto destacado no card do plano, como 'Mais popular' ou 'Melhor custo-benefício'</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                         <Input
                           value={editState.badge || ''}
                           onChange={(e) => handleFieldChange('badge', e.target.value || undefined)}
@@ -299,7 +371,17 @@ export default function PlanDetail() {
                   )}
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="plan-desc-short">Descrição curta</Label>
+                    <div className="flex items-center gap-1">
+                      <Label htmlFor="plan-desc-short">Descrição curta</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p>Resumo exibido no card do plano na página de planos</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                     <Input
                       id="plan-desc-short"
                       value={editState.descriptionShort}
@@ -309,7 +391,17 @@ export default function PlanDetail() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="plan-desc">Descrição completa</Label>
+                    <div className="flex items-center gap-1">
+                      <Label htmlFor="plan-desc">Descrição completa</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p>Texto detalhado exibido na página de detalhes do plano</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                     <Textarea
                       id="plan-desc"
                       value={editState.description}
@@ -334,6 +426,14 @@ export default function PlanDetail() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Label className="text-sm text-muted-foreground">Plano gratuito</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p>Ativa o plano como gratuito. Todos os preços serão ignorados</p>
+                        </TooltipContent>
+                      </Tooltip>
                       <Switch
                         checked={editState.isFree}
                         onCheckedChange={(v) => handleFieldChange('isFree', v)}
@@ -343,8 +443,18 @@ export default function PlanDetail() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <Label className="text-sm font-semibold mb-3 block">Preços Regulares</Label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="flex items-center gap-1 mb-3">
+                      <Label className="text-sm font-semibold">Preços Regulares</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="w-4 h-4 text-muted-foreground/50 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p>Valores cobrados por período. Deixe em branco ou zero para não oferecer esse período</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                       {(Object.keys(PERIOD_LABELS) as PlanPeriod[]).map((period) => (
                         <div key={period} className="space-y-1">
                           <Label className="text-xs text-muted-foreground">{PERIOD_LABELS[period]}</Label>
@@ -352,7 +462,8 @@ export default function PlanDetail() {
                             type="number"
                             step="0.01"
                             min="0"
-                            value={editState.prices[period]}
+                            value={editState.prices[period] || ''}
+                            placeholder="0"
                             onChange={(e) => handlePriceChange(period, e.target.value)}
                             className="h-9"
                             disabled={editState.isFree}
@@ -382,7 +493,17 @@ export default function PlanDetail() {
                 <CardContent className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label>Duração trial (dias)</Label>
+                      <div className="flex items-center gap-1">
+                        <Label>Duração trial (dias)</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p>Período de teste gratuito em dias. Após o trial, o plano será cobrado normalmente</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <Input
                         type="number"
                         min="0"
@@ -392,7 +513,17 @@ export default function PlanDetail() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Desconto (%)</Label>
+                      <div className="flex items-center gap-1">
+                        <Label>Desconto (%)</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p>Percentual de desconto aplicado no checkout. Ex: 10 = 10% de desconto</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <Input
                         type="number"
                         min="0"
@@ -407,7 +538,17 @@ export default function PlanDetail() {
 
                   {!editState.isFree && (editState.discountPercentage ?? 0) > 0 && (
                     <div className="space-y-1.5">
-                      <Label>Período mínimo para desconto</Label>
+                      <div className="flex items-center gap-1">
+                        <Label>Período mínimo para desconto</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p>Período mínimo que o usuário deve contratar para receber o desconto</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <Select
                         value={editState.discountMinPeriod ?? ''}
                         onValueChange={(v) => handleFieldChange('discountMinPeriod', (v || undefined) as PlanPeriod | undefined)}
@@ -424,7 +565,17 @@ export default function PlanDetail() {
 
                   {!editState.isFree && (
                     <div className="space-y-1.5">
-                      <Label>Bônus testes comportamentais</Label>
+                      <div className="flex items-center gap-1">
+                        <Label>Bônus testes comportamentais</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p>Quantidade de testes Gauge-Pro extras incluídos no plano por período</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <div className="grid sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Semestral</Label>
@@ -461,7 +612,17 @@ export default function PlanDetail() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               <Card>
                 <CardHeader>
-                  <CardTitle>Recursos do Plano</CardTitle>
+                  <div className="flex items-center gap-1">
+                    <CardTitle>Recursos do Plano</CardTitle>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="w-4 h-4 text-muted-foreground/50 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <p>Lista de funcionalidades incluídas neste plano, exibidas como bullets no card</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <CardDescription>Lista de recursos incluídos no plano</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">

@@ -3,7 +3,7 @@
  * PRD-060: Gestão de Planos "Commerce"
  */
 
-export type PlanPeriod = 'monthly' | 'quarterly' | 'semiannual' | 'annual';
+export type PlanPeriod = 'monthly' | 'quarterly' | 'semiannual' | 'annual' | 'one_time';
 export type PlanStatus = 'active' | 'inactive' | 'archived';
 export type SubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'suspended' | 'pending' | 'trial' | 'past_due';
 

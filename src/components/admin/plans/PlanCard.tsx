@@ -17,6 +17,7 @@ const PERIOD_LABELS: Record<PlanPeriod, string> = {
   quarterly: 'Trimestral',
   semiannual: 'Semestral',
   annual: 'Anual',
+  one_time: 'Avulso',
 };
 
 interface PlanCardProps {
@@ -136,7 +137,7 @@ export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, index = 0, st
           <h4 className="text-sm font-semibold text-foreground">Preços</h4>
           <div className="grid grid-cols-2 gap-2">
             {(Object.keys(PERIOD_LABELS) as PlanPeriod[]).map((period) => {
-              const regularPrice = plan.prices[period];
+              const regularPrice = plan.prices[period] ?? 0;
               const launchPrice = plan.launchPrices?.[period];
               const showLaunchPrice = hasLaunchPrices && launchPrice !== undefined && launchPrice > 0 && launchPrice < regularPrice;
 
