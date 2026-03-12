@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Save, ArrowLeft, CreditCard, Plus, Trash2,
@@ -59,15 +59,18 @@ const BLANK_PLAN: Plan = {
 export default function PlanDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isNew = !id;
+  const cloneId = searchParams.get('clone');
 
   const { data: plan, isLoading, refetch } = usePlan(id);
+  const { data: clonePlan } = usePlan(isNew ? (cloneId || undefined) : undefined);
   const updatePlanMutation = useUpdatePlan();
   const createPlanMutation = useCreatePlan();
   const syncPlan = useSyncPlan();
 
   const [editState, setEditState] = useState<Plan>({ ...BLANK_PLAN, features: [] });
-  const [formInitialized, setFormInitialized] = useState(isNew);
+  const [formInitialized, setFormInitialized] = useState(isNew && !cloneId);
   const [newFeature, setNewFeature] = useState('');
   const [stripeEnv, setStripeEnv] = useState<StripeEnvironment>('test');
   const [isSaving, setIsSaving] = useState(false);
@@ -78,6 +81,28 @@ export default function PlanDetail() {
       setFormInitialized(true);
     }
   }, [plan, formInitialized]);
+
+  // Clone mode: pre-fill form with source plan data
+  useEffect(() => {
+    if (isNew && cloneId && clonePlan && !formInitialized) {
+      setEditState({
+        ...clonePlan,
+        id: '',
+        createdAt: '',
+        name: `Cópia de ${clonePlan.name}`,
+        slug: `${clonePlan.slug}-copia`,
+        features: [...clonePlan.features],
+        // Clear Stripe fields so the clone gets its own Stripe products
+        stripeProductIdTest: undefined,
+        stripeProductIdLive: undefined,
+        stripePriceIdsTest: undefined,
+        stripePriceIdsLive: undefined,
+        stripeSyncedAtTest: undefined,
+        stripeSyncedAtLive: undefined,
+      });
+      setFormInitialized(true);
+    }
+  }, [isNew, cloneId, clonePlan, formInitialized]);
 
   const canSave = editState.name.trim() !== '' && editState.slug.trim() !== '';
 
@@ -201,10 +226,12 @@ export default function PlanDetail() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-3">
               <CreditCard className="w-7 h-7 text-cyan-600" />
-              {isNew ? 'Novo Plano' : `Editar: ${plan?.name}`}
+              {isNew ? (cloneId ? 'Duplicar Plano' : 'Novo Plano') : `Editar: ${plan?.name}`}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {isNew ? 'Preencha os dados do novo plano' : `Slug: ${plan?.slug}`}
+              {isNew
+                ? (cloneId ? `Duplicando a partir de: ${clonePlan?.name ?? '...'}` : 'Preencha os dados do novo plano')
+                : `Slug: ${plan?.slug}`}
             </p>
           </div>
         </div>

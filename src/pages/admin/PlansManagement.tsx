@@ -46,6 +46,8 @@ export default function PlansManagement() {
 
   const handleEdit = (plan: Plan) => navigate(`/admin/planos/${plan.id}`);
 
+  const handleClone = (plan: Plan) => navigate(`/admin/planos/novo?clone=${plan.id}`);
+
   const handleToggleStatus = async (id: string) => {
     const plan = [...candidatePlans, ...companyPlans].find(p => p.id === id);
     if (!plan) return;
@@ -159,6 +161,7 @@ export default function PlansManagement() {
                   onEdit={handleEdit}
                   onToggleStatus={handleToggleStatus}
                   onDelete={handleDeleteClick}
+                  onClone={handleClone}
                   index={index}
                   stripeEnvironment={stripeEnv}
                 />
@@ -175,6 +178,7 @@ export default function PlansManagement() {
                   onEdit={handleEdit}
                   onToggleStatus={handleToggleStatus}
                   onDelete={handleDeleteClick}
+                  onClone={handleClone}
                   index={index}
                   stripeEnvironment={stripeEnv}
                 />
