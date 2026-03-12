@@ -72,7 +72,7 @@ import {
 } from '@/components/ui/pagination';
 import { getOrGenerateIdealProfile, getCompositeBehavioralProfile } from '@/lib/behavioralProfiles';
 import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
-import { useJobs } from '@/hooks/useJobsQuery';
+import { useJobsByCompany } from '@/hooks/useJobsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useAllGaugeProResults } from '@/hooks/useGaugeProQuery';
 import type { GaugeProResult } from '@/types/gaugePro';
@@ -172,8 +172,7 @@ export default function CompanyCandidates() {
   const companyId = currentCompany?.id ?? '';
 
   // Fetch data from service layer
-  const { data: jobsResult } = useJobs();
-  const jobs = jobsResult?.data ?? [];
+  const { data: jobs = [] } = useJobsByCompany(companyId);
   const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
   const allCandidates = candidatesResult?.data ?? [];
   const { data: behavioralTests = [] } = useBehavioralTests();
@@ -258,7 +257,7 @@ export default function CompanyCandidates() {
 
   // Get company jobs
   const companyJobs = useMemo(() =>
-    jobs.filter((job) => job.companyId === companyId && job.status === 'active'),
+    jobs.filter((job) => job.status === 'active'),
     [jobs]
   );
 
