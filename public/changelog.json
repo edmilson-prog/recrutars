@@ -1,12 +1,38 @@
 {
   "versions": [
     {
+      "version": "1.33.0",
+      "codename": "Prism",
+      "type": "minor",
+      "releaseDate": "2026-03-12",
+      "description": "Cobranca avulsa (one-time), clonagem de planos, correcoes de RLS e botao de convite no banco de talentos.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Periodo avulso (one_time) para planos — permite criar cobancas nao recorrentes para candidatos e empresas",
+            "Botao Duplicar plano no admin — clona todos os dados do plano-fonte com prefixo 'Copia de' e limpeza de campos Stripe",
+            "Tooltips informativos em todos os campos do formulario de criacao de planos"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Campos de preco exibiam '0' fixo impossivel de apagar — substituido por placeholder com campo vazio editavel",
+            "Botao 'Convidar para vaga' inativo no banco de talentos da Licitare — corrigido hook useJobsByCompany para buscar vagas filtradas por empresa sem paginacao",
+            "Erro 403 RLS ao favoritar candidato durante impersonacao admin — adicionadas policies admin para SELECT, INSERT, UPDATE e DELETE na tabela favorites"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.32.4",
       "codename": "Prism",
       "type": "patch",
       "releaseDate": "2026-03-11",
       "description": "Correcao de layout dos cards de candidatos reprovados e contratados na pagina de Candidaturas.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

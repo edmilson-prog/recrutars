@@ -4,9 +4,10 @@
  */
 
 import { motion } from 'framer-motion';
-import { Check, Edit, Power, PowerOff, Clock, Percent, RefreshCw, Cloud, CloudOff, Trash2 } from 'lucide-react';
+import { Check, Copy, Edit, Power, PowerOff, Clock, Percent, RefreshCw, Cloud, CloudOff, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { formatBRL } from '@/lib/formatters';
 import { useSyncPlan } from '@/hooks/useStripeQuery';
@@ -17,6 +18,7 @@ const PERIOD_LABELS: Record<PlanPeriod, string> = {
   quarterly: 'Trimestral',
   semiannual: 'Semestral',
   annual: 'Anual',
+  one_time: 'Avulso',
 };
 
 interface PlanCardProps {
@@ -24,11 +26,12 @@ interface PlanCardProps {
   onEdit: (plan: Plan) => void;
   onToggleStatus: (id: string) => void;
   onDelete?: (plan: Plan) => void;
+  onClone?: (plan: Plan) => void;
   index?: number;
   stripeEnvironment?: StripeEnvironment;
 }
 
-export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, index = 0, stripeEnvironment = 'test' }: PlanCardProps) {
+export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, onClone, index = 0, stripeEnvironment = 'test' }: PlanCardProps) {
   const hasLaunchPrices = plan.launchPrices && Object.values(plan.launchPrices).some(v => v > 0);
   const isTrial = !!plan.trialDurationDays;
   const syncPlan = useSyncPlan();
@@ -136,7 +139,7 @@ export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, index = 0, st
           <h4 className="text-sm font-semibold text-foreground">Preços</h4>
           <div className="grid grid-cols-2 gap-2">
             {(Object.keys(PERIOD_LABELS) as PlanPeriod[]).map((period) => {
-              const regularPrice = plan.prices[period];
+              const regularPrice = plan.prices[period] ?? 0;
               const launchPrice = plan.launchPrices?.[period];
               const showLaunchPrice = hasLaunchPrices && launchPrice !== undefined && launchPrice > 0 && launchPrice < regularPrice;
 
@@ -199,6 +202,21 @@ export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, index = 0, st
             <Edit className="w-4 h-4 mr-2" />
             Editar
           </Button>
+          {onClone && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-cyan-600 border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700 dark:text-cyan-400 dark:border-cyan-700 dark:hover:bg-cyan-950 dark:hover:text-cyan-300"
+                  onClick={() => onClone(plan)}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Duplicar plano</TooltipContent>
+            </Tooltip>
+          )}
           <Button
             variant={isActive ? 'ghost' : 'default'}
             size="sm"

@@ -13,6 +13,7 @@ const PERIOD_LABELS: Record<PlanPeriod, string> = {
   quarterly: 'Trimestral',
   semiannual: 'Semestral',
   annual: 'Anual',
+  one_time: 'Avulso',
 };
 
 interface LaunchPriceEditorProps {
@@ -31,6 +32,7 @@ export function LaunchPriceEditor({ plan, onChange }: LaunchPriceEditorProps) {
           quarterly: plan.prices.quarterly * 0.8,
           semiannual: plan.prices.semiannual * 0.8,
           annual: plan.prices.annual * 0.8,
+          one_time: (plan.prices.one_time ?? 0) * 0.8,
         },
         launchPriceEndDate: plan.launchPriceEndDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       });
@@ -69,7 +71,7 @@ export function LaunchPriceEditor({ plan, onChange }: LaunchPriceEditorProps) {
 
       {hasLaunchPrices && plan.launchPrices && (
         <div className="space-y-3 pl-2 border-l-2 border-cyan-500/30">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {(Object.keys(PERIOD_LABELS) as PlanPeriod[]).map((period) => (
               <div key={period} className="space-y-1">
                 <Label className="text-xs text-muted-foreground">
@@ -79,7 +81,8 @@ export function LaunchPriceEditor({ plan, onChange }: LaunchPriceEditorProps) {
                   type="number"
                   step="0.01"
                   min="0"
-                  value={plan.launchPrices![period]}
+                  value={plan.launchPrices![period] || ''}
+                  placeholder="0"
                   onChange={(e) => handleLaunchPriceChange(period, e.target.value)}
                   className="h-8 text-sm"
                 />
