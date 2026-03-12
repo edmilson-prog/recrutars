@@ -35,6 +35,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { useJobRecommendations } from '@/hooks/useJobRecommendations';
+import { useJobLocations } from '@/hooks/useJobsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { RecommendedJobCard } from '@/components/candidato/RecommendedJobCard';
 import { Link } from 'react-router-dom';
@@ -54,18 +55,10 @@ const initialFilters: Filters = {
   salaryMax: '',
 };
 
-// Localizações disponíveis (extraídas das vagas mock)
-const LOCATIONS = [
-  'São Paulo, SP',
-  'Rio de Janeiro, RJ',
-  'Belo Horizonte, MG',
-  'Porto Alegre, RS',
-  'Curitiba, PR',
-];
-
 export default function RecommendedJobs() {
   const { currentCandidate } = useAuth();
   const candidateId = currentCandidate?.id || '';
+  const { data: locations = [] } = useJobLocations();
 
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -79,8 +72,8 @@ export default function RecommendedJobs() {
     refresh,
   } = useJobRecommendations({
     candidateId,
-    limit: 50, // Carregar mais para a página
-    minScore: 50,
+    limit: 50,
+    minScore: 30,
   });
 
   // Filtrar recomendações
@@ -192,7 +185,7 @@ export default function RecommendedJobs() {
                   <FilterFields
                     filters={filters}
                     updateFilter={updateFilter}
-                    locations={LOCATIONS}
+                    locations={locations}
                   />
                   <div className="flex gap-3">
                     <Button
@@ -224,7 +217,7 @@ export default function RecommendedJobs() {
           <FilterFields
             filters={filters}
             updateFilter={updateFilter}
-            locations={LOCATIONS}
+            locations={locations}
             inline
           />
           {hasActiveFilters && (
