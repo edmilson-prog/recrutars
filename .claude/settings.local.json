@@ -119,7 +119,15 @@
       "Bash(git -C /d/claude/recrutars-maike log --oneline src/pages/empresa/Messages.tsx)",
       "mcp__chrome-devtools__handle_dialog",
       "mcp__chrome-devtools__resize_page",
-      "Bash(echo === Searching for $table ===:*)"
+      "Bash(echo === Searching for $table ===:*)",
+      "Bash(do grep:*)",
+      "Bash(do:*)",
+      "Bash(find \"D:\\\\claude\\\\recrutars-maike\" -type f \\\\\\( -name \"*talent*\" -o -name \"*pool*\" \\\\\\) 2>/dev/null | head -20)",
+      "Bash(find /d/claude/recrutars-maike -type f \\\\\\( -name \"*stripe*\" -o -name \"*checkout*\" \\\\\\) 2>/dev/null | grep -v node_modules)",
+      "Bash(find /d/claude/recrutars-maike -path \"*/node_modules\" -prune -o -type f \\\\\\( -name \"*stripe*\" -o -name \"*checkout*\" \\\\\\) -print 2>/dev/null | grep -v node_modules | grep -v \".git\" | head -20)",
+      "Bash(cd D:/claude/recrutars-maike && node -p \"require\\('./package.json'\\).version\")",
+      "Bash(cd \"D:/claude/recrutars-maike\" && mv fix-accents.js fix-accents.cjs && node fix-accents.cjs)",
+      "Bash(cd \"D:/claude/recrutars-maike\" && rm -f fix-accents.cjs fix-accents2.cjs check-accents.cjs check-accents2.cjs check-accents3.cjs check-final.cjs check-broad.cjs check-misc.cjs)"
     ]
   },
   "enableAllProjectMcpServers": true,
