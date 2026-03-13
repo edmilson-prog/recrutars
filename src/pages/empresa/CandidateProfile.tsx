@@ -29,6 +29,7 @@ import {
   ChevronDown,
   User2,
   Award,
+  Phone,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -158,6 +159,18 @@ function formatActivityTimestamp(timestamp: string): string {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 10) {
+    return digits
+      .replace(/(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{4})(\d)/, '$1-$2');
+  }
+  return digits
+    .replace(/(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2');
+}
+
 export default function CandidateProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -217,6 +230,12 @@ export default function CandidateProfile() {
   const candidateApplications = useMemo(
     () => allApplications.filter((a) => a.candidateId === id),
     [allApplications, id]
+  );
+
+  const activeStatuses = ['pending', 'reviewing', 'interview', 'offer'];
+  const hasActiveApplication = useMemo(
+    () => candidateApplications.some((a) => activeStatuses.includes(a.status)),
+    [candidateApplications]
   );
 
   const activeApplicationId = selectedApplicationId || candidateApplications[0]?.id || '';
@@ -417,6 +436,22 @@ export default function CandidateProfile() {
                       <Mail className="w-4 h-4" />
                       {candidate.email}
                     </span>
+                    {hasActiveApplication && candidate.phone && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a
+                            href={`tel:${candidate.phone}`}
+                            className="flex items-center gap-1 hover:text-foreground hover:underline transition-colors"
+                          >
+                            <Phone className="w-4 h-4" />
+                            {formatPhone(candidate.phone)}
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Visível porque o candidato possui candidatura ativa</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
                 </div>
 

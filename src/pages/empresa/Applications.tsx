@@ -325,19 +325,22 @@ export default function CompanyApplications() {
     [applications_, localStatusOverrides]
   );
 
-  // Real application count per job (excludes withdrawn)
+  // Statuses that count as active in the pipeline
+  const activeStatuses = ['pending', 'reviewing', 'interview', 'offer'];
+
+  // Real application count per job (only active pipeline statuses)
   const applicationsCountByJob = useMemo(() => {
     const map: Record<string, number> = {};
     for (const app of applications) {
-      if (app.status !== 'withdrawn') {
+      if (activeStatuses.includes(app.status)) {
         map[app.jobId] = (map[app.jobId] ?? 0) + 1;
       }
     }
     return map;
   }, [applications]);
 
-  // Total de candidaturas ativas (exclui withdrawn) — exibido no badge do titulo
-  const totalActiveApplications = applications.filter(a => a.status !== 'withdrawn').length;
+  // Total de candidaturas ativas no pipeline — exibido no badge do titulo
+  const totalActiveApplications = applications.filter(a => activeStatuses.includes(a.status)).length;
 
   // Notes state (local + fetched)
   const [localNotes, setLocalNotes] = useState<ApplicationNote[]>([]);
