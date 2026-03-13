@@ -440,7 +440,9 @@ export default function CandidateProfile() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <a
-                            href={`tel:${candidate.phone}`}
+                            href={`https://wa.me/55${candidate.phone.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="flex items-center gap-1 hover:text-foreground hover:underline transition-colors"
                           >
                             <Phone className="w-4 h-4" />
@@ -448,7 +450,7 @@ export default function CandidateProfile() {
                           </a>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Visível porque o candidato possui candidatura ativa</p>
+                          <p>Abrir WhatsApp — visível porque o candidato possui candidatura ativa</p>
                         </TooltipContent>
                       </Tooltip>
                     )}
