@@ -41,6 +41,10 @@ import { useCandidateRecommendations } from '@/hooks/useCandidateRecommendations
 import { SuggestedCandidateCard } from '@/components/empresa/SuggestedCandidateCard';
 import { InviteCandidateModal } from '@/components/empresa/InviteCandidateModal';
 import { useJob } from '@/hooks/useJobsQuery';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCreateApplication } from '@/hooks/useApplicationsQuery';
+import { useCreateConversation, useSendMessage } from '@/hooks/useMessagesQuery';
+import { toast } from 'sonner';
 import type { Candidate, Job } from '@/types';
 
 // Tipos de filtro
@@ -74,6 +78,10 @@ export default function SuggestedCandidates() {
 
   // Fetch data from service layer
   const { data: job } = useJob(jobId || '');
+  const { user, currentCompany } = useAuth();
+  const createApplicationMutation = useCreateApplication();
+  const createConversationMutation = useCreateConversation();
+  const sendMessageMutation = useSendMessage();
 
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -163,10 +171,52 @@ export default function SuggestedCandidates() {
   };
 
   // Handler para confirmar convite
-  const handleConfirmInvite = (message: string, scheduleInterview: boolean) => {
-    // TODO: Integrar com sistema de mensagens
-    console.log('Convite enviado:', { candidate: selectedCandidate?.id, message, scheduleInterview });
-    setSelectedCandidate(null);
+  const handleConfirmInvite = async (message: string, _scheduleInterview: boolean) => {
+    if (!selectedCandidate || !job || !currentCompany) return;
+
+    try {
+      const displayName = selectedCandidate.name || 'Candidato';
+      await createApplicationMutation.mutateAsync({
+        jobId: job.id,
+        candidateId: selectedCandidate.id,
+        candidateName: displayName,
+        jobTitle: job.title,
+        companyName: currentCompany.name ?? '',
+        message: message || undefined,
+      });
+
+      try {
+        const conversation = await createConversationMutation.mutateAsync({
+          candidateId: selectedCandidate.id,
+          companyId: currentCompany.id,
+          jobId: job.id,
+        });
+
+        const messageContent = message.trim()
+          || `Olá! Você foi convidado(a) a se candidatar à vaga "${job.title}". Acesse suas candidaturas para mais detalhes.`;
+
+        await sendMessageMutation.mutateAsync({
+          conversationId: conversation.id,
+          message: {
+            senderId: user?.id ?? '',
+            senderName: currentCompany.name ?? '',
+            senderType: 'company',
+            receiverName: displayName,
+            subject: `Convite: ${job.title}`,
+            content: messageContent,
+          },
+        });
+      } catch (msgError) {
+        console.warn('[handleConfirmInvite] Candidatura criada, mas erro ao enviar mensagem:', msgError);
+      }
+
+      toast.success(`Convite enviado para ${displayName} para a vaga "${job.title}"`);
+      setSelectedCandidate(null);
+      setInviteModalOpen(false);
+    } catch (error) {
+      console.error('[handleConfirmInvite] Erro:', error);
+      toast.error('Erro ao enviar convite. Tente novamente.');
+    }
   };
 
   if (!job) {

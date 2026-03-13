@@ -44,6 +44,15 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -76,6 +85,8 @@ import { CandidateComparisonModal } from '@/components/compare/CandidateComparis
 import { ExportCandidatesModal } from '@/components/export';
 import type { ExportContext } from '@/types/export';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCreateApplication } from '@/hooks/useApplicationsQuery';
+import { useCreateConversation, useSendMessage } from '@/hooks/useMessagesQuery';
 
 type SortOption = 'recent' | 'match' | 'experience';
 
@@ -108,13 +119,23 @@ const calculateMatch = (
 
 export default function SavedCandidates() {
   const navigate = useNavigate();
-  const { currentCompany } = useAuth();
+  const { user, currentCompany } = useAuth();
   const companyId = currentCompany?.id ?? '';
   const { getFavoriteCandidates, removeFavorite, toggleFavorite } = useFavoriteCandidates();
+  const createApplicationMutation = useCreateApplication();
+  const createConversationMutation = useCreateConversation();
+  const sendMessageMutation = useSendMessage();
 
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [areaFilter, setAreaFilter] = useState<string>('all');
   const [candidateToRemove, setCandidateToRemove] = useState<string | null>(null);
+
+  // Invite modal state
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [inviteMessage, setInviteMessage] = useState('');
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
 
   // PRD-031: Hook de seleção para comparação
   const {
@@ -224,6 +245,66 @@ export default function SavedCandidates() {
       removeFavorite(candidateToRemove);
       toast.success('Candidato removido da lista');
       setCandidateToRemove(null);
+    }
+  };
+
+  const handleOpenInviteModal = (candidate: Candidate, job: Job) => {
+    setSelectedCandidate(candidate);
+    setSelectedJob(job);
+    setInviteMessage('');
+    setIsInviteModalOpen(true);
+  };
+
+  const handleSendInvite = async () => {
+    if (!selectedCandidate || !selectedJob || !currentCompany) return;
+
+    setIsSendingInvite(true);
+    try {
+      const displayName = getDisplayName(selectedCandidate);
+      await createApplicationMutation.mutateAsync({
+        jobId: selectedJob.id,
+        candidateId: selectedCandidate.id,
+        candidateName: displayName,
+        jobTitle: selectedJob.title,
+        companyName: currentCompany.name ?? '',
+        message: inviteMessage || undefined,
+      });
+
+      try {
+        const conversation = await createConversationMutation.mutateAsync({
+          candidateId: selectedCandidate.id,
+          companyId: currentCompany.id,
+          jobId: selectedJob.id,
+        });
+
+        const messageContent = inviteMessage.trim()
+          || `Olá! Você foi convidado(a) a se candidatar à vaga "${selectedJob.title}". Acesse suas candidaturas para mais detalhes.`;
+
+        await sendMessageMutation.mutateAsync({
+          conversationId: conversation.id,
+          message: {
+            senderId: user?.id ?? '',
+            senderName: currentCompany.name ?? '',
+            senderType: 'company',
+            receiverName: displayName,
+            subject: `Convite: ${selectedJob.title}`,
+            content: messageContent,
+          },
+        });
+      } catch (msgError) {
+        console.warn('[handleSendInvite] Candidatura criada, mas erro ao enviar mensagem:', msgError);
+      }
+
+      toast.success(`Convite enviado para ${displayName} para a vaga "${selectedJob.title}"`);
+      setIsInviteModalOpen(false);
+      setSelectedCandidate(null);
+      setSelectedJob(null);
+      setInviteMessage('');
+    } catch (error) {
+      console.error('[handleSendInvite] Erro:', error);
+      toast.error('Erro ao enviar convite. Tente novamente.');
+    } finally {
+      setIsSendingInvite(false);
     }
   };
 
@@ -394,11 +475,7 @@ export default function SavedCandidates() {
                   {companyJobs.map((job) => (
                     <DropdownMenuItem
                       key={job.id}
-                      onClick={() => {
-                        toast.success(
-                          `Convite enviado para ${displayName} para a vaga "${job.title}"`
-                        );
-                      }}
+                      onClick={() => handleOpenInviteModal(candidate, job)}
                     >
                       {job.title}
                     </DropdownMenuItem>
@@ -600,6 +677,44 @@ export default function SavedCandidates() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Invite Modal */}
+      <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convidar candidato</DialogTitle>
+            <DialogDescription>
+              Envie um convite para {selectedCandidate ? getDisplayName(selectedCandidate) : ''} se candidatar à vaga "
+              {selectedJob?.title}"
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Mensagem personalizada (opcional)</label>
+              <Textarea
+                placeholder="Escreva uma mensagem personalizada para o candidato..."
+                value={inviteMessage}
+                onChange={(e) => setInviteMessage(e.target.value)}
+                rows={4}
+              />
+              <p className="text-sm text-muted-foreground">
+                {inviteMessage.length}/500 caracteres
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsInviteModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSendInvite} disabled={isSendingInvite}>
+              <Send className="w-4 h-4 mr-2" />
+              {isSendingInvite ? 'Enviando...' : 'Enviar convite'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
