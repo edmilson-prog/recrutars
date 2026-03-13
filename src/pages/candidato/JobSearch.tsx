@@ -472,7 +472,7 @@ export default function CandidateJobSearch() {
         <div className="flex gap-6">
           {/* Desktop Filters Sidebar */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
-            <div className="bg-card rounded-2xl p-6 shadow-soft sticky top-6">
+            <div className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft sticky top-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-foreground">Filtros</h2>
                 {hasActiveFilters && (
@@ -655,7 +655,7 @@ export default function CandidateJobSearch() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium hover:scale-[1.01] hover:border-primary/20 transition-all border border-transparent cursor-pointer group"
+                  className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft hover:shadow-medium hover:scale-[1.01] hover:border-primary/20 transition-all border border-transparent cursor-pointer group"
                   onClick={() => navigate(`/candidato/vagas/${job.id}`)}
                 >
                   <div className="flex flex-col md:flex-row md:items-start gap-4">

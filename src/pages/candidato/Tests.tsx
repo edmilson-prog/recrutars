@@ -55,7 +55,7 @@ export default function CandidateTests() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-card rounded-2xl p-6 shadow-soft"
+          className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
         >
           <div className="flex flex-col lg:flex-row lg:items-center gap-6">
             {/* Title area */}
@@ -74,7 +74,7 @@ export default function CandidateTests() {
             </div>
 
             {/* Stats + CTA */}
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex flex-col sm:flex-row items-center gap-3">
               {/* Stats mini-cards */}
               <div className="flex items-center gap-2">
                 <StatMini
@@ -98,7 +98,7 @@ export default function CandidateTests() {
                 onClick={() => navigate('/candidato/gauge-pro')}
                 disabled={cooldownInfo.inCooldown}
                 className={cn(
-                  'whitespace-nowrap',
+                  'w-full sm:w-auto whitespace-nowrap',
                   cooldownInfo.inCooldown ? 'opacity-60' : 'gradient-primary'
                 )}
               >

@@ -109,7 +109,7 @@ export default function CandidateMessages() {
 
   return (
     <DashboardLayout userType="candidate">
-      <div className="h-[calc(100vh-8rem)]">
+      <div className="h-[calc(100dvh-14rem)]">
         <div className="bg-card rounded-2xl shadow-soft h-full overflow-hidden flex">
           {/* Conversations List */}
           <div

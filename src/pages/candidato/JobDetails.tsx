@@ -344,7 +344,7 @@ export default function JobDetails() {
         )}
 
         {/* Description */}
-        <div className="bg-card rounded-2xl p-6 shadow-soft">
+        <div className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft">
           <h2 className="text-xl font-semibold text-foreground mb-4">Descrição da vaga</h2>
           <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
             {job.description}
@@ -352,7 +352,7 @@ export default function JobDetails() {
         </div>
 
         {/* Requirements */}
-        <div className="bg-card rounded-2xl p-6 shadow-soft">
+        <div className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft">
           <h2 className="text-xl font-semibold text-foreground mb-4">Requisitos</h2>
           <ul className="space-y-3">
             {job.requirements.map((req, index) => (
@@ -365,7 +365,7 @@ export default function JobDetails() {
         </div>
 
         {/* Benefits */}
-        <div className="bg-card rounded-2xl p-6 shadow-soft">
+        <div className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft">
           <h2 className="text-xl font-semibold text-foreground mb-4">Benefícios</h2>
           <div className="flex flex-wrap gap-2">
             {job.benefits.map((benefit, index) => (
@@ -381,7 +381,7 @@ export default function JobDetails() {
         </div>
 
         {/* Company Info */}
-        <div className="bg-card rounded-2xl p-6 shadow-soft">
+        <div className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft">
           <h2 className="text-xl font-semibold text-foreground mb-4">Sobre a empresa</h2>
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-muted rounded-xl flex items-center justify-center">

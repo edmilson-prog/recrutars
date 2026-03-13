@@ -142,27 +142,27 @@ export default function CandidateInterviews() {
           {/* Main Content */}
           <div className="lg:col-span-2">
             {/* Stats Summary */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="bg-card rounded-xl p-4 shadow-soft">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+              <div className="bg-card rounded-xl p-3 sm:p-4 shadow-soft">
                 <div className="flex items-center gap-2 mb-1">
                   <Clock className="h-4 w-4 text-yellow-500" />
                   <p className="text-sm text-muted-foreground">Pendentes</p>
                 </div>
-                <p className="text-2xl font-bold text-foreground">{pendingInterviews.length}</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{pendingInterviews.length}</p>
               </div>
-              <div className="bg-card rounded-xl p-4 shadow-soft">
+              <div className="bg-card rounded-xl p-3 sm:p-4 shadow-soft">
                 <div className="flex items-center gap-2 mb-1">
                   <CalendarCheck className="h-4 w-4 text-green-500" />
                   <p className="text-sm text-muted-foreground">Confirmadas</p>
                 </div>
-                <p className="text-2xl font-bold text-foreground">{confirmedInterviews.length}</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{confirmedInterviews.length}</p>
               </div>
-              <div className="bg-card rounded-xl p-4 shadow-soft">
+              <div className="bg-card rounded-xl p-3 sm:p-4 shadow-soft">
                 <div className="flex items-center gap-2 mb-1">
                   <CalendarX className="h-4 w-4 text-gray-500" />
                   <p className="text-sm text-muted-foreground">Realizadas</p>
                 </div>
-                <p className="text-2xl font-bold text-foreground">{completedInterviews.length}</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{completedInterviews.length}</p>
               </div>
             </div>
 

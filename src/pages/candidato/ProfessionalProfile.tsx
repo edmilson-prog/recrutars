@@ -130,7 +130,7 @@ function SkillLevelSelector({
           <span className="text-xs">{skillLevelLabels[level]}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-48">
+      <PopoverContent className="w-40 sm:w-48">
         <div className="space-y-1">
           {levels.map((l) => (
             <Button
@@ -716,7 +716,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
               </Button>
             )}
             <div>
-              <h1 className="text-2xl font-bold">
+              <h1 className="text-xl sm:text-2xl font-bold">
                 Perfil Profissional
               </h1>
               <p className="text-muted-foreground">{curriculum.title || 'Complete seu perfil profissional'}</p>
@@ -984,7 +984,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-muted/50 rounded-xl">
                   <div>
                     <Label className="font-medium">Disponível para Mudança</Label>
                     <p className="text-sm text-muted-foreground">
@@ -1051,7 +1051,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-muted/50 rounded-xl">
                   <div>
                     <Label className="font-medium">Aceita Negociar</Label>
                     <p className="text-sm text-muted-foreground">
@@ -1172,7 +1172,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
           <TabsContent value="experience" className="mt-6">
             <div className="space-y-6">
               {/* Toggle Primeiro Emprego */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border rounded-lg bg-muted/30">
                 <div>
                   <Label htmlFor="first-job" className="text-sm font-medium">Primeiro Emprego</Label>
                   <p className="text-xs text-muted-foreground">Ainda não possuo experiência profissional.</p>
@@ -1509,7 +1509,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                       <Lightbulb className="h-4 w-4 shrink-0 text-amber-500" />
                       <span>Adicione pelo menos 3 habilidades para completar esta seção. Você tem {curriculum.skills.length} de 3.</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                           <Code className="h-3 w-3 text-cyan-500" />
@@ -2211,7 +2211,7 @@ function SkillDialog({
             <RadioGroup
               value={form.type}
               onValueChange={(v) => setForm({ ...form, type: v as SkillType })}
-              className="flex gap-4"
+              className="flex flex-col sm:flex-row gap-2 sm:gap-4"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="technical" id="type-tech" />
@@ -2385,7 +2385,7 @@ function CourseDialog({
                   certificateFileName: '',
                 })
               }
-              className="flex gap-4"
+              className="flex flex-col sm:flex-row gap-2 sm:gap-4"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="" id="cert-none" />

@@ -122,7 +122,7 @@ export default function SavedJobs() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.05 }}
-        className={`bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium transition-all ${
+        className={`bg-card rounded-2xl p-4 sm:p-6 shadow-soft hover:shadow-medium transition-all ${
           isClosed ? 'opacity-75' : ''
         }`}
       >
@@ -280,7 +280,7 @@ export default function SavedJobs() {
               <div className="flex items-center gap-2">
                 <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
                 <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-full sm:w-48">
                     <SelectValue placeholder="Ordenar por" />
                   </SelectTrigger>
                   <SelectContent>
