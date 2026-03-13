@@ -157,6 +157,45 @@ export function calculateSkillsScore(
 }
 
 /**
+ * Calcula o score de skills usando IDs padronizados com peso de prioridade.
+ * Match exato por ID — sem tokenizacao fuzzy.
+ *
+ * Formula:
+ * - Cada skill da vaga tem peso decrescente baseado em sua posicao (prioridade)
+ * - Se o candidato tem a skill, ganha pontos proporcionais ao peso da vaga
+ * - Bonus pequeno se o candidato tambem priorizou essa skill
+ */
+export function calculateStandardizedSkillsScore(
+  candidateSkillIds: string[],
+  jobSkillIds: string[],
+): number {
+  if (!candidateSkillIds?.length) return 20;
+  if (!jobSkillIds?.length) return 50;
+
+  const n = jobSkillIds.length;
+  let score = 0;
+  let maxScore = 0;
+
+  for (let i = 0; i < n; i++) {
+    // Priority weight: first skill = 1.0, last = 1/n
+    const jobWeight = (n - i) / n;
+    maxScore += jobWeight;
+
+    const candidateIndex = candidateSkillIds.indexOf(jobSkillIds[i]);
+    if (candidateIndex >= 0) {
+      // Bonus if candidate also ranks this skill highly (1.0 for top, 0.7 for bottom)
+      const candidateBonus = 1 - (candidateIndex / candidateSkillIds.length) * 0.3;
+      score += jobWeight * candidateBonus;
+    }
+  }
+
+  if (maxScore === 0) return 50;
+
+  const rawScore = (score / maxScore) * 100;
+  return Math.min(100, Math.max(0, Math.round(rawScore)));
+}
+
+/**
  * Calcula o score de experiência comparando anos de experiência
  * com o nível da vaga
  */
@@ -523,7 +562,9 @@ export function calculateMatchBreakdown(
   candidate: Partial<Candidate>,
   job: Partial<Job>,
   idealProfile?: BehavioralProfile,
-  candidateBehavioralProfile?: BehavioralProfile
+  candidateBehavioralProfile?: BehavioralProfile,
+  candidateStdSkillIds?: string[],
+  jobStdSkillIds?: string[],
 ): MatchResult {
   // Usa perfil fornecido externamente, ou extrai de candidate.testResult (legacy)
   const candidateProfile: BehavioralProfile | undefined = candidateBehavioralProfile
@@ -537,10 +578,10 @@ export function calculateMatchBreakdown(
       : undefined);
 
   // Calcula scores individuais
-  const skillsScore = calculateSkillsScore(
-    candidate.skills || [],
-    job.requirements || []
-  );
+  // Prefer standardized skills when available for both sides
+  const skillsScore = (candidateStdSkillIds?.length && jobStdSkillIds?.length)
+    ? calculateStandardizedSkillsScore(candidateStdSkillIds, jobStdSkillIds)
+    : calculateSkillsScore(candidate.skills || [], job.requirements || []);
 
   const experienceScore = calculateExperienceScore(
     candidate.experience || 0,

@@ -98,6 +98,8 @@ import { calculateCompleteness, getProgressColor } from '@/utils/curriculumCompl
 import { Progress } from '@/components/ui/progress';
 import DocumentsTab from '@/components/profile/DocumentsTab';
 import { OnboardingStepIndicator } from '@/components/onboarding/OnboardingStepIndicator';
+import { StandardizedSkillSelector } from '@/components/skills/StandardizedSkillSelector';
+import { useSkillCatalog, useCandidateStandardizedSkills, useSetCandidateSkills } from '@/hooks/useStandardizedSkillsQuery';
 
 // Componente de nível de habilidade visual
 function SkillLevelSelector({
@@ -185,6 +187,13 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
   const updateMutation = useUpdateCurriculum();
   const ensureProfileMutation = useEnsureProfile();
 
+  // Standardized skills hooks
+  const { data: skillCatalog } = useSkillCatalog();
+  const { data: existingStdSkills } = useCandidateStandardizedSkills(candidateId);
+  const setStdSkillsMutation = useSetCandidateSkills();
+  const [stdTechnicalIds, setStdTechnicalIds] = useState<string[]>([]);
+  const [stdBehavioralIds, setStdBehavioralIds] = useState<string[]>([]);
+
   // Estado do currículo
   const [curriculum, setCurriculum] = useState<Curriculum | null>(null);
   const [loading, setLoading] = useState(true);
@@ -263,6 +272,37 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
       initializedRef.current = true;
     }
   }, [ensureProfileMutation.data]);
+
+  // Populate standardized skills from existing data
+  useEffect(() => {
+    if (!existingStdSkills || existingStdSkills.length === 0) return;
+    const technical = existingStdSkills
+      .filter((s) => s.skill?.type === 'technical')
+      .sort((a, b) => a.priority - b.priority)
+      .map((s) => s.skillId);
+    const behavioral = existingStdSkills
+      .filter((s) => s.skill?.type === 'behavioral')
+      .sort((a, b) => a.priority - b.priority)
+      .map((s) => s.skillId);
+    setStdTechnicalIds(technical);
+    setStdBehavioralIds(behavioral);
+  }, [existingStdSkills]);
+
+  // Save standardized skills
+  const handleSaveStdSkills = useCallback(() => {
+    if (!candidateId) return;
+    const allSkills = [
+      ...stdTechnicalIds.map((id, i) => ({ skillId: id, priority: i + 1 })),
+      ...stdBehavioralIds.map((id, i) => ({ skillId: id, priority: i + 1 })),
+    ];
+    setStdSkillsMutation.mutate(
+      { candidateId, skills: allSkills },
+      {
+        onSuccess: () => toast.success('Habilidades padronizadas salvas!'),
+        onError: () => toast.error('Erro ao salvar habilidades padronizadas'),
+      }
+    );
+  }, [candidateId, stdTechnicalIds, stdBehavioralIds, setStdSkillsMutation]);
 
   // Detectar mudancas nao salvas nos campos de texto (sub-entidades sao auto-saved)
   const hasUnsavedChanges = useMemo(() => {
@@ -1403,13 +1443,53 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
           </TabsContent>
 
           {/* Tab: Habilidades */}
-          <TabsContent value="skills" className="mt-6">
+          <TabsContent value="skills" className="mt-6 space-y-6">
+            {/* Habilidades Padronizadas */}
+            {skillCatalog && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Habilidades Padronizadas</CardTitle>
+                    <CardDescription>
+                      Selecione até 10 habilidades técnicas e 10 comportamentais para melhorar seu match com vagas.
+                    </CardDescription>
+                  </div>
+                  <Button
+                    onClick={handleSaveStdSkills}
+                    disabled={setStdSkillsMutation.isPending}
+                    size="sm"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {setStdSkillsMutation.isPending ? 'Salvando...' : 'Salvar'}
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <StandardizedSkillSelector
+                    type="technical"
+                    selectedSkillIds={stdTechnicalIds}
+                    onChange={setStdTechnicalIds}
+                    maxSelections={10}
+                    catalog={skillCatalog}
+                  />
+                  <Separator />
+                  <StandardizedSkillSelector
+                    type="behavioral"
+                    selectedSkillIds={stdBehavioralIds}
+                    onChange={setStdBehavioralIds}
+                    maxSelections={10}
+                    catalog={skillCatalog}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Habilidades Livres (legado) */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Habilidades</CardTitle>
+                  <CardTitle>Habilidades Detalhadas</CardTitle>
                   <CardDescription>
-                    Informe o que você domina — ferramentas, linguagens, metodologias e competências interpessoais.
+                    Habilidades com nível de proficiência — ferramentas, linguagens, metodologias e competências interpessoais.
                   </CardDescription>
                 </div>
                 <Button

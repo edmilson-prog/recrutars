@@ -42,7 +42,7 @@ export interface UseJobRecommendationsReturn {
 export function useJobRecommendations(
   options: UseJobRecommendationsOptions
 ): UseJobRecommendationsReturn {
-  const { candidateId, limit = 10, minScore = 50 } = options;
+  const { candidateId, limit = 10, minScore = 30 } = options;
 
   // Hooks de feedback e favoritos
   const {
@@ -58,7 +58,10 @@ export function useJobRecommendations(
   const { favorites } = useFavoriteJobs();
 
   // Buscar dados via service layer
-  const { data: jobsResult } = useJobs();
+  const { data: jobsResult } = useJobs(
+    { status: 'active' },
+    { page: 1, pageSize: 1000 }
+  );
   const jobs = jobsResult?.data ?? [];
   const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
   const candidates = candidatesResult?.data ?? [];
@@ -158,6 +161,6 @@ export function useTopRecommendations(candidateId: string, count: number = 5) {
   return useJobRecommendations({
     candidateId,
     limit: count,
-    minScore: 50,
+    minScore: 40,
   });
 }

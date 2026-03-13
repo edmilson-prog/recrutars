@@ -4,6 +4,7 @@ import { Job, JobStatus } from '@/types';
 import { useJob, useCreateJob, useUpdateJob } from '@/hooks/useJobsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { useJobAnalyzer, createJobFormData } from '@/hooks/useJobAnalyzer';
+import { useJobStandardizedSkills, useSetJobSkills } from '@/hooks/useStandardizedSkillsQuery';
 import { toast } from 'sonner';
 
 export const COMMON_BENEFITS = [
@@ -60,6 +61,14 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
   const [isDirty, setIsDirty] = useState(false);
   const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
 
+  // Standardized skills state
+  const [technicalSkillIds, setTechnicalSkillIds] = useState<string[]>([]);
+  const [behavioralSkillIds, setBehavioralSkillIds] = useState<string[]>([]);
+  const setJobSkillsMutation = useSetJobSkills();
+
+  // Load existing standardized skills when editing
+  const { data: existingJobSkills } = useJobStandardizedSkills(jobId ?? '');
+
   // Load job for editing via React Query
   useEffect(() => {
     if (!jobId) return;
@@ -92,6 +101,21 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     setJobStatus((job as Job).status);
   }, [jobId, jobResult]);
 
+  // Populate standardized skills when editing
+  useEffect(() => {
+    if (!existingJobSkills || existingJobSkills.length === 0) return;
+    const technical = existingJobSkills
+      .filter((s) => s.skill?.type === 'technical')
+      .sort((a, b) => a.priority - b.priority)
+      .map((s) => s.skillId);
+    const behavioral = existingJobSkills
+      .filter((s) => s.skill?.type === 'behavioral')
+      .sort((a, b) => a.priority - b.priority)
+      .map((s) => s.skillId);
+    setTechnicalSkillIds(technical);
+    setBehavioralSkillIds(behavioral);
+  }, [existingJobSkills]);
+
   // Mark as dirty on any change after initial load
   const updateFormData = useCallback((updates: Partial<typeof INITIAL_FORM_STATE>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -104,8 +128,8 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       ...selectedBenefits,
       ...otherBenefits.split('\n').filter(b => b.trim()),
     ];
-    return createJobFormData(formData, allBenefits, skills);
-  }, [formData, selectedBenefits, otherBenefits, skills]);
+    return createJobFormData(formData, allBenefits, skills, technicalSkillIds.length, behavioralSkillIds.length);
+  }, [formData, selectedBenefits, otherBenefits, skills, technicalSkillIds, behavioralSkillIds]);
 
   const { analysis, isAnalyzing } = useJobAnalyzer(jobFormData, {
     enabled: true,
@@ -165,6 +189,17 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       addSkill();
     }
   }, [addSkill]);
+
+  // Standardized skills handlers (mark dirty on change)
+  const handleSetTechnicalSkillIds = useCallback((ids: string[]) => {
+    setTechnicalSkillIds(ids);
+    setIsDirty(true);
+  }, []);
+
+  const handleSetBehavioralSkillIds = useCallback((ids: string[]) => {
+    setBehavioralSkillIds(ids);
+    setIsDirty(true);
+  }, []);
 
   // Apply AI suggestion
   const handleApplySuggestion = useCallback((field: string, value: string) => {
@@ -258,11 +293,23 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       isAnonymous: formData.isAnonymous,
     };
 
+    // Helper to save standardized skills after job create/update
+    const saveStandardizedSkills = (targetJobId: string) => {
+      const allSkills = [
+        ...technicalSkillIds.map((id, i) => ({ skillId: id, priority: i + 1 })),
+        ...behavioralSkillIds.map((id, i) => ({ skillId: id, priority: i + 1 })),
+      ];
+      if (allSkills.length > 0) {
+        setJobSkillsMutation.mutate({ jobId: targetJobId, skills: allSkills });
+      }
+    };
+
     if (isEditing && jobId) {
       updateJobMutation.mutate(
         { id: jobId, updates: jobData },
         {
           onSuccess: () => {
+            saveStandardizedSkills(jobId);
             toast.success('Vaga atualizada com sucesso!');
             setIsDirty(false);
             if (onSuccess) onSuccess();
@@ -278,6 +325,7 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       };
       createJobMutation.mutate(newJob, {
         onSuccess: (createdJob) => {
+          saveStandardizedSkills(createdJob.id);
           toast.success('Vaga publicada com sucesso!');
           setIsDirty(false);
           if (onSuccess) {
@@ -288,7 +336,7 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
         },
       });
     }
-  }, [formData, selectedBenefits, otherBenefits, skills, isEditing, jobId, validate, navigate, onSuccess, createJobMutation, updateJobMutation]);
+  }, [formData, selectedBenefits, otherBenefits, skills, technicalSkillIds, behavioralSkillIds, isEditing, jobId, validate, navigate, onSuccess, createJobMutation, updateJobMutation, setJobSkillsMutation]);
 
   return {
     // State
@@ -302,6 +350,10 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     isDirty,
     progress,
     jobStatus,
+
+    // Standardized skills state
+    technicalSkillIds,
+    behavioralSkillIds,
 
     // Setters
     updateFormData,
@@ -318,6 +370,10 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     handleSaveJob,
     handleUpdateStatus,
     validate,
+
+    // Standardized skills handlers
+    setTechnicalSkillIds: handleSetTechnicalSkillIds,
+    setBehavioralSkillIds: handleSetBehavioralSkillIds,
 
     // AI Analysis
     analysis,

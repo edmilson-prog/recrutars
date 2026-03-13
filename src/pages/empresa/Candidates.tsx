@@ -103,6 +103,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ExportCandidatesModal } from '@/components/export';
 import type { ExportContext } from '@/types/export';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCreateApplication } from '@/hooks/useApplicationsQuery';
+import { useCreateConversation, useSendMessage } from '@/hooks/useMessagesQuery';
 
 // Filter options
 const legacyBehavioralProfiles = ['Executor', 'Influenciador', 'Analítico', 'Estável'];
@@ -168,7 +170,7 @@ const MatchRing = ({ score }: { score: number }) => {
 };
 
 export default function CompanyCandidates() {
-  const { currentCompany } = useAuth();
+  const { user, currentCompany } = useAuth();
   const companyId = currentCompany?.id ?? '';
 
   // Fetch data from service layer
@@ -232,6 +234,7 @@ export default function CompanyCandidates() {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [inviteMessage, setInviteMessage] = useState('');
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
 
   // PRD-002-dgn: Seleção de candidatos para comparação
   const {
@@ -254,6 +257,9 @@ export default function CompanyCandidates() {
 
   // PRD-030: Hook de candidatos favoritos
   const { isFavorite, toggleFavorite } = useFavoriteCandidates();
+  const createApplicationMutation = useCreateApplication();
+  const createConversationMutation = useCreateConversation();
+  const sendMessageMutation = useSendMessage();
 
   // Get company jobs
   const companyJobs = useMemo(() =>
@@ -413,17 +419,59 @@ export default function CompanyCandidates() {
     setIsInviteModalOpen(true);
   };
 
-  const handleSendInvite = () => {
-    if (!selectedCandidate || !selectedJob) return;
+  const handleSendInvite = async () => {
+    if (!selectedCandidate || !selectedJob || !currentCompany) return;
 
-    // Mock: create message (in real app, would call API)
-    // PRD-026: Usar nome de exibição (pode ser anônimo)
-    const displayName = getDisplayName(selectedCandidate);
-    toast.success(`Convite enviado para ${displayName} para a vaga "${selectedJob.title}"`);
-    setIsInviteModalOpen(false);
-    setSelectedCandidate(null);
-    setSelectedJob(null);
-    setInviteMessage('');
+    setIsSendingInvite(true);
+    try {
+      // 1) Create application (invitation)
+      const displayName = getDisplayName(selectedCandidate);
+      await createApplicationMutation.mutateAsync({
+        jobId: selectedJob.id,
+        candidateId: selectedCandidate.id,
+        candidateName: displayName,
+        jobTitle: selectedJob.title,
+        companyName: currentCompany.name ?? '',
+        message: inviteMessage || undefined,
+      });
+
+      // 2) Create/find conversation and send invitation message
+      try {
+        const conversation = await createConversationMutation.mutateAsync({
+          candidateId: selectedCandidate.id,
+          companyId: currentCompany.id,
+          jobId: selectedJob.id,
+        });
+
+        const messageContent = inviteMessage.trim()
+          || `Olá! Você foi convidado(a) a se candidatar à vaga "${selectedJob.title}". Acesse suas candidaturas para mais detalhes.`;
+
+        await sendMessageMutation.mutateAsync({
+          conversationId: conversation.id,
+          message: {
+            senderId: user?.id ?? '',
+            senderName: currentCompany.name ?? '',
+            senderType: 'company',
+            receiverName: displayName,
+            subject: `Convite: ${selectedJob.title}`,
+            content: messageContent,
+          },
+        });
+      } catch (msgError) {
+        console.warn('[handleSendInvite] Candidatura criada, mas erro ao enviar mensagem:', msgError);
+      }
+
+      toast.success(`Convite enviado para ${displayName} para a vaga "${selectedJob.title}"`);
+      setIsInviteModalOpen(false);
+      setSelectedCandidate(null);
+      setSelectedJob(null);
+      setInviteMessage('');
+    } catch (error) {
+      console.error('[handleSendInvite] Erro:', error);
+      toast.error('Erro ao enviar convite. Tente novamente.');
+    } finally {
+      setIsSendingInvite(false);
+    }
   };
 
   const toggleSkillFilter = (skill: string) => {
@@ -1265,9 +1313,9 @@ export default function CompanyCandidates() {
             <Button variant="outline" onClick={() => setIsInviteModalOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSendInvite}>
+            <Button onClick={handleSendInvite} disabled={isSendingInvite}>
               <Send className="w-4 h-4 mr-2" />
-              Enviar convite
+              {isSendingInvite ? 'Enviando...' : 'Enviar convite'}
             </Button>
           </DialogFooter>
         </DialogContent>

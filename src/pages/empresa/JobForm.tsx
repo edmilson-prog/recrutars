@@ -43,23 +43,21 @@ export default function CompanyJobForm() {
     formData,
     selectedBenefits,
     otherBenefits,
-    skills,
-    newSkill,
     isEditing,
     notFound,
     isDirty,
     progress,
     jobStatus,
+    technicalSkillIds,
+    behavioralSkillIds,
     updateFormData,
     setOtherBenefits,
-    setNewSkill,
     toggleBenefit,
-    addSkill,
-    removeSkill,
-    handleSkillKeyPress,
     handleApplySuggestion,
     handleSaveJob,
     handleUpdateStatus,
+    setTechnicalSkillIds,
+    setBehavioralSkillIds,
     analysis,
     isAnalyzing,
   } = useJobForm({ jobId: id });
@@ -214,12 +212,10 @@ export default function CompanyJobForm() {
 
               <TabsContent value="skills" className="mt-6">
                 <JobFormSkills
-                  skills={skills}
-                  newSkill={newSkill}
-                  onNewSkillChange={setNewSkill}
-                  onAddSkill={addSkill}
-                  onRemoveSkill={removeSkill}
-                  onKeyPress={handleSkillKeyPress}
+                  technicalSkillIds={technicalSkillIds}
+                  behavioralSkillIds={behavioralSkillIds}
+                  onTechnicalChange={setTechnicalSkillIds}
+                  onBehavioralChange={setBehavioralSkillIds}
                 />
               </TabsContent>
             </Tabs>

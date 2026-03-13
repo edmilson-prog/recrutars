@@ -11,7 +11,7 @@ export type SuggestionCategory =
   | 'benefits'
   | 'title'
   | 'requirements'
-  | 'softSkills'
+  | 'competencies'
   | 'workType'
   | 'location'
   | 'bias';
@@ -29,6 +29,8 @@ export interface JobFormData {
   requirements: string;
   benefits: string[];
   skills: string[];
+  technicalSkillCount: number;
+  behavioralSkillCount: number;
 }
 
 export interface JobSuggestion {

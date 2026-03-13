@@ -23,7 +23,7 @@ import {
   TITLE_MIN_LENGTH,
   TITLE_MAX_LENGTH,
   CLEAR_TITLE_KEYWORDS,
-  SOFT_SKILLS_KEYWORDS,
+  MIN_COMPETENCIES_PER_TYPE,
   calculateCategoryScore,
 } from './criteriaConfig';
 import { analyzeBias } from './biasAnalyzer';
@@ -89,7 +89,7 @@ function analyzeSalary(formData: JobFormData): { score: number; suggestion?: Job
         'critical',
         'Adicione faixa salarial',
         'Vagas sem faixa salarial têm 67% menos candidaturas. Este é o critério mais impactante.',
-        25,
+        20,
         undefined,
         `R$ ${suggested.min.toLocaleString('pt-BR')} - R$ ${suggested.max.toLocaleString('pt-BR')}`,
         'add'
@@ -347,34 +347,71 @@ function analyzeRequirements(formData: JobFormData): { score: number; suggestion
   return { score: 1 };
 }
 
-function analyzeSoftSkills(formData: JobFormData): { score: number; suggestion?: JobSuggestion } {
-  const text = `${formData.description} ${formData.requirements}`.toLowerCase();
-  const foundSkills = SOFT_SKILLS_KEYWORDS.filter(skill => text.includes(skill.toLowerCase()));
+function analyzeCompetencies(formData: JobFormData): { score: number; suggestion?: JobSuggestion } {
+  const { technicalSkillCount, behavioralSkillCount } = formData;
+  const total = technicalSkillCount + behavioralSkillCount;
 
-  if (foundSkills.length === 0) {
+  // Tier 1: No competencies at all → critical
+  if (total === 0) {
     return {
       score: 0,
       suggestion: createSuggestion(
-        'softSkills',
-        'important',
-        'Mencione soft skills',
-        'Incluir habilidades comportamentais como comunicação, trabalho em equipe ou proatividade ajuda a atrair candidatos alinhados.',
-        5,
+        'competencies',
+        'critical',
+        'Selecione competências',
+        'Adicione competências técnicas e comportamentais na aba "Competências" para melhorar o match com candidatos.',
+        10,
         undefined,
-        'comunicação, trabalho em equipe, proatividade',
+        undefined,
         'add'
       ),
     };
   }
 
-  if (foundSkills.length < 2) {
+  // Tier 2: Only one type filled → important
+  if (technicalSkillCount === 0 || behavioralSkillCount === 0) {
+    const missing = technicalSkillCount === 0 ? 'técnicas' : 'comportamentais';
+    return {
+      score: 0.3,
+      suggestion: createSuggestion(
+        'competencies',
+        'important',
+        `Adicione competências ${missing}`,
+        `Selecione competências ${missing} na aba "Competências" para um match mais preciso.`,
+        7,
+        undefined,
+        undefined,
+        'add'
+      ),
+    };
+  }
+
+  // Tier 3: Both types but some < 3 → important
+  if (technicalSkillCount < 3 || behavioralSkillCount < 3) {
     return {
       score: 0.5,
       suggestion: createSuggestion(
-        'softSkills',
+        'competencies',
+        'important',
+        'Adicione mais competências',
+        `Você selecionou ${technicalSkillCount} técnica(s) e ${behavioralSkillCount} comportamental(is). Selecione pelo menos 3 de cada tipo para melhor precisão no match.`,
+        5,
+        undefined,
+        undefined,
+        'add'
+      ),
+    };
+  }
+
+  // Tier 4: Both types 3+ but some < 5 → ok (stays visible until 5+5)
+  if (technicalSkillCount < MIN_COMPETENCIES_PER_TYPE || behavioralSkillCount < MIN_COMPETENCIES_PER_TYPE) {
+    return {
+      score: 0.8,
+      suggestion: createSuggestion(
+        'competencies',
         'ok',
-        'Adicione mais soft skills',
-        `Você mencionou "${foundSkills[0]}". Considere adicionar outras habilidades comportamentais relevantes.`,
+        'Complete as competências',
+        `Você selecionou ${technicalSkillCount} técnica(s) e ${behavioralSkillCount} comportamental(is). Selecione ${MIN_COMPETENCIES_PER_TYPE} de cada tipo para pontuação máxima.`,
         2,
         undefined,
         undefined,
@@ -383,6 +420,7 @@ function analyzeSoftSkills(formData: JobFormData): { score: number; suggestion?:
     };
   }
 
+  // Tier 5: 5 technical + 5 behavioral → perfect score, no suggestion
   return { score: 1 };
 }
 
@@ -461,7 +499,7 @@ export function analyzeJob(formData: JobFormData): JobAnalysis {
     benefits: 0,
     title: 0,
     requirements: 0,
-    softSkills: 0,
+    competencies: 0,
     workType: 0,
     location: 0,
     bias: 0,
@@ -474,7 +512,7 @@ export function analyzeJob(formData: JobFormData): JobAnalysis {
     { category: 'benefits', analyze: () => analyzeBenefits(formData) },
     { category: 'title', analyze: () => analyzeTitle(formData) },
     { category: 'requirements', analyze: () => analyzeRequirements(formData) },
-    { category: 'softSkills', analyze: () => analyzeSoftSkills(formData) },
+    { category: 'competencies', analyze: () => analyzeCompetencies(formData) },
     { category: 'workType', analyze: () => analyzeWorkType(formData) },
     { category: 'location', analyze: () => analyzeLocation(formData) },
     { category: 'bias', analyze: () => analyzeBiasInText(formData) },

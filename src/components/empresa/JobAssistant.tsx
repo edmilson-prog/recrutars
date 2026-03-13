@@ -29,7 +29,7 @@ function categoryToField(category: string): string {
     benefits: 'benefits',
     title: 'title',
     requirements: 'requirements',
-    softSkills: 'requirements',
+    competencies: 'skills',
     workType: 'type',
     location: 'location',
     bias: 'description',

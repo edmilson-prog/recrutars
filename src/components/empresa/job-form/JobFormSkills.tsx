@@ -1,61 +1,60 @@
-import { X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { StandardizedSkillSelector } from '@/components/skills/StandardizedSkillSelector';
+import { useSkillCatalog } from '@/hooks/useStandardizedSkillsQuery';
+import { Loader2 } from 'lucide-react';
 
 interface JobFormSkillsProps {
-  skills: string[];
-  newSkill: string;
-  onNewSkillChange: (value: string) => void;
-  onAddSkill: () => void;
-  onRemoveSkill: (skill: string) => void;
-  onKeyPress: (e: React.KeyboardEvent) => void;
+  technicalSkillIds: string[];
+  behavioralSkillIds: string[];
+  onTechnicalChange: (ids: string[]) => void;
+  onBehavioralChange: (ids: string[]) => void;
 }
 
 export function JobFormSkills({
-  skills,
-  newSkill,
-  onNewSkillChange,
-  onAddSkill,
-  onRemoveSkill,
-  onKeyPress,
+  technicalSkillIds,
+  behavioralSkillIds,
+  onTechnicalChange,
+  onBehavioralChange,
 }: JobFormSkillsProps) {
+  const { data: catalog, isLoading } = useSkillCatalog();
+
+  if (isLoading || !catalog) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-sm text-muted-foreground">Carregando competências...</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Competências Desejadas</CardTitle>
-        <CardDescription>Adicione as skills e competências esperadas dos candidatos</CardDescription>
+        <CardDescription>
+          Selecione até 5 competências técnicas e 5 comportamentais para esta vaga.
+          A ordem de seleção define a prioridade no match com candidatos.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Digite uma skill e pressione Enter"
-            value={newSkill}
-            onChange={(e) => onNewSkillChange(e.target.value)}
-            onKeyDown={onKeyPress}
-          />
-          <Button type="button" variant="outline" onClick={onAddSkill}>
-            Adicionar
-          </Button>
-        </div>
-        {skills.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {skills.map(skill => (
-              <Badge key={skill} variant="secondary" className="gap-1 pr-1">
-                {skill}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 hover:bg-transparent"
-                  onClick={() => onRemoveSkill(skill)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ))}
-          </div>
-        )}
+      <CardContent className="space-y-6">
+        <StandardizedSkillSelector
+          type="technical"
+          selectedSkillIds={technicalSkillIds}
+          onChange={onTechnicalChange}
+          maxSelections={5}
+          catalog={catalog}
+        />
+        <Separator />
+        <StandardizedSkillSelector
+          type="behavioral"
+          selectedSkillIds={behavioralSkillIds}
+          onChange={onBehavioralChange}
+          maxSelections={5}
+          catalog={catalog}
+        />
       </CardContent>
     </Card>
   );
