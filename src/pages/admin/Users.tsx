@@ -73,6 +73,7 @@ export default function AdminUsers() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [activeKpi, setActiveKpi] = useState<string | null>(null);
 
   // Fetch users via service layer
   const { data: usersResult, isLoading: isLoadingUsers } = useUsers(undefined, { page: 1, pageSize: 9999 });
@@ -148,15 +149,37 @@ export default function AdminUsers() {
     const inactive = users.filter(u => u.status === 'inactive' || u.status === 'suspended' || u.status === 'pending').length;
     const noRole = users.filter(u => !u.roleId).length;
     return [
-      { label: 'Total Usuarios', value: total, icon: Users, color: 'bg-primary/10 text-primary', clickable: false },
-      { label: 'Admins', value: admins, icon: ShieldCheck, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', clickable: false },
-      { label: 'Empresas', value: companies, icon: Building2, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', clickable: false },
-      { label: 'Candidatos', value: candidates, icon: Crown, color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', clickable: false },
-      { label: 'Ativos', value: active, icon: UserCheck, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300', clickable: false },
-      { label: 'Inativos', value: inactive, icon: UserX, color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', clickable: false },
-      { label: 'Sem Papel', value: noRole, icon: ShieldAlert, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300', clickable: true },
+      { key: 'total', label: 'Total Usuarios', value: total, icon: Users, color: 'bg-primary/10 text-primary', activeRing: 'ring-2 ring-primary', hoverRing: 'hover:ring-2 hover:ring-primary/50' },
+      { key: 'admins', label: 'Admins', value: admins, icon: ShieldCheck, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', activeRing: 'ring-2 ring-purple-400', hoverRing: 'hover:ring-2 hover:ring-purple-400/50' },
+      { key: 'companies', label: 'Empresas', value: companies, icon: Building2, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', activeRing: 'ring-2 ring-blue-400', hoverRing: 'hover:ring-2 hover:ring-blue-400/50' },
+      { key: 'candidates', label: 'Candidatos', value: candidates, icon: Crown, color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', activeRing: 'ring-2 ring-green-400', hoverRing: 'hover:ring-2 hover:ring-green-400/50' },
+      { key: 'active', label: 'Ativos', value: active, icon: UserCheck, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300', activeRing: 'ring-2 ring-emerald-400', hoverRing: 'hover:ring-2 hover:ring-emerald-400/50' },
+      { key: 'inactive', label: 'Inativos', value: inactive, icon: UserX, color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', activeRing: 'ring-2 ring-red-400', hoverRing: 'hover:ring-2 hover:ring-red-400/50' },
+      { key: 'noRole', label: 'Sem Papel', value: noRole, icon: ShieldAlert, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300', activeRing: 'ring-2 ring-amber-400', hoverRing: 'hover:ring-2 hover:ring-amber-400/50' },
     ];
   }, [users]);
+
+  // KPI quick-filter handler (toggle)
+  const handleKpiClick = useCallback((key: string) => {
+    if (activeKpi === key || key === 'total') {
+      // Toggle off or "Total" always clears
+      setFilters(emptyFilters);
+      setActiveKpi(null);
+      return;
+    }
+
+    const filterMap: Record<string, UserFiltersState> = {
+      admins: { ...emptyFilters, types: ['admin'] },
+      companies: { ...emptyFilters, types: ['company'] },
+      candidates: { ...emptyFilters, types: ['candidate'] },
+      active: { ...emptyFilters, statuses: ['active' as UserStatus] },
+      inactive: { ...emptyFilters, statuses: ['inactive' as UserStatus, 'suspended' as UserStatus, 'pending' as UserStatus] },
+      noRole: { ...emptyFilters, noRole: true },
+    };
+
+    setFilters(filterMap[key] ?? emptyFilters);
+    setActiveKpi(key);
+  }, [activeKpi]);
 
   // Selection
   const toggleSelect = useCallback((id: string) => {
@@ -234,8 +257,8 @@ export default function AdminUsers() {
   const filtersContent = (
     <UserFilters
       filters={filters}
-      onChange={setFilters}
-      onClear={() => setFilters(emptyFilters)}
+      onChange={(f) => { setFilters(f); setActiveKpi(null); }}
+      onClear={() => { setFilters(emptyFilters); setActiveKpi(null); }}
     />
   );
 
@@ -276,25 +299,28 @@ export default function AdminUsers() {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
-          {kpis.map((kpi, index) => (
-            <motion.div
-              key={kpi.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              onClick={kpi.clickable ? () => setFilters(prev => ({ ...emptyFilters, noRole: true })) : undefined}
-              className={cn(
-                'bg-card rounded-xl p-4 shadow-soft',
-                kpi.clickable && 'cursor-pointer hover:ring-2 hover:ring-amber-400 transition-shadow'
-              )}
-            >
-              <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center mb-3', kpi.color)}>
-                <kpi.icon className="w-5 h-5" />
-              </div>
-              <div className="text-2xl font-bold text-foreground">{kpi.value}</div>
-              <div className="text-xs text-muted-foreground">{kpi.label}</div>
-            </motion.div>
-          ))}
+          {kpis.map((kpi, index) => {
+            const isActive = activeKpi === kpi.key;
+            return (
+              <motion.div
+                key={kpi.key}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                onClick={() => handleKpiClick(kpi.key)}
+                className={cn(
+                  'bg-card rounded-xl p-4 shadow-soft cursor-pointer transition-shadow',
+                  isActive ? kpi.activeRing : kpi.hoverRing
+                )}
+              >
+                <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center mb-3', kpi.color)}>
+                  <kpi.icon className="w-5 h-5" />
+                </div>
+                <div className="text-2xl font-bold text-foreground">{kpi.value}</div>
+                <div className="text-xs text-muted-foreground">{kpi.label}</div>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Search + Filters Bar */}
