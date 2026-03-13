@@ -4,7 +4,7 @@
  * PRD-044: Pagina "Sobre" e Tooltip de Versao
  */
 
-export const APP_VERSION = "1.34.0";
+export const APP_VERSION = "1.34.1";
 export const APP_CODENAME = "Compass";
 export const APP_NAME = "RecrutaRS";
 export const APP_COMPANY = "AILA - Sistemas Inteligentes";

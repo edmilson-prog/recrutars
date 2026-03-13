@@ -1,12 +1,30 @@
 {
   "versions": [
     {
+      "version": "1.34.1",
+      "codename": "Compass",
+      "type": "patch",
+      "releaseDate": "2026-03-12",
+      "description": "Correção do botão Convidar para Vaga no banco de talentos, candidatos salvos e sugeridos — agora cria candidatura e envia mensagem de fato.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Botão 'Convidar para Vaga' no Banco de Talentos, Candidatos Salvos e Candidatos Sugeridos agora cria candidatura com status 'Novo' e envia mensagem ao candidato",
+            "Recomendações de vagas retornando sempre vazias devido a filtro de localização hardcoded",
+            "Seletor de modalidade no formulário de vaga não exibindo valor selecionado corretamente"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.34.0",
       "codename": "Compass",
       "type": "minor",
       "releaseDate": "2026-03-12",
       "description": "Sistema de competências padronizadas com 80 habilidades, integração com Assistente de Redação e match por prioridade.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
