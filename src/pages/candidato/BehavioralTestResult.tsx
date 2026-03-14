@@ -151,7 +151,7 @@ export default function BehavioralTestResult() {
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-card rounded-2xl p-6 shadow-soft"
+                className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
               >
                 <h3 className="font-semibold text-foreground mb-4">
                   Perfil por Dimensão
@@ -167,7 +167,7 @@ export default function BehavioralTestResult() {
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-card rounded-2xl p-6 shadow-soft"
+                className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
               >
                 <h3 className="font-semibold text-foreground mb-4">
                   Scores
@@ -222,7 +222,7 @@ export default function BehavioralTestResult() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-card rounded-2xl p-6 shadow-soft"
+              className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
             >
               <h3 className="font-semibold text-foreground mb-4">
                 Detalhamento por Categoria
@@ -246,7 +246,7 @@ export default function BehavioralTestResult() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-card rounded-2xl p-6 shadow-soft"
+              className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
             >
               <h3 className="font-semibold text-foreground mb-4">
                 Próximos Passos

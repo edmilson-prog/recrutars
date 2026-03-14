@@ -94,11 +94,11 @@ export default function FeatureFlagEditor() {
       setCategory(existingFlag.category);
       setScope(existingFlag.scope);
       setStatus(existingFlag.status);
-      setDefaultValue(existingFlag.defaultValue);
-      setConditionGroups(existingFlag.conditionGroups);
+      setDefaultValue(existingFlag.defaultValue ?? false);
+      setConditionGroups(existingFlag.conditionGroups ?? []);
       setRolloutPercentage(existingFlag.rolloutPercentage ?? 0);
       setUseRollout(existingFlag.rolloutPercentage !== undefined && existingFlag.rolloutPercentage > 0);
-      setIsKillSwitched(existingFlag.isKillSwitched);
+      setIsKillSwitched(existingFlag.isKillSwitched ?? false);
       setKillSwitchReason(existingFlag.killSwitchReason || '');
     }
   }, [existingFlag]);

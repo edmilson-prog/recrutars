@@ -23,6 +23,7 @@ import {
   FileDown,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -508,24 +509,15 @@ export default function SavedCandidates() {
     <DashboardLayout userType="company">
       <div className="space-y-6">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <Heart className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Candidatos Salvos</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Candidatos que você salvou do Banco de Talentos. Acesse rapidamente seus favoritos e compare perfis para agilizar o processo seletivo.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          title="Candidatos Salvos"
+          description="Candidatos que você salvou do Banco de Talentos. Acesse rapidamente seus favoritos e compare perfis para agilizar o processo seletivo."
+          howItWorks={[
+            'Candidatos que você salvou para acompanhar',
+            'Organize seus favoritos por vaga ou perfil',
+            'Acesse rapidamente candidatos de interesse',
+          ]}
+        />
 
         {/* Controls */}
         {savedCandidates.length > 0 && (

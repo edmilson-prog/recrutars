@@ -150,3 +150,53 @@ export function useCreateUser() {
     },
   });
 }
+
+// ---------------------------------------------------------------------------
+// useSetUserPassword — mutation (admin only, via Edge Function)
+// ---------------------------------------------------------------------------
+
+export function useSetUserPassword() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      password,
+      adminId,
+    }: {
+      userId: string;
+      password: string;
+      adminId: string;
+    }) => {
+      const service = await getUsersService();
+      return service.setUserPassword(userId, password, adminId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rbac-audit'] });
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// useSendPasswordResetEmail — mutation (admin only, via Edge Function)
+// ---------------------------------------------------------------------------
+
+export function useSendPasswordResetEmail() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      adminId,
+    }: {
+      userId: string;
+      adminId: string;
+    }) => {
+      const service = await getUsersService();
+      return service.sendPasswordResetEmail(userId, adminId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rbac-audit'] });
+    },
+  });
+}

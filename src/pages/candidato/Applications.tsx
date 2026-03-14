@@ -179,7 +179,7 @@ export default function CandidateApplications() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="bg-card rounded-2xl p-6 shadow-soft"
+                className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
               >
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div className="flex items-start gap-4">

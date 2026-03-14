@@ -1,6 +1,6 @@
 /**
  * Admin Permission Groups Page
- * PRD-061: Gestao de Grupos de Permissao
+ * PRD-061: Gestão de Grupos de Permissão
  */
 
 import { useState, useEffect } from 'react';
@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import {
   UsersRound, Plus, Edit, Trash2, Search, Shield, Users, Loader2,
 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
 import { useUsers } from '@/hooks/useUsersQuery';
@@ -223,29 +224,21 @@ export default function AdminPermissionGroups() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <UsersRound className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Grupos de Permissão</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Organize usuários em grupos com permissões compartilhadas para controle de acesso simplificado.
-              </p>
-            </div>
+        <PageHeader
+          title="Grupos de Permissão"
+          description="Organize usuários em grupos com permissões compartilhadas para controle de acesso simplificado."
+          actions={
             <Button onClick={openCreate} className="shrink-0">
               <Plus className="w-4 h-4 mr-2" />
               Novo Grupo
             </Button>
-          </div>
-        </motion.div>
+          }
+          howItWorks={[
+            'Grupos organizam permissões para controle de acesso',
+            'Crie grupos e vincule usuários para definir acessos',
+            'Use "Novo Grupo" para criar uma configuração de permissões',
+          ]}
+        />
 
         <AdminTabNav />
 
@@ -290,7 +283,7 @@ export default function AdminPermissionGroups() {
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Shield className="w-3.5 h-3.5" />
-                  {group.permissionCodes.length} permissoes
+                  {group.permissionCodes.length} permissões
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="w-3.5 h-3.5" />
@@ -337,7 +330,7 @@ export default function AdminPermissionGroups() {
           <div className="text-center py-16 text-muted-foreground">
             <UsersRound className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p className="text-lg font-medium">Nenhum grupo encontrado</p>
-            <p className="text-sm">Crie um grupo para organizar permissoes de usuarios.</p>
+            <p className="text-sm">Crie um grupo para organizar permissões de usuários.</p>
           </div>
         )}
 
@@ -348,8 +341,8 @@ export default function AdminPermissionGroups() {
               <DialogTitle>{editingId ? 'Editar Grupo' : 'Novo Grupo'}</DialogTitle>
               <DialogDescription>
                 {editingId
-                  ? 'Atualize as informacoes e permissoes do grupo.'
-                  : 'Crie um novo grupo de permissao para organizar usuarios.'
+                  ? 'Atualize as informações e permissões do grupo.'
+                  : 'Crie um novo grupo de permissão para organizar usuários.'
                 }
               </DialogDescription>
             </DialogHeader>
@@ -367,12 +360,12 @@ export default function AdminPermissionGroups() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="group-desc">Descricao</Label>
+                  <Label htmlFor="group-desc">Descrição</Label>
                   <Input
                     id="group-desc"
                     value={form.description}
                     onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Descreva o proposito deste grupo..."
+                    placeholder="Descreva o propósito deste grupo..."
                   />
                 </div>
               </div>
@@ -381,9 +374,9 @@ export default function AdminPermissionGroups() {
 
               {/* Permissions */}
               <div>
-                <Label className="text-base font-semibold">Permissoes</Label>
+                <Label className="text-base font-semibold">Permissões</Label>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Selecione as permissoes que serao concedidas a todos os membros do grupo.
+                  Selecione as permissões que serão concedidas a todos os membros do grupo.
                 </p>
 
                 <div className="space-y-6">
@@ -419,7 +412,7 @@ export default function AdminPermissionGroups() {
               <div>
                 <Label className="text-base font-semibold">Membros</Label>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Adicione usuarios a este grupo.
+                  Adicione usuários a este grupo.
                 </p>
 
                 <div className="space-y-2 max-h-48 overflow-y-auto">

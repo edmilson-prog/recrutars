@@ -45,6 +45,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { PermissionsTab } from '@/components/admin/users/PermissionsTab';
+import { PasswordManagementSection } from '@/components/admin/users/PasswordManagementSection';
 import type { UserStatus, AuditAction } from '@/types/rbac';
 
 const typeOptions = [
@@ -202,7 +203,7 @@ export default function AdminUserDetail() {
     return (
       <DashboardLayout userType="admin">
         <div className="flex flex-col items-center justify-center py-20">
-          <p className="text-lg text-muted-foreground">Usuario nao encontrado.</p>
+          <p className="text-lg text-muted-foreground">Usuário não encontrado.</p>
           <Link to="/admin/usuarios" className="mt-4">
             <Button variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -252,13 +253,13 @@ export default function AdminUserDetail() {
       await Promise.all(promises);
 
       toast({
-        title: 'Permissoes atualizadas',
-        description: 'As permissoes do usuario foram salvas com sucesso.',
+        title: 'Permissões atualizadas',
+        description: 'As permissões do usuário foram salvas com sucesso.',
       });
     } catch {
       toast({
-        title: 'Erro ao salvar permissoes',
-        description: 'Nao foi possivel atualizar as permissoes. Tente novamente.',
+        title: 'Erro ao salvar permissões',
+        description: 'Não foi possível atualizar as permissões. Tente novamente.',
         variant: 'destructive',
       });
     }
@@ -277,8 +278,8 @@ export default function AdminUserDetail() {
       const result = await startImpersonation(id, originalUser?.roleId, originalUser?.type || 'candidate', impersonateReason.trim());
       if (result.success) {
         toast({
-          title: 'Impersonacao iniciada',
-          description: `Visualizando como ${originalUser?.name}. A sessao expira em 1 hora.`,
+          title: 'Impersonação iniciada',
+          description: `Visualizando como ${originalUser?.name}. A sessão expira em 1 hora.`,
         });
         setImpersonateDialogOpen(false);
         setImpersonateReason('');
@@ -289,14 +290,14 @@ export default function AdminUserDetail() {
         else if (targetType === 'company') navigate('/empresa');
       } else {
         toast({
-          title: 'Erro ao iniciar impersonacao',
-          description: result.error || 'Nao foi possivel iniciar a impersonacao.',
+          title: 'Erro ao iniciar impersonação',
+          description: result.error || 'Não foi possível iniciar a impersonação.',
           variant: 'destructive',
         });
       }
     } catch {
       toast({
-        title: 'Erro ao iniciar impersonacao',
+        title: 'Erro ao iniciar impersonação',
         description: 'Ocorreu um erro inesperado. Tente novamente.',
         variant: 'destructive',
       });
@@ -350,7 +351,7 @@ export default function AdminUserDetail() {
             </TabsTrigger>
             <TabsTrigger value="permissoes" className="gap-1.5">
               <Shield className="w-4 h-4" />
-              <span className="hidden sm:inline">Permissoes</span>
+              <span className="hidden sm:inline">Permissões</span>
             </TabsTrigger>
             <TabsTrigger value="timeline" className="gap-1.5">
               <Clock className="w-4 h-4" />
@@ -373,7 +374,7 @@ export default function AdminUserDetail() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-card rounded-xl p-6 shadow-soft space-y-6"
             >
-              <h2 className="text-lg font-semibold">Dados do Usuario</h2>
+              <h2 className="text-lg font-semibold">Dados do Usuário</h2>
 
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -423,6 +424,14 @@ export default function AdminUserDetail() {
 
               <Separator />
 
+              <PasswordManagementSection
+                userId={originalUser.id}
+                userEmail={originalUser.email}
+                userName={originalUser.name}
+              />
+
+              <Separator />
+
               <div className="grid sm:grid-cols-3 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">ID</span>
@@ -435,7 +444,7 @@ export default function AdminUserDetail() {
                   </p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Ultimo Acesso</span>
+                  <span className="text-muted-foreground">Último Acesso</span>
                   <p className="text-foreground">
                     {originalUser.lastAccessAt
                       ? formatRelativeDate(originalUser.lastAccessAt)
@@ -448,7 +457,7 @@ export default function AdminUserDetail() {
               <div className="flex justify-end">
                 <Button>
                   <Save className="w-4 h-4 mr-2" />
-                  Salvar Alteracoes
+                  Salvar Alterações
                 </Button>
               </div>
             </motion.div>
@@ -474,7 +483,7 @@ export default function AdminUserDetail() {
             >
               <h2 className="text-lg font-semibold">Timeline de Atividades</h2>
               <p className="text-sm text-muted-foreground">
-                Ultimos {userTimeline.length} eventos registrados para este usuario.
+                Últimos {userTimeline.length} eventos registrados para este usuário.
               </p>
 
               {userTimeline.length === 0 ? (
@@ -550,7 +559,7 @@ export default function AdminUserDetail() {
                   <div>
                     <p className="text-sm font-medium text-foreground">Sem assinatura vinculada</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Administradores nao possuem plano de assinatura.
+                      Administradores não possuem plano de assinatura.
                     </p>
                   </div>
                 </div>
@@ -567,7 +576,7 @@ export default function AdminUserDetail() {
                           <p className="text-xl font-bold text-foreground">{activeSubscription.planName}</p>
                           {activeSubscription.isTrial && (
                             <Badge className="mt-1.5 bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300 border-0 text-xs">
-                              Periodo de Trial
+                              Período de Trial
                             </Badge>
                           )}
                         </div>
@@ -584,7 +593,7 @@ export default function AdminUserDetail() {
 
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-border/50">
                         <div>
-                          <p className="text-xs text-muted-foreground">Periodo</p>
+                          <p className="text-xs text-muted-foreground">Período</p>
                           <p className="text-sm font-medium mt-0.5">
                             {subscriptionPeriodLabels[activeSubscription.period] ?? activeSubscription.period}
                           </p>
@@ -632,7 +641,7 @@ export default function AdminUserDetail() {
                   {allSubscriptions.length > 0 && (
                     <div>
                       <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                        Historico de Assinaturas
+                        Histórico de Assinaturas
                       </h3>
                       <div className="space-y-2">
                         {allSubscriptions.map((sub) => {
@@ -689,7 +698,7 @@ export default function AdminUserDetail() {
               {/* Add note */}
               <div className="space-y-3">
                 <Textarea
-                  placeholder="Escreva uma nota sobre este usuario..."
+                  placeholder="Escreva uma nota sobre este usuário..."
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   rows={3}
@@ -749,27 +758,27 @@ export default function AdminUserDetail() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Eye className="w-5 h-5 text-amber-500" />
-              Impersonar Usuario
+              Impersonar Usuário
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Voce esta prestes a visualizar a plataforma como <strong>{originalUser.name}</strong>.
-              A sessao de impersonacao expira automaticamente em <strong>1 hora</strong>.
+              Você está prestes a visualizar a plataforma como <strong>{originalUser.name}</strong>.
+              A sessão de impersonação expira automaticamente em <strong>1 hora</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="my-4 space-y-3">
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
-              <p className="font-medium">Atencao</p>
+              <p className="font-medium">Atenção</p>
               <p className="mt-1">
-                Todas as acoes realizadas durante a impersonacao serao registradas no log de auditoria.
+                Todas as ações realizadas durante a impersonação serão registradas no log de auditoria.
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="impersonate-reason">Motivo (obrigatorio)</Label>
+              <Label htmlFor="impersonate-reason">Motivo (obrigatório)</Label>
               <Textarea
                 id="impersonate-reason"
-                placeholder="Descreva o motivo da impersonacao..."
+                placeholder="Descreva o motivo da impersonação..."
                 value={impersonateReason}
                 onChange={(e) => setImpersonateReason(e.target.value)}
                 rows={3}
@@ -787,7 +796,7 @@ export default function AdminUserDetail() {
             >
               {impersonateLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               <Eye className="w-4 h-4 mr-2" />
-              Iniciar Impersonacao
+              Iniciar Impersonação
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

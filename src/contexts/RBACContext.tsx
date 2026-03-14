@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useMemo, useEffect, useCallback, ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission, getEffectivePermissions, configureRBAC } from '@/lib/rbac';
+import { supabase } from '@/lib/supabase';
 import { useImpersonation } from '@/hooks/useImpersonation';
 import { useRoles, usePermissionGroups, useUserPermissionOverrides } from '@/hooks/useRBACQuery';
 import type { PermissionResolution, ImpersonationSession } from '@/types/rbac';
@@ -91,6 +92,14 @@ export function RBACProvider({ children }: { children: ReactNode }) {
     // Step 2: Activate AuthContext overlay (loads target user data)
     try {
       await activateImpersonation(targetUserId);
+
+      // Log impersonation in audit trail (fire-and-forget)
+      supabase.rpc('log_rbac_audit', {
+        p_action: 'impersonation_started',
+        p_target_user_id: targetUserId,
+        p_details: reason,
+      }).then();
+
       return { success: true };
     } catch (err) {
       // Rollback session if AuthContext activation fails

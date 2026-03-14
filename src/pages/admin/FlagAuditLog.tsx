@@ -6,10 +6,11 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  ScrollText, Search, Calendar, ChevronLeft, ChevronRight,
+  Search, Calendar, ChevronLeft, ChevronRight,
   PlusCircle, ToggleLeft, Skull, ShieldOff, Edit2, UserPlus, UserMinus,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -157,25 +158,15 @@ export default function FlagAuditLog() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <ScrollText className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Auditoria de Feature Flags</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Histórico completo de alterações em flags, overrides e kill switches.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          title="Auditoria de Feature Flags"
+          description="Histórico completo de alterações em flags, overrides e kill switches."
+          howItWorks={[
+            'Histórico de todas as alterações em feature flags',
+            'Veja quem alterou, quando e qual foi a mudança',
+            'Filtre por flag, usuário e período',
+          ]}
+        />
 
         <AdminTabNav />
 
@@ -189,10 +180,10 @@ export default function FlagAuditLog() {
                   onValueChange={(v) => { setActionFilter(v); resetPage(); }}
                 >
                   <SelectTrigger className="w-full lg:w-[160px] h-9">
-                    <SelectValue placeholder="Acao" />
+                    <SelectValue placeholder="Ação" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todas acoes</SelectItem>
+                    <SelectItem value="all">Todas ações</SelectItem>
                     {Object.entries(actionConfig).map(([key, cfg]) => (
                       <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
                     ))}
@@ -242,7 +233,7 @@ export default function FlagAuditLog() {
                       value={dateToFilter}
                       onChange={(e) => { setDateToFilter(e.target.value); resetPage(); }}
                       className="pl-9 h-9 w-[160px]"
-                      placeholder="Ate"
+                      placeholder="Até"
                     />
                   </div>
                 </div>
@@ -260,10 +251,10 @@ export default function FlagAuditLog() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[170px]">Data</TableHead>
-                      <TableHead className="w-[120px]">Acao</TableHead>
+                      <TableHead className="w-[120px]">Ação</TableHead>
                       <TableHead>Flag</TableHead>
                       <TableHead>Executor</TableHead>
-                      <TableHead>Alteracao</TableHead>
+                      <TableHead>Alteração</TableHead>
                       <TableHead>Detalhes</TableHead>
                     </TableRow>
                   </TableHeader>

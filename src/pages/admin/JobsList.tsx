@@ -1,13 +1,12 @@
 /**
  * JobsList Page
- * PRD-058: Listagem de todas as vagas com filtros avancados
+ * PRD-058: Listagem de todas as vagas com filtros avançados
  */
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  Briefcase,
   Search,
   Star,
   MoreHorizontal,
@@ -17,6 +16,7 @@ import {
   ChevronRight,
   Filter,
 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAdminJobs } from '@/hooks/useAdminJobs';
 import { cn } from '@/lib/utils';
@@ -54,7 +54,7 @@ const STATUS_BADGES: Record<string, { label: string; className: string }> = {
   active: { label: 'Ativa', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' },
   pending: { label: 'Pendente', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400' },
   rejected: { label: 'Rejeitada', className: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' },
-  correction: { label: 'Correcao', className: 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400' },
+  correction: { label: 'Correção', className: 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400' },
   finalized: { label: 'Finalizada', className: 'bg-gray-100 text-gray-700 dark:bg-gray-500/20 dark:text-gray-400' },
 };
 
@@ -62,7 +62,7 @@ const MODERATION_BADGES: Record<string, { label: string; className: string }> = 
   pending: { label: 'Pendente', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400' },
   approved: { label: 'Aprovada', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' },
   rejected: { label: 'Rejeitada', className: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' },
-  correction_requested: { label: 'Correcao', className: 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400' },
+  correction_requested: { label: 'Correção', className: 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400' },
 };
 
 export default function JobsList() {
@@ -114,25 +114,10 @@ export default function JobsList() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <Briefcase className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Todas as Vagas</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Navegue e filtre todas as vagas publicadas na plataforma. {filtered.length} vagas encontradas.
-              </p>
-            </div>
-
-            {/* Mobile filter trigger */}
+        <PageHeader
+          title="Todas as Vagas"
+          description={<>Navegue e filtre todas as vagas publicadas na plataforma. {filtered.length} vagas encontradas.</>}
+          actions={
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" className="lg:hidden shrink-0">
@@ -147,8 +132,13 @@ export default function JobsList() {
                 <div className="mt-4">{FilterSidebar}</div>
               </SheetContent>
             </Sheet>
-          </div>
-        </motion.div>
+          }
+          howItWorks={[
+            'Lista completa de todas as vagas da plataforma',
+            'Filtre por empresa, status, tipo de contrato e localização',
+            'Use as ações do menu para moderar e gerenciar vagas',
+          ]}
+        />
 
         <AdminTabNav />
 
@@ -175,7 +165,7 @@ export default function JobsList() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por titulo ou empresa..."
+                  placeholder="Buscar por título ou empresa..."
                   value={(filters.search as string) || ''}
                   onChange={(e) =>
                     handleFilterChange({ ...filters, search: e.target.value || undefined })
@@ -194,12 +184,12 @@ export default function JobsList() {
                       <TableHead>Empresa</TableHead>
                       <TableHead className="hidden md:table-cell">Localidade</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="hidden lg:table-cell">Moderacao</TableHead>
+                      <TableHead className="hidden lg:table-cell">Moderação</TableHead>
                       <TableHead className="hidden xl:table-cell">Plano</TableHead>
                       <TableHead className="hidden md:table-cell text-center">Dest.</TableHead>
-                      <TableHead className="hidden lg:table-cell">Publicacao</TableHead>
+                      <TableHead className="hidden lg:table-cell">Publicação</TableHead>
                       <TableHead className="text-center">Cand.</TableHead>
-                      <TableHead className="text-right">Acoes</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -309,7 +299,7 @@ export default function JobsList() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-4 py-3 border-t">
                   <span className="text-xs text-muted-foreground">
-                    Pagina {page + 1} de {totalPages}
+                    Página {page + 1} de {totalPages}
                   </span>
                   <div className="flex items-center gap-2">
                     <Button

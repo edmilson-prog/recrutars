@@ -54,6 +54,10 @@ export interface IUsersService {
   ): Promise<User>;
 
   createUser(data: CreateUserData): Promise<{ userId: string }>;
+
+  setUserPassword(userId: string, password: string, adminId: string): Promise<void>;
+
+  sendPasswordResetEmail(userId: string, adminId: string): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,18 +1,18 @@
 /**
  * Admin Users Page
- * PRD-061: Gestao de Usuarios e Permissoes (RBAC)
- * Listagem unificada de usuarios com filtros, busca e acoes em lote.
+ * PRD-061: Gestão de Usuários e Permissões (RBAC)
+ * Listagem unificada de usuários com filtros, busca e ações em lote.
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import {
   Users, ShieldCheck, Building2, UserCheck, UserX, Search,
   SlidersHorizontal, CheckCircle, Ban, ChevronLeft, ChevronRight,
   Download, Crown, Loader2, ShieldAlert, UserPlus,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useUsers, useUpdateUserStatus } from '@/hooks/useUsersQuery';
 import { useRoles } from '@/hooks/useRBACQuery';
 import { formatRelativeDate } from '@/lib/formatters';
@@ -73,6 +73,7 @@ export default function AdminUsers() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [activeKpi, setActiveKpi] = useState<string | null>(null);
 
   // Fetch users via service layer
   const { data: usersResult, isLoading: isLoadingUsers } = useUsers(undefined, { page: 1, pageSize: 9999 });
@@ -148,15 +149,37 @@ export default function AdminUsers() {
     const inactive = users.filter(u => u.status === 'inactive' || u.status === 'suspended' || u.status === 'pending').length;
     const noRole = users.filter(u => !u.roleId).length;
     return [
-      { label: 'Total Usuarios', value: total, icon: Users, color: 'bg-primary/10 text-primary', clickable: false },
-      { label: 'Admins', value: admins, icon: ShieldCheck, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', clickable: false },
-      { label: 'Empresas', value: companies, icon: Building2, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', clickable: false },
-      { label: 'Candidatos', value: candidates, icon: Crown, color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', clickable: false },
-      { label: 'Ativos', value: active, icon: UserCheck, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300', clickable: false },
-      { label: 'Inativos', value: inactive, icon: UserX, color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', clickable: false },
-      { label: 'Sem Papel', value: noRole, icon: ShieldAlert, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300', clickable: true },
+      { key: 'total', label: 'Total Usuários', value: total, icon: Users, color: 'bg-primary/10 text-primary', activeRing: 'ring-2 ring-primary', hoverRing: 'hover:ring-2 hover:ring-primary/50' },
+      { key: 'admins', label: 'Admins', value: admins, icon: ShieldCheck, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', activeRing: 'ring-2 ring-purple-400', hoverRing: 'hover:ring-2 hover:ring-purple-400/50' },
+      { key: 'companies', label: 'Empresas', value: companies, icon: Building2, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', activeRing: 'ring-2 ring-blue-400', hoverRing: 'hover:ring-2 hover:ring-blue-400/50' },
+      { key: 'candidates', label: 'Candidatos', value: candidates, icon: Crown, color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', activeRing: 'ring-2 ring-green-400', hoverRing: 'hover:ring-2 hover:ring-green-400/50' },
+      { key: 'active', label: 'Ativos', value: active, icon: UserCheck, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300', activeRing: 'ring-2 ring-emerald-400', hoverRing: 'hover:ring-2 hover:ring-emerald-400/50' },
+      { key: 'inactive', label: 'Inativos', value: inactive, icon: UserX, color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', activeRing: 'ring-2 ring-red-400', hoverRing: 'hover:ring-2 hover:ring-red-400/50' },
+      { key: 'noRole', label: 'Sem Papel', value: noRole, icon: ShieldAlert, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300', activeRing: 'ring-2 ring-amber-400', hoverRing: 'hover:ring-2 hover:ring-amber-400/50' },
     ];
   }, [users]);
+
+  // KPI quick-filter handler (toggle)
+  const handleKpiClick = useCallback((key: string) => {
+    if (activeKpi === key || key === 'total') {
+      // Toggle off or "Total" always clears
+      setFilters(emptyFilters);
+      setActiveKpi(null);
+      return;
+    }
+
+    const filterMap: Record<string, UserFiltersState> = {
+      admins: { ...emptyFilters, types: ['admin'] },
+      companies: { ...emptyFilters, types: ['company'] },
+      candidates: { ...emptyFilters, types: ['candidate'] },
+      active: { ...emptyFilters, statuses: ['active' as UserStatus] },
+      inactive: { ...emptyFilters, statuses: ['inactive' as UserStatus, 'suspended' as UserStatus, 'pending' as UserStatus] },
+      noRole: { ...emptyFilters, noRole: true },
+    };
+
+    setFilters(filterMap[key] ?? emptyFilters);
+    setActiveKpi(key);
+  }, [activeKpi]);
 
   // Selection
   const toggleSelect = useCallback((id: string) => {
@@ -196,7 +219,7 @@ export default function AdminUsers() {
     if (filteredUsers.length === 0) {
       toast({
         title: 'Nenhum dado para exportar',
-        description: 'Ajuste os filtros para incluir usuarios na exportacao.',
+        description: 'Ajuste os filtros para incluir usuários na exportação.',
         variant: 'destructive',
       });
       return;
@@ -215,8 +238,8 @@ export default function AdminUsers() {
     );
 
     toast({
-      title: 'Exportacao concluida',
-      description: `${filteredUsers.length} usuario${filteredUsers.length !== 1 ? 's' : ''} exportado${filteredUsers.length !== 1 ? 's' : ''} com sucesso.`,
+      title: 'Exportação concluída',
+      description: `${filteredUsers.length} usuário${filteredUsers.length !== 1 ? 's' : ''} exportado${filteredUsers.length !== 1 ? 's' : ''} com sucesso.`,
     });
   }, [filteredUsers, toast]);
 
@@ -234,67 +257,65 @@ export default function AdminUsers() {
   const filtersContent = (
     <UserFilters
       filters={filters}
-      onChange={setFilters}
-      onClear={() => setFilters(emptyFilters)}
+      onChange={(f) => { setFilters(f); setActiveKpi(null); }}
+      onClear={() => { setFilters(emptyFilters); setActiveKpi(null); }}
     />
   );
 
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <Users className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Usuários</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Gerencie todos os usuários da plataforma. Visualize perfis, status e tipos de conta.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
+        <PageHeader
+          title="Usuários"
+          description="Gerencie todos os usuários da plataforma. Visualize perfis, status e tipos de conta."
+          actions={
+            <>
               <Button variant="outline" size="sm" onClick={handleExportCSV}>
                 <Download className="w-4 h-4 mr-2" />
                 Exportar CSV
               </Button>
               <Button size="sm" onClick={() => setCreateModalOpen(true)}>
                 <UserPlus className="w-4 h-4 mr-2" />
-                Novo Usuario
+                Novo Usuário
               </Button>
-            </div>
-          </div>
-        </motion.div>
+            </>
+          }
+          howItWorksIntro="Usuários são todas as contas cadastradas na plataforma RecrutaRS."
+          howItWorks={[
+            'Filtre por tipo (Admin, Empresa, Candidato) ou status usando os filtros laterais',
+            'Use os cards de métricas como filtros rápidos — clique para ativar',
+            'Clique em "Novo Usuário" para criar uma conta manualmente',
+            'Use o menu de ações (...) em cada linha para gerenciar o usuário',
+            'Exporte a lista filtrada para CSV a qualquer momento',
+          ]}
+        />
 
         <AdminTabNav />
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
-          {kpis.map((kpi, index) => (
-            <motion.div
-              key={kpi.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              onClick={kpi.clickable ? () => setFilters(prev => ({ ...emptyFilters, noRole: true })) : undefined}
-              className={cn(
-                'bg-card rounded-xl p-4 shadow-soft',
-                kpi.clickable && 'cursor-pointer hover:ring-2 hover:ring-amber-400 transition-shadow'
-              )}
-            >
-              <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center mb-3', kpi.color)}>
-                <kpi.icon className="w-5 h-5" />
-              </div>
-              <div className="text-2xl font-bold text-foreground">{kpi.value}</div>
-              <div className="text-xs text-muted-foreground">{kpi.label}</div>
-            </motion.div>
-          ))}
+          {kpis.map((kpi, index) => {
+            const isActive = activeKpi === kpi.key;
+            return (
+              <motion.div
+                key={kpi.key}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                onClick={() => handleKpiClick(kpi.key)}
+                className={cn(
+                  'bg-card rounded-xl p-4 shadow-soft cursor-pointer transition-shadow',
+                  isActive ? kpi.activeRing : kpi.hoverRing
+                )}
+              >
+                <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center mb-3', kpi.color)}>
+                  <kpi.icon className="w-5 h-5" />
+                </div>
+                <div className="text-2xl font-bold text-foreground">{kpi.value}</div>
+                <div className="text-xs text-muted-foreground">{kpi.label}</div>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Search + Filters Bar */}
@@ -326,7 +347,7 @@ export default function AdminUsers() {
               <SheetContent side="left" className="w-80 overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle>Filtros</SheetTitle>
-                  <SheetDescription>Refine a listagem de usuarios</SheetDescription>
+                  <SheetDescription>Refine a listagem de usuários</SheetDescription>
                 </SheetHeader>
                 <div className="mt-6">
                   {filtersContent}
@@ -353,7 +374,7 @@ export default function AdminUsers() {
             className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg"
           >
             <span className="text-sm font-medium">
-              {selectedIds.length} usuario{selectedIds.length > 1 ? 's' : ''} selecionado{selectedIds.length > 1 ? 's' : ''}
+              {selectedIds.length} usuário{selectedIds.length > 1 ? 's' : ''} selecionado{selectedIds.length > 1 ? 's' : ''}
             </span>
             <div className="flex gap-2 ml-auto">
               <Button size="sm" variant="outline" onClick={bulkActivate}>
@@ -435,7 +456,7 @@ export default function AdminUsers() {
               {filteredUsers.length <= ITEMS_PER_PAGE && (
                 <div className="px-4 py-3 border-t">
                   <span className="text-sm text-muted-foreground">
-                    {filteredUsers.length} usuario{filteredUsers.length !== 1 ? 's' : ''} encontrado{filteredUsers.length !== 1 ? 's' : ''}
+                    {filteredUsers.length} usuário{filteredUsers.length !== 1 ? 's' : ''} encontrado{filteredUsers.length !== 1 ? 's' : ''}
                   </span>
                 </div>
               )}

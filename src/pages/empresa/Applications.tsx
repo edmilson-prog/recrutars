@@ -39,6 +39,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -725,33 +726,24 @@ export default function CompanyApplications() {
     <DashboardLayout userType="company">
       <div className="space-y-6">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <ClipboardCheck className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                Candidaturas
-                <Badge
-                  variant="secondary"
-                  className="text-base font-semibold px-3 py-1 bg-secondary/10 text-secondary"
-                  aria-label={`${totalActiveApplications} candidaturas no total`}
-                >
-                  {totalActiveApplications}
-                </Badge>
-              </h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Acompanhe e gerencie todas as candidaturas das suas vagas. Filtre por status, avalie candidatos e avance no processo seletivo.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          title="Candidaturas"
+          description="Acompanhe e gerencie todas as candidaturas das suas vagas. Filtre por status, avalie candidatos e avance no processo seletivo."
+          badges={
+            <Badge
+              variant="secondary"
+              className="text-base font-semibold px-3 py-1 bg-secondary/10 text-secondary"
+              aria-label={`${totalActiveApplications} candidaturas no total`}
+            >
+              {totalActiveApplications}
+            </Badge>
+          }
+          howItWorks={[
+            'Acompanhe todas as candidaturas das suas vagas',
+            'Arraste cards no pipeline Kanban para avançar candidatos',
+            'Filtre por vaga, status e perfil comportamental',
+          ]}
+        />
 
         {/* Job Selector and Filters */}
         <div className="flex flex-col lg:flex-row gap-4">
@@ -1734,7 +1726,7 @@ export default function CompanyApplications() {
               setJobClosureModalOpen(true);
             } else {
               const remaining = result.positionsCount - result.hiredCount;
-              toast.info(`Vaga ainda possui ${remaining} posicao(oes) em aberto.`);
+              toast.info(`Vaga ainda possui ${remaining} posição(ões) em aberto.`);
             }
           }}
         />

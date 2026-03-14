@@ -16,6 +16,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatBRL } from '@/lib/formatters';
@@ -75,32 +76,22 @@ export default function BillingDashboard() {
     { label: 'Canceladas', value: kpis.cancelledCount.toString(), icon: XCircle, color: 'text-red-600' },
     { label: 'Pagamento Pendente', value: kpis.pastDueCount.toString(), icon: TrendingDown, color: 'text-yellow-600' },
     { label: 'Taxa de Churn', value: `${kpis.churnRate}%`, icon: TrendingDown, color: 'text-orange-600' },
-    { label: 'Conversoes Trial → Pago', value: kpis.trialConversions.toString(), icon: TrendingUp, color: 'text-green-600' },
+    { label: 'Conversões Trial → Pago', value: kpis.trialConversions.toString(), icon: TrendingUp, color: 'text-green-600' },
     { label: 'Total de Assinaturas', value: kpis.total.toString(), icon: Users, color: 'text-foreground' },
   ];
 
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <DollarSign className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Financeiro</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Métricas de faturamento, receita recorrente e acompanhamento financeiro da plataforma.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          title="Financeiro"
+          description="Métricas de faturamento, receita recorrente e acompanhamento financeiro da plataforma."
+          howItWorks={[
+            'Métricas financeiras: receita, assinaturas ativas e inadimplência',
+            'Gráficos mostram evolução da receita ao longo do tempo',
+            'Acompanhe taxa de conversão de trials para pagantes',
+          ]}
+        />
 
         <AdminTabNav />
 

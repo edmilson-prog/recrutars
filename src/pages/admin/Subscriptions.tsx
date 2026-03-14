@@ -19,6 +19,7 @@ import {
   Pause,
   ShoppingBag,
 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -171,25 +172,15 @@ export default function SubscriptionsPage() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <CreditCard className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Assinaturas</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Gerencie todas as assinaturas da plataforma. Visualize status, planos ativos e histórico de pagamentos.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          title="Assinaturas"
+          description="Gerencie todas as assinaturas da plataforma. Visualize status, planos ativos e histórico de pagamentos."
+          howItWorks={[
+            'Liste e gerencie assinaturas de empresas',
+            'Filtre por status, plano e data de vencimento',
+            'Use as ações do menu para gerenciar cada assinatura',
+          ]}
+        />
 
         <AdminTabNav />
 
@@ -300,14 +291,14 @@ export default function SubscriptionsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Usuario</TableHead>
+                      <TableHead>Usuário</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Plano</TableHead>
-                      <TableHead>Periodo</TableHead>
-                      <TableHead>Preco</TableHead>
+                      <TableHead>Período</TableHead>
+                      <TableHead>Preço</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Early Adopter</TableHead>
-                      <TableHead>Renovacao</TableHead>
+                      <TableHead>Renovação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

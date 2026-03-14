@@ -160,4 +160,24 @@ export class UsersServiceSupabase implements IUsersService {
     if (result?.error) throw new Error(result.error);
     return { userId: result.userId };
   }
+
+  // -----------------------------------------------------------------------
+  // Password management (admin only, via Edge Function)
+  // -----------------------------------------------------------------------
+
+  async setUserPassword(userId: string, password: string, adminId: string): Promise<void> {
+    const { data, error } = await supabase.functions.invoke('admin-manage-password', {
+      body: { action: 'set_password', user_id: userId, password, admin_id: adminId },
+    });
+    if (error) throw new Error(error.message ?? 'Erro ao redefinir senha');
+    if (data?.error) throw new Error(data.error);
+  }
+
+  async sendPasswordResetEmail(userId: string, adminId: string): Promise<void> {
+    const { data, error } = await supabase.functions.invoke('admin-manage-password', {
+      body: { action: 'send_reset_email', user_id: userId, admin_id: adminId },
+    });
+    if (error) throw new Error(error.message ?? 'Erro ao enviar email de redefinição');
+    if (data?.error) throw new Error(data.error);
+  }
 }

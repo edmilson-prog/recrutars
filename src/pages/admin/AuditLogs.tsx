@@ -10,6 +10,7 @@ import {
   ChevronLeft, ChevronRight, Download, X, Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
 import { useUsers } from '@/hooks/useUsersQuery';
 import { useAuditLogs } from '@/hooks/useRBACQuery';
@@ -41,22 +42,22 @@ import type { AuditAction, PermissionAuditLog } from '@/types/rbac';
 const ITEMS_PER_PAGE = 20;
 
 const auditActionLabels: Record<string, string> = {
-  role_assigned: 'Papel Atribuido',
+  role_assigned: 'Papel Atribuído',
   role_removed: 'Papel Removido',
-  permission_granted: 'Permissao Concedida',
-  permission_denied: 'Permissao Negada',
-  permission_removed: 'Permissao Removida',
+  permission_granted: 'Permissão Concedida',
+  permission_denied: 'Permissão Negada',
+  permission_removed: 'Permissão Removida',
   group_created: 'Grupo Criado',
   group_updated: 'Grupo Atualizado',
-  group_deleted: 'Grupo Excluido',
+  group_deleted: 'Grupo Excluído',
   group_member_added: 'Membro Adicionado',
   group_member_removed: 'Membro Removido',
-  user_created: 'Usuario Criado',
-  user_updated: 'Usuario Atualizado',
+  user_created: 'Usuário Criado',
+  user_updated: 'Usuário Atualizado',
   user_status_changed: 'Status Alterado',
-  user_deleted: 'Usuario Excluido',
-  impersonation_started: 'Impersonacao Iniciada',
-  impersonation_ended: 'Impersonacao Encerrada',
+  user_deleted: 'Usuário Excluído',
+  impersonation_started: 'Impersonação Iniciada',
+  impersonation_ended: 'Impersonação Encerrada',
   login: 'Login',
   logout: 'Logout',
   password_changed: 'Senha Alterada',
@@ -89,20 +90,20 @@ const auditActionColors: Record<string, string> = {
 const actionOptions: { value: AuditAction; label: string }[] = [
   { value: 'login', label: 'Login' },
   { value: 'logout', label: 'Logout' },
-  { value: 'user_created', label: 'Usuario Criado' },
-  { value: 'user_updated', label: 'Usuario Atualizado' },
+  { value: 'user_created', label: 'Usuário Criado' },
+  { value: 'user_updated', label: 'Usuário Atualizado' },
   { value: 'user_status_changed', label: 'Status Alterado' },
-  { value: 'user_deleted', label: 'Usuario Excluido' },
-  { value: 'role_assigned', label: 'Papel Atribuido' },
+  { value: 'user_deleted', label: 'Usuário Excluído' },
+  { value: 'role_assigned', label: 'Papel Atribuído' },
   { value: 'role_removed', label: 'Papel Removido' },
-  { value: 'permission_granted', label: 'Permissao Concedida' },
-  { value: 'permission_denied', label: 'Permissao Negada' },
+  { value: 'permission_granted', label: 'Permissão Concedida' },
+  { value: 'permission_denied', label: 'Permissão Negada' },
   { value: 'group_created', label: 'Grupo Criado' },
   { value: 'group_updated', label: 'Grupo Atualizado' },
   { value: 'group_member_added', label: 'Membro Adicionado' },
   { value: 'group_member_removed', label: 'Membro Removido' },
-  { value: 'impersonation_started', label: 'Impersonacao Iniciada' },
-  { value: 'impersonation_ended', label: 'Impersonacao Encerrada' },
+  { value: 'impersonation_started', label: 'Impersonação Iniciada' },
+  { value: 'impersonation_ended', label: 'Impersonação Encerrada' },
   { value: 'password_changed', label: 'Senha Alterada' },
   { value: 'plan_changed', label: 'Plano Alterado' },
 ];
@@ -192,7 +193,7 @@ export default function AdminAuditLogs() {
     if (filteredLogs.length === 0) {
       toast({
         title: 'Nenhum dado para exportar',
-        description: 'Ajuste os filtros para incluir eventos na exportacao.',
+        description: 'Ajuste os filtros para incluir eventos na exportação.',
         variant: 'destructive',
       });
       return;
@@ -202,7 +203,7 @@ export default function AdminAuditLogs() {
       filteredLogs,
       [
         { key: 'performedAt', header: 'Data', accessor: (log) => log.performedAt ? formatDateTimeBR(log.performedAt) : '' },
-        { key: 'action', header: 'Acao', accessor: (log) => auditActionLabels[log.action] || log.action },
+        { key: 'action', header: 'Ação', accessor: (log) => auditActionLabels[log.action] || log.action },
         { key: 'performedByName', header: 'Realizado Por', accessor: (log) => log.performedByName || '' },
         { key: 'targetUserName', header: 'Alvo', accessor: (log) => {
           const parts: string[] = [];
@@ -217,7 +218,7 @@ export default function AdminAuditLogs() {
     );
 
     toast({
-      title: 'Exportacao concluida',
+      title: 'Exportação concluída',
       description: `${filteredLogs.length} evento${filteredLogs.length !== 1 ? 's' : ''} exportado${filteredLogs.length !== 1 ? 's' : ''} com sucesso.`,
     });
   };
@@ -244,7 +245,7 @@ export default function AdminAuditLogs() {
       { label: 'Total de Eventos', value: sortedLogs.length, icon: ScrollText },
       { label: 'Eventos Hoje', value: todayLogs.length, icon: Calendar },
       { label: 'Logins Registrados', value: loginCount, icon: User },
-      { label: 'Alteracoes de Permissao', value: permChanges, icon: Shield },
+      { label: 'Alterações de Permissão', value: permChanges, icon: Shield },
     ];
   }, [sortedLogs]);
 
@@ -262,29 +263,21 @@ export default function AdminAuditLogs() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <ScrollText className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Auditoria</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Registro de todas as ações realizadas no sistema. Rastreie operações de usuários, alterações e eventos.
-              </p>
-            </div>
+        <PageHeader
+          title="Auditoria"
+          description="Registro de todas as ações realizadas no sistema. Rastreie operações de usuários, alterações e eventos."
+          actions={
             <Button variant="outline" size="sm" className="shrink-0" onClick={handleExportCSV}>
               <Download className="w-4 h-4 mr-2" />
               Exportar
             </Button>
-          </div>
-        </motion.div>
+          }
+          howItWorks={[
+            'Registro de todas as ações administrativas na plataforma',
+            'Filtre por tipo de ação, usuário e período',
+            'Exporte os logs para análise externa',
+          ]}
+        />
 
         <AdminTabNav />
 
@@ -343,7 +336,7 @@ export default function AdminAuditLogs() {
               className="bg-card rounded-xl p-4 shadow-soft border"
             >
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium">Filtros Avancados</span>
+                <span className="text-sm font-medium">Filtros Avançados</span>
                 {activeFilterCount > 0 && (
                   <Button variant="ghost" size="sm" className="text-xs" onClick={clearFilters}>
                     <X className="w-3 h-3 mr-1" />
@@ -353,13 +346,13 @@ export default function AdminAuditLogs() {
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-xs">Tipo de Acao</Label>
+                  <Label className="text-xs">Tipo de Ação</Label>
                   <Select value={actionFilter} onValueChange={(v) => setActionFilter(v === '_all' ? '' : v)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Todas as acoes" />
+                      <SelectValue placeholder="Todas as ações" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="_all">Todas as acoes</SelectItem>
+                      <SelectItem value="_all">Todas as ações</SelectItem>
                       {actionOptions.map(opt => (
                         <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                       ))}
@@ -367,13 +360,13 @@ export default function AdminAuditLogs() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs">Usuario</Label>
+                  <Label className="text-xs">Usuário</Label>
                   <Select value={userFilter} onValueChange={(v) => setUserFilter(v === '_all' ? '' : v)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Todos os usuarios" />
+                      <SelectValue placeholder="Todos os usuários" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="_all">Todos os usuarios</SelectItem>
+                      <SelectItem value="_all">Todos os usuários</SelectItem>
                       {logUsers.map(user => (
                         <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
                       ))}
@@ -389,7 +382,7 @@ export default function AdminAuditLogs() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs">Ate</Label>
+                  <Label className="text-xs">Até</Label>
                   <Input
                     type="date"
                     value={dateTo}
@@ -412,7 +405,7 @@ export default function AdminAuditLogs() {
             <TableHeader>
               <TableRow>
                 <TableHead className="min-w-[160px]">Data</TableHead>
-                <TableHead className="min-w-[140px]">Acao</TableHead>
+                <TableHead className="min-w-[140px]">Ação</TableHead>
                 <TableHead className="hidden sm:table-cell min-w-[140px]">Realizado por</TableHead>
                 <TableHead className="hidden md:table-cell min-w-[140px]">Alvo</TableHead>
                 <TableHead className="hidden lg:table-cell">Detalhes</TableHead>

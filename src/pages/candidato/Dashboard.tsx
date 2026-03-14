@@ -173,7 +173,7 @@ export default function CandidateDashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20, transition: { duration: 0.3 } }}
               transition={{ delay: 0.05 }}
-              className="bg-card rounded-2xl p-6 shadow-soft"
+              className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div>
@@ -254,7 +254,7 @@ export default function CandidateDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-card rounded-2xl p-6 shadow-soft"
+            className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
           >
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
               <div>
@@ -305,7 +305,7 @@ export default function CandidateDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-card rounded-2xl p-6 shadow-soft"
+            className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
@@ -334,7 +334,7 @@ export default function CandidateDashboard() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-card rounded-2xl p-6 shadow-soft cursor-help"
+                  className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft cursor-help"
                 >
                   <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mb-4">
                     <stat.icon className="w-6 h-6 text-primary-foreground" />
@@ -357,7 +357,7 @@ export default function CandidateDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-card rounded-2xl p-6 shadow-soft"
+            className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
@@ -417,7 +417,7 @@ export default function CandidateDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="bg-card rounded-2xl p-6 shadow-soft"
+            className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">

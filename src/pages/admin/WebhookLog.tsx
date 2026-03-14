@@ -16,6 +16,7 @@ import {
   ChevronUp,
   Filter,
 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -97,23 +98,10 @@ export default function WebhookLog() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <Webhook className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Webhook Log</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Eventos recebidos do Stripe via webhook. Monitore processamento, falhas e reenvios.
-              </p>
-            </div>
+        <PageHeader
+          title="Webhook Log"
+          description="Eventos recebidos do Stripe via webhook. Monitore processamento, falhas e reenvios."
+          actions={
             <Button
               variant="outline"
               size="sm"
@@ -124,8 +112,13 @@ export default function WebhookLog() {
               <RefreshCw className={cn('w-4 h-4 mr-2', loading && 'animate-spin')} />
               Atualizar
             </Button>
-          </div>
-        </motion.div>
+          }
+          howItWorks={[
+            'Histórico de eventos de webhook (Stripe, integrações)',
+            'Monitore entregas bem-sucedidas e falhas',
+            'Use "Atualizar" para recarregar os eventos mais recentes',
+          ]}
+        />
 
         <AdminTabNav />
 
@@ -167,7 +160,7 @@ export default function WebhookLog() {
             <SelectContent>
               <SelectItem value="all">Todos Ambientes</SelectItem>
               <SelectItem value="test">Teste</SelectItem>
-              <SelectItem value="live">Producao</SelectItem>
+              <SelectItem value="live">Produção</SelectItem>
             </SelectContent>
           </Select>
 

@@ -473,7 +473,7 @@ export default function CandidateProfile() {
         </div>
 
         <Tabs defaultValue="perfil" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="perfil" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Perfil</span>
@@ -502,9 +502,9 @@ export default function CandidateProfile() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-card rounded-2xl p-6 shadow-soft"
+              className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
             >
-              <div className="flex items-center gap-6">
+              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                 <div className="relative">
                   <Avatar className="w-24 h-24">
                     <AvatarImage src={avatarPreview || undefined} alt={profile.name} />
@@ -522,7 +522,7 @@ export default function CandidateProfile() {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="absolute -bottom-1 -right-1 rounded-full w-8 h-8"
+                    className="absolute -bottom-1 -right-1 rounded-full w-10 h-10 sm:w-8 sm:h-8"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
                   >
@@ -549,7 +549,7 @@ export default function CandidateProfile() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="bg-card rounded-2xl p-6 shadow-soft"
+              className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
@@ -604,7 +604,7 @@ export default function CandidateProfile() {
                     </>
                   ) : (
                     <>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Input
                           id="cpf"
                           value={maskCPFInput(cpfInput)}
@@ -619,6 +619,7 @@ export default function CandidateProfile() {
                         />
                         <Button
                           size="sm"
+                          className="h-10 sm:h-auto"
                           onClick={handleSaveCpf}
                           disabled={cpfSaving || stripCPF(cpfInput).length !== 11}
                         >
@@ -657,7 +658,7 @@ export default function CandidateProfile() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-card rounded-2xl p-6 shadow-soft border border-border"
+              className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft border border-border"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -704,7 +705,7 @@ export default function CandidateProfile() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-card rounded-2xl p-6 shadow-soft"
+              className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
@@ -745,7 +746,7 @@ export default function CandidateProfile() {
                   )}
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-muted/50 rounded-xl">
                   <div>
                     <Label className="font-medium">Exibir Expectativa Salarial</Label>
                     <p className="text-sm text-muted-foreground">
@@ -765,7 +766,7 @@ export default function CandidateProfile() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-card rounded-2xl p-6 shadow-soft"
+              className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft"
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center">
@@ -832,7 +833,7 @@ export default function CandidateProfile() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">ID do Candidato</p>
                     <p className="text-xs text-muted-foreground font-mono truncate">{candidate?.id || '—'}</p>
@@ -840,7 +841,7 @@ export default function CandidateProfile() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="ml-3 shrink-0"
+                    className="ml-3 shrink-0 h-10 sm:h-auto"
                     onClick={() => {
                       if (candidate?.id) {
                         navigator.clipboard.writeText(candidate.id);
@@ -884,22 +885,22 @@ export default function CandidateProfile() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium">E-mail</p>
                     <p className="text-sm text-muted-foreground">{profile.email}</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setShowEmailModal(true)}>
+                  <Button variant="outline" size="sm" className="h-10 sm:h-auto" onClick={() => setShowEmailModal(true)}>
                     Alterar e-mail
                   </Button>
                 </div>
                 <Separator />
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium">Senha</p>
                     <p className="text-sm text-muted-foreground">••••••••••</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setShowPasswordModal(true)}>
+                  <Button variant="outline" size="sm" className="h-10 sm:h-auto" onClick={() => setShowPasswordModal(true)}>
                     Alterar senha
                   </Button>
                 </div>
@@ -920,7 +921,7 @@ export default function CandidateProfile() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium">Novas vagas compatíveis</p>
                     <p className="text-xs text-muted-foreground">Receba alertas quando novas vagas combinarem com seu perfil</p>
@@ -931,7 +932,7 @@ export default function CandidateProfile() {
                   />
                 </div>
                 <Separator />
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium">Atualizações de candidaturas</p>
                     <p className="text-xs text-muted-foreground">Saiba quando o status de suas candidaturas mudar</p>
@@ -942,7 +943,7 @@ export default function CandidateProfile() {
                   />
                 </div>
                 <Separator />
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium">Mensagens de empresas</p>
                     <p className="text-xs text-muted-foreground">Receba notificações quando uma empresa enviar uma mensagem</p>
@@ -969,14 +970,14 @@ export default function CandidateProfile() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium">Baixar meus dados</p>
                     <p className="text-xs text-muted-foreground">
                       Exporte todos os seus dados pessoais em formato JSON
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={handleExportData} disabled={isExporting}>
+                  <Button variant="outline" size="sm" className="h-10 sm:h-auto" onClick={handleExportData} disabled={isExporting}>
                     {isExporting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
                     Baixar dados
                   </Button>
@@ -998,22 +999,22 @@ export default function CandidateProfile() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium">Desativar conta</p>
                     <p className="text-xs text-muted-foreground">Sua conta ficará invisível, mas seus dados serão preservados</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setShowDeactivateModal(true)}>
+                  <Button variant="outline" size="sm" className="h-10 sm:h-auto" onClick={() => setShowDeactivateModal(true)}>
                     Desativar
                   </Button>
                 </div>
                 <Separator />
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium">Excluir conta permanentemente</p>
                     <p className="text-xs text-muted-foreground">Todos os seus dados serão removidos permanentemente</p>
                   </div>
-                  <Button variant="destructive" size="sm" onClick={() => setShowDeleteModal(true)}>
+                  <Button variant="destructive" size="sm" className="h-10 sm:h-auto" onClick={() => setShowDeleteModal(true)}>
                     Excluir conta
                   </Button>
                 </div>
@@ -1043,7 +1044,7 @@ export default function CandidateProfile() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold">
+                  <span className="text-2xl sm:text-3xl font-bold">
                     {isCurrentFree ? 'Gratis' : formatBRL(currentMonthlyPrice)}
                   </span>
                   {!isCurrentFree && <span className="text-muted-foreground">/mês</span>}
@@ -1144,7 +1145,7 @@ export default function CandidateProfile() {
                       <CardHeader className="text-center pb-2">
                         <CardTitle className="text-lg">{planName}</CardTitle>
                         <div className="mt-2">
-                          <span className="text-3xl font-bold">
+                          <span className="text-2xl sm:text-3xl font-bold">
                             {isFree ? 'Gratis' : formatBRL(monthlyPrice)}
                           </span>
                           {!isFree && <span className="text-muted-foreground text-sm">/mês</span>}
@@ -1335,7 +1336,7 @@ export default function CandidateProfile() {
 
       {/* Modal de Crop de Avatar */}
       <Dialog open={showCropModal} onOpenChange={setShowCropModal}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Ajustar foto</DialogTitle>
             <DialogDescription>
@@ -1343,7 +1344,7 @@ export default function CandidateProfile() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="relative h-64 w-full bg-muted rounded-lg overflow-hidden">
+          <div className="relative h-48 sm:h-64 w-full bg-muted rounded-lg overflow-hidden">
             {cropperImage && (
               <Cropper
                 image={cropperImage}

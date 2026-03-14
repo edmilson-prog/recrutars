@@ -1,25 +1,37 @@
 // Utilitário para cálculo de completude do perfil profissional
 //
-// Calcula a completude baseado em 7 seções alinhadas com as tabs do ProfessionalProfile:
-// 1. Informações pessoais (título, email, sobre)
-// 2. Localização (cidade ou estado)
-// 3. Disponibilidade e salário (disponibilidade, faixa salarial)
-// 4. Interesses profissionais (setores, funções, modalidade ou contrato)
-// 5. Experiência profissional (pelo menos 1)
-// 6. Formação acadêmica (pelo menos 1)
-// 7. Habilidades (pelo menos 3)
+// Sistema de pesos (100 pontos) alinhado com as 9 tabs do ProfessionalProfile:
+// 1. Informações pessoais — 30pts (título 8, email 5, sobre 10, telefone 4, linkedin 3)
+// 2. Localização — 5pts (cidade ou estado)
+// 3. Disponibilidade e salário — 10pts (disponibilidade 5, faixa salarial 5)
+// 4. Interesses profissionais — 5pts (opcional, setores/funções/modelo/contrato)
+// 5. Experiência profissional — 15pts (progressivo: 1+ exp, 2+ exp, descrições)
+// 6. Formação acadêmica — 10pts (nível educacional 5, formação detalhada 5)
+// 7. Habilidades — 15pts (progressivo: 3+, 5+, 8+ skills)
+// 8. Cursos e certificações — 5pts (opcional, pelo menos 1)
+// 9. Documentos — 5pts (opcional, currículo PDF anexado)
 
 import type { Curriculum, CompletenessResult, CompletenessSection } from '@/types';
 
 export function calculateCompleteness(curriculum: Curriculum): CompletenessResult {
   const sections: CompletenessSection[] = [];
-  let completedCount = 0;
+  let totalPoints = 0;
 
-  // 1. Informações pessoais (tab: basic)
+  // ---------------------------------------------------------------------------
+  // 1. Informações pessoais (tab: basic) — 30pts
+  // ---------------------------------------------------------------------------
+  let basicPoints = 0;
+  if (curriculum.title?.trim()) basicPoints += 8;
+  if (curriculum.email?.trim()) basicPoints += 5;
+  if ((curriculum.about?.trim()?.length ?? 0) >= 50) basicPoints += 10;
+  if (curriculum.phone?.trim()) basicPoints += 4;
+  if (curriculum.linkedin?.trim()) basicPoints += 3;
+  totalPoints += basicPoints;
+
   const hasBasicInfo = Boolean(
     curriculum.title?.trim() &&
     curriculum.email?.trim() &&
-    curriculum.about?.trim()
+    (curriculum.about?.trim()?.length ?? 0) >= 50
   );
   sections.push({
     name: 'Informações pessoais',
@@ -27,21 +39,29 @@ export function calculateCompleteness(curriculum: Curriculum): CompletenessResul
     isComplete: hasBasicInfo,
     required: true,
   });
-  if (hasBasicInfo) completedCount++;
 
-  // 2. Localização (tab: location)
+  // ---------------------------------------------------------------------------
+  // 2. Localização (tab: location) — 5pts
+  // ---------------------------------------------------------------------------
   const hasLocation = Boolean(
     curriculum.city?.trim() || curriculum.state?.trim() || curriculum.location?.trim()
   );
+  if (hasLocation) totalPoints += 5;
   sections.push({
     name: 'Localização',
     key: 'location',
     isComplete: hasLocation,
     required: true,
   });
-  if (hasLocation) completedCount++;
 
-  // 3. Disponibilidade e Salário (tabs: basic + salary)
+  // ---------------------------------------------------------------------------
+  // 3. Disponibilidade e Salário (tab: salary) — 10pts
+  // ---------------------------------------------------------------------------
+  let salaryPoints = 0;
+  if (curriculum.availability?.trim()) salaryPoints += 5;
+  if (curriculum.salary?.min && curriculum.salary?.max) salaryPoints += 5;
+  totalPoints += salaryPoints;
+
   const hasSalaryInfo = Boolean(
     curriculum.availability?.trim() &&
     curriculum.salary?.min &&
@@ -53,35 +73,57 @@ export function calculateCompleteness(curriculum: Curriculum): CompletenessResul
     isComplete: hasSalaryInfo,
     required: true,
   });
-  if (hasSalaryInfo) completedCount++;
 
-  // 4. Interesses profissionais (tab: interests)
+  // ---------------------------------------------------------------------------
+  // 4. Interesses profissionais (tab: interests) — 5pts (opcional)
+  // ---------------------------------------------------------------------------
   const hasInterests = Boolean(
     (curriculum.preferredSectors?.length ?? 0) > 0 ||
     (curriculum.preferredRoles?.length ?? 0) > 0 ||
     (curriculum.workModel?.length ?? 0) > 0 ||
     (curriculum.contractType?.length ?? 0) > 0
   );
+  if (hasInterests) totalPoints += 5;
   sections.push({
     name: 'Interesses profissionais',
     key: 'interests',
     isComplete: hasInterests,
     required: false,
   });
-  if (hasInterests) completedCount++;
 
-  // 5. Experiência profissional (tab: experience)
-  const hasExperience = curriculum.isFirstJob || (curriculum.experiences?.length ?? 0) > 0;
+  // ---------------------------------------------------------------------------
+  // 5. Experiência profissional (tab: experience) — 15pts (progressivo)
+  // ---------------------------------------------------------------------------
+  const expCount = curriculum.experiences?.length ?? 0;
+  const hasExperience = curriculum.isFirstJob || expCount > 0;
+  let expPoints = 0;
+  if (curriculum.isFirstJob) {
+    expPoints = 15; // Primeiro emprego = seção completa
+  } else {
+    if (expCount >= 1) expPoints += 5;
+    if (expCount >= 2) expPoints += 5;
+    // Bônus: todas as experiências têm descrição
+    if (expCount > 0 && curriculum.experiences.every(e => e.description?.trim())) {
+      expPoints += 5;
+    }
+  }
+  totalPoints += expPoints;
   sections.push({
     name: 'Experiência profissional',
     key: 'experience',
     isComplete: hasExperience,
-    itemCount: curriculum.experiences?.length || 0,
+    itemCount: expCount,
     required: true,
   });
-  if (hasExperience) completedCount++;
 
-  // 6. Formação acadêmica (tab: education)
+  // ---------------------------------------------------------------------------
+  // 6. Formação acadêmica (tab: education) — 10pts
+  // ---------------------------------------------------------------------------
+  let eduPoints = 0;
+  if (curriculum.educationLevel) eduPoints += 5;
+  if ((curriculum.education?.length ?? 0) > 0) eduPoints += 5;
+  totalPoints += eduPoints;
+
   const hasEducation = Boolean(curriculum.educationLevel) || (curriculum.education?.length ?? 0) > 0;
   sections.push({
     name: 'Formação acadêmica',
@@ -90,25 +132,60 @@ export function calculateCompleteness(curriculum: Curriculum): CompletenessResul
     itemCount: curriculum.education?.length || 0,
     required: true,
   });
-  if (hasEducation) completedCount++;
 
-  // 7. Habilidades (tab: skills)
-  const hasSkills = (curriculum.skills?.length ?? 0) >= 3;
+  // ---------------------------------------------------------------------------
+  // 7. Habilidades (tab: skills) — 15pts (progressivo)
+  // ---------------------------------------------------------------------------
+  const skillCount = curriculum.skills?.length ?? 0;
+  let skillPoints = 0;
+  if (skillCount >= 3) skillPoints += 5;
+  if (skillCount >= 5) skillPoints += 5;
+  if (skillCount >= 8) skillPoints += 5;
+  totalPoints += skillPoints;
+
+  const hasSkills = skillCount >= 5;
   sections.push({
     name: 'Habilidades',
     key: 'skills',
     isComplete: hasSkills,
-    itemCount: curriculum.skills?.length || 0,
+    itemCount: skillCount,
     required: true,
   });
-  if (hasSkills) completedCount++;
 
-  // Calcular porcentagem (7 seções)
-  const percentage = Math.round((completedCount / sections.length) * 100);
+  // ---------------------------------------------------------------------------
+  // 8. Cursos e certificações (tab: courses) — 5pts (opcional)
+  // ---------------------------------------------------------------------------
+  const courseCount = curriculum.courses?.length ?? 0;
+  const hasCourses = courseCount > 0;
+  if (hasCourses) totalPoints += 5;
+  sections.push({
+    name: 'Cursos e certificações',
+    key: 'courses',
+    isComplete: hasCourses,
+    itemCount: courseCount,
+    required: false,
+  });
 
-  // Listar seções faltantes
+  // ---------------------------------------------------------------------------
+  // 9. Documentos (tab: documents) — 5pts (opcional)
+  // ---------------------------------------------------------------------------
+  const hasDocuments = Boolean(curriculum.resumePdfUrl);
+  if (hasDocuments) totalPoints += 5;
+  sections.push({
+    name: 'Documentos',
+    key: 'documents',
+    isComplete: hasDocuments,
+    required: false,
+  });
+
+  // ---------------------------------------------------------------------------
+  // Resultado final
+  // ---------------------------------------------------------------------------
+  const percentage = Math.min(totalPoints, 100);
+
+  // Listar seções obrigatórias faltantes
   const missingSections = sections
-    .filter(s => !s.isComplete)
+    .filter(s => s.required && !s.isComplete)
     .map(s => s.name);
 
   return {

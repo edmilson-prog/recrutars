@@ -12,11 +12,11 @@ import {
   Clock,
   Star,
   DollarSign,
-  BarChart3,
   FlaskConical,
   AlertTriangle,
   TimerOff,
 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import {
   PieChart,
@@ -147,7 +147,7 @@ export default function SubscriptionDashboard() {
       isSmallText: true,
     },
     {
-      label: 'Crescimento Mes',
+      label: 'Crescimento Mês',
       value: `${growthPercent > 0 ? '+' : ''}${growthPercent}%`,
       icon: TrendingUp,
       color: growthPercent >= 0 ? 'text-success' : 'text-destructive',
@@ -179,25 +179,15 @@ export default function SubscriptionDashboard() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-8">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <BarChart3 className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Dashboard de Assinaturas</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Visão geral de assinantes, receita e métricas de crescimento da plataforma.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          title="Dashboard de Assinaturas"
+          description="Visão geral de assinantes, receita e métricas de crescimento da plataforma."
+          howItWorks={[
+            'Métricas de assinaturas: ativas, trials, churn e receita',
+            'Gráficos mostram evolução ao longo do tempo',
+            'Acompanhe taxa de conversão e retenção',
+          ]}
+        />
 
         <AdminTabNav />
 
@@ -284,7 +274,7 @@ export default function SubscriptionDashboard() {
             className="bg-card rounded-2xl p-6 shadow-soft"
           >
             <h2 className="text-lg font-semibold text-foreground mb-4">
-              Distribuicao por Plano
+              Distribuição por Plano
             </h2>
             {planDistribution.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -320,7 +310,7 @@ export default function SubscriptionDashboard() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                Sem dados disponiveis
+                Sem dados disponíveis
               </div>
             )}
           </motion.div>
@@ -379,7 +369,7 @@ export default function SubscriptionDashboard() {
           className="bg-card rounded-2xl p-6 shadow-soft"
         >
           <h2 className="text-lg font-semibold text-foreground mb-4">
-            Distribuicao por Periodo
+            Distribuição por Período
           </h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={periodDistribution}>

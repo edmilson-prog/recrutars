@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, MapPin, Briefcase, DollarSign, Building2, Clock, Heart, Filter, X, ArrowUpDown, CheckCircle, TrendingUp, Brain, List, LayoutGrid } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -384,24 +385,15 @@ export default function CandidateJobSearch() {
     <DashboardLayout userType="candidate">
       <div className="space-y-6">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <Briefcase className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Buscar Vagas</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Encontre a oportunidade ideal para sua carreira
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          title="Buscar Vagas"
+          description="Encontre a oportunidade ideal para sua carreira"
+          howItWorks={[
+            'Encontre vagas ideais para sua carreira',
+            'Filtre por área, localização e modelo de trabalho',
+            'Candidate-se diretamente pela plataforma',
+          ]}
+        />
 
         {/* Stats Bar */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -472,7 +464,7 @@ export default function CandidateJobSearch() {
         <div className="flex gap-6">
           {/* Desktop Filters Sidebar */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
-            <div className="bg-card rounded-2xl p-6 shadow-soft sticky top-6">
+            <div className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft sticky top-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-foreground">Filtros</h2>
                 {hasActiveFilters && (
@@ -655,7 +647,7 @@ export default function CandidateJobSearch() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-card rounded-2xl p-6 shadow-soft hover:shadow-medium hover:scale-[1.01] hover:border-primary/20 transition-all border border-transparent cursor-pointer group"
+                  className="bg-card rounded-2xl p-4 sm:p-6 shadow-soft hover:shadow-medium hover:scale-[1.01] hover:border-primary/20 transition-all border border-transparent cursor-pointer group"
                   onClick={() => navigate(`/candidato/vagas/${job.id}`)}
                 >
                   <div className="flex flex-col md:flex-row md:items-start gap-4">
