@@ -162,9 +162,9 @@ export default function FlagAuditLog() {
           title="Auditoria de Feature Flags"
           description="Histórico completo de alterações em flags, overrides e kill switches."
           howItWorks={[
-            'Historico de todas as alteracoes em feature flags',
-            'Veja quem alterou, quando e qual foi a mudanca',
-            'Filtre por flag, usuario e periodo',
+            'Histórico de todas as alterações em feature flags',
+            'Veja quem alterou, quando e qual foi a mudança',
+            'Filtre por flag, usuário e período',
           ]}
         />
 
@@ -180,10 +180,10 @@ export default function FlagAuditLog() {
                   onValueChange={(v) => { setActionFilter(v); resetPage(); }}
                 >
                   <SelectTrigger className="w-full lg:w-[160px] h-9">
-                    <SelectValue placeholder="Acao" />
+                    <SelectValue placeholder="Ação" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todas acoes</SelectItem>
+                    <SelectItem value="all">Todas ações</SelectItem>
                     {Object.entries(actionConfig).map(([key, cfg]) => (
                       <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
                     ))}
@@ -233,7 +233,7 @@ export default function FlagAuditLog() {
                       value={dateToFilter}
                       onChange={(e) => { setDateToFilter(e.target.value); resetPage(); }}
                       className="pl-9 h-9 w-[160px]"
-                      placeholder="Ate"
+                      placeholder="Até"
                     />
                   </div>
                 </div>
@@ -251,10 +251,10 @@ export default function FlagAuditLog() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[170px]">Data</TableHead>
-                      <TableHead className="w-[120px]">Acao</TableHead>
+                      <TableHead className="w-[120px]">Ação</TableHead>
                       <TableHead>Flag</TableHead>
                       <TableHead>Executor</TableHead>
-                      <TableHead>Alteracao</TableHead>
+                      <TableHead>Alteração</TableHead>
                       <TableHead>Detalhes</TableHead>
                     </TableRow>
                   </TableHeader>

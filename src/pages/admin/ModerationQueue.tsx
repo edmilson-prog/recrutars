@@ -1,6 +1,6 @@
 /**
  * ModerationQueue Page
- * PRD-058: Fila de moderacao de vagas pendentes
+ * PRD-058: Fila de moderação de vagas pendentes
  */
 
 import { motion } from 'framer-motion';
@@ -48,9 +48,9 @@ export default function ModerationQueue() {
           title="Fila de Moderação"
           description={<>Revise e aprove vagas pendentes. {moderationQueue.length} vaga{moderationQueue.length !== 1 ? 's' : ''} aguardando aprovação.</>}
           howItWorks={[
-            'Revise itens pendentes de moderacao',
-            'Aprove, rejeite ou solicite alteracoes em cada item',
-            'Filtre por tipo de conteudo e data de submissao',
+            'Revise itens pendentes de moderação',
+            'Aprove, rejeite ou solicite alterações em cada item',
+            'Filtre por tipo de conteúdo e data de submissão',
           ]}
         />
 
@@ -66,7 +66,7 @@ export default function ModerationQueue() {
             <Inbox className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-foreground">Fila vazia</h2>
             <p className="text-muted-foreground mt-1">
-              Nao ha vagas pendentes de moderacao no momento.
+              Não há vagas pendentes de moderação no momento.
             </p>
           </motion.div>
         ) : (

@@ -1,7 +1,7 @@
 /**
  * Admin Users Page
- * PRD-061: Gestao de Usuarios e Permissoes (RBAC)
- * Listagem unificada de usuarios com filtros, busca e acoes em lote.
+ * PRD-061: Gestão de Usuários e Permissões (RBAC)
+ * Listagem unificada de usuários com filtros, busca e ações em lote.
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
@@ -149,7 +149,7 @@ export default function AdminUsers() {
     const inactive = users.filter(u => u.status === 'inactive' || u.status === 'suspended' || u.status === 'pending').length;
     const noRole = users.filter(u => !u.roleId).length;
     return [
-      { key: 'total', label: 'Total Usuarios', value: total, icon: Users, color: 'bg-primary/10 text-primary', activeRing: 'ring-2 ring-primary', hoverRing: 'hover:ring-2 hover:ring-primary/50' },
+      { key: 'total', label: 'Total Usuários', value: total, icon: Users, color: 'bg-primary/10 text-primary', activeRing: 'ring-2 ring-primary', hoverRing: 'hover:ring-2 hover:ring-primary/50' },
       { key: 'admins', label: 'Admins', value: admins, icon: ShieldCheck, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', activeRing: 'ring-2 ring-purple-400', hoverRing: 'hover:ring-2 hover:ring-purple-400/50' },
       { key: 'companies', label: 'Empresas', value: companies, icon: Building2, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', activeRing: 'ring-2 ring-blue-400', hoverRing: 'hover:ring-2 hover:ring-blue-400/50' },
       { key: 'candidates', label: 'Candidatos', value: candidates, icon: Crown, color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', activeRing: 'ring-2 ring-green-400', hoverRing: 'hover:ring-2 hover:ring-green-400/50' },
@@ -219,7 +219,7 @@ export default function AdminUsers() {
     if (filteredUsers.length === 0) {
       toast({
         title: 'Nenhum dado para exportar',
-        description: 'Ajuste os filtros para incluir usuarios na exportacao.',
+        description: 'Ajuste os filtros para incluir usuários na exportação.',
         variant: 'destructive',
       });
       return;
@@ -238,8 +238,8 @@ export default function AdminUsers() {
     );
 
     toast({
-      title: 'Exportacao concluida',
-      description: `${filteredUsers.length} usuario${filteredUsers.length !== 1 ? 's' : ''} exportado${filteredUsers.length !== 1 ? 's' : ''} com sucesso.`,
+      title: 'Exportação concluída',
+      description: `${filteredUsers.length} usuário${filteredUsers.length !== 1 ? 's' : ''} exportado${filteredUsers.length !== 1 ? 's' : ''} com sucesso.`,
     });
   }, [filteredUsers, toast]);
 
@@ -266,8 +266,8 @@ export default function AdminUsers() {
     <DashboardLayout userType="admin">
       <div className="space-y-6">
         <PageHeader
-          title="Usuarios"
-          description="Gerencie todos os usuarios da plataforma. Visualize perfis, status e tipos de conta."
+          title="Usuários"
+          description="Gerencie todos os usuários da plataforma. Visualize perfis, status e tipos de conta."
           actions={
             <>
               <Button variant="outline" size="sm" onClick={handleExportCSV}>
@@ -276,16 +276,16 @@ export default function AdminUsers() {
               </Button>
               <Button size="sm" onClick={() => setCreateModalOpen(true)}>
                 <UserPlus className="w-4 h-4 mr-2" />
-                Novo Usuario
+                Novo Usuário
               </Button>
             </>
           }
-          howItWorksIntro="Usuarios sao todas as contas cadastradas na plataforma RecrutaRS."
+          howItWorksIntro="Usuários são todas as contas cadastradas na plataforma RecrutaRS."
           howItWorks={[
             'Filtre por tipo (Admin, Empresa, Candidato) ou status usando os filtros laterais',
-            'Use os cards de metricas como filtros rapidos — clique para ativar',
-            'Clique em "Novo Usuario" para criar uma conta manualmente',
-            'Use o menu de acoes (...) em cada linha para gerenciar o usuario',
+            'Use os cards de métricas como filtros rápidos — clique para ativar',
+            'Clique em "Novo Usuário" para criar uma conta manualmente',
+            'Use o menu de ações (...) em cada linha para gerenciar o usuário',
             'Exporte a lista filtrada para CSV a qualquer momento',
           ]}
         />
@@ -347,7 +347,7 @@ export default function AdminUsers() {
               <SheetContent side="left" className="w-80 overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle>Filtros</SheetTitle>
-                  <SheetDescription>Refine a listagem de usuarios</SheetDescription>
+                  <SheetDescription>Refine a listagem de usuários</SheetDescription>
                 </SheetHeader>
                 <div className="mt-6">
                   {filtersContent}
@@ -374,7 +374,7 @@ export default function AdminUsers() {
             className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg"
           >
             <span className="text-sm font-medium">
-              {selectedIds.length} usuario{selectedIds.length > 1 ? 's' : ''} selecionado{selectedIds.length > 1 ? 's' : ''}
+              {selectedIds.length} usuário{selectedIds.length > 1 ? 's' : ''} selecionado{selectedIds.length > 1 ? 's' : ''}
             </span>
             <div className="flex gap-2 ml-auto">
               <Button size="sm" variant="outline" onClick={bulkActivate}>
@@ -456,7 +456,7 @@ export default function AdminUsers() {
               {filteredUsers.length <= ITEMS_PER_PAGE && (
                 <div className="px-4 py-3 border-t">
                   <span className="text-sm text-muted-foreground">
-                    {filteredUsers.length} usuario{filteredUsers.length !== 1 ? 's' : ''} encontrado{filteredUsers.length !== 1 ? 's' : ''}
+                    {filteredUsers.length} usuário{filteredUsers.length !== 1 ? 's' : ''} encontrado{filteredUsers.length !== 1 ? 's' : ''}
                   </span>
                 </div>
               )}

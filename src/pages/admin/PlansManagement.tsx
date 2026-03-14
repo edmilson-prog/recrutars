@@ -94,7 +94,7 @@ export default function PlansManagement() {
           }
           howItWorks={[
             'Crie e gerencie os planos da plataforma',
-            'Configure precos, limites de uso e periodos de trial',
+            'Configure preços, limites de uso e períodos de trial',
             'Use "Novo Plano" para adicionar um plano',
           ]}
         />

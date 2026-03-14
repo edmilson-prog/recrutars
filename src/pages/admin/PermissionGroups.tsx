@@ -1,6 +1,6 @@
 /**
  * Admin Permission Groups Page
- * PRD-061: Gestao de Grupos de Permissao
+ * PRD-061: Gestão de Grupos de Permissão
  */
 
 import { useState, useEffect } from 'react';
@@ -234,9 +234,9 @@ export default function AdminPermissionGroups() {
             </Button>
           }
           howItWorks={[
-            'Grupos organizam permissoes para controle de acesso',
-            'Crie grupos e vincule usuarios para definir acessos',
-            'Use "Novo Grupo" para criar uma configuracao de permissoes',
+            'Grupos organizam permissões para controle de acesso',
+            'Crie grupos e vincule usuários para definir acessos',
+            'Use "Novo Grupo" para criar uma configuração de permissões',
           ]}
         />
 
@@ -283,7 +283,7 @@ export default function AdminPermissionGroups() {
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Shield className="w-3.5 h-3.5" />
-                  {group.permissionCodes.length} permissoes
+                  {group.permissionCodes.length} permissões
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="w-3.5 h-3.5" />
@@ -330,7 +330,7 @@ export default function AdminPermissionGroups() {
           <div className="text-center py-16 text-muted-foreground">
             <UsersRound className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p className="text-lg font-medium">Nenhum grupo encontrado</p>
-            <p className="text-sm">Crie um grupo para organizar permissoes de usuarios.</p>
+            <p className="text-sm">Crie um grupo para organizar permissões de usuários.</p>
           </div>
         )}
 
@@ -341,8 +341,8 @@ export default function AdminPermissionGroups() {
               <DialogTitle>{editingId ? 'Editar Grupo' : 'Novo Grupo'}</DialogTitle>
               <DialogDescription>
                 {editingId
-                  ? 'Atualize as informacoes e permissoes do grupo.'
-                  : 'Crie um novo grupo de permissao para organizar usuarios.'
+                  ? 'Atualize as informações e permissões do grupo.'
+                  : 'Crie um novo grupo de permissão para organizar usuários.'
                 }
               </DialogDescription>
             </DialogHeader>
@@ -360,12 +360,12 @@ export default function AdminPermissionGroups() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="group-desc">Descricao</Label>
+                  <Label htmlFor="group-desc">Descrição</Label>
                   <Input
                     id="group-desc"
                     value={form.description}
                     onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Descreva o proposito deste grupo..."
+                    placeholder="Descreva o propósito deste grupo..."
                   />
                 </div>
               </div>
@@ -374,9 +374,9 @@ export default function AdminPermissionGroups() {
 
               {/* Permissions */}
               <div>
-                <Label className="text-base font-semibold">Permissoes</Label>
+                <Label className="text-base font-semibold">Permissões</Label>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Selecione as permissoes que serao concedidas a todos os membros do grupo.
+                  Selecione as permissões que serão concedidas a todos os membros do grupo.
                 </p>
 
                 <div className="space-y-6">
@@ -412,7 +412,7 @@ export default function AdminPermissionGroups() {
               <div>
                 <Label className="text-base font-semibold">Membros</Label>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Adicione usuarios a este grupo.
+                  Adicione usuários a este grupo.
                 </p>
 
                 <div className="space-y-2 max-h-48 overflow-y-auto">

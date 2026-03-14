@@ -104,7 +104,7 @@ export default function CompanyInterviews() {
   };
 
   const handleProposeNew = (interview: Interview) => {
-    // TODO: Abrir modal para propor novos horarios
+    // TODO: Abrir modal para propor novos horários
     toast.info('Funcionalidade em desenvolvimento');
   };
 
@@ -135,7 +135,7 @@ export default function CompanyInterviews() {
       acceptSuggestedSlot(selectedInterview.id, slotIndex);
       setShowAcceptModal(false);
       setSelectedInterview(null);
-      toast.success('Horario confirmado com sucesso!');
+      toast.success('Horário confirmado com sucesso!');
       setActiveTab('confirmed');
     }
   };
@@ -203,7 +203,7 @@ export default function CompanyInterviews() {
           <div className="bg-card rounded-xl p-4 shadow-soft">
             <div className="flex items-center gap-2 mb-1">
               <AlertCircle className="h-4 w-4 text-yellow-500" />
-              <p className="text-sm text-muted-foreground">Sugestoes Pendentes</p>
+              <p className="text-sm text-muted-foreground">Sugestões Pendentes</p>
             </div>
             <p className="text-2xl font-bold text-foreground">{pendingCompanyInterviews.length}</p>
           </div>
@@ -269,10 +269,10 @@ export default function CompanyInterviews() {
             {pendingCompanyInterviews.length > 0 && (
               <Alert className="border-yellow-500/30 bg-yellow-500/5">
                 <AlertCircle className="h-4 w-4 text-yellow-500" />
-                <AlertTitle>Atencao</AlertTitle>
+                <AlertTitle>Atenção</AlertTitle>
                 <AlertDescription>
-                  Voce tem {pendingCompanyInterviews.length} entrevista(s) com sugestoes de
-                  horario do candidato aguardando sua confirmacao.
+                  Você tem {pendingCompanyInterviews.length} entrevista(s) com sugestões de
+                  horário do candidato aguardando sua confirmação.
                 </AlertDescription>
               </Alert>
             )}
@@ -290,12 +290,12 @@ export default function CompanyInterviews() {
                   Nenhuma entrevista pendente
                 </h3>
                 <p className="text-muted-foreground">
-                  Todas as entrevistas estao confirmadas ou finalizadas
+                  Todas as entrevistas estão confirmadas ou finalizadas
                 </p>
               </motion.div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Candidato sugeriu horarios - requer acao */}
+                {/* Candidato sugeriu horários - requer ação */}
                 {pendingCompanyInterviews.map((interview, index) => (
                   <motion.div
                     key={interview.id}
@@ -351,12 +351,12 @@ export default function CompanyInterviews() {
                   Nenhuma entrevista confirmada
                 </h3>
                 <p className="text-muted-foreground">
-                  Quando voce ou o candidato confirmar um horario, a entrevista aparecera aqui
+                  Quando você ou o candidato confirmar um horário, a entrevista aparecerá aqui
                 </p>
               </motion.div>
             ) : (
               <>
-                {/* Calendario Semanal */}
+                {/* Calendário Semanal */}
                 <WeeklyCalendar
                   interviews={confirmedInterviews}
                   currentWeek={currentWeek}
@@ -423,7 +423,7 @@ export default function CompanyInterviews() {
                   Nenhuma entrevista realizada
                 </h3>
                 <p className="text-muted-foreground">
-                  Seu historico de entrevistas aparecera aqui
+                  Seu histórico de entrevistas aparecerá aqui
                 </p>
               </motion.div>
             ) : (

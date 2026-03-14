@@ -71,9 +71,9 @@ export default function PlanSimulator() {
           title="Simulador de Planos"
           description="Simule como as feature flags se comportam para diferentes contextos de usuário, plano e papel."
           howItWorks={[
-            'Simule cenarios de planos e precos',
-            'Visualize o impacto de mudancas antes de aplicar',
-            'Compare diferentes configuracoes lado a lado',
+            'Simule cenários de planos e preços',
+            'Visualize o impacto de mudanças antes de aplicar',
+            'Compare diferentes configurações lado a lado',
           ]}
         />
 
@@ -228,9 +228,9 @@ export default function PlanSimulator() {
           <Card className="border-dashed">
             <CardContent className="py-16 flex flex-col items-center text-center">
               <Wand2 className="w-12 h-12 text-muted-foreground/40 mb-4" />
-              <h3 className="text-lg font-semibold text-foreground">Nenhuma simulacao ativa</h3>
+              <h3 className="text-lg font-semibold text-foreground">Nenhuma simulação ativa</h3>
               <p className="text-sm text-muted-foreground mt-1 max-w-md">
-                Configure o contexto do usuario acima e clique em "Simular" para visualizar como as feature flags se comportam para o cenario selecionado.
+                Configure o contexto do usuário acima e clique em "Simular" para visualizar como as feature flags se comportam para o cenário selecionado.
               </p>
             </CardContent>
           </Card>

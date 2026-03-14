@@ -1,6 +1,6 @@
 /**
  * AdminHires Page
- * PRD-058: Listagem de contratacoes com KPIs e filtros
+ * PRD-058: Listagem de contratações com KPIs e filtros
  */
 
 import { useState, useMemo } from 'react';
@@ -62,9 +62,9 @@ export default function AdminHires() {
   const withTest = hires.filter((h) => h.hasTestResult).length;
 
   const kpis = [
-    { label: 'Total Contratacoes', value: totalHires.toString(), icon: UserCheck, color: 'text-cyan-600', bgColor: 'bg-cyan-500/10' },
-    { label: 'Tempo Medio Preenchimento', value: `${avgTimeToFill} dias`, icon: Timer, color: 'text-blue-600', bgColor: 'bg-blue-500/10' },
-    { label: 'Com Curriculo', value: withCV.toString(), icon: FileText, color: 'text-emerald-600', bgColor: 'bg-emerald-500/10' },
+    { label: 'Total Contratações', value: totalHires.toString(), icon: UserCheck, color: 'text-cyan-600', bgColor: 'bg-cyan-500/10' },
+    { label: 'Tempo Médio Preenchimento', value: `${avgTimeToFill} dias`, icon: Timer, color: 'text-blue-600', bgColor: 'bg-blue-500/10' },
+    { label: 'Com Currículo', value: withCV.toString(), icon: FileText, color: 'text-emerald-600', bgColor: 'bg-emerald-500/10' },
     { label: 'Com Teste', value: withTest.toString(), icon: Brain, color: 'text-purple-600', bgColor: 'bg-purple-500/10' },
   ];
 
@@ -79,9 +79,9 @@ export default function AdminHires() {
           title="Contratações"
           description="Registro de todas as contratações realizadas pela plataforma. Acompanhe métricas e tempo de preenchimento."
           howItWorks={[
-            'Registro de todas as contratacoes realizadas pela plataforma',
-            'Acompanhe metricas como tempo medio de preenchimento',
-            'Filtre por empresa, periodo e status da contratacao',
+            'Registro de todas as contratações realizadas pela plataforma',
+            'Acompanhe métricas como tempo médio de preenchimento',
+            'Filtre por empresa, período e status da contratação',
           ]}
         />
 
@@ -151,7 +151,7 @@ export default function AdminHires() {
                 {filtered.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                      Nenhuma contratacao encontrada.
+                      Nenhuma contratação encontrada.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -194,7 +194,7 @@ export default function AdminHires() {
                             Sim
                           </Badge>
                         ) : (
-                          <Badge variant="secondary" className="text-[10px]">Nao</Badge>
+                          <Badge variant="secondary" className="text-[10px]">Não</Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-center">
@@ -203,7 +203,7 @@ export default function AdminHires() {
                             Sim
                           </Badge>
                         ) : (
-                          <Badge variant="secondary" className="text-[10px]">Nao</Badge>
+                          <Badge variant="secondary" className="text-[10px]">Não</Badge>
                         )}
                       </TableCell>
                       <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">

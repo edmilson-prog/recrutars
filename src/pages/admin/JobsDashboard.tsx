@@ -1,6 +1,6 @@
 /**
  * JobsDashboard Page
- * PRD-058: Dashboard de vagas com KPIs, graficos e alertas
+ * PRD-058: Dashboard de vagas com KPIs, gráficos e alertas
  */
 
 import { useMemo } from 'react';
@@ -63,13 +63,13 @@ export default function JobsDashboard() {
   // KPI cards
   const kpis = [
     { label: 'Vagas Ativas', value: stats.totalActive.toString(), icon: Briefcase, color: 'text-cyan-600', bgColor: 'bg-cyan-500/10' },
-    { label: 'Publicadas no Mes', value: stats.publishedThisMonth.toString(), icon: CalendarPlus, color: 'text-blue-600', bgColor: 'bg-blue-500/10' },
-    { label: 'Fila Moderacao', value: stats.pendingModeration.toString(), icon: Clock, color: stats.pendingModeration > 0 ? 'text-yellow-600' : 'text-muted-foreground', bgColor: 'bg-yellow-500/10' },
+    { label: 'Publicadas no Mês', value: stats.publishedThisMonth.toString(), icon: CalendarPlus, color: 'text-blue-600', bgColor: 'bg-blue-500/10' },
+    { label: 'Fila Moderação', value: stats.pendingModeration.toString(), icon: Clock, color: stats.pendingModeration > 0 ? 'text-yellow-600' : 'text-muted-foreground', bgColor: 'bg-yellow-500/10' },
     { label: 'Finalizadas', value: stats.finalized.toString(), icon: CheckCircle, color: 'text-emerald-600', bgColor: 'bg-emerald-500/10' },
     { label: 'Expiradas', value: stats.expired.toString(), icon: XCircle, color: 'text-red-500', bgColor: 'bg-red-500/10' },
     { label: 'Total Candidaturas', value: stats.totalApplications.toString(), icon: Users, color: 'text-purple-600', bgColor: 'bg-purple-500/10' },
-    { label: 'Taxa Conversao', value: conversionRate, icon: TrendingUp, color: 'text-emerald-600', bgColor: 'bg-emerald-500/10' },
-    { label: 'Tempo Medio Preenchimento', value: avgTimeToFill, icon: Timer, color: 'text-blue-600', bgColor: 'bg-blue-500/10' },
+    { label: 'Taxa Conversão', value: conversionRate, icon: TrendingUp, color: 'text-emerald-600', bgColor: 'bg-emerald-500/10' },
+    { label: 'Tempo Médio Preenchimento', value: avgTimeToFill, icon: Timer, color: 'text-blue-600', bgColor: 'bg-blue-500/10' },
   ];
 
   // Chart: status distribution
@@ -78,10 +78,10 @@ export default function JobsDashboard() {
     jobs.forEach((j) => {
       const label =
         j.status === 'active' ? 'Ativas' :
-        j.status === 'pending' ? 'Em Moderacao' :
+        j.status === 'pending' ? 'Em Moderação' :
         j.status === 'rejected' ? 'Rejeitadas' :
         j.status === 'finalized' ? 'Finalizadas' :
-        j.status === 'correction' ? 'Correcao' : 'Outros';
+        j.status === 'correction' ? 'Correção' : 'Outros';
       counts[label] = (counts[label] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
@@ -137,7 +137,7 @@ export default function JobsDashboard() {
   const funnelData = useMemo(() => {
     return [
       { value: stats.totalApplications, name: 'Candidaturas', fill: '#3b82f6' },
-      { value: hires.length, name: 'Contratacoes', fill: '#10b981' },
+      { value: hires.length, name: 'Contratações', fill: '#10b981' },
     ];
   }, [stats.totalApplications, hires.length]);
 
@@ -148,9 +148,9 @@ export default function JobsDashboard() {
           title="Dashboard de Vagas"
           description="Visão geral de vagas, moderação e métricas de recrutamento da plataforma."
           howItWorks={[
-            'Metricas de vagas: publicadas, em andamento e finalizadas',
-            'Graficos mostram taxa de conversao e tempo medio de preenchimento',
-            'Acompanhe tendencias de publicacao e candidatura',
+            'Métricas de vagas: publicadas, em andamento e finalizadas',
+            'Gráficos mostram taxa de conversão e tempo médio de preenchimento',
+            'Acompanhe tendências de publicação e candidatura',
           ]}
         />
 
@@ -185,7 +185,7 @@ export default function JobsDashboard() {
             className="bg-card rounded-2xl p-6 shadow-soft"
           >
             <h2 className="text-lg font-semibold text-foreground mb-4">
-              Distribuicao por Status
+              Distribuição por Status
             </h2>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -225,7 +225,7 @@ export default function JobsDashboard() {
             className="bg-card rounded-2xl p-6 shadow-soft"
           >
             <h2 className="text-lg font-semibold text-foreground mb-4">
-              Vagas Publicadas por Mes
+              Vagas Publicadas por Mês
             </h2>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyPublications}>
@@ -285,7 +285,7 @@ export default function JobsDashboard() {
             className="bg-card rounded-2xl p-6 shadow-soft"
           >
             <h2 className="text-lg font-semibold text-foreground mb-4">
-              Tendencia de Candidaturas
+              Tendência de Candidaturas
             </h2>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={applicationsTrend}>
@@ -384,7 +384,7 @@ export default function JobsDashboard() {
                             : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400'
                         )}
                       >
-                        {alert.severity === 'critical' ? 'Critico' : 'Atencao'}
+                        {alert.severity === 'critical' ? 'Crítico' : 'Atenção'}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">

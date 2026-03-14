@@ -181,7 +181,7 @@ export default function FeatureFlags() {
           }
           howItWorks={[
             'Gerencie flags de funcionalidade da plataforma',
-            'Ative ou desative features para todos ou grupos especificos',
+            'Ative ou desative features para todos ou grupos específicos',
             'Configure rollouts progressivos e kill switches',
           ]}
         />
@@ -224,7 +224,7 @@ export default function FeatureFlags() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por key, nome ou descricao..."
+                  placeholder="Buscar por key, nome ou descrição..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9 h-9"
@@ -280,7 +280,7 @@ export default function FeatureFlags() {
                     <TableHead>Nome</TableHead>
                     <TableHead className="text-center">Status</TableHead>
                     <TableHead className="text-center">Escopo</TableHead>
-                    <TableHead className="text-center">Padrao</TableHead>
+                    <TableHead className="text-center">Padrão</TableHead>
                     <TableHead className="text-center">Rollout</TableHead>
                     <TableHead>Atualizado</TableHead>
                     <TableHead className="text-center">Toggle</TableHead>
@@ -388,13 +388,13 @@ export default function FeatureFlags() {
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <p>
-                  Voce esta prestes a ativar o kill switch para a flag{' '}
+                  Você está prestes a ativar o kill switch para a flag{' '}
                   <strong>"{killTarget?.name}"</strong> ({killTarget?.key}).
-                  Isso desativara imediatamente a funcionalidade para todos os usuarios.
+                  Isso desativará imediatamente a funcionalidade para todos os usuários.
                 </p>
                 <div>
                   <label className="text-sm font-medium text-foreground">
-                    Motivo (obrigatorio)
+                    Motivo (obrigatório)
                   </label>
                   <Textarea
                     value={killReason}

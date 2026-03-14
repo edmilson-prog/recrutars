@@ -180,7 +180,7 @@ export default function AdminAssessmentQuestions() {
             </Button>
           }
           howItWorks={[
-            'Perguntas sao usadas nos testes comportamentais Gauge-Pro',
+            'Perguntas são usadas nos testes comportamentais Gauge-Pro',
             'Filtre por categoria, tipo e status',
             'Use "Nova Pergunta" para adicionar ao banco de perguntas',
           ]}

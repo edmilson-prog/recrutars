@@ -93,9 +93,9 @@ export default function FinalizedJobs() {
           title="Vagas Finalizadas"
           description="Histórico de vagas encerradas na plataforma. Veja contratações, cancelamentos e expirações."
           howItWorks={[
-            'Historico de vagas encerradas na plataforma',
-            'Consulte metricas de contratacao e tempo de preenchimento',
-            'Filtre por empresa, periodo e motivo de encerramento',
+            'Histórico de vagas encerradas na plataforma',
+            'Consulte métricas de contratação e tempo de preenchimento',
+            'Filtre por empresa, período e motivo de encerramento',
           ]}
         />
 
@@ -154,7 +154,7 @@ export default function FinalizedJobs() {
                   <TableHead>Vaga</TableHead>
                   <TableHead>Empresa</TableHead>
                   <TableHead>Motivo</TableHead>
-                  <TableHead className="hidden md:table-cell">Data Finalizacao</TableHead>
+                  <TableHead className="hidden md:table-cell">Data Finalização</TableHead>
                   <TableHead className="text-center">Candidaturas</TableHead>
                   <TableHead className="hidden lg:table-cell">Candidato Contratado</TableHead>
                 </TableRow>

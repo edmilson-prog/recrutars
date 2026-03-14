@@ -640,7 +640,7 @@ export default function CompanyCandidates() {
           description="Explore candidatos cadastrados na plataforma. Filtre por habilidades, localização e perfil comportamental para encontrar os melhores talentos."
           howItWorks={[
             'Explore candidatos cadastrados na plataforma',
-            'Filtre por habilidades, localizacao e perfil comportamental',
+            'Filtre por habilidades, localização e perfil comportamental',
             'Salve candidatos interessantes para acompanhar',
           ]}
         />

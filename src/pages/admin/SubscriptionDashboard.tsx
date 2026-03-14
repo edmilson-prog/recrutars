@@ -147,7 +147,7 @@ export default function SubscriptionDashboard() {
       isSmallText: true,
     },
     {
-      label: 'Crescimento Mes',
+      label: 'Crescimento Mês',
       value: `${growthPercent > 0 ? '+' : ''}${growthPercent}%`,
       icon: TrendingUp,
       color: growthPercent >= 0 ? 'text-success' : 'text-destructive',
@@ -183,9 +183,9 @@ export default function SubscriptionDashboard() {
           title="Dashboard de Assinaturas"
           description="Visão geral de assinantes, receita e métricas de crescimento da plataforma."
           howItWorks={[
-            'Metricas de assinaturas: ativas, trials, churn e receita',
-            'Graficos mostram evolucao ao longo do tempo',
-            'Acompanhe taxa de conversao e retencao',
+            'Métricas de assinaturas: ativas, trials, churn e receita',
+            'Gráficos mostram evolução ao longo do tempo',
+            'Acompanhe taxa de conversão e retenção',
           ]}
         />
 
@@ -274,7 +274,7 @@ export default function SubscriptionDashboard() {
             className="bg-card rounded-2xl p-6 shadow-soft"
           >
             <h2 className="text-lg font-semibold text-foreground mb-4">
-              Distribuicao por Plano
+              Distribuição por Plano
             </h2>
             {planDistribution.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -310,7 +310,7 @@ export default function SubscriptionDashboard() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                Sem dados disponiveis
+                Sem dados disponíveis
               </div>
             )}
           </motion.div>
@@ -369,7 +369,7 @@ export default function SubscriptionDashboard() {
           className="bg-card rounded-2xl p-6 shadow-soft"
         >
           <h2 className="text-lg font-semibold text-foreground mb-4">
-            Distribuicao por Periodo
+            Distribuição por Período
           </h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={periodDistribution}>

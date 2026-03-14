@@ -1001,7 +1001,7 @@ export default function AdminCandidates() {
           howItWorks={[
             'Visualize todos os candidatos cadastrados na plataforma',
             'Filtre por status, teste comportamental e perfil',
-            'Use as acoes do menu para gerenciar cada candidato',
+            'Use as ações do menu para gerenciar cada candidato',
           ]}
         />
 

@@ -1,6 +1,6 @@
 /**
  * Admin Roles & Permissions Page
- * PRD-061: Matriz visual de permissoes por papel
+ * PRD-061: Matriz visual de permissões por papel
  */
 
 import { useState, useEffect, useMemo, Fragment } from 'react';
@@ -126,7 +126,7 @@ export default function AdminRolesPermissions() {
       { id: roleId, data: { permissions: updatedPermissions } },
       {
         onSuccess: () => {
-          toast({ title: 'Permissao atualizada com sucesso' });
+          toast({ title: 'Permissão atualizada com sucesso' });
         },
         onError: (err) => {
           // Revert optimistic update
@@ -134,7 +134,7 @@ export default function AdminRolesPermissions() {
             r.id === roleId ? { ...r, permissions: role.permissions } : r
           ));
           toast({
-            title: 'Erro ao atualizar permissao',
+            title: 'Erro ao atualizar permissão',
             description: (err as Error).message,
             variant: 'destructive',
           });
@@ -252,7 +252,7 @@ export default function AdminRolesPermissions() {
 
     deleteRoleMutation.mutate(roleId, {
       onSuccess: () => {
-        toast({ title: 'Papel excluido com sucesso' });
+        toast({ title: 'Papel excluído com sucesso' });
       },
       onError: (err) => {
         // Revert optimistic delete
@@ -286,7 +286,7 @@ export default function AdminRolesPermissions() {
         <div className="space-y-6">
           <div className="flex items-center gap-3 py-12 justify-center text-muted-foreground">
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Carregando papeis e permissoes...</span>
+            <span>Carregando papéis e permissões...</span>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -310,9 +310,9 @@ export default function AdminRolesPermissions() {
             </Button>
           }
           howItWorks={[
-            'Defina papeis com permissoes granulares',
-            'Atribua papeis a usuarios para controle de acesso',
-            'Use "Novo Papel" para criar uma configuracao de permissoes',
+            'Defina papéis com permissões granulares',
+            'Atribua papéis a usuários para controle de acesso',
+            'Use "Novo Papel" para criar uma configuração de permissões',
           ]}
         />
 
@@ -371,12 +371,12 @@ export default function AdminRolesPermissions() {
               <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{role.description}</p>
 
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span>Nivel: {role.level}</span>
+                <span>Nível: {role.level}</span>
                 <span>Tipo: {role.type}</span>
               </div>
               <div className="mt-2">
                 <Badge variant="secondary" className="text-[10px]">
-                  {role.permissions.includes('*') ? 'Todas' : role.permissions.length} permissoes
+                  {role.permissions.includes('*') ? 'Todas' : role.permissions.length} permissões
                 </Badge>
               </div>
             </motion.div>
@@ -391,9 +391,9 @@ export default function AdminRolesPermissions() {
           className="bg-card rounded-xl shadow-soft overflow-hidden"
         >
           <div className="p-6 border-b">
-            <h2 className="text-lg font-semibold text-foreground">Matriz de Permissoes</h2>
+            <h2 className="text-lg font-semibold text-foreground">Matriz de Permissões</h2>
             <p className="text-sm text-muted-foreground">
-              Permissoes de papeis do tipo Sistema e Admin. Papeis de sistema nao podem ser editados.
+              Permissões de papéis do tipo Sistema e Admin. Papéis de sistema não podem ser editados.
             </p>
           </div>
 
@@ -401,7 +401,7 @@ export default function AdminRolesPermissions() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[200px] sticky left-0 bg-card z-10">Permissao</TableHead>
+                  <TableHead className="min-w-[200px] sticky left-0 bg-card z-10">Permissão</TableHead>
                   {matrixRoles.map(role => (
                     <TableHead key={role.id} className="text-center min-w-[100px]">
                       <div className="flex flex-col items-center gap-1">
@@ -466,8 +466,8 @@ export default function AdminRolesPermissions() {
               <DialogTitle>{editingId ? 'Editar Papel' : 'Novo Papel'}</DialogTitle>
               <DialogDescription>
                 {editingId
-                  ? 'Atualize as informacoes deste papel customizado.'
-                  : 'Crie um novo papel com permissoes especificas.'
+                  ? 'Atualize as informações deste papel customizado.'
+                  : 'Crie um novo papel com permissões específicas.'
                 }
               </DialogDescription>
             </DialogHeader>
@@ -495,7 +495,7 @@ export default function AdminRolesPermissions() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role-desc">Descricao</Label>
+                <Label htmlFor="role-desc">Descrição</Label>
                 <Input
                   id="role-desc"
                   value={form.description}
@@ -521,7 +521,7 @@ export default function AdminRolesPermissions() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="role-level">Nivel (1-100)</Label>
+                  <Label htmlFor="role-level">Nível (1-100)</Label>
                   <Input
                     id="role-level"
                     type="number"
@@ -536,9 +536,9 @@ export default function AdminRolesPermissions() {
               <Separator />
 
               <div>
-                <Label className="text-base font-semibold">Permissoes</Label>
+                <Label className="text-base font-semibold">Permissões</Label>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Selecione as permissoes para este papel.
+                  Selecione as permissões para este papel.
                 </p>
                 <div className="space-y-6">
                   {Object.entries(permsByCategory).map(([category, perms]) => (

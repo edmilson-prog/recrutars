@@ -636,8 +636,8 @@ export default function AdminCompanies() {
           }
           howItWorks={[
             'Visualize todas as empresas cadastradas na plataforma',
-            'Filtre por status, plano e nivel de atividade',
-            'Use as acoes do menu para gerenciar cada empresa',
+            'Filtre por status, plano e nível de atividade',
+            'Use as ações do menu para gerenciar cada empresa',
           ]}
         />
 

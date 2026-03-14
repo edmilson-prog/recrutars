@@ -76,7 +76,7 @@ export default function BillingDashboard() {
     { label: 'Canceladas', value: kpis.cancelledCount.toString(), icon: XCircle, color: 'text-red-600' },
     { label: 'Pagamento Pendente', value: kpis.pastDueCount.toString(), icon: TrendingDown, color: 'text-yellow-600' },
     { label: 'Taxa de Churn', value: `${kpis.churnRate}%`, icon: TrendingDown, color: 'text-orange-600' },
-    { label: 'Conversoes Trial → Pago', value: kpis.trialConversions.toString(), icon: TrendingUp, color: 'text-green-600' },
+    { label: 'Conversões Trial → Pago', value: kpis.trialConversions.toString(), icon: TrendingUp, color: 'text-green-600' },
     { label: 'Total de Assinaturas', value: kpis.total.toString(), icon: Users, color: 'text-foreground' },
   ];
 
@@ -87,9 +87,9 @@ export default function BillingDashboard() {
           title="Financeiro"
           description="Métricas de faturamento, receita recorrente e acompanhamento financeiro da plataforma."
           howItWorks={[
-            'Metricas financeiras: receita, assinaturas ativas e inadimplencia',
-            'Graficos mostram evolucao da receita ao longo do tempo',
-            'Acompanhe taxa de conversao de trials para pagantes',
+            'Métricas financeiras: receita, assinaturas ativas e inadimplência',
+            'Gráficos mostram evolução da receita ao longo do tempo',
+            'Acompanhe taxa de conversão de trials para pagantes',
           ]}
         />
 

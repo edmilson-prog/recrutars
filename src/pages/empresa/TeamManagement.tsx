@@ -2,7 +2,7 @@
  * Team Management Hub - Main Page
  * PRD-055: Core & Mapa Comportamental
  * PRD-056: Compatibilidade & Team Builder
- * PRD-057: Desenvolvimento & Evolucao
+ * PRD-057: Desenvolvimento & Evolução
  */
 
 import { useState, useEffect } from 'react';

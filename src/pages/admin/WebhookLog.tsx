@@ -114,7 +114,7 @@ export default function WebhookLog() {
             </Button>
           }
           howItWorks={[
-            'Historico de eventos de webhook (Stripe, integracoes)',
+            'Histórico de eventos de webhook (Stripe, integrações)',
             'Monitore entregas bem-sucedidas e falhas',
             'Use "Atualizar" para recarregar os eventos mais recentes',
           ]}
@@ -160,7 +160,7 @@ export default function WebhookLog() {
             <SelectContent>
               <SelectItem value="all">Todos Ambientes</SelectItem>
               <SelectItem value="test">Teste</SelectItem>
-              <SelectItem value="live">Producao</SelectItem>
+              <SelectItem value="live">Produção</SelectItem>
             </SelectContent>
           </Select>
 

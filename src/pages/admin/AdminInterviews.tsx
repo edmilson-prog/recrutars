@@ -213,7 +213,7 @@ export default function AdminInterviews() {
           howItWorks={[
             'Todas as entrevistas agendadas na plataforma',
             'Filtre por status: agendadas, realizadas, canceladas',
-            'Acompanhe metricas de comparecimento e conclusao',
+            'Acompanhe métricas de comparecimento e conclusão',
           ]}
         />
 

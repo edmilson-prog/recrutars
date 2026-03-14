@@ -95,7 +95,7 @@ export default function AdminAssessmentCategories() {
           }
           howItWorks={[
             'Categorias agrupam perguntas do sistema Gauge-Pro',
-            'Cada categoria representa uma dimensao comportamental',
+            'Cada categoria representa uma dimensão comportamental',
             'Clique em "Ver Perguntas" para gerenciar perguntas de uma categoria',
           ]}
         />

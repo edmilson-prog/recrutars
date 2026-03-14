@@ -1,6 +1,6 @@
 /**
  * ModerationConfig Page
- * PRD-058: Configuracoes de moderacao, regras, templates e motivos
+ * PRD-058: Configurações de moderação, regras, templates e motivos
  */
 
 import { useState } from 'react';
@@ -29,23 +29,23 @@ import { AdminTabNav } from '@/components/admin/AdminTabNav';
 const MODE_OPTIONS: { value: ModerationMode; label: string; description: string }[] = [
   {
     value: 'automatic',
-    label: 'Automatico',
-    description: 'Vagas publicadas imediatamente sem revisao',
+    label: 'Automático',
+    description: 'Vagas publicadas imediatamente sem revisão',
   },
   {
     value: 'new_companies',
-    label: 'Moderacao para novos',
-    description: 'Primeiras 3 vagas de cada empresa passam por aprovacao',
+    label: 'Moderação para novos',
+    description: 'Primeiras 3 vagas de cada empresa passam por aprovação',
   },
   {
     value: 'all',
-    label: 'Moderacao total',
-    description: 'Toda vaga passa por aprovacao antes de publicar',
+    label: 'Moderação total',
+    description: 'Toda vaga passa por aprovação antes de publicar',
   },
   {
     value: 'by_plan',
-    label: 'Moderacao por plano',
-    description: 'Apenas vagas de empresas do plano Essencial passam por moderacao',
+    label: 'Moderação por plano',
+    description: 'Apenas vagas de empresas do plano Essencial passam por moderação',
   },
 ];
 
@@ -68,7 +68,7 @@ export default function ModerationConfig() {
       setNewReason('');
       toast({
         title: 'Motivo adicionado',
-        description: `"${trimmed}" foi adicionado a lista de motivos.`,
+        description: `"${trimmed}" foi adicionado à lista de motivos.`,
       });
     }
   };
@@ -83,8 +83,8 @@ export default function ModerationConfig() {
 
   const handleSave = () => {
     toast({
-      title: 'Configuracoes salvas',
-      description: 'As configuracoes de moderacao foram atualizadas com sucesso.',
+      title: 'Configurações salvas',
+      description: 'As configurações de moderação foram atualizadas com sucesso.',
     });
   };
 
@@ -101,9 +101,9 @@ export default function ModerationConfig() {
             </Button>
           }
           howItWorks={[
-            'Configure regras de moderacao automatica e manual',
-            'Defina criterios para aprovacao ou rejeicao de conteudo',
-            'Salve as alteracoes para aplicar imediatamente',
+            'Configure regras de moderação automática e manual',
+            'Defina critérios para aprovação ou rejeição de conteúdo',
+            'Salve as alterações para aplicar imediatamente',
           ]}
         />
 
@@ -117,7 +117,7 @@ export default function ModerationConfig() {
         >
           <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <Shield className="w-5 h-5 text-cyan-600" />
-            Modo de Moderacao
+            Modo de Moderação
           </h2>
           <Separator />
 
@@ -159,7 +159,7 @@ export default function ModerationConfig() {
           transition={{ delay: 0.1 }}
           className="bg-card rounded-2xl p-6 shadow-soft space-y-4"
         >
-          <h2 className="text-lg font-semibold text-foreground">Tempo Maximo de Alerta</h2>
+          <h2 className="text-lg font-semibold text-foreground">Tempo Máximo de Alerta</h2>
           <Separator />
           <div className="flex items-center gap-3">
             <Input
@@ -182,7 +182,7 @@ export default function ModerationConfig() {
           transition={{ delay: 0.2 }}
           className="bg-card rounded-2xl p-6 shadow-soft space-y-4"
         >
-          <h2 className="text-lg font-semibold text-foreground">Motivos de Rejeicao</h2>
+          <h2 className="text-lg font-semibold text-foreground">Motivos de Rejeição</h2>
           <Separator />
 
           <div className="space-y-2">
@@ -206,7 +206,7 @@ export default function ModerationConfig() {
 
           <div className="flex items-center gap-2">
             <Input
-              placeholder="Novo motivo de rejeicao..."
+              placeholder="Novo motivo de rejeição..."
               value={newReason}
               onChange={(e) => setNewReason(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddReason()}
@@ -248,7 +248,7 @@ export default function ModerationConfig() {
           <h2 className="text-lg font-semibold text-foreground">Regras de Auto-Flagging</h2>
           <Separator />
           <p className="text-sm text-muted-foreground">
-            Regras automaticas que sinalizam vagas para revisao manual.
+            Regras automáticas que sinalizam vagas para revisão manual.
           </p>
           <ModerationRulesEditor
             rules={config.autoFlagRules}

@@ -192,8 +192,8 @@ export default function AdminDashboard() {
           description="Visão geral da plataforma RecrutaRS. Acompanhe métricas de empresas, candidatos, vagas e testes comportamentais."
           howItWorks={[
             'Os cards mostram totais de empresas, candidatos, vagas e testes',
-            'Graficos exibem crescimento e tendencias ao longo do tempo',
-            'Clique nos cards para navegar ate a secao correspondente',
+            'Gráficos exibem crescimento e tendências ao longo do tempo',
+            'Clique nos cards para navegar até a seção correspondente',
           ]}
         />
 

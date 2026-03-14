@@ -178,7 +178,7 @@ export default function SubscriptionsPage() {
           howItWorks={[
             'Liste e gerencie assinaturas de empresas',
             'Filtre por status, plano e data de vencimento',
-            'Use as acoes do menu para gerenciar cada assinatura',
+            'Use as ações do menu para gerenciar cada assinatura',
           ]}
         />
 
@@ -291,14 +291,14 @@ export default function SubscriptionsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Usuario</TableHead>
+                      <TableHead>Usuário</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Plano</TableHead>
-                      <TableHead>Periodo</TableHead>
-                      <TableHead>Preco</TableHead>
+                      <TableHead>Período</TableHead>
+                      <TableHead>Preço</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Early Adopter</TableHead>
-                      <TableHead>Renovacao</TableHead>
+                      <TableHead>Renovação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

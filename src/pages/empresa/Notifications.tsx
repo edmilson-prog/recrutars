@@ -96,8 +96,8 @@ export default function Notifications() {
             </>
           }
           howItWorks={[
-            'Central de notificacoes da empresa',
-            'Filtre por tipo de notificacao',
+            'Central de notificações da empresa',
+            'Filtre por tipo de notificação',
             'Marque como lidas individualmente ou todas de uma vez',
           ]}
         />

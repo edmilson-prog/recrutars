@@ -390,7 +390,7 @@ export default function CandidateJobSearch() {
           description="Encontre a oportunidade ideal para sua carreira"
           howItWorks={[
             'Encontre vagas ideais para sua carreira',
-            'Filtre por area, localizacao e modelo de trabalho',
+            'Filtre por área, localização e modelo de trabalho',
             'Candidate-se diretamente pela plataforma',
           ]}
         />

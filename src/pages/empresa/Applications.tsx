@@ -740,7 +740,7 @@ export default function CompanyApplications() {
           }
           howItWorks={[
             'Acompanhe todas as candidaturas das suas vagas',
-            'Arraste cards no pipeline Kanban para avancar candidatos',
+            'Arraste cards no pipeline Kanban para avançar candidatos',
             'Filtre por vaga, status e perfil comportamental',
           ]}
         />
@@ -1726,7 +1726,7 @@ export default function CompanyApplications() {
               setJobClosureModalOpen(true);
             } else {
               const remaining = result.positionsCount - result.hiredCount;
-              toast.info(`Vaga ainda possui ${remaining} posicao(oes) em aberto.`);
+              toast.info(`Vaga ainda possui ${remaining} posição(ões) em aberto.`);
             }
           }}
         />

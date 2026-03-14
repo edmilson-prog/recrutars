@@ -513,7 +513,7 @@ export default function SavedCandidates() {
           title="Candidatos Salvos"
           description="Candidatos que você salvou do Banco de Talentos. Acesse rapidamente seus favoritos e compare perfis para agilizar o processo seletivo."
           howItWorks={[
-            'Candidatos que voce salvou para acompanhar',
+            'Candidatos que você salvou para acompanhar',
             'Organize seus favoritos por vaga ou perfil',
             'Acesse rapidamente candidatos de interesse',
           ]}
