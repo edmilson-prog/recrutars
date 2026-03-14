@@ -1,12 +1,48 @@
 {
   "versions": [
     {
+      "version": "1.35.0",
+      "codename": "Shield",
+      "type": "minor",
+      "releaseDate": "2026-03-13",
+      "description": "Gestão de senhas admin, auditoria de impersonação, novo PageHeader unificado, filtros rápidos em KPIs e correções de responsividade mobile.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Gestão de senhas admin — redefinir senha direta e enviar email de reset para qualquer usuário",
+            "Auditoria de impersonação — log completo de acessos admin em nome de outros usuários",
+            "Filtros rápidos nos cards de métricas (KPI) na página de usuários admin — clique para ativar/desativar"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Banners de todas as páginas substituídos por componente PageHeader unificado com seção colapsável 'Como funciona?'"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Layout responsivo mobile-first em todas as páginas de candidato",
+            "WhatsApp abre corretamente ao clicar no telefone do candidato (antes abria discador)",
+            "Contagem de candidaturas considera apenas aplicações ativas no pipeline",
+            "Telefone do candidato exibido condicionalmente apenas quando disponível",
+            "Crash no ConditionBuilder do editor de Feature Flags quando conditionGroups era undefined",
+            "Warning de Switch controlado/não-controlado no editor de Feature Flags",
+            "Acentuação corrigida em todos os textos de cabeçalho e strings de UI em português"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.34.1",
       "codename": "Compass",
       "type": "patch",
       "releaseDate": "2026-03-12",
       "description": "Correção do botão Convidar para Vaga no banco de talentos, candidatos salvos e sugeridos — agora cria candidatura e envia mensagem de fato.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
