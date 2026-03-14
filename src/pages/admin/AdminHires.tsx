@@ -13,6 +13,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useAdminJobs } from '@/hooks/useAdminJobs';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -74,25 +75,15 @@ export default function AdminHires() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <UserCheck className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Contratações</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Registro de todas as contratações realizadas pela plataforma. Acompanhe métricas e tempo de preenchimento.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          title="Contratações"
+          description="Registro de todas as contratações realizadas pela plataforma. Acompanhe métricas e tempo de preenchimento."
+          howItWorks={[
+            'Registro de todas as contratacoes realizadas pela plataforma',
+            'Acompanhe metricas como tempo medio de preenchimento',
+            'Filtre por empresa, periodo e status da contratacao',
+          ]}
+        />
 
         <AdminTabNav />
 

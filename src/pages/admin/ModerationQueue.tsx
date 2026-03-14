@@ -6,13 +6,13 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  Shield,
   Clock,
   Building2,
   Inbox,
   Eye,
   EyeOff,
 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAdminJobs } from '@/hooks/useAdminJobs';
 import { useModeration } from '@/hooks/useModeration';
@@ -44,25 +44,15 @@ export default function ModerationQueue() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <Shield className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Fila de Moderação</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Revise e aprove vagas pendentes. {moderationQueue.length} vaga{moderationQueue.length !== 1 ? 's' : ''} aguardando aprovação.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          title="Fila de Moderação"
+          description={<>Revise e aprove vagas pendentes. {moderationQueue.length} vaga{moderationQueue.length !== 1 ? 's' : ''} aguardando aprovação.</>}
+          howItWorks={[
+            'Revise itens pendentes de moderacao',
+            'Aprove, rejeite ou solicite alteracoes em cada item',
+            'Filtre por tipo de conteudo e data de submissao',
+          ]}
+        />
 
         <AdminTabNav />
 

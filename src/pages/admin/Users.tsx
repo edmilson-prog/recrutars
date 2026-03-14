@@ -6,13 +6,13 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import {
   Users, ShieldCheck, Building2, UserCheck, UserX, Search,
   SlidersHorizontal, CheckCircle, Ban, ChevronLeft, ChevronRight,
   Download, Crown, Loader2, ShieldAlert, UserPlus,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useUsers, useUpdateUserStatus } from '@/hooks/useUsersQuery';
 import { useRoles } from '@/hooks/useRBACQuery';
 import { formatRelativeDate } from '@/lib/formatters';
@@ -265,24 +265,11 @@ export default function AdminUsers() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <Users className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Usuários</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Gerencie todos os usuários da plataforma. Visualize perfis, status e tipos de conta.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
+        <PageHeader
+          title="Usuarios"
+          description="Gerencie todos os usuarios da plataforma. Visualize perfis, status e tipos de conta."
+          actions={
+            <>
               <Button variant="outline" size="sm" onClick={handleExportCSV}>
                 <Download className="w-4 h-4 mr-2" />
                 Exportar CSV
@@ -291,9 +278,17 @@ export default function AdminUsers() {
                 <UserPlus className="w-4 h-4 mr-2" />
                 Novo Usuario
               </Button>
-            </div>
-          </div>
-        </motion.div>
+            </>
+          }
+          howItWorksIntro="Usuarios sao todas as contas cadastradas na plataforma RecrutaRS."
+          howItWorks={[
+            'Filtre por tipo (Admin, Empresa, Candidato) ou status usando os filtros laterais',
+            'Use os cards de metricas como filtros rapidos — clique para ativar',
+            'Clique em "Novo Usuario" para criar uma conta manualmente',
+            'Use o menu de acoes (...) em cada linha para gerenciar o usuario',
+            'Exporte a lista filtrada para CSV a qualquer momento',
+          ]}
+        />
 
         <AdminTabNav />
 

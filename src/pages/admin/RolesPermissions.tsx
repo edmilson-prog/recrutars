@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import {
   Shield, Plus, Edit, Trash2, Lock, Save, X, Check, Loader2,
 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
 import { useRoles, usePermissions, useCreateRole, useUpdateRole, useDeleteRole } from '@/hooks/useRBACQuery';
@@ -299,29 +300,21 @@ export default function AdminRolesPermissions() {
         </div>
       ) : (
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <Shield className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Papéis e Permissões</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Gerencie papéis e visualize a matriz de permissões do sistema RBAC.
-              </p>
-            </div>
+        <PageHeader
+          title="Papéis e Permissões"
+          description="Gerencie papéis e visualize a matriz de permissões do sistema RBAC."
+          actions={
             <Button onClick={openCreate} className="shrink-0">
               <Plus className="w-4 h-4 mr-2" />
               Novo Papel
             </Button>
-          </div>
-        </motion.div>
+          }
+          howItWorks={[
+            'Defina papeis com permissoes granulares',
+            'Atribua papeis a usuarios para controle de acesso',
+            'Use "Novo Papel" para criar uma configuracao de permissoes',
+          ]}
+        />
 
         <AdminTabNav />
 

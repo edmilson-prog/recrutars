@@ -7,7 +7,6 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  Briefcase,
   Search,
   Star,
   MoreHorizontal,
@@ -17,6 +16,7 @@ import {
   ChevronRight,
   Filter,
 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAdminJobs } from '@/hooks/useAdminJobs';
 import { cn } from '@/lib/utils';
@@ -114,25 +114,10 @@ export default function JobsList() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <Briefcase className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Todas as Vagas</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Navegue e filtre todas as vagas publicadas na plataforma. {filtered.length} vagas encontradas.
-              </p>
-            </div>
-
-            {/* Mobile filter trigger */}
+        <PageHeader
+          title="Todas as Vagas"
+          description={<>Navegue e filtre todas as vagas publicadas na plataforma. {filtered.length} vagas encontradas.</>}
+          actions={
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" className="lg:hidden shrink-0">
@@ -147,8 +132,13 @@ export default function JobsList() {
                 <div className="mt-4">{FilterSidebar}</div>
               </SheetContent>
             </Sheet>
-          </div>
-        </motion.div>
+          }
+          howItWorks={[
+            'Lista completa de todas as vagas da plataforma',
+            'Filtre por empresa, status, tipo de contrato e localizacao',
+            'Use as acoes do menu para moderar e gerenciar vagas',
+          ]}
+        />
 
         <AdminTabNav />
 

@@ -30,6 +30,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { TechnicalAnalysisCard } from '@/components/aiAnalysis';
 import { PracticalAnalysisCard } from '@/components/aiAnalysis/PracticalAnalysisCard';
 import { Button } from '@/components/ui/button';
@@ -976,42 +977,33 @@ export default function AdminCandidates() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <User className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Gestão de Candidatos</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Visualize e gerencie todos os candidatos cadastrados na plataforma.
-                Acompanhe perfis comportamentais, status de testes e ações administrativas.
-              </p>
-              {candidates.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-xs font-medium text-muted-foreground">
-                    <User className="w-3 h-3" />
-                    {candidates.length} {candidates.length === 1 ? 'candidato' : 'candidatos'}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                    <CheckCircle2 className="w-3 h-3" />
-                    {candidates.filter(c => c.status === 'active').length} ativos
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 text-xs font-medium text-violet-600 dark:text-violet-400">
-                    <Brain className="w-3 h-3" />
-                    {candidates.filter(c => c.hasTest === true).length} com teste
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          title="Gestão de Candidatos"
+          description="Visualize e gerencie todos os candidatos cadastrados na plataforma. Acompanhe perfis comportamentais, status de testes e ações administrativas."
+          badges={
+            candidates.length > 0 ? (
+              <>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                  <User className="w-3 h-3" />
+                  {candidates.length} {candidates.length === 1 ? 'candidato' : 'candidatos'}
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 className="w-3 h-3" />
+                  {candidates.filter(c => c.status === 'active').length} ativos
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 text-xs font-medium text-violet-600 dark:text-violet-400">
+                  <Brain className="w-3 h-3" />
+                  {candidates.filter(c => c.hasTest === true).length} com teste
+                </span>
+              </>
+            ) : undefined
+          }
+          howItWorks={[
+            'Visualize todos os candidatos cadastrados na plataforma',
+            'Filtre por status, teste comportamental e perfil',
+            'Use as acoes do menu para gerenciar cada candidato',
+          ]}
+        />
 
         {/* Search and Filters */}
         <div className="flex flex-col md:flex-row gap-4">

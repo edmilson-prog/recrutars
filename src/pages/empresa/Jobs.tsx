@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, Search, MoreVertical, Users, Eye, Pause, Play, Trash2, Edit, Copy, XCircle, X, Briefcase, Brain, Loader2, Sparkles, List, LayoutGrid, MapPin } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -211,28 +212,21 @@ export default function CompanyJobs() {
     <DashboardLayout userType="company">
       <div className="space-y-6">
         {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <Briefcase className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Minhas Vagas</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Gerencie suas vagas e processos seletivos. Acompanhe candidaturas, configure testes comportamentais e encontre os melhores talentos.
-              </p>
-            </div>
+        <PageHeader
+          title="Minhas Vagas"
+          description="Gerencie suas vagas e processos seletivos. Acompanhe candidaturas, configure testes comportamentais e encontre os melhores talentos."
+          actions={
             <Button onClick={() => navigate('/empresa/vagas/nova')} className="shrink-0">
               <Plus className="w-4 h-4 mr-2" />
               Nova Vaga
             </Button>
-          </div>
-        </motion.div>
+          }
+          howItWorks={[
+            'Gerencie suas vagas e processos seletivos',
+            'Publique novas vagas com "Nova Vaga"',
+            'Acompanhe candidaturas e configure testes comportamentais',
+          ]}
+        />
 
         {/* Status Filter Tabs */}
         <div className="flex flex-wrap gap-2">

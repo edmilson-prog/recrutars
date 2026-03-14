@@ -13,6 +13,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -80,18 +81,10 @@ export default function AdminAssessmentCategories() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6">
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <FolderTree className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Categorias de Avaliação</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Gerencie as dimensões e categorias do sistema Gauge-Pro para avaliações comportamentais.
-              </p>
-            </div>
+        <PageHeader
+          title="Categorias de Avaliação"
+          description="Gerencie as dimensões e categorias do sistema Gauge-Pro para avaliações comportamentais."
+          actions={
             <Button asChild className="shrink-0">
               <Link to="/admin/avaliacoes/perguntas">
                 <FileQuestion className="h-4 w-4 mr-2" />
@@ -99,8 +92,13 @@ export default function AdminAssessmentCategories() {
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Link>
             </Button>
-          </div>
-        </div>
+          }
+          howItWorks={[
+            'Categorias agrupam perguntas do sistema Gauge-Pro',
+            'Cada categoria representa uma dimensao comportamental',
+            'Clique em "Ver Perguntas" para gerenciar perguntas de uma categoria',
+          ]}
+        />
 
         <AdminTabNav />
 

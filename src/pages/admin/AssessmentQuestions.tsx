@@ -17,6 +17,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -157,13 +158,10 @@ export default function AdminAssessmentQuestions() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6">
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <FileQuestion className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
+        <PageHeader
+          title="Banco de Perguntas"
+          description={
+            <>
               <div className="flex items-center gap-2 mb-1">
                 <Button variant="ghost" size="sm" asChild className="h-8 px-2">
                   <Link to="/admin/avaliacoes/categorias">
@@ -172,17 +170,21 @@ export default function AdminAssessmentQuestions() {
                   </Link>
                 </Button>
               </div>
-              <h1 className="text-2xl font-bold text-foreground">Banco de Perguntas</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Gerencie as {stats.totalQuestions} perguntas do sistema Gauge-Pro 2.0 organizadas por dimensão e categoria.
-              </p>
-            </div>
+              <p>Gerencie as {stats.totalQuestions} perguntas do sistema Gauge-Pro 2.0 organizadas por dimensão e categoria.</p>
+            </>
+          }
+          actions={
             <Button onClick={() => setIsFormOpen(true)} className="shrink-0">
               <Plus className="h-4 w-4 mr-2" />
               Nova Pergunta
             </Button>
-          </div>
-        </div>
+          }
+          howItWorks={[
+            'Perguntas sao usadas nos testes comportamentais Gauge-Pro',
+            'Filtre por categoria, tipo e status',
+            'Use "Nova Pergunta" para adicionar ao banco de perguntas',
+          ]}
+        />
 
         <AdminTabNav />
 

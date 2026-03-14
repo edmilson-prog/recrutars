@@ -5,7 +5,8 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Plus, RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -82,24 +83,21 @@ export default function PlansManagement() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6">
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <CreditCard className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Gestão de Planos</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Configure planos de assinatura para candidatos e empresas. Gerencie preços, recursos e sincronização com Stripe.
-              </p>
-            </div>
+        <PageHeader
+          title="Gestão de Planos"
+          description="Configure planos de assinatura para candidatos e empresas. Gerencie preços, recursos e sincronização com Stripe."
+          actions={
             <Button onClick={handleNewPlan} className="bg-cyan-600 hover:bg-cyan-700 shrink-0">
               <Plus className="w-4 h-4 mr-2" />
               Novo Plano
             </Button>
-          </div>
-        </div>
+          }
+          howItWorks={[
+            'Crie e gerencie os planos da plataforma',
+            'Configure precos, limites de uso e periodos de trial',
+            'Use "Novo Plano" para adicionar um plano',
+          ]}
+        />
 
         <AdminTabNav />
 

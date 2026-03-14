@@ -7,10 +7,11 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ToggleLeft, Plus, Search, Skull, Filter,
+  Plus, Search, Skull, Filter,
   Flag, Zap, ShieldOff, FlaskConical,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -166,23 +167,10 @@ export default function FeatureFlags() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <ToggleLeft className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Feature Flags</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Gerencie flags de funcionalidades, rollouts progressivos e kill switches da plataforma.
-              </p>
-            </div>
+        <PageHeader
+          title="Feature Flags"
+          description="Gerencie flags de funcionalidades, rollouts progressivos e kill switches da plataforma."
+          actions={
             <Button
               onClick={() => navigate('/admin/feature-flags/new')}
               className="bg-cyan-600 hover:bg-cyan-700 shrink-0"
@@ -190,8 +178,13 @@ export default function FeatureFlags() {
               <Plus className="w-4 h-4 mr-2" />
               Nova Flag
             </Button>
-          </div>
-        </motion.div>
+          }
+          howItWorks={[
+            'Gerencie flags de funcionalidade da plataforma',
+            'Ative ou desative features para todos ou grupos especificos',
+            'Configure rollouts progressivos e kill switches',
+          ]}
+        />
 
         <AdminTabNav />
 

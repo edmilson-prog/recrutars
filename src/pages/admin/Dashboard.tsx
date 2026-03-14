@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Building2, Users, Briefcase, Brain, TrendingUp, ArrowUp, ArrowDown, ChevronRight, FileText, Target, AlertTriangle, Code2, GraduationCap, MapPin, LayoutDashboard } from 'lucide-react';
+import { Building2, Users, Briefcase, Brain, TrendingUp, ArrowUp, ArrowDown, ChevronRight, FileText, Target, AlertTriangle, Code2, GraduationCap, MapPin } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { getOrGenerateIdealProfile } from '@/lib/behavioralProfiles';
 import { useJobs } from '@/hooks/useJobsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
@@ -186,25 +187,15 @@ export default function AdminDashboard() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-8">
-        {/* Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <LayoutDashboard className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Visão geral da plataforma RecrutaRS. Acompanhe métricas de empresas, candidatos, vagas e testes comportamentais.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          title="Dashboard"
+          description="Visão geral da plataforma RecrutaRS. Acompanhe métricas de empresas, candidatos, vagas e testes comportamentais."
+          howItWorks={[
+            'Os cards mostram totais de empresas, candidatos, vagas e testes',
+            'Graficos exibem crescimento e tendencias ao longo do tempo',
+            'Clique nos cards para navegar ate a secao correspondente',
+          ]}
+        />
 
         {/* Stats Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">

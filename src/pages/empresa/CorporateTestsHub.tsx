@@ -4,8 +4,8 @@
  */
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -43,23 +43,11 @@ export default function CorporateTestsHub() {
         )}
 
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-l-[3px] border-l-primary p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-              <BarChart3 className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">Hub de Testes Comportamentais</h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Gerencie testes Gauge-Pro, analise resultados e compare candidatos para decisões mais assertivas no recrutamento.
-              </p>
-            </div>
-            <div className="flex gap-2 shrink-0">
+        <PageHeader
+          title="Hub de Testes Comportamentais"
+          description="Gerencie testes Gauge-Pro, analise resultados e compare candidatos para decisões mais assertivas no recrutamento."
+          actions={
+            <>
               <Button
                 variant="outline"
                 size="sm"
@@ -77,9 +65,14 @@ export default function CorporateTestsHub() {
                 Auditoria
               </Button>
               <GaugeProMiniManual />
-            </div>
-          </div>
-        </motion.div>
+            </>
+          }
+          howItWorks={[
+            'Central de testes comportamentais da empresa',
+            'Envie convites de teste para colaboradores',
+            'Acompanhe resultados e compare perfis da equipe',
+          ]}
+        />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
