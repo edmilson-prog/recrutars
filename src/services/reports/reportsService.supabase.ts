@@ -9,10 +9,36 @@ import type {
   ActivityFeedEvent,
   ReportSchedule,
 } from '@/types/reports';
+import type { Database } from '@/types/database';
 import type {
   IReportsService,
   CreateReportScheduleData,
 } from './reportsService';
+
+type MetricsRow = Database['public']['Tables']['platform_metrics_daily']['Row'];
+
+function convertMetricsRow(row: MetricsRow): PlatformMetricsDaily {
+  return {
+    id: row.id,
+    metricDate: row.metric_date,
+    totalCandidates: row.total_candidates,
+    totalCompanies: row.total_companies,
+    newCandidates: row.new_candidates,
+    newCompanies: row.new_companies,
+    activeJobs: row.active_jobs,
+    newJobs: row.new_jobs,
+    applications: row.applications,
+    interviewsScheduled: row.interviews_scheduled,
+    interviewsDone: row.interviews_done,
+    hires: row.hires,
+    testsStarted: row.tests_started,
+    testsCompleted: row.tests_completed,
+    mrr: row.mrr,
+    newSubscriptions: row.new_subscriptions,
+    cancellations: row.cancellations,
+    revenue: row.revenue,
+  };
+}
 
 export class SupabaseReportsService implements IReportsService {
   async getDailyMetrics(
@@ -27,7 +53,7 @@ export class SupabaseReportsService implements IReportsService {
       .order('metric_date', { ascending: true });
 
     if (error) throw error;
-    return (data ?? []) as unknown as PlatformMetricsDaily[];
+    return (data ?? []).map(convertMetricsRow);
   }
 
   async getLatestMetrics(): Promise<PlatformMetricsDaily | null> {
@@ -39,7 +65,7 @@ export class SupabaseReportsService implements IReportsService {
       .maybeSingle();
 
     if (error) throw error;
-    return (data as unknown as PlatformMetricsDaily) ?? null;
+    return data ? convertMetricsRow(data) : null;
   }
 
   async getActivityFeed(limit = 50): Promise<ActivityFeedEvent[]> {
