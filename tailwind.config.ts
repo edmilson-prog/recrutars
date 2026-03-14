@@ -67,6 +67,8 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+          "foreground-muted": "hsl(var(--sidebar-foreground-muted))",
+          hover: "hsl(var(--sidebar-hover))",
         },
         navy: {
           50: "#eef2ff",

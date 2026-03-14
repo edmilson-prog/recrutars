@@ -90,6 +90,8 @@
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 228 48% 28%;
     --sidebar-ring: 207 70% 53%;
+    --sidebar-foreground-muted: 228 48% 70%;
+    --sidebar-hover: 228 48% 37%;
 
     /* Glassmorphism tokens */
     --glass-bg: rgba(255, 255, 255, 0.7);
@@ -135,6 +137,8 @@
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 222 47% 15%;
     --sidebar-ring: 207 70% 53%;
+    --sidebar-foreground-muted: 222 47% 50%;
+    --sidebar-hover: 222 47% 12%;
 
     /* Glassmorphism tokens (dark) */
     --glass-bg: rgba(0, 0, 0, 0.7);
