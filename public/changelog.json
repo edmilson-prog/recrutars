@@ -1,12 +1,39 @@
 {
   "versions": [
     {
+      "version": "1.36.0",
+      "codename": "Forge",
+      "type": "minor",
+      "releaseDate": "2026-03-15",
+      "description": "Redesign da sidebar com navegação agrupada e tooltips, formulário de criação de usuário expandido com campos de perfil candidato/empresa, e correções de acentuação e métricas.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Formulário de criação de usuário admin expandido com campos de perfil de candidato e empresa",
+            "Sidebar redesenhada com navegação agrupada, tooltips, seção de perfil e correção de estado ativo"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Coluna 'Último Acesso' na tabela de usuários agora exibe 'Nunca fez login' em vez de traço",
+            "Acentuação corrigida em cabeçalhos e textos da tabela de usuários admin",
+            "Botão salvar no detalhe de usuário admin agora funciona corretamente e nomes exibidos em maiúsculo",
+            "Acentuação corrigida nas páginas e componentes de Feature Flags",
+            "Tabela platform_metrics_daily populada e conversão snake_case corrigida nos relatórios financeiros"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.35.0",
       "codename": "Shield",
       "type": "minor",
       "releaseDate": "2026-03-13",
       "description": "Gestão de senhas admin, auditoria de impersonação, novo PageHeader unificado, filtros rápidos em KPIs e correções de responsividade mobile.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
