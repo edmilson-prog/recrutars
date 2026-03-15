@@ -236,6 +236,38 @@ export default function AdminUserDetail() {
     setNotes(prev => prev.filter(n => n.id !== noteId));
   };
 
+  const hasChanges = originalUser && (
+    name !== (originalUser.name || '') ||
+    email !== (originalUser.email || '') ||
+    type !== (originalUser.type || 'candidate') ||
+    status !== ((originalUser.status as UserStatus) || 'active')
+  );
+
+  const handleSave = async () => {
+    if (!id || !hasChanges) return;
+
+    try {
+      const updates: Record<string, unknown> = {};
+      if (name !== originalUser?.name) updates.name = name;
+      if (email !== originalUser?.email) updates.email = email;
+      if (type !== originalUser?.type) updates.type = type;
+      if (status !== originalUser?.status) updates.status = status;
+
+      await updateUserMutation.mutateAsync({ id, updates });
+
+      toast({
+        title: 'Dados atualizados',
+        description: 'As alterações do usuário foram salvas com sucesso.',
+      });
+    } catch {
+      toast({
+        title: 'Erro ao salvar',
+        description: 'Não foi possível atualizar os dados. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handlePermissionsSave = async (updates: { roleId?: string; groupIds?: string[] }) => {
     if (!id) return;
 
@@ -383,6 +415,7 @@ export default function AdminUserDetail() {
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    className="uppercase"
                   />
                 </div>
                 <div className="space-y-2">
@@ -455,8 +488,15 @@ export default function AdminUserDetail() {
               </div>
 
               <div className="flex justify-end">
-                <Button>
-                  <Save className="w-4 h-4 mr-2" />
+                <Button
+                  onClick={handleSave}
+                  disabled={!hasChanges || updateUserMutation.isPending}
+                >
+                  {updateUserMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
                   Salvar Alterações
                 </Button>
               </div>

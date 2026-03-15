@@ -131,7 +131,7 @@ export function UserTable({
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <div className="font-medium text-foreground truncate">{user.name}</div>
+                    <div className="font-medium text-foreground truncate uppercase">{user.name}</div>
                     <div className="text-xs text-muted-foreground truncate">{user.email}</div>
                   </div>
                 </Link>
