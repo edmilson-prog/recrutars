@@ -1,10 +1,15 @@
 /**
  * UserTable Component
  * PRD-061: Tabela de usuários com seleção e ações
+ * Sort + Resize: Ordenação dinâmica por coluna e colunas redimensionáveis
  */
 
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { MoreHorizontal, Eye, Edit, Ban, CheckCircle, Trash2 } from 'lucide-react';
+import {
+  MoreHorizontal, Eye, Edit, Ban, CheckCircle, Trash2,
+  ArrowUpDown, ArrowUp, ArrowDown,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,12 +36,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { User } from '@/types';
 import type { Role } from '@/types/rbac';
 
+interface SortConfig {
+  field: string;
+  direction: 'asc' | 'desc';
+}
+
 interface UserTableProps {
   users: User[];
   selectedIds: string[];
   onToggleSelect: (id: string) => void;
   onToggleAll: () => void;
   onStatusChange: (userId: string, status: 'active' | 'inactive' | 'suspended') => void;
+  sortConfig: SortConfig | null;
+  onSort: (field: string) => void;
 }
 
 const typeLabels: Record<string, { label: string; className: string }> = {
@@ -51,6 +63,27 @@ const statusLabels: Record<string, { label: string; className: string }> = {
   suspended: { label: 'Suspenso', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
   pending: { label: 'Pendente', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
 };
+
+interface ColumnDef {
+  key: string;
+  label: string;
+  sortField?: string;
+  minWidth: number;
+  defaultWidth: number;
+  fixed?: boolean;
+  hiddenClass?: string;
+}
+
+const columns: ColumnDef[] = [
+  { key: 'checkbox', label: '', minWidth: 48, defaultWidth: 48, fixed: true },
+  { key: 'user', label: 'Usuário', sortField: 'name', minWidth: 200, defaultWidth: 280 },
+  { key: 'type', label: 'Tipo', sortField: 'type', minWidth: 100, defaultWidth: 120, hiddenClass: 'hidden md:table-cell' },
+  { key: 'role', label: 'Papel', sortField: 'roleId', minWidth: 120, defaultWidth: 140, hiddenClass: 'hidden lg:table-cell' },
+  { key: 'status', label: 'Status', sortField: 'status', minWidth: 100, defaultWidth: 120, hiddenClass: 'hidden md:table-cell' },
+  { key: 'plan', label: 'Plano', minWidth: 100, defaultWidth: 100, hiddenClass: 'hidden xl:table-cell' },
+  { key: 'lastAccess', label: 'Último Acesso', sortField: 'lastAccessAt', minWidth: 140, defaultWidth: 160, hiddenClass: 'hidden lg:table-cell' },
+  { key: 'actions', label: 'Ações', minWidth: 48, defaultWidth: 48, fixed: true },
+];
 
 function getRoleName(roleId: string | undefined, roles: Role[]): string {
   if (!roleId) return '-';
@@ -67,34 +100,146 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
+function SortIcon({ field, sortConfig }: { field: string; sortConfig: SortConfig | null }) {
+  const isActive = sortConfig?.field === field;
+  if (isActive && sortConfig.direction === 'asc') {
+    return <ArrowUp className="h-3.5 w-3.5 shrink-0 text-primary opacity-100 transition-opacity duration-150" />;
+  }
+  if (isActive && sortConfig.direction === 'desc') {
+    return <ArrowDown className="h-3.5 w-3.5 shrink-0 text-primary opacity-100 transition-opacity duration-150" />;
+  }
+  return <ArrowUpDown className="h-3.5 w-3.5 shrink-0 opacity-40 group-hover/header:opacity-70 transition-opacity duration-150" />;
+}
+
 export function UserTable({
   users,
   selectedIds,
   onToggleSelect,
   onToggleAll,
   onStatusChange,
+  sortConfig,
+  onSort,
 }: UserTableProps) {
   const { data: roles = [], isLoading: rolesLoading } = useRoles();
   const allSelected = users.length > 0 && selectedIds.length === users.length;
 
+  // Column resize state
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+    const widths: Record<string, number> = {};
+    columns.forEach(col => { widths[col.key] = col.defaultWidth; });
+    return widths;
+  });
+  const resizeRef = useRef<{
+    columnKey: string;
+    startX: number;
+    startWidth: number;
+  } | null>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
+
+  const handleResizeStart = useCallback((e: React.PointerEvent, columnKey: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const col = columns.find(c => c.key === columnKey);
+    if (!col || col.fixed) return;
+
+    resizeRef.current = {
+      columnKey,
+      startX: e.clientX,
+      startWidth: columnWidths[columnKey],
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [columnWidths]);
+
+  useEffect(() => {
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!resizeRef.current) return;
+      const { columnKey, startX, startWidth } = resizeRef.current;
+      const col = columns.find(c => c.key === columnKey);
+      if (!col) return;
+      const diff = e.clientX - startX;
+      const newWidth = Math.max(col.minWidth, startWidth + diff);
+      setColumnWidths(prev => ({ ...prev, [columnKey]: newWidth }));
+    };
+
+    const handlePointerUp = () => {
+      if (!resizeRef.current) return;
+      resizeRef.current = null;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+    return () => {
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, []);
+
   return (
-    <Table>
+    <Table ref={tableRef} style={{ tableLayout: 'fixed' }}>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-12">
-            <Checkbox
-              checked={allSelected}
-              onCheckedChange={onToggleAll}
-              aria-label="Selecionar todos"
-            />
-          </TableHead>
-          <TableHead>Usuário</TableHead>
-          <TableHead className="hidden md:table-cell">Tipo</TableHead>
-          <TableHead className="hidden lg:table-cell">Papel</TableHead>
-          <TableHead className="hidden md:table-cell">Status</TableHead>
-          <TableHead className="hidden xl:table-cell">Plano</TableHead>
-          <TableHead className="hidden lg:table-cell">Último Acesso</TableHead>
-          <TableHead className="w-12">Ações</TableHead>
+          {columns.map((col) => {
+            const isSortable = !!col.sortField;
+            const isActive = sortConfig?.field === col.sortField;
+            const ariaSort = isActive
+              ? sortConfig?.direction === 'asc' ? 'ascending' : 'descending'
+              : 'none';
+
+            return (
+              <TableHead
+                key={col.key}
+                className={cn(
+                  'group/header relative select-none transition-colors duration-150',
+                  col.hiddenClass,
+                  isSortable && 'cursor-pointer hover:bg-muted/30',
+                )}
+                style={{ width: columnWidths[col.key] }}
+                aria-sort={isSortable ? ariaSort : undefined}
+              >
+                {col.key === 'checkbox' ? (
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={onToggleAll}
+                    aria-label="Selecionar todos"
+                  />
+                ) : isSortable ? (
+                  <button
+                    type="button"
+                    className={cn(
+                      'inline-flex items-center gap-1 w-full h-full text-left font-medium',
+                      'text-muted-foreground hover:text-foreground transition-colors duration-150',
+                      'focus-visible:outline-none focus-visible:text-foreground',
+                      isActive && 'text-foreground',
+                    )}
+                    onClick={() => onSort(col.sortField!)}
+                    aria-label={`Ordenar por ${col.label}${isActive ? `, atualmente ${sortConfig?.direction === 'asc' ? 'ascendente' : 'descendente'}` : ''}`}
+                  >
+                    <span className="truncate">{col.label}</span>
+                    <SortIcon field={col.sortField!} sortConfig={sortConfig} />
+                  </button>
+                ) : (
+                  <span>{col.label}</span>
+                )}
+
+                {/* Resize handle */}
+                {!col.fixed && (
+                  <div
+                    className={cn(
+                      'absolute right-0 top-0 bottom-0 z-10 w-1.5 cursor-col-resize',
+                      'after:content-[""] after:absolute after:inset-y-1 after:right-0.5 after:w-0.5 after:rounded-full',
+                      'after:bg-border after:opacity-0 after:transition-opacity after:duration-150',
+                      'group-hover/header:after:opacity-50 hover:after:opacity-100 hover:after:bg-primary',
+                    )}
+                    onPointerDown={(e) => handleResizeStart(e, col.key)}
+                  />
+                )}
+              </TableHead>
+            );
+          })}
         </TableRow>
       </TableHeader>
       <TableBody>

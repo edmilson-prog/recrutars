@@ -74,6 +74,7 @@ export default function AdminUsers() {
   const [page, setPage] = useState(1);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [activeKpi, setActiveKpi] = useState<string | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ field: string; direction: 'asc' | 'desc' } | null>(null);
 
   // Fetch users via service layer
   const { data: usersResult, isLoading: isLoadingUsers } = useUsers(undefined, { page: 1, pageSize: 9999 });
@@ -104,9 +105,18 @@ export default function AdminUsers() {
     setSelectedIds([]);
   }, [debouncedSearch, filters]);
 
-  // Filter logic
+  // Sort handler
+  const handleSort = useCallback((field: string) => {
+    setSortConfig(prev => {
+      if (!prev || prev.field !== field) return { field, direction: 'asc' as const };
+      if (prev.direction === 'asc') return { field, direction: 'desc' as const };
+      return null;
+    });
+  }, []);
+
+  // Filter + sort logic
   const filteredUsers = useMemo(() => {
-    return users.filter(user => {
+    const filtered = users.filter(user => {
       // Search
       if (debouncedSearch) {
         const q = debouncedSearch.toLowerCase();
@@ -130,7 +140,31 @@ export default function AdminUsers() {
       if (filters.dateTo && user.createdAt > filters.dateTo) return false;
       return true;
     });
-  }, [users, debouncedSearch, filters]);
+
+    // Sort
+    if (sortConfig) {
+      const { field, direction } = sortConfig;
+      const multiplier = direction === 'asc' ? 1 : -1;
+      filtered.sort((a, b) => {
+        const valA = (a as Record<string, unknown>)[field];
+        const valB = (b as Record<string, unknown>)[field];
+        // Nulls go to the end
+        if (valA == null && valB == null) return 0;
+        if (valA == null) return 1;
+        if (valB == null) return -1;
+        // String comparison with pt-BR locale
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          return valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' }) * multiplier;
+        }
+        // Numeric/date comparison
+        if (valA < valB) return -1 * multiplier;
+        if (valA > valB) return 1 * multiplier;
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [users, debouncedSearch, filters, sortConfig]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE));
@@ -418,6 +452,8 @@ export default function AdminUsers() {
                 onToggleSelect={toggleSelect}
                 onToggleAll={toggleAll}
                 onStatusChange={handleStatusChange}
+                sortConfig={sortConfig}
+                onSort={handleSort}
               />
 
               {/* Pagination */}
