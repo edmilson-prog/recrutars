@@ -5,8 +5,8 @@
  * User-level diagnostics showing evaluation chain for each flag.
  */
 
-import { useState } from 'react';
-import { User, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { User, ChevronDown, ChevronRight, AlertTriangle, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
@@ -18,6 +18,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { EvaluationChain } from './EvaluationChain';
+import { useUsers } from '@/hooks/useUsersQuery';
 import type { FeatureFlag, FeatureFlagOverride, EvaluationContext, EvaluationResult } from '@/types';
 
 interface UserDiagnosticsProps {
@@ -27,26 +28,41 @@ interface UserDiagnosticsProps {
   evaluate: (key: string, context: EvaluationContext) => EvaluationResult;
 }
 
-const mockUsers = [
-  { id: 'candidate-1', name: 'Joao Santos', type: 'candidate', plan: 'essencial' },
-  { id: 'candidate-2', name: 'Maria Oliveira', type: 'candidate', plan: 'avancar' },
-  { id: 'candidate-4', name: 'Carla Mendes', type: 'candidate', plan: 'destaque-maximo' },
-  { id: 'candidate-5', name: 'Lucas Ferreira', type: 'candidate', plan: 'essencial' },
-  { id: 'company-1', name: 'Tech Solutions', type: 'company', plan: 'recrutamento-premium' },
-  { id: 'company-2', name: 'Inovacao Digital', type: 'company', plan: 'selecao-inteligente' },
-  { id: 'company-3', name: 'StartUp Brasil', type: 'company', plan: 'essencial-empresas' },
-];
-
 export function UserDiagnostics({ userId: initialUserId, flags, overrides, evaluate }: UserDiagnosticsProps) {
-  const [selectedUserId, setSelectedUserId] = useState(initialUserId || mockUsers[0].id);
+  const { data: usersData, isLoading: isLoadingUsers } = useUsers(
+    undefined,
+    { page: 1, pageSize: 20 },
+  );
+
+  const usersList = useMemo(() =>
+    (usersData?.data || []).map(u => ({
+      id: u.id,
+      name: u.name,
+      type: u.type,
+    })),
+    [usersData]
+  );
+
+  const [selectedUserId, setSelectedUserId] = useState(initialUserId);
   const [expandedFlag, setExpandedFlag] = useState<string | null>(null);
 
-  const selectedUser = mockUsers.find((u) => u.id === selectedUserId) || mockUsers[0];
+  const effectiveUserId = selectedUserId || usersList[0]?.id || '';
+  const selectedUser = usersList.find((u) => u.id === effectiveUserId) || usersList[0];
+
+  if (isLoadingUsers || !selectedUser) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   const context: EvaluationContext = {
     userId: selectedUser.id,
     userType: selectedUser.type as 'admin' | 'company' | 'candidate',
-    planSlug: selectedUser.plan,
+    planSlug: '',
     roleSlug: 'viewer',
     capabilities: [],
     companyId: selectedUser.type === 'company' ? selectedUser.id : undefined,
@@ -67,20 +83,20 @@ export function UserDiagnostics({ userId: initialUserId, flags, overrides, evalu
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <User className="w-5 h-5 text-cyan-600" />
-          Diagnostico por Usuario
+          Diagnóstico por Usuário
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* User selector */}
         <div className="flex items-center gap-3">
-          <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+          <Select value={effectiveUserId} onValueChange={setSelectedUserId}>
             <SelectTrigger className="w-[280px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {mockUsers.map((u) => (
+              {usersList.map((u) => (
                 <SelectItem key={u.id} value={u.id}>
-                  {u.name} ({u.type} - {u.plan})
+                  {u.name} ({u.type})
                 </SelectItem>
               ))}
             </SelectContent>

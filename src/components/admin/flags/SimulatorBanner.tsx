@@ -20,10 +20,10 @@ export function SimulatorBanner({ isSimulating, onStop }: SimulatorBannerProps) 
     <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-500 text-yellow-950 py-2 px-4 flex items-center justify-center gap-3 shadow-lg">
       <AlertTriangle className="w-5 h-5 flex-shrink-0" />
       <span className="font-bold text-sm uppercase tracking-wider">
-        Modo Simulacao Ativo
+        Modo Simulação Ativo
       </span>
       <span className="text-sm hidden sm:inline">
-        — Os resultados exibidos nao refletem o ambiente de producao
+        — Os resultados exibidos não refletem o ambiente de produção
       </span>
       <Button
         variant="outline"

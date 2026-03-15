@@ -158,7 +158,62 @@ export class UsersServiceSupabase implements IUsersService {
     });
     if (error) throw new Error(error.message ?? 'Erro ao criar usuario');
     if (result?.error) throw new Error(result.error);
-    return { userId: result.userId };
+
+    const userId = result.userId;
+
+    // Persist candidate-specific profile data
+    if (data.type === 'candidate' && data.candidateProfile) {
+      const cp = data.candidateProfile;
+      const updates: Record<string, unknown> = {};
+      if (cp.cpf) updates.cpf = cp.cpf;
+      if (cp.dateOfBirth) updates.date_of_birth = cp.dateOfBirth;
+      if (cp.gender) updates.gender = cp.gender;
+      if (cp.maritalStatus) updates.marital_status = cp.maritalStatus;
+      if (cp.nationality) updates.nationality = cp.nationality;
+      if (cp.state) updates.state = cp.state;
+      if (cp.city) updates.city = cp.city;
+
+      if (Object.keys(updates).length > 0) {
+        // If all personal profile fields are filled, skip onboarding step
+        if (cp.cpf && cp.dateOfBirth && cp.gender && cp.maritalStatus && cp.state && cp.city) {
+          updates.onboarding_step = 'professional_profile';
+        }
+
+        await supabase
+          .from('candidates')
+          .update(updates)
+          .eq('profile_id', userId);
+      }
+    }
+
+    // Persist company-specific profile data
+    if (data.type === 'company' && data.companyProfile) {
+      const co = data.companyProfile;
+      const updates: Record<string, unknown> = {};
+      if (co.cnpj) updates.cnpj = co.cnpj;
+      if (co.razaoSocial) updates.razao_social = co.razaoSocial;
+      if (co.nomeFantasia) updates.nome_fantasia = co.nomeFantasia;
+      if (co.cep) updates.cep = co.cep;
+      if (co.logradouro) updates.logradouro = co.logradouro;
+      if (co.numero) updates.numero = co.numero;
+      if (co.complemento) updates.complemento = co.complemento;
+      if (co.bairro) updates.bairro = co.bairro;
+      if (co.city) updates.city = co.city;
+      if (co.state) updates.state = co.state;
+      if (co.industry) updates.industry = co.industry;
+      if (co.size) updates.size = co.size;
+      if (co.website) updates.website = co.website;
+      if (co.linkedin) updates.linkedin = co.linkedin;
+
+      if (Object.keys(updates).length > 0) {
+        await supabase
+          .from('companies')
+          .update(updates)
+          .eq('profile_id', userId);
+      }
+    }
+
+    return { userId };
   }
 
   // -----------------------------------------------------------------------

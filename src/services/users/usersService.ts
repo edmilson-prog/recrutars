@@ -21,6 +21,33 @@ export interface UserFilters {
   roleId?: string;
 }
 
+export interface CandidateProfilePayload {
+  cpf?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  maritalStatus?: string;
+  nationality?: string;
+  state?: string;
+  city?: string;
+}
+
+export interface CompanyProfilePayload {
+  cnpj?: string;
+  razaoSocial?: string;
+  nomeFantasia?: string;
+  cep?: string;
+  logradouro?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  city?: string;
+  state?: string;
+  industry?: string;
+  size?: string;
+  website?: string;
+  linkedin?: string;
+}
+
 export interface CreateUserData {
   name: string;
   email: string;
@@ -28,6 +55,8 @@ export interface CreateUserData {
   phone?: string;
   password?: string;
   sendInviteEmail?: boolean;
+  candidateProfile?: CandidateProfilePayload;
+  companyProfile?: CompanyProfilePayload;
 }
 
 // ---------------------------------------------------------------------------

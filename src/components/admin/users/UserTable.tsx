@@ -1,6 +1,6 @@
 /**
  * UserTable Component
- * PRD-061: Tabela de usuarios com selecao e acoes
+ * PRD-061: Tabela de usuários com seleção e ações
  */
 
 import { Link } from 'react-router-dom';
@@ -88,20 +88,20 @@ export function UserTable({
               aria-label="Selecionar todos"
             />
           </TableHead>
-          <TableHead>Usuario</TableHead>
+          <TableHead>Usuário</TableHead>
           <TableHead className="hidden md:table-cell">Tipo</TableHead>
           <TableHead className="hidden lg:table-cell">Papel</TableHead>
           <TableHead className="hidden md:table-cell">Status</TableHead>
           <TableHead className="hidden xl:table-cell">Plano</TableHead>
-          <TableHead className="hidden lg:table-cell">Ultimo Acesso</TableHead>
-          <TableHead className="w-12">Acoes</TableHead>
+          <TableHead className="hidden lg:table-cell">Último Acesso</TableHead>
+          <TableHead className="w-12">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {users.length === 0 && (
           <TableRow>
             <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-              Nenhum usuario encontrado com os filtros aplicados.
+              Nenhum usuário encontrado com os filtros aplicados.
             </TableCell>
           </TableRow>
         )}
@@ -131,7 +131,7 @@ export function UserTable({
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <div className="font-medium text-foreground truncate">{user.name}</div>
+                    <div className="font-medium text-foreground truncate uppercase">{user.name}</div>
                     <div className="text-xs text-muted-foreground truncate">{user.email}</div>
                   </div>
                 </Link>
@@ -158,7 +158,7 @@ export function UserTable({
               </TableCell>
               <TableCell className="hidden lg:table-cell">
                 <span className="text-sm text-muted-foreground">
-                  {user.lastAccessAt ? formatRelativeDate(user.lastAccessAt) : '-'}
+                  {user.lastAccessAt ? formatRelativeDate(user.lastAccessAt) : 'Nunca fez login'}
                 </span>
               </TableCell>
               <TableCell>
@@ -166,7 +166,7 @@ export function UserTable({
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">Acoes</span>
+                      <span className="sr-only">Ações</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">

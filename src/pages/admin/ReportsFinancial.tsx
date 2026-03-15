@@ -2,9 +2,9 @@
  * ReportsFinancial page
  * PRD-059: Relatorios "Radar" - Financial Dashboard
  *
- * KPIs: MRR, ARR, Receita Total, Ticket Medio, Churn, LTV, Conversao Free->Paid
- * Charts: MRR Evolution, Receita por Plano, Distribuicao Assinantes,
- *         Churn vs Novas Assinaturas, Receita por Periodo
+ * KPIs: MRR, ARR, Receita Total, Ticket Médio, Churn, LTV, Conversão Free->Paid
+ * Charts: MRR Evolution, Receita por Plano, Distribuição Assinantes,
+ *         Churn vs Novas Assinaturas, Receita por Período
  */
 
 import { useMemo } from 'react';
@@ -34,6 +34,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { KPICard } from '@/components/admin/reports/KPICard';
@@ -133,14 +134,17 @@ export default function ReportsFinancial() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Relatorio Financeiro</h1>
-            <p className="text-muted-foreground">KPIs de receita, assinaturas e conversao</p>
-          </div>
-          <TimeFilter value={timeFilter} onChange={setTimeFilter} />
-        </div>
+        <PageHeader
+          title="Relatório Financeiro"
+          description="KPIs de receita, assinaturas e conversão"
+          actions={<TimeFilter value={timeFilter} onChange={setTimeFilter} />}
+          howItWorks={[
+            'Os KPIs mostram MRR, ARR, receita total, ticket médio, churn, LTV e conversão free-paid do período selecionado',
+            'Setas e percentuais indicam a variação em relação ao período anterior',
+            'Gráficos detalham evolução do MRR, receita por plano, distribuição de assinantes e churn vs novas assinaturas',
+            'Use o filtro de período no canto superior direito para ajustar o intervalo de análise',
+          ]}
+        />
 
         <AdminTabNav />
 
@@ -171,7 +175,7 @@ export default function ReportsFinancial() {
             index={2}
           />
           <KPICard
-            title="Ticket Medio"
+            title="Ticket Médio"
             value={financialKPIs.ticketMedio}
             previousValue={prevFinancialKPIs?.ticketMedio}
             format="currency"
@@ -196,7 +200,7 @@ export default function ReportsFinancial() {
             index={5}
           />
           <KPICard
-            title="Conversao Free-Paid"
+            title="Conversão Free-Paid"
             value={financialKPIs.conversionRate}
             previousValue={prevFinancialKPIs?.conversionRate}
             format="percent"
@@ -215,7 +219,7 @@ export default function ReportsFinancial() {
           >
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Evolucao do MRR</CardTitle>
+                <CardTitle className="text-lg">Evolução do MRR</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -287,9 +291,9 @@ export default function ReportsFinancial() {
           </motion.div>
         </div>
 
-        {/* Charts Row 2: Distribuicao + Churn vs Novas + Receita por Periodo */}
+        {/* Charts Row 2: Distribuição + Churn vs Novas + Receita por Período */}
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Distribuicao de Assinantes */}
+          {/* Distribuição de Assinantes */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -297,7 +301,7 @@ export default function ReportsFinancial() {
           >
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Distribuicao de Assinantes</CardTitle>
+                <CardTitle className="text-lg">Distribuição de Assinantes</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center">
                 <ResponsiveContainer width="100%" height={280}>
@@ -349,7 +353,7 @@ export default function ReportsFinancial() {
             </Card>
           </motion.div>
 
-          {/* Receita por Periodo */}
+          {/* Receita por Período */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -357,7 +361,7 @@ export default function ReportsFinancial() {
           >
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Receita por Periodo</CardTitle>
+                <CardTitle className="text-lg">Receita por Período</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center">
                 <ResponsiveContainer width="100%" height={280}>

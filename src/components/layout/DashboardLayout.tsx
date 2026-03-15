@@ -8,10 +8,11 @@
 
 import { ReactNode, useState, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Building2, Users, Settings, LogOut,
-  Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, Heart, Calendar, HelpCircle, Bell,
-  ChevronLeft, ChevronRight, Sparkles, Info, UsersRound,
+  Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, ClipboardCheck, Heart, Calendar, HelpCircle, Bell,
+  ChevronLeft, ChevronRight, Sparkles, Info, UserCog, MoreHorizontal,
   ShieldCheck, BarChart3, CreditCard, DollarSign, ToggleLeft, Headset,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -37,6 +38,8 @@ import { GlassHeader } from '@/components/layout/GlassHeader';
 import { GlassFooter } from '@/components/layout/GlassFooter';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { NotificationBell } from '@/components/notifications';
 import { CompanyNotificationBell } from '@/components/notifications/CompanyNotificationBell';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
@@ -61,54 +64,123 @@ interface NavItem {
   countKey?: 'savedJobs' | 'interviews' | 'savedCandidates' | 'companyInterviews' | 'recommendations';
 }
 
-const adminNav: NavItem[] = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/empresas', label: 'Empresas', icon: Building2 },
-  { href: '/admin/candidatos', label: 'Candidatos', icon: Users },
-  { href: '/admin/planos', label: 'Planos & Assinaturas', icon: CreditCard },
-  { href: '/admin/assinaturas/billing', label: 'Financeiro', icon: DollarSign },
-  { href: '/admin/feature-flags', label: 'Feature Flags', icon: ToggleLeft },
-  { href: '/admin/usuarios', label: 'Usuários & Permissões', icon: ShieldCheck },
-  { href: '/admin/avaliacoes/categorias', label: 'Avaliações', icon: Brain },
-  { href: '/admin/vagas', label: 'Vagas', icon: Briefcase },
-  { href: '/admin/relatorios/financeiro', label: 'Relatórios', icon: BarChart3 },
-  { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
-  { href: '/admin/helpdesk', label: 'Helpdesk', icon: Headset },
-  { href: '/sobre', label: 'Sobre', icon: Info },
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const adminNavGroups: NavGroup[] = [
+  {
+    label: 'Principal',
+    items: [
+      { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/admin/empresas', label: 'Empresas', icon: Building2 },
+      { href: '/admin/candidatos', label: 'Candidatos', icon: Users },
+      { href: '/admin/vagas', label: 'Vagas', icon: Briefcase },
+    ],
+  },
+  {
+    label: 'Financeiro',
+    items: [
+      { href: '/admin/planos', label: 'Planos & Assinaturas', icon: CreditCard },
+      { href: '/admin/assinaturas/billing', label: 'Financeiro', icon: DollarSign },
+    ],
+  },
+  {
+    label: 'Sistema',
+    items: [
+      { href: '/admin/feature-flags', label: 'Feature Flags', icon: ToggleLeft },
+      { href: '/admin/usuarios', label: 'Usuários & Permissões', icon: ShieldCheck },
+      { href: '/admin/avaliacoes/categorias', label: 'Avaliações', icon: Brain },
+      { href: '/admin/relatorios/financeiro', label: 'Relatórios', icon: BarChart3 },
+    ],
+  },
+  {
+    label: 'Suporte',
+    items: [
+      { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
+      { href: '/admin/helpdesk', label: 'Helpdesk', icon: Headset },
+      { href: '/sobre', label: 'Sobre', icon: Info },
+    ],
+  },
 ];
 
-const companyNav: NavItem[] = [
-  { href: '/empresa', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/empresa/vagas', label: 'Minhas Vagas', icon: Briefcase },
-  { href: '/empresa/candidaturas', label: 'Candidaturas', icon: ClipboardList },
-  { href: '/empresa/entrevistas', label: 'Entrevistas', icon: Calendar, countKey: 'companyInterviews' },
-  { href: '/empresa/candidatos', label: 'Banco de Talentos', icon: Users },
-  { href: '/empresa/candidatos-salvos', label: 'Candidatos Salvos', icon: Heart, countKey: 'savedCandidates' },
-  { href: '/empresa/testes', label: 'Testes', icon: Brain },
-  { href: '/empresa/equipes', label: 'Gestão de Equipes', icon: UsersRound },
-  { href: '/empresa/mensagens', label: 'Mensagens', icon: MessageSquare },
-  { href: '/empresa/notificacoes', label: 'Notificações', icon: Bell },
-  { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
-  { href: '/empresa/configuracoes', label: 'Configurações', icon: Settings },
-  { href: '/sobre', label: 'Sobre', icon: Info },
+const companyNavGroups: NavGroup[] = [
+  {
+    label: 'Principal',
+    items: [
+      { href: '/empresa', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/empresa/vagas', label: 'Minhas Vagas', icon: Briefcase },
+      { href: '/empresa/candidaturas', label: 'Candidaturas', icon: ClipboardList },
+      { href: '/empresa/entrevistas', label: 'Entrevistas', icon: Calendar, countKey: 'companyInterviews' },
+    ],
+  },
+  {
+    label: 'Talentos',
+    items: [
+      { href: '/empresa/candidatos', label: 'Banco de Talentos', icon: Users },
+      { href: '/empresa/candidatos-salvos', label: 'Candidatos Salvos', icon: Heart, countKey: 'savedCandidates' },
+      { href: '/empresa/testes', label: 'Testes', icon: Brain },
+      { href: '/empresa/equipes', label: 'Gestão de Equipes', icon: UserCog },
+    ],
+  },
+  {
+    label: 'Comunicação',
+    items: [
+      { href: '/empresa/mensagens', label: 'Mensagens', icon: MessageSquare },
+      { href: '/empresa/notificacoes', label: 'Notificações', icon: Bell },
+    ],
+  },
+  {
+    label: 'Geral',
+    items: [
+      { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
+      { href: '/empresa/configuracoes', label: 'Configurações', icon: Settings },
+      { href: '/sobre', label: 'Sobre', icon: Info },
+    ],
+  },
 ];
 
-const candidateNav: NavItem[] = [
-  { href: '/candidato', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/candidato/perfil', label: 'Meu Perfil', icon: FileText },
-  { href: '/candidato/vagas-recomendadas', label: 'Vagas para Você', icon: Sparkles, countKey: 'recommendations' },
-  { href: '/candidato/vagas', label: 'Buscar Vagas', icon: Search },
-  { href: '/candidato/vagas-salvas', label: 'Vagas Salvas', icon: Heart, countKey: 'savedJobs' },
-  { href: '/candidato/candidaturas', label: 'Candidaturas', icon: ClipboardList },
-  { href: '/candidato/entrevistas', label: 'Entrevistas', icon: Calendar, countKey: 'interviews' },
-  { href: '/candidato/teste-comportamental', label: 'Teste Comportamental', icon: Brain },
-  { href: '/candidato/testes', label: 'Meus Testes', icon: Brain },
-
-  { href: '/candidato/mensagens', label: 'Mensagens', icon: MessageSquare },
-  { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
-  { href: '/candidato/configuracoes', label: 'Configurações', icon: Settings },
-  { href: '/sobre', label: 'Sobre', icon: Info },
+const candidateNavGroups: NavGroup[] = [
+  {
+    label: 'Principal',
+    items: [
+      { href: '/candidato', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/candidato/perfil', label: 'Meu Perfil', icon: FileText },
+    ],
+  },
+  {
+    label: 'Vagas',
+    items: [
+      { href: '/candidato/vagas-recomendadas', label: 'Vagas para Você', icon: Sparkles, countKey: 'recommendations' },
+      { href: '/candidato/vagas', label: 'Buscar Vagas', icon: Search },
+      { href: '/candidato/vagas-salvas', label: 'Vagas Salvas', icon: Heart, countKey: 'savedJobs' },
+      { href: '/candidato/candidaturas', label: 'Candidaturas', icon: ClipboardList },
+      { href: '/candidato/entrevistas', label: 'Entrevistas', icon: Calendar, countKey: 'interviews' },
+    ],
+  },
+  {
+    label: 'Avaliações',
+    items: [
+      { href: '/candidato/teste-comportamental', label: 'Teste Comportamental', icon: Brain },
+      { href: '/candidato/testes', label: 'Meus Testes', icon: ClipboardCheck },
+    ],
+  },
+  {
+    label: 'Geral',
+    items: [
+      { href: '/candidato/mensagens', label: 'Mensagens', icon: MessageSquare },
+      { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
+      { href: '/candidato/configuracoes', label: 'Configurações', icon: Settings },
+      { href: '/sobre', label: 'Sobre', icon: Info },
+    ],
+  },
 ];
+
+/** Helper to flatten nav groups into flat NavItem array (for header label lookup, breadcrumbs, etc.) */
+function flattenNavGroups(groups: NavGroup[]): NavItem[] {
+  return groups.flatMap(g => g.items);
+}
 
 /** Encontra label do item ativo (incluindo tabs admin) */
 function findActiveLabel(items: NavItem[], pathname: string, userType: string): string | undefined {
@@ -202,11 +274,15 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
     setCsatDismissed(true);
   }, [pendingCsat, user?.id, submitCsatMutation]);
 
-  const navItems = userType === 'admin'
-    ? adminNav
+  const prefersReducedMotion = useReducedMotion();
+
+  const navGroups = userType === 'admin'
+    ? adminNavGroups
     : userType === 'company'
-      ? companyNav
-      : candidateNav;
+      ? companyNavGroups
+      : candidateNavGroups;
+
+  const navItems = flattenNavGroups(navGroups);
 
   // Obter contadores para items do menu
   const getItemCount = (countKey?: string): number | null => {
@@ -261,26 +337,47 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
       ? isAdminNavItemActive(item.href, location.pathname)
       : location.pathname === item.href;
     const count = getItemCount(item.countKey);
+    const hasCount = count !== null && count > 0;
+    const tooltipLabel = hasCount ? `${item.label} (${count})` : item.label;
 
-    return (
+    const linkContent = (
       <Link
         key={item.href}
         to={item.href}
+        aria-current={isActive ? 'page' : undefined}
         className={cn(
-          "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+          "relative flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors duration-150",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar",
           isCollapsed && "justify-center px-2",
           isActive
-            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-            : "hover:bg-sidebar-accent/50"
+            ? "bg-sidebar-primary/15 text-sidebar-accent-foreground"
+            : "hover:bg-sidebar-foreground/5"
         )}
-        title={isCollapsed ? item.label : undefined}
       >
-        <item.icon className={cn(
-          "w-5 h-5 flex-shrink-0",
-          isActive && "text-sidebar-primary"
-        )} />
-        {!isCollapsed && <span className="font-medium flex-1">{item.label}</span>}
-        {!isCollapsed && count !== null && count > 0 && (
+        {/* Left-edge active indicator */}
+        {isActive && (
+          <motion.div
+            layoutId={prefersReducedMotion ? undefined : "sidebar-active-indicator"}
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-sidebar-primary"
+            transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 350, damping: 30 }}
+          />
+        )}
+        <div className="relative flex-shrink-0">
+          <item.icon className={cn(
+            "w-5 h-5",
+            isActive ? "text-sidebar-primary" : "text-sidebar-foreground/70"
+          )} />
+          {/* Badge dot when collapsed */}
+          {isCollapsed && hasCount && (
+            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-sidebar-primary" />
+          )}
+        </div>
+        <span className={cn(
+          "flex-1",
+          isCollapsed ? "sr-only" : "",
+          isActive ? "font-semibold" : "font-normal"
+        )}>{item.label}</span>
+        {!isCollapsed && hasCount && (
           <Badge
             variant="secondary"
             className={cn(
@@ -293,7 +390,45 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         )}
       </Link>
     );
+
+    if (isCollapsed) {
+      return (
+        <Tooltip key={item.href} delayDuration={0}>
+          <TooltipTrigger asChild>
+            {linkContent}
+          </TooltipTrigger>
+          <TooltipContent side="right" className="font-medium">
+            {tooltipLabel}
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return linkContent;
   };
+
+  /** Renderiza grupos de navegação com labels de seção */
+  const renderNavGroups = () => (
+    <>
+      {navGroups.map((group, groupIndex) => (
+        <div key={group.label} role="group" aria-label={group.label}>
+          {/* Section label or divider */}
+          {groupIndex > 0 && (
+            isCollapsed ? (
+              <div className="h-px bg-sidebar-border mx-3 my-2" />
+            ) : (
+              <div className="text-[11px] uppercase tracking-wider font-semibold text-sidebar-foreground/40 px-4 pt-5 pb-1.5">
+                {group.label}
+              </div>
+            )
+          )}
+          <div className="space-y-0.5">
+            {group.items.map(renderNavItem)}
+          </div>
+        </div>
+      ))}
+    </>
+  );
 
   return (
     <div className="h-screen flex w-full overflow-hidden">
@@ -301,71 +436,159 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
       <SkipLink href="#main-content" />
 
       {/* Sidebar - PRD-003-dgn: Oculta em mobile */}
-      <aside className={cn(
-        "h-screen bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300",
-        isCollapsed ? "w-20" : "w-64",
-        // Ocultar em mobile
-        "hidden md:flex"
-      )}>
-        {/* Logo */}
-        <div className={cn(
-          "p-6 border-b border-sidebar-border flex items-center",
-          isCollapsed ? "justify-center relative" : "justify-between"
-        )}>
-          <Link to="/" className={cn(
-            "flex items-center gap-2",
-            isCollapsed && "justify-center"
+      <TooltipProvider>
+        <aside
+          className={cn(
+            "h-screen bg-sidebar text-sidebar-foreground flex flex-col transition-[width] duration-300",
+            "shadow-[inset_-1px_0_0_hsl(var(--sidebar-border))]",
+            isCollapsed ? "w-20" : "w-64",
+            "hidden md:flex"
+          )}
+          aria-label="Menu principal"
+        >
+          {/* Logo */}
+          <div className={cn(
+            "p-6 border-b border-sidebar-border flex items-center",
+            isCollapsed ? "justify-center relative" : "justify-between"
           )}>
-            <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center flex-shrink-0">
-              <span className="text-xl font-bold text-sidebar-primary-foreground">R</span>
-            </div>
-            {!isCollapsed && <span className="text-xl font-bold">RecrutaRS</span>}
-          </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleCollapse}
-            className={cn(
-              "h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent",
-              isCollapsed && "absolute right-2"
-            )}
-            aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
-          >
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map(renderNavItem)}
-        </nav>
-
-        {/* User section - apenas botão de sair */}
-        <div className="p-4 border-t border-sidebar-border">
-          {!isCollapsed ? (
+            <Link to="/" className={cn(
+              "flex items-center gap-2",
+              isCollapsed && "justify-center"
+            )}>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sidebar-primary to-sidebar-primary/80 flex items-center justify-center flex-shrink-0 shadow-lg shadow-sidebar-primary/20">
+                <span className="text-xl font-bold text-sidebar-primary-foreground">R</span>
+              </div>
+              <AnimatePresence>
+                {!isCollapsed && (
+                  <motion.span
+                    initial={prefersReducedMotion ? false : { opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-xl font-bold overflow-hidden whitespace-nowrap"
+                  >
+                    RecrutaRS
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Link>
             <Button
               variant="ghost"
-              className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              onClick={handleLogout}
+              size="icon"
+              onClick={toggleCollapse}
+              className={cn(
+                "h-8 w-8 text-sidebar-foreground hover:bg-sidebar-foreground/5",
+                isCollapsed && "absolute right-2"
+              )}
+              aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
             >
-              <LogOut className="w-5 h-5 mr-3" />
-              Sair
+              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </Button>
-          ) : (
-            <div className="flex justify-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                onClick={handleLogout}
-                title="Sair"
-              >
-                <LogOut className="w-5 h-5" />
-              </Button>
-            </div>
-          )}
-        </div>
-      </aside>
+          </div>
+
+          {/* Navigation */}
+          <nav
+            className="flex-1 p-3 overflow-y-auto"
+            style={{
+              maskImage: 'linear-gradient(to bottom, transparent 0%, black 8px, black calc(100% - 8px), transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 8px, black calc(100% - 8px), transparent 100%)',
+            }}
+          >
+            {renderNavGroups()}
+          </nav>
+
+          {/* User profile section */}
+          <div className="p-3 border-t border-sidebar-border">
+            {!isCollapsed ? (
+              <div className="flex items-center gap-3 p-2 rounded-lg">
+                <Avatar className="w-9 h-9 rounded-lg flex-shrink-0">
+                  <AvatarImage src={avatarUrl || undefined} alt={displayName || ''} />
+                  <AvatarFallback className="rounded-lg bg-sidebar-primary/20 text-sidebar-primary text-sm font-semibold">
+                    {displayName?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold truncate text-sidebar-foreground">{displayName}</div>
+                  <div className="text-[11px] text-sidebar-foreground/60">{roleLabel}</div>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-foreground/5 flex-shrink-0"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="top" align="start" className="w-48">
+                    <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate(getProfileRoute())}>
+                      <User className="w-4 h-4 mr-2" />
+                      Conta
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(
+                      userType === 'admin' ? '/admin/configuracoes' :
+                      userType === 'company' ? '/empresa/configuracoes' :
+                      '/candidato/configuracoes'
+                    )}>
+                      <Settings className="w-4 h-4 mr-2" />
+                      Configurações
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring rounded-lg">
+                      <Avatar className="w-9 h-9 rounded-lg cursor-pointer hover:opacity-80 transition-opacity">
+                        <AvatarImage src={avatarUrl || undefined} alt={displayName || ''} />
+                        <AvatarFallback className="rounded-lg bg-sidebar-primary/20 text-sidebar-primary text-sm font-semibold">
+                          {displayName?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="right" align="end" className="w-48">
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{displayName}</p>
+                        <p className="text-xs leading-none text-muted-foreground">{roleLabel}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate(getProfileRoute())}>
+                      <User className="w-4 h-4 mr-2" />
+                      Conta
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(
+                      userType === 'admin' ? '/admin/configuracoes' :
+                      userType === 'company' ? '/empresa/configuracoes' :
+                      '/candidato/configuracoes'
+                    )}>
+                      <Settings className="w-4 h-4 mr-2" />
+                      Configurações
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+          </div>
+        </aside>
+      </TooltipProvider>
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col bg-background relative">

@@ -5,6 +5,7 @@
  * Visual builder for condition groups (OR between groups, AND within).
  */
 
+import { useMemo } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { usePlans } from '@/hooks/usePlansQuery';
 import type { ConditionGroup, FlagCondition, ConditionType, ConditionOperator } from '@/types';
 
 interface ConditionBuilderProps {
@@ -28,43 +30,42 @@ const conditionTypes: { value: ConditionType; label: string }[] = [
   { value: 'plan_is', label: 'Plano' },
   { value: 'role_is', label: 'Papel' },
   { value: 'has_capability', label: 'Capacidade' },
-  { value: 'user_type_is', label: 'Tipo de usuario' },
+  { value: 'user_type_is', label: 'Tipo de usuário' },
   { value: 'rollout_percent', label: 'Rollout percentual' },
 ];
 
 const operatorsByType: Record<ConditionType, { value: ConditionOperator; label: string }[]> = {
   plan_is: [
     { value: 'EQUALS', label: 'Igual a' },
-    { value: 'IN', label: 'Esta em' },
-    { value: 'NOT_IN', label: 'Nao esta em' },
+    { value: 'IN', label: 'Está em' },
+    { value: 'NOT_IN', label: 'Não está em' },
   ],
   role_is: [
     { value: 'EQUALS', label: 'Igual a' },
-    { value: 'IN', label: 'Esta em' },
-    { value: 'NOT_IN', label: 'Nao esta em' },
+    { value: 'IN', label: 'Está em' },
+    { value: 'NOT_IN', label: 'Não está em' },
   ],
   has_capability: [
     { value: 'IN', label: 'Possui algum' },
-    { value: 'NOT_IN', label: 'Nao possui' },
+    { value: 'NOT_IN', label: 'Não possui' },
   ],
   user_type_is: [
     { value: 'EQUALS', label: 'Igual a' },
-    { value: 'IN', label: 'Esta em' },
+    { value: 'IN', label: 'Está em' },
   ],
   rollout_percent: [
-    { value: 'LTE', label: 'Ate (%)' },
+    { value: 'LTE', label: 'Até (%)' },
   ],
 };
 
 const userTypeOptions = ['admin', 'company', 'candidate'];
-const planOptions = ['essencial', 'avancar', 'destaque-maximo', 'essencial-empresas', 'selecao-inteligente', 'recrutamento-premium'];
 
-function getValueOptions(type: ConditionType): string[] | null {
+function getValueOptions(type: ConditionType, dynamicPlanOptions: string[]): string[] | null {
   switch (type) {
     case 'user_type_is':
       return userTypeOptions;
     case 'plan_is':
-      return planOptions;
+      return dynamicPlanOptions;
     default:
       return null;
   }
@@ -78,13 +79,15 @@ function ConditionRow({
   condition,
   onUpdate,
   onRemove,
+  planOptions,
 }: {
   condition: FlagCondition;
   onUpdate: (updates: Partial<FlagCondition>) => void;
   onRemove: () => void;
+  planOptions: string[];
 }) {
   const availableOperators = operatorsByType[condition.type] || [];
-  const valueOptions = getValueOptions(condition.type);
+  const valueOptions = getValueOptions(condition.type, planOptions);
   const multiValue = isMultiValue(condition.operator);
 
   const handleTypeChange = (newType: ConditionType) => {
@@ -186,6 +189,12 @@ function ConditionRow({
 }
 
 export function ConditionBuilder({ conditionGroups, onChange }: ConditionBuilderProps) {
+  const { data: candidatePlans = [] } = usePlans('candidate');
+  const { data: companyPlans = [] } = usePlans('company');
+  const dynamicPlanOptions = useMemo(
+    () => [...candidatePlans, ...companyPlans].map(p => p.slug),
+    [candidatePlans, companyPlans]
+  );
   const addGroup = () => {
     const newGroup: ConditionGroup = {
       conditions: [{ type: 'plan_is', operator: 'EQUALS', value: '' }],
@@ -275,6 +284,7 @@ export function ConditionBuilder({ conditionGroups, onChange }: ConditionBuilder
                     condition={condition}
                     onUpdate={(updates) => updateCondition(groupIndex, condIndex, updates)}
                     onRemove={() => removeCondition(groupIndex, condIndex)}
+                    planOptions={dynamicPlanOptions}
                   />
                 </div>
               ))}
@@ -286,7 +296,7 @@ export function ConditionBuilder({ conditionGroups, onChange }: ConditionBuilder
                 className="h-7 text-xs mt-2"
               >
                 <Plus className="w-3 h-3 mr-1" />
-                Adicionar Condicao
+                Adicionar Condição
               </Button>
             </CardContent>
           </Card>

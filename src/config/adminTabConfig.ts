@@ -122,9 +122,26 @@ export function isAdminNavItemActive(itemHref: string, pathname: string): boolea
   const group = ADMIN_TAB_GROUPS.find(g => g.parentHref === itemHref);
   if (!group) return false;
 
-  return group.tabs.some(
+  // Find matching tabs in this group
+  const matchingTabs = group.tabs.filter(
     tab => pathname === tab.href || pathname.startsWith(tab.href + '/')
   );
+  if (matchingTabs.length === 0) return false;
+
+  const bestMatchLen = Math.max(...matchingTabs.map(t => t.href.length));
+
+  // Check if another group has a more specific (longer) match — longest prefix wins
+  for (const otherGroup of ADMIN_TAB_GROUPS) {
+    if (otherGroup.id === group.id) continue;
+    for (const otherTab of otherGroup.tabs) {
+      if ((pathname === otherTab.href || pathname.startsWith(otherTab.href + '/'))
+          && otherTab.href.length > bestMatchLen) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 /** Retorna o label da tab ativa para o pathname (para o header) */
