@@ -119,12 +119,12 @@ export default function FeatureFlagEditor() {
 
   const handleSave = () => {
     if (!key.trim() || !name.trim()) {
-      toast.error('Key e nome sao obrigatorios.');
+      toast.error('Key e nome são obrigatórios.');
       return;
     }
 
     if (isKillSwitched && !killSwitchReason.trim()) {
-      toast.error('Motivo do kill switch e obrigatorio.');
+      toast.error('Motivo do kill switch é obrigatório.');
       return;
     }
 
@@ -185,7 +185,7 @@ export default function FeatureFlagEditor() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <Card>
                 <CardHeader>
-                  <CardTitle>Informacoes Basicas</CardTitle>
+                  <CardTitle>Informações Básicas</CardTitle>
                   <CardDescription>Identifique e categorize a feature flag</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -211,7 +211,7 @@ export default function FeatureFlagEditor() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label>Descricao</Label>
+                    <Label>Descrição</Label>
                     <Textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
@@ -266,7 +266,7 @@ export default function FeatureFlagEditor() {
                   </div>
 
                   <div className="flex items-center gap-3 pt-2">
-                    <Label>Valor padrao</Label>
+                    <Label>Valor padrão</Label>
                     <Switch checked={defaultValue} onCheckedChange={setDefaultValue} />
                     <span className="text-sm text-muted-foreground">
                       {defaultValue ? 'Habilitado' : 'Desabilitado'}
@@ -280,9 +280,9 @@ export default function FeatureFlagEditor() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               <Card>
                 <CardHeader>
-                  <CardTitle>Condicoes</CardTitle>
+                  <CardTitle>Condições</CardTitle>
                   <CardDescription>
-                    Defina quando a flag deve ser habilitada. Grupos usam logica OU, condicoes dentro do grupo usam logica E.
+                    Defina quando a flag deve ser habilitada. Grupos usam lógica OU, condições dentro do grupo usam lógica E.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -302,7 +302,7 @@ export default function FeatureFlagEditor() {
                     <div>
                       <CardTitle>Rollout Percentual</CardTitle>
                       <CardDescription>
-                        Libere gradualmente a funcionalidade para uma porcentagem dos usuarios
+                        Libere gradualmente a funcionalidade para uma porcentagem dos usuários
                       </CardDescription>
                     </div>
                     <Switch checked={useRollout} onCheckedChange={setUseRollout} />
@@ -329,7 +329,7 @@ export default function FeatureFlagEditor() {
                       <div>
                         <CardTitle>Kill Switch</CardTitle>
                         <CardDescription>
-                          Desativa emergencialmente a flag para todos os usuarios
+                          Desativa emergencialmente a flag para todos os usuários
                         </CardDescription>
                       </div>
                     </div>
@@ -342,7 +342,7 @@ export default function FeatureFlagEditor() {
                 {isKillSwitched && (
                   <CardContent>
                     <div className="space-y-1.5">
-                      <Label className="text-red-600">Motivo (obrigatorio)</Label>
+                      <Label className="text-red-600">Motivo (obrigatório)</Label>
                       <Textarea
                         value={killSwitchReason}
                         onChange={(e) => setKillSwitchReason(e.target.value)}
@@ -379,7 +379,7 @@ export default function FeatureFlagEditor() {
                   className="w-full bg-cyan-600 hover:bg-cyan-700"
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  {isNew ? 'Criar Flag' : 'Salvar Alteracoes'}
+                  {isNew ? 'Criar Flag' : 'Salvar Alterações'}
                 </Button>
                 <Button
                   variant="outline"
@@ -395,7 +395,7 @@ export default function FeatureFlagEditor() {
             {!isNew && flagAudits.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Historico de Alteracoes</CardTitle>
+                  <CardTitle className="text-base">Histórico de Alterações</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <FlagAuditTimeline audits={flagAudits} />

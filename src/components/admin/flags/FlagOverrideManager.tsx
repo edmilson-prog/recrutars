@@ -102,7 +102,7 @@ export function FlagOverrideManager({ flagKey, overrides, onAdd, onRemove }: Fla
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="user">Usuario</SelectItem>
+                      <SelectItem value="user">Usuário</SelectItem>
                       <SelectItem value="company">Empresa</SelectItem>
                     </SelectContent>
                   </Select>
@@ -131,7 +131,7 @@ export function FlagOverrideManager({ flagKey, overrides, onAdd, onRemove }: Fla
                   <Label>Habilitado</Label>
                   <Switch checked={enabled} onCheckedChange={setEnabled} />
                   <span className="text-sm text-muted-foreground">
-                    {enabled ? 'Sim' : 'Nao'}
+                    {enabled ? 'Sim' : 'Não'}
                   </span>
                 </div>
 
@@ -184,7 +184,7 @@ export function FlagOverrideManager({ flagKey, overrides, onAdd, onRemove }: Fla
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-medium">{override.targetName}</span>
                       <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                        {override.targetType === 'user' ? 'Usuario' : 'Empresa'}
+                        {override.targetType === 'user' ? 'Usuário' : 'Empresa'}
                       </Badge>
                       <Badge
                         variant="outline"

@@ -28,12 +28,12 @@ interface UserDiagnosticsProps {
 }
 
 const mockUsers = [
-  { id: 'candidate-1', name: 'Joao Santos', type: 'candidate', plan: 'essencial' },
+  { id: 'candidate-1', name: 'João Santos', type: 'candidate', plan: 'essencial' },
   { id: 'candidate-2', name: 'Maria Oliveira', type: 'candidate', plan: 'avancar' },
   { id: 'candidate-4', name: 'Carla Mendes', type: 'candidate', plan: 'destaque-maximo' },
   { id: 'candidate-5', name: 'Lucas Ferreira', type: 'candidate', plan: 'essencial' },
   { id: 'company-1', name: 'Tech Solutions', type: 'company', plan: 'recrutamento-premium' },
-  { id: 'company-2', name: 'Inovacao Digital', type: 'company', plan: 'selecao-inteligente' },
+  { id: 'company-2', name: 'Inovação Digital', type: 'company', plan: 'selecao-inteligente' },
   { id: 'company-3', name: 'StartUp Brasil', type: 'company', plan: 'essencial-empresas' },
 ];
 
@@ -67,7 +67,7 @@ export function UserDiagnostics({ userId: initialUserId, flags, overrides, evalu
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <User className="w-5 h-5 text-cyan-600" />
-          Diagnostico por Usuario
+          Diagnóstico por Usuário
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -35,12 +35,12 @@ const userTypes = [
 const plansByType: Record<string, { value: string; label: string }[]> = {
   candidate: [
     { value: 'essencial', label: 'Essencial' },
-    { value: 'avancar', label: 'Avancar' },
-    { value: 'destaque-maximo', label: 'Destaque Maximo' },
+    { value: 'avancar', label: 'Avançar' },
+    { value: 'destaque-maximo', label: 'Destaque Máximo' },
   ],
   company: [
     { value: 'essencial-empresas', label: 'Essencial Empresas' },
-    { value: 'selecao-inteligente', label: 'Selecao Inteligente' },
+    { value: 'selecao-inteligente', label: 'Seleção Inteligente' },
     { value: 'recrutamento-premium', label: 'Recrutamento Premium' },
   ],
   admin: [
@@ -84,7 +84,7 @@ function ContextForm({
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="space-y-1.5">
-          <Label className="text-xs">Tipo de usuario</Label>
+          <Label className="text-xs">Tipo de usuário</Label>
           <Select
             value={context.userType}
             onValueChange={(v) => {
@@ -154,13 +154,13 @@ export function SimulatorPanel({ onSimulate, onCompare, mode: initialMode }: Sim
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg">Configurar Simulacao</CardTitle>
+        <CardTitle className="text-lg">Configurar Simulação</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Tabs value={mode} onValueChange={(v) => setMode(v as 'single' | 'comparison')}>
           <TabsList className="grid w-full max-w-xs grid-cols-2">
             <TabsTrigger value="single">Individual</TabsTrigger>
-            <TabsTrigger value="comparison">Comparacao</TabsTrigger>
+            <TabsTrigger value="comparison">Comparação</TabsTrigger>
           </TabsList>
 
           <TabsContent value="single" className="mt-4">
