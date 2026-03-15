@@ -24,6 +24,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -93,6 +94,9 @@ export function FlagOverrideManager({ flagKey, overrides, onAdd, onRemove }: Fla
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Novo Override</DialogTitle>
+                <DialogDescription>
+                  Configure um override para forçar o valor da flag para um usuário ou empresa específica.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 mt-2">
                 <div className="space-y-1.5">

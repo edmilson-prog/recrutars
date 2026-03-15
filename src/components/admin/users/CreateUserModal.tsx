@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserPlus, Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, Mail, Lock, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,13 +13,20 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useCreateUser } from '@/hooks/useUsersQuery';
 import { PasswordStrengthIndicator } from '@/components/invite/PasswordStrengthIndicator';
+import { CandidateProfileFields } from './CandidateProfileFields';
+import { CompanyProfileFields } from './CompanyProfileFields';
+import type { CandidateProfileData } from './CandidateProfileFields';
+import type { CompanyProfileData } from './CompanyProfileFields';
 import type { CreateUserData } from '@/services/users/usersService';
 
 interface CreateUserModalProps {
@@ -70,6 +77,16 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [candidateProfile, setCandidateProfile] = useState<CandidateProfileData>({
+    cpf: '', dateOfBirth: '', gender: '', maritalStatus: '',
+    nationality: 'Brasileira', state: '', city: '',
+  });
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfileData>({
+    cnpj: '', razaoSocial: '', nomeFantasia: '', cep: '',
+    logradouro: '', numero: '', complemento: '', bairro: '',
+    city: '', state: '', industry: '', size: '', website: '', linkedin: '',
+  });
 
   const resetForm = () => {
     setType('candidate');
@@ -80,6 +97,16 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
     setPassword('');
     setShowPassword(false);
     setErrors({});
+    setProfileOpen(false);
+    setCandidateProfile({
+      cpf: '', dateOfBirth: '', gender: '', maritalStatus: '',
+      nationality: 'Brasileira', state: '', city: '',
+    });
+    setCompanyProfile({
+      cnpj: '', razaoSocial: '', nomeFantasia: '', cep: '',
+      logradouro: '', numero: '', complemento: '', bairro: '',
+      city: '', state: '', industry: '', size: '', website: '', linkedin: '',
+    });
   };
 
   const handleClose = () => {
@@ -120,6 +147,9 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
     e.preventDefault();
     if (!validate()) return;
 
+    const hasCandidate = type === 'candidate' && Object.values(candidateProfile).some(v => v && v !== 'Brasileira');
+    const hasCompany = type === 'company' && Object.values(companyProfile).some(v => !!v);
+
     const data: CreateUserData = {
       name: name.trim(),
       email: email.trim().toLowerCase(),
@@ -127,6 +157,8 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
       phone: phone.trim() || undefined,
       password: accessMethod === 'password' ? password : undefined,
       sendInviteEmail: accessMethod === 'email',
+      candidateProfile: hasCandidate ? candidateProfile : undefined,
+      companyProfile: hasCompany ? companyProfile : undefined,
     };
 
     try {
@@ -155,7 +187,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -168,7 +200,9 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+        <form onSubmit={handleSubmit} className="pt-2">
+        <ScrollArea className="max-h-[70vh] pr-3">
+        <div className="space-y-5">
           {/* Type selector */}
           <div className="space-y-2">
             <Label>Tipo de Conta</Label>
@@ -240,6 +274,43 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
               onChange={(e) => setPhone(e.target.value)}
             />
           </div>
+
+          {/* Conditional profile section */}
+          {type !== 'admin' && (
+            <Collapsible open={profileOpen} onOpenChange={setProfileOpen}>
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className="w-full flex items-center gap-3 group"
+                >
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
+                    {profileOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    {type === 'candidate' ? 'Perfil do Candidato' : 'Dados da Empresa'}
+                    <Badge variant="outline" className="text-[10px] ml-1 px-1.5 py-0">
+                      opcional
+                    </Badge>
+                  </span>
+                  <div className="flex-1 h-px bg-border" />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="pt-4">
+                  {type === 'candidate' ? (
+                    <CandidateProfileFields
+                      value={candidateProfile}
+                      onChange={setCandidateProfile}
+                    />
+                  ) : (
+                    <CompanyProfileFields
+                      value={companyProfile}
+                      onChange={setCompanyProfile}
+                    />
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
 
           {/* Access method */}
           <div className="space-y-2.5">
@@ -337,8 +408,11 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
             )}
           </AnimatePresence>
 
+        </div>
+        </ScrollArea>
+
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 pt-2 border-t border-border">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
             <Button
               type="button"
               variant="outline"

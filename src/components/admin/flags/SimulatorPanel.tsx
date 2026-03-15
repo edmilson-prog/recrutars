@@ -5,7 +5,7 @@
  * Form panel for simulation context (single and comparison modes).
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Play, GitCompare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
+import { usePlans } from '@/hooks/usePlansQuery';
+import { useRoles } from '@/hooks/useRBACQuery';
 import type { EvaluationContext } from '@/types';
 
 interface SimulatorPanelProps {
@@ -30,29 +32,6 @@ const userTypes = [
   { value: 'admin', label: 'Admin' },
   { value: 'company', label: 'Empresa' },
   { value: 'candidate', label: 'Candidato' },
-];
-
-const plansByType: Record<string, { value: string; label: string }[]> = {
-  candidate: [
-    { value: 'essencial', label: 'Essencial' },
-    { value: 'avancar', label: 'Avançar' },
-    { value: 'destaque-maximo', label: 'Destaque Máximo' },
-  ],
-  company: [
-    { value: 'essencial-empresas', label: 'Essencial Empresas' },
-    { value: 'selecao-inteligente', label: 'Seleção Inteligente' },
-    { value: 'recrutamento-premium', label: 'Recrutamento Premium' },
-  ],
-  admin: [
-    { value: 'admin', label: 'Admin' },
-  ],
-};
-
-const roleOptions = [
-  { value: 'viewer', label: 'Viewer' },
-  { value: 'editor', label: 'Editor' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'owner', label: 'Owner' },
 ];
 
 function defaultContext(): EvaluationContext {
@@ -69,10 +48,14 @@ function ContextForm({
   context,
   onChange,
   label,
+  plansByType,
+  roleOptions,
 }: {
   context: EvaluationContext;
   onChange: (ctx: EvaluationContext) => void;
   label?: string;
+  plansByType: Record<string, { value: string; label: string }[]>;
+  roleOptions: { value: string; label: string }[];
 }) {
   const plans = plansByType[context.userType] || [];
 
@@ -143,6 +126,21 @@ function ContextForm({
 }
 
 export function SimulatorPanel({ onSimulate, onCompare, mode: initialMode }: SimulatorPanelProps) {
+  const { data: candidatePlans = [] } = usePlans('candidate');
+  const { data: companyPlans = [] } = usePlans('company');
+  const { data: roles = [] } = useRoles();
+
+  const plansByType = useMemo<Record<string, { value: string; label: string }[]>>(() => ({
+    candidate: candidatePlans.map(p => ({ value: p.slug, label: p.name })),
+    company: companyPlans.map(p => ({ value: p.slug, label: p.name })),
+    admin: [{ value: 'admin', label: 'Admin' }],
+  }), [candidatePlans, companyPlans]);
+
+  const roleOptions = useMemo(() =>
+    roles.map(r => ({ value: r.slug, label: r.name })),
+    [roles]
+  );
+
   const [mode, setMode] = useState<'single' | 'comparison'>(initialMode);
   const [contextA, setContextA] = useState<EvaluationContext>(defaultContext());
   const [contextB, setContextB] = useState<EvaluationContext>({
@@ -164,7 +162,7 @@ export function SimulatorPanel({ onSimulate, onCompare, mode: initialMode }: Sim
           </TabsList>
 
           <TabsContent value="single" className="mt-4">
-            <ContextForm context={contextA} onChange={setContextA} />
+            <ContextForm context={contextA} onChange={setContextA} plansByType={plansByType} roleOptions={roleOptions} />
             <Button
               onClick={() => onSimulate(contextA)}
               className="mt-4 bg-cyan-600 hover:bg-cyan-700"
@@ -177,10 +175,10 @@ export function SimulatorPanel({ onSimulate, onCompare, mode: initialMode }: Sim
           <TabsContent value="comparison" className="mt-4 space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <div className="p-4 rounded-lg border bg-muted/30">
-                <ContextForm context={contextA} onChange={setContextA} label="Contexto A" />
+                <ContextForm context={contextA} onChange={setContextA} label="Contexto A" plansByType={plansByType} roleOptions={roleOptions} />
               </div>
               <div className="p-4 rounded-lg border bg-muted/30">
-                <ContextForm context={contextB} onChange={setContextB} label="Contexto B" />
+                <ContextForm context={contextB} onChange={setContextB} label="Contexto B" plansByType={plansByType} roleOptions={roleOptions} />
               </div>
             </div>
             <Button

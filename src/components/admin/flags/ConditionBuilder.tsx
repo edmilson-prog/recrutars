@@ -5,6 +5,7 @@
  * Visual builder for condition groups (OR between groups, AND within).
  */
 
+import { useMemo } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { usePlans } from '@/hooks/usePlansQuery';
 import type { ConditionGroup, FlagCondition, ConditionType, ConditionOperator } from '@/types';
 
 interface ConditionBuilderProps {
@@ -57,14 +59,13 @@ const operatorsByType: Record<ConditionType, { value: ConditionOperator; label: 
 };
 
 const userTypeOptions = ['admin', 'company', 'candidate'];
-const planOptions = ['essencial', 'avancar', 'destaque-maximo', 'essencial-empresas', 'selecao-inteligente', 'recrutamento-premium'];
 
-function getValueOptions(type: ConditionType): string[] | null {
+function getValueOptions(type: ConditionType, dynamicPlanOptions: string[]): string[] | null {
   switch (type) {
     case 'user_type_is':
       return userTypeOptions;
     case 'plan_is':
-      return planOptions;
+      return dynamicPlanOptions;
     default:
       return null;
   }
@@ -78,13 +79,15 @@ function ConditionRow({
   condition,
   onUpdate,
   onRemove,
+  planOptions,
 }: {
   condition: FlagCondition;
   onUpdate: (updates: Partial<FlagCondition>) => void;
   onRemove: () => void;
+  planOptions: string[];
 }) {
   const availableOperators = operatorsByType[condition.type] || [];
-  const valueOptions = getValueOptions(condition.type);
+  const valueOptions = getValueOptions(condition.type, planOptions);
   const multiValue = isMultiValue(condition.operator);
 
   const handleTypeChange = (newType: ConditionType) => {
@@ -186,6 +189,12 @@ function ConditionRow({
 }
 
 export function ConditionBuilder({ conditionGroups, onChange }: ConditionBuilderProps) {
+  const { data: candidatePlans = [] } = usePlans('candidate');
+  const { data: companyPlans = [] } = usePlans('company');
+  const dynamicPlanOptions = useMemo(
+    () => [...candidatePlans, ...companyPlans].map(p => p.slug),
+    [candidatePlans, companyPlans]
+  );
   const addGroup = () => {
     const newGroup: ConditionGroup = {
       conditions: [{ type: 'plan_is', operator: 'EQUALS', value: '' }],
@@ -275,6 +284,7 @@ export function ConditionBuilder({ conditionGroups, onChange }: ConditionBuilder
                     condition={condition}
                     onUpdate={(updates) => updateCondition(groupIndex, condIndex, updates)}
                     onRemove={() => removeCondition(groupIndex, condIndex)}
+                    planOptions={dynamicPlanOptions}
                   />
                 </div>
               ))}
