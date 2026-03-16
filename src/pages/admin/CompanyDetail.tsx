@@ -445,13 +445,20 @@ export default function AdminCompanyDetail() {
 
           {/* Action buttons */}
           <div className="flex flex-wrap gap-2 shrink-0">
+            <Link to={`/admin/usuarios/${mergedCompany.userId}`}>
+              <Button variant="outline" size="sm">
+                <ShieldCheck className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Permissões</span>
+                <span className="sm:hidden">Perm.</span>
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setNotifyModalOpen(true)}
             >
               <Bell className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Enviar Notificacao</span>
+              <span className="hidden sm:inline">Enviar Notificação</span>
               <span className="sm:hidden">Notificar</span>
             </Button>
             {mergedCompany.status === 'active' || mergedCompany.status === 'pending' ? (

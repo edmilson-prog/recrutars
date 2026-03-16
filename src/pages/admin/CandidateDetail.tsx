@@ -37,6 +37,7 @@ import {
   Wrench,
   UserCircle,
   DollarSign,
+  ShieldCheck,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -488,6 +489,13 @@ export default function AdminCandidateDetail() {
 
           {/* Action buttons */}
           <div className="flex flex-wrap gap-2 shrink-0">
+            <Link to={`/admin/usuarios/${mergedCandidate.userId}`}>
+              <Button variant="outline" size="sm">
+                <ShieldCheck className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Permissões</span>
+                <span className="sm:hidden">Perm.</span>
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"

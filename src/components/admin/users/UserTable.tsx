@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Table,
   TableBody,
@@ -271,6 +271,7 @@ export function UserTable({
                   className="flex items-center gap-3 hover:underline"
                 >
                   <Avatar className="h-8 w-8">
+                    {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
                     <AvatarFallback className="text-xs bg-primary/10 text-primary">
                       {getInitials(user.name)}
                     </AvatarFallback>
