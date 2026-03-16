@@ -204,15 +204,17 @@ export function useUnifiedTests(candidateId: string) {
 
   // Gauge-Pro cooldown info (reads from same localStorage key as useGaugeProAssessment)
   const cooldownInfo = useMemo(() => {
-    if (!candidateId) return { inCooldown: false, daysRemaining: 0 };
+    if (!candidateId) return { inCooldown: false, daysRemaining: 0, cooldownEndDate: null as string | null };
     const lastCompletedKey = GAUGE_PRO_CONFIG.storageKeys.lastCompleted(candidateId);
     const last = localStorage.getItem(lastCompletedKey);
-    if (!last) return { inCooldown: false, daysRemaining: 0 };
-    const daysSince = (Date.now() - new Date(last).getTime()) / (1000 * 60 * 60 * 24);
+    if (!last) return { inCooldown: false, daysRemaining: 0, cooldownEndDate: null as string | null };
+    const lastDate = new Date(last);
+    const cooldownEndDate = new Date(lastDate.getTime() + GAUGE_PRO_CONFIG.cooldownDays * 86400000).toISOString();
+    const daysSince = (Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24);
     if (daysSince < GAUGE_PRO_CONFIG.cooldownDays) {
-      return { inCooldown: true, daysRemaining: Math.ceil(GAUGE_PRO_CONFIG.cooldownDays - daysSince) };
+      return { inCooldown: true, daysRemaining: Math.ceil(GAUGE_PRO_CONFIG.cooldownDays - daysSince), cooldownEndDate };
     }
-    return { inCooldown: false, daysRemaining: 0 };
+    return { inCooldown: false, daysRemaining: 0, cooldownEndDate: null as string | null };
   }, [candidateId]);
 
   return { tests, stats, isLoading, hasGaugeProResult, cooldownInfo };
