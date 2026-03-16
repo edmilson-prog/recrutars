@@ -21,6 +21,7 @@ import type {
 } from '@/types/gaugePro';
 import { DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 import { GAUGE_PRO_CONFIG } from '@/data/gaugeProConfig';
+import { useGaugeProCooldownDays } from '@/hooks/useGaugeProCooldownDays';
 import { GAUGE_PRO_ADJECTIVES } from '@/data/gaugeProWords';
 import { GAUGE_PRO_SCENARIOS } from '@/data/gaugeProScenarios';
 import { determineArchetype } from '@/data/gaugeProArchetypes';
@@ -45,6 +46,7 @@ export interface UseGaugeProOptions {
 export function useGaugeProAssessment(options: UseGaugeProOptions) {
   const { candidateId, onComplete, onXPAwarded, onBadgeAwarded } = options;
   const queryClient = useQueryClient();
+  const cooldownDays = useGaugeProCooldownDays();
 
   const [phase, setPhase] = useState<GaugeProPhase>('intro');
   const [assessment, setAssessment] = useState<GaugeProAssessment | null>(null);
@@ -92,16 +94,16 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
     : [];
   const currentShuffledOrder = currentDimension ? (shuffledWordOrders[currentDimension] || []) : [];
 
-  // Check cooldown
+  // Check cooldown (uses configurable days from admin settings)
   const getCooldownInfo = useCallback((): { inCooldown: boolean; daysRemaining: number } => {
     const last = localStorage.getItem(lastCompletedKey);
     if (!last) return { inCooldown: false, daysRemaining: 0 };
     const daysSince = (Date.now() - new Date(last).getTime()) / (1000 * 60 * 60 * 24);
-    if (daysSince < GAUGE_PRO_CONFIG.cooldownDays) {
-      return { inCooldown: true, daysRemaining: Math.ceil(GAUGE_PRO_CONFIG.cooldownDays - daysSince) };
+    if (daysSince < cooldownDays) {
+      return { inCooldown: true, daysRemaining: Math.ceil(cooldownDays - daysSince) };
     }
     return { inCooldown: false, daysRemaining: 0 };
-  }, [lastCompletedKey]);
+  }, [lastCompletedKey, cooldownDays]);
 
   const isInCooldown = useCallback(() => getCooldownInfo().inCooldown, [getCooldownInfo]);
 

@@ -6,6 +6,7 @@
 import { useMemo } from 'react';
 import { useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
 import { useBehavioralTestsByCandidate } from '@/hooks/useBehavioralTestsQuery';
+import { useGaugeProCooldownDays } from '@/hooks/useGaugeProCooldownDays';
 import { TEST_CONFIG } from '@/data/testConfig';
 import { GAUGE_PRO_CONFIG } from '@/data/gaugeProConfig';
 import type { GaugeProResult } from '@/types/gaugePro';
@@ -162,6 +163,7 @@ function mapBehavioralTest(test: BehavioralTest): UnifiedTest {
 export function useUnifiedTests(candidateId: string) {
   const gaugeProQuery = useGaugeProResultByCandidate(candidateId);
   const behavioralQuery = useBehavioralTestsByCandidate(candidateId);
+  const cooldownDays = useGaugeProCooldownDays();
 
   const isLoading = gaugeProQuery.isLoading || behavioralQuery.isLoading;
 
@@ -209,13 +211,13 @@ export function useUnifiedTests(candidateId: string) {
     const last = localStorage.getItem(lastCompletedKey);
     if (!last) return { inCooldown: false, daysRemaining: 0, cooldownEndDate: null as string | null };
     const lastDate = new Date(last);
-    const cooldownEndDate = new Date(lastDate.getTime() + GAUGE_PRO_CONFIG.cooldownDays * 86400000).toISOString();
+    const cooldownEndDate = new Date(lastDate.getTime() + cooldownDays * 86400000).toISOString();
     const daysSince = (Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24);
-    if (daysSince < GAUGE_PRO_CONFIG.cooldownDays) {
-      return { inCooldown: true, daysRemaining: Math.ceil(GAUGE_PRO_CONFIG.cooldownDays - daysSince), cooldownEndDate };
+    if (daysSince < cooldownDays) {
+      return { inCooldown: true, daysRemaining: Math.ceil(cooldownDays - daysSince), cooldownEndDate };
     }
     return { inCooldown: false, daysRemaining: 0, cooldownEndDate: null as string | null };
-  }, [candidateId]);
+  }, [candidateId, cooldownDays]);
 
   return { tests, stats, isLoading, hasGaugeProResult, cooldownInfo };
 }

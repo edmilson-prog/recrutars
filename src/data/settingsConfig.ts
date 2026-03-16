@@ -202,6 +202,16 @@ export const adminSettingsCategories: ConfigCategory[] = [
             validation: { min: 10, max: 50 },
             order: 3,
           },
+          {
+            id: 'gaugepro-cooldown-days',
+            key: 'cooldownDays',
+            name: 'Período de Cooldown (dias)',
+            description: 'Tempo mínimo de espera entre testes Gauge-Pro. O candidato só poderá refazer o teste após este período.',
+            type: 'number',
+            defaultValue: 90,
+            validation: { min: 1, max: 365 },
+            order: 4,
+          },
         ],
       },
       {
