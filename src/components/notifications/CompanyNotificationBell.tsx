@@ -10,7 +10,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -46,6 +45,10 @@ export function CompanyNotificationBell({ className }: CompanyNotificationBellPr
   const handleNotificationClick = (id: string) => {
     markAsReadMutation.mutate({ id, userId });
     setOpen(false);
+  };
+
+  const handleMarkSingleAsRead = (id: string) => {
+    markAsReadMutation.mutate({ id, userId });
   };
 
   const handleMarkAllAsRead = () => {
@@ -100,18 +103,19 @@ export function CompanyNotificationBell({ className }: CompanyNotificationBellPr
 
         {/* Lista de notificações */}
         {latestNotifications.length > 0 ? (
-          <ScrollArea className="max-h-96">
+          <div className="max-h-96 overflow-y-auto">
             <div className="divide-y">
               {latestNotifications.map((notification) => (
                 <CompanyNotificationItem
                   key={notification.id}
                   notification={notification}
                   onRead={handleNotificationClick}
+                  onMarkAsRead={handleMarkSingleAsRead}
                   compact
                 />
               ))}
             </div>
-          </ScrollArea>
+          </div>
         ) : (
           <div className="px-4 py-8 text-center">
             <Bell className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />

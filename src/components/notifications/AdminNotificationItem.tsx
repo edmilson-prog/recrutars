@@ -8,6 +8,7 @@ import {
   LifeBuoy,
   MessageCircle,
   CreditCard,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,7 @@ import { formatTimeAgo } from '@/lib/notificationHelpers';
 interface AdminNotificationItemProps {
   notification: AdminNotification;
   onRead: (id: string) => void;
+  onMarkAsRead?: (id: string) => void;
   compact?: boolean;
 }
 
@@ -80,6 +82,7 @@ const userTypeLabels: Record<string, string> = {
 export function AdminNotificationItem({
   notification,
   onRead,
+  onMarkAsRead,
   compact = false,
 }: AdminNotificationItemProps) {
   const navigate = useNavigate();
@@ -132,9 +135,25 @@ export function AdminNotificationItem({
             >
               {notification.title}
             </p>
-            <span className="text-xs text-muted-foreground flex-shrink-0">
-              {formatTimeAgo(notification.createdAt)}
-            </span>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <span className="text-xs text-muted-foreground">
+                {formatTimeAgo(notification.createdAt)}
+              </span>
+              {!notification.read && onMarkAsRead && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMarkAsRead(notification.id);
+                  }}
+                  className="p-0.5 rounded hover:bg-muted transition-colors"
+                  title="Marcar como lida"
+                  aria-label="Marcar como lida"
+                >
+                  <Check className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+                </button>
+              )}
+            </div>
           </div>
 
           <p

@@ -4,9 +4,11 @@
  * Supports template selection, target type, scheduling, and form validation.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, Send, Clock, Users, UserCheck, Building2, User, Loader2 } from 'lucide-react';
+import { Bell, Send, Clock, Users, UserCheck, Building2, User, Loader2, Search, X } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -87,9 +89,69 @@ export function CreateNotificationDialog({
   const [priority, setPriority] = useState<NotificationPriority>('media');
   const [targetType, setTargetType] = useState<NotificationTargetType | ''>('');
   const [targetUserId, setTargetUserId] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string; email: string; type: string } | null>(null);
+  const [searchResults, setSearchResults] = useState<{ id: string; name: string; email: string; type: string }[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduledAt, setScheduledAt] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
+
+  // Debounced user search
+  useEffect(() => {
+    if (userSearch.trim().length < 2) {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timeout = setTimeout(async () => {
+      const query = userSearch.trim();
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, name, email, type')
+        .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
+        .in('type', ['candidate', 'company'])
+        .eq('status', 'active')
+        .limit(10);
+
+      setSearchResults(data ?? []);
+      setShowResults(true);
+      setIsSearching(false);
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [userSearch]);
+
+  // Close results on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelectUser = (user: { id: string; name: string; email: string; type: string }) => {
+    setSelectedUser(user);
+    setTargetUserId(user.id);
+    setUserSearch('');
+    setShowResults(false);
+    setSearchResults([]);
+    setErrors((prev) => ({ ...prev, targetUserId: '' }));
+  };
+
+  const handleClearUser = () => {
+    setSelectedUser(null);
+    setTargetUserId('');
+    setUserSearch('');
+    setSearchResults([]);
+  };
 
   const resetForm = useCallback(() => {
     setTemplateId('');
@@ -99,6 +161,10 @@ export function CreateNotificationDialog({
     setPriority('media');
     setTargetType('');
     setTargetUserId('');
+    setUserSearch('');
+    setSelectedUser(null);
+    setSearchResults([]);
+    setShowResults(false);
     setScheduleEnabled(false);
     setScheduledAt('');
     setErrors({});
@@ -242,6 +308,9 @@ export function CreateNotificationDialog({
                         setErrors((prev) => ({ ...prev, targetType: '', targetUserId: '' }));
                         if (option.value !== 'specific_user') {
                           setTargetUserId('');
+                          setSelectedUser(null);
+                          setUserSearch('');
+                          setSearchResults([]);
                         }
                       }}
                       className={cn(
@@ -263,7 +332,7 @@ export function CreateNotificationDialog({
                 <p className="text-xs text-destructive">{errors.targetType}</p>
               )}
 
-              {/* Specific user search */}
+              {/* Specific user search with autocomplete */}
               <AnimatePresence>
                 {targetType === 'specific_user' && (
                   <motion.div
@@ -271,20 +340,85 @@ export function CreateNotificationDialog({
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
                   >
                     <div className="space-y-1.5 pt-2">
-                      <Label htmlFor="target-user-search">Buscar usuario</Label>
-                      <Input
-                        id="target-user-search"
-                        placeholder="Nome ou email do usuario..."
-                        value={targetUserId}
-                        onChange={(e) => {
-                          setTargetUserId(e.target.value);
-                          setErrors((prev) => ({ ...prev, targetUserId: '' }));
-                        }}
-                        className={errors.targetUserId ? 'border-destructive' : ''}
-                      />
+                      <Label htmlFor="target-user-search">Buscar usuário</Label>
+
+                      {selectedUser ? (
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-muted/30">
+                          <User className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{selectedUser.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{selectedUser.email}</p>
+                          </div>
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {selectedUser.type === 'company' ? 'Empresa' : 'Candidato'}
+                          </Badge>
+                          <button
+                            type="button"
+                            onClick={handleClearUser}
+                            className="p-0.5 rounded hover:bg-muted transition-colors shrink-0"
+                            aria-label="Remover usuário selecionado"
+                          >
+                            <X className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div ref={searchContainerRef} className="relative">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                              id="target-user-search"
+                              placeholder="Digite nome ou email do usuário..."
+                              value={userSearch}
+                              onChange={(e) => {
+                                setUserSearch(e.target.value);
+                                setErrors((prev) => ({ ...prev, targetUserId: '' }));
+                              }}
+                              onFocus={() => {
+                                if (searchResults.length > 0) setShowResults(true);
+                              }}
+                              className={cn(
+                                'pl-9',
+                                errors.targetUserId ? 'border-destructive' : '',
+                              )}
+                            />
+                            {isSearching && (
+                              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+                            )}
+                          </div>
+
+                          {/* Search results dropdown */}
+                          {showResults && searchResults.length > 0 && (
+                            <div className="absolute z-50 w-full mt-1 border rounded-lg bg-popover shadow-md max-h-48 overflow-y-auto">
+                              {searchResults.map((user) => (
+                                <button
+                                  key={user.id}
+                                  type="button"
+                                  onClick={() => handleSelectUser(user)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 transition-colors first:rounded-t-lg last:rounded-b-lg"
+                                >
+                                  <User className="w-4 h-4 text-muted-foreground shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{user.name}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs shrink-0">
+                                    {user.type === 'company' ? 'Empresa' : 'Candidato'}
+                                  </Badge>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          {showResults && searchResults.length === 0 && userSearch.trim().length >= 2 && !isSearching && (
+                            <div className="absolute z-50 w-full mt-1 border rounded-lg bg-popover shadow-md px-3 py-4 text-center">
+                              <p className="text-sm text-muted-foreground">Nenhum usuário encontrado</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {errors.targetUserId && (
                         <p className="text-xs text-destructive">{errors.targetUserId}</p>
                       )}

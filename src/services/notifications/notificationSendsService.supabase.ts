@@ -22,8 +22,8 @@ export class NotificationSendsServiceSupabase implements INotificationSendsServi
       .from('notification_sends')
       .select(`
         *,
-        sender:profiles!notification_sends_sent_by_fkey(full_name),
-        target_user:profiles!notification_sends_target_user_id_fkey(full_name)
+        sender:profiles!notification_sends_sent_by_fkey(name),
+        target_user:profiles!notification_sends_target_user_id_fkey(name)
       `)
       .order('created_at', { ascending: false });
 
@@ -121,7 +121,7 @@ export class NotificationSendsServiceSupabase implements INotificationSendsServi
       priority: row.priority,
       targetType: row.target_type,
       targetUserId: row.target_user_id,
-      targetUserName: row.target_user?.full_name ?? undefined,
+      targetUserName: row.target_user?.name ?? undefined,
       targetCount: row.target_count ?? 0,
       deliveredCount: row.delivered_count ?? 0,
       readCount: row.read_count ?? 0,
@@ -129,7 +129,7 @@ export class NotificationSendsServiceSupabase implements INotificationSendsServi
       scheduledAt: row.scheduled_at,
       sentAt: row.sent_at,
       sentBy: row.sent_by,
-      sentByName: row.sender?.full_name ?? undefined,
+      sentByName: row.sender?.name ?? undefined,
       templateId: row.template_id,
       createdAt: row.created_at,
     };
