@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { playNotificationSound } from '@/lib/notificationSound';
 
 export function useRealtimeNotifications(userId: string) {
   const queryClient = useQueryClient();
@@ -31,6 +32,9 @@ export function useRealtimeNotifications(userId: string) {
           // Invalidate queries to refetch fresh data
           queryClient.invalidateQueries({ queryKey: ['notifications', userId] });
           queryClient.invalidateQueries({ queryKey: ['notifications', 'unread', userId] });
+
+          // Play notification sound
+          playNotificationSound();
 
           // Show toast with notification title
           const record = payload.new as { title?: string; description?: string };
