@@ -1,12 +1,28 @@
 {
   "versions": [
     {
+      "version": "1.37.1",
+      "codename": "Beacon",
+      "type": "patch",
+      "releaseDate": "2026-03-16",
+      "description": "Correção na sincronização de nome e email entre perfil e autenticação do Supabase.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Alteração de nome e email no painel admin agora sincroniza com auth.users do Supabase via Edge Function, permitindo login com o novo email"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.37.0",
       "codename": "Beacon",
       "type": "minor",
       "releaseDate": "2026-03-15",
       "description": "Sistema completo de notificações com triggers automáticos, Realtime, central de gerenciamento admin, e melhorias de UX na tabela de usuários.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
