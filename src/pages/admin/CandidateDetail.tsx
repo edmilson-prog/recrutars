@@ -55,8 +55,10 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useSendManualNotification } from '@/hooks/useNotificationSendsQuery';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -276,7 +278,9 @@ export default function AdminCandidateDetail() {
 
   // Form state
   const [deactivateReason, setDeactivateReason] = useState('');
+  const [notificationTitle, setNotificationTitle] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
+  const sendNotificationMutation = useSendManualNotification();
 
   // Combine local (optimistic) + DB actions, deduplicated
   const allActions = useMemo(() => {
@@ -371,15 +375,28 @@ export default function AdminCandidateDetail() {
     setResetTestDialogOpen(false);
   };
 
-  const handleSendNotification = () => {
-    if (!mergedCandidate || !notificationMessage.trim()) return;
+  const handleSendNotification = async () => {
+    if (!mergedCandidate || !notificationTitle.trim() || !notificationMessage.trim()) return;
 
-    const details = `Notificação enviada: ${notificationMessage.substring(0, 50)}${notificationMessage.length > 50 ? '...' : ''}`;
-    logAction('notification_sent', details);
+    try {
+      await sendNotificationMutation.mutateAsync({
+        title: notificationTitle.trim(),
+        description: notificationMessage.trim(),
+        category: 'informativo',
+        priority: 'media',
+        targetType: 'specific_user',
+        targetUserId: mergedCandidate.userId,
+      });
 
-    toast.success(`Notificação enviada para ${mergedCandidate.name}`);
-    setNotifyModalOpen(false);
-    setNotificationMessage('');
+      const details = `Notificação enviada: ${notificationTitle.trim()}`;
+      logAction('notification_sent', details);
+
+      setNotifyModalOpen(false);
+      setNotificationTitle('');
+      setNotificationMessage('');
+    } catch {
+      // toast de erro ja tratado pelo hook
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -1471,6 +1488,16 @@ export default function AdminCandidateDetail() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
+              <Label htmlFor="notificationTitle">Título</Label>
+              <Input
+                id="notificationTitle"
+                placeholder="Título da notificação"
+                value={notificationTitle}
+                onChange={(e) => setNotificationTitle(e.target.value)}
+                maxLength={100}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="notificationMessage">Mensagem</Label>
               <Textarea
                 id="notificationMessage"
@@ -1479,7 +1506,7 @@ export default function AdminCandidateDetail() {
                 onChange={(e) => setNotificationMessage(e.target.value)}
                 maxLength={500}
                 className="resize-none"
-                rows={5}
+                rows={4}
               />
               <p className="text-xs text-muted-foreground text-right">
                 {notificationMessage.length}/500 caracteres
@@ -1492,7 +1519,7 @@ export default function AdminCandidateDetail() {
             </Button>
             <Button
               onClick={handleSendNotification}
-              disabled={!notificationMessage.trim()}
+              disabled={!notificationTitle.trim() || !notificationMessage.trim() || sendNotificationMutation.isPending}
             >
               <Bell className="w-4 h-4 mr-2" />
               Enviar Notificação

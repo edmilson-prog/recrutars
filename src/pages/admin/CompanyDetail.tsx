@@ -47,7 +47,9 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useSendManualNotification } from '@/hooks/useNotificationSendsQuery';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -217,7 +219,9 @@ export default function AdminCompanyDetail() {
   // Form state
   const [deactivateReason, setDeactivateReason] = useState('');
   const [newPlan, setNewPlan] = useState('');
+  const [notificationTitle, setNotificationTitle] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
+  const sendNotificationMutation = useSendManualNotification();
 
   // ---------------------------------------------------------------------------
   // Action handlers
@@ -300,23 +304,36 @@ export default function AdminCompanyDetail() {
     setNewPlan('');
   };
 
-  const handleSendNotification = () => {
-    if (!mergedCompany || !notificationMessage.trim()) return;
+  const handleSendNotification = async () => {
+    if (!mergedCompany || !notificationTitle.trim() || !notificationMessage.trim()) return;
 
-    const newAction: AdminAction = {
-      id: `action-${Date.now()}`,
-      companyId: mergedCompany.id,
-      companyName: mergedCompany.name,
-      action: 'notification_sent',
-      performedBy: 'Voce',
-      performedAt: new Date().toISOString(),
-      details: `Notificacao enviada: ${notificationMessage.substring(0, 50)}${notificationMessage.length > 50 ? '...' : ''}`,
-    };
-    setAdminActions((prev) => [newAction, ...prev]);
+    try {
+      await sendNotificationMutation.mutateAsync({
+        title: notificationTitle.trim(),
+        description: notificationMessage.trim(),
+        category: 'informativo',
+        priority: 'media',
+        targetType: 'specific_user',
+        targetUserId: mergedCompany.userId,
+      });
 
-    toast.success(`Notificacao enviada para ${mergedCompany.name}`);
-    setNotifyModalOpen(false);
-    setNotificationMessage('');
+      const newAction: AdminAction = {
+        id: `action-${Date.now()}`,
+        companyId: mergedCompany.id,
+        companyName: mergedCompany.name,
+        action: 'notification_sent',
+        performedBy: 'Voce',
+        performedAt: new Date().toISOString(),
+        details: `Notificação enviada: ${notificationTitle.trim()}`,
+      };
+      setAdminActions((prev) => [newAction, ...prev]);
+
+      setNotifyModalOpen(false);
+      setNotificationTitle('');
+      setNotificationMessage('');
+    } catch {
+      // toast de erro ja tratado pelo hook
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -1252,15 +1269,25 @@ export default function AdminCompanyDetail() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
+              <Label htmlFor="notificationTitle">Título</Label>
+              <Input
+                id="notificationTitle"
+                placeholder="Título da notificação"
+                value={notificationTitle}
+                onChange={(e) => setNotificationTitle(e.target.value)}
+                maxLength={100}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="notificationMessage">Mensagem</Label>
               <Textarea
                 id="notificationMessage"
-                placeholder="Escreva a mensagem da notificacao..."
+                placeholder="Escreva a mensagem da notificação..."
                 value={notificationMessage}
                 onChange={(e) => setNotificationMessage(e.target.value)}
                 maxLength={500}
                 className="resize-none"
-                rows={5}
+                rows={4}
               />
               <p className="text-xs text-muted-foreground text-right">
                 {notificationMessage.length}/500 caracteres
@@ -1273,10 +1300,10 @@ export default function AdminCompanyDetail() {
             </Button>
             <Button
               onClick={handleSendNotification}
-              disabled={!notificationMessage.trim()}
+              disabled={!notificationTitle.trim() || !notificationMessage.trim() || sendNotificationMutation.isPending}
             >
               <Bell className="w-4 h-4 mr-2" />
-              Enviar Notificacao
+              Enviar Notificação
             </Button>
           </DialogFooter>
         </DialogContent>
