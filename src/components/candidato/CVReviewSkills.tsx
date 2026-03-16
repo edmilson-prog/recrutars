@@ -4,12 +4,10 @@
  */
 
 import { useState } from 'react';
-import { Lightbulb, Plus, X, Check } from 'lucide-react';
+import { Lightbulb, X } from 'lucide-react';
 import { ParsedSkill, SkillType, getConfidenceLevel } from '@/types/cvParser';
 import { CVReviewSection, ConfidenceIndicator } from './CVReviewSection';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 interface CVReviewSkillsProps {
@@ -25,9 +23,6 @@ const SKILL_TYPE_CONFIG: Record<SkillType, { label: string; color: string }> = {
 };
 
 export function CVReviewSkills({ data, onChange }: CVReviewSkillsProps) {
-  const [newSkill, setNewSkill] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
-
   const avgConfidence =
     data.length > 0
       ? data.reduce((sum, skill) => sum + skill.confidence, 0) / data.length
@@ -49,33 +44,6 @@ export function CVReviewSkills({ data, onChange }: CVReviewSkillsProps) {
     onChange(data.filter((s) => s.id !== skillId));
   };
 
-  const handleAdd = () => {
-    if (!newSkill.trim()) return;
-
-    const skill: ParsedSkill = {
-      id: Math.random().toString(36).substring(2, 11),
-      name: newSkill.trim(),
-      normalizedName: newSkill.trim(),
-      level: null,
-      type: 'technical',
-      confidence: 1, // Manual = alta confiança
-    };
-
-    onChange([...data, skill]);
-    setNewSkill('');
-    setIsAdding(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAdd();
-    } else if (e.key === 'Escape') {
-      setIsAdding(false);
-      setNewSkill('');
-    }
-  };
-
   return (
     <CVReviewSection
       title="Habilidades"
@@ -84,9 +52,9 @@ export function CVReviewSkills({ data, onChange }: CVReviewSkillsProps) {
       icon={<Lightbulb className="w-5 h-5 text-gray-500" />}
     >
       <div className="space-y-4">
-        {data.length === 0 && !isAdding ? (
+        {data.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-4">
-            Nenhuma habilidade detectada. Adicione manualmente.
+            Nenhuma habilidade detectada.
           </p>
         ) : (
           Object.entries(groupedSkills).map(([type, skills]) => (
@@ -97,47 +65,6 @@ export function CVReviewSkills({ data, onChange }: CVReviewSkillsProps) {
               onRemove={handleRemove}
             />
           ))
-        )}
-
-        {/* Add skill input */}
-        {isAdding ? (
-          <div className="flex items-center gap-2">
-            <Input
-              value={newSkill}
-              onChange={(e) => setNewSkill(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Digite a habilidade..."
-              className="flex-1"
-              autoFocus
-            />
-            <Button
-              size="sm"
-              onClick={handleAdd}
-              disabled={!newSkill.trim()}
-            >
-              <Check className="w-4 h-4" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setIsAdding(false);
-                setNewSkill('');
-              }}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsAdding(true)}
-            className="w-full"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar habilidade
-          </Button>
         )}
       </div>
     </CVReviewSection>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Calendar, Brain, Eye, Search, MessageSquare, ArrowRight, Clock, Building2, HelpCircle, Loader2, X, CheckCircle2 } from 'lucide-react';
+import { FileText, Calendar, Brain, Eye, Search, MessageSquare, ArrowRight, Clock, Building2, HelpCircle, Loader2, X, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -16,6 +16,7 @@ import { useUpdateCandidate } from '@/hooks/useCandidatesQuery';
 import { calculateProfileCompletion } from '@/utils/profileCompleteness';
 import { calculateCompleteness } from '@/utils/curriculumCompleteness';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRBAC } from '@/contexts/RBACContext';
 import { GAUGE_PRO_CONFIG } from '@/data/gaugeProConfig';
@@ -82,6 +83,29 @@ export default function CandidateDashboard() {
     const savedAssessment = localStorage.getItem(assessmentKey);
     if (savedAssessment && !savedResult) setHasOngoingAssessment(true);
   }, [candidateId]);
+
+  // Skill migration banner
+  const [hasSkillMigration, setHasSkillMigration] = useState(false);
+
+  useEffect(() => {
+    if (!candidateId) return;
+    supabase
+      .from('candidates')
+      .select('skill_migration_note')
+      .eq('id', candidateId)
+      .single()
+      .then(({ data }) => {
+        setHasSkillMigration(!!data?.skill_migration_note);
+      });
+  }, [candidateId]);
+
+  const handleDismissSkillMigration = async () => {
+    setHasSkillMigration(false);
+    await supabase
+      .from('candidates')
+      .update({ skill_migration_note: null })
+      .eq('id', candidateId);
+  };
 
   // Completude do perfil pessoal (calculada dinamicamente)
   // Movido para antes do early return para respeitar as regras de Hooks do React
@@ -157,6 +181,40 @@ export default function CandidateDashboard() {
             </Link>
           </Button>
         </div>
+
+        {/* Banner de migração de habilidades */}
+        {hasSkillMigration && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="relative flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-lg bg-amber-500/10 border-l-4 border-amber-500"
+          >
+            <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5 sm:mt-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">
+                Suas habilidades foram atualizadas
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Algumas competências foram ajustadas para o formato padronizado. Revise para garantir que seu perfil esteja correto.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button asChild variant="outline" size="sm" className="text-xs">
+                <Link to="/candidato/perfil?tab=skills">
+                  Revisar Habilidades
+                </Link>
+              </Button>
+              <button
+                onClick={handleDismissSkillMigration}
+                className="p-1 rounded hover:bg-muted transition-colors"
+                aria-label="Dispensar aviso"
+              >
+                <X className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {/* PRD-035: Banner de incentivo ao teste comportamental */}
         <DiscIncentiveBanner

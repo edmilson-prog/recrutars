@@ -25,8 +25,6 @@ import {
   DollarSign,
   ChevronsUpDown,
   Target,
-  AlertCircle,
-  Lightbulb,
 } from 'lucide-react';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -72,8 +70,11 @@ import {
 } from '@/data/settingsConfig';
 import { brazilianCitiesByState } from '@/data/brazilianCities';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile, useEnsureProfile, useUpdateCurriculum } from '@/hooks/useCurriculumsQuery';
@@ -81,18 +82,12 @@ import type {
   Curriculum,
   ExperienceWithCurrent,
   EducationWithStatus,
-  SkillWithLevel,
   Course,
-  SkillLevel,
   EducationStatus,
-  SkillType,
   CertificateType,
 } from '@/types';
 import {
-  skillLevelLabels,
-  skillLevelOrder,
   educationStatusLabels,
-  skillTypeLabels,
 } from '@/types/curriculum';
 import { calculateCompleteness, getProgressColor } from '@/utils/curriculumCompleteness';
 import { Progress } from '@/components/ui/progress';
@@ -100,66 +95,6 @@ import DocumentsTab from '@/components/profile/DocumentsTab';
 import { OnboardingStepIndicator } from '@/components/onboarding/OnboardingStepIndicator';
 import { StandardizedSkillSelector } from '@/components/skills/StandardizedSkillSelector';
 import { useSkillCatalog, useCandidateStandardizedSkills, useSetCandidateSkills } from '@/hooks/useStandardizedSkillsQuery';
-
-// Componente de nível de habilidade visual
-function SkillLevelSelector({
-  level,
-  onChange,
-}: {
-  level: SkillLevel;
-  onChange: (level: SkillLevel) => void;
-}) {
-  const levels: SkillLevel[] = ['basic', 'beginner', 'intermediate', 'advanced', 'expert'];
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full justify-between">
-          <div className="flex items-center gap-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <span
-                key={i}
-                className={`text-sm ${
-                  i <= skillLevelOrder[level] ? 'text-cyan-500' : 'text-gray-300'
-                }`}
-              >
-                ●
-              </span>
-            ))}
-          </div>
-          <span className="text-xs">{skillLevelLabels[level]}</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-40 sm:w-48">
-        <div className="space-y-1">
-          {levels.map((l) => (
-            <Button
-              key={l}
-              variant={l === level ? 'secondary' : 'ghost'}
-              size="sm"
-              className="w-full justify-start gap-2"
-              onClick={() => onChange(l)}
-            >
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <span
-                    key={i}
-                    className={`text-xs ${
-                      i <= skillLevelOrder[l] ? 'text-cyan-500' : 'text-gray-300'
-                    }`}
-                  >
-                    ●
-                  </span>
-                ))}
-              </div>
-              <span className="text-xs">{skillLevelLabels[l]}</span>
-            </Button>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
 
 // Stable layout components — defined OUTSIDE the main component to prevent
 // React from creating new component references on every render (which would
@@ -194,13 +129,41 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
   const [stdTechnicalIds, setStdTechnicalIds] = useState<string[]>([]);
   const [stdBehavioralIds, setStdBehavioralIds] = useState<string[]>([]);
 
+  // Skill migration banner
+  const [skillMigrationNote, setSkillMigrationNote] = useState<{ from: string; to: string }[] | null>(null);
+
+  useEffect(() => {
+    if (!candidateId) return;
+    supabase
+      .from('candidates')
+      .select('skill_migration_note')
+      .eq('id', candidateId)
+      .single()
+      .then(({ data }) => {
+        if (data?.skill_migration_note) {
+          setSkillMigrationNote(data.skill_migration_note as { from: string; to: string }[]);
+        }
+      });
+  }, [candidateId]);
+
+  const handleDismissMigrationNote = async () => {
+    setSkillMigrationNote(null);
+    await supabase
+      .from('candidates')
+      .update({ skill_migration_note: null })
+      .eq('id', candidateId);
+  };
+
   // Estado do currículo
   const [curriculum, setCurriculum] = useState<Curriculum | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Estado das abas
-  const [activeTab, setActiveTab] = useState('basic');
+  // Estado das abas (suporta ?tab=skills via query param)
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') || 'basic';
+  });
 
   // Estado do combobox de cidade
   const [cityOpen, setCityOpen] = useState(false);
@@ -212,13 +175,13 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
   // Estados para modais
   const [experienceDialogOpen, setExperienceDialogOpen] = useState(false);
   const [educationDialogOpen, setEducationDialogOpen] = useState(false);
-  const [skillDialogOpen, setSkillDialogOpen] = useState(false);
+
   const [courseDialogOpen, setCourseDialogOpen] = useState(false);
 
   // Estados para edição
   const [editingExperience, setEditingExperience] = useState<ExperienceWithCurrent | null>(null);
   const [editingEducation, setEditingEducation] = useState<EducationWithStatus | null>(null);
-  const [editingSkill, setEditingSkill] = useState<SkillWithLevel | null>(null);
+
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 
   // Guard: evita que refetches background do React Query sobrescrevam estado local nao salvo.
@@ -462,101 +425,6 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
     } catch {
       updateField('education', previousEducation);
       toast.error('Erro ao remover formação.');
-    }
-  };
-
-  // Handlers para habilidades (auto-save)
-  const handleSaveSkill = async (skills: SkillWithLevel[]) => {
-    if (!curriculum || skills.length === 0) return;
-
-    const existingNames = new Set(
-      curriculum.skills.map((s) => s.name.toLowerCase().trim())
-    );
-
-    let updatedSkills = [...curriculum.skills];
-    let addedCount = 0;
-    let updatedCount = 0;
-
-    for (const skill of skills) {
-      const existingIndex = updatedSkills.findIndex((s) => s.id === skill.id);
-      if (existingIndex >= 0) {
-        // Editing existing skill
-        updatedSkills[existingIndex] = skill;
-        updatedCount++;
-      } else {
-        // Skip duplicates (case-insensitive)
-        if (existingNames.has(skill.name.toLowerCase().trim())) continue;
-        existingNames.add(skill.name.toLowerCase().trim());
-        updatedSkills = [...updatedSkills, skill];
-        addedCount++;
-      }
-    }
-
-    if (addedCount === 0 && updatedCount === 0) {
-      toast.info('Habilidades já existentes no perfil.');
-      setSkillDialogOpen(false);
-      setEditingSkill(null);
-      return;
-    }
-
-    const previousSkills = curriculum.skills;
-    updateField('skills', updatedSkills);
-    setSkillDialogOpen(false);
-    setEditingSkill(null);
-
-    try {
-      const saved = await updateMutation.mutateAsync({
-        id: curriculum.id,
-        updates: { skills: updatedSkills },
-      });
-      setCurriculum((prev) => prev ? { ...prev, skills: saved.skills } : null);
-      if (updatedCount > 0) {
-        toast.success('Habilidade atualizada!');
-      } else {
-        toast.success(addedCount > 1 ? `${addedCount} habilidades adicionadas!` : 'Habilidade adicionada!');
-      }
-    } catch {
-      updateField('skills', previousSkills);
-      toast.error('Erro ao salvar habilidade.');
-    }
-  };
-
-  const handleDeleteSkill = async (skillId: string) => {
-    if (!curriculum) return;
-    const previousSkills = curriculum.skills;
-    const updatedSkills = curriculum.skills.filter((s) => s.id !== skillId);
-    updateField('skills', updatedSkills);
-
-    try {
-      const saved = await updateMutation.mutateAsync({
-        id: curriculum.id,
-        updates: { skills: updatedSkills },
-      });
-      setCurriculum((prev) => prev ? { ...prev, skills: saved.skills } : null);
-      toast.success('Habilidade removida.');
-    } catch {
-      updateField('skills', previousSkills);
-      toast.error('Erro ao remover habilidade.');
-    }
-  };
-
-  const handleChangeSkillLevel = async (skillId: string, newLevel: SkillLevel) => {
-    if (!curriculum) return;
-    const previousSkills = curriculum.skills;
-    const updatedSkills = curriculum.skills.map((s) =>
-      s.id === skillId ? { ...s, level: newLevel } : s
-    );
-    updateField('skills', updatedSkills);
-
-    try {
-      const saved = await updateMutation.mutateAsync({
-        id: curriculum.id,
-        updates: { skills: updatedSkills },
-      });
-      setCurriculum((prev) => prev ? { ...prev, skills: saved.skills } : null);
-    } catch {
-      updateField('skills', previousSkills);
-      toast.error('Erro ao atualizar nível da habilidade.');
     }
   };
 
@@ -1444,14 +1312,47 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
 
           {/* Tab: Habilidades */}
           <TabsContent value="skills" className="mt-6 space-y-6">
+            {/* Banner de migração por similaridade */}
+            {skillMigrationNote && skillMigrationNote.length > 0 && (
+              <Alert className="border-cyan-500/30 bg-cyan-500/10">
+                <Info className="h-4 w-4 text-cyan-500" />
+                <AlertTitle className="text-cyan-700 dark:text-cyan-400">
+                  Suas habilidades foram atualizadas
+                </AlertTitle>
+                <AlertDescription className="mt-2 space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Algumas competências foram ajustadas para o formato padronizado. Revise abaixo e corrija se necessário.
+                  </p>
+                  <ul className="text-sm space-y-1">
+                    {skillMigrationNote.map((note, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <span className="text-muted-foreground line-through">{note.from}</span>
+                        <span className="text-muted-foreground">→</span>
+                        <span className="font-medium text-foreground">{note.to}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDismissMigrationNote}
+                    className="mt-2"
+                  >
+                    <Check className="h-3.5 w-3.5 mr-1.5" />
+                    Entendi, está correto
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Habilidades Padronizadas */}
             {skillCatalog && (
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
-                    <CardTitle>Habilidades Padronizadas</CardTitle>
+                    <CardTitle>Habilidades</CardTitle>
                     <CardDescription>
-                      Selecione até 10 habilidades técnicas e 10 comportamentais para melhorar seu match com vagas.
+                      Selecione suas principais competências para que empresas encontrem seu perfil.
                     </CardDescription>
                   </div>
                   <Button
@@ -1483,163 +1384,6 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
               </Card>
             )}
 
-            {/* Habilidades Livres (legado) */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Habilidades Detalhadas</CardTitle>
-                  <CardDescription>
-                    Habilidades com nível de proficiência — ferramentas, linguagens, metodologias e competências interpessoais.
-                  </CardDescription>
-                </div>
-                <Button
-                  onClick={() => {
-                    setEditingSkill(null);
-                    setSkillDialogOpen(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {curriculum.skills.length < 3 && (
-                  <div className="mb-4 rounded-lg border border-dashed p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <Lightbulb className="h-4 w-4 shrink-0 text-amber-500" />
-                      <span>Adicione pelo menos 3 habilidades para completar esta seção. Você tem {curriculum.skills.length} de 3.</span>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                          <Code className="h-3 w-3 text-cyan-500" />
-                          Exemplos técnicas
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {['Excel', 'Pacote Office', 'Atendimento ao cliente', 'Gestão de estoque', 'Vendas', 'Logística'].map((ex) => (
-                            <span key={ex} className="rounded-full bg-cyan-500/10 px-2.5 py-0.5 text-xs text-cyan-700 dark:text-cyan-400">
-                              {ex}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                          <User className="h-3 w-3 text-pink-500" />
-                          Exemplos comportamentais
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {['Liderança', 'Comunicação', 'Trabalho em equipe', 'Resolução de problemas', 'Proatividade', 'Organização'].map((ex) => (
-                            <span key={ex} className="rounded-full bg-pink-500/10 px-2.5 py-0.5 text-xs text-pink-700 dark:text-pink-400">
-                              {ex}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {curriculum.skills.length > 0 && (
-                  <div className="space-y-6">
-                    {/* Habilidades Técnicas */}
-                    {curriculum.skills.filter((s) => s.type === 'technical').length > 0 && (
-                      <div>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <h4 className="font-medium mb-3 flex items-center gap-2 cursor-help w-fit">
-                                <Code className="h-4 w-4 text-cyan-500" />
-                                Técnicas
-                                <AlertCircle className="h-3.5 w-3.5 text-muted-foreground/50" />
-                              </h4>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" className="max-w-xs">
-                              Ferramentas, softwares, metodologias e conhecimentos específicos da sua área de atuação.
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <div className="grid gap-3 md:grid-cols-2">
-                          {curriculum.skills
-                            .filter((s) => s.type === 'technical')
-                            .map((skill, index) => (
-                              <motion.div
-                                key={skill.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                className="flex items-center justify-between p-3 border rounded-lg"
-                              >
-                                <span className="font-medium">{skill.name}</span>
-                                <div className="flex items-center gap-2">
-                                  <SkillLevelSelector
-                                    level={skill.level}
-                                    onChange={(l) => handleChangeSkillLevel(skill.id, l)}
-                                  />
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDeleteSkill(skill.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                  </Button>
-                                </div>
-                              </motion.div>
-                            ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Habilidades Comportamentais */}
-                    {curriculum.skills.filter((s) => s.type === 'behavioral').length > 0 && (
-                      <div>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <h4 className="font-medium mb-3 flex items-center gap-2 cursor-help w-fit">
-                                <User className="h-4 w-4 text-pink-500" />
-                                Comportamentais
-                                <AlertCircle className="h-3.5 w-3.5 text-muted-foreground/50" />
-                              </h4>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" className="max-w-xs">
-                              Competências interpessoais como comunicação, liderança, trabalho em equipe e gestão do tempo.
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <div className="grid gap-3 md:grid-cols-2">
-                          {curriculum.skills
-                            .filter((s) => s.type === 'behavioral')
-                            .map((skill, index) => (
-                              <motion.div
-                                key={skill.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                className="flex items-center justify-between p-3 border rounded-lg"
-                              >
-                                <span className="font-medium">{skill.name}</span>
-                                <div className="flex items-center gap-2">
-                                  <SkillLevelSelector
-                                    level={skill.level}
-                                    onChange={(l) => handleChangeSkillLevel(skill.id, l)}
-                                  />
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDeleteSkill(skill.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                  </Button>
-                                </div>
-                              </motion.div>
-                            ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Tab: Cursos */}
@@ -1753,14 +1497,6 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
           onOpenChange={setEducationDialogOpen}
           education={editingEducation}
           onSave={handleSaveEducation}
-        />
-
-        {/* Dialog: Habilidade */}
-        <SkillDialog
-          open={skillDialogOpen}
-          onOpenChange={setSkillDialogOpen}
-          skill={editingSkill}
-          onSave={handleSaveSkill}
         />
 
         {/* Dialog: Curso */}
@@ -2112,134 +1848,6 @@ function EducationDialog({
                 disabled={form.status === 'in_progress'}
               />
             </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit}>Salvar</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// Dialog de Habilidade
-function SkillDialog({
-  open,
-  onOpenChange,
-  skill,
-  onSave,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  skill: SkillWithLevel | null;
-  onSave: (skills: SkillWithLevel[]) => void;
-}) {
-  const [form, setForm] = useState<SkillWithLevel>({
-    id: '',
-    name: '',
-    level: 'intermediate',
-    type: 'technical',
-  });
-
-  useEffect(() => {
-    if (skill) {
-      setForm(skill);
-    } else {
-      setForm({
-        id: `skill-${Date.now()}`,
-        name: '',
-        level: 'intermediate',
-        type: 'technical',
-      });
-    }
-  }, [skill, open]);
-
-  const handleSubmit = () => {
-    if (!form.name) {
-      toast.error('Informe o nome da habilidade.');
-      return;
-    }
-
-    // Editing existing skill — no splitting
-    if (skill) {
-      onSave([form]);
-      return;
-    }
-
-    // Adding new — split by comma for multiple skills
-    const names = form.name
-      .split(',')
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
-
-    const skills: SkillWithLevel[] = names.map((name) => ({
-      id: `skill-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      name,
-      level: form.level,
-      type: form.type,
-    }));
-
-    onSave(skills);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            {skill ? 'Editar Habilidade' : 'Adicionar Habilidade'}
-          </DialogTitle>
-          <DialogDescription>
-            Preencha os dados da habilidade.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="skill-name">Nome da habilidade *</Label>
-            <Input
-              id="skill-name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Ex: Excel, Liderança, Atendimento ao cliente..."
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Tipo</Label>
-            <RadioGroup
-              value={form.type}
-              onValueChange={(v) => setForm({ ...form, type: v as SkillType })}
-              className="flex flex-col sm:flex-row gap-2 sm:gap-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="technical" id="type-tech" />
-                <Label htmlFor="type-tech">Técnica</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="behavioral" id="type-behav" />
-                <Label htmlFor="type-behav">Comportamental</Label>
-              </div>
-            </RadioGroup>
-          </div>
-          <div className="space-y-2">
-            <Label>Nível de proficiência</Label>
-            <Select
-              value={form.level}
-              onValueChange={(v) => setForm({ ...form, level: v as SkillLevel })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="basic">Básico</SelectItem>
-                <SelectItem value="beginner">Iniciante</SelectItem>
-                <SelectItem value="intermediate">Intermediário</SelectItem>
-                <SelectItem value="advanced">Avançado</SelectItem>
-                <SelectItem value="expert">Especialista</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </div>
         <DialogFooter>
