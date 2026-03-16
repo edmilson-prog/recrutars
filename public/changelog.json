@@ -1,12 +1,48 @@
 {
   "versions": [
     {
+      "version": "1.37.0",
+      "codename": "Beacon",
+      "type": "minor",
+      "releaseDate": "2026-03-15",
+      "description": "Sistema completo de notificações com triggers automáticos, Realtime, central de gerenciamento admin, e melhorias de UX na tabela de usuários.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Triggers automáticos de notificação para candidaturas, mensagens, entrevistas, testes e vagas compatíveis",
+            "Notificações em tempo real via Supabase Realtime com toast instantâneo (substituindo polling de 30s)",
+            "Central de notificações admin com bell, página dedicada e 4 triggers (cadastros, vagas, tickets)",
+            "Central de envio de notificações manuais com templates, destinatários por grupo, agendamento e métricas",
+            "Busca parcial de usuários com autocomplete no modal de nova notificação",
+            "Controle individual 'marcar como lida' em cada notificação do dropdown do sininho",
+            "Ordenação dinâmica de colunas e colunas redimensionáveis na tabela de usuários admin"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Dropdown do sininho agora usa scroll nativo (roda do mouse) em vez de ScrollArea customizado",
+            "Polling de notificações reduzido de 30s para 5min como fallback do Realtime"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Vagas anônimas agora exibem 'Empresa Confidencial' nas notificações de job match",
+            "Proteção contra NULL em todas as triggers de notificação para cenários de exclusão concorrente"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.36.0",
       "codename": "Forge",
       "type": "minor",
       "releaseDate": "2026-03-15",
       "description": "Redesign da sidebar com navegação agrupada e tooltips, formulário de criação de usuário expandido com campos de perfil candidato/empresa, e correções de acentuação e métricas.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
