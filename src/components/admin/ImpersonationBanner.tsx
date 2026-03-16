@@ -41,7 +41,7 @@ export function ImpersonationBanner({ targetName, targetType, remainingTimeMs, o
   const typeLabel = targetType === 'company' ? 'Empresa' : targetType === 'candidate' ? 'Candidato' : 'Admin';
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-500 text-amber-950 px-4 py-2">
+    <div className="sticky top-0 z-[100] bg-amber-500 text-amber-950 px-4 py-2">
       <div className="max-w-screen-xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Eye className="w-5 h-5" />
