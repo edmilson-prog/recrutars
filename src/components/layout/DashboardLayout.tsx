@@ -40,7 +40,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { NotificationBell } from '@/components/notifications';
+import { NotificationBell, AdminNotificationBell } from '@/components/notifications';
 import { CompanyNotificationBell } from '@/components/notifications/CompanyNotificationBell';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { BottomNav } from '@/components/navigation';
@@ -98,6 +98,7 @@ const adminNavGroups: NavGroup[] = [
   {
     label: 'Suporte',
     items: [
+      { href: '/admin/notificacoes', label: 'Notificações', icon: Bell },
       { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
       { href: '/admin/helpdesk', label: 'Helpdesk', icon: Headset },
       { href: '/sobre', label: 'Sobre', icon: Info },
@@ -625,6 +626,10 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
               {/* PRD-033: Notificações - empresas */}
               {userType === 'company' && (
                 <CompanyNotificationBell />
+              )}
+              {/* Notificações - admin */}
+              {userType === 'admin' && (
+                <AdminNotificationBell />
               )}
               {/* Avatar e nome do usuário com menu dropdown */}
               <DropdownMenu>

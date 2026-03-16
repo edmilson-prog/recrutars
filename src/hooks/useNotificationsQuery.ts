@@ -30,7 +30,7 @@ export function useNotifications(userId: string) {
       return service.getNotifications(userId);
     },
     enabled: !!userId,
-    refetchInterval: 30_000, // poll every 30s
+    refetchInterval: 300_000, // fallback poll every 5min (Realtime handles instant updates)
   });
 }
 
@@ -43,7 +43,7 @@ export function useNotificationUnreadCount(userId: string) {
       return service.getUnreadCount(userId);
     },
     enabled: !!userId,
-    refetchInterval: 30_000, // poll every 30s
+    refetchInterval: 300_000, // fallback poll every 5min (Realtime handles instant updates)
   });
 }
 

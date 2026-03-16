@@ -1,4 +1,4 @@
-// PRD-033: Componente de sino de notificações para empresa
+// Componente de sino de notificações para admin
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -20,15 +20,15 @@ import {
   useMarkAllNotificationsAsRead,
 } from '@/hooks/useNotificationsQuery';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
-import type { CompanyNotification } from '@/types/companyNotifications';
-import { CompanyNotificationItem } from './CompanyNotificationItem';
+import type { AdminNotification } from '@/types/adminNotifications';
+import { AdminNotificationItem } from './AdminNotificationItem';
 import { cn } from '@/lib/utils';
 
-interface CompanyNotificationBellProps {
+interface AdminNotificationBellProps {
   className?: string;
 }
 
-export function CompanyNotificationBell({ className }: CompanyNotificationBellProps) {
+export function AdminNotificationBell({ className }: AdminNotificationBellProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const userId = user?.id ?? '';
@@ -36,7 +36,7 @@ export function CompanyNotificationBell({ className }: CompanyNotificationBellPr
 
   useRealtimeNotifications(userId);
   const { data: rawNotifications = [] } = useNotifications(userId);
-  const notifications = rawNotifications as unknown as CompanyNotification[];
+  const notifications = rawNotifications as unknown as AdminNotification[];
   const { data: unreadCount = 0 } = useNotificationUnreadCount(userId);
   const markAsReadMutation = useMarkNotificationAsRead();
   const markAllMutation = useMarkAllNotificationsAsRead();
@@ -54,7 +54,7 @@ export function CompanyNotificationBell({ className }: CompanyNotificationBellPr
 
   const handleViewAll = () => {
     setOpen(false);
-    navigate('/empresa/notificacoes');
+    navigate('/admin/notificacoes');
   };
 
   return (
@@ -103,7 +103,7 @@ export function CompanyNotificationBell({ className }: CompanyNotificationBellPr
           <ScrollArea className="max-h-96">
             <div className="divide-y">
               {latestNotifications.map((notification) => (
-                <CompanyNotificationItem
+                <AdminNotificationItem
                   key={notification.id}
                   notification={notification}
                   onRead={handleNotificationClick}

@@ -19,6 +19,7 @@ import {
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
 } from '@/hooks/useNotificationsQuery';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import { NotificationItem } from './NotificationItem';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +33,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
   const userId = user?.id ?? '';
   const [open, setOpen] = useState(false);
 
+  useRealtimeNotifications(userId);
   const { data: notifications = [] } = useNotifications(userId);
   const { data: unreadCount = 0 } = useNotificationUnreadCount(userId);
   const markAsReadMutation = useMarkNotificationAsRead();
