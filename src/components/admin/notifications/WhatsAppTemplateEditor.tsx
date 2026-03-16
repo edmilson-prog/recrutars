@@ -61,7 +61,7 @@ const MESSAGE_MIN = 10;
 const NAME_MAX = 80;
 
 const VARIABLES = [
-  { label: '{{nome}}', example: 'Joao Santos' },
+  { label: '{{nome}}', example: 'João Santos' },
   { label: '{{link}}', example: 'https://app.recrutars.com.br' },
   { label: '{{empresa}}', example: 'Tech Solutions' },
   { label: '{{vaga}}', example: 'Desenvolvedor React' },
@@ -174,11 +174,11 @@ export function WhatsAppTemplateEditor({
     const newErrors: FormErrors = {};
 
     if (!name.trim()) {
-      newErrors.name = 'Nome do template e obrigatorio';
+      newErrors.name = 'Nome do template é obrigatório';
     }
 
     if (!messageText.trim()) {
-      newErrors.messageText = 'Texto da mensagem e obrigatorio';
+      newErrors.messageText = 'Texto da mensagem é obrigatório';
     } else if (messageText.trim().length < MESSAGE_MIN) {
       newErrors.messageText = `Mensagem deve ter no minimo ${MESSAGE_MIN} caracteres`;
     }
@@ -271,7 +271,7 @@ export function WhatsAppTemplateEditor({
 
               {/* Description */}
               <div className="space-y-1.5">
-                <Label htmlFor="template-description">Descricao (opcional)</Label>
+                <Label htmlFor="template-description">Descrição (opcional)</Label>
                 <Textarea
                   id="template-description"
                   placeholder="Descreva brevemente quando usar este template..."
@@ -366,10 +366,10 @@ export function WhatsAppTemplateEditor({
 
             {/* Right column — Live Preview */}
             <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Pre-visualizacao</Label>
+              <Label className="text-xs text-muted-foreground">Pré-visualização</Label>
               <WhatsAppMessagePreview
                 message={previewText}
-                recipientName="Joao Santos"
+                recipientName="João Santos"
               />
             </div>
           </div>
@@ -395,7 +395,7 @@ export function WhatsAppTemplateEditor({
             ) : (
               <MessageCircle className="w-4 h-4 mr-2" />
             )}
-            {isSaving ? 'Salvando...' : isEditMode ? 'Salvar Alteracoes' : 'Criar Template'}
+            {isSaving ? 'Salvando...' : isEditMode ? 'Salvar Alterações' : 'Criar Template'}
           </Button>
         </div>
       </DialogContent>

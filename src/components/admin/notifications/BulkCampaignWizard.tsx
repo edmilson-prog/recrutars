@@ -2,7 +2,7 @@
  * BulkCampaignWizard
  * 3-step dialog wizard for sending bulk WhatsApp campaigns.
  *
- * Step 1 — Selecionar Audiencia: choose a target audience
+ * Step 1 — Selecionar Audiência: choose a target audience
  * Step 2 — Compor Mensagem: compose or pick a template
  * Step 3 — Revisar e Enviar: review recipients and send
  */
@@ -104,7 +104,7 @@ const AUDIENCE_OPTIONS: AudienceOption[] = [
 ];
 
 const VARIABLES = [
-  { label: '{{nome}}', example: 'Joao Santos' },
+  { label: '{{nome}}', example: 'João Santos' },
   { label: '{{link}}', example: 'https://app.recrutars.com.br' },
 ] as const;
 
@@ -411,7 +411,7 @@ export function BulkCampaignWizard({
             Nova Campanha WhatsApp
           </DialogTitle>
           <DialogDescription>
-            Envie mensagens em lote para um grupo de destinatarios.
+            Envie mensagens em lote para um grupo de destinatários.
           </DialogDescription>
         </DialogHeader>
 
@@ -420,7 +420,7 @@ export function BulkCampaignWizard({
           {[1, 2, 3].map((s, idx) => {
             const isActive = step === s;
             const isCompleted = step > s;
-            const labels = ['Audiencia', 'Mensagem', 'Enviar'];
+            const labels = ['Audiência', 'Mensagem', 'Enviar'];
 
             return (
               <div key={s} className="flex items-center">
@@ -609,10 +609,10 @@ export function BulkCampaignWizard({
 
                 {/* Preview */}
                 <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Pre-visualizacao</Label>
+                  <Label className="text-xs text-muted-foreground">Pré-visualização</Label>
                   <WhatsAppMessagePreview
                     message={previewText}
-                    recipientName="Joao Santos"
+                    recipientName="João Santos"
                   />
                 </div>
               </motion.div>
@@ -633,7 +633,7 @@ export function BulkCampaignWizard({
                   <h3 className="text-sm font-medium text-foreground">Resumo da campanha</h3>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-xs text-muted-foreground">Audiencia</p>
+                      <p className="text-xs text-muted-foreground">Audiência</p>
                       <p className="font-medium text-foreground">{selectedAudienceLabel}</p>
                     </div>
                     <div>
@@ -668,14 +668,14 @@ export function BulkCampaignWizard({
                     {checkNumbersMutation.isPending
                       ? 'Verificando...'
                       : hasCheckedNumbers
-                        ? 'Numeros verificados'
+                        ? 'Números verificados'
                         : 'Verificar numeros'}
                   </Button>
                   {hasCheckedNumbers && invalidCount > 0 && (
                     <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
                       <AlertTriangle className="w-4 h-4" aria-hidden="true" />
                       <span className="text-xs font-medium">
-                        {invalidCount} numero{invalidCount !== 1 ? 's' : ''} nao encontrado{invalidCount !== 1 ? 's' : ''} no WhatsApp
+                        {invalidCount} numero{invalidCount !== 1 ? 's' : ''} não encontrado{invalidCount !== 1 ? 's' : ''} no WhatsApp
                       </span>
                     </div>
                   )}
@@ -713,9 +713,9 @@ export function BulkCampaignWizard({
                               {hasCheckedNumbers && (
                                 <div className="shrink-0">
                                   {status === true ? (
-                                    <CheckCircle2 className="w-4 h-4 text-emerald-500" aria-label="Numero encontrado no WhatsApp" />
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-500" aria-label="Número encontrado no WhatsApp" />
                                   ) : status === false ? (
-                                    <XCircle className="w-4 h-4 text-red-500" aria-label="Numero nao encontrado no WhatsApp" />
+                                    <XCircle className="w-4 h-4 text-red-500" aria-label="Numero não encontrado no WhatsApp" />
                                   ) : (
                                     <div className="w-4 h-4 rounded-full bg-muted" aria-label="Status desconhecido" />
                                   )}
@@ -766,7 +766,7 @@ export function BulkCampaignWizard({
               {loadingRecipients ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : null}
-              Proximo
+              Próximo
             </Button>
           ) : (
             <Button

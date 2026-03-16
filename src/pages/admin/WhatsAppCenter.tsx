@@ -438,7 +438,7 @@ export default function WhatsAppCenter() {
         />
 
         {/* Sub-tab pills */}
-        <div className="flex gap-2" role="tablist" aria-label="Secoes do WhatsApp Center">
+        <div className="flex gap-2" role="tablist" aria-label="Seções do WhatsApp Center">
           {subTabs.map((tab) => (
             <button
               key={tab.key}
@@ -471,7 +471,7 @@ export default function WhatsAppCenter() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[140px]">Data</TableHead>
-                        <TableHead>Destinatario</TableHead>
+                        <TableHead>Destinatário</TableHead>
                         <TableHead className="hidden md:table-cell">Template</TableHead>
                         <TableHead className="w-[100px]">Status</TableHead>
                       </TableRow>
@@ -519,7 +519,7 @@ export default function WhatsAppCenter() {
                     Nenhuma mensagem enviada
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    As mensagens WhatsApp enviadas aparecerao aqui.
+                    As mensagens WhatsApp enviadas aparecerão aqui.
                   </p>
                 </CardContent>
               </Card>
@@ -655,7 +655,7 @@ export default function WhatsAppCenter() {
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                                 <MoreHorizontal className="w-4 h-4" />
-                                <span className="sr-only">Acoes do template</span>
+                                <span className="sr-only">Ações do template</span>
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -753,7 +753,7 @@ export default function WhatsAppCenter() {
               <AlertDialogTitle>Excluir template</AlertDialogTitle>
               <AlertDialogDescription>
                 Tem certeza que deseja excluir o template{' '}
-                <strong>{deleteConfirmTemplate?.name}</strong>? Essa acao nao pode ser desfeita.
+                <strong>{deleteConfirmTemplate?.name}</strong>? Essa ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

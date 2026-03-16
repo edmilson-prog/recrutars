@@ -80,7 +80,7 @@ export function WhatsAppMessagePreview({
             <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words leading-relaxed">
               {message ? renderMessageWithVariables(message) : (
                 <span className="text-gray-400 dark:text-gray-500 italic">
-                  Nenhuma mensagem para pre-visualizar
+                  Nenhuma mensagem para pré-visualizar
                 </span>
               )}
             </p>

@@ -45,7 +45,7 @@ export function EvolutionConnectionStatus({ className }: EvolutionConnectionStat
       className={cn('flex items-center gap-2', className)}
       role="status"
       aria-live="polite"
-      aria-label={`Status da conexao WhatsApp: ${label}`}
+      aria-label={`Status da conexão WhatsApp: ${label}`}
     >
       <span
         className={cn('w-2.5 h-2.5 rounded-full shrink-0', dotClasses)}
@@ -59,7 +59,7 @@ export function EvolutionConnectionStatus({ className }: EvolutionConnectionStat
         className="h-7 w-7"
         onClick={handleRefresh}
         disabled={isChecking}
-        aria-label="Verificar conexao novamente"
+        aria-label="Verificar conexão novamente"
       >
         <RefreshCw
           className={cn('w-3.5 h-3.5', isChecking && 'animate-spin')}
