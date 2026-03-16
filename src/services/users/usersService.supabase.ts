@@ -118,6 +118,32 @@ export class UsersServiceSupabase implements IUsersService {
     id: string,
     updates: Partial<User>,
   ): Promise<User> {
+    // Sync name/email to auth.users via Edge Function (before updating profiles)
+    if (updates.name !== undefined || updates.email !== undefined) {
+      const { data: session } = await supabase.auth.getSession();
+      const adminId = session?.session?.user?.id;
+
+      const { data: fnResult, error: fnError } = await supabase.functions.invoke(
+        'admin-update-user',
+        {
+          body: {
+            user_id: id,
+            email: updates.email ?? undefined,
+            name: updates.name ?? undefined,
+            admin_id: adminId,
+          },
+        },
+      );
+
+      if (fnError) {
+        throw new Error(`Failed to sync auth user: ${fnError.message}`);
+      }
+
+      if (fnResult && !fnResult.success) {
+        throw new Error(`Failed to sync auth user: ${fnResult.error ?? 'Unknown error'}`);
+      }
+    }
+
     // Convert camelCase updates to snake_case DB columns
     const dbUpdates: Record<string, unknown> = {};
 
