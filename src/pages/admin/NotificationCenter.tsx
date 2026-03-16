@@ -1,7 +1,8 @@
 // Central de Gerenciamento de Notificacoes (Admin)
 
 import { useState, useCallback } from 'react';
-import { Send } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Send, MessageCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ import type {
 } from '@/types/notificationSends';
 
 export default function NotificationCenter() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<FiltersType>({});
   const [activeStatFilter, setActiveStatFilter] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -61,6 +63,7 @@ export default function NotificationCenter() {
       priority: notification.priority,
       targetType: notification.targetType,
       targetUserId: notification.targetUserId ?? undefined,
+      channel: notification.channel,
     });
     setDialogOpen(true);
   }, []);
@@ -77,6 +80,30 @@ export default function NotificationCenter() {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
+        {/* Tabs de navegação */}
+        <div className="flex gap-1 border-b">
+          <button
+            onClick={() => navigate('/admin/notificacoes')}
+            className="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Bell className="w-4 h-4 inline mr-2" />
+            Recebidas
+          </button>
+          <button
+            className="px-4 py-2 text-sm font-medium border-b-2 border-primary text-primary"
+          >
+            <Send className="w-4 h-4 inline mr-2" />
+            Central de Envio
+          </button>
+          <button
+            onClick={() => navigate('/admin/notificacoes/whatsapp')}
+            className="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <MessageCircle className="w-4 h-4 inline mr-2" />
+            WhatsApp
+          </button>
+        </div>
+
         <PageHeader
           title="Central de Notificações"
           description="Gerencie, envie e monitore notificações para os usuários da plataforma"

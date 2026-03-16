@@ -5,7 +5,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { Send, Clock, CheckCircle2, PenLine } from 'lucide-react';
+import { Send, Clock, CheckCircle2, PenLine, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { NotificationSendsStats } from '@/types/notificationSends';
 
@@ -52,6 +52,15 @@ const kpiConfig = [
     activeRing: 'ring-2 ring-purple-400',
     hoverRing: 'hover:ring-2 hover:ring-purple-400/50',
   },
+  {
+    key: 'whatsapp',
+    label: 'WhatsApp',
+    icon: MessageCircle,
+    statKey: 'whatsappSent' as keyof NotificationSendsStats,
+    color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+    activeRing: 'ring-2 ring-green-400',
+    hoverRing: 'hover:ring-2 hover:ring-green-400/50',
+  },
 ] as const;
 
 export function NotificationStatsCards({
@@ -68,7 +77,7 @@ export function NotificationStatsCards({
   };
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
       {kpiConfig.map((kpi, index) => {
         const isActive = activeFilter === kpi.key;
         return (

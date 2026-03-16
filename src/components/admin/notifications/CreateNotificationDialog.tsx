@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, Send, Clock, Users, UserCheck, Building2, User, Loader2, Search, X } from 'lucide-react';
+import { Bell, Send, Clock, Users, UserCheck, Building2, User, Loader2, Search, X, MessageCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -31,11 +31,13 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { notificationTemplates } from '@/data/notificationTemplates';
+import { ChannelSelector } from './ChannelSelector';
 import type {
   CreateNotificationParams,
   NotificationCategory,
   NotificationPriority,
   NotificationTargetType,
+  NotificationChannel,
 } from '@/types/notificationSends';
 
 interface CreateNotificationDialogProps {
@@ -87,6 +89,7 @@ export function CreateNotificationDialog({
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<NotificationCategory>('informativo');
   const [priority, setPriority] = useState<NotificationPriority>('media');
+  const [channel, setChannel] = useState<NotificationChannel | ''>('in_app');
   const [targetType, setTargetType] = useState<NotificationTargetType | ''>('');
   const [targetUserId, setTargetUserId] = useState('');
   const [userSearch, setUserSearch] = useState('');
@@ -159,6 +162,7 @@ export function CreateNotificationDialog({
     setDescription('');
     setCategory('informativo');
     setPriority('media');
+    setChannel('in_app');
     setTargetType('');
     setTargetUserId('');
     setUserSearch('');
@@ -177,6 +181,7 @@ export function CreateNotificationDialog({
       setDescription(defaultValues.description ?? '');
       setCategory(defaultValues.category ?? 'informativo');
       setPriority(defaultValues.priority ?? 'media');
+      setChannel(defaultValues.channel ?? 'in_app');
       setTargetType(defaultValues.targetType ?? '');
       setTargetUserId(defaultValues.targetUserId ?? '');
       setTemplateId(defaultValues.templateId ?? '');
@@ -244,6 +249,7 @@ export function CreateNotificationDialog({
       description: description.trim(),
       category,
       priority,
+      channel: channel as NotificationChannel || 'in_app',
       targetType: targetType as NotificationTargetType,
       targetUserId: targetType === 'specific_user' ? targetUserId.trim() : undefined,
       scheduledAt: scheduleEnabled && scheduledAt ? scheduledAt : undefined,
@@ -264,7 +270,11 @@ export function CreateNotificationDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Bell className="w-4 h-4 text-primary" />
+              {channel === 'whatsapp' ? (
+                <MessageCircle className="w-4 h-4 text-primary" />
+              ) : (
+                <Bell className="w-4 h-4 text-primary" />
+              )}
             </div>
             Nova Notificacao
           </DialogTitle>
@@ -291,6 +301,16 @@ export function CreateNotificationDialog({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Canal de envio */}
+            <div className="space-y-1.5">
+              <Label>Canal de envio</Label>
+              <ChannelSelector
+                value={channel}
+                onChange={setChannel}
+                disabled={isSending}
+              />
             </div>
 
             {/* Destinatarios */}

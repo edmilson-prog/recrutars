@@ -84,6 +84,7 @@ import AdminHelpdesk from "./pages/admin/Helpdesk";
 import AdminHelpdeskTicketDetail from "./pages/admin/HelpdeskTicketDetail";
 import AdminNotifications from "./pages/admin/Notifications";
 import AdminNotificationCenter from "./pages/admin/NotificationCenter";
+import AdminWhatsAppCenter from "./pages/admin/WhatsAppCenter";
 
 // PRD-062: Feature Flags "Switch"
 import AdminFeatureFlags from "./pages/admin/FeatureFlags";
@@ -458,6 +459,11 @@ const App = () => (
             <Route path="/admin/notificacoes/central" element={
               <ProtectedRoute allowedTypes={['admin']}>
                 <AdminNotificationCenter />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/notificacoes/whatsapp" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminWhatsAppCenter />
               </ProtectedRoute>
             } />
 

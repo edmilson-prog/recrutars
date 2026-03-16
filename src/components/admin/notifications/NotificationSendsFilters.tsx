@@ -19,7 +19,9 @@ import type {
   NotificationCategory,
   NotificationPriority,
   NotificationSendStatus,
+  NotificationChannel,
 } from '@/types/notificationSends';
+import { channelLabels } from '@/types/notificationSends';
 
 interface NotificationSendsFiltersProps {
   filters: FiltersType;
@@ -121,6 +123,22 @@ export function NotificationSendsFilters({
           <SelectItem value="scheduled">Agendada</SelectItem>
           <SelectItem value="failed">Falha</SelectItem>
           <SelectItem value="cancelled">Cancelada</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {/* Canal */}
+      <Select
+        value={filters.channel || 'all'}
+        onValueChange={(value) => onFiltersChange({ ...filters, channel: value === 'all' ? '' : value as NotificationChannel })}
+      >
+        <SelectTrigger className="w-full sm:w-[140px]">
+          <SelectValue placeholder="Canal" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos</SelectItem>
+          {(Object.keys(channelLabels) as NotificationChannel[]).map((key) => (
+            <SelectItem key={key} value={key}>{channelLabels[key]}</SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

@@ -5,7 +5,7 @@
  */
 
 import { useMemo } from 'react';
-import { MoreHorizontal, Copy, XCircle, Inbox } from 'lucide-react';
+import { MoreHorizontal, Copy, XCircle, Inbox, MessageCircle, Bell } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -32,6 +32,8 @@ import {
   categoryColors,
   priorityColors,
   statusColors,
+  channelLabels,
+  channelColors,
 } from '@/types/notificationSends';
 
 interface NotificationSendsTableProps {
@@ -96,6 +98,7 @@ export function NotificationSendsTable({
             <TableHead className="w-[140px]">Data</TableHead>
             <TableHead className="min-w-[180px]">Titulo</TableHead>
             <TableHead className="min-w-[160px]">Destinatario</TableHead>
+            <TableHead>Canal</TableHead>
             <TableHead>Categoria</TableHead>
             <TableHead>Prioridade</TableHead>
             <TableHead>Status</TableHead>
@@ -121,6 +124,23 @@ export function NotificationSendsTable({
               {/* Destinatario */}
               <TableCell className="text-sm">
                 {getRecipientLabel(notification)}
+              </TableCell>
+
+              {/* Canal */}
+              <TableCell>
+                <Badge
+                  className={cn(
+                    'text-xs gap-1',
+                    channelColors[notification.channel ?? 'in_app'],
+                  )}
+                >
+                  {notification.channel === 'whatsapp' || notification.channel === 'both' ? (
+                    <MessageCircle className="w-3 h-3" />
+                  ) : (
+                    <Bell className="w-3 h-3" />
+                  )}
+                  {channelLabels[notification.channel ?? 'in_app']}
+                </Badge>
               </TableCell>
 
               {/* Categoria */}

@@ -4,6 +4,7 @@ export type NotificationCategory = 'informativo' | 'operacional' | 'alerta';
 export type NotificationPriority = 'baixa' | 'media' | 'alta' | 'urgente';
 export type NotificationTargetType = 'all_users' | 'all_candidates' | 'all_companies' | 'specific_user';
 export type NotificationSendStatus = 'draft' | 'scheduled' | 'sent' | 'failed' | 'cancelled';
+export type NotificationChannel = 'in_app' | 'whatsapp' | 'both';
 
 export interface NotificationSend {
   id: string;
@@ -24,6 +25,7 @@ export interface NotificationSend {
   sentBy: string;
   sentByName?: string;
   templateId: string | null;
+  channel: NotificationChannel;
   createdAt: string;
 }
 
@@ -37,6 +39,7 @@ export interface CreateNotificationParams {
   targetUserId?: string;
   scheduledAt?: string;
   templateId?: string;
+  channel?: NotificationChannel;
 }
 
 export interface NotificationSendsFilters {
@@ -44,6 +47,7 @@ export interface NotificationSendsFilters {
   category?: NotificationCategory | '';
   priority?: NotificationPriority | '';
   status?: NotificationSendStatus | '';
+  channel?: NotificationChannel | '';
 }
 
 export interface NotificationSendsStats {
@@ -51,6 +55,7 @@ export interface NotificationSendsStats {
   scheduled: number;
   successful: number;
   manual: number;
+  whatsappSent: number;
 }
 
 // Labels
@@ -102,4 +107,16 @@ export const statusColors: Record<NotificationSendStatus, string> = {
   sent: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
   failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
   cancelled: 'bg-gray-200 text-gray-600 dark:bg-gray-800/50 dark:text-gray-500',
+};
+
+export const channelLabels: Record<NotificationChannel, string> = {
+  in_app: 'In-App',
+  whatsapp: 'WhatsApp',
+  both: 'Ambos',
+};
+
+export const channelColors: Record<NotificationChannel, string> = {
+  in_app: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  whatsapp: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  both: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
 };

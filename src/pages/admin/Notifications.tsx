@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCheck, Filter, Send } from 'lucide-react';
+import { Bell, CheckCheck, Filter, Send, MessageCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -70,6 +70,13 @@ export default function Notifications() {
           >
             <Send className="w-4 h-4 inline mr-2" />
             Central de Envio
+          </button>
+          <button
+            onClick={() => navigate('/admin/notificacoes/whatsapp')}
+            className="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <MessageCircle className="w-4 h-4 inline mr-2" />
+            WhatsApp
           </button>
         </div>
 

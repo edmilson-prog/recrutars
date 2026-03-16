@@ -43,6 +43,10 @@ export class NotificationSendsServiceSupabase implements INotificationSendsServi
       query = query.eq('status', filters.status);
     }
 
+    if (filters?.channel) {
+      query = query.eq('channel', filters.channel);
+    }
+
     const { data, error } = await query;
 
     if (error) throw error;
@@ -53,7 +57,7 @@ export class NotificationSendsServiceSupabase implements INotificationSendsServi
   async getStats(): Promise<NotificationSendsStats> {
     const { data, error } = await supabase
       .from('notification_sends')
-      .select('status');
+      .select('status, channel');
 
     if (error) throw error;
 
@@ -64,6 +68,7 @@ export class NotificationSendsServiceSupabase implements INotificationSendsServi
       scheduled: rows.filter((r) => r.status === 'scheduled').length,
       successful: rows.filter((r) => r.status === 'sent').length,
       manual: rows.length,
+      whatsappSent: rows.filter((r) => r.channel === 'whatsapp' || r.channel === 'both').length,
     };
   }
 
@@ -131,6 +136,7 @@ export class NotificationSendsServiceSupabase implements INotificationSendsServi
       sentBy: row.sent_by,
       sentByName: row.sender?.name ?? undefined,
       templateId: row.template_id,
+      channel: row.channel ?? 'in_app',
       createdAt: row.created_at,
     };
   }
