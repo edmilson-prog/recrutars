@@ -94,6 +94,7 @@ import { Progress } from '@/components/ui/progress';
 import DocumentsTab from '@/components/profile/DocumentsTab';
 import { OnboardingStepIndicator } from '@/components/onboarding/OnboardingStepIndicator';
 import { StandardizedSkillSelector } from '@/components/skills/StandardizedSkillSelector';
+import { formatBrazilianPhone, stripToDigits } from '@/hooks/usePhoneMask';
 import { useSkillCatalog, useCandidateStandardizedSkills, useSetCandidateSkills } from '@/hooks/useStandardizedSkillsQuery';
 
 // Stable layout components — defined OUTSIDE the main component to prevent
@@ -709,10 +710,27 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                     <Label htmlFor="phone">Telefone</Label>
                     <Input
                       id="phone"
-                      value={curriculum.phone || ''}
-                      onChange={(e) => updateField('phone', e.target.value)}
-                      placeholder="(11) 99999-9999"
+                      type="tel"
+                      inputMode="numeric"
+                      value={formatBrazilianPhone(curriculum.phone || '')}
+                      onChange={(e) => {
+                        const raw = stripToDigits(e.target.value).slice(0, 11);
+                        updateField('phone', raw);
+                      }}
+                      placeholder="(XX) XXXXX-XXXX"
                     />
+                    {(() => {
+                      const digits = curriculum.phone || '';
+                      if (digits.length >= 3) {
+                        const isMobile = digits[2] === '9';
+                        return (
+                          <span className={cn('text-xs', isMobile ? 'text-emerald-500' : 'text-blue-500')}>
+                            {isMobile ? 'Celular' : 'Fixo'}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
 
