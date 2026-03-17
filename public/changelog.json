@@ -1,12 +1,36 @@
 {
   "versions": [
     {
+      "version": "1.38.1",
+      "codename": "Market",
+      "type": "patch",
+      "releaseDate": "2026-03-17",
+      "description": "Página dedicada de testes no admin com visão geral, resultados, convites e testes corporativos, e correção do KPI zerado no dashboard.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Página /admin/testes com 4 abas: Visão Geral (KPIs, gráficos, funil), Resultados (tabela com detail sheet), Convites (cross-company) e Testes Corporativos",
+            "Entrada 'Testes' no sidebar admin no grupo Principal"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "KPI 'Testes concluídos' no dashboard admin mostrava zero — corrigido para contar gauge_pro_results + behavioral_tests",
+            "Acentuação corrigida em toda a página AdminTests"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.38.0",
       "codename": "Market",
       "type": "minor",
       "releaseDate": "2026-03-17",
       "description": "Sistema de pacotes de testes avulsos com créditos e checkout Stripe, integração WhatsApp via Evolution API, melhorias de notificações e skills padronizadas.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
