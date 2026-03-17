@@ -45,7 +45,7 @@ function normalizeCreditRow(row: Record<string, unknown>): TestCredit {
   return {
     id: row.id as string,
     companyId: row.company_id as string,
-    packageId: row.package_id as string,
+    packageId: (row.package_id as string) ?? null,
     totalCredits: row.total_credits as number,
     usedCredits: row.used_credits as number,
     remainingCredits: row.remaining_credits as number,
@@ -54,6 +54,7 @@ function normalizeCreditRow(row: Record<string, unknown>): TestCredit {
     status: row.status as TestCredit['status'],
     purchasedAt: (row.purchased_at as string) ?? '',
     createdAt: (row.created_at as string) ?? '',
+    origin: (row.origin as TestCredit['origin']) ?? 'purchase',
     // Joined fields from test_packages
     packageName: (row as Record<string, unknown>).package_name as string | undefined,
     packageSlug: (row as Record<string, unknown>).package_slug as string | undefined,
@@ -247,5 +248,85 @@ export class SupabaseTestPackagesService implements ITestPackagesService {
 
     if (error) throw error;
     return (data as boolean) ?? false;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Admin credit management
+  // ---------------------------------------------------------------------------
+
+  async adminManualCredit(
+    companyId: string,
+    amount: number,
+    description: string,
+    createdBy: string,
+  ): Promise<string> {
+    const { data, error } = await supabase.rpc('admin_manual_credit', {
+      p_company_id: companyId,
+      p_amount: amount,
+      p_description: description,
+      p_created_by: createdBy,
+    });
+
+    if (error) throw error;
+    return data as string;
+  }
+
+  async adminManualDebit(
+    companyId: string,
+    amount: number,
+    description: string,
+    createdBy: string,
+  ): Promise<number> {
+    const { data, error } = await supabase.rpc('admin_manual_debit', {
+      p_company_id: companyId,
+      p_amount: amount,
+      p_description: description,
+      p_created_by: createdBy,
+    });
+
+    if (error) throw error;
+    return data as number;
+  }
+
+  async adminTransferCredits(
+    sourceCompanyId: string,
+    targetCompanyId: string,
+    amount: number,
+    description: string,
+    createdBy: string,
+  ): Promise<string> {
+    const { data, error } = await supabase.rpc('admin_transfer_credits', {
+      p_source_company_id: sourceCompanyId,
+      p_target_company_id: targetCompanyId,
+      p_amount: amount,
+      p_description: description,
+      p_created_by: createdBy,
+    });
+
+    if (error) throw error;
+    return data as string;
+  }
+
+  async searchCompanies(
+    query: string,
+    excludeId?: string,
+  ): Promise<Array<{ id: string; name: string; cnpj: string }>> {
+    let q = supabase
+      .from('companies')
+      .select('id, name, cnpj')
+      .ilike('name', `%${query}%`)
+      .limit(10);
+
+    if (excludeId) {
+      q = q.neq('id', excludeId);
+    }
+
+    const { data, error } = await q;
+    if (error) throw error;
+    return (data ?? []).map((r) => ({
+      id: r.id as string,
+      name: r.name as string,
+      cnpj: (r.cnpj as string) ?? '',
+    }));
   }
 }

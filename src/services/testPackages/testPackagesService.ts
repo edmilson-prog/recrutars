@@ -58,6 +58,38 @@ export interface ITestPackagesService {
     invitationId: string,
     description: string,
   ): Promise<boolean>;
+
+  // Admin credit management
+  /** Admin: Add N credits manually to a company. Returns credit_id. */
+  adminManualCredit(
+    companyId: string,
+    amount: number,
+    description: string,
+    createdBy: string,
+  ): Promise<string>;
+
+  /** Admin: Remove N credits from a company (FIFO). Returns total debited. */
+  adminManualDebit(
+    companyId: string,
+    amount: number,
+    description: string,
+    createdBy: string,
+  ): Promise<number>;
+
+  /** Admin: Transfer N credits between companies. Returns transfer_id. */
+  adminTransferCredits(
+    sourceCompanyId: string,
+    targetCompanyId: string,
+    amount: number,
+    description: string,
+    createdBy: string,
+  ): Promise<string>;
+
+  /** Search companies by name for admin transfer autocomplete. */
+  searchCompanies(
+    query: string,
+    excludeId?: string,
+  ): Promise<Array<{ id: string; name: string; cnpj: string }>>;
 }
 
 // ---------------------------------------------------------------------------

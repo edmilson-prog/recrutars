@@ -79,6 +79,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { AdminAction, Company } from '@/types';
+import { CompanySubscriptionTab } from '@/components/admin/companies/CompanySubscriptionTab';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -842,6 +843,12 @@ export default function AdminCompanyDetail() {
                     </Button>
                   </div>
                 </div>
+
+                {/* Credit Management Section */}
+                <CompanySubscriptionTab
+                  companyId={mergedCompany.id}
+                  companyName={mergedCompany.name}
+                />
               </div>
             </motion.div>
           </TabsContent>

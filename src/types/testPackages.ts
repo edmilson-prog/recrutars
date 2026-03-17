@@ -30,7 +30,7 @@ export interface TestPackage {
 export interface TestCredit {
   id: string;
   companyId: string;
-  packageId: string;
+  packageId: string | null;
   totalCredits: number;
   usedCredits: number;
   remainingCredits: number;
@@ -39,6 +39,7 @@ export interface TestCredit {
   status: 'active' | 'exhausted' | 'refunded';
   purchasedAt: string;
   createdAt: string;
+  origin?: 'purchase' | 'manual' | 'transfer';
   // Joined fields
   packageName?: string;
   packageSlug?: string;
@@ -48,7 +49,7 @@ export interface TestCreditTransaction {
   id: string;
   companyId: string;
   creditId: string;
-  type: 'purchase' | 'consume' | 'refund';
+  type: 'purchase' | 'consume' | 'refund' | 'manual_credit' | 'manual_debit' | 'transfer_out' | 'transfer_in';
   amount: number;
   referenceType: string | null;
   referenceId: string | null;

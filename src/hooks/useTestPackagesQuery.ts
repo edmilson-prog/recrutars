@@ -210,3 +210,103 @@ export function useRefundCredit() {
     },
   });
 }
+
+// ---------------------------------------------------------------------------
+// Admin credit management mutations
+// ---------------------------------------------------------------------------
+
+export function useAdminManualCredit() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      companyId,
+      amount,
+      description,
+      createdBy,
+    }: {
+      companyId: string;
+      amount: number;
+      description: string;
+      createdBy: string;
+    }) => {
+      const svc = await getTestPackagesService();
+      return svc.adminManualCredit(companyId, amount, description, createdBy);
+    },
+    onSuccess: (_data, { companyId }) => {
+      qc.invalidateQueries({ queryKey: testPackageKeys.balance(companyId) });
+      qc.invalidateQueries({ queryKey: testPackageKeys.credits(companyId) });
+      qc.invalidateQueries({ queryKey: testPackageKeys.transactions(companyId) });
+    },
+  });
+}
+
+export function useAdminManualDebit() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      companyId,
+      amount,
+      description,
+      createdBy,
+    }: {
+      companyId: string;
+      amount: number;
+      description: string;
+      createdBy: string;
+    }) => {
+      const svc = await getTestPackagesService();
+      return svc.adminManualDebit(companyId, amount, description, createdBy);
+    },
+    onSuccess: (_data, { companyId }) => {
+      qc.invalidateQueries({ queryKey: testPackageKeys.balance(companyId) });
+      qc.invalidateQueries({ queryKey: testPackageKeys.credits(companyId) });
+      qc.invalidateQueries({ queryKey: testPackageKeys.transactions(companyId) });
+    },
+  });
+}
+
+export function useAdminTransferCredits() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      sourceCompanyId,
+      targetCompanyId,
+      amount,
+      description,
+      createdBy,
+    }: {
+      sourceCompanyId: string;
+      targetCompanyId: string;
+      amount: number;
+      description: string;
+      createdBy: string;
+    }) => {
+      const svc = await getTestPackagesService();
+      return svc.adminTransferCredits(sourceCompanyId, targetCompanyId, amount, description, createdBy);
+    },
+    onSuccess: (_data, { sourceCompanyId, targetCompanyId }) => {
+      // Invalidate both companies
+      for (const id of [sourceCompanyId, targetCompanyId]) {
+        qc.invalidateQueries({ queryKey: testPackageKeys.balance(id) });
+        qc.invalidateQueries({ queryKey: testPackageKeys.credits(id) });
+        qc.invalidateQueries({ queryKey: testPackageKeys.transactions(id) });
+      }
+    },
+  });
+}
+
+/** Search companies by name (admin transfer autocomplete). */
+export function useCompanySearch(query: string, excludeId?: string) {
+  return useQuery({
+    queryKey: ['companies', 'search', query, excludeId],
+    queryFn: async () => {
+      const svc = await getTestPackagesService();
+      return svc.searchCompanies(query, excludeId);
+    },
+    enabled: query.length >= 2,
+    staleTime: 30_000,
+  });
+}
