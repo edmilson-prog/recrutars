@@ -18,6 +18,7 @@ import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useGaugeProSessionByCandidate, useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
+import type { GaugeProDimension } from '@/types/gaugePro';
 
 export default function TeamMemberProfile() {
   const { id } = useParams();
@@ -49,7 +50,7 @@ export default function TeamMemberProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('company_tests')
-        .select('id, name, status')
+        .select('id, name, status, weights')
         .eq('company_id', companyId)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
@@ -60,6 +61,9 @@ export default function TeamMemberProfile() {
   });
 
   const activeTestId = companyTests.length > 0 ? companyTests[0].id : '';
+  const activeTestWeights = companyTests.length > 0
+    ? (companyTests[0].weights as Record<GaugeProDimension, number> | undefined)
+    : undefined;
 
   const { data: memberTestHistory = [] } = useQuery({
     queryKey: ['team-member-test-history', candidateId],
@@ -156,6 +160,7 @@ export default function TeamMemberProfile() {
           candidateId={candidateId || undefined}
           gaugeProAssessment={gaugeProAssessment ?? undefined}
           gaugeProResult={gaugeProResult ?? undefined}
+          testWeights={activeTestWeights}
           onEdit={() => {
             // Placeholder: open edit modal
           }}
