@@ -19,6 +19,7 @@ import type {
   ScheduleDowngradeParams,
   ScheduleDowngradeResult,
   CancelSubscriptionParams,
+  PackageCheckoutParams,
 } from './stripeService';
 import type { StripeEnvironment } from '@/types/plans';
 
@@ -121,5 +122,29 @@ export class SupabaseStripeService implements IStripeService {
 
     if (error) return { success: false, error: error.message };
     return data as { success: boolean; error?: string };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Test Packages
+  // ---------------------------------------------------------------------------
+
+  async syncPackage(packageId: string, environment: StripeEnvironment): Promise<SyncResult> {
+    const { data, error } = await supabase.functions.invoke('stripe-sync-package', {
+      body: { packageId, environment },
+    });
+
+    if (error) return { success: false, error: error.message };
+    return data as SyncResult;
+  }
+
+  async createPackageCheckout(params: PackageCheckoutParams): Promise<CheckoutResult> {
+    const { data, error } = await supabase.functions.invoke('stripe-package-checkout', {
+      body: params,
+    });
+
+    if (error) throw new Error(error.message);
+    const result = data as { success: boolean; sessionId?: string; url?: string; error?: string };
+    if (!result.success) throw new Error(result.error ?? 'Package checkout failed');
+    return { sessionId: result.sessionId!, url: result.url! };
   }
 }

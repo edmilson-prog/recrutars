@@ -64,9 +64,13 @@ import AdminSubscriptionDashboard from "./pages/admin/SubscriptionDashboard";
 // PRD-075/076: Stripe Integration & Billing
 import AdminWebhookLog from "./pages/admin/WebhookLog";
 import AdminBillingDashboard from "./pages/admin/BillingDashboard";
+// Test Packages
+import AdminPackagesManagement from "./pages/admin/PackagesManagement";
+import AdminPackageDetail from "./pages/admin/PackageDetail";
 import CompanyCheckoutSuccess from "./pages/empresa/CheckoutSuccess";
 import CompanyCheckoutCancel from "./pages/empresa/CheckoutCancel";
 import CompanyMyPlan from "./pages/empresa/MyPlan";
+import CompanyPackages from "./pages/empresa/Packages";
 import CandidateMyPlan from "./pages/candidato/MyPlan";
 
 // PRD-058: Admin Jobs & Moderation "Sentinel"
@@ -408,6 +412,23 @@ const App = () => (
               </ProtectedRoute>
             } />
 
+            {/* Test Packages Routes */}
+            <Route path="/admin/pacotes" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminPackagesManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/pacotes/novo" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminPackageDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/pacotes/:id" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminPackageDetail />
+              </ProtectedRoute>
+            } />
+
             {/* PRD-058: Admin Jobs & Moderation "Sentinel" Routes */}
             <Route path="/admin/vagas" element={
               <ProtectedRoute allowedTypes={['admin']}>
@@ -581,6 +602,13 @@ const App = () => (
                 <CorporateTestReports />
               </ProtectedRoute>
             } />
+            {/* Test Packages */}
+            <Route path="/empresa/pacotes" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyPackages />
+              </ProtectedRoute>
+            } />
+
             {/* PRD-055, 056, 057: Team Management Routes */}
             <Route path="/empresa/equipes" element={
               <ProtectedRoute allowedTypes={['company']}>

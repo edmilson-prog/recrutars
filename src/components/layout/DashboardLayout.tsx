@@ -13,7 +13,7 @@ import {
   LayoutDashboard, Building2, Users, Settings, LogOut,
   Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, ClipboardCheck, Heart, Calendar, HelpCircle, Bell,
   ChevronLeft, ChevronRight, Sparkles, Info, UserCog, MoreHorizontal,
-  ShieldCheck, BarChart3, CreditCard, DollarSign, ToggleLeft, Headset,
+  ShieldCheck, BarChart3, CreditCard, DollarSign, ToggleLeft, Headset, Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdminNavItemActive, getTabLabelForPath } from '@/config/adminTabConfig';
@@ -83,6 +83,7 @@ const adminNavGroups: NavGroup[] = [
     label: 'Financeiro',
     items: [
       { href: '/admin/planos', label: 'Planos & Assinaturas', icon: CreditCard },
+      { href: '/admin/pacotes', label: 'Pacotes de Testes', icon: Package },
       { href: '/admin/assinaturas/billing', label: 'Financeiro', icon: DollarSign },
     ],
   },
@@ -122,6 +123,7 @@ const companyNavGroups: NavGroup[] = [
       { href: '/empresa/candidatos', label: 'Banco de Talentos', icon: Users },
       { href: '/empresa/candidatos-salvos', label: 'Candidatos Salvos', icon: Heart, countKey: 'savedCandidates' },
       { href: '/empresa/testes', label: 'Testes', icon: Brain },
+      { href: '/empresa/pacotes', label: 'Pacotes de Testes', icon: Package },
       { href: '/empresa/equipes', label: 'Gestão de Equipes', icon: UserCog },
     ],
   },

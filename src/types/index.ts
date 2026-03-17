@@ -30,3 +30,4 @@ export * from './adminJobs';
 export * from './reports';
 export * from './hiring';
 export * from './standardizedSkill';
+export * from './testPackages';

@@ -86,6 +86,15 @@ export interface CancelSubscriptionParams {
   environment: StripeEnvironment;
 }
 
+export interface PackageCheckoutParams {
+  packageId: string;
+  companyId: string;
+  userId: string;
+  environment: StripeEnvironment;
+  successUrl: string;
+  cancelUrl: string;
+}
+
 export interface IStripeService {
   testConnection(environment: StripeEnvironment): Promise<{ success: boolean; error?: string }>;
   syncPlan(planId: string, environment: StripeEnvironment): Promise<SyncResult>;
@@ -97,6 +106,9 @@ export interface IStripeService {
   cancelDowngrade(subscriptionId: string, environment: StripeEnvironment): Promise<{ success: boolean; error?: string }>;
   cancelSubscription(params: CancelSubscriptionParams): Promise<{ success: boolean; error?: string }>;
   reactivateSubscription(subscriptionId: string, environment: StripeEnvironment): Promise<{ success: boolean; error?: string }>;
+  // Test Packages
+  syncPackage(packageId: string, environment: StripeEnvironment): Promise<SyncResult>;
+  createPackageCheckout(params: PackageCheckoutParams): Promise<CheckoutResult>;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,278 @@
+/**
+ * PackagesManagement Page
+ * Admin test packages CRUD management page.
+ * Follows PlansManagement.tsx pattern.
+ */
+
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, RefreshCw, Package } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PackageCard } from '@/components/admin/packages/PackageCard';
+import { AdminTabNav } from '@/components/admin/AdminTabNav';
+import {
+  useAllTestPackages,
+  useUpdateTestPackage,
+  useDeleteTestPackage,
+} from '@/hooks/useTestPackagesQuery';
+import { getStripeService } from '@/services/stripe/stripeService';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import type { TestPackage } from '@/types/testPackages';
+import type { StripeEnvironment } from '@/types/plans';
+
+export default function PackagesManagement() {
+  const navigate = useNavigate();
+  const { data: packages, isLoading } = useAllTestPackages();
+  const updatePackageMutation = useUpdateTestPackage();
+  const deletePackageMutation = useDeleteTestPackage();
+
+  const [stripeEnv, setStripeEnv] = useState<StripeEnvironment>('test');
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
+  const [syncingPackageId, setSyncingPackageId] = useState<string | null>(null);
+
+  // Delete confirmation
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingPackage, setDeletingPackage] = useState<TestPackage | null>(null);
+
+  const handleNewPackage = () => navigate('/admin/pacotes/novo');
+
+  const handleEdit = (pkg: TestPackage) => navigate(`/admin/pacotes/${pkg.id}`);
+
+  const handleClone = (pkg: TestPackage) => navigate(`/admin/pacotes/novo?clone=${pkg.id}`);
+
+  const handleToggleActive = async (pkg: TestPackage) => {
+    const currentActive = pkg.isActive ?? (pkg as unknown as Record<string, unknown>).is_active ?? true;
+    const newStatus = !currentActive;
+    try {
+      await updatePackageMutation.mutateAsync({ id: pkg.id, updates: { is_active: newStatus } });
+      toast.success(newStatus ? 'Pacote ativado.' : 'Pacote desativado.');
+    } catch {
+      toast.error('Erro ao alterar status do pacote.');
+    }
+  };
+
+  const handleDeleteClick = (pkg: TestPackage) => {
+    setDeletingPackage(pkg);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingPackage) return;
+    try {
+      await deletePackageMutation.mutateAsync(deletingPackage.id);
+      toast.success(`Pacote "${deletingPackage.name}" excluido.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir pacote.');
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeletingPackage(null);
+    }
+  };
+
+  const handleSyncPackage = async (pkg: TestPackage) => {
+    setSyncingPackageId(pkg.id);
+    try {
+      const svc = await getStripeService();
+      const result = await svc.syncPackage(pkg.id, stripeEnv);
+      if (result.success) {
+        toast.success(`Pacote "${pkg.name}" sincronizado com Stripe!`);
+      } else {
+        toast.error(result.error ?? 'Erro ao sincronizar pacote.');
+      }
+    } catch {
+      toast.error('Erro ao sincronizar pacote com Stripe.');
+    } finally {
+      setSyncingPackageId(null);
+    }
+  };
+
+  const handleSyncAll = async () => {
+    setIsSyncingAll(true);
+    try {
+      const svc = await getStripeService();
+      const allPkgs = packages ?? [];
+      let successCount = 0;
+      let errorCount = 0;
+      for (const pkg of allPkgs) {
+        try {
+          const result = await svc.syncPackage(pkg.id, stripeEnv);
+          if (result.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch {
+          errorCount++;
+        }
+      }
+      if (errorCount === 0) {
+        toast.success(`Todos os ${successCount} pacotes sincronizados com Stripe!`);
+      } else {
+        toast.warning(`${successCount} sincronizados, ${errorCount} com erro.`);
+      }
+    } catch {
+      toast.error('Erro ao sincronizar pacotes com Stripe.');
+    } finally {
+      setIsSyncingAll(false);
+    }
+  };
+
+  const packageCount = packages?.length ?? 0;
+
+  return (
+    <DashboardLayout userType="admin">
+      <div className="space-y-6">
+        <PageHeader
+          title="Pacotes de Testes"
+          description="Gerencie pacotes de creditos de testes avulsos. Configure precos, recursos e sincronizacao com Stripe."
+          actions={
+            <Button onClick={handleNewPackage} className="bg-cyan-600 hover:bg-cyan-700 shrink-0">
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Pacote
+            </Button>
+          }
+          howItWorks={[
+            'Crie e gerencie pacotes de creditos de testes',
+            'Configure precos, quantidades e recursos incluidos',
+            'Use "Novo Pacote" para adicionar um pacote',
+          ]}
+        />
+
+        <AdminTabNav />
+
+        {/* Stripe environment toggle + sync all */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+            <button
+              className={cn(
+                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                stripeEnv === 'test' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+              onClick={() => setStripeEnv('test')}
+            >
+              Teste
+            </button>
+            <button
+              className={cn(
+                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                stripeEnv === 'live' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+              onClick={() => setStripeEnv('live')}
+            >
+              Producao
+            </button>
+          </div>
+          <Badge variant="outline" className={cn('text-xs', stripeEnv === 'live' ? 'text-red-600 border-red-300' : 'text-blue-600 border-blue-300')}>
+            Stripe: {stripeEnv === 'test' ? 'Teste' : 'Producao'}
+          </Badge>
+          <Badge variant="outline" className="text-xs text-muted-foreground">
+            {packageCount} {packageCount === 1 ? 'pacote' : 'pacotes'}
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs ml-auto"
+            disabled={isSyncingAll}
+            onClick={handleSyncAll}
+          >
+            <RefreshCw className={cn('w-3 h-3 mr-1.5', isSyncingAll && 'animate-spin')} />
+            {isSyncingAll ? 'Sincronizando...' : 'Sincronizar Todos'}
+          </Button>
+        </div>
+
+        {/* Loading state */}
+        {isLoading && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-card rounded-2xl shadow-soft overflow-hidden">
+                <Skeleton className="h-1.5 w-full" />
+                <div className="p-6 space-y-4">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-8 w-1/3" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!isLoading && packageCount === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <Package className="w-12 h-12 text-muted-foreground/50" />
+            <p className="text-lg text-muted-foreground">Nenhum pacote cadastrado.</p>
+            <Button onClick={handleNewPackage} className="bg-cyan-600 hover:bg-cyan-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Criar Primeiro Pacote
+            </Button>
+          </div>
+        )}
+
+        {/* Packages grid */}
+        {!isLoading && packageCount > 0 && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(packages ?? []).map((pkg, index) => (
+              <PackageCard
+                key={pkg.id}
+                pkg={pkg}
+                stripeEnv={stripeEnv}
+                onEdit={() => handleEdit(pkg)}
+                onClone={() => handleClone(pkg)}
+                onToggleActive={() => handleToggleActive(pkg)}
+                onDelete={() => handleDeleteClick(pkg)}
+                onSync={() => handleSyncPackage(pkg)}
+                isSyncing={syncingPackageId === pkg.id}
+                index={index}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Pacote</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir o pacote{' '}
+                <strong>&quot;{deletingPackage?.name}&quot;</strong> ({deletingPackage?.slug})?
+                Esta acao nao pode ser desfeita. Pacotes com compras ativas nao podem ser excluidos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleConfirmDelete();
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deletePackageMutation.isPending}
+              >
+                {deletePackageMutation.isPending ? 'Excluindo...' : 'Confirmar Exclusao'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </DashboardLayout>
+  );
+}
