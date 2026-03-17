@@ -495,6 +495,11 @@ export default function AdminCandidateDetail() {
                 <StatusIcon className="w-3 h-3 mr-1" />
                 {statusConfig.label}
               </Badge>
+              {mergedCandidate.visibilityLocked && (
+                <Badge variant="secondary" className="bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 text-xs">
+                  Colaborador
+                </Badge>
+              )}
             </div>
             <p className="text-sm text-muted-foreground">
               {mergedCandidate.title || 'Sem título profissional'}

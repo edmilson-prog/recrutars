@@ -26,6 +26,7 @@ export interface UserFiltersState {
   statuses: UserStatus[];
   roleId: string;
   noRole: boolean;
+  isCollaborator: boolean;
   plan: string;
   dateFrom: string;
   dateTo: string;
@@ -81,6 +82,7 @@ export function UserFilters({ filters, onChange, onClear }: UserFiltersProps) {
     filters.statuses.length +
     (filters.roleId ? 1 : 0) +
     (filters.noRole ? 1 : 0) +
+    (filters.isCollaborator ? 1 : 0) +
     (filters.plan ? 1 : 0) +
     (filters.dateFrom ? 1 : 0) +
     (filters.dateTo ? 1 : 0);
@@ -112,6 +114,23 @@ export function UserFilters({ filters, onChange, onClear }: UserFiltersProps) {
             </label>
           </div>
         ))}
+      </div>
+
+      <Separator />
+
+      {/* Origem */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Origem</Label>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="origin-collaborator"
+            checked={filters.isCollaborator}
+            onCheckedChange={(checked) => onChange({ ...filters, isCollaborator: !!checked })}
+          />
+          <label htmlFor="origin-collaborator" className="text-sm cursor-pointer text-cyan-600 dark:text-cyan-400 font-medium">
+            Colaborador
+          </label>
+        </div>
       </div>
 
       <Separator />
