@@ -499,7 +499,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
           </nav>
 
           {/* User profile section */}
-          <div className="p-3 border-t border-sidebar-border">
+          <div className="px-3 pt-3 pb-14 border-t border-sidebar-border shrink-0">
             {!isCollapsed ? (
               <div className="flex items-center gap-3 p-2 rounded-lg">
                 <Avatar className="w-9 h-9 rounded-lg flex-shrink-0">
