@@ -644,6 +644,7 @@ const App = () => (
                 <TeamBuilder />
               </ProtectedRoute>
             } />
+            <Route path="/empresa/equipes/desenvolvimento" element={<Navigate to="/empresa/equipes?tab=members" replace />} />
             <Route path="/empresa/equipes/desenvolvimento/:id" element={
               <ProtectedRoute allowedTypes={['company']}>
                 <TeamDevelopment />
@@ -659,6 +660,7 @@ const App = () => (
                 <TeamCulture />
               </ProtectedRoute>
             } />
+            <Route path="/empresa/equipes/evolucao" element={<Navigate to="/empresa/equipes?tab=members" replace />} />
             <Route path="/empresa/equipes/evolucao/:id" element={
               <ProtectedRoute allowedTypes={['company']}>
                 <TeamEvolution />
