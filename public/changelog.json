@@ -1,12 +1,60 @@
 {
   "versions": [
     {
+      "version": "1.39.0",
+      "codename": "Crew",
+      "type": "minor",
+      "releaseDate": "2026-03-17",
+      "description": "Redesign do fluxo de teste para colaboradores com CPF, envio multicanal, perfil enriquecido com 4 tabs, gestão manual de créditos e filtros de colaborador no admin.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Perfil do colaborador enriquecido com 4 tabs: Visão Geral, Competências, IA e Respostas (7 componentes reutilizados)",
+            "Header hero redesenhado no perfil do colaborador com CPF mascarado, telefone, fit score e badge de arquétipo",
+            "Gestão manual de créditos no admin: creditar, debitar e transferir entre empresas com auditoria",
+            "3 RPCs PostgreSQL para operações de crédito (admin_manual_credit, admin_manual_debit, admin_transfer_credits)",
+            "Painel de créditos na tab Assinatura do detalhe da empresa com KPIs, compras ativas e histórico de transações",
+            "KPI 'Colaboradores' na página Usuários & Permissões com filtro rápido clicável",
+            "Badge 'Colaborador' (cyan) nas listagens e detalhes de candidatos no admin",
+            "Filtro 'Origem' (Candidato/Colaborador) nas páginas admin de Candidatos e Usuários",
+            "SendTestModal com 3 canais de envio: link, email e WhatsApp com expiração 24h",
+            "CPF obrigatório e telefone WhatsApp no cadastro de membros de equipe",
+            "Verificação de CPF via Edge Function para testes de colaboradores",
+            "Deprecação do link público em favor de convites individuais"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Breadcrumb 404 corrigido para rotas de desenvolvimento e evolução",
+            "Breadcrumb 'Membro' redirecionava para 404 — corrigido com modal mais largo",
+            "gauge_status na Edge Function corrigido para usar 'mapped' em vez de 'completed'",
+            "Nomes normalizados para UPPERCASE em todas as tabelas do banco"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Grid de KPIs em Usuários & Permissões expandido de 7 para 8 colunas"
+          ]
+        },
+        {
+          "type": "deprecated",
+          "items": [
+            "Link público de teste comportamental (substituído por convites individuais)"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.38.1",
       "codename": "Market",
       "type": "patch",
       "releaseDate": "2026-03-17",
       "description": "Página dedicada de testes no admin com visão geral, resultados, convites e testes corporativos, e correção do KPI zerado no dashboard.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
