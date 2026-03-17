@@ -182,8 +182,10 @@ export class TeamsServiceSupabase implements ITeamsService {
       .from('team_members')
       .insert({
         company_id: input.companyId,
-        name: input.name,
+        name: input.name?.toUpperCase().trim() ?? input.name,
+        cpf: input.cpf ?? null,
         email: input.email,
+        phone: input.phone ?? null,
         avatar_url: input.avatar ?? null,
         department_id: input.departmentId,
         position_id: input.positionId,
@@ -207,7 +209,9 @@ export class TeamsServiceSupabase implements ITeamsService {
     const payload: Record<string, unknown> = {};
 
     if (updates.name !== undefined) payload.name = updates.name.toUpperCase().trim();
+    if (updates.cpf !== undefined) payload.cpf = updates.cpf;
     if (updates.email !== undefined) payload.email = updates.email;
+    if (updates.phone !== undefined) payload.phone = updates.phone;
     if (updates.avatar !== undefined) payload.avatar_url = updates.avatar;
     if (updates.departmentId !== undefined) payload.department_id = updates.departmentId;
     if (updates.positionId !== undefined) payload.position_id = updates.positionId;
@@ -398,7 +402,9 @@ export class TeamsServiceSupabase implements ITeamsService {
       id: row.id,
       companyId: row.company_id,
       name: row.name,
+      cpf: row.cpf ?? undefined,
       email: row.email,
+      phone: row.phone ?? undefined,
       avatar: row.avatar_url ?? undefined,
       departmentId: row.department_id,
       positionId: row.position_id,

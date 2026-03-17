@@ -27,6 +27,23 @@ import { Switch } from "@/components/ui/switch";
 
 import type { TeamMember, Department, Position } from "@/types/teamManagement";
 
+/** Apply CPF mask: 999.999.999-99 */
+function maskCpf(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
+/** Apply phone mask: (99) 99999-9999 */
+function maskPhone(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits.length ? `(${digits}` : "";
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 interface TeamMemberFormProps {
   member?: TeamMember | null;
   departments: Department[];
@@ -48,7 +65,9 @@ export default function TeamMemberForm({
 
   // Form state
   const [name, setName] = useState("");
+  const [cpf, setCpf] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [positionId, setPositionId] = useState("");
   const [hireDate, setHireDate] = useState("");
@@ -59,14 +78,18 @@ export default function TeamMemberForm({
     if (open) {
       if (member) {
         setName(member.name ?? "");
+        setCpf(member.cpf ?? "");
         setEmail(member.email ?? "");
+        setPhone(member.phone ?? "");
         setDepartmentId(member.departmentId ?? "");
         setPositionId(member.positionId ?? "");
         setHireDate(member.hireDate ?? "");
         setIsActive(member.isActive);
       } else {
         setName("");
+        setCpf("");
         setEmail("");
+        setPhone("");
         setDepartmentId("");
         setPositionId("");
         setHireDate("");
@@ -96,8 +119,10 @@ export default function TeamMemberForm({
     }
   }, [departmentId, positionId, positions]);
 
+  const cpfDigits = cpf.replace(/\D/g, "");
   const canSave =
     name.trim().length > 0 &&
+    cpfDigits.length === 11 &&
     email.trim().length > 0 &&
     departmentId.length > 0 &&
     positionId.length > 0;
@@ -107,7 +132,9 @@ export default function TeamMemberForm({
 
     const data: Partial<TeamMember> = {
       name: name.trim(),
+      cpf: cpfDigits || undefined,
       email: email.trim(),
+      phone: phone.replace(/\D/g, "") || undefined,
       departmentId,
       positionId,
       hireDate: hireDate || undefined,
@@ -150,6 +177,26 @@ export default function TeamMemberForm({
               />
             </div>
 
+            {/* CPF */}
+            <div className="space-y-2">
+              <Label htmlFor="member-cpf">
+                CPF <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="member-cpf"
+                placeholder="000.000.000-00"
+                value={cpf}
+                onChange={(e) => setCpf(maskCpf(e.target.value))}
+                maxLength={14}
+                disabled={isEditing && !!member?.cpf}
+              />
+              {isEditing && !!member?.cpf && (
+                <p className="text-xs text-muted-foreground">
+                  CPF não pode ser alterado após o cadastro.
+                </p>
+              )}
+            </div>
+
             {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="member-email">
@@ -162,6 +209,21 @@ export default function TeamMemberForm({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
+            </div>
+
+            {/* Telefone (WhatsApp) */}
+            <div className="space-y-2">
+              <Label htmlFor="member-phone">Telefone (WhatsApp)</Label>
+              <Input
+                id="member-phone"
+                placeholder="(99) 99999-9999"
+                value={phone}
+                onChange={(e) => setPhone(maskPhone(e.target.value))}
+                maxLength={15}
+              />
+              <p className="text-xs text-muted-foreground">
+                Necessário para envio de convites via WhatsApp.
+              </p>
             </div>
 
             {/* Departamento */}

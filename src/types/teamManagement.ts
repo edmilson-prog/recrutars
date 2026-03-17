@@ -48,7 +48,9 @@ export interface TeamMember {
   id: string;
   companyId?: string;
   name: string;
+  cpf?: string;
   email: string;
+  phone?: string;
   avatar?: string;
   departmentId: string;
   positionId: string;
