@@ -378,7 +378,7 @@ Deno.serve(async (req: Request) => {
       // Update team member if provided
       if (team_member_id) {
         const updates: Record<string, unknown> = {
-          gauge_status: 'completed',
+          gauge_status: 'mapped',
           last_test_date: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
