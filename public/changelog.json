@@ -1,12 +1,47 @@
 {
   "versions": [
     {
+      "version": "1.38.0",
+      "codename": "Market",
+      "type": "minor",
+      "releaseDate": "2026-03-17",
+      "description": "Sistema de pacotes de testes avulsos com créditos e checkout Stripe, integração WhatsApp via Evolution API, melhorias de notificações e skills padronizadas.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Sistema de pacotes de testes avulsos com créditos, checkout Stripe one-time, gestão admin e loja empresa",
+            "Integração WhatsApp via Evolution API para envio de mensagens a candidatos",
+            "Alerta sonoro em notificações realtime",
+            "Notificação automática quando candidato completa teste Gauge-Pro",
+            "Controles granulares de toggle para 12 triggers de notificação automática",
+            "Avatar na tabela de usuários e atalho de permissões no detalhe candidato/empresa",
+            "Dias de cooldown do Gauge-Pro configuráveis via configurações admin",
+            "Timer de contagem regressiva no cooldown de teste comportamental",
+            "Migração de skills legadas para padronizadas com banners de revisão"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Planos inativos agora ocultos de candidatos e empresas",
+            "Perfil de usuário no sidebar não ficava mais atrás do GlassFooter",
+            "Máscara de telefone não remove mais o DDD como código de país",
+            "Acentos corrigidos em componentes WhatsApp e payload checkNumbers",
+            "Botão de envio de notificação agora cria notificações corretamente",
+            "Banner de impersonação alterado de fixed para sticky evitando sobreposição do menu"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.37.1",
       "codename": "Beacon",
       "type": "patch",
       "releaseDate": "2026-03-16",
       "description": "Correção na sincronização de nome e email entre perfil e autenticação do Supabase.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
