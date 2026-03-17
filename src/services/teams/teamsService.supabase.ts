@@ -206,7 +206,7 @@ export class TeamsServiceSupabase implements ITeamsService {
   async updateTeamMember(id: string, updates: Partial<TeamMember>): Promise<TeamMember> {
     const payload: Record<string, unknown> = {};
 
-    if (updates.name !== undefined) payload.name = updates.name;
+    if (updates.name !== undefined) payload.name = updates.name.toUpperCase().trim();
     if (updates.email !== undefined) payload.email = updates.email;
     if (updates.avatar !== undefined) payload.avatar_url = updates.avatar;
     if (updates.departmentId !== undefined) payload.department_id = updates.departmentId;

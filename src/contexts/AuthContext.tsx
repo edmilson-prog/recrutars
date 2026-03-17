@@ -390,7 +390,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (type === 'company' && cnpjData) {
-      metadata.name = cnpjData.nomeFantasia || cnpjData.razaoSocial;
+      metadata.name = (cnpjData.nomeFantasia || cnpjData.razaoSocial).toUpperCase();
       metadata.cnpj = cnpjData.cnpj;
       metadata.razao_social = cnpjData.razaoSocial;
       metadata.nome_fantasia = cnpjData.nomeFantasia;

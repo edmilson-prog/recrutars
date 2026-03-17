@@ -146,7 +146,7 @@ export class CompaniesServiceSupabase implements ICompaniesService {
     // Convert camelCase updates to snake_case DB columns
     const dbUpdates: Record<string, unknown> = {};
 
-    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.name !== undefined) dbUpdates.name = updates.name.toUpperCase().trim();
     if (updates.cnpj !== undefined) dbUpdates.cnpj = updates.cnpj;
     if (updates.logo !== undefined) dbUpdates.logo_url = updates.logo;
     if (updates.industry !== undefined) dbUpdates.industry = updates.industry;

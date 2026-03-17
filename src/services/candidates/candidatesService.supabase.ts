@@ -177,7 +177,7 @@ export class CandidatesServiceSupabase implements ICandidatesService {
       dbUpdates.anonymous_id = updates.visibility.anonymousId;
     }
     // Campos de perfil consolidado
-    if (updates.displayName !== undefined) dbUpdates.display_name = updates.displayName;
+    if (updates.displayName !== undefined) dbUpdates.display_name = updates.displayName.toUpperCase().trim();
     if (updates.city !== undefined) dbUpdates.city = updates.city;
     if (updates.state !== undefined) dbUpdates.state = updates.state;
     if (updates.openToRelocation !== undefined) dbUpdates.open_to_relocation = updates.openToRelocation;
