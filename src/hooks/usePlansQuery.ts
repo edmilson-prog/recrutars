@@ -26,6 +26,17 @@ export function usePlans(type?: 'candidate' | 'company') {
   });
 }
 
+/** Admin-only: returns ALL plans including inactive */
+export function useAllPlans(type?: 'candidate' | 'company') {
+  return useQuery({
+    queryKey: [PLANS_KEY, 'all', { type }],
+    queryFn: async () => {
+      const svc = await getPlansService();
+      return svc.getAllPlans(type);
+    },
+  });
+}
+
 export function usePlan(id: string | undefined) {
   return useQuery({
     queryKey: [PLANS_KEY, id],

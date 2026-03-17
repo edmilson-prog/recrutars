@@ -67,6 +67,20 @@ function normalizeAssignmentRow(row: Record<string, unknown>): PlanCapabilityAss
 
 export class SupabasePlansService implements IPlansService {
   async getPlans(type?: 'candidate' | 'company'): Promise<Plan[]> {
+    let query = supabase.from('plans').select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (type) {
+      query = query.eq('type', type);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []).map(r => normalizePlanRow(r as Record<string, unknown>));
+  }
+
+  async getAllPlans(type?: 'candidate' | 'company'): Promise<Plan[]> {
     let query = supabase.from('plans').select('*').order('sort_order', { ascending: true });
 
     if (type) {

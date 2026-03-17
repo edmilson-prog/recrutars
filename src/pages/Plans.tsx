@@ -35,8 +35,7 @@ export default function PlansPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<PlanPeriod>('monthly');
   const [planType, setPlanType] = useState<'company' | 'candidate'>('company');
 
-  const allPlans = planType === 'company' ? companyPlans : candidatePlans;
-  const activePlans = allPlans.filter((p) => p.isActive);
+  const activePlans = planType === 'company' ? companyPlans : candidatePlans;
 
   // Desconto dinamico: maior desconto entre planos ativos
   const maxDiscount = activePlans.length > 0

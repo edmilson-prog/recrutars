@@ -32,8 +32,11 @@ export interface CreateSubscriptionData {
 }
 
 export interface IPlansService {
-  /** List all plans, optionally filtered by type. */
+  /** List active plans, optionally filtered by type. */
   getPlans(type?: 'candidate' | 'company'): Promise<Plan[]>;
+
+  /** List ALL plans including inactive (admin only). */
+  getAllPlans(type?: 'candidate' | 'company'): Promise<Plan[]>;
 
   /** Get a single plan by ID. */
   getPlan(id: string): Promise<Plan | null>;

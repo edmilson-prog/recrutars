@@ -6,7 +6,7 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import { usePlans as usePlansQuery } from './usePlansQuery';
+import { usePlans as usePlansQuery, useAllPlans as useAllPlansQuery } from './usePlansQuery';
 
 export function usePlans() {
   const { data: plans = [], isLoading, error } = usePlansQuery();
@@ -40,4 +40,25 @@ export function usePlans() {
     isLoading,
     error,
   };
+}
+
+/** Admin-only: includes inactive plans */
+export function useAllPlansAdmin() {
+  const { data: plans = [], isLoading, error } = useAllPlansQuery();
+
+  const candidatePlans = useMemo(
+    () => plans.filter(p => p.type === 'candidate').sort((a, b) => a.order - b.order),
+    [plans],
+  );
+  const companyPlans = useMemo(
+    () => plans.filter(p => p.type === 'company').sort((a, b) => a.order - b.order),
+    [plans],
+  );
+
+  const getPlanById = useCallback(
+    (id: string) => plans.find(p => p.id === id),
+    [plans],
+  );
+
+  return { plans, candidatePlans, companyPlans, getPlanById, isLoading, error };
 }

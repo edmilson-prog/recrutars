@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { PlanCard } from '@/components/admin/plans/PlanCard';
-import { usePlans } from '@/hooks/usePlans';
+import { useAllPlansAdmin as usePlans } from '@/hooks/usePlans';
 import { useUpdatePlan, useDeletePlan } from '@/hooks/usePlansQuery';
 import { useSyncAllPlans } from '@/hooks/useStripeQuery';
 import { cn } from '@/lib/utils';
