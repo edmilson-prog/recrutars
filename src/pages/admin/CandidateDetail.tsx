@@ -488,6 +488,11 @@ export default function AdminCandidateDetail() {
               <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">
                 {mergedCandidate.displayName || mergedCandidate.name}
               </h1>
+              {mergedCandidate.visibilityLocked && (
+                <Badge variant="outline" className="text-amber-600 border-amber-400 text-[10px]">
+                  Colaborador
+                </Badge>
+              )}
               <Badge
                 variant="secondary"
                 className={cn(statusConfig.bgColor, statusConfig.color)}

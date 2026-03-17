@@ -599,6 +599,11 @@ export default function AdminCandidates() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-semibold text-lg truncate">{candidate.name}</h3>
+                {candidate.visibilityLocked && (
+                  <Badge variant="outline" className="text-amber-600 border-amber-400 text-[10px]">
+                    Colaborador
+                  </Badge>
+                )}
                 <Badge
                   variant="secondary"
                   className={cn(STATUS_CONFIG[candidate.status].bgColor, STATUS_CONFIG[candidate.status].color)}
