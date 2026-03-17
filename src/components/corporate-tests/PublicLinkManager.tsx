@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Link2, Copy, Check, Unlink, Loader2 } from 'lucide-react';
+import { Link2, Copy, Check, Unlink, Loader2, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useUpdatePublicLink } from '@/hooks/useCompanyTestsQuery';
 import { getAppBaseUrl } from '@/constants/app';
@@ -26,6 +27,9 @@ export function PublicLinkManager({ testId, testName, existingSlug, isActive = f
   const [slug, setSlug] = useState(existingSlug || '');
   const [copied, setCopied] = useState(false);
   const updatePublicLink = useUpdatePublicLink();
+
+  // Deprecation: public links are being replaced by individual collaborator invitations
+  const isDeprecated = true;
 
   const hasLink = !!existingSlug;
   const link = `${getAppBaseUrl()}/teste/${existingSlug || slug}`;
@@ -57,6 +61,15 @@ export function PublicLinkManager({ testId, testName, existingSlug, isActive = f
 
   return (
     <div className="space-y-4">
+      {isDeprecated && (
+        <Alert className="border-amber-500/50 bg-amber-500/10">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <AlertDescription className="text-sm">
+            Links públicos estão sendo substituídos por convites individuais via Gestão de Equipes.
+            Pré-cadastre o colaborador e envie o teste diretamente pelo perfil dele.
+          </AlertDescription>
+        </Alert>
+      )}
       {!hasLink ? (
         <div className="space-y-3">
           <div className="space-y-2">
