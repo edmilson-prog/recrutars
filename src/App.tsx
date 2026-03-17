@@ -623,6 +623,7 @@ const App = () => (
                 <TeamManagement />
               </ProtectedRoute>
             } />
+            <Route path="/empresa/equipes/membro" element={<Navigate to="/empresa/equipes?tab=members" replace />} />
             <Route path="/empresa/equipes/membro/:id" element={
               <ProtectedRoute allowedTypes={['company']}>
                 <TeamMemberProfile />

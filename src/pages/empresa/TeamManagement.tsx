@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { pageTransition } from '@/lib/animations';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -65,7 +65,8 @@ export default function TeamManagement() {
   // Fetch all positions (using 'all' as departmentId to load all)
   const { data: fetchedPositions = [], isLoading: positionsLoading } = usePositions('all');
 
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
 
   // React Query data — departments and positions come directly from Supabase
   const departments = fetchedDepartments;

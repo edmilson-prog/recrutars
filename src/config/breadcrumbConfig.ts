@@ -51,8 +51,9 @@ export const SEGMENT_LABELS: Record<string, string> = {
   teste: 'Teste',
   resultado: 'Resultado',
   comparar: 'Comparar',
-  relatorios: 'Relatorios',
+  relatorios: 'Relatórios',
   tickets: 'Tickets',
+  membro: 'Membro',
 };
 
 /**
