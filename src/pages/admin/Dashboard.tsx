@@ -9,6 +9,8 @@ import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useCompanies } from '@/hooks/useCompaniesQuery';
 import { useApplications } from '@/hooks/useApplicationsQuery';
 import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { calculateMatchBreakdown, calculateMatchStatistics } from '@/lib/matchCalculator';
@@ -44,11 +46,36 @@ export default function AdminDashboard() {
   const { data: applicationsResult } = useApplications(undefined, { page: 1, pageSize: 1000 });
   const { data: testsResult } = useBehavioralTests();
 
+  // Gauge-Pro completed tests count (modern test system)
+  const { data: gaugeProCount } = useQuery({
+    queryKey: ['admin', 'gauge-pro-completed-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('gauge_pro_results')
+        .select('*', { count: 'exact', head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const { data: gaugeProThisMonthCount } = useQuery({
+    queryKey: ['admin', 'gauge-pro-completed-this-month'],
+    queryFn: async () => {
+      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+      const { count, error } = await supabase
+        .from('gauge_pro_results')
+        .select('*', { count: 'exact', head: true })
+        .gte('generated_at', startOfMonth);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   const jobs = jobsResult?.data ?? [];
   const candidates = candidatesResult?.data ?? [];
   const companies = companiesResult?.data ?? [];
   const applications = applicationsResult?.data ?? [];
-  const tests = testsResult?.data ?? [];
+  const tests = testsResult ?? [];
 
   // Compute real metrics from Supabase data
   const adminStats = useMemo(() => {
@@ -58,14 +85,16 @@ export default function AdminDashboard() {
     const totalCompanies = companies.length;
     const totalCandidates = candidates.length;
     const activeJobs = jobs.filter((j: any) => (j.status ?? j.status) === 'active').length;
-    const testsCompleted = tests.filter((t: any) => (t.status ?? t.status) === 'completed').length;
+    const legacyCompleted = tests.filter((t: any) => (t.status ?? t.status) === 'completed').length;
+    const testsCompleted = (gaugeProCount ?? 0) + legacyCompleted;
 
     const getCreatedAt = (item: any) => new Date(item.createdAt ?? item.created_at);
 
     const newCompaniesThisMonth = companies.filter(c => getCreatedAt(c) >= startOfMonth).length;
     const newCandidatesThisMonth = candidates.filter(c => getCreatedAt(c) >= startOfMonth).length;
     const newJobsThisMonth = jobs.filter((j: any) => (j.status ?? j.status) === 'active' && getCreatedAt(j) >= startOfMonth).length;
-    const newTestsThisMonth = tests.filter((t: any) => (t.status ?? t.status) === 'completed' && getCreatedAt(t) >= startOfMonth).length;
+    const legacyTestsThisMonth = tests.filter((t: any) => (t.status ?? t.status) === 'completed' && getCreatedAt(t) >= startOfMonth).length;
+    const newTestsThisMonth = (gaugeProThisMonthCount ?? 0) + legacyTestsThisMonth;
 
     // Match rate: percentage of applications with high match (>= 80%)
     const matchRate = applications.length > 0
@@ -73,7 +102,7 @@ export default function AdminDashboard() {
       : 0;
 
     return { totalCompanies, totalCandidates, activeJobs, testsCompleted, newCompaniesThisMonth, newCandidatesThisMonth, newJobsThisMonth, newTestsThisMonth, matchRate };
-  }, [companies, candidates, jobs, tests, applications]);
+  }, [companies, candidates, jobs, tests, applications, gaugeProCount, gaugeProThisMonthCount]);
 
   const stats = useMemo(() => [
     {
