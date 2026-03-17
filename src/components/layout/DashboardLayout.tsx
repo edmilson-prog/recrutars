@@ -77,6 +77,7 @@ const adminNavGroups: NavGroup[] = [
       { href: '/admin/empresas', label: 'Empresas', icon: Building2 },
       { href: '/admin/candidatos', label: 'Candidatos', icon: Users },
       { href: '/admin/vagas', label: 'Vagas', icon: Briefcase },
+      { href: '/admin/testes', label: 'Testes', icon: Brain },
     ],
   },
   {

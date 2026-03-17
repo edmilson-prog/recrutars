@@ -66,6 +66,7 @@ import AdminWebhookLog from "./pages/admin/WebhookLog";
 import AdminBillingDashboard from "./pages/admin/BillingDashboard";
 // Test Packages
 import AdminPackagesManagement from "./pages/admin/PackagesManagement";
+import AdminTests from "./pages/admin/AdminTests";
 import AdminPackageDetail from "./pages/admin/PackageDetail";
 import CompanyCheckoutSuccess from "./pages/empresa/CheckoutSuccess";
 import CompanyCheckoutCancel from "./pages/empresa/CheckoutCancel";
@@ -409,6 +410,13 @@ const App = () => (
             <Route path="/admin/assinaturas/billing" element={
               <ProtectedRoute allowedTypes={['admin']}>
                 <AdminBillingDashboard />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin Tests Overview */}
+            <Route path="/admin/testes" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminTests />
               </ProtectedRoute>
             } />
 
