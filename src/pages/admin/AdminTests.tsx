@@ -1,6 +1,6 @@
 /**
  * AdminTests — Admin tests overview page with 4 tabs:
- *   1. Visao Geral (KPIs, charts, funnel)
+ *   1. Visão Geral (KPIs, charts, funnel)
  *   2. Resultados (search + table + detail sheet)
  *   3. Convites (invitations table)
  *   4. Testes Corporativos (company tests table)
@@ -454,7 +454,7 @@ function TableSkeleton({ rows = 5, cols = 5 }: { rows?: number; cols?: number })
 }
 
 // ---------------------------------------------------------------------------
-// Tab 1: Visao Geral
+// Tab 1: Visão Geral
 // ---------------------------------------------------------------------------
 
 function OverviewTab() {
@@ -513,7 +513,7 @@ function OverviewTab() {
       {/* KPI Cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCard
-          title="Testes Concluidos"
+          title="Testes Concluídos"
           value={totalCount ?? 0}
           subtitle={thisMonthCount ? `+${thisMonthCount} este mes` : undefined}
           icon={Brain}
@@ -528,14 +528,14 @@ function OverviewTab() {
           index={1}
         />
         <KpiCard
-          title="Taxa de Conclusao"
+          title="Taxa de Conclusão"
           value={`${completionRate}%`}
           icon={TrendingUp}
           loading={invLoading}
           index={2}
         />
         <KpiCard
-          title="Tempo Medio"
+          title="Tempo Médio"
           value={`${avgTime ?? 0}min`}
           icon={Timer}
           loading={avgLoading}
@@ -587,7 +587,7 @@ function OverviewTab() {
                   dataKey="count"
                   stroke="#06b6d4"
                   strokeWidth={2}
-                  name="Concluidos"
+                  name="Concluídos"
                   dot={{ fill: '#06b6d4', r: 3 }}
                   activeDot={{ r: 5 }}
                 />
@@ -597,7 +597,7 @@ function OverviewTab() {
             <EmptyState
               icon={FileText}
               title="Sem dados"
-              description="Nenhum teste concluido nos ultimos 30 dias."
+              description="Nenhum teste concluído nos últimos 30 dias."
             />
           )}
         </motion.div>
@@ -610,7 +610,7 @@ function OverviewTab() {
           className="bg-card rounded-2xl p-6 shadow-soft"
         >
           <h3 className="text-lg font-semibold text-foreground mb-4">
-            Distribuicao de Arquetipos
+            Distribuição de Arquétipos
           </h3>
           {resultsLoading ? (
             <Skeleton className="h-[280px] w-full" />
@@ -651,7 +651,7 @@ function OverviewTab() {
           ) : (
             <EmptyState
               icon={Brain}
-              title="Sem arquetipos"
+              title="Sem arquétipos"
               description="Nenhum resultado Gauge-Pro gerado ainda."
             />
           )}
@@ -666,7 +666,7 @@ function OverviewTab() {
         className="bg-card rounded-2xl p-6 shadow-soft"
       >
         <h3 className="text-lg font-semibold text-foreground mb-6">
-          Funil de Conclusao
+          Funil de Conclusão
         </h3>
         {invLoading ? (
           <div className="flex gap-6 justify-center">
@@ -679,7 +679,7 @@ function OverviewTab() {
             {[
               { label: 'Convidados', value: funnelData.invited, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' },
               { label: 'Iniciados', value: funnelData.started, color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300' },
-              { label: 'Concluidos', value: funnelData.completed, color: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' },
+              { label: 'Concluídos', value: funnelData.completed, color: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' },
             ].map((step, idx) => (
               <div key={step.label} className="flex items-center gap-4">
                 <div className={cn('text-center p-6 rounded-2xl min-w-[140px]', step.color)}>
@@ -754,7 +754,7 @@ function ResultsTab() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por candidato, e-mail ou arquetipo..."
+              placeholder="Buscar por candidato, e-mail ou arquétipo..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
@@ -799,7 +799,7 @@ function ResultsTab() {
           <EmptyState
             icon={Brain}
             title="Nenhum resultado encontrado"
-            description="Nao ha resultados de testes que correspondam aos filtros selecionados."
+            description="Não há resultados de testes que correspondam aos filtros selecionados."
           />
         ) : (
           <Table>
@@ -807,8 +807,8 @@ function ResultsTab() {
               <TableRow>
                 <TableHead>Candidato</TableHead>
                 <TableHead>Tipo</TableHead>
-                <TableHead>Arquetipo</TableHead>
-                <TableHead>Dimensao Principal</TableHead>
+                <TableHead>Arquétipo</TableHead>
+                <TableHead>Dimensão Principal</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
@@ -878,7 +878,7 @@ function ResultsTab() {
               <div className="mt-6 space-y-6">
                 {/* Archetype */}
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Arquetipo</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Arquétipo</h4>
                   <Badge className="bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300 border-0 text-sm px-3 py-1">
                     {selectedResult.gauge_pro_archetypes?.name ?? 'Desconhecido'}
                   </Badge>
@@ -888,7 +888,7 @@ function ResultsTab() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                      Dimensao Principal
+                      Dimensão Principal
                     </h4>
                     <span className="font-semibold text-foreground">
                       {selectedResult.primary_dimension
@@ -899,7 +899,7 @@ function ResultsTab() {
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                      Dimensao Secundaria
+                      Dimensão Secundária
                     </h4>
                     <span className="font-semibold text-foreground">
                       {selectedResult.secondary_dimension
@@ -1078,7 +1078,7 @@ function InvitationsTab() {
           <EmptyState
             icon={Mail}
             title="Nenhum convite encontrado"
-            description="Nao ha convites de teste que correspondam a busca."
+            description="Não há convites de teste que correspondam à busca."
           />
         ) : (
           <Table>
@@ -1087,7 +1087,7 @@ function InvitationsTab() {
                 <TableHead>Candidato</TableHead>
                 <TableHead>Empresa</TableHead>
                 <TableHead>Teste</TableHead>
-                <TableHead>Metodo</TableHead>
+                <TableHead>Método</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Enviado em</TableHead>
                 <TableHead>Concluido em</TableHead>
@@ -1200,7 +1200,7 @@ function CorporateTestsTab() {
           <EmptyState
             icon={ClipboardList}
             title="Nenhum teste corporativo encontrado"
-            description="Nao ha testes corporativos cadastrados ou que correspondam a busca."
+            description="Não há testes corporativos cadastrados ou que correspondam à busca."
           />
         ) : (
           <Table>
@@ -1210,7 +1210,7 @@ function CorporateTestsTab() {
                 <TableHead>Empresa</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Total Convites</TableHead>
-                <TableHead className="text-right">Concluidos</TableHead>
+                <TableHead className="text-right">Concluídos</TableHead>
                 <TableHead className="text-right">Taxa %</TableHead>
                 <TableHead>Criado em</TableHead>
               </TableRow>
@@ -1294,16 +1294,16 @@ export default function AdminTests() {
           title="Testes Comportamentais"
           description="Visao geral de todos os testes Gauge-Pro, resultados, convites e testes corporativos da plataforma."
           howItWorks={[
-            'A aba "Visao Geral" mostra KPIs, graficos de evolucao e funil de conclusao',
-            'Em "Resultados" voce pode buscar e filtrar todos os resultados de testes',
+            'A aba "Visão Geral" mostra KPIs, gráficos de evolução e funil de conclusão',
+            'Em "Resultados" você pode buscar e filtrar todos os resultados de testes',
             'A aba "Convites" lista todos os convites enviados com status de acompanhamento',
-            '"Testes Corporativos" exibe os testes criados pelas empresas e suas taxas de conclusao',
+            '"Testes Corporativos" exibe os testes criados pelas empresas e suas taxas de conclusão',
           ]}
         />
 
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-6">
-            <TabsTrigger value="overview">Visao Geral</TabsTrigger>
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="results">Resultados</TabsTrigger>
             <TabsTrigger value="invitations">Convites</TabsTrigger>
             <TabsTrigger value="corporate">Testes Corporativos</TabsTrigger>
