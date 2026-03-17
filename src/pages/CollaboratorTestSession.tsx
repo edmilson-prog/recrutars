@@ -42,7 +42,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
-type SessionStep = 'loading' | 'identify' | 'login_prompt' | 'test' | 'complete' | 'error';
+type SessionStep = 'loading' | 'cpf_confirm' | 'identify' | 'login_prompt' | 'test' | 'complete' | 'error';
 
 interface InvitationData {
   id: string;
@@ -67,6 +67,14 @@ interface TestInfo {
 interface Department {
   id: string;
   name: string;
+}
+
+interface TeamMemberInfo {
+  id: string;
+  name: string;
+  email: string;
+  maskedCpf: string | null;
+  hasCpf: boolean;
 }
 
 export default function CollaboratorTestSession() {
@@ -97,6 +105,12 @@ export default function CollaboratorTestSession() {
   const [isNewUser, setIsNewUser] = useState(navState?.isNewUser ?? false);
   const [candidateId, setCandidateId] = useState<string | null>(null);
   const [invitationId, setInvitationId] = useState<string | null>(null);
+
+  // Team member CPF confirmation
+  const [teamMemberInfo, setTeamMemberInfo] = useState<TeamMemberInfo | null>(null);
+  const [cpfLast3, setCpfLast3] = useState('');
+  const [cpfError, setCpfError] = useState('');
+  const [verifyingCpf, setVerifyingCpf] = useState(false);
 
   // Login form
   const [loginPassword, setLoginPassword] = useState('');
@@ -144,6 +158,11 @@ export default function CollaboratorTestSession() {
         setFormName(inv.candidate_name || '');
         setFormEmail(inv.candidate_email || '');
 
+        // Store team member info if available
+        if (data.teamMember) {
+          setTeamMemberInfo(data.teamMember);
+        }
+
         // Determine initial step
         if (inv.status === 'completed') {
           setStep('complete');
@@ -151,9 +170,15 @@ export default function CollaboratorTestSession() {
           return;
         }
 
+        // Pre-registered team member with CPF: show CPF confirmation
+        if (inv.team_member_id && data.teamMember?.hasCpf) {
+          setStep('cpf_confirm');
+          return;
+        }
+
         // Internal invite with existing candidate: skip identify
         if (inv.invite_origin === 'invite_base' && inv.candidate_id) {
-          setIsNewUser(false); // Existing candidate from company base
+          setIsNewUser(false);
           setStep('login_prompt');
           return;
         }
@@ -176,7 +201,7 @@ export default function CollaboratorTestSession() {
     if (!user || !invitation) return;
 
     if (step === 'login_prompt' || step === 'identify') {
-      // Already logged in — skip identification/login and proceed to test
+      // Already logged in — skip identification/login and proceed to test (but NOT cpf_confirm)
       proceedToTest();
     }
   }, [user, authLoading, invitation, step]);
@@ -298,6 +323,54 @@ export default function CollaboratorTestSession() {
     }
   };
 
+  // Handle CPF verification for pre-registered team members
+  const handleCpfVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!invitation?.teamMemberId || cpfLast3.length !== 3) return;
+
+    setCpfError('');
+    setVerifyingCpf(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('process-collaborator-invite', {
+        body: {
+          action: 'verify_cpf',
+          team_member_id: invitation.teamMemberId,
+          cpf_last3: cpfLast3,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) {
+        setCpfError(data.error);
+        if (!data.valid) return;
+        throw new Error(data.error);
+      }
+
+      // CPF verified — set candidate info
+      if (data.candidateId) {
+        setCandidateId(data.candidateId);
+      }
+      setIsNewUser(data.isNewUser ?? false);
+
+      // Silent auth if new user
+      if (data.tokenHash) {
+        await supabase.auth.verifyOtp({
+          token_hash: data.tokenHash,
+          type: 'magiclink',
+        });
+      }
+
+      proceedToTest();
+    } catch (err) {
+      if (!cpfError) {
+        setCpfError(err instanceof Error ? err.message : 'Erro ao verificar CPF.');
+      }
+    } finally {
+      setVerifyingCpf(false);
+    }
+  };
+
   // Gauge-Pro assessment hook
   const gaugePro = useGaugeProAssessment({
     candidateId: candidateId || user?.id || 'temp',
@@ -308,14 +381,9 @@ export default function CollaboratorTestSession() {
           body: {
             action: 'mark_completed',
             invitation_id: invitationId,
-            result_data: gaugeResult ? {
-              scores: gaugeResult.finalScores,
-              archetype_id: gaugeResult.archetype?.id,
-              primary_dimension: gaugeResult.primaryDimension,
-              secondary_dimension: gaugeResult.secondaryDimension,
-              strengths: gaugeResult.strengths,
-              development_areas: gaugeResult.developmentAreas,
-            } : undefined,
+            team_member_id: invitation?.teamMemberId || null,
+            archetype: gaugeResult?.archetype?.id,
+            gauge_scores: gaugeResult?.finalScores,
           },
         });
       }
@@ -371,6 +439,82 @@ export default function CollaboratorTestSession() {
         Voltar ao inicio
       </Button>
     </div>
+  );
+
+  const renderCpfConfirm = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="max-w-lg mx-auto"
+    >
+      <Card>
+        <CardContent className="pt-6 space-y-6">
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-foreground">
+              {testInfo?.name || 'Teste Comportamental'}
+            </h2>
+            {companyName && (
+              <p className="text-sm text-muted-foreground mt-1">{companyName}</p>
+            )}
+            <p className="text-sm text-muted-foreground mt-3">
+              Confirme sua identidade para iniciar o teste.
+            </p>
+          </div>
+
+          <div className="space-y-3 bg-muted/50 rounded-lg p-4">
+            <div>
+              <span className="text-xs text-muted-foreground">Nome</span>
+              <p className="font-medium">{teamMemberInfo?.name}</p>
+            </div>
+            {teamMemberInfo?.maskedCpf && (
+              <div>
+                <span className="text-xs text-muted-foreground">CPF</span>
+                <p className="font-mono">{teamMemberInfo.maskedCpf}</p>
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={handleCpfVerify} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cpf-last3">
+                Digite os 3 ultimos digitos do seu CPF
+              </Label>
+              <Input
+                id="cpf-last3"
+                value={cpfLast3}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, '').slice(0, 3);
+                  setCpfLast3(v);
+                  setCpfError('');
+                }}
+                placeholder="000"
+                maxLength={3}
+                className="text-center text-2xl font-mono tracking-widest"
+                autoFocus
+                disabled={verifyingCpf}
+              />
+              {cpfError && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertDescription>{cpfError}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={verifyingCpf || cpfLast3.length !== 3}
+            >
+              {verifyingCpf ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
+              Confirmar e Iniciar
+              {!verifyingCpf && <ArrowRight className="w-4 h-4 ml-2" />}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 
   const renderIdentify = () => (
@@ -641,6 +785,7 @@ export default function CollaboratorTestSession() {
   const renderStep = () => {
     switch (step) {
       case 'loading': return renderLoading();
+      case 'cpf_confirm': return renderCpfConfirm();
       case 'identify': return renderIdentify();
       case 'login_prompt': return renderLoginPrompt();
       case 'test': return renderTest();
