@@ -23,6 +23,7 @@ export { default as TeamMemberForm } from './TeamMemberForm';
 export { default as TeamMemberCard } from './TeamMemberCard';
 export { default as GaugeStatusBadge } from './GaugeStatusBadge';
 export { default as CandidateImportModal } from './CandidateImportModal';
+export { default as SendTestModal } from './SendTestModal';
 export { default as SpreadsheetImport } from './SpreadsheetImport';
 export { MemberProfile } from './MemberProfile';
 export { default as CollectiveRadarChart } from './CollectiveRadarChart';

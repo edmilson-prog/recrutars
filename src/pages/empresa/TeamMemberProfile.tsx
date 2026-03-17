@@ -3,19 +3,21 @@
  * PRD-055: Página de perfil completo do colaborador.
  */
 
+import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { motion } from 'framer-motion';
 import { pageTransition } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Send, Loader2 } from 'lucide-react';
 import { MemberProfile } from '@/components/team-management/MemberProfile';
+import SendTestModal from '@/components/team-management/SendTestModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamMember, useDepartments, usePositions } from '@/hooks/useTeamsQuery';
-import { useQuery } from '@tanstack/react-query';
+import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useGaugeProSessionByCandidate, useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
-import { Loader2 } from 'lucide-react';
 
 export default function TeamMemberProfile() {
   const { id } = useParams();
@@ -36,6 +38,28 @@ export default function TeamMemberProfile() {
   const candidateId = member?.importedFromCandidateId ?? '';
   const { data: gaugeProAssessment } = useGaugeProSessionByCandidate(candidateId);
   const { data: gaugeProResult } = useGaugeProResultByCandidate(candidateId);
+
+  const { data: creditBalance } = useCompanyCreditBalance(companyId);
+  const queryClient = useQueryClient();
+  const [sendTestOpen, setSendTestOpen] = useState(false);
+
+  // Get active company test for behavioral assessments
+  const { data: companyTests = [] } = useQuery({
+    queryKey: ['company-tests-active', companyId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('company_tests')
+        .select('id, name, status')
+        .eq('company_id', companyId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!companyId,
+  });
+
+  const activeTestId = companyTests.length > 0 ? companyTests[0].id : '';
 
   const { data: memberTestHistory = [] } = useQuery({
     queryKey: ['team-member-test-history', candidateId],
@@ -107,12 +131,21 @@ export default function TeamMemberProfile() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold">Perfil do Colaborador</h1>
             <p className="text-muted-foreground">
               Visualize o perfil comportamental completo de {member.name}
             </p>
           </div>
+          {activeTestId && (
+            <Button
+              className="bg-cyan-600 hover:bg-cyan-700 shrink-0"
+              onClick={() => setSendTestOpen(true)}
+            >
+              <Send className="h-4 w-4 mr-2" />
+              Enviar Teste Comportamental
+            </Button>
+          )}
         </div>
 
         <MemberProfile
@@ -132,6 +165,20 @@ export default function TeamMemberProfile() {
           onViewDevelopment={() => navigate(`/empresa/equipes/desenvolvimento/${id}`)}
           onViewEvolution={() => navigate(`/empresa/equipes/evolucao/${id}`)}
         />
+
+        {member && activeTestId && (
+          <SendTestModal
+            open={sendTestOpen}
+            onOpenChange={setSendTestOpen}
+            member={member}
+            companyId={companyId}
+            testId={activeTestId}
+            creditBalance={creditBalance ?? 0}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ['team-member-test-history'] });
+            }}
+          />
+        )}
       </motion.div>
     </DashboardLayout>
   );
