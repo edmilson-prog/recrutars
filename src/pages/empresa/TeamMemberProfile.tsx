@@ -19,7 +19,9 @@ import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useGaugeProSessionByCandidate, useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
-import type { GaugeProDimension } from '@/types/gaugePro';
+import type { GaugeProDimension, GaugeProResult, DimensionScores, DimensionClassification } from '@/types/gaugePro';
+import type { TestHistoryEntry } from '@/types/teamManagement';
+import { ARCHETYPE_PROFILES } from '@/data/gaugeProArchetypes';
 
 export default function TeamMemberProfile() {
   const { id } = useParams();
@@ -68,24 +70,68 @@ export default function TeamMemberProfile() {
     ? (companyTests[0].weights as Record<GaugeProDimension, number> | undefined)
     : undefined;
 
-  const { data: memberTestHistory = [] } = useQuery({
+  const [selectedResultId, setSelectedResultId] = useState<string | null>(null);
+
+  const { data: memberTestHistory = [] } = useQuery<TestHistoryEntry[]>({
     queryKey: ['team-member-test-history', candidateId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('gauge_pro_results')
-        .select('id, generated_at, archetype_id, final_scores, candidate_id')
+        .select('*')
         .eq('candidate_id', candidateId!)
         .order('generated_at', { ascending: false });
       if (error) throw error;
       return (data ?? []).map((r: Record<string, unknown>) => ({
         id: r.id as string,
-        scores: r.final_scores as Record<string, number>,
+        memberId: id ?? '',
+        scores: r.final_scores as DimensionScores,
         archetype: (r.archetype_id as string) ?? '–',
         completedAt: r.generated_at as string,
+        part1Scores: r.part1_scores as DimensionScores | undefined,
+        part2Scores: r.part2_scores as DimensionScores | undefined,
+        classifications: r.classifications as Record<string, DimensionClassification> | undefined,
+        primaryDimension: r.primary_dimension as string | undefined,
+        secondaryDimension: r.secondary_dimension as string | undefined,
+        strengths: r.strengths as string[] | undefined,
+        developmentAreas: r.development_areas as string[] | undefined,
+        careerRecommendations: r.career_recommendations as string[] | undefined,
+        xpAwarded: r.xp_awarded as number | undefined,
+        badgeAwarded: r.badge_awarded as string | undefined,
       }));
     },
     enabled: !!candidateId,
   });
+
+  // Derive selected GaugeProResult from history (default = most recent)
+  const selectedEntry = selectedResultId
+    ? memberTestHistory.find((e) => e.id === selectedResultId)
+    : memberTestHistory[0];
+
+  const selectedGaugeProResult: GaugeProResult | undefined = selectedEntry
+    ? {
+        id: selectedEntry.id,
+        assessmentId: '',
+        candidateId: candidateId || '',
+        part1Scores: selectedEntry.part1Scores ?? selectedEntry.scores,
+        part2Scores: selectedEntry.part2Scores ?? selectedEntry.scores,
+        finalScores: selectedEntry.scores,
+        classifications: (selectedEntry.classifications ?? {}) as Record<GaugeProDimension, DimensionClassification>,
+        archetype: ARCHETYPE_PROFILES.find(
+          (p) => p.id === selectedEntry.archetype || p.name === selectedEntry.archetype
+        ) ?? { id: selectedEntry.archetype, name: selectedEntry.archetype, description: '', strengths: [], developmentAreas: [], idealRoles: [], workStyle: '', communicationStyle: '' },
+        primaryDimension: (selectedEntry.primaryDimension ?? 'D1') as GaugeProDimension,
+        secondaryDimension: (selectedEntry.secondaryDimension ?? 'D2') as GaugeProDimension,
+        strengths: selectedEntry.strengths ?? [],
+        developmentAreas: selectedEntry.developmentAreas ?? [],
+        careerRecommendations: selectedEntry.careerRecommendations ?? [],
+        xpAwarded: selectedEntry.xpAwarded ?? 0,
+        badgeAwarded: selectedEntry.badgeAwarded ?? '',
+        generatedAt: selectedEntry.completedAt,
+      }
+    : undefined;
+
+  // Use selected result when user picks from timeline, otherwise fall back to the hook result
+  const effectiveGaugeProResult = selectedResultId ? selectedGaugeProResult : (gaugeProResult ?? selectedGaugeProResult);
 
   if (memberLoading) {
     return (
@@ -160,9 +206,11 @@ export default function TeamMemberProfile() {
           department={department}
           position={position}
           testHistory={memberTestHistory}
+          selectedTestId={selectedResultId}
+          onSelectTest={setSelectedResultId}
           candidateId={candidateId || undefined}
           gaugeProAssessment={gaugeProAssessment ?? undefined}
-          gaugeProResult={gaugeProResult ?? undefined}
+          gaugeProResult={effectiveGaugeProResult ?? undefined}
           testWeights={activeTestWeights}
           onEdit={() => setEditFormOpen(true)}
           onScheduleRetest={() => {

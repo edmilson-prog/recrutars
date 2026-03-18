@@ -374,8 +374,9 @@ export default function CollaboratorTestSession() {
   // Gauge-Pro assessment hook
   const gaugePro = useGaugeProAssessment({
     candidateId: candidateId || user?.id || 'temp',
+    forceNew: !!invitationId,
     onComplete: async (gaugeResult) => {
-      // Mark invitation as completed and persist result to test_results
+      // Mark invitation as completed and persist result via service role
       if (invitationId) {
         await supabase.functions.invoke('process-collaborator-invite', {
           body: {
@@ -384,6 +385,21 @@ export default function CollaboratorTestSession() {
             team_member_id: invitation?.teamMemberId || null,
             archetype: gaugeResult?.archetype?.id,
             gauge_scores: gaugeResult?.finalScores,
+            result_data: {
+              candidate_id: candidateId,
+              final_scores: gaugeResult.finalScores,
+              part1_scores: gaugeResult.part1Scores,
+              part2_scores: gaugeResult.part2Scores,
+              archetype_id: gaugeResult.archetype?.id,
+              primary_dimension: gaugeResult.primaryDimension,
+              secondary_dimension: gaugeResult.secondaryDimension,
+              strengths: gaugeResult.strengths,
+              development_areas: gaugeResult.developmentAreas,
+              career_recommendations: gaugeResult.careerRecommendations,
+              xp_awarded: gaugeResult.xpAwarded,
+              badge_awarded: gaugeResult.badgeAwarded,
+              generated_at: gaugeResult.generatedAt,
+            },
           },
         });
       }

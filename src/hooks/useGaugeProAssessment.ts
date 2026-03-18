@@ -38,13 +38,15 @@ const TOTAL_WORD_STEPS = 10;
 
 export interface UseGaugeProOptions {
   candidateId: string;
+  /** When true, ignores localStorage/Supabase history and starts a fresh assessment (retest flow). */
+  forceNew?: boolean;
   onComplete?: (result: GaugeProResult) => void;
   onXPAwarded?: (xp: number) => void;
   onBadgeAwarded?: (badgeId: string) => void;
 }
 
 export function useGaugeProAssessment(options: UseGaugeProOptions) {
-  const { candidateId, onComplete, onXPAwarded, onBadgeAwarded } = options;
+  const { candidateId, forceNew, onComplete, onXPAwarded, onBadgeAwarded } = options;
   const queryClient = useQueryClient();
   const cooldownDays = useGaugeProCooldownDays();
 
@@ -109,6 +111,15 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
 
   // Load existing session (localStorage sync, then Supabase async)
   useEffect(() => {
+    // forceNew: clear all prior state and start fresh (retest flow)
+    if (forceNew) {
+      localStorage.removeItem(storageKey);
+      localStorage.removeItem(resultKey);
+      localStorage.removeItem(lastCompletedKey);
+      supabaseAssessmentIdRef.current = null;
+      return;
+    }
+
     // 1. Sync: Check localStorage for existing result (fast)
     const savedResult = localStorage.getItem(resultKey);
     if (savedResult) {
@@ -193,7 +204,7 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
         } catch { /* Supabase offline — localStorage is sufficient */ }
       }
     }).catch(() => { /* Supabase offline */ });
-  }, [storageKey, resultKey, lastCompletedKey, isInCooldown, candidateId]);
+  }, [storageKey, resultKey, lastCompletedKey, isInCooldown, candidateId, forceNew]);
 
   // Timer
   useEffect(() => {
@@ -476,6 +487,7 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
         let sbId = supabaseAssessmentIdRef.current;
 
         // Fallback: fetch assessment ID if ref was lost (e.g. page refresh)
+        // In forceNew mode, startAssessment() already created a new row at test start
         if (!sbId) {
           const existing = await svc.getAssessmentByCandidate(candidateId);
           if (existing) sbId = existing.id;

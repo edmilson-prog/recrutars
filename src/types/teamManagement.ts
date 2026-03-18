@@ -12,7 +12,7 @@
  *   Development plans, objectives, retest scheduling, evolution annotations.
  */
 
-import type { GaugeProDimension, DimensionScores } from './gaugePro';
+import type { GaugeProDimension, DimensionScores, DimensionClassification } from './gaugePro';
 
 // ---------------------------------------------------------------------------
 // PRD-055 — Core & Mapa Comportamental
@@ -72,6 +72,16 @@ export interface TestHistoryEntry {
   scores: DimensionScores;
   archetype: string;
   completedAt: string;
+  part1Scores?: DimensionScores;
+  part2Scores?: DimensionScores;
+  classifications?: Record<string, DimensionClassification>;
+  primaryDimension?: string;
+  secondaryDimension?: string;
+  strengths?: string[];
+  developmentAreas?: string[];
+  careerRecommendations?: string[];
+  xpAwarded?: number;
+  badgeAwarded?: string;
 }
 
 // ---------------------------------------------------------------------------

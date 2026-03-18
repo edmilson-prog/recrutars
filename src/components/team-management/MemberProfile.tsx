@@ -33,7 +33,12 @@ import {
   Radar,
   Sparkles,
   ClipboardList,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
+import { Fragment, useState } from 'react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import GaugeStatusBadge from './GaugeStatusBadge';
 import { GaugeProRadarChart } from '@/components/corporate-tests/GaugeProRadarChart';
@@ -50,20 +55,25 @@ import { TechnicalAnalysisCard } from '@/components/aiAnalysis/TechnicalAnalysis
 import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
 import { ARCHETYPE_PROFILES } from '@/data/gaugeProArchetypes';
 import { calculateFitScore, classifyFitScore } from '@/utils/fitScore';
-import type { TeamMember, Department, Position } from '@/types/teamManagement';
+import type { TeamMember, Department, Position, TestHistoryEntry } from '@/types/teamManagement';
 import type { DimensionScores, GaugeProAssessment, GaugeProResult, GaugeProDimension } from '@/types/gaugePro';
 import type { CompanyTestResult } from '@/types/companyTest';
+
+const DIMENSION_LABELS: Record<string, string> = {
+  D1: 'Dominância',
+  D2: 'Influência',
+  D3: 'Estabilidade',
+  D4: 'Conformidade',
+  D5: 'Resiliência',
+};
 
 interface MemberProfileProps {
   member: TeamMember;
   department?: Department;
   position?: Position;
-  testHistory?: Array<{
-    id: string;
-    scores: DimensionScores;
-    archetype: string;
-    completedAt: string;
-  }>;
+  testHistory?: TestHistoryEntry[];
+  selectedTestId?: string | null;
+  onSelectTest?: (testId: string) => void;
   candidateId?: string;
   gaugeProAssessment?: GaugeProAssessment;
   gaugeProResult?: GaugeProResult;
@@ -104,6 +114,8 @@ export function MemberProfile({
   department,
   position,
   testHistory = [],
+  selectedTestId,
+  onSelectTest,
   candidateId,
   gaugeProAssessment,
   gaugeProResult,
@@ -114,6 +126,7 @@ export function MemberProfile({
   onViewEvolution,
 }: MemberProfileProps) {
   const { user } = useAuth();
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
   const initials = member.name
     .split(' ')
@@ -310,6 +323,63 @@ export function MemberProfile({
         </Card>
       </div>
 
+      {/* ── Test Timeline (only when 2+ tests) ────────────────────────── */}
+      {testHistory.length > 1 && onSelectTest && (
+        <Card>
+          <CardContent className="pt-5 pb-4">
+            <p className="text-xs font-medium text-muted-foreground mb-3">Histórico de Avaliações</p>
+            <div className="relative flex items-center">
+              {/* Connecting line */}
+              <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-border" />
+              {/* Dots */}
+              <div className="relative flex justify-between w-full">
+                {[...testHistory].reverse().map((entry, idx) => {
+                  const isSelected = selectedTestId
+                    ? entry.id === selectedTestId
+                    : idx === testHistory.length - 1;
+                  const isLatest = idx === testHistory.length - 1;
+                  return (
+                    <Tooltip key={entry.id}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => onSelectTest(entry.id)}
+                          className="flex flex-col items-center gap-1.5 group"
+                        >
+                          <div
+                            className={`relative z-10 rounded-full transition-all ${
+                              isSelected
+                                ? 'w-4 h-4 bg-primary ring-2 ring-primary/30'
+                                : 'w-3 h-3 bg-muted-foreground/40 group-hover:bg-primary/60'
+                            }`}
+                          />
+                          <span className={`text-[10px] leading-tight ${
+                            isSelected ? 'text-primary font-semibold' : 'text-muted-foreground'
+                          }`}>
+                            {formatDate(entry.completedAt)}
+                          </span>
+                          {isLatest && (
+                            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-3.5">
+                              Atual
+                            </Badge>
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        <p>{entry.archetype}</p>
+                        <p className="text-muted-foreground">
+                          {formatDate(entry.completedAt)}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* ── Tabs (only when mapped) ────────────────────────────────────── */}
       {isMapped && scores ? (
         <Tabs defaultValue="overview" className="space-y-6">
@@ -425,7 +495,7 @@ export function MemberProfile({
               </Card>
             )}
 
-            {/* Test History */}
+            {/* Test History — Expandable */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Histórico de Testes</CardTitle>
@@ -443,23 +513,124 @@ export function MemberProfile({
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-8" />
                         <TableHead>Data</TableHead>
                         <TableHead>Arquétipo</TableHead>
+                        <TableHead>Fit Score</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {testHistory.map((entry) => (
-                        <TableRow key={entry.id}>
-                          <TableCell className="text-sm">
-                            {formatDate(entry.completedAt)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary" className="text-xs">
-                              {entry.archetype}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {testHistory.map((entry) => {
+                        const isExpanded = expandedRowId === entry.id;
+                        const isActive = selectedTestId
+                          ? entry.id === selectedTestId
+                          : entry.id === testHistory[0]?.id;
+                        const entryFitScore = entry.scores && testWeights
+                          ? calculateFitScore(entry.scores, testWeights)
+                          : undefined;
+                        const entryFitClass = entryFitScore !== undefined
+                          ? classifyFitScore(entryFitScore)
+                          : undefined;
+
+                        return (
+                          <Fragment key={entry.id}>
+                            <TableRow
+                              className={`cursor-pointer transition-colors ${
+                                isActive ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-muted/50'
+                              }`}
+                              onClick={() => {
+                                setExpandedRowId(isExpanded ? null : entry.id);
+                                if (onSelectTest) onSelectTest(entry.id);
+                              }}
+                            >
+                              <TableCell className="w-8 px-2">
+                                {isExpanded ? (
+                                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </TableCell>
+                              <TableCell className="text-sm font-medium">
+                                {formatDate(entry.completedAt)}
+                                {entry.id === testHistory[0]?.id && (
+                                  <Badge variant="secondary" className="ml-2 text-[10px] px-1.5 py-0">
+                                    Mais recente
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="secondary" className="text-xs">
+                                  {entry.archetype}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {entryFitScore !== undefined && entryFitClass ? (
+                                  <FitScoreDisplay score={entryFitScore} classification={entryFitClass} compact />
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">–</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+
+                            {/* Expanded details */}
+                            {isExpanded && (
+                              <TableRow className="bg-muted/30 hover:bg-muted/30">
+                                <TableCell colSpan={4} className="p-4">
+                                  <div className="space-y-4">
+                                    {/* D1-D5 scores */}
+                                    <div>
+                                      <p className="text-xs font-semibold text-muted-foreground mb-2">Dimensões</p>
+                                      <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                                        {(['D1', 'D2', 'D3', 'D4', 'D5'] as const).map((dim) => {
+                                          const val = entry.scores?.[dim] ?? 0;
+                                          return (
+                                            <div key={dim} className="space-y-1">
+                                              <div className="flex justify-between text-xs">
+                                                <span className="font-medium">{dim}</span>
+                                                <span className="text-muted-foreground">{Math.round(val)}</span>
+                                              </div>
+                                              <Progress value={val} className="h-1.5" />
+                                              <p className="text-[10px] text-muted-foreground">{DIMENSION_LABELS[dim]}</p>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+
+                                    {/* Strengths & Development Areas */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                      {entry.strengths && entry.strengths.length > 0 && (
+                                        <div>
+                                          <p className="text-xs font-semibold text-muted-foreground mb-1.5">Forças</p>
+                                          <div className="flex flex-wrap gap-1">
+                                            {entry.strengths.map((s) => (
+                                              <Badge key={s} variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                                {s}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {entry.developmentAreas && entry.developmentAreas.length > 0 && (
+                                        <div>
+                                          <p className="text-xs font-semibold text-muted-foreground mb-1.5">Áreas de Desenvolvimento</p>
+                                          <div className="flex flex-wrap gap-1">
+                                            {entry.developmentAreas.map((d) => (
+                                              <Badge key={d} variant="secondary" className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                                                {d}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </Fragment>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 )}

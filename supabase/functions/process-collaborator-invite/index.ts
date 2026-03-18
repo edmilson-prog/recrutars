@@ -364,7 +364,7 @@ Deno.serve(async (req: Request) => {
     // ACTION: mark_completed
     // -----------------------------------------------------------------------
     if (action === 'mark_completed') {
-      const { invitation_id, team_member_id, archetype, gauge_scores } = body;
+      const { invitation_id, team_member_id, archetype, gauge_scores, result_data } = body;
       if (!invitation_id) return json({ error: 'invitation_id obrigatorio.' }, 400);
 
       await supabase
@@ -389,6 +389,48 @@ Deno.serve(async (req: Request) => {
           .from('team_members')
           .update(updates)
           .eq('id', team_member_id);
+      }
+
+      // Persist assessment + result via service role (bypasses RLS)
+      if (result_data && result_data.candidate_id && result_data.final_scores) {
+        const now = new Date().toISOString();
+        const genAt = result_data.generated_at || now;
+
+        // Create assessment row
+        const { data: assessmentRows, error: aErr } = await supabase
+          .from('gauge_pro_assessments')
+          .insert({
+            candidate_id: result_data.candidate_id,
+            phase: 'completed',
+            started_at: genAt,
+            completed_at: now,
+          })
+          .select('id');
+
+        const assessmentId = assessmentRows?.[0]?.id;
+        console.log('[mark_completed] assessment insert:', { assessmentId, error: aErr?.message });
+
+        if (assessmentId) {
+          const { error: rErr } = await supabase
+            .from('gauge_pro_results')
+            .insert({
+              assessment_id: assessmentId,
+              candidate_id: result_data.candidate_id,
+              final_scores: result_data.final_scores,
+              part1_scores: result_data.part1_scores || null,
+              part2_scores: result_data.part2_scores || null,
+              archetype_id: result_data.archetype_id || null,
+              primary_dimension: result_data.primary_dimension || null,
+              secondary_dimension: result_data.secondary_dimension || null,
+              strengths: result_data.strengths || null,
+              development_areas: result_data.development_areas || null,
+              career_recommendations: result_data.career_recommendations || null,
+              xp_awarded: result_data.xp_awarded || 0,
+              badge_awarded: result_data.badge_awarded || null,
+              generated_at: genAt,
+            });
+          console.log('[mark_completed] result insert:', { assessmentId, error: rErr?.message });
+        }
       }
 
       return json({ success: true });
