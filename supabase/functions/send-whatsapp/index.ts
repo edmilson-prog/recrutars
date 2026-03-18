@@ -79,6 +79,13 @@ function errorResponse(message: string, status = 400): Response {
   return jsonResponse({ success: false, error: message }, status);
 }
 
+/** Normalize phone to include country code 55 for Brazil. */
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length <= 11) return '55' + digits;
+  return digits;
+}
+
 /** Random delay between min and max ms (inclusive). */
 function randomDelay(min: number, max: number): Promise<void> {
   const ms = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -321,7 +328,7 @@ async function handleSendText(
   try {
     console.log('[send-whatsapp] Step 1: Calling Evolution API...');
     evolutionResult = await evolutionPost(config, `/message/sendText/${config.instanceName}`, {
-      number: phone,
+      number: normalizePhone(phone),
       text,
       delay: 1000,
       linkPreview: true,
@@ -408,7 +415,7 @@ async function handleSendBulk(
 
     try {
       const result = await evolutionPost(config, `/message/sendText/${config.instanceName}`, {
-        number: recipient.phone,
+        number: normalizePhone(recipient.phone),
         text: personalizedText,
         delay: 1000,
         linkPreview: true,
