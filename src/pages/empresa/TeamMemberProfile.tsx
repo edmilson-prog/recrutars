@@ -12,8 +12,9 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Send, Loader2 } from 'lucide-react';
 import { MemberProfile } from '@/components/team-management/MemberProfile';
 import SendTestModal from '@/components/team-management/SendTestModal';
+import TeamMemberForm from '@/components/team-management/TeamMemberForm';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTeamMember, useDepartments, usePositions } from '@/hooks/useTeamsQuery';
+import { useTeamMember, useDepartments, usePositions, useUpdateTeamMember } from '@/hooks/useTeamsQuery';
 import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -43,6 +44,8 @@ export default function TeamMemberProfile() {
   const { data: creditBalance } = useCompanyCreditBalance(companyId);
   const queryClient = useQueryClient();
   const [sendTestOpen, setSendTestOpen] = useState(false);
+  const [editFormOpen, setEditFormOpen] = useState(false);
+  const updateMember = useUpdateTeamMember();
 
   // Get active company test for behavioral assessments
   const { data: companyTests = [] } = useQuery({
@@ -161,9 +164,7 @@ export default function TeamMemberProfile() {
           gaugeProAssessment={gaugeProAssessment ?? undefined}
           gaugeProResult={gaugeProResult ?? undefined}
           testWeights={activeTestWeights}
-          onEdit={() => {
-            // Placeholder: open edit modal
-          }}
+          onEdit={() => setEditFormOpen(true)}
           onScheduleRetest={() => {
             // Placeholder: open retest scheduling
           }}
@@ -181,6 +182,25 @@ export default function TeamMemberProfile() {
             creditBalance={creditBalance ?? 0}
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ['team-member-test-history'] });
+            }}
+          />
+        )}
+
+        {member && (
+          <TeamMemberForm
+            open={editFormOpen}
+            onOpenChange={setEditFormOpen}
+            member={member}
+            departments={departments}
+            positions={positions}
+            onSave={async (data) => {
+              try {
+                await updateMember.mutateAsync({ id: member.id, updates: data });
+                setEditFormOpen(false);
+                queryClient.invalidateQueries({ queryKey: ['team-member', id] });
+              } catch {
+                // Toast de erro é tratado pelo mutation
+              }
             }}
           />
         )}
