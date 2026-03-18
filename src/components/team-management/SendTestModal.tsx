@@ -57,6 +57,12 @@ const ORIGIN_MAP: Record<InviteChannel, string> = {
   whatsapp: 'invite_link',
 };
 
+const METHOD_MAP: Record<InviteChannel, string> = {
+  link: 'public_link',
+  email: 'email',
+  whatsapp: 'internal',
+};
+
 function formatPhone(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11);
   if (digits.length <= 10) {
@@ -119,7 +125,7 @@ export default function SendTestModal({
       test_id: testId,
       candidate_name: member.name,
       candidate_email: member.email,
-      method,
+      method: METHOD_MAP[method],
       status: 'sent',
       token: inviteToken,
       sent_at: new Date().toISOString(),
