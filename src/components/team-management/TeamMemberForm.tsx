@@ -163,7 +163,7 @@ export default function TeamMemberForm({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[60vh] overflow-y-auto space-y-5 py-1 pr-1">
+        <div className="max-h-[60vh] overflow-y-auto space-y-5 py-1 px-1">
             {/* Nome */}
             <div className="space-y-2">
               <Label htmlFor="member-name">
