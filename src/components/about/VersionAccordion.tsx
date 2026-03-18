@@ -77,14 +77,11 @@ const changeTypeConfig: Record<ChangeType, { label: string; icon: typeof Plus; c
 };
 
 export function VersionAccordion({ versions }: VersionAccordionProps) {
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
-
   return (
     <Accordion type="single" collapsible className="space-y-2">
       {versions.map((version) => {
         const releaseConfig = releaseTypeConfig[version.type];
         const releaseDate = parseISO(version.releaseDate);
-        const isToday = version.releaseDate === todayStr;
         const formattedDate = format(releaseDate, "dd MMM yyyy", { locale: ptBR });
 
         return (
@@ -159,7 +156,7 @@ export function VersionAccordion({ versions }: VersionAccordionProps) {
                         </div>
                         <ul className="space-y-1 pl-6">
                           {category.items.map((item, index) => {
-                            const detail = isToday ? category.details?.[String(index)] : undefined;
+                            const detail = category.details?.[String(index)];
                             if (detail) {
                               return (
                                 <li
