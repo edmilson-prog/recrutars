@@ -24,7 +24,8 @@ import {
   useAnnotations,
   useCreateAnnotation,
 } from '@/hooks/useTeamsQuery';
-import { mockTestHistory } from '@/data/teamManagementData';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
 import type { EvolutionAnnotation } from '@/types/teamManagement';
 
@@ -51,11 +52,33 @@ export default function TeamEvolution() {
     [member, positions],
   );
 
-  // Filter test history for this member (still from mock — no service yet)
-  const memberHistory = useMemo(
-    () => mockTestHistory.filter((h) => h.memberId === id),
-    [id],
-  );
+  // Load test history from gauge_pro_results via candidate link
+  const candidateId = member?.importedFromCandidateId ?? '';
+  const { data: memberHistory = [] } = useQuery({
+    queryKey: ['team-member-test-history', candidateId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('gauge_pro_results')
+        .select('id, generated_at, archetype_id, final_scores')
+        .eq('candidate_id', candidateId)
+        .order('generated_at', { ascending: true });
+      if (error) throw error;
+      return (data ?? []).map((r) => ({
+        id: r.id,
+        memberId: id!,
+        scores: {
+          D1: (r.final_scores as Record<string, number>)?.D1 ?? 0,
+          D2: (r.final_scores as Record<string, number>)?.D2 ?? 0,
+          D3: (r.final_scores as Record<string, number>)?.D3 ?? 0,
+          D4: (r.final_scores as Record<string, number>)?.D4 ?? 0,
+          D5: (r.final_scores as Record<string, number>)?.D5 ?? 0,
+        },
+        archetype: (r.archetype_id as string) ?? '–',
+        completedAt: r.generated_at as string,
+      }));
+    },
+    enabled: !!candidateId,
+  });
 
   // Annotations state (initialized from service layer)
   const [annotations, setAnnotations] = useState<EvolutionAnnotation[]>([]);
