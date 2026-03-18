@@ -49,7 +49,8 @@ async function getStripeKey(
   if (error || !data) throw new Error('Stripe credentials not found in system_settings');
 
   const values = data.values as Record<string, unknown>;
-  const secretKey = values[keyName] as string | undefined;
+  const stripeSettings = (values['stripe'] as Record<string, unknown>) ?? {};
+  const secretKey = stripeSettings[keyName] as string | undefined;
   if (!secretKey) throw new Error(`Stripe key "${keyName}" not configured`);
 
   return secretKey;
