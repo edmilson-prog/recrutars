@@ -21,6 +21,7 @@ export interface TestPackage {
   stripePriceIdLive: string | null;
   stripeSyncedAtTest: string | null;
   stripeSyncedAtLive: string | null;
+  paymentMethods: string[];
   isActive: boolean;
   sortOrder: number;
   createdAt: string;

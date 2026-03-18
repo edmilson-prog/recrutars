@@ -105,7 +105,9 @@ Deno.serve(async (req: Request) => {
     // 3. Create Stripe Checkout Session (one-time payment)
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      payment_method_types: ['card'],
+      payment_method_types: (pkg.payment_methods as string[])?.length > 0
+        ? (pkg.payment_methods as string[])
+        : ['card'],
       line_items: [
         {
           price: priceId,

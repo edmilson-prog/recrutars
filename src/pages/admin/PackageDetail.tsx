@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -55,6 +56,7 @@ const BLANK_PACKAGE: TestPackage = {
   stripePriceIdLive: null,
   stripeSyncedAtTest: null,
   stripeSyncedAtLive: null,
+  paymentMethods: ['card'],
   isActive: true,
   sortOrder: 0,
   createdAt: '',
@@ -169,6 +171,7 @@ export default function PackageDetail() {
       original_price: editState.originalPrice || null,
       features: editState.features,
       badge: editState.badge || null,
+      payment_methods: editState.paymentMethods,
       is_active: editState.isActive,
       sort_order: editState.sortOrder || 0,
     };
@@ -455,6 +458,43 @@ export default function PackageDetail() {
                         onChange={(e) => handleFieldChange('badge', e.target.value || null)}
                         placeholder="Ex: Mais Popular"
                       />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <Label>Meios de Pagamento</Label>
+                    <p className="text-xs text-muted-foreground">Selecione quais meios de pagamento serao aceitos neste pacote</p>
+                    <div className="flex flex-wrap gap-4 pt-1">
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox checked disabled />
+                        <span className="text-muted-foreground">Cartao de Credito</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <Checkbox
+                          checked={editState.paymentMethods.includes('pix')}
+                          onCheckedChange={(checked) => {
+                            const methods = checked
+                              ? [...editState.paymentMethods, 'pix']
+                              : editState.paymentMethods.filter(m => m !== 'pix');
+                            handleFieldChange('paymentMethods', methods);
+                          }}
+                        />
+                        PIX
+                      </label>
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <Checkbox
+                          checked={editState.paymentMethods.includes('boleto')}
+                          onCheckedChange={(checked) => {
+                            const methods = checked
+                              ? [...editState.paymentMethods, 'boleto']
+                              : editState.paymentMethods.filter(m => m !== 'boleto');
+                            handleFieldChange('paymentMethods', methods);
+                          }}
+                        />
+                        Boleto
+                      </label>
                     </div>
                   </div>
                 </CardContent>
