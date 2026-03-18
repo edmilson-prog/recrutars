@@ -449,6 +449,15 @@ export function MemberProfile({
 
           {/* Tab 3: IA */}
           <TabsContent value="ia" className="space-y-6">
+            {selectedTestId && testHistory.length > 1 && selectedTestId !== testHistory[0]?.id && (
+              <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
+                <CardContent className="py-3">
+                  <p className="text-sm text-amber-800 dark:text-amber-300">
+                    A análise IA abaixo foi gerada para o teste mais recente. Para gerar uma análise específica para este teste, use o botão "Gerar Análise".
+                  </p>
+                </CardContent>
+              </Card>
+            )}
             {user?.type === 'admin' && candidateId && (
               <TechnicalAnalysisCard
                 candidateId={candidateId}
