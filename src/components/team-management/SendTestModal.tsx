@@ -51,6 +51,12 @@ interface SendTestModalProps {
 
 type InviteChannel = 'link' | 'email' | 'whatsapp';
 
+const ORIGIN_MAP: Record<InviteChannel, string> = {
+  link: 'invite_link',
+  email: 'invite_email',
+  whatsapp: 'invite_link',
+};
+
 function formatPhone(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11);
   if (digits.length <= 10) {
@@ -119,7 +125,7 @@ export default function SendTestModal({
       sent_at: new Date().toISOString(),
       expires_at: expiresAt,
       team_member_id: member.id,
-      invite_origin: 'team_management',
+      invite_origin: ORIGIN_MAP[method],
     });
 
     if (error) {
