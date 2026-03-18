@@ -193,7 +193,7 @@ export default function CompanyCandidates() {
   // Dynamic behavioral profile options from real Gauge-Pro results
   const behavioralProfiles = useMemo(() => {
     const names = new Set<string>();
-    allGaugeResults.forEach(r => names.add(r.archetype.name));
+    allGaugeResults.forEach(r => { if (r.archetype) names.add(r.archetype.name); });
     // Also include legacy profiles for candidates with old-style tests
     legacyBehavioralProfiles.forEach(p => names.add(p));
     return Array.from(names).sort();
@@ -298,7 +298,7 @@ export default function CompanyCandidates() {
       locationFilter === 'all' || candidate.location.includes(locationFilter);
 
     const gaugeResult = gaugeResultsByCandidate.get(candidate.id);
-    const candidateProfile = gaugeResult?.archetype.name
+    const candidateProfile = gaugeResult?.archetype?.name
       ?? candidate.testResult?.result.profile;
     const matchesProfile =
       profileFilter === 'all' ||
@@ -911,7 +911,7 @@ export default function CompanyCandidates() {
                       <div className="flex items-center gap-1.5 flex-wrap justify-center">
                         {(() => {
                           const gr = gaugeResultsByCandidate.get(candidate.id);
-                          if (gr) return <Badge className="bg-secondary text-secondary-foreground text-xs">{gr.archetype.name}</Badge>;
+                          if (gr?.archetype) return <Badge className="bg-secondary text-secondary-foreground text-xs">{gr.archetype.name}</Badge>;
                           if (candidate.testResult) return <Badge className="bg-secondary text-secondary-foreground text-xs">{candidate.testResult.result.profile}</Badge>;
                           return null;
                         })()}
@@ -1138,7 +1138,7 @@ export default function CompanyCandidates() {
                       <div className="flex flex-wrap items-center gap-4 mt-4">
                         {(() => {
                           const gr = gaugeResultsByCandidate.get(candidate.id);
-                          if (gr) {
+                          if (gr?.archetype) {
                             return (
                               <Badge className="bg-secondary text-secondary-foreground">
                                 {gr.archetype.name}
