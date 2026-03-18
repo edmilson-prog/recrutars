@@ -1,12 +1,49 @@
 {
   "versions": [
     {
+      "version": "1.40.0",
+      "codename": "Payment",
+      "type": "minor",
+      "releaseDate": "2026-03-18",
+      "description": "Edge Functions de sincronização e checkout Stripe para pacotes de testes, meios de pagamento configuráveis por pacote (Cartão, PIX, Boleto), validação de skills no onboarding e melhorias de UX no admin.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Edge Function stripe-sync-package para sincronizar pacotes de teste com Stripe",
+            "Edge Function stripe-package-checkout para checkout de pacotes via Stripe",
+            "Meios de pagamento configuráveis por pacote: Cartão, PIX e Boleto",
+            "Ícone de copiar para área de transferência nos campos email, CPF e telefone do candidato",
+            "Tooltips com detalhes simplificados nos itens do changelog",
+            "Estatística 'Total Hoje' no hero card da página Sobre",
+            "Modal 'Quase lá!' no onboarding com regras de seleção de habilidades"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Validação de skills no onboarding corrigida para exigir 2 técnicas e 2 comportamentais",
+            "Grupos de habilidades agora iniciam fechados no onboarding e perfil",
+            "Leitura de credenciais Stripe corrigida para acessar subcategoria correta no system_settings",
+            "Campo 'Sobre você' limitado a 2000 caracteres com contador"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Acentuação corrigida em toda a página de edição de pacotes"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.39.0",
       "codename": "Crew",
       "type": "minor",
       "releaseDate": "2026-03-17",
       "description": "Redesign do fluxo de teste para colaboradores com CPF, envio multicanal, perfil enriquecido com 4 tabs, gestão manual de créditos e filtros de colaborador no admin.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
