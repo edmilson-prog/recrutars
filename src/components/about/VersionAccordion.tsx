@@ -7,8 +7,13 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   Plus, RefreshCw, AlertTriangle, Trash2, Wrench, Shield,
-  Calendar
+  Calendar, FileCode, Route,
 } from 'lucide-react';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 import {
   Accordion,
   AccordionContent,
@@ -72,11 +77,14 @@ const changeTypeConfig: Record<ChangeType, { label: string; icon: typeof Plus; c
 };
 
 export function VersionAccordion({ versions }: VersionAccordionProps) {
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+
   return (
     <Accordion type="single" collapsible className="space-y-2">
       {versions.map((version) => {
         const releaseConfig = releaseTypeConfig[version.type];
         const releaseDate = parseISO(version.releaseDate);
+        const isToday = version.releaseDate === todayStr;
         const formattedDate = format(releaseDate, "dd MMM yyyy", { locale: ptBR });
 
         return (
@@ -150,14 +158,62 @@ export function VersionAccordion({ versions }: VersionAccordionProps) {
                           {config.label}
                         </div>
                         <ul className="space-y-1 pl-6">
-                          {category.items.map((item, index) => (
-                            <li
-                              key={index}
-                              className="text-sm text-muted-foreground list-disc marker:text-muted-foreground/50"
-                            >
-                              {item}
-                            </li>
-                          ))}
+                          {category.items.map((item, index) => {
+                            const detail = isToday ? category.details?.[String(index)] : undefined;
+                            if (detail) {
+                              return (
+                                <li
+                                  key={index}
+                                  className="text-sm text-muted-foreground list-disc marker:text-muted-foreground/50"
+                                >
+                                  <HoverCard openDelay={200} closeDelay={100}>
+                                    <HoverCardTrigger asChild>
+                                      <span className="cursor-pointer underline decoration-dotted decoration-muted-foreground/40 underline-offset-2 hover:text-foreground transition-colors">
+                                        {item}
+                                      </span>
+                                    </HoverCardTrigger>
+                                    <HoverCardContent className="w-[80vw] max-w-2xl text-sm" side="top" align="start">
+                                      <p className="text-foreground mb-3">{detail.description}</p>
+                                      {detail.files && detail.files.length > 0 && (
+                                        <div className="mb-2">
+                                          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1">
+                                            <FileCode className="w-3 h-3" />
+                                            Arquivos
+                                          </div>
+                                          <div className="space-y-0.5">
+                                            {detail.files.map((file, i) => (
+                                              <p key={i} className="text-xs font-mono text-cyan-500 truncate">{file}</p>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {detail.routes && detail.routes.length > 0 && (
+                                        <div>
+                                          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1">
+                                            <Route className="w-3 h-3" />
+                                            Rotas
+                                          </div>
+                                          <div className="space-y-0.5">
+                                            {detail.routes.map((route, i) => (
+                                              <p key={i} className="text-xs font-mono text-emerald-500">{route}</p>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </li>
+                              );
+                            }
+                            return (
+                              <li
+                                key={index}
+                                className="text-sm text-muted-foreground list-disc marker:text-muted-foreground/50"
+                              >
+                                {item}
+                              </li>
+                            );
+                          })}
                         </ul>
                       </div>
                     );
