@@ -18,7 +18,44 @@
             "Tooltips com detalhes simplificados nos itens do changelog",
             "Estatística 'Total Hoje' no hero card da página Sobre",
             "Modal 'Quase lá!' no onboarding com regras de seleção de habilidades"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "Cria ou atualiza o produto e preço do pacote no Stripe, salvando os IDs de volta no banco de dados para uso no checkout.",
+              "files": ["supabase/functions/stripe-sync-package/index.ts"],
+              "routes": ["/admin/pacotes-testes"]
+            },
+            "1": {
+              "description": "Cria uma sessão de checkout no Stripe para compra avulsa de pacotes de testes. Suporta pagamento único com redirecionamento para a página do Stripe.",
+              "files": ["supabase/functions/stripe-package-checkout/index.ts"],
+              "routes": ["/empresa/pacotes"]
+            },
+            "2": {
+              "description": "Cada pacote pode ter seus próprios meios de pagamento: Cartão (obrigatório), PIX e Boleto. Configurável via checkboxes na edição do pacote.",
+              "files": ["src/pages/admin/PackageDetail.tsx", "sql/migrations/061_package_payment_methods.sql"],
+              "routes": ["/admin/pacotes-testes/:id"]
+            },
+            "3": {
+              "description": "Ícone de copiar ao lado de email, CPF e telefone no detalhe do candidato. Ao clicar, copia o valor e exibe confirmação visual.",
+              "files": ["src/pages/admin/CandidateDetail.tsx"],
+              "routes": ["/admin/candidatos/:id"]
+            },
+            "4": {
+              "description": "Ao passar o mouse sobre um item do changelog, um tooltip exibe a descrição simplificada, arquivos alterados e rotas afetadas.",
+              "files": ["src/components/about/VersionAccordion.tsx", "src/types/changelog.ts"],
+              "routes": ["/sobre"]
+            },
+            "5": {
+              "description": "Card hero na página Sobre agora mostra quantas atualizações foram feitas no dia atual.",
+              "files": ["src/pages/About.tsx"],
+              "routes": ["/sobre"]
+            },
+            "6": {
+              "description": "Quando o candidato tenta avançar no onboarding sem selecionar ao menos 2 competências técnicas e 2 comportamentais, um modal amigável informa o que falta.",
+              "files": ["src/pages/candidato/ProfessionalProfile.tsx"],
+              "routes": ["/candidato/onboarding/perfil-profissional"]
+            }
+          }
         },
         {
           "type": "fixed",
@@ -27,13 +64,41 @@
             "Grupos de habilidades agora iniciam fechados no onboarding e perfil",
             "Leitura de credenciais Stripe corrigida para acessar subcategoria correta no system_settings",
             "Campo 'Sobre você' limitado a 2000 caracteres com contador"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "A validação checava skills legadas (sempre vazias) em vez das padronizadas. Agora exige 2 técnicas e 2 comportamentais para avançar.",
+              "files": ["src/pages/candidato/ProfessionalProfile.tsx"],
+              "routes": ["/candidato/onboarding/perfil-profissional"]
+            },
+            "1": {
+              "description": "O primeiro grupo de cada seção (técnicas e comportamentais) vinha expandido automaticamente. Agora todos iniciam fechados.",
+              "files": ["src/components/skills/SkillCategoryAccordion.tsx"],
+              "routes": ["/candidato/perfil", "/candidato/onboarding/perfil-profissional"]
+            },
+            "2": {
+              "description": "A Edge Function buscava a chave Stripe diretamente em values.stripeTestSecretKey, mas a estrutura real é values.stripe.stripeTestSecretKey.",
+              "files": ["supabase/functions/stripe-sync-package/index.ts"]
+            },
+            "3": {
+              "description": "O campo de texto 'Sobre você' no perfil profissional agora tem limite de 2000 caracteres com contador visível.",
+              "files": ["src/pages/candidato/ProfessionalProfile.tsx"],
+              "routes": ["/candidato/perfil", "/candidato/onboarding/perfil-profissional"]
+            }
+          }
         },
         {
           "type": "changed",
           "items": [
             "Acentuação corrigida em toda a página de edição de pacotes"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "Textos como Configuração, Descrição, Créditos, Preços e outros labels foram corrigidos com acentuação adequada.",
+              "files": ["src/pages/admin/PackageDetail.tsx"],
+              "routes": ["/admin/pacotes-testes/:id"]
+            }
+          }
         }
       ]
     },
