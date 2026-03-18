@@ -51,6 +51,14 @@ interface SendTestModalProps {
 
 type InviteChannel = 'link' | 'email' | 'whatsapp';
 
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 10) {
+    return digits.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+  }
+  return digits.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
+}
+
 export default function SendTestModal({
   open,
   onOpenChange,
@@ -197,7 +205,7 @@ export default function SendTestModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-4">
           {/* Credit balance */}
           <div className="flex items-center justify-between rounded-md border p-3 bg-muted/30">
             <div className="flex items-center gap-2 text-sm">
@@ -343,7 +351,7 @@ export default function SendTestModal({
                       Telefone do colaborador
                     </label>
                     <Input
-                      value={member.phone}
+                      value={formatPhone(member.phone)}
                       readOnly
                       className="bg-muted/50"
                     />
@@ -352,7 +360,7 @@ export default function SendTestModal({
                   <div className="rounded-md border p-3 bg-muted/20">
                     <p className="text-sm text-muted-foreground">
                       Uma mensagem sera enviada via WhatsApp para{' '}
-                      <span className="font-semibold text-foreground">{member.phone}</span>{' '}
+                      <span className="font-semibold text-foreground">{formatPhone(member.phone)}</span>{' '}
                       com o link do teste.
                     </p>
                   </div>
