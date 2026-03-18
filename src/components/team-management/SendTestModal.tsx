@@ -83,17 +83,16 @@ export default function SendTestModal({
   const [activeTab, setActiveTab] = useState<InviteChannel>('link');
   const [isSending, setIsSending] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const [generatedToken, setGeneratedToken] = useState<string | null>(null);
+  const [token, setToken] = useState(() => crypto.randomUUID());
 
   const noCredits = creditBalance === 0;
 
-  const token = generatedToken ?? crypto.randomUUID();
   const inviteLink = `${window.location.origin}/convite/teste/${token}`;
 
   const resetState = useCallback(() => {
     setIsSending(false);
     setIsCopied(false);
-    setGeneratedToken(null);
+    setToken(crypto.randomUUID());
     setActiveTab('link');
   }, []);
 
@@ -114,11 +113,6 @@ export default function SendTestModal({
   }
 
   async function createInvitation(method: InviteChannel): Promise<boolean> {
-    const inviteToken = generatedToken ?? token;
-    if (!generatedToken) {
-      setGeneratedToken(inviteToken);
-    }
-
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
     const { error } = await supabase.from('test_invitations').insert({
@@ -127,7 +121,7 @@ export default function SendTestModal({
       candidate_email: member.email,
       method: METHOD_MAP[method],
       status: 'sent',
-      token: inviteToken,
+      token,
       sent_at: new Date().toISOString(),
       expires_at: expiresAt,
       team_member_id: member.id,
@@ -137,7 +131,7 @@ export default function SendTestModal({
     if (error) {
       console.error('Error creating invitation:', error);
       toast.error('Erro ao criar convite. Tente novamente.');
-      setGeneratedToken(null);
+      setToken(crypto.randomUUID());
       return false;
     }
 
