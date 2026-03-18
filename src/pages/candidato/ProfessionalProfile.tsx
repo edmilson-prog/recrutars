@@ -172,6 +172,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
   // Validacao visual no onboarding
   const [showOnboardingErrors, setShowOnboardingErrors] = useState(false);
   const [blinkErrors, setBlinkErrors] = useState(false);
+  const [showSkillsModal, setShowSkillsModal] = useState(false);
 
   // Estados para modais
   const [experienceDialogOpen, setExperienceDialogOpen] = useState(false);
@@ -516,7 +517,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
     );
     const hasExperience = curriculum.isFirstJob || (curriculum.experiences?.length ?? 0) > 0;
     const hasEducation = Boolean(curriculum.educationLevel) || (curriculum.education?.length ?? 0) > 0;
-    const hasSkills = (curriculum.skills?.length ?? 0) > 0;
+    const hasSkills = stdTechnicalIds.length >= 2 && stdBehavioralIds.length >= 2;
     const incomplete: string[] = [];
     if (!hasBasic) incomplete.push('basic');
     if (!hasLocation) incomplete.push('location');
@@ -526,7 +527,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
     if (!hasEducation) incomplete.push('education');
     if (!hasSkills) incomplete.push('skills');
     return { complete: incomplete.length === 0, incomplete };
-  }, [onboardingMode, curriculum]);
+  }, [onboardingMode, curriculum, stdTechnicalIds, stdBehavioralIds]);
 
   const onboardingComplete = onboardingTabStatus.complete;
 
@@ -754,8 +755,12 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                     onChange={(e) => updateField('about', e.target.value)}
                     placeholder="Descreva brevemente sua experiência e objetivos profissionais..."
                     rows={4}
+                    maxLength={2000}
                     className={cn(showOnboardingErrors && !curriculum.about?.trim() && "border-destructive", showOnboardingErrors && !curriculum.about?.trim() && blinkErrors && "animate-blink-destructive")}
                   />
+                  <p className="text-xs text-muted-foreground text-right">
+                    {(curriculum.about || '').length}/2000
+                  </p>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -1371,6 +1376,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                     <CardTitle>Habilidades</CardTitle>
                     <CardDescription>
                       Selecione suas principais competências para que empresas encontrem seu perfil.
+                      {onboardingMode && ' Escolha ao menos 2 competências técnicas e 2 comportamentais para avançar.'}
                     </CardDescription>
                   </div>
                   <Button
@@ -1553,6 +1559,10 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                       // Validate current tab before advancing (only for mandatory tabs)
                       const currentTab = ONBOARDING_TAB_ORDER[currentTabIndex];
                       if (onboardingTabStatus.incomplete.includes(currentTab)) {
+                        if (currentTab === 'skills') {
+                          setShowSkillsModal(true);
+                          return;
+                        }
                         setShowOnboardingErrors(true);
                         setBlinkErrors(true);
                         setTimeout(() => setBlinkErrors(false), 1200);
@@ -1593,6 +1603,61 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
           );
         })()}
       </div>
+
+      {/* Modal de requisito mínimo de habilidades (onboarding) */}
+      <Dialog open={showSkillsModal} onOpenChange={setShowSkillsModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-cyan-950/40">
+                <Info className="w-5 h-5 text-cyan-400" />
+              </div>
+              <DialogTitle className="text-lg">Quase lá!</DialogTitle>
+            </div>
+            <DialogDescription className="mt-2">
+              Para avançar, você precisa selecionar pelo menos 2 competências
+              técnicas e 2 competências comportamentais.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 mt-2">
+            {stdTechnicalIds.length < 2 && (
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/50 p-3">
+                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-cyan-950/40">
+                  <span className="text-xs font-bold text-cyan-400">
+                    {2 - stdTechnicalIds.length}
+                  </span>
+                </div>
+                <span className="text-sm text-foreground">
+                  {stdTechnicalIds.length === 1
+                    ? 'Falta 1 competência técnica'
+                    : 'Faltam 2 competências técnicas'}
+                </span>
+              </div>
+            )}
+            {stdBehavioralIds.length < 2 && (
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/50 p-3">
+                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-cyan-950/40">
+                  <span className="text-xs font-bold text-cyan-400">
+                    {2 - stdBehavioralIds.length}
+                  </span>
+                </div>
+                <span className="text-sm text-foreground">
+                  {stdBehavioralIds.length === 1
+                    ? 'Falta 1 competência comportamental'
+                    : 'Faltam 2 competências comportamentais'}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="mt-4">
+            <Button className="gradient-primary w-full sm:w-auto" onClick={() => setShowSkillsModal(false)}>
+              Entendi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </LayoutWrapper>
   );
