@@ -137,6 +137,7 @@ export default function SendTestModal({
     if (error) {
       console.error('Error creating invitation:', error);
       toast.error('Erro ao criar convite. Tente novamente.');
+      setGeneratedToken(null);
       return false;
     }
 
