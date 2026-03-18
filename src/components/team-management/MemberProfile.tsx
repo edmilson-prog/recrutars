@@ -91,6 +91,14 @@ function maskCpf(cpf: string): string {
   return digits.length >= 3 ? `***${digits.slice(-3)}` : '***';
 }
 
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 10) {
+    return digits.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+  }
+  return digits.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
+}
+
 export function MemberProfile({
   member,
   department,
@@ -206,7 +214,7 @@ export function MemberProfile({
                 {member.phone && (
                   <span className="flex items-center gap-1.5">
                     <Phone className="h-3.5 w-3.5" />
-                    {member.phone}
+                    {formatPhone(member.phone)}
                   </span>
                 )}
               </div>
