@@ -5,7 +5,8 @@
 
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, Tag, Sparkles, ArrowDown } from 'lucide-react';
+import { useMemo } from 'react';
+import { Calendar, Tag, Sparkles, TrendingUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ import type { Version } from '@/types/changelog';
 
 interface AboutHeroCardProps {
   version: Version;
+  allVersions?: Version[];
   onViewHistory: () => void;
 }
 
@@ -35,16 +37,25 @@ const releaseTypeConfig = {
   },
 };
 
-export function AboutHeroCard({ version, onViewHistory }: AboutHeroCardProps) {
+export function AboutHeroCard({ version, allVersions = [], onViewHistory }: AboutHeroCardProps) {
   const releaseConfig = releaseTypeConfig[version.type];
   const releaseDate = parseISO(version.releaseDate);
   const formattedDate = format(releaseDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
-  // Count total changes
+  // Count total changes for this version
   const totalChanges = version.changes.reduce(
     (acc, category) => acc + category.items.length,
     0
   );
+
+  // Count total changes for all versions released on the same day
+  const todayChanges = useMemo(() => {
+    return allVersions
+      .filter(v => v.releaseDate === version.releaseDate)
+      .reduce((total, v) =>
+        total + v.changes.reduce((acc, cat) => acc + cat.items.length, 0),
+      0);
+  }, [allVersions, version.releaseDate]);
 
   return (
     <Card className="overflow-hidden">
@@ -89,7 +100,7 @@ export function AboutHeroCard({ version, onViewHistory }: AboutHeroCardProps) {
         </div>
 
         {/* Metrics */}
-        <div className="grid grid-cols-3 divide-x border-t">
+        <div className="grid grid-cols-4 divide-x border-t">
           <div className="p-4 md:p-6 text-center">
             <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
               <Calendar className="w-4 h-4" />
@@ -110,6 +121,13 @@ export function AboutHeroCard({ version, onViewHistory }: AboutHeroCardProps) {
               <span className="text-xs uppercase tracking-wider">Mudanças</span>
             </div>
             <p className="font-semibold text-sm md:text-base">{totalChanges} itens</p>
+          </div>
+          <div className="p-4 md:p-6 text-center">
+            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-xs uppercase tracking-wider">Total Hoje</span>
+            </div>
+            <p className="font-semibold text-sm md:text-base">{todayChanges} itens</p>
           </div>
         </div>
 
