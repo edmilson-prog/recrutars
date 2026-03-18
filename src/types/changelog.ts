@@ -5,9 +5,16 @@
 
 export type ChangeType = 'added' | 'changed' | 'deprecated' | 'removed' | 'fixed' | 'security';
 
+export interface ChangeItemDetail {
+  description: string;
+  files?: string[];
+  routes?: string[];
+}
+
 export interface ChangeCategory {
   type: ChangeType;
   items: string[];
+  details?: Record<string, ChangeItemDetail>;
 }
 
 export type ReleaseType = 'major' | 'minor' | 'patch';

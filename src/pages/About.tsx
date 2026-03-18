@@ -75,6 +75,7 @@ export default function AboutPage() {
         {currentVersion && (
           <AboutHeroCard
             version={currentVersion}
+            allVersions={versions}
             onViewHistory={handleViewHistory}
           />
         )}

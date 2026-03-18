@@ -38,6 +38,8 @@ import {
   UserCircle,
   DollarSign,
   ShieldCheck,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -60,6 +62,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useSendManualNotification } from '@/hooks/useNotificationSendsQuery';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -500,6 +503,11 @@ export default function AdminCandidateDetail() {
                 <StatusIcon className="w-3 h-3 mr-1" />
                 {statusConfig.label}
               </Badge>
+              {mergedCandidate.visibilityLocked && (
+                <Badge variant="secondary" className="bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 text-xs">
+                  Colaborador
+                </Badge>
+              )}
             </div>
             <p className="text-sm text-muted-foreground">
               {mergedCandidate.title || 'Sem título profissional'}
@@ -640,7 +648,7 @@ export default function AdminCandidateDetail() {
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                     <InfoItem label="Nome Completo" value={mergedCandidate.displayName || mergedCandidate.name} />
-                    <InfoItem label="CPF" value={formatCPF(mergedCandidate.cpf || '')} />
+                    <InfoItem label="CPF" value={formatCPF(mergedCandidate.cpf || '')} copyValue={mergedCandidate.cpf || undefined} />
                     <InfoItem label="Data de Nascimento" value={formatDateOfBirth(mergedCandidate.dateOfBirth)} />
                     <InfoItem label="Gênero" value={mergedCandidate.gender || '---'} />
                     <InfoItem label="Estado Civil" value={mergedCandidate.maritalStatus || '---'} />
@@ -823,8 +831,8 @@ export default function AdminCandidateDetail() {
                 <h3 className="text-lg font-semibold text-foreground">Informações Pessoais</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <InfoItem label="Nome" value={mergedCandidate.displayName || mergedCandidate.name} />
-                  <InfoItem label="E-mail" value={mergedCandidate.email} />
-                  <InfoItem label="Telefone" value={mergedCandidate.phone || '---'} />
+                  <InfoItem label="E-mail" value={mergedCandidate.email} copyValue={mergedCandidate.email} />
+                  <InfoItem label="Telefone" value={mergedCandidate.phone || '---'} copyValue={mergedCandidate.phone || undefined} />
                   <InfoItem
                     label="Localização"
                     value={
@@ -833,7 +841,7 @@ export default function AdminCandidateDetail() {
                         : mergedCandidate.location || '---'
                     }
                   />
-                  <InfoItem label="CPF" value={formatCPF(mergedCandidate.cpf || '')} />
+                  <InfoItem label="CPF" value={formatCPF(mergedCandidate.cpf || '')} copyValue={mergedCandidate.cpf || undefined} />
                   <InfoItem label="Data de Nascimento" value={formatDateOfBirth(mergedCandidate.dateOfBirth)} />
                 </div>
                 {mergedCandidate.about && (
@@ -1569,13 +1577,44 @@ function KPICard({ icon: Icon, label, value, iconColor, bgColor }: KPICardProps)
 interface InfoItemProps {
   label: string;
   value: React.ReactNode;
+  copyValue?: string;
 }
 
-function InfoItem({ label, value }: InfoItemProps) {
+function InfoItem({ label, value, copyValue }: InfoItemProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!copyValue) return;
+    await navigator.clipboard.writeText(copyValue);
+    setCopied(true);
+    toast.success('Copiado!');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div>
       <span className="text-xs text-muted-foreground uppercase tracking-wider">{label}</span>
-      <div className="mt-0.5 text-sm text-foreground">{value}</div>
+      <div className="mt-0.5 flex items-center gap-1.5 text-sm text-foreground">
+        <span>{value}</span>
+        {copyValue && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="inline-flex items-center justify-center rounded p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {copied ? (
+                  <Check className="w-3.5 h-3.5 text-green-500" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-xs">Copiar</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
     </div>
   );
 }

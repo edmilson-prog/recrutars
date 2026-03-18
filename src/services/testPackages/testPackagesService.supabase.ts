@@ -33,6 +33,7 @@ function normalizePackageRow(row: Record<string, unknown>): TestPackage {
     stripePriceIdLive: (row.stripe_price_id_live as string) ?? null,
     stripeSyncedAtTest: (row.stripe_synced_at_test as string) ?? null,
     stripeSyncedAtLive: (row.stripe_synced_at_live as string) ?? null,
+    paymentMethods: (row.payment_methods as string[]) ?? ['card'],
     isActive: (row.is_active as boolean) ?? true,
     sortOrder: (row.sort_order as number) ?? 0,
     createdAt: (row.created_at as string) ?? '',

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -267,6 +267,7 @@ const BEHAVIORAL_PROFILES = ARCHETYPE_PROFILES.map((a) => ({
 
 export default function AdminCandidates() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Fetch candidates via service layer
   const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates(
@@ -282,6 +283,9 @@ export default function AdminCandidates() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [testStatusFilter, setTestStatusFilter] = useState<string>('all');
   const [behavioralProfileFilter, setDiscProfileFilter] = useState<string>('all');
+  const [originFilter, setOriginFilter] = useState<string>(
+    searchParams.get('origin') === 'collaborator' ? 'collaborator' : 'all'
+  );
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -333,7 +337,7 @@ export default function AdminCandidates() {
   // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, statusFilter, testStatusFilter, behavioralProfileFilter]);
+  }, [debouncedSearch, statusFilter, testStatusFilter, behavioralProfileFilter, originFilter]);
 
   // Filter logic
   const filteredCandidates = candidates.filter((candidate) => {
@@ -356,7 +360,11 @@ export default function AdminCandidates() {
       behavioralProfileFilter === 'all' ||
       candidateArchetypeId === behavioralProfileFilter;
 
-    return matchesSearch && matchesStatus && matchesTestStatus && matchesDiscProfile;
+    const matchesOrigin = originFilter === 'all'
+      || (originFilter === 'collaborator' && candidate.visibilityLocked)
+      || (originFilter === 'candidate' && !candidate.visibilityLocked);
+
+    return matchesSearch && matchesStatus && matchesTestStatus && matchesDiscProfile && matchesOrigin;
   });
 
   // Pagination
@@ -507,6 +515,7 @@ export default function AdminCandidates() {
 
   const handleClearFilters = () => {
     setStatusFilter('all');
+    setOriginFilter('all');
     setTestStatusFilter('all');
     setDiscProfileFilter('all');
     setSearchTerm('');
@@ -525,6 +534,20 @@ export default function AdminCandidates() {
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="active">Ativo</SelectItem>
             <SelectItem value="inactive">Inativo</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Origem</Label>
+        <Select value={originFilter} onValueChange={setOriginFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="candidate">Candidato</SelectItem>
+            <SelectItem value="collaborator">Colaborador</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -611,6 +634,11 @@ export default function AdminCandidates() {
                   <StatusIcon className="h-3 w-3 mr-1" />
                   {STATUS_CONFIG[candidate.status].label}
                 </Badge>
+                {candidate.visibilityLocked && (
+                  <Badge variant="secondary" className="bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 text-xs">
+                    Colaborador
+                  </Badge>
+                )}
               </div>
 
               <p className="text-sm text-muted-foreground mb-2">{candidate.email}</p>
@@ -694,6 +722,11 @@ export default function AdminCandidates() {
                   >
                     {STATUS_CONFIG[selectedCandidate.status].label}
                   </Badge>
+                  {selectedCandidate.visibilityLocked && (
+                    <Badge variant="secondary" className="bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 text-xs">
+                      Colaborador
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>

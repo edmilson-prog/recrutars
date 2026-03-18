@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -55,6 +56,7 @@ const BLANK_PACKAGE: TestPackage = {
   stripePriceIdLive: null,
   stripeSyncedAtTest: null,
   stripeSyncedAtLive: null,
+  paymentMethods: ['card'],
   isActive: true,
   sortOrder: 0,
   createdAt: '',
@@ -169,6 +171,7 @@ export default function PackageDetail() {
       original_price: editState.originalPrice || null,
       features: editState.features,
       badge: editState.badge || null,
+      payment_methods: editState.paymentMethods,
       is_active: editState.isActive,
       sort_order: editState.sortOrder || 0,
     };
@@ -293,11 +296,11 @@ export default function PackageDetail() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* LEFT COLUMN */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Card 1: Informacoes Basicas */}
+            {/* Card 1: Informações Básicas */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <Card>
                 <CardHeader>
-                  <CardTitle>Informacoes Basicas</CardTitle>
+                  <CardTitle>Informações Básicas</CardTitle>
                   <CardDescription>Identifique e configure o pacote</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -329,7 +332,7 @@ export default function PackageDetail() {
                             <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
-                            <p>Identificador unico usado na URL e integracoes. Use letras minusculas e hifens</p>
+                            <p>Identificador único usado na URL e integrações. Use letras minúsculas e hífens</p>
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -345,7 +348,7 @@ export default function PackageDetail() {
 
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-1">
-                      <Label htmlFor="pkg-desc-short">Descricao curta</Label>
+                      <Label htmlFor="pkg-desc-short">Descrição curta</Label>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
@@ -365,7 +368,7 @@ export default function PackageDetail() {
 
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-1">
-                      <Label htmlFor="pkg-desc">Descricao completa</Label>
+                      <Label htmlFor="pkg-desc">Descrição completa</Label>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
@@ -381,19 +384,19 @@ export default function PackageDetail() {
                       onChange={(e) => handleFieldChange('description', e.target.value || null)}
                       rows={4}
                       className="resize-none"
-                      placeholder="Descricao detalhada do pacote"
+                      placeholder="Descrição detalhada do pacote"
                     />
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
 
-            {/* Card 2: Configuracao */}
+            {/* Card 2: Configuração */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               <Card>
                 <CardHeader>
-                  <CardTitle>Configuracao</CardTitle>
-                  <CardDescription>Tipo de teste, creditos e destaque</CardDescription>
+                  <CardTitle>Configuração</CardTitle>
+                  <CardDescription>Tipo de teste, créditos e destaque</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid sm:grid-cols-3 gap-4">
@@ -421,7 +424,7 @@ export default function PackageDetail() {
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1">
-                        <Label>Creditos *</Label>
+                        <Label>Créditos *</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
@@ -457,22 +460,59 @@ export default function PackageDetail() {
                       />
                     </div>
                   </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <Label>Meios de Pagamento</Label>
+                    <p className="text-xs text-muted-foreground">Selecione quais meios de pagamento serão aceitos neste pacote</p>
+                    <div className="flex flex-wrap gap-4 pt-1">
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox checked disabled />
+                        <span className="text-muted-foreground">Cartão de Crédito</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <Checkbox
+                          checked={editState.paymentMethods.includes('pix')}
+                          onCheckedChange={(checked) => {
+                            const methods = checked
+                              ? [...editState.paymentMethods, 'pix']
+                              : editState.paymentMethods.filter(m => m !== 'pix');
+                            handleFieldChange('paymentMethods', methods);
+                          }}
+                        />
+                        PIX
+                      </label>
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <Checkbox
+                          checked={editState.paymentMethods.includes('boleto')}
+                          onCheckedChange={(checked) => {
+                            const methods = checked
+                              ? [...editState.paymentMethods, 'boleto']
+                              : editState.paymentMethods.filter(m => m !== 'boleto');
+                            handleFieldChange('paymentMethods', methods);
+                          }}
+                        />
+                        Boleto
+                      </label>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
 
-            {/* Card 3: Precos */}
+            {/* Card 3: Preços */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
               <Card>
                 <CardHeader>
-                  <CardTitle>Precos</CardTitle>
-                  <CardDescription>Configure o preco do pacote e o preco original para exibir desconto</CardDescription>
+                  <CardTitle>Preços</CardTitle>
+                  <CardDescription>Configure o preço do pacote e o preço original para exibir desconto</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1">
-                        <Label>Preco (BRL) *</Label>
+                        <Label>Preço (BRL) *</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
@@ -494,13 +534,13 @@ export default function PackageDetail() {
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1">
-                        <Label>Preco original (BRL)</Label>
+                        <Label>Preço original (BRL)</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
-                            <p>Preco original exibido riscado para mostrar desconto. Deixe vazio se nao houver desconto</p>
+                            <p>Preço original exibido riscado para mostrar desconto. Deixe vazio se não houver desconto</p>
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -579,12 +619,12 @@ export default function PackageDetail() {
               </Card>
             </motion.div>
 
-            {/* Card 5: Configuracoes */}
+            {/* Card 5: Configurações */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
               <Card>
                 <CardHeader>
-                  <CardTitle>Configuracoes</CardTitle>
-                  <CardDescription>Status e ordenacao do pacote</CardDescription>
+                  <CardTitle>Configurações</CardTitle>
+                  <CardDescription>Status e ordenação do pacote</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-4">
@@ -602,13 +642,13 @@ export default function PackageDetail() {
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1">
-                        <Label>Ordem de exibicao</Label>
+                        <Label>Ordem de exibição</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
-                            <p>Define a posicao do pacote na listagem. Menor numero = aparece primeiro</p>
+                            <p>Define a posição do pacote na listagem. Menor número = aparece primeiro</p>
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -628,7 +668,7 @@ export default function PackageDetail() {
           {/* RIGHT COLUMN -- sticky sidebar */}
           <div className="space-y-6">
             <div className="lg:sticky lg:top-6 space-y-6">
-              {/* Card: Acoes */}
+              {/* Card: Ações */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                 <Card>
                   <CardContent className="pt-5 space-y-4">
@@ -638,7 +678,7 @@ export default function PackageDetail() {
                       className="w-full bg-cyan-600 hover:bg-cyan-700"
                     >
                       <Save className="w-4 h-4 mr-2" />
-                      {isSaving ? 'Salvando...' : (isNew ? 'Criar Pacote' : 'Salvar Alteracoes')}
+                      {isSaving ? 'Salvando...' : (isNew ? 'Criar Pacote' : 'Salvar Alterações')}
                     </Button>
                     <Button
                       variant="outline"
@@ -671,7 +711,7 @@ export default function PackageDetail() {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {editState.credits} {editState.credits === 1 ? 'credito' : 'creditos'} Gauge-Pro
+                        {editState.credits} {editState.credits === 1 ? 'crédito' : 'créditos'} Gauge-Pro
                       </p>
                     </div>
                     <div className="flex items-baseline gap-2">
@@ -753,7 +793,7 @@ export default function PackageDetail() {
                           )}
                           onClick={() => setStripeEnv('live')}
                         >
-                          Producao
+                          Produção
                         </button>
                       </div>
 
@@ -791,7 +831,7 @@ export default function PackageDetail() {
 
                       {!isSynced && (
                         <p className="text-xs text-muted-foreground">
-                          Clique em sincronizar para criar produto e preco no Stripe.
+                          Clique em sincronizar para criar produto e preço no Stripe.
                         </p>
                       )}
 
@@ -810,14 +850,14 @@ export default function PackageDetail() {
                 </motion.div>
               )}
 
-              {/* Card: Informacoes (edit only) */}
+              {/* Card: Informações (edit only) */}
               {!isNew && pkg && (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2">
                         <Info className="w-4 h-4" />
-                        Informacoes
+                        Informações
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">

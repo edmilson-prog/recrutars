@@ -1,26 +1,292 @@
 {
   "versions": [
     {
+      "version": "1.40.0",
+      "codename": "Payment",
+      "type": "minor",
+      "releaseDate": "2026-03-18",
+      "description": "Edge Functions de sincronização e checkout Stripe para pacotes de testes, meios de pagamento configuráveis por pacote (Cartão, PIX, Boleto), validação de skills no onboarding e melhorias de UX no admin.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Edge Function stripe-sync-package para sincronizar pacotes de teste com Stripe",
+            "Edge Function stripe-package-checkout para checkout de pacotes via Stripe",
+            "Meios de pagamento configuráveis por pacote: Cartão, PIX e Boleto",
+            "Ícone de copiar para área de transferência nos campos email, CPF e telefone do candidato",
+            "Tooltips com detalhes simplificados nos itens do changelog",
+            "Estatística 'Total Hoje' no hero card da página Sobre",
+            "Modal 'Quase lá!' no onboarding com regras de seleção de habilidades"
+          ],
+          "details": {
+            "0": {
+              "description": "Cria ou atualiza o produto e preço do pacote no Stripe, salvando os IDs de volta no banco de dados para uso no checkout.",
+              "files": ["supabase/functions/stripe-sync-package/index.ts"],
+              "routes": ["/admin/pacotes-testes"]
+            },
+            "1": {
+              "description": "Cria uma sessão de checkout no Stripe para compra avulsa de pacotes de testes. Suporta pagamento único com redirecionamento para a página do Stripe.",
+              "files": ["supabase/functions/stripe-package-checkout/index.ts"],
+              "routes": ["/empresa/pacotes"]
+            },
+            "2": {
+              "description": "Cada pacote pode ter seus próprios meios de pagamento: Cartão (obrigatório), PIX e Boleto. Configurável via checkboxes na edição do pacote.",
+              "files": ["src/pages/admin/PackageDetail.tsx", "sql/migrations/061_package_payment_methods.sql"],
+              "routes": ["/admin/pacotes-testes/:id"]
+            },
+            "3": {
+              "description": "Ícone de copiar ao lado de email, CPF e telefone no detalhe do candidato. Ao clicar, copia o valor e exibe confirmação visual.",
+              "files": ["src/pages/admin/CandidateDetail.tsx"],
+              "routes": ["/admin/candidatos/:id"]
+            },
+            "4": {
+              "description": "Ao passar o mouse sobre um item do changelog, um tooltip exibe a descrição simplificada, arquivos alterados e rotas afetadas.",
+              "files": ["src/components/about/VersionAccordion.tsx", "src/types/changelog.ts"],
+              "routes": ["/sobre"]
+            },
+            "5": {
+              "description": "Card hero na página Sobre agora mostra quantas atualizações foram feitas no dia atual.",
+              "files": ["src/pages/About.tsx"],
+              "routes": ["/sobre"]
+            },
+            "6": {
+              "description": "Quando o candidato tenta avançar no onboarding sem selecionar ao menos 2 competências técnicas e 2 comportamentais, um modal amigável informa o que falta.",
+              "files": ["src/pages/candidato/ProfessionalProfile.tsx"],
+              "routes": ["/candidato/onboarding/perfil-profissional"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Validação de skills no onboarding corrigida para exigir 2 técnicas e 2 comportamentais",
+            "Grupos de habilidades agora iniciam fechados no onboarding e perfil",
+            "Leitura de credenciais Stripe corrigida para acessar subcategoria correta no system_settings",
+            "Campo 'Sobre você' limitado a 2000 caracteres com contador"
+          ],
+          "details": {
+            "0": {
+              "description": "A validação checava skills legadas (sempre vazias) em vez das padronizadas. Agora exige 2 técnicas e 2 comportamentais para avançar.",
+              "files": ["src/pages/candidato/ProfessionalProfile.tsx"],
+              "routes": ["/candidato/onboarding/perfil-profissional"]
+            },
+            "1": {
+              "description": "O primeiro grupo de cada seção (técnicas e comportamentais) vinha expandido automaticamente. Agora todos iniciam fechados.",
+              "files": ["src/components/skills/SkillCategoryAccordion.tsx"],
+              "routes": ["/candidato/perfil", "/candidato/onboarding/perfil-profissional"]
+            },
+            "2": {
+              "description": "A Edge Function buscava a chave Stripe diretamente em values.stripeTestSecretKey, mas a estrutura real é values.stripe.stripeTestSecretKey.",
+              "files": ["supabase/functions/stripe-sync-package/index.ts"]
+            },
+            "3": {
+              "description": "O campo de texto 'Sobre você' no perfil profissional agora tem limite de 2000 caracteres com contador visível.",
+              "files": ["src/pages/candidato/ProfessionalProfile.tsx"],
+              "routes": ["/candidato/perfil", "/candidato/onboarding/perfil-profissional"]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Acentuação corrigida em toda a página de edição de pacotes"
+          ],
+          "details": {
+            "0": {
+              "description": "Textos como Configuração, Descrição, Créditos, Preços e outros labels foram corrigidos com acentuação adequada.",
+              "files": ["src/pages/admin/PackageDetail.tsx"],
+              "routes": ["/admin/pacotes-testes/:id"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "version": "1.39.0",
+      "codename": "Crew",
+      "type": "minor",
+      "releaseDate": "2026-03-17",
+      "description": "Redesign do fluxo de teste para colaboradores com CPF, envio multicanal, perfil enriquecido com 4 tabs, gestão manual de créditos e filtros de colaborador no admin.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Perfil do colaborador enriquecido com 4 tabs: Visão Geral, Competências, IA e Respostas (7 componentes reutilizados)",
+            "Header hero redesenhado no perfil do colaborador com CPF mascarado, telefone, fit score e badge de arquétipo",
+            "Gestão manual de créditos no admin: creditar, debitar e transferir entre empresas com auditoria",
+            "3 RPCs PostgreSQL para operações de crédito (admin_manual_credit, admin_manual_debit, admin_transfer_credits)",
+            "Painel de créditos na tab Assinatura do detalhe da empresa com KPIs, compras ativas e histórico de transações",
+            "KPI 'Colaboradores' na página Usuários & Permissões com filtro rápido clicável",
+            "Badge 'Colaborador' (cyan) nas listagens e detalhes de candidatos no admin",
+            "Filtro 'Origem' (Candidato/Colaborador) nas páginas admin de Candidatos e Usuários",
+            "SendTestModal com 3 canais de envio: link, email e WhatsApp com expiração 24h",
+            "CPF obrigatório e telefone WhatsApp no cadastro de membros de equipe",
+            "Verificação de CPF via Edge Function para testes de colaboradores",
+            "Deprecação do link público em favor de convites individuais"
+          ],
+          "details": {
+            "0": {
+              "description": "Perfil do colaborador agora tem 4 abas organizadas: Visão Geral, Competências, Análise IA e Respostas do teste, facilitando a consulta completa do perfil.",
+              "files": ["src/components/team-management/MemberProfile.tsx"],
+              "routes": ["/empresa/equipe/:id"]
+            },
+            "1": {
+              "description": "Cabeçalho do perfil do colaborador redesenhado com foto, nome, cargo, CPF parcial, telefone, score de compatibilidade e tipo comportamental.",
+              "files": ["src/components/team-management/MemberProfile.tsx"],
+              "routes": ["/empresa/equipe/:id"]
+            },
+            "2": {
+              "description": "Administradores podem adicionar, remover e transferir créditos de teste entre empresas com confirmação em 2 etapas e registro de auditoria.",
+              "files": ["src/components/admin/companies/CreditOperationDialog.tsx", "src/components/admin/companies/CompanySubscriptionTab.tsx"],
+              "routes": ["/admin/empresas/:id"]
+            },
+            "3": {
+              "description": "Operações de crédito no banco de dados garantem segurança e integridade nas ações de adicionar, debitar e transferir créditos entre empresas.",
+              "files": ["sql/migrations/060_admin_credit_management.sql"]
+            },
+            "4": {
+              "description": "Painel de créditos na aba Assinatura da empresa com saldo atual, total comprado, total usado, compras ativas e histórico completo de transações.",
+              "files": ["src/components/admin/companies/CompanySubscriptionTab.tsx"],
+              "routes": ["/admin/empresas/:id"]
+            },
+            "5": {
+              "description": "Novo indicador 'Colaboradores' no painel de Usuários do admin. Ao clicar, filtra a tabela para mostrar apenas colaboradores.",
+              "files": ["src/pages/admin/Users.tsx"],
+              "routes": ["/admin/usuarios"]
+            },
+            "6": {
+              "description": "Identificação visual 'Colaborador' em destaque nas listagens e detalhes de candidatos no painel administrativo.",
+              "files": ["src/pages/admin/Candidates.tsx", "src/pages/admin/CandidateDetail.tsx"],
+              "routes": ["/admin/candidatos", "/admin/candidatos/:id"]
+            },
+            "7": {
+              "description": "Novo filtro 'Origem' permite separar candidatos de colaboradores nas páginas de Candidatos e Usuários do admin.",
+              "files": ["src/pages/admin/Candidates.tsx", "src/components/admin/users/UserFilters.tsx", "src/pages/admin/Users.tsx"],
+              "routes": ["/admin/candidatos", "/admin/usuarios"]
+            },
+            "8": {
+              "description": "Envio de teste por 3 canais: link copiável, email direto e WhatsApp. Convites expiram automaticamente em 24 horas.",
+              "files": ["src/components/empresa/SendTestModal.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "9": {
+              "description": "CPF passou a ser obrigatório no cadastro de membros da equipe, com validação automática. Telefone WhatsApp é opcional.",
+              "files": ["src/components/empresa/TeamMemberForm.tsx"],
+              "routes": ["/empresa/equipe"]
+            },
+            "10": {
+              "description": "Verificação automática de CPF antes de iniciar o teste do colaborador, garantindo que o teste seja vinculado à pessoa correta.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"]
+            },
+            "11": {
+              "description": "O link público de teste exibe aviso de descontinuação. Convites individuais oferecem melhor rastreamento e controle por colaborador.",
+              "files": ["src/components/empresa/PublicLinkManager.tsx"],
+              "routes": ["/empresa/testes"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Breadcrumb 404 corrigido para rotas de desenvolvimento e evolução",
+            "Breadcrumb 'Membro' redirecionava para 404 — corrigido com modal mais largo",
+            "gauge_status na Edge Function corrigido para usar 'mapped' em vez de 'completed'",
+            "Nomes normalizados para UPPERCASE em todas as tabelas do banco"
+          ],
+          "details": {
+            "0": {
+              "description": "Links de navegação nas páginas de Desenvolvimento e Evolução do membro agora funcionam corretamente.",
+              "routes": ["/empresa/equipe/:id/desenvolvimento", "/empresa/equipe/:id/evolucao"]
+            },
+            "1": {
+              "description": "Link de navegação 'Membro' corrigido para abrir o perfil do membro em um painel ampliado.",
+              "routes": ["/empresa/equipe/:id"]
+            },
+            "2": {
+              "description": "Correção no processamento de testes de colaboradores que impedia a conclusão correta em alguns cenários.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"]
+            },
+            "3": {
+              "description": "Todos os nomes no sistema foram padronizados para letras maiúsculas, garantindo consistência na exibição.",
+              "files": ["sql/migrations/058_uppercase_all_names.sql"]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Grid de KPIs em Usuários & Permissões expandido de 7 para 8 colunas"
+          ],
+          "details": {
+            "0": {
+              "description": "Painel de indicadores em Usuários expandido para 8 itens, com layout adaptável para celular, tablet e desktop.",
+              "files": ["src/pages/admin/Users.tsx"],
+              "routes": ["/admin/usuarios"]
+            }
+          }
+        },
+        {
+          "type": "deprecated",
+          "items": [
+            "Link público de teste comportamental (substituído por convites individuais)"
+          ],
+          "details": {
+            "0": {
+              "description": "O link público de teste está sendo substituído por convites individuais, que oferecem melhor rastreamento e controle por colaborador.",
+              "files": ["src/components/empresa/PublicLinkManager.tsx"],
+              "routes": ["/empresa/testes"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.38.1",
       "codename": "Market",
       "type": "patch",
       "releaseDate": "2026-03-17",
       "description": "Página dedicada de testes no admin com visão geral, resultados, convites e testes corporativos, e correção do KPI zerado no dashboard.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
           "items": [
             "Página /admin/testes com 4 abas: Visão Geral (KPIs, gráficos, funil), Resultados (tabela com detail sheet), Convites (cross-company) e Testes Corporativos",
             "Entrada 'Testes' no sidebar admin no grupo Principal"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "Nova página de Testes no admin com 4 abas: Visão Geral com indicadores e gráficos, Resultados com detalhes de cada teste, Convites enviados e Testes Corporativos.",
+              "files": ["src/pages/admin/AdminTests.tsx"],
+              "routes": ["/admin/testes"]
+            },
+            "1": {
+              "description": "Acesso rápido à página de Testes pelo menu lateral do admin, no grupo Principal.",
+              "files": ["src/config/adminTabConfig.ts"],
+              "routes": ["/admin/testes"]
+            }
+          }
         },
         {
           "type": "fixed",
           "items": [
             "KPI 'Testes concluídos' no dashboard admin mostrava zero — corrigido para contar gauge_pro_results + behavioral_tests",
             "Acentuação corrigida em toda a página AdminTests"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "Indicador 'Testes concluídos' no dashboard admin mostrava zero. Corrigido para contabilizar todos os testes finalizados.",
+              "files": ["src/pages/admin/Dashboard.tsx"],
+              "routes": ["/admin/dashboard"]
+            },
+            "1": {
+              "description": "Textos com acentuação incorreta na página de Testes do admin foram corrigidos.",
+              "files": ["src/pages/admin/AdminTests.tsx"],
+              "routes": ["/admin/testes"]
+            }
+          }
         }
       ]
     },
@@ -44,7 +310,52 @@
             "Dias de cooldown do Gauge-Pro configuráveis via configurações admin",
             "Timer de contagem regressiva no cooldown de teste comportamental",
             "Migração de skills legadas para padronizadas com banners de revisão"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "Pacotes de testes avulsos disponíveis para compra com créditos. Pagamento via Stripe, gestão pelo admin e loja acessível pela empresa.",
+              "files": ["src/services/testPackages/testPackagesService.supabase.ts", "src/pages/empresa/Packages.tsx", "src/pages/admin/TestPackages.tsx"],
+              "routes": ["/empresa/pacotes", "/admin/pacotes-testes"]
+            },
+            "1": {
+              "description": "Envio de mensagens WhatsApp para candidatos. Painel admin para configurar conexão, QR code e status.",
+              "files": ["src/services/whatsapp/whatsappService.supabase.ts", "src/pages/admin/EvolutionPanel.tsx"],
+              "routes": ["/admin/whatsapp"]
+            },
+            "2": {
+              "description": "Som de alerta toca quando uma nova notificação é recebida em tempo real.",
+              "files": ["src/hooks/useNotificationSound.ts"]
+            },
+            "3": {
+              "description": "A empresa recebe notificação automática quando um candidato finaliza o teste Gauge-Pro.",
+              "files": ["src/hooks/useNotificationSendsQuery.ts"]
+            },
+            "4": {
+              "description": "Controle individual para cada tipo de notificação automática: novo candidato, teste concluído, nova mensagem e outros eventos.",
+              "files": ["src/pages/empresa/NotificationSettings.tsx"],
+              "routes": ["/empresa/configuracoes/notificacoes"]
+            },
+            "5": {
+              "description": "Foto do usuário visível na tabela de listagem e atalho rápido para permissões nos detalhes de candidato e empresa.",
+              "files": ["src/pages/admin/Users.tsx", "src/pages/admin/CandidateDetail.tsx", "src/pages/admin/CompanyDetail.tsx"],
+              "routes": ["/admin/usuarios"]
+            },
+            "6": {
+              "description": "Administradores podem definir quantos dias o candidato deve esperar para refazer o teste Gauge-Pro. Padrão: 30 dias.",
+              "files": ["src/pages/admin/Settings.tsx"],
+              "routes": ["/admin/configuracoes"]
+            },
+            "7": {
+              "description": "Contagem regressiva visível mostrando quanto tempo falta para o candidato poder refazer o teste comportamental.",
+              "files": ["src/pages/candidato/Tests.tsx"],
+              "routes": ["/candidato/testes"]
+            },
+            "8": {
+              "description": "Competências antigas foram migradas para o novo padrão. Candidatos com competências desatualizadas veem um aviso para revisá-las.",
+              "files": ["src/services/standardizedSkills/standardizedSkillsService.supabase.ts"],
+              "routes": ["/candidato/perfil"]
+            }
+          }
         },
         {
           "type": "fixed",
@@ -55,7 +366,34 @@
             "Acentos corrigidos em componentes WhatsApp e payload checkNumbers",
             "Botão de envio de notificação agora cria notificações corretamente",
             "Banner de impersonação alterado de fixed para sticky evitando sobreposição do menu"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "Planos inativos não aparecem mais para candidatos e empresas. Apenas planos ativos são exibidos.",
+              "files": ["src/services/plans/plansService.supabase.ts"],
+              "routes": ["/planos", "/empresa/plano"]
+            },
+            "1": {
+              "description": "Perfil do usuário no rodapé do menu lateral não ficava mais oculto atrás do rodapé da página.",
+              "files": ["src/components/layout/DashboardLayout.tsx"]
+            },
+            "2": {
+              "description": "Máscara de telefone não remove mais o DDD ao digitar o número.",
+              "files": ["src/lib/masks.ts"]
+            },
+            "3": {
+              "description": "Textos com acentuação incorreta nos componentes de WhatsApp foram corrigidos.",
+              "files": ["src/services/whatsapp/whatsappService.supabase.ts"]
+            },
+            "4": {
+              "description": "Botão 'Enviar Notificação' agora cria e envia a notificação corretamente.",
+              "files": ["src/hooks/useNotificationSendsQuery.ts"]
+            },
+            "5": {
+              "description": "Banner de impersonação ajustado para não sobrepor o menu lateral ao rolar a página.",
+              "files": ["src/components/layout/ImpersonationBanner.tsx"]
+            }
+          }
         }
       ]
     },

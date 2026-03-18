@@ -9,12 +9,13 @@ import { motion } from 'framer-motion';
 import {
   Users, ShieldCheck, Building2, UserCheck, UserX, Search,
   SlidersHorizontal, CheckCircle, Ban, ChevronLeft, ChevronRight,
-  Download, Crown, Loader2, ShieldAlert, UserPlus,
+  Download, Crown, Loader2, ShieldAlert, UserPlus, UsersRound,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useUsers, useUpdateUserStatus } from '@/hooks/useUsersQuery';
 import { useRoles } from '@/hooks/useRBACQuery';
+import { useTeamMembers } from '@/hooks/useTeamsQuery';
 import { formatRelativeDate } from '@/lib/formatters';
 import { formatDateBR } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
@@ -46,6 +47,7 @@ const emptyFilters: UserFiltersState = {
   statuses: [],
   roleId: '',
   noRole: false,
+  isCollaborator: false,
   plan: '',
   dateFrom: '',
   dateTo: '',
@@ -79,6 +81,7 @@ export default function AdminUsers() {
   // Fetch users via service layer
   const { data: usersResult, isLoading: isLoadingUsers } = useUsers(undefined, { page: 1, pageSize: 9999 });
   const { data: rolesData } = useRoles();
+  const { data: teamMembersData } = useTeamMembers();
   const updateStatusMutation = useUpdateUserStatus();
 
   // Users with RBAC enrichment from service
@@ -92,6 +95,13 @@ export default function AdminUsers() {
   }, [usersResult]);
 
   const users = localUsers;
+
+  // Set of emails that are collaborators (team members)
+  const collaboratorEmails = useMemo(() => {
+    const emails = new Set<string>();
+    teamMembersData?.forEach(m => emails.add(m.email.toLowerCase()));
+    return emails;
+  }, [teamMembersData]);
 
   // Debounce search
   useEffect(() => {
@@ -135,6 +145,8 @@ export default function AdminUsers() {
       if (filters.roleId && user.roleId !== filters.roleId) return false;
       // No role
       if (filters.noRole && user.roleId) return false;
+      // Collaborator
+      if (filters.isCollaborator && !collaboratorEmails.has(user.email.toLowerCase())) return false;
       // Date range
       if (filters.dateFrom && user.createdAt < filters.dateFrom) return false;
       if (filters.dateTo && user.createdAt > filters.dateTo) return false;
@@ -182,6 +194,7 @@ export default function AdminUsers() {
     const active = users.filter(u => (u.status || 'active') === 'active').length;
     const inactive = users.filter(u => u.status === 'inactive' || u.status === 'suspended' || u.status === 'pending').length;
     const noRole = users.filter(u => !u.roleId).length;
+    const collaborators = teamMembersData?.length ?? 0;
     return [
       { key: 'total', label: 'Total Usuários', value: total, icon: Users, color: 'bg-primary/10 text-primary', activeRing: 'ring-2 ring-primary', hoverRing: 'hover:ring-2 hover:ring-primary/50' },
       { key: 'admins', label: 'Admins', value: admins, icon: ShieldCheck, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', activeRing: 'ring-2 ring-purple-400', hoverRing: 'hover:ring-2 hover:ring-purple-400/50' },
@@ -190,8 +203,9 @@ export default function AdminUsers() {
       { key: 'active', label: 'Ativos', value: active, icon: UserCheck, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300', activeRing: 'ring-2 ring-emerald-400', hoverRing: 'hover:ring-2 hover:ring-emerald-400/50' },
       { key: 'inactive', label: 'Inativos', value: inactive, icon: UserX, color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', activeRing: 'ring-2 ring-red-400', hoverRing: 'hover:ring-2 hover:ring-red-400/50' },
       { key: 'noRole', label: 'Sem Papel', value: noRole, icon: ShieldAlert, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300', activeRing: 'ring-2 ring-amber-400', hoverRing: 'hover:ring-2 hover:ring-amber-400/50' },
+      { key: 'collaborators', label: 'Colaboradores', value: collaborators, icon: UsersRound, color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300', activeRing: 'ring-2 ring-cyan-400', hoverRing: 'hover:ring-2 hover:ring-cyan-400/50' },
     ];
-  }, [users]);
+  }, [users, teamMembersData]);
 
   // KPI quick-filter handler (toggle)
   const handleKpiClick = useCallback((key: string) => {
@@ -209,6 +223,7 @@ export default function AdminUsers() {
       active: { ...emptyFilters, statuses: ['active' as UserStatus] },
       inactive: { ...emptyFilters, statuses: ['inactive' as UserStatus, 'suspended' as UserStatus, 'pending' as UserStatus] },
       noRole: { ...emptyFilters, noRole: true },
+      collaborators: { ...emptyFilters, isCollaborator: true },
     };
 
     setFilters(filterMap[key] ?? emptyFilters);
@@ -327,7 +342,7 @@ export default function AdminUsers() {
         <AdminTabNav />
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
           {kpis.map((kpi, index) => {
             const isActive = activeKpi === kpi.key;
             return (
