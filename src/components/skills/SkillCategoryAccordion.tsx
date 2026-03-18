@@ -49,7 +49,7 @@ export function SkillCategoryAccordion({
   // When searching, open all matching categories
   const defaultOpenValues = normalizedQuery
     ? filteredCategories.map((c) => c.name)
-    : [filteredCategories[0]?.name];
+    : [];
 
   return (
     <Accordion
