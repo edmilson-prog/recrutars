@@ -26,18 +26,21 @@ interface TechnicalAnalysisCardProps {
   candidateId: string;
   candidateName?: string;
   gaugeProResult?: GaugeProResult | null;
+  testResultId?: string;
 }
 
 export function TechnicalAnalysisCard({
   candidateId,
   candidateName,
   gaugeProResult,
+  testResultId,
 }: TechnicalAnalysisCardProps) {
   const [metadataOpen, setMetadataOpen] = useState(false);
   const { technicalAnalysis, isGenerating, isRegenerating, error, canGenerate, generateAnalyses, regenerateAnalysis } =
     useAIAnalysis({
       candidateId,
       candidateName,
+      testResultId,
     });
 
   if (isGenerating) {

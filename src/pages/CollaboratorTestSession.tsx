@@ -403,6 +403,28 @@ export default function CollaboratorTestSession() {
           },
         });
       }
+
+      // Fire-and-forget: gerar análises IA em background (mesmo padrão do useGaugeProAssessment)
+      if (candidateId && gaugeResult) {
+        import('@/lib/aiAgent').then(({ loadAgentSettingsAsync, generateBothAnalyses, saveAnalysisResult }) => {
+          loadAgentSettingsAsync().then((agentSettings) => {
+            if (agentSettings.agentEnabled && agentSettings.apiKey) {
+              const memberName = invitation?.candidateName || 'Colaborador';
+              generateBothAnalyses(gaugeResult, memberName, agentSettings)
+                .then((analysisResult) => {
+                  const hasValidAnalysis =
+                    (analysisResult.practical && analysisResult.practical.status !== 'error') ||
+                    (analysisResult.technical && analysisResult.technical.status !== 'error');
+                  if (hasValidAnalysis) {
+                    saveAnalysisResult(analysisResult);
+                  }
+                })
+                .catch(() => { /* fallback: relatório básico sem IA */ });
+            }
+          });
+        }).catch(() => { /* módulo IA indisponível */ });
+      }
+
       setStep('complete');
     },
   });

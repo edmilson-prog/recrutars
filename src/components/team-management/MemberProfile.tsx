@@ -35,11 +35,12 @@ import {
   ClipboardList,
   ChevronDown,
   ChevronUp,
+  Bot,
+  Clock,
 } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
-import { useAuth } from '@/contexts/AuthContext';
 import GaugeStatusBadge from './GaugeStatusBadge';
 import { GaugeProRadarChart } from '@/components/corporate-tests/GaugeProRadarChart';
 import { DimensionBarsGaugePro } from '@/components/corporate-tests/DimensionBarsGaugePro';
@@ -50,9 +51,11 @@ import { EmotionalFactorsCard } from '@/components/corporate-tests/EmotionalFact
 import { RiskScoreCard } from '@/components/corporate-tests/RiskScoreCard';
 import { FitScoreDisplay } from '@/components/corporate-tests/FitScoreDisplay';
 import { AIRecommendationsTab } from '@/components/corporate-tests/AIRecommendationsTab';
-import { PracticalAnalysisCard } from '@/components/aiAnalysis/PracticalAnalysisCard';
-import { TechnicalAnalysisCard } from '@/components/aiAnalysis/TechnicalAnalysisCard';
 import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { useQuery } from '@tanstack/react-query';
+import { loadAllAnalysesFromSupabase } from '@/lib/aiAgent/storageService';
+import { renderAnalysisContent } from '@/lib/renderAnalysisContent';
 import { ARCHETYPE_PROFILES } from '@/data/gaugeProArchetypes';
 import { calculateFitScore, classifyFitScore } from '@/utils/fitScore';
 import type { TeamMember, Department, Position, TestHistoryEntry } from '@/types/teamManagement';
@@ -109,6 +112,155 @@ function formatPhone(value: string): string {
   return digits.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
 }
 
+function formatAnalysisDate(iso: string): string {
+  const d = new Date(iso);
+  return `${d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}, ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+function AllAnalysesAccordion({
+  candidateId,
+  testHistory,
+}: {
+  candidateId: string;
+  testHistory: TestHistoryEntry[];
+}) {
+  const { data: allAnalyses = [], isLoading } = useQuery({
+    queryKey: ['ai-analyses-all', candidateId],
+    queryFn: () => loadAllAnalysesFromSupabase(candidateId),
+    enabled: !!candidateId,
+  });
+
+  // Merge: show analyses that exist + tests without analysis
+  const testDates = new Map(testHistory.map((t) => [t.id, t.completedAt]));
+  const analysisTestIds = new Set(allAnalyses.map((a) => a.testResultId));
+
+  // All items: analyses first (ordered by date desc), then tests without analysis
+  const items = [
+    ...allAnalyses.map((a) => ({
+      testResultId: a.testResultId,
+      date: testDates.get(a.testResultId) ?? a.generatedAt,
+      practical: a.practical,
+      technical: a.technical,
+      generatedAt: a.generatedAt,
+      hasAnalysis: true as const,
+    })),
+    ...testHistory
+      .filter((t) => !analysisTestIds.has(t.id))
+      .map((t) => ({
+        testResultId: t.id,
+        date: t.completedAt,
+        practical: undefined,
+        technical: undefined,
+        generatedAt: undefined,
+        hasAnalysis: false as const,
+      })),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const latestTestId = testHistory.length > 0
+    ? [...testHistory].sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())[0].id
+    : undefined;
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-10">
+          <Sparkles className="h-6 w-6 animate-pulse text-muted-foreground/40 mr-2" />
+          <span className="text-sm text-muted-foreground">Carregando análises...</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+          <Sparkles className="h-10 w-10 mb-3 text-muted-foreground/40" />
+          <p className="text-sm font-medium">Nenhuma análise disponível</p>
+          <p className="text-xs mt-1">As análises são geradas automaticamente ao finalizar um teste.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Accordion
+      type="single"
+      collapsible
+      defaultValue={items[0]?.testResultId}
+      className="space-y-2"
+    >
+      {items.map((item) => {
+        const isLatest = item.testResultId === latestTestId;
+        return (
+          <AccordionItem
+            key={item.testResultId}
+            value={item.testResultId}
+            className="border rounded-lg overflow-hidden"
+          >
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <div className="flex items-center gap-3 flex-1">
+                <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                <span className="font-medium text-sm">{formatDate(item.date)}</span>
+                {isLatest && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                    Atual
+                  </Badge>
+                )}
+                {!item.hasAnalysis && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 text-muted-foreground">
+                    Sem análise
+                  </Badge>
+                )}
+              </div>
+              {item.generatedAt && (
+                <div className="flex items-center gap-1.5 mr-2 text-[11px] text-muted-foreground shrink-0">
+                  <Bot className="h-3 w-3" />
+                  <span>Gerado por IA</span>
+                  <Clock className="h-3 w-3 ml-1" />
+                  <span>{formatAnalysisDate(item.generatedAt)}</span>
+                </div>
+              )}
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              {item.hasAnalysis ? (
+                <div className="space-y-4">
+                  {item.practical && item.practical.status !== 'error' && (
+                    <div>
+                      <div className="max-w-none max-h-[520px] overflow-y-auto pr-3 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
+                        {renderAnalysisContent(item.practical.content)}
+                      </div>
+                    </div>
+                  )}
+                  {item.technical && item.technical.status !== 'error' && (
+                    <div>
+                      <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                        <ShieldCheck className="h-3 w-3" />
+                        Análise Técnica
+                      </div>
+                      <div className="max-w-none max-h-[520px] overflow-y-auto pr-3 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
+                        {renderAnalysisContent(item.technical.content)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-6 text-center">
+                  <Sparkles className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                  <p className="text-sm text-muted-foreground">Nenhuma análise gerada para este teste</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">
+                    A análise é gerada automaticamente ao finalizar o teste comportamental.
+                  </p>
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        );
+      })}
+    </Accordion>
+  );
+}
+
 export function MemberProfile({
   member,
   department,
@@ -125,7 +277,6 @@ export function MemberProfile({
   onViewDevelopment,
   onViewEvolution,
 }: MemberProfileProps) {
-  const { user } = useAuth();
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
   const initials = member.name
@@ -449,30 +600,12 @@ export function MemberProfile({
 
           {/* Tab 3: IA */}
           <TabsContent value="ia" className="space-y-6">
-            {selectedTestId && testHistory.length > 1 && selectedTestId !== testHistory[0]?.id && (
-              <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
-                <CardContent className="py-3">
-                  <p className="text-sm text-amber-800 dark:text-amber-300">
-                    A análise IA abaixo foi gerada para o teste mais recente. Para gerar uma análise específica para este teste, use o botão "Gerar Análise".
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-            {user?.type === 'admin' && candidateId && (
-              <TechnicalAnalysisCard
+            {candidateId ? (
+              <AllAnalysesAccordion
                 candidateId={candidateId}
-                candidateName={member.name}
-                gaugeProResult={gaugeProResult}
+                testHistory={testHistory}
               />
-            )}
-            {candidateId && (
-              <PracticalAnalysisCard
-                candidateId={candidateId}
-                candidateName={member.name}
-              />
-            )}
-            {aiResult && <AIRecommendationsTab result={aiResult} />}
-            {!candidateId && !aiResult && (
+            ) : (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                   <Sparkles className="h-10 w-10 mb-3 text-muted-foreground/40" />
@@ -483,6 +616,7 @@ export function MemberProfile({
                 </CardContent>
               </Card>
             )}
+            {aiResult && <AIRecommendationsTab result={aiResult} />}
           </TabsContent>
 
           {/* Tab 4: Respostas */}

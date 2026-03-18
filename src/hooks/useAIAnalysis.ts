@@ -17,6 +17,7 @@ interface UseAIAnalysisOptions {
   candidateId: string;
   candidateName?: string;
   jobTitle?: string;
+  testResultId?: string;
 }
 
 interface UseAIAnalysisReturn {
@@ -35,6 +36,7 @@ export function useAIAnalysis({
   candidateId,
   candidateName = 'Candidato',
   jobTitle,
+  testResultId,
 }: UseAIAnalysisOptions): UseAIAnalysisReturn {
   const queryClient = useQueryClient();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -50,9 +52,9 @@ export function useAIAnalysis({
 
   // React Query: fetch AI analysis from Supabase with localStorage as initialData
   const { data: analysisResult } = useQuery<AIAnalysisResult | null>({
-    queryKey: gaugeProKeys.aiAnalysisByCandidate(candidateId),
+    queryKey: gaugeProKeys.aiAnalysisByCandidate(candidateId, testResultId),
     queryFn: async () => {
-      const remote = await loadAnalysisFromSupabase(candidateId);
+      const remote = await loadAnalysisFromSupabase(candidateId, testResultId);
       if (remote) {
         // Update localStorage cache only (no Supabase write — may be read by company user)
         saveAnalysisResult(remote, true);

@@ -96,12 +96,19 @@ async function saveToSupabase(analysis: AIAnalysis): Promise<void> {
 
 export async function loadAnalysisFromSupabase(
   candidateId: string,
+  testResultId?: string,
 ): Promise<AIAnalysisResult | null> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('ai_analyses')
     .select('*')
     .eq('candidate_id', candidateId)
     .order('created_at', { ascending: false });
+
+  if (testResultId) {
+    query = query.eq('test_result_id', testResultId);
+  }
+
+  const { data, error } = await query;
 
   if (error || !data || data.length === 0) return null;
 
@@ -118,6 +125,38 @@ export async function loadAnalysisFromSupabase(
     technical: technical ? rowToAnalysis(technical) : undefined,
     generatedAt: (practical ?? technical)!.created_at,
   };
+}
+
+export async function loadAllAnalysesFromSupabase(
+  candidateId: string,
+): Promise<AIAnalysisResult[]> {
+  const { data, error } = await supabase
+    .from('ai_analyses')
+    .select('*')
+    .eq('candidate_id', candidateId)
+    .order('created_at', { ascending: false });
+
+  if (error || !data || data.length === 0) return [];
+
+  const rows = data as AiAnalysisRow[];
+  const grouped = new Map<string, AiAnalysisRow[]>();
+  for (const row of rows) {
+    const key = row.test_result_id;
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(row);
+  }
+
+  return Array.from(grouped.entries()).map(([testResultId, group]) => {
+    const practical = group.find((r) => r.analysis_type === 'practical');
+    const technical = group.find((r) => r.analysis_type === 'technical');
+    return {
+      candidateId,
+      testResultId,
+      practical: practical ? rowToAnalysis(practical) : undefined,
+      technical: technical ? rowToAnalysis(technical) : undefined,
+      generatedAt: (practical ?? technical)!.created_at,
+    };
+  });
 }
 
 // --- Public API (dual-write) ---

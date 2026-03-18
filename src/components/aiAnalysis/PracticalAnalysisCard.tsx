@@ -27,6 +27,7 @@ interface PracticalAnalysisCardProps {
   candidateName?: string;
   jobTitle?: string;
   gaugeProResult?: GaugeProResult | null;
+  testResultId?: string;
 }
 
 export function PracticalAnalysisCard({
@@ -34,6 +35,7 @@ export function PracticalAnalysisCard({
   candidateName,
   jobTitle,
   gaugeProResult,
+  testResultId,
 }: PracticalAnalysisCardProps) {
   const [metadataOpen, setMetadataOpen] = useState(false);
   const { practicalAnalysis, isGenerating, isRegenerating, error, canGenerate, generateAnalyses, regenerateAnalysis } =
@@ -41,6 +43,7 @@ export function PracticalAnalysisCard({
       candidateId,
       candidateName,
       jobTitle,
+      testResultId,
     });
 
   if (isGenerating) {
