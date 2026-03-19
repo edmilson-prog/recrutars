@@ -3,14 +3,14 @@
  * PRD-052: Dashboard, criação, gestão e convites
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Shield } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   GaugeProOnboardingBanner,
   GaugeProMiniManual,
@@ -23,8 +23,18 @@ import { useCompanyTests } from '@/hooks/useCompanyTestsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function CorporateTestsHub() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'overview';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const navigate = useNavigate();
+
+  // Sync tab from URL params (deep-link from profile page)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['overview', 'create', 'tests', 'invites'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
   const { currentCompany } = useAuth();
   const { data: companyTests = [], isLoading } = useCompanyTests(currentCompany?.id);
 

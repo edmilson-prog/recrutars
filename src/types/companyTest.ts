@@ -19,6 +19,8 @@ export interface TestTemplate {
 }
 
 // --- Company Test ---
+export type TargetAudience = 'candidate' | 'collaborator';
+
 export interface CompanyTest {
   id: string;
   companyId: string;
@@ -27,6 +29,7 @@ export interface CompanyTest {
   templateId: string;
   weights: Record<GaugeProDimension, number>;
   status: CompanyTestStatus;
+  targetAudience: TargetAudience;
   jobId?: string;
   jobTitle?: string;
   deadline?: string; // ISO date
@@ -48,6 +51,7 @@ export interface TestInvitation {
   id: string;
   testId: string;
   candidateId?: string;
+  teamMemberId?: string;
   candidateName: string;
   candidateEmail: string;
   method: InvitationMethod;
@@ -65,6 +69,7 @@ export interface TestInvitation {
 // --- Create Invitation Input ---
 export interface CreateInvitationInput {
   candidateId?: string;
+  teamMemberId?: string;
   candidateName: string;
   candidateEmail: string;
   method: InvitationMethod;
@@ -78,6 +83,16 @@ export interface CompanyCandidate {
   email: string;
   title?: string;
   avatarUrl?: string;
+}
+
+// --- Company Team Member (for "Da Equipe" tab — collaborator tests) ---
+export interface CompanyTeamMemberForInvite {
+  id: string;
+  name: string;
+  email: string;
+  departmentId?: string;
+  gaugeStatus: string;
+  archetype?: string;
 }
 
 // --- Test Result ---

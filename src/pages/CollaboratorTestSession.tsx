@@ -209,7 +209,7 @@ export default function CollaboratorTestSession() {
   const proceedToTest = useCallback(async () => {
     if (!invitation) return;
 
-    // Get candidate ID for the authenticated user
+    // Get candidate ID for the authenticated user (legacy flow)
     let resolvedCandidateId = invitation.candidateId;
 
     if (user && !resolvedCandidateId) {
@@ -224,6 +224,7 @@ export default function CollaboratorTestSession() {
     if (resolvedCandidateId) {
       setCandidateId(resolvedCandidateId);
     }
+    // If no candidateId and we have teamMemberId, that's OK (unified flow PRD-088)
 
     // Mark invitation as started
     await supabase.functions.invoke('process-collaborator-invite', {
@@ -347,7 +348,15 @@ export default function CollaboratorTestSession() {
         throw new Error(data.error);
       }
 
-      // CPF verified — set candidate info
+      // Unified flow (PRD-088): skipAuth means no shadow candidate, no auth needed
+      if (data.skipAuth) {
+        setIsNewUser(false);
+        // candidateId stays null — unified flow uses team_member_id only
+        proceedToTest();
+        return;
+      }
+
+      // Legacy flow: set candidate info from shadow candidate
       if (data.candidateId) {
         setCandidateId(data.candidateId);
       }
@@ -372,8 +381,10 @@ export default function CollaboratorTestSession() {
   };
 
   // Gauge-Pro assessment hook
+  // Use team_member_id as key for unified flow (no candidateId available)
+  const gaugeProKey = candidateId || (invitation?.teamMemberId ? `tm-${invitation.teamMemberId}` : user?.id || 'temp');
   const gaugePro = useGaugeProAssessment({
-    candidateId: candidateId || user?.id || 'temp',
+    candidateId: gaugeProKey,
     forceNew: !!invitationId,
     onComplete: async (gaugeResult) => {
       // Mark invitation as completed and persist result via service role
@@ -386,7 +397,8 @@ export default function CollaboratorTestSession() {
             archetype: gaugeResult?.archetype?.id,
             gauge_scores: gaugeResult?.finalScores,
             result_data: {
-              candidate_id: candidateId,
+              candidate_id: candidateId || null,
+              team_member_id: invitation?.teamMemberId || null,
               final_scores: gaugeResult.finalScores,
               part1_scores: gaugeResult.part1Scores,
               part2_scores: gaugeResult.part2Scores,
@@ -809,16 +821,47 @@ export default function CollaboratorTestSession() {
     }
   };
 
-  const renderComplete = () => (
-    <TestCompletionActivation
-      isNewUser={isNewUser}
-      candidateName={formName || invitation?.candidateName || ''}
-      candidateEmail={formEmail || invitation?.candidateEmail || ''}
-      companyName={companyName}
-      userId={user?.id}
-      invitationId={invitationId || undefined}
-    />
-  );
+  const renderComplete = () => {
+    // Unified flow (PRD-088): simplified completion — no account activation
+    const isUnifiedFlow = !candidateId && !!invitation?.teamMemberId;
+
+    if (isUnifiedFlow) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-lg mx-auto text-center space-y-6 py-12"
+        >
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+            <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold">Teste Concluido!</h2>
+          <p className="text-muted-foreground">
+            Obrigado, {formName || invitation?.candidateName}! Seus resultados foram registrados com sucesso.
+          </p>
+          {companyName && (
+            <p className="text-sm text-muted-foreground">
+              A equipe de {companyName} podera visualizar seu perfil comportamental.
+            </p>
+          )}
+        </motion.div>
+      );
+    }
+
+    // Legacy flow: full activation screen
+    return (
+      <TestCompletionActivation
+        isNewUser={isNewUser}
+        candidateName={formName || invitation?.candidateName || ''}
+        candidateEmail={formEmail || invitation?.candidateEmail || ''}
+        companyName={companyName}
+        userId={user?.id}
+        invitationId={invitationId || undefined}
+      />
+    );
+  };
 
   const renderStep = () => {
     switch (step) {

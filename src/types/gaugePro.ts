@@ -108,7 +108,8 @@ export type GaugeProPhase =
 
 export interface GaugeProAssessment {
   id: string;
-  candidateId: string;
+  candidateId?: string;
+  teamMemberId?: string;
   phase: GaugeProPhase;
   startedAt: string;
 
@@ -134,7 +135,8 @@ export interface GaugeProAssessment {
 export interface GaugeProResult {
   id: string;
   assessmentId: string;
-  candidateId: string;
+  candidateId?: string;
+  teamMemberId?: string;
 
   part1Scores: DimensionScores;
   part2Scores: DimensionScores;
