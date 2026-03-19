@@ -150,7 +150,41 @@ Deno.serve(async (req: Request) => {
         return json({ error: 'CPF nao confere. Verifique os digitos informados.', valid: false });
       }
 
-      // CPF verified - create shadow candidate profile if needed
+      // Check if this is a collaborator-audience test (unified flow — no shadow candidate)
+      const { data: activeInvite } = await supabase
+        .from('test_invitations')
+        .select('test_id')
+        .eq('team_member_id', team_member_id)
+        .in('status', ['sent', 'viewed', 'started'])
+        .order('sent_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let isCollaboratorTest = false;
+      if (activeInvite?.test_id) {
+        const { data: testData } = await supabase
+          .from('company_tests')
+          .select('target_audience')
+          .eq('id', activeInvite.test_id)
+          .maybeSingle();
+        isCollaboratorTest = testData?.target_audience === 'collaborator';
+      }
+
+      if (isCollaboratorTest) {
+        // Unified flow: CPF verified, no shadow candidate needed
+        console.log('[verify_cpf] Unified flow — skipping shadow candidate for team_member:', team_member_id);
+        return json({
+          valid: true,
+          teamMemberId: team_member_id,
+          candidateId: null,
+          profileId: null,
+          isNewUser: false,
+          tokenHash: null,
+          skipAuth: true,
+        });
+      }
+
+      // Legacy flow: create shadow candidate profile if needed
       const { data: existingCandidate } = await supabase
         .from('candidates')
         .select('id, profile_id')
@@ -392,43 +426,53 @@ Deno.serve(async (req: Request) => {
       }
 
       // Persist assessment + result via service role (bypasses RLS)
-      if (result_data && result_data.candidate_id && result_data.final_scores) {
+      // Supports both: candidate_id (legacy) and team_member_id (unified flow PRD-088)
+      const hasOwner = result_data && result_data.final_scores && (result_data.candidate_id || team_member_id);
+      if (hasOwner) {
         const now = new Date().toISOString();
         const genAt = result_data.generated_at || now;
+
+        // Build assessment row with appropriate owner
+        const assessmentRow: Record<string, unknown> = {
+          phase: 'completed',
+          started_at: genAt,
+          completed_at: now,
+        };
+        if (result_data.candidate_id) assessmentRow.candidate_id = result_data.candidate_id;
+        if (team_member_id) assessmentRow.team_member_id = team_member_id;
 
         // Create assessment row
         const { data: assessmentRows, error: aErr } = await supabase
           .from('gauge_pro_assessments')
-          .insert({
-            candidate_id: result_data.candidate_id,
-            phase: 'completed',
-            started_at: genAt,
-            completed_at: now,
-          })
+          .insert(assessmentRow)
           .select('id');
 
         const assessmentId = assessmentRows?.[0]?.id;
-        console.log('[mark_completed] assessment insert:', { assessmentId, error: aErr?.message });
+        console.log('[mark_completed] assessment insert:', { assessmentId, candidateId: result_data.candidate_id, teamMemberId: team_member_id, error: aErr?.message });
 
         if (assessmentId) {
+          // Build result row with appropriate owner
+          const resultRow: Record<string, unknown> = {
+            assessment_id: assessmentId,
+            final_scores: result_data.final_scores,
+            part1_scores: result_data.part1_scores || null,
+            part2_scores: result_data.part2_scores || null,
+            archetype_id: result_data.archetype_id || null,
+            primary_dimension: result_data.primary_dimension || null,
+            secondary_dimension: result_data.secondary_dimension || null,
+            strengths: result_data.strengths || null,
+            development_areas: result_data.development_areas || null,
+            career_recommendations: result_data.career_recommendations || null,
+            xp_awarded: result_data.xp_awarded || 0,
+            badge_awarded: result_data.badge_awarded || null,
+            generated_at: genAt,
+          };
+          if (result_data.candidate_id) resultRow.candidate_id = result_data.candidate_id;
+          if (team_member_id) resultRow.team_member_id = team_member_id;
+
           const { error: rErr } = await supabase
             .from('gauge_pro_results')
-            .insert({
-              assessment_id: assessmentId,
-              candidate_id: result_data.candidate_id,
-              final_scores: result_data.final_scores,
-              part1_scores: result_data.part1_scores || null,
-              part2_scores: result_data.part2_scores || null,
-              archetype_id: result_data.archetype_id || null,
-              primary_dimension: result_data.primary_dimension || null,
-              secondary_dimension: result_data.secondary_dimension || null,
-              strengths: result_data.strengths || null,
-              development_areas: result_data.development_areas || null,
-              career_recommendations: result_data.career_recommendations || null,
-              xp_awarded: result_data.xp_awarded || 0,
-              badge_awarded: result_data.badge_awarded || null,
-              generated_at: genAt,
-            });
+            .insert(resultRow);
           console.log('[mark_completed] result insert:', { assessmentId, error: rErr?.message });
 
           // Link assessment back to the invitation for full traceability
