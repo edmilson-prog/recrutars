@@ -12,6 +12,7 @@ import type {
   AuditAction,
   HubDashboardKPIs,
   CompanyCandidate,
+  CompanyTeamMemberForInvite,
   CreateInvitationInput,
 } from '@/types/companyTest';
 
@@ -50,6 +51,7 @@ export interface ICompanyTestsService {
 
   // Company Candidates (for "Da Base" tab)
   getCompanyCandidates(companyId: string, search?: string): Promise<CompanyCandidate[]>;
+  getCompanyTeamMembers(companyId: string, search?: string): Promise<CompanyTeamMemberForInvite[]>;
 
   // Audit
   addAuditLog(log: Omit<AuditLog, 'id' | 'timestamp'>): Promise<void>;

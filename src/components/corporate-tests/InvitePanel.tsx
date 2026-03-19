@@ -91,44 +91,67 @@ export function InvitePanel() {
           </div>
 
           {/* Invite Methods */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Convidar Candidatos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="email">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="email" className="text-xs">
-                    <Mail className="h-3.5 w-3.5 mr-1.5" />
-                    Por Email
-                  </TabsTrigger>
-                  <TabsTrigger value="link" className="text-xs">
-                    <Link2 className="h-3.5 w-3.5 mr-1.5" />
-                    Link Público
-                  </TabsTrigger>
-                  <TabsTrigger value="internal" className="text-xs">
-                    <Users className="h-3.5 w-3.5 mr-1.5" />
-                    Da Base
-                  </TabsTrigger>
-                </TabsList>
+          {(() => {
+            const isCollaborator = selectedTest.targetAudience === 'collaborator';
+            return (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    {isCollaborator ? 'Convidar Colaboradores' : 'Convidar Candidatos'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue={isCollaborator ? 'internal' : 'email'}>
+                    <TabsList className={`grid w-full ${isCollaborator ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                      {!isCollaborator && (
+                        <TabsTrigger value="email" className="text-xs">
+                          <Mail className="h-3.5 w-3.5 mr-1.5" />
+                          Por Email
+                        </TabsTrigger>
+                      )}
+                      {!isCollaborator && (
+                        <TabsTrigger value="link" className="text-xs">
+                          <Link2 className="h-3.5 w-3.5 mr-1.5" />
+                          Link Publico
+                        </TabsTrigger>
+                      )}
+                      <TabsTrigger value="internal" className="text-xs">
+                        <Users className="h-3.5 w-3.5 mr-1.5" />
+                        {isCollaborator ? 'Da Equipe' : 'Da Base'}
+                      </TabsTrigger>
+                      {isCollaborator && (
+                        <TabsTrigger value="email" className="text-xs">
+                          <Mail className="h-3.5 w-3.5 mr-1.5" />
+                          Por Email
+                        </TabsTrigger>
+                      )}
+                    </TabsList>
 
-                <TabsContent value="email" className="mt-4">
-                  <EmailInviteForm testId={effectiveTestId} testName={selectedTest.name} />
-                </TabsContent>
-                <TabsContent value="link" className="mt-4">
-                  <PublicLinkManager
-                    testId={effectiveTestId}
-                    testName={selectedTest.name}
-                    existingSlug={selectedTest.publicLinkSlug}
-                    isActive={selectedTest.publicLinkActive}
-                  />
-                </TabsContent>
-                <TabsContent value="internal" className="mt-4">
-                  <InternalCandidateInvite testId={effectiveTestId} testName={selectedTest.name} />
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+                    <TabsContent value="email" className="mt-4">
+                      <EmailInviteForm testId={effectiveTestId} testName={selectedTest.name} />
+                    </TabsContent>
+                    {!isCollaborator && (
+                      <TabsContent value="link" className="mt-4">
+                        <PublicLinkManager
+                          testId={effectiveTestId}
+                          testName={selectedTest.name}
+                          existingSlug={selectedTest.publicLinkSlug}
+                          isActive={selectedTest.publicLinkActive}
+                        />
+                      </TabsContent>
+                    )}
+                    <TabsContent value="internal" className="mt-4">
+                      <InternalCandidateInvite
+                        testId={effectiveTestId}
+                        testName={selectedTest.name}
+                        targetAudience={selectedTest.targetAudience}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </>
       )}
     </div>

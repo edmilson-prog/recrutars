@@ -38,7 +38,7 @@ export const teamKeys = {
 // ---------------------------------------------------------------------------
 
 /** Fetch departments for a company */
-export function useDepartments(companyId: string) {
+export function useDepartments(companyId: string | undefined) {
   return useQuery({
     queryKey: teamKeys.departments(companyId),
     queryFn: async () => {

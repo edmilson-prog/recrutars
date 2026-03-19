@@ -111,6 +111,17 @@ export function useCompanyCandidates(companyId: string | undefined, search?: str
   });
 }
 
+export function useCompanyTeamMembersForInvite(companyId: string | undefined, search?: string) {
+  return useQuery({
+    queryKey: [...companyTestKeys.all, 'teamMembers', companyId ?? '', search ?? ''],
+    queryFn: async () => {
+      const service = await getCompanyTestsService();
+      return service.getCompanyTeamMembers(companyId!, search);
+    },
+    enabled: !!companyId,
+  });
+}
+
 export function useCompanyTestStats(companyId: string | undefined) {
   return useQuery({
     queryKey: companyTestKeys.stats(companyId ?? ''),

@@ -1,12 +1,42 @@
 {
   "versions": [
     {
+      "version": "1.42.0",
+      "codename": "Sentinel",
+      "type": "minor",
+      "releaseDate": "2026-03-19",
+      "description": "Fluxo unificado de teste Gauge-Pro para colaboradores. Hub de Testes como ponto central, seletor de público-alvo, team_member_id direto no assessment sem candidato fantasma.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Seletor de público-alvo (Candidatos Externos / Colaboradores) na criação de testes no Hub",
+            "Tab 'Da Equipe' no Hub de Testes com seletor de colaboradores, filtro por departamento e badges de status",
+            "Suporte a team_member_id direto em gauge_pro_assessments e gauge_pro_results (elimina candidato fantasma)",
+            "Fluxo unificado no CollaboratorTestSession: verificação CPF sem criação de auth user para testes de colaboradores",
+            "Tela de conclusão simplificada para colaboradores (sem ativação de conta)",
+            "Deep-link do Hub de Testes via URL params (?tab=convites)",
+            "Query de histórico de testes por team_member_id no perfil do colaborador"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Tabs do InvitePanel condicionais: testes de colaborador mostram 'Da Equipe' + 'Por Email', testes de candidato mantêm 3 tabs",
+            "Edge function verify_cpf pula criação de shadow candidate para testes com target_audience=collaborator",
+            "Edge function mark_completed aceita team_member_id como owner alternativo ao candidate_id"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.41.1",
       "codename": "Insight",
       "type": "patch",
       "releaseDate": "2026-03-19",
       "description": "Correção de 3 bugs críticos no fluxo de envio de teste para colaboradores: convites duplicados, links indisponíveis e rastreabilidade assessment_id.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

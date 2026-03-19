@@ -11,6 +11,7 @@ import type {
   AuditLog,
   HubDashboardKPIs,
   CompanyCandidate,
+  CompanyTeamMemberForInvite,
 } from '@/types/companyTest';
 import type { ICompanyTestsService, CompanyTestFilters, AuditLogFilters } from './companyTestsService';
 import { ARCHETYPE_PROFILES } from '@/data/gaugeProArchetypes';
@@ -28,6 +29,7 @@ function companyTestRowToModel(row: Record<string, unknown>): CompanyTest {
     templateId: row.template_id as string,
     weights: (row.weights as Record<string, number>) ?? {},
     status: row.status as CompanyTest['status'],
+    targetAudience: (row.target_audience as CompanyTest['targetAudience']) ?? 'candidate',
     jobId: row.job_id as string | undefined,
     jobTitle: row.job_title as string | undefined,
     deadline: row.deadline as string | undefined,
@@ -47,6 +49,7 @@ function invitationRowToModel(row: Record<string, unknown>): TestInvitation {
     id: row.id as string,
     testId: row.test_id as string,
     candidateId: row.candidate_id as string | undefined,
+    teamMemberId: row.team_member_id as string | undefined,
     candidateName: row.candidate_name as string,
     candidateEmail: row.candidate_email as string,
     method: row.method as TestInvitation['method'],
@@ -164,6 +167,7 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
         job_title: input.jobTitle ?? null,
         deadline: input.deadline ?? null,
         instructions: input.instructions ?? null,
+        target_audience: input.targetAudience ?? 'candidate',
         created_by: input.createdAt ? undefined : undefined, // Will be set from auth context
       })
       .select()
@@ -184,6 +188,7 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
     if (updates.jobTitle !== undefined) row.job_title = updates.jobTitle;
     if (updates.deadline !== undefined) row.deadline = updates.deadline;
     if (updates.instructions !== undefined) row.instructions = updates.instructions;
+    if (updates.targetAudience !== undefined) row.target_audience = updates.targetAudience;
     if (updates.publicLinkSlug !== undefined) row.public_link_slug = updates.publicLinkSlug;
     if (updates.publicLinkActive !== undefined) row.public_link_active = updates.publicLinkActive;
     if (updates.activatedAt !== undefined) row.activated_at = updates.activatedAt;
@@ -374,6 +379,31 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
     }
 
     return candidates;
+  }
+
+  async getCompanyTeamMembers(companyId: string, search?: string): Promise<CompanyTeamMemberForInvite[]> {
+    let query = supabase
+      .from('team_members')
+      .select('id, name, email, department_id, gauge_status, archetype')
+      .eq('company_id', companyId)
+      .eq('is_active', true)
+      .order('name');
+
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return (data ?? []).map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      name: row.name as string,
+      email: row.email as string,
+      departmentId: row.department_id as string | undefined,
+      gaugeStatus: (row.gauge_status as string) ?? 'unmapped',
+      archetype: row.archetype as string | undefined,
+    }));
   }
 
   // ----------------------------------------------------------

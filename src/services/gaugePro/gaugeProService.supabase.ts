@@ -39,7 +39,8 @@ import { ARCHETYPE_PROFILES } from '@/data/gaugeProArchetypes';
 function rowToAssessment(r: Record<string, unknown>): GaugeProAssessment {
   return {
     id: r.id as string,
-    candidateId: r.candidate_id as string,
+    candidateId: r.candidate_id as string | undefined,
+    teamMemberId: r.team_member_id as string | undefined,
     phase: r.phase as GaugeProPhase,
     startedAt: r.started_at as string,
 
@@ -65,6 +66,7 @@ function assessmentToRow(
   const row: Record<string, unknown> = {};
 
   if (model.candidateId !== undefined) row.candidate_id = model.candidateId;
+  if (model.teamMemberId !== undefined) row.team_member_id = model.teamMemberId;
   if (model.phase !== undefined) row.phase = model.phase;
   if (model.startedAt !== undefined) row.started_at = model.startedAt;
   if (model.part1StartedAt !== undefined) row.part1_started_at = model.part1StartedAt;
@@ -85,7 +87,8 @@ function rowToResult(r: Record<string, unknown>): GaugeProResult {
   return {
     id: r.id as string,
     assessmentId: r.assessment_id as string,
-    candidateId: r.candidate_id as string,
+    candidateId: r.candidate_id as string | undefined,
+    teamMemberId: r.team_member_id as string | undefined,
     part1Scores: r.part1_scores as DimensionScores,
     part2Scores: r.part2_scores as DimensionScores,
     finalScores: r.final_scores as DimensionScores,
@@ -107,7 +110,8 @@ function resultToRow(
 ): Record<string, unknown> {
   return {
     assessment_id: model.assessmentId,
-    candidate_id: model.candidateId,
+    candidate_id: model.candidateId ?? null,
+    team_member_id: model.teamMemberId ?? null,
     part1_scores: model.part1Scores,
     part2_scores: model.part2Scores,
     final_scores: model.finalScores,

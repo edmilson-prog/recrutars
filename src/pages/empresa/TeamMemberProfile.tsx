@@ -73,15 +73,49 @@ export default function TeamMemberProfile() {
   const [selectedResultId, setSelectedResultId] = useState<string | null>(null);
 
   const { data: memberTestHistory = [] } = useQuery<TestHistoryEntry[]>({
-    queryKey: ['team-member-test-history', candidateId],
+    queryKey: ['team-member-test-history', id, candidateId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('gauge_pro_results')
-        .select('*')
-        .eq('candidate_id', candidateId!)
-        .order('generated_at', { ascending: false });
-      if (error) throw error;
-      return (data ?? []).map((r: Record<string, unknown>) => ({
+      const allResults: Record<string, unknown>[] = [];
+      const seenIds = new Set<string>();
+
+      // Query by candidate_id (legacy flow results)
+      if (candidateId) {
+        const { data, error } = await supabase
+          .from('gauge_pro_results')
+          .select('*')
+          .eq('candidate_id', candidateId)
+          .order('generated_at', { ascending: false });
+        if (!error && data) {
+          for (const r of data) {
+            seenIds.add((r as Record<string, unknown>).id as string);
+            allResults.push(r as Record<string, unknown>);
+          }
+        }
+      }
+
+      // Query by team_member_id (unified flow results — PRD-088)
+      if (id) {
+        const { data: tmResults, error: tmErr } = await supabase
+          .from('gauge_pro_results')
+          .select('*')
+          .eq('team_member_id', id)
+          .order('generated_at', { ascending: false });
+        if (!tmErr && tmResults) {
+          for (const r of tmResults) {
+            const rid = (r as Record<string, unknown>).id as string;
+            if (!seenIds.has(rid)) {
+              allResults.push(r as Record<string, unknown>);
+            }
+          }
+        }
+      }
+
+      // Sort merged results by generated_at descending
+      allResults.sort((a, b) =>
+        new Date(b.generated_at as string).getTime() - new Date(a.generated_at as string).getTime()
+      );
+
+      return allResults.map((r) => ({
         id: r.id as string,
         memberId: id ?? '',
         scores: r.final_scores as DimensionScores,
@@ -99,7 +133,7 @@ export default function TeamMemberProfile() {
         badgeAwarded: r.badge_awarded as string | undefined,
       }));
     },
-    enabled: !!candidateId,
+    enabled: !!id, // Enable even without candidateId (unified flow may only have team_member_id)
   });
 
   // Derive selected GaugeProResult from history (default = most recent)
