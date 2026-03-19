@@ -430,10 +430,22 @@ Deno.serve(async (req: Request) => {
               generated_at: genAt,
             });
           console.log('[mark_completed] result insert:', { assessmentId, error: rErr?.message });
+
+          // Link assessment back to the invitation for full traceability
+          const { error: linkErr } = await supabase
+            .from('test_invitations')
+            .update({ assessment_id: assessmentId })
+            .eq('id', invitation_id);
+
+          if (linkErr) {
+            console.error('[mark_completed] failed to link assessment_id:', linkErr.message);
+          } else {
+            console.log('[mark_completed] linked assessment_id to invitation:', { invitation_id, assessmentId });
+          }
         }
       }
 
-      return json({ success: true });
+      return json({ success: true, assessmentId: assessmentRows?.[0]?.id ?? null });
     }
 
     return json({ error: 'Acao invalida: ' + action }, 400);
