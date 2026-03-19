@@ -82,7 +82,7 @@ FROM (
     AND tm.imported_from_candidate_id IS NOT NULL
     AND gpa.phase = 'completed'
   ORDER BY ti_inner.id,
-    ABS(EXTRACT(EPOCH FROM (COALESCE(gpa.completed_at, gpa.created_at) - COALESCE(ti_inner.completed_at, ti_inner.updated_at))))
+    ABS(EXTRACT(EPOCH FROM (COALESCE(gpa.completed_at, gpa.started_at) - COALESCE(ti_inner.completed_at, ti_inner.updated_at))))
 ) sub
 WHERE ti.id = sub.invitation_id;
 
