@@ -1,12 +1,126 @@
 {
   "versions": [
     {
+      "version": "1.41.1",
+      "codename": "Insight",
+      "type": "patch",
+      "releaseDate": "2026-03-19",
+      "description": "Correção de 3 bugs críticos no fluxo de envio de teste para colaboradores: convites duplicados, links indisponíveis e rastreabilidade assessment_id.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Convites duplicados: verificação de convite pendente antes de criar novo, com deduplicação por (team_member_id, test_id)",
+            "Links indisponíveis: URL do convite exibida somente após confirmação de persistência no banco",
+            "assessment_id NULL: edge function mark_completed agora vincula assessment ao convite após criação",
+            "Reenvio de convite regenera token e notifica colaborador pelo canal selecionado",
+            "Migration de limpeza: convites duplicados expirados, assessment_id backfilled, FK constraint e UNIQUE parcial adicionados"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.41.0",
+      "codename": "Insight",
+      "type": "minor",
+      "releaseDate": "2026-03-19",
+      "description": "Redesign do fluxo de teste para colaboradores com 3 canais de envio, verificação de CPF, perfil enriquecido com 4 abas, análise IA com accordion, timeline de histórico de testes e gerenciamento manual de créditos no admin.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "SendTestModal com 3 canais de envio: link direto, email e WhatsApp",
+            "Verificação de CPF via Edge Function para testes de colaboradores",
+            "Badge 'Colaborador' nos listings de candidatos do admin",
+            "Perfil enriquecido do colaborador com layout de 4 abas e header redesenhado",
+            "Gerenciamento manual de créditos no admin (crédito, débito, transferência)",
+            "Timeline de histórico de testes com persistência de reteste",
+            "Aba IA refatorada com accordion e trigger automático de análise para colaboradores",
+            "Banner informativo na aba IA ao visualizar resultados de testes anteriores"
+          ],
+          "details": {
+            "0": {
+              "description": "Modal unificado para envio de teste com 3 opções: link copiável, envio por email e envio por WhatsApp com expiração de 24h.",
+              "files": ["src/components/team-management/SendTestModal.tsx"],
+              "routes": ["/empresa/equipes"]
+            },
+            "1": {
+              "description": "Edge Function process-collaborator-invite com ação verify_cpf para confirmar identidade do colaborador antes do teste.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "2": {
+              "description": "Badge visual 'Colaborador' exibido nos cards e detalhes de candidatos que possuem visibilityLocked.",
+              "files": ["src/pages/empresa/Candidates.tsx", "src/pages/admin/CandidateDetail.tsx"],
+              "routes": ["/admin/candidatos", "/empresa/candidatos"]
+            },
+            "3": {
+              "description": "Perfil do colaborador redesenhado com 4 abas: Resumo, Evolução, IA e Dados. Header com foto, cargo, departamento e contato.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx", "src/components/team-management/MemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "4": {
+              "description": "Admin pode adicionar, debitar e transferir créditos de teste manualmente entre empresas.",
+              "files": ["src/pages/admin/CreditManagement.tsx"],
+              "routes": ["/admin/creditos"]
+            },
+            "5": {
+              "description": "Timeline visual mostrando histórico de testes realizados pelo colaborador com datas e status.",
+              "files": ["src/components/team-management/MemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "6": {
+              "description": "Aba IA usa accordion para organizar análises (técnica, prática, geral). Análise é disparada automaticamente ao abrir a aba para colaboradores.",
+              "files": ["src/components/team-management/MemberProfile.tsx", "src/hooks/useAIAnalysis.ts"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "7": {
+              "description": "Banner azul informativo aparece quando o usuário está visualizando resultados de um teste anterior, não o mais recente.",
+              "files": ["src/components/team-management/MemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Link público de teste depreciado em favor de convites individuais por colaborador"
+          ],
+          "details": {
+            "0": {
+              "description": "PublicLinkManager exibe aviso amber de depreciação. O fluxo recomendado agora é enviar convites individuais via SendTestModal.",
+              "files": ["src/components/team-management/PublicLinkManager.tsx"],
+              "routes": ["/empresa/equipes"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Máscara de telefone aplicada no header do perfil do colaborador e no SendTestModal",
+            "Focus ring cortado à esquerda nos inputs do TeamMemberForm e SendTestModal",
+            "Breadcrumb 404 corrigido para rotas de desenvolvimento e evolução do membro",
+            "Token de convite estabilizado para não regenerar a cada render no SendTestModal",
+            "Valores de invite_origin mapeados corretamente para constraint do banco",
+            "Token resetado ao falhar criação de convite para evitar duplicatas",
+            "Código de país 55 adicionado aos números de telefone enviados via Evolution API",
+            "Histórico de testes substituído de mock para query real no banco de dados",
+            "Null checks adicionados para archetype no talent pool de candidatos",
+            "Botão Editar conectado ao TeamMemberForm no perfil do colaborador",
+            "Tooltips de detalhe do changelog exibidos para todas as versões"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.40.0",
       "codename": "Payment",
       "type": "minor",
       "releaseDate": "2026-03-18",
       "description": "Edge Functions de sincronização e checkout Stripe para pacotes de testes, meios de pagamento configuráveis por pacote (Cartão, PIX, Boleto), validação de skills no onboarding e melhorias de UX no admin.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

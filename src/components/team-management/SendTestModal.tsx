@@ -2,9 +2,15 @@
  * SendTestModal
  * Modal for sending a behavioral test invitation to a pre-registered team member.
  * Supports 3 channels: unique link, email, and WhatsApp.
+ *
+ * PRD-087 fixes:
+ * - Checks for existing pending invitation before creating a new one (deduplication)
+ * - Generates token only on send, NOT on modal mount
+ * - Shows invite URL only AFTER successful DB insert/update
+ * - Notifies collaborator on resend (token invalidation requires active delivery)
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +38,7 @@ import {
   Loader2,
   Send,
   CreditCard,
+  RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -50,6 +57,12 @@ interface SendTestModalProps {
 }
 
 type InviteChannel = 'link' | 'email' | 'whatsapp';
+
+interface InvitationResult {
+  success: boolean;
+  link?: string;
+  isResend?: boolean;
+}
 
 const ORIGIN_MAP: Record<InviteChannel, string> = {
   link: 'invite_link',
@@ -83,17 +96,45 @@ export default function SendTestModal({
   const [activeTab, setActiveTab] = useState<InviteChannel>('link');
   const [isSending, setIsSending] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const [token, setToken] = useState(() => crypto.randomUUID());
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [hasExistingInvite, setHasExistingInvite] = useState(false);
+  const [isCheckingExisting, setIsCheckingExisting] = useState(false);
 
   const noCredits = creditBalance === 0;
 
-  const inviteLink = `${window.location.origin}/convite/teste/${token}`;
+  // Check for existing pending invitation when modal opens
+  useEffect(() => {
+    if (!open || !member.id || !testId) {
+      setHasExistingInvite(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsCheckingExisting(true);
+
+    supabase
+      .from('test_invitations')
+      .select('id')
+      .eq('team_member_id', member.id)
+      .eq('test_id', testId)
+      .in('status', ['sent', 'viewed', 'started'])
+      .limit(1)
+      .then(({ data }) => {
+        if (!cancelled) {
+          setHasExistingInvite((data?.length ?? 0) > 0);
+          setIsCheckingExisting(false);
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [open, member.id, testId]);
 
   const resetState = useCallback(() => {
     setIsSending(false);
     setIsCopied(false);
-    setToken(crypto.randomUUID());
+    setGeneratedLink(null);
     setActiveTab('link');
+    setHasExistingInvite(false);
   }, []);
 
   function handleOpenChange(value: boolean) {
@@ -102,8 +143,9 @@ export default function SendTestModal({
   }
 
   async function handleCopyLink() {
+    if (!generatedLink) return;
     try {
-      await navigator.clipboard.writeText(inviteLink);
+      await navigator.clipboard.writeText(generatedLink);
       setIsCopied(true);
       toast.success('Link copiado!');
       setTimeout(() => setIsCopied(false), 2000);
@@ -112,17 +154,106 @@ export default function SendTestModal({
     }
   }
 
-  async function createInvitation(method: InviteChannel): Promise<boolean> {
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  /**
+   * Send notification to collaborator via the specified channel.
+   * Used both for new invitations and resends.
+   */
+  async function notifyCollaborator(method: InviteChannel, link: string): Promise<void> {
+    if (method === 'link') {
+      // Link channel: no automatic notification, user copies manually
+      return;
+    }
 
+    if (method === 'email') {
+      // Email: use existing edge function or Supabase email (best-effort)
+      try {
+        await supabase.functions.invoke('send-whatsapp', {
+          body: {
+            action: 'send_email_notification',
+            to: member.email,
+            subject: 'Convite para Teste Comportamental Gauge-Pro',
+            body: `Ola ${member.name}! Voce foi convidado(a) para realizar o teste comportamental Gauge-Pro. Acesse o link para iniciar: ${link}\n\nEste link expira em 24 horas.`,
+          },
+        });
+      } catch (err) {
+        console.error('Email notification failed (non-blocking):', err);
+      }
+      return;
+    }
+
+    if (method === 'whatsapp' && member.phone) {
+      const messageText = `Ola ${member.name}! Voce foi convidado(a) para realizar o teste comportamental Gauge-Pro. Acesse o link para iniciar: ${link}\n\nEste link expira em 24 horas.`;
+      try {
+        const whatsappSvc = await getWhatsAppService();
+        const result = await whatsappSvc.sendMessage(member.phone, messageText, {
+          recipientId: member.id,
+          recipientType: 'candidate',
+        });
+        if (!result.success) {
+          toast.error(result.error ?? 'Erro ao enviar mensagem via WhatsApp.');
+        }
+      } catch (err) {
+        console.error('WhatsApp notification failed:', err);
+        toast.error('Erro ao enviar mensagem via WhatsApp. Tente novamente.');
+      }
+    }
+  }
+
+  /**
+   * Create or resend invitation. Checks for existing pending invitation first.
+   * Token is generated ONLY here, ensuring it exists in the DB before any URL is shown.
+   */
+  async function createInvitation(method: InviteChannel): Promise<InvitationResult> {
+    const newToken = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const now = new Date().toISOString();
+
+    // 1. Check for existing active invitation
+    const { data: existing } = await supabase
+      .from('test_invitations')
+      .select('id, token, status')
+      .eq('team_member_id', member.id)
+      .eq('test_id', testId)
+      .in('status', ['sent', 'viewed', 'started'])
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      // RESEND: regenerate token + update timestamps
+      const { error } = await supabase
+        .from('test_invitations')
+        .update({
+          token: newToken,
+          sent_at: now,
+          expires_at: expiresAt,
+          method: METHOD_MAP[method],
+          invite_origin: ORIGIN_MAP[method],
+        })
+        .eq('id', existing.id);
+
+      if (error) {
+        console.error('Error resending invitation:', error);
+        toast.error('Erro ao reenviar convite. Tente novamente.');
+        return { success: false };
+      }
+
+      const link = `${window.location.origin}/convite/teste/${newToken}`;
+
+      // Notify collaborator with the new link (old token is now invalid)
+      await notifyCollaborator(method, link);
+
+      return { success: true, link, isResend: true };
+    }
+
+    // 2. NEW: create fresh invitation
     const { error } = await supabase.from('test_invitations').insert({
       test_id: testId,
       candidate_name: member.name,
       candidate_email: member.email,
       method: METHOD_MAP[method],
       status: 'sent',
-      token,
-      sent_at: new Date().toISOString(),
+      token: newToken,
+      sent_at: now,
       expires_at: expiresAt,
       team_member_id: member.id,
       invite_origin: ORIGIN_MAP[method],
@@ -131,22 +262,30 @@ export default function SendTestModal({
     if (error) {
       console.error('Error creating invitation:', error);
       toast.error('Erro ao criar convite. Tente novamente.');
-      setToken(crypto.randomUUID());
-      return false;
+      return { success: false };
     }
 
-    return true;
+    const link = `${window.location.origin}/convite/teste/${newToken}`;
+
+    // Notify collaborator with the link
+    await notifyCollaborator(method, link);
+
+    return { success: true, link, isResend: false };
   }
 
   async function handleSendLink() {
     if (noCredits) return;
     setIsSending(true);
     try {
-      const success = await createInvitation('link');
-      if (success) {
-        toast.success('Convite criado com sucesso! Compartilhe o link com o colaborador.');
+      const result = await createInvitation('link');
+      if (result.success && result.link) {
+        setGeneratedLink(result.link);
+        toast.success(
+          result.isResend
+            ? 'Convite reenviado! Compartilhe o novo link com o colaborador.'
+            : 'Convite criado com sucesso! Compartilhe o link com o colaborador.',
+        );
         onSuccess();
-        handleOpenChange(false);
       }
     } finally {
       setIsSending(false);
@@ -157,9 +296,13 @@ export default function SendTestModal({
     if (noCredits) return;
     setIsSending(true);
     try {
-      const success = await createInvitation('email');
-      if (success) {
-        toast.success(`Convite enviado por email para ${member.email}`);
+      const result = await createInvitation('email');
+      if (result.success) {
+        toast.success(
+          result.isResend
+            ? `Convite reenviado por email para ${member.email}`
+            : `Convite enviado por email para ${member.email}`,
+        );
         onSuccess();
         handleOpenChange(false);
       }
@@ -172,43 +315,46 @@ export default function SendTestModal({
     if (noCredits || !member.phone) return;
     setIsSending(true);
     try {
-      const success = await createInvitation('whatsapp');
-      if (!success) return;
-
-      const messageText = `Ola ${member.name}! Voce foi convidado(a) para realizar o teste comportamental Gauge-Pro. Acesse o link para iniciar: ${inviteLink}\n\nEste link expira em 24 horas.`;
-
-      const whatsappSvc = await getWhatsAppService();
-      const result = await whatsappSvc.sendMessage(member.phone, messageText, {
-        recipientId: member.id,
-        recipientType: 'candidate',
-      });
-
-      if (!result.success) {
-        toast.error(result.error ?? 'Erro ao enviar mensagem via WhatsApp.');
-        return;
+      const result = await createInvitation('whatsapp');
+      if (result.success) {
+        toast.success(
+          result.isResend
+            ? `Convite reenviado via WhatsApp para ${member.phone}`
+            : `Convite enviado via WhatsApp para ${member.phone}`,
+        );
+        onSuccess();
+        handleOpenChange(false);
       }
-
-      toast.success(`Convite enviado via WhatsApp para ${member.phone}`);
-      onSuccess();
-      handleOpenChange(false);
-    } catch (err) {
-      console.error('Error sending WhatsApp:', err);
-      toast.error('Erro ao enviar mensagem via WhatsApp. Tente novamente.');
     } finally {
       setIsSending(false);
     }
   }
+
+  const actionLabel = hasExistingInvite ? 'Reenviar' : 'Enviar';
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[540px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5 text-cyan-500" />
-            Enviar Teste Comportamental
+            {hasExistingInvite ? (
+              <RefreshCw className="h-5 w-5 text-amber-500" />
+            ) : (
+              <Send className="h-5 w-5 text-cyan-500" />
+            )}
+            {hasExistingInvite ? 'Reenviar Teste Comportamental' : 'Enviar Teste Comportamental'}
           </DialogTitle>
           <DialogDescription>
-            Envie o teste Gauge-Pro para <span className="font-semibold">{member.name}</span>
+            {hasExistingInvite ? (
+              <>
+                Ja existe um convite pendente para <span className="font-semibold">{member.name}</span>.
+                Ao reenviar, o link anterior sera invalidado e um novo sera gerado.
+              </>
+            ) : (
+              <>
+                Envie o teste Gauge-Pro para <span className="font-semibold">{member.name}</span>
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -240,13 +386,25 @@ export default function SendTestModal({
             </Alert>
           )}
 
+          {/* Existing invite warning */}
+          {hasExistingInvite && (
+            <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
+              <RefreshCw className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-700 dark:text-amber-400">
+                Convite pendente encontrado. O reenvio ira gerar um novo link e invalidar o anterior.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Expiration notice */}
-          <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-700 dark:text-amber-400">
-              O convite expira em 24 horas independente do canal de envio.
-            </AlertDescription>
-          </Alert>
+          {!hasExistingInvite && (
+            <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-700 dark:text-amber-400">
+                O convite expira em 24 horas independente do canal de envio.
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Channel tabs */}
           <Tabs
@@ -271,47 +429,66 @@ export default function SendTestModal({
 
             {/* Tab 1: Link Unico */}
             <TabsContent value="link" className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground">
-                  Link do convite
-                </label>
-                <div className="flex gap-2">
-                  <Input
-                    value={inviteLink}
-                    readOnly
-                    className="bg-muted/50 text-xs font-mono"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleCopyLink}
-                    className="shrink-0"
-                  >
-                    {isCopied ? (
-                      <Check className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
+              {generatedLink ? (
+                /* Link generated — show it with copy button */
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Link do convite
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={generatedLink}
+                      readOnly
+                      className="bg-muted/50 text-xs font-mono"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleCopyLink}
+                      className="shrink-0"
+                    >
+                      {isCopied ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Este link expira em 24 horas. Compartilhe diretamente com o colaborador.
+                  </p>
                 </div>
-              </div>
+              ) : (
+                /* No link yet — show send button */
+                <>
+                  <div className="rounded-md border p-3 bg-muted/20">
+                    <p className="text-sm text-muted-foreground">
+                      {hasExistingInvite
+                        ? 'Um novo link sera gerado ao reenviar. O link anterior sera invalidado.'
+                        : 'Um link unico sera gerado para o colaborador acessar o teste.'}
+                    </p>
+                  </div>
 
-              <p className="text-xs text-muted-foreground">
-                Este link expira em 24 horas. Compartilhe diretamente com o colaborador.
-              </p>
+                  <p className="text-xs text-muted-foreground">
+                    O link expira em 24 horas. Copie e compartilhe diretamente com o colaborador.
+                  </p>
 
-              <Button
-                className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
-                onClick={handleSendLink}
-                disabled={noCredits || isSending}
-              >
-                {isSending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4 mr-2" />
-                )}
-                Enviar Convite
-              </Button>
+                  <Button
+                    className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
+                    onClick={handleSendLink}
+                    disabled={noCredits || isSending || isCheckingExisting}
+                  >
+                    {isSending ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : hasExistingInvite ? (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    ) : (
+                      <Send className="h-4 w-4 mr-2" />
+                    )}
+                    {hasExistingInvite ? 'Reenviar Convite' : 'Gerar Link e Enviar Convite'}
+                  </Button>
+                </>
+              )}
             </TabsContent>
 
             {/* Tab 2: Email */}
@@ -329,23 +506,35 @@ export default function SendTestModal({
 
               <div className="rounded-md border p-3 bg-muted/20">
                 <p className="text-sm text-muted-foreground">
-                  Um email sera enviado para{' '}
-                  <span className="font-semibold text-foreground">{member.email}</span>{' '}
-                  com o link do teste.
+                  {hasExistingInvite ? (
+                    <>
+                      Um novo link sera gerado e enviado para{' '}
+                      <span className="font-semibold text-foreground">{member.email}</span>.
+                      O link anterior sera invalidado.
+                    </>
+                  ) : (
+                    <>
+                      Um email sera enviado para{' '}
+                      <span className="font-semibold text-foreground">{member.email}</span>{' '}
+                      com o link do teste.
+                    </>
+                  )}
                 </p>
               </div>
 
               <Button
                 className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
                 onClick={handleSendEmail}
-                disabled={noCredits || isSending}
+                disabled={noCredits || isSending || isCheckingExisting}
               >
                 {isSending ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : hasExistingInvite ? (
+                  <RefreshCw className="h-4 w-4 mr-2" />
                 ) : (
                   <Mail className="h-4 w-4 mr-2" />
                 )}
-                Enviar por Email
+                {hasExistingInvite ? 'Reenviar por Email' : 'Enviar por Email'}
               </Button>
             </TabsContent>
 
@@ -366,23 +555,35 @@ export default function SendTestModal({
 
                   <div className="rounded-md border p-3 bg-muted/20">
                     <p className="text-sm text-muted-foreground">
-                      Uma mensagem sera enviada via WhatsApp para{' '}
-                      <span className="font-semibold text-foreground">{formatPhone(member.phone)}</span>{' '}
-                      com o link do teste.
+                      {hasExistingInvite ? (
+                        <>
+                          Um novo link sera gerado e enviado via WhatsApp para{' '}
+                          <span className="font-semibold text-foreground">{formatPhone(member.phone)}</span>.
+                          O link anterior sera invalidado.
+                        </>
+                      ) : (
+                        <>
+                          Uma mensagem sera enviada via WhatsApp para{' '}
+                          <span className="font-semibold text-foreground">{formatPhone(member.phone)}</span>{' '}
+                          com o link do teste.
+                        </>
+                      )}
                     </p>
                   </div>
 
                   <Button
                     className="w-full bg-green-600 hover:bg-green-700 text-white"
                     onClick={handleSendWhatsApp}
-                    disabled={noCredits || isSending}
+                    disabled={noCredits || isSending || isCheckingExisting}
                   >
                     {isSending ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : hasExistingInvite ? (
+                      <RefreshCw className="h-4 w-4 mr-2" />
                     ) : (
                       <MessageCircle className="h-4 w-4 mr-2" />
                     )}
-                    Enviar por WhatsApp
+                    {hasExistingInvite ? 'Reenviar por WhatsApp' : 'Enviar por WhatsApp'}
                   </Button>
                 </>
               ) : (
