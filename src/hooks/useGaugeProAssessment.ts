@@ -284,11 +284,15 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
     });
 
     // Fire-and-forget: create assessment row in Supabase
-    getGaugeProService().then(svc =>
-      svc.startAssessment(candidateId).then(row => {
-        supabaseAssessmentIdRef.current = row.id;
-      })
-    ).catch(() => { /* Supabase unavailable — localStorage continues */ });
+    // Skip if candidateId is not a valid UUID (unified collaborator flow — edge function handles persistence)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidateId);
+    if (isUUID) {
+      getGaugeProService().then(svc =>
+        svc.startAssessment(candidateId).then(row => {
+          supabaseAssessmentIdRef.current = row.id;
+        })
+      ).catch(() => { /* Supabase unavailable — localStorage continues */ });
+    }
   }, [saveSession, candidateId]);
 
   // Toggle word selection for current step
@@ -486,6 +490,11 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
 
       saveSession({ phase: 'completed', completedAt: new Date().toISOString(), part2CompletedAt: new Date().toISOString() });
 
+      // Gamification callbacks + onComplete (must fire regardless of Supabase persistence)
+      onXPAwarded?.(GAUGE_PRO_CONFIG.rewards.xpReward);
+      onBadgeAwarded?.(GAUGE_PRO_CONFIG.rewards.badgeId);
+      onComplete?.(gaugeResult);
+
       // Fire-and-forget: persist result to Supabase (skip if candidateId is not a valid UUID)
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidateId);
       if (!isUUID) return; // Unified flow: edge function handles persistence
@@ -521,11 +530,6 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
           });
         }
       }).catch(() => { /* Supabase unavailable — localStorage has the data */ });
-
-      // Gamification callbacks
-      onXPAwarded?.(GAUGE_PRO_CONFIG.rewards.xpReward);
-      onBadgeAwarded?.(GAUGE_PRO_CONFIG.rewards.badgeId);
-      onComplete?.(gaugeResult);
 
       // Fire-and-forget: gerar análises IA em background (PRD-051)
       import('@/lib/aiAgent').then(({ loadAgentSettingsAsync, generateBothAnalyses, saveAnalysisResult }) => {
