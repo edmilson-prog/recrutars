@@ -252,12 +252,24 @@ export function useSendTestInvitations() {
       const { data, error } = await supabase.functions.invoke('send-test-invitation', {
         body: { action: 'send_invitations', test_id: testId, invitations },
       });
-      // Check insufficientCredits FIRST — invoke() sets both error+data on 400
-      if (data?.insufficientCredits) {
-        throw new InsufficientCreditsError(data.available ?? 0, data.required ?? invitations.length);
+      // On 400, data may be null — extract body from error.context (FunctionsHttpError)
+      if (error) {
+        let errorBody: Record<string, unknown> | null = null;
+        try {
+          const ctx = (error as { context?: Response }).context;
+          if (ctx instanceof Response) {
+            errorBody = await ctx.json();
+          }
+        } catch { /* ignore parse errors */ }
+        if (errorBody?.insufficientCredits) {
+          throw new InsufficientCreditsError(
+            (errorBody.available as number) ?? 0,
+            (errorBody.required as number) ?? invitations.length,
+          );
+        }
+        throw new Error((errorBody?.error as string) || error.message);
       }
       if (data?.error) throw new Error(data.error);
-      if (error) throw error;
       return data.invitations as TestInvitation[];
     },
     onSuccess: (invitations, { testId }) => {
