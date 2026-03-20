@@ -90,10 +90,23 @@ function rowToAnalysis(r: AiAnalysisRow): AIAnalysis {
 // --- Supabase persistence ---
 
 async function saveToSupabase(analysis: AIAnalysis, teamMemberId?: string): Promise<void> {
-  const row = analysisToRow(analysis, teamMemberId);
-  const { error } = await supabase
-    .from('ai_analyses')
-    .upsert(row, { onConflict: 'test_result_id,analysis_type' });
+  const validCandidateId = (analysis.candidateId && UUID_RE.test(analysis.candidateId)) ? analysis.candidateId : null;
+  const validTeamMemberId = (teamMemberId && UUID_RE.test(teamMemberId)) ? teamMemberId : null;
+
+  // Use SECURITY DEFINER RPC to bypass RLS (collaborators are unauthenticated)
+  const { error } = await supabase.rpc('save_ai_analysis', {
+    p_candidate_id: validCandidateId,
+    p_team_member_id: validTeamMemberId,
+    p_test_result_id: analysis.testResultId,
+    p_analysis_type: analysis.analysisType,
+    p_content: analysis.content,
+    p_status: analysis.status,
+    p_model_used: analysis.modelUsed || null,
+    p_tokens_input: analysis.tokensInput || 0,
+    p_tokens_output: analysis.tokensOutput || 0,
+    p_generation_time_ms: analysis.generationTimeMs || 0,
+    p_error_message: analysis.errorMessage || null,
+  });
   if (error) throw error;
 }
 
