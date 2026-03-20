@@ -10,7 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { X, Send, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useSendTestInvitations, InsufficientCreditsError } from '@/hooks/useCompanyTestsQuery';
+import { useSendTestInvitations } from '@/hooks/useCompanyTestsQuery';
+import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
+import { useAuth } from '@/contexts/AuthContext';
 import { InsufficientCreditsModal } from '@/components/billing/InsufficientCreditsModal';
 
 interface EmailInviteFormProps {
@@ -20,11 +22,13 @@ interface EmailInviteFormProps {
 
 export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
   const { toast } = useToast();
+  const { currentCompany } = useAuth();
   const [emailInput, setEmailInput] = useState('');
   const [emails, setEmails] = useState<string[]>([]);
   const [insufficientCreditsOpen, setInsufficientCreditsOpen] = useState(false);
   const [creditBalance, setCreditBalance] = useState(0);
   const sendInvitations = useSendTestInvitations();
+  const { data: companyCredits } = useCompanyCreditBalance(currentCompany?.id);
 
   const addEmail = () => {
     const email = emailInput.trim().toLowerCase();
@@ -59,22 +63,23 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
       return;
     }
 
-    try {
-      await sendInvitations.mutateAsync({
-        testId,
-        invitations: emails.map(email => ({
-          candidateName: email.split('@')[0],
-          candidateEmail: email,
-          method: 'email' as const,
-        })),
-      });
-      setEmails([]);
-    } catch (err) {
-      if (err instanceof InsufficientCreditsError) {
-        setCreditBalance(err.available);
-        setInsufficientCreditsOpen(true);
-      }
+    // PRD-089: Check credits before sending
+    const balance = companyCredits ?? 0;
+    if (balance < emails.length) {
+      setCreditBalance(balance);
+      setInsufficientCreditsOpen(true);
+      return;
     }
+
+    await sendInvitations.mutateAsync({
+      testId,
+      invitations: emails.map(email => ({
+        candidateName: email.split('@')[0],
+        candidateEmail: email,
+        method: 'email' as const,
+      })),
+    });
+    setEmails([]);
   };
 
   return (

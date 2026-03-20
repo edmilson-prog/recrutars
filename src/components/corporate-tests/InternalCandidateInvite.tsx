@@ -27,6 +27,7 @@ import {
 import { InsufficientCreditsModal } from '@/components/billing/InsufficientCreditsModal';
 import { useDepartments } from '@/hooks/useTeamsQuery';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
 import { supabase } from '@/lib/supabase';
 import type { TargetAudience, InvitationMethod } from '@/types/companyTest';
 
@@ -87,6 +88,7 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
   const { data: departments } = useDepartments(isCollaborator ? currentCompany?.id : undefined);
 
   const sendInvitations = useSendTestInvitations();
+  const { data: companyCredits } = useCompanyCreditBalance(currentCompany?.id);
 
   // Query active invitations for this test to detect duplicates (collaborator mode)
   const { data: activeInvitations } = useQuery({
@@ -135,6 +137,14 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
 
   const handleConfirmSend = async () => {
     if (selected.size === 0) return;
+
+    // PRD-089: Check credits before sending (frontend pre-check)
+    const balance = companyCredits ?? 0;
+    if (balance < selected.size) {
+      setCreditBalance(balance);
+      setInsufficientCreditsOpen(true);
+      return;
+    }
 
     try {
       if (isCollaborator && teamMembers) {

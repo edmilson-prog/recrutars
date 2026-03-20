@@ -252,31 +252,7 @@ export function useSendTestInvitations() {
       const { data, error } = await supabase.functions.invoke('send-test-invitation', {
         body: { action: 'send_invitations', test_id: testId, invitations },
       });
-      // On 400, extract the JSON body — may be in data, error.context, or error.message
-      if (error) {
-        // Try multiple ways to get the error body
-        let body: Record<string, unknown> | null = data as Record<string, unknown> | null;
-        if (!body) {
-          try {
-            const ctx = (error as Record<string, unknown>).context;
-            if (ctx && typeof ctx === 'object' && 'json' in ctx && typeof (ctx as Response).json === 'function') {
-              body = await (ctx as Response).json();
-            } else if (ctx && typeof ctx === 'object') {
-              body = ctx as Record<string, unknown>;
-            }
-          } catch { /* ignore */ }
-        }
-        if (!body) {
-          try { body = JSON.parse(error.message); } catch { /* not JSON */ }
-        }
-        if (body?.insufficientCredits) {
-          throw new InsufficientCreditsError(
-            (body.available as number) ?? 0,
-            (body.required as number) ?? invitations.length,
-          );
-        }
-        throw new Error((body?.error as string) || error.message);
-      }
+      if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data.invitations as TestInvitation[];
     },
@@ -287,9 +263,7 @@ export function useSendTestInvitations() {
         description: `${invitations.length} convite${invitations.length > 1 ? 's' : ''} enviado${invitations.length > 1 ? 's' : ''} com sucesso.`,
       });
     },
-    onError: (error) => {
-      // Don't show generic toast for insufficient credits — caller handles with modal
-      if (error instanceof InsufficientCreditsError) return;
+    onError: () => {
       toast({ title: 'Erro ao enviar convites', variant: 'destructive' });
     },
   });
