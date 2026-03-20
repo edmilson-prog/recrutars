@@ -108,7 +108,7 @@ export default function CollaboratorTestSession() {
 
   // Team member CPF confirmation
   const [teamMemberInfo, setTeamMemberInfo] = useState<TeamMemberInfo | null>(null);
-  const [cpfLast3, setCpfLast3] = useState('');
+  const [cpfLast4, setCpfLast4] = useState('');
   const [cpfError, setCpfError] = useState('');
   const [verifyingCpf, setVerifyingCpf] = useState(false);
 
@@ -327,7 +327,7 @@ export default function CollaboratorTestSession() {
   // Handle CPF verification for pre-registered team members
   const handleCpfVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!invitation?.teamMemberId || cpfLast3.length !== 3) return;
+    if (!invitation?.teamMemberId || cpfLast4.length !== 4) return;
 
     setCpfError('');
     setVerifyingCpf(true);
@@ -337,7 +337,7 @@ export default function CollaboratorTestSession() {
         body: {
           action: 'verify_cpf',
           team_member_id: invitation.teamMemberId,
-          cpf_last3: cpfLast3,
+          cpf_last4: cpfLast4,
         },
       });
 
@@ -526,19 +526,19 @@ export default function CollaboratorTestSession() {
 
           <form onSubmit={handleCpfVerify} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="cpf-last3">
-                Digite os 3 ultimos digitos do seu CPF
+              <Label htmlFor="cpf-last4">
+                Digite os 4 ultimos digitos do seu CPF
               </Label>
               <Input
-                id="cpf-last3"
-                value={cpfLast3}
+                id="cpf-last4"
+                value={cpfLast4}
                 onChange={(e) => {
-                  const v = e.target.value.replace(/\D/g, '').slice(0, 3);
-                  setCpfLast3(v);
+                  const v = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setCpfLast4(v);
                   setCpfError('');
                 }}
-                placeholder="000"
-                maxLength={3}
+                placeholder="0000"
+                maxLength={4}
                 className="text-center text-2xl font-mono tracking-widest"
                 autoFocus
                 disabled={verifyingCpf}
@@ -553,7 +553,7 @@ export default function CollaboratorTestSession() {
             <Button
               type="submit"
               className="w-full"
-              disabled={verifyingCpf || cpfLast3.length !== 3}
+              disabled={verifyingCpf || cpfLast4.length !== 4}
             >
               {verifyingCpf ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

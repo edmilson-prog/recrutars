@@ -100,10 +100,10 @@ Deno.serve(async (req: Request) => {
           .eq('id', inv.team_member_id)
           .maybeSingle();
         if (tm) {
-          // Mask CPF: show only middle 3 digits
+          // Mask CPF: show only first 3 digits of middle block (hide last 4 for verification)
           const cpfDigits = (tm.cpf || '').replace(/\D/g, '');
           const maskedCpf = cpfDigits.length === 11
-            ? `***.${cpfDigits.slice(3, 6)}.${cpfDigits.slice(6, 9)}-**`
+            ? `***.${cpfDigits.slice(3, 6)}.***-**`
             : null;
           teamMember = {
             id: tm.id,
@@ -128,8 +128,9 @@ Deno.serve(async (req: Request) => {
     // ACTION: verify_cpf
     // -----------------------------------------------------------------------
     if (action === 'verify_cpf') {
-      const { team_member_id, cpf_last3 } = body;
-      if (!team_member_id || !cpf_last3) {
+      const { team_member_id, cpf_last3, cpf_last4 } = body;
+      const cpfInput = cpf_last4 || cpf_last3; // Support both (backward compat)
+      if (!team_member_id || !cpfInput) {
         return json({ error: 'Dados obrigatorios.' }, 400);
       }
 
@@ -144,9 +145,12 @@ Deno.serve(async (req: Request) => {
       }
 
       const cpfDigits = tm.cpf.replace(/\D/g, '');
-      const actualLast3 = cpfDigits.slice(8, 11);
+      // Support 4-digit verification (preferred) or 3-digit (legacy)
+      const expectedDigits = cpfInput.length === 4
+        ? cpfDigits.slice(7, 11)  // last 4 digits
+        : cpfDigits.slice(8, 11); // last 3 digits (legacy)
 
-      if (cpf_last3 !== actualLast3) {
+      if (cpfInput !== expectedDigits) {
         return json({ error: 'CPF nao confere. Verifique os digitos informados.', valid: false });
       }
 
