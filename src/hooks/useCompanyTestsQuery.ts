@@ -252,11 +252,12 @@ export function useSendTestInvitations() {
       const { data, error } = await supabase.functions.invoke('send-test-invitation', {
         body: { action: 'send_invitations', test_id: testId, invitations },
       });
-      if (error) throw error;
+      // Check insufficientCredits FIRST — invoke() sets both error+data on 400
       if (data?.insufficientCredits) {
         throw new InsufficientCreditsError(data.available ?? 0, data.required ?? invitations.length);
       }
       if (data?.error) throw new Error(data.error);
+      if (error) throw error;
       return data.invitations as TestInvitation[];
     },
     onSuccess: (invitations, { testId }) => {
