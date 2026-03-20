@@ -30,6 +30,7 @@ export interface AIAnalysis {
 export interface AIAnalysisResult {
   candidateId: string;
   testResultId: string;
+  teamMemberId?: string;
   practical?: AIAnalysis;
   technical?: AIAnalysis;
   generatedAt: string;
