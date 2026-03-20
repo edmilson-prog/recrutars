@@ -12,6 +12,7 @@ import { PeriodFilter } from './PeriodFilter';
 import { CreditSummaryCard } from './CreditSummaryCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCompanyTests, useCompanyTestStats, useTestAuditLogs, useTestMetrics, useDetectAbandonment } from '@/hooks/useCompanyTestsQuery';
+import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { getActionLabel } from '@/utils/auditLog';
 import type { PeriodFilter as PeriodFilterType, HubDashboardKPIs, FunnelData, HubAlert, ActivityItem, AuditAction } from '@/types/companyTest';
@@ -46,6 +47,8 @@ export function HubDashboard() {
 
   // PRD-089: Enhanced metrics from RPC
   const { data: metricsData } = useTestMetrics(companyId, period);
+  // Direct credit balance (authoritative source, same as CreditBadge)
+  const { data: creditBalance } = useCompanyCreditBalance(companyId);
 
   // Build KPIs: prefer enhanced metrics when available, fallback to basic stats
   const kpis = useMemo<HubDashboardKPIs>(() => {
@@ -66,13 +69,13 @@ export function HubDashboard() {
         mappedMembers: metricsData.mappedMembers,
         totalMembers: metricsData.totalMembers,
         creditsUsed: metricsData.creditsUsed,
-        creditsAvailable: metricsData.creditsAvailable,
+        creditsAvailable: creditBalance ?? metricsData.creditsAvailable,
         pendingRetests: metricsData.pendingRetests,
       };
     }
 
     return base;
-  }, [statsData, metricsData]);
+  }, [statsData, metricsData, creditBalance]);
 
   // Build funnel from metrics RPC
   const funnelData = useMemo<FunnelData>(() => {
