@@ -173,7 +173,7 @@ export default function TeamMemberForm({
                 id="member-name"
                 placeholder="Nome completo"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => setName(e.target.value.toUpperCase())}
               />
             </div>
 
