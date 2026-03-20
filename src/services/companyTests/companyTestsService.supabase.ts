@@ -12,6 +12,8 @@ import type {
   HubDashboardKPIs,
   CompanyCandidate,
   CompanyTeamMemberForInvite,
+  EnhancedAuditLogFilters,
+  TestMetrics,
 } from '@/types/companyTest';
 import type { ICompanyTestsService, CompanyTestFilters, AuditLogFilters } from './companyTestsService';
 import { ARCHETYPE_PROFILES } from '@/data/gaugeProArchetypes';
@@ -463,7 +465,7 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
     const activeTests = (tests ?? []).filter(t => (t as Record<string, unknown>).status === 'active').length;
 
     if (testIds.length === 0) {
-      return { totalTests: 0, activeTests: 0, pendingInvites: 0, completionRate: 0, avgCompletionTime: 0 };
+      return { totalTests: 0, activeTests: 0, pendingInvites: 0, completionRate: 0, avgCompletionTime: 0, abandonRate: 0, mappedMembers: 0, totalMembers: 0, creditsUsed: 0, creditsAvailable: 0, pendingRetests: 0 };
     }
 
     // Get invitations for all company tests
@@ -499,6 +501,94 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
       pendingInvites: pending,
       completionRate,
       avgCompletionTime,
+      abandonRate: 0,
+      mappedMembers: 0,
+      totalMembers: 0,
+      creditsUsed: 0,
+      creditsAvailable: 0,
+      pendingRetests: 0,
+    };
+  }
+
+  // ----------------------------------------------------------
+  // PRD-089: Enhanced metrics via RPC
+  // ----------------------------------------------------------
+
+  async getTestMetrics(companyId: string, from?: string, to?: string): Promise<TestMetrics> {
+    const { data, error } = await supabase.rpc('get_test_metrics', {
+      p_company_id: companyId,
+      p_from: from ?? null,
+      p_to: to ?? null,
+    });
+
+    if (error) throw error;
+
+    const metrics = data as TestMetrics;
+    return {
+      totalInvitations: metrics?.totalInvitations ?? 0,
+      completed: metrics?.completed ?? 0,
+      abandoned: metrics?.abandoned ?? 0,
+      pending: metrics?.pending ?? 0,
+      started: metrics?.started ?? 0,
+      viewed: metrics?.viewed ?? 0,
+      completionRate: metrics?.completionRate ?? 0,
+      abandonRate: metrics?.abandonRate ?? 0,
+      avgCompletionHours: metrics?.avgCompletionHours ?? 0,
+      mappedMembers: metrics?.mappedMembers ?? 0,
+      totalMembers: metrics?.totalMembers ?? 0,
+      creditsUsed: metrics?.creditsUsed ?? 0,
+      creditsAvailable: metrics?.creditsAvailable ?? 0,
+      pendingRetests: metrics?.pendingRetests ?? 0,
+    };
+  }
+
+  async detectAbandonment(companyId: string): Promise<number> {
+    const { data, error } = await supabase.rpc('detect_abandoned_invitations', {
+      p_company_id: companyId,
+    });
+
+    if (error) {
+      console.error('[detectAbandonment] error:', error.message);
+      return 0;
+    }
+    return (data as number) ?? 0;
+  }
+
+  async getAuditLogsPaginated(companyId: string, filters?: EnhancedAuditLogFilters): Promise<{ logs: AuditLog[]; total: number }> {
+    const page = filters?.page ?? 0;
+    const pageSize = filters?.pageSize ?? 25;
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('test_audit_logs')
+      .select('*', { count: 'exact' })
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false });
+
+    if (filters?.action) {
+      query = query.eq('action', filters.action);
+    }
+    if (filters?.search) {
+      query = query.or(`resource_name.ilike.%${filters.search}%,user_name.ilike.%${filters.search}%,details.ilike.%${filters.search}%`);
+    }
+    if (filters?.resourceType) {
+      query = query.eq('resource_type', filters.resourceType);
+    }
+    if (filters?.period && filters.period !== 'all' && filters.period !== 'custom') {
+      const days = filters.period === '7d' ? 7 : filters.period === '30d' ? 30 : 90;
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+      query = query.gte('created_at', since);
+    }
+
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
+    if (error) throw error;
+
+    return {
+      logs: (data ?? []).map(row => auditLogRowToModel(row as Record<string, unknown>)),
+      total: count ?? 0,
     };
   }
 }

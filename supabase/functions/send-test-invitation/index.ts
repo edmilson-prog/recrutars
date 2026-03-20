@@ -1,3 +1,11 @@
+/**
+ * Edge Function: send-test-invitation
+ * Handles batch sending, resending, and cancelling test invitations.
+ *
+ * PRD-089: Added credit consumption on send, credit refund on cancel,
+ *          and enhanced audit logging.
+ */
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -11,6 +19,36 @@ function jsonResponse(data: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+/** Fire-and-forget audit log. Never blocks the main flow (RNF-002). */
+async function auditLog(
+  supabase: ReturnType<typeof createClient>,
+  params: {
+    action: string;
+    userId?: string | null;
+    userName?: string | null;
+    resourceType: string;
+    resourceId: string;
+    resourceName?: string | null;
+    details?: string | null;
+    companyId: string;
+  }
+): Promise<void> {
+  try {
+    await supabase.from("test_audit_logs").insert({
+      action: params.action,
+      user_id: params.userId ?? "00000000-0000-0000-0000-000000000000",
+      user_name: params.userName ?? "Sistema",
+      resource_type: params.resourceType,
+      resource_id: params.resourceId,
+      resource_name: params.resourceName ?? null,
+      details: params.details ?? null,
+      company_id: params.companyId,
+    });
+  } catch (err) {
+    console.error("[auditLog] Failed (non-blocking):", err);
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -85,6 +123,21 @@ Deno.serve(async (req: Request) => {
           }
         }
 
+        // PRD-089: Check credit balance before sending (RF-013)
+        const invitationCount = invitations.length;
+        const { data: balance } = await adminClient.rpc("get_company_credit_balance", {
+          p_company_id: test.company_id,
+        });
+
+        if ((balance ?? 0) < invitationCount) {
+          return jsonResponse({
+            error: `Creditos insuficientes. Disponivel: ${balance ?? 0}, Necessario: ${invitationCount}`,
+            insufficientCredits: true,
+            available: balance ?? 0,
+            required: invitationCount,
+          }, 400);
+        }
+
         // Create invitations
         // PRD-088: Added teamMemberId support for collaborator tests
         const rows = invitations.map((inv: { candidateId?: string; teamMemberId?: string; candidateName: string; candidateEmail: string; method: string; expiresInDays?: number }) => {
@@ -121,25 +174,59 @@ Deno.serve(async (req: Request) => {
           return jsonResponse({ error: insertError.message }, 500);
         }
 
-        // Audit log
+        // Fetch caller name for audit logs
+        let callerName = "Usuario";
         if (callerId) {
           const { data: callerProfile } = await adminClient
             .from("profiles")
             .select("full_name")
             .eq("id", callerId)
             .single();
+          callerName = callerProfile?.full_name ?? "Usuario";
+        }
 
-          for (const inv of created ?? []) {
-            await adminClient.from("test_audit_logs").insert({
+        // Audit + Credit consumption for each invitation (RF-012, RF-016)
+        for (const inv of created ?? []) {
+          const memberName = inv.candidate_name || "Colaborador";
+
+          // Audit: invite_sent
+          if (callerId) {
+            auditLog(adminClient, {
               action: "invite_sent",
-              user_id: callerId,
-              user_name: callerProfile?.full_name ?? "Usuario",
-              resource_type: "invitation",
-              resource_id: inv.id,
-              resource_name: inv.candidate_name,
+              userId: callerId,
+              userName: callerName,
+              resourceType: "invitation",
+              resourceId: inv.id,
+              resourceName: memberName,
               details: `Teste: ${test.name}`,
-              company_id: test.company_id,
+              companyId: test.company_id,
             });
+          }
+
+          // PRD-089: Consume credit (RF-012)
+          try {
+            await adminClient.rpc("consume_test_credit", {
+              p_company_id: test.company_id,
+              p_invitation_id: inv.id,
+              p_description: `Teste "${test.name}" - ${memberName}`,
+              p_created_by: callerId,
+            });
+
+            // Audit: credit_consumed
+            if (callerId) {
+              auditLog(adminClient, {
+                action: "credit_consumed",
+                userId: callerId,
+                userName: callerName,
+                resourceType: "credit_transaction",
+                resourceId: inv.id,
+                resourceName: memberName,
+                details: `1 credito consumido - Teste: ${test.name}`,
+                companyId: test.company_id,
+              });
+            }
+          } catch (creditErr) {
+            console.error("[send_invitations] credit consume error (non-blocking):", creditErr);
           }
         }
 
@@ -182,15 +269,15 @@ Deno.serve(async (req: Request) => {
             .single();
 
           if (test) {
-            await adminClient.from("test_audit_logs").insert({
+            auditLog(adminClient, {
               action: "invite_resent",
-              user_id: callerId,
-              user_name: callerProfile?.full_name ?? "Usuario",
-              resource_type: "invitation",
-              resource_id: invitation_id,
-              resource_name: updated.candidate_name,
+              userId: callerId,
+              userName: callerProfile?.full_name ?? "Usuario",
+              resourceType: "invitation",
+              resourceId: invitation_id,
+              resourceName: updated.candidate_name,
               details: `Reenvio - Teste: ${test.name}`,
-              company_id: test.company_id,
+              companyId: test.company_id,
             });
           }
         }
@@ -204,6 +291,16 @@ Deno.serve(async (req: Request) => {
           return jsonResponse({ error: "invitation_id is required" }, 400);
         }
 
+        // PRD-089: Read invitation BEFORE update to know original status (RF-014)
+        const { data: inv } = await adminClient
+          .from("test_invitations")
+          .select("candidate_name, test_id, status")
+          .eq("id", invitation_id)
+          .single();
+
+        const originalStatus = inv?.status;
+
+        // Update status to expired
         const { error: cancelError } = await adminClient
           .from("test_invitations")
           .update({ status: "expired" })
@@ -213,37 +310,65 @@ Deno.serve(async (req: Request) => {
           return jsonResponse({ error: cancelError.message }, 500);
         }
 
-        if (callerId) {
-          const { data: inv } = await adminClient
-            .from("test_invitations")
-            .select("candidate_name, test_id")
-            .eq("id", invitation_id)
+        if (inv) {
+          const { data: test } = await adminClient
+            .from("company_tests")
+            .select("company_id, name")
+            .eq("id", inv.test_id)
             .single();
 
-          if (inv) {
-            const { data: test } = await adminClient
-              .from("company_tests")
-              .select("company_id, name")
-              .eq("id", inv.test_id)
-              .single();
-
+          let callerName = "Usuario";
+          if (callerId) {
             const { data: callerProfile } = await adminClient
               .from("profiles")
               .select("full_name")
               .eq("id", callerId)
               .single();
+            callerName = callerProfile?.full_name ?? "Usuario";
+          }
 
-            if (test) {
-              await adminClient.from("test_audit_logs").insert({
+          if (test) {
+            // Audit: invite_cancelled
+            if (callerId) {
+              auditLog(adminClient, {
                 action: "invite_cancelled",
-                user_id: callerId,
-                user_name: callerProfile?.full_name ?? "Usuario",
-                resource_type: "invitation",
-                resource_id: invitation_id,
-                resource_name: inv.candidate_name,
+                userId: callerId,
+                userName: callerName,
+                resourceType: "invitation",
+                resourceId: invitation_id,
+                resourceName: inv.candidate_name,
                 details: `Teste: ${test.name}`,
-                company_id: test.company_id,
+                companyId: test.company_id,
               });
+            }
+
+            // PRD-089: Refund credit if invitation was not yet started (RF-014)
+            if (originalStatus && ["sent", "viewed"].includes(originalStatus)) {
+              try {
+                await adminClient.rpc("refund_test_credit", {
+                  p_company_id: test.company_id,
+                  p_invitation_id: invitation_id,
+                  p_description: `Cancelamento - ${inv.candidate_name}`,
+                });
+
+                // Audit: credit_refunded
+                if (callerId) {
+                  auditLog(adminClient, {
+                    action: "credit_refunded",
+                    userId: callerId,
+                    userName: callerName,
+                    resourceType: "credit_transaction",
+                    resourceId: invitation_id,
+                    resourceName: inv.candidate_name,
+                    details: `Credito estornado - Convite cancelado`,
+                    companyId: test.company_id,
+                  });
+                }
+
+                console.log("[cancel] credit refunded for invitation:", invitation_id);
+              } catch (refundErr) {
+                console.error("[cancel] refund error (non-blocking):", refundErr);
+              }
             }
           }
         }

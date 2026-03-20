@@ -1,12 +1,61 @@
 {
   "versions": [
     {
+      "version": "1.43.0",
+      "codename": "Lighthouse",
+      "type": "minor",
+      "releaseDate": "2026-03-20",
+      "description": "Rastreamento e observabilidade ponta a ponta do fluxo de testes Gauge-Pro. 7 dimensoes: ciclo de vida, cadeia de vinculos, retestes, creditos, auditoria completa, metricas agregadas e notificacoes em tempo real.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Rastreamento do ciclo de vida completo do convite: viewed_at automatico ao primeiro acesso ao link",
+            "Cadeia de vinculos convite-assessment-resultado-IA via campos invitation_id e result_id",
+            "View unificada vw_test_tracking_chain para consulta da cadeia completa",
+            "RPC get_test_metrics com 14 metricas agregadas por empresa e periodo",
+            "Deteccao on-demand de testes abandonados (convites em started ha mais de 24h)",
+            "Consumo automatico de creditos ao enviar convites de teste (RF-012)",
+            "Estorno automatico de credito ao cancelar convite pendente (RF-014)",
+            "Bloqueio de envio quando creditos insuficientes com mensagem clara (RF-013)",
+            "Audit logging completo: 16 tipos de evento fire-and-forget (nunca bloqueia fluxo)",
+            "Notificacao in-app para admins da empresa quando colaborador conclui teste",
+            "Notificacao WhatsApp opt-in para owner da empresa na conclusao de teste",
+            "KPIs expandidos no Hub: taxa de abandono, colaboradores mapeados, creditos, retestes pendentes",
+            "Funil de conversao com 5 etapas (Convidados-Visualizados-Iniciados-Concluidos-Analisados) e percentuais",
+            "Card de resumo de creditos no Hub de Testes",
+            "Modal de agendamento de reteste com frequencia configuravel (3/6/9/12 meses)",
+            "Badge visual de reteste pendente no perfil do colaborador",
+            "RLS append-only em test_audit_logs e test_credit_transactions (sem UPDATE/DELETE)"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Edge function process-collaborator-invite instrumentada com auditoria completa em todas as acoes",
+            "Edge function send-test-invitation: consumo de credito integrado ao envio e estorno ao cancelamento",
+            "Acao cancel em send-test-invitation agora le convite antes do update para verificar status original",
+            "Activity Feed no Hub suporta novos tipos de evento (invite_viewed, test_started, credit_consumed etc.)",
+            "PeriodFilter inclui opcao 'Todos' para visualizar historico completo"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Bug de escopo em mark_completed: assessmentRows referenciado fora do bloco if (corrigido com finalAssessmentId)",
+            "Backfill de dados legados: vinculos assessment_id e invitation_id preenchidos para convites concluidos"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.42.2",
       "codename": "Sentinel",
       "type": "patch",
       "releaseDate": "2026-03-20",
       "description": "Hotfixes do fluxo unificado de teste para colaboradores: seletor de canal, deduplicacao de convites, links copiaveis, verificacao CPF com 4 digitos, e correcao da tela de analise travada.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

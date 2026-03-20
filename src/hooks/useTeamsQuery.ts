@@ -225,6 +225,35 @@ export function useSaveDevelopmentPlan() {
   });
 }
 
+/** Fetch retest schedule for a specific member */
+export function useMemberRetestSchedule(memberId: string | undefined) {
+  return useQuery<RetestSchedule | null>({
+    queryKey: [...teamKeys.all, 'memberRetest', memberId],
+    queryFn: async () => {
+      const { supabase } = await import('@/lib/supabase');
+      const { data, error } = await supabase
+        .from('retest_schedules')
+        .select('*')
+        .eq('member_id', memberId!)
+        .order('next_date', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) return null;
+      if (!data) return null;
+      return {
+        id: data.id,
+        memberId: data.member_id,
+        frequency: data.frequency,
+        nextDate: data.next_date,
+        autoSend: data.auto_send,
+        lastSentAt: data.last_sent_at ?? undefined,
+        createdAt: data.created_at,
+      } as RetestSchedule;
+    },
+    enabled: !!memberId,
+  });
+}
+
 /** Save (create or update) a retest schedule */
 export function useSaveRetestSchedule() {
   const queryClient = useQueryClient();

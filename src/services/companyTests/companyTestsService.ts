@@ -14,6 +14,9 @@ import type {
   CompanyCandidate,
   CompanyTeamMemberForInvite,
   CreateInvitationInput,
+  EnhancedAuditLogFilters,
+  TestMetrics,
+  PeriodFilter,
 } from '@/types/companyTest';
 
 export interface CompanyTestFilters {
@@ -59,6 +62,11 @@ export interface ICompanyTestsService {
 
   // Dashboard
   getStats(companyId: string): Promise<HubDashboardKPIs>;
+
+  // PRD-089: Enhanced metrics + audit + abandonment
+  getTestMetrics(companyId: string, from?: string, to?: string): Promise<TestMetrics>;
+  detectAbandonment(companyId: string): Promise<number>;
+  getAuditLogsPaginated(companyId: string, filters?: EnhancedAuditLogFilters): Promise<{ logs: AuditLog[]; total: number }>;
 }
 
 let _instance: ICompanyTestsService | null = null;
