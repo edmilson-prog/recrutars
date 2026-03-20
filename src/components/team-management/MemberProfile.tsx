@@ -671,9 +671,9 @@ export function MemberProfile({
 
           {/* Tab 2: Competências */}
           <TabsContent value="competencias" className="space-y-6">
-            <CompetencyRadarChart scores={scores} />
+            <EmotionalFactorsCard scores={scores} />
             <div className="grid gap-6 lg:grid-cols-2">
-              <EmotionalFactorsCard scores={scores} />
+              <CompetencyRadarChart scores={scores} />
               <RiskScoreCard scores={scores} fitScore={fitScore} />
             </div>
             {fitScore !== undefined && fitClassification && (
