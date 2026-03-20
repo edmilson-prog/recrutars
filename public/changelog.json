@@ -1,12 +1,29 @@
 {
   "versions": [
     {
+      "version": "1.42.1",
+      "codename": "Sentinel",
+      "type": "patch",
+      "releaseDate": "2026-03-19",
+      "description": "Hotfix: seletor de canal de envio na tab Da Equipe do Hub de Testes e edge function send-test-invitation salva localmente.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Seletor de canal (Link Unico, Email, WhatsApp) adicionado ao envio de convites para colaboradores no Hub de Testes",
+            "Edge function send-test-invitation salva no repositorio local para controle de versao"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.42.0",
       "codename": "Sentinel",
       "type": "minor",
       "releaseDate": "2026-03-19",
       "description": "Fluxo unificado de teste Gauge-Pro para colaboradores. Hub de Testes como ponto central, seletor de público-alvo, team_member_id direto no assessment sem candidato fantasma.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
