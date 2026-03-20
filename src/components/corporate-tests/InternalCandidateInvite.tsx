@@ -2,6 +2,7 @@
  * Internal Candidate / Team Member Invite
  * PRD-052: Seleção de candidatos internos (da base) — Supabase-backed
  * PRD-088: Dual mode — candidates (default) or team members (collaborator tests)
+ * PRD-088 hotfix: Channel selection step for collaborator mode
  */
 
 import { useState } from 'react';
@@ -12,7 +13,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Send, Loader2 } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Search, Send, Loader2, Link2, Mail, MessageCircle, ArrowLeft } from 'lucide-react';
 import {
   useCompanyCandidates,
   useCompanyTeamMembersForInvite,
@@ -21,13 +24,15 @@ import {
 import { useDepartments } from '@/hooks/useTeamsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import type { TargetAudience } from '@/types/companyTest';
+import type { TargetAudience, InvitationMethod } from '@/types/companyTest';
 
 interface InternalCandidateInviteProps {
   testId: string;
   testName: string;
   targetAudience?: TargetAudience;
 }
+
+type SendStep = 'select' | 'channel';
 
 const GAUGE_STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
   unmapped: { label: 'Sem teste', variant: 'outline' },
@@ -38,6 +43,12 @@ const GAUGE_STATUS_LABELS: Record<string, { label: string; variant: 'default' | 
   retest_pending: { label: 'Reteste pendente', variant: 'destructive' },
 };
 
+const CHANNEL_OPTIONS = [
+  { value: 'public_link' as InvitationMethod, label: 'Link Unico', description: 'Gera links copiaveis para compartilhar manualmente', icon: Link2 },
+  { value: 'email' as InvitationMethod, label: 'Email', description: 'Envia email com o link do teste para cada colaborador', icon: Mail },
+  { value: 'internal' as InvitationMethod, label: 'WhatsApp', description: 'Envia mensagem via WhatsApp (Evolution API)', icon: MessageCircle },
+];
+
 export function InternalCandidateInvite({ testId, testName, targetAudience }: InternalCandidateInviteProps) {
   const { currentCompany } = useAuth();
   const isCollaborator = targetAudience === 'collaborator';
@@ -45,6 +56,8 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [sendStep, setSendStep] = useState<SendStep>('select');
+  const [selectedChannel, setSelectedChannel] = useState<InvitationMethod>('public_link');
 
   // Candidate mode (default)
   const { data: candidates, isLoading: candidatesLoading } = useCompanyCandidates(
@@ -78,11 +91,20 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
     });
   };
 
-  const handleSend = async () => {
+  const handleProceedToChannel = () => {
+    if (selected.size === 0) return;
+    setSendStep('channel');
+  };
+
+  const handleBackToSelect = () => {
+    setSendStep('select');
+  };
+
+  const handleConfirmSend = async () => {
     if (selected.size === 0) return;
 
     if (isCollaborator && teamMembers) {
-      // Collaborator mode: send invitations with teamMemberId
+      // Collaborator mode: send invitations with teamMemberId + selected channel
       const selectedMembers = teamMembers.filter(m => selected.has(m.id));
 
       await sendInvitations.mutateAsync({
@@ -91,11 +113,11 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
           teamMemberId: m.id,
           candidateName: m.name,
           candidateEmail: m.email,
-          method: 'internal' as const,
+          method: selectedChannel,
         })),
       });
     } else if (candidates) {
-      // Candidate mode: existing behavior
+      // Candidate mode: existing behavior (no channel step)
       const selectedCandidates = candidates.filter(c => selected.has(c.id));
 
       // PRD-081: Create team_members for each selected candidate (invite_base)
@@ -131,8 +153,75 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
     }
 
     setSelected(new Set());
+    setSendStep('select');
   };
 
+  // For candidate mode, send directly (no channel step)
+  const handleSendDirect = async () => {
+    await handleConfirmSend();
+  };
+
+  // ─── Channel Selection Step (collaborator mode only) ───
+  if (isCollaborator && sendStep === 'channel') {
+    const selectedNames = teamMembers
+      ?.filter(m => selected.has(m.id))
+      .map(m => m.name) ?? [];
+
+    return (
+      <div className="space-y-4">
+        {/* Summary */}
+        <div className="rounded-md border p-3 bg-muted/20">
+          <p className="text-sm font-medium">
+            {selectedNames.length} colaborador{selectedNames.length > 1 ? 'es' : ''} selecionado{selectedNames.length > 1 ? 's' : ''}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1 truncate">
+            {selectedNames.slice(0, 3).join(', ')}{selectedNames.length > 3 ? ` e mais ${selectedNames.length - 3}` : ''}
+          </p>
+        </div>
+
+        {/* Channel Selection */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Como deseja enviar o convite?</Label>
+          <RadioGroup value={selectedChannel} onValueChange={(v) => setSelectedChannel(v as InvitationMethod)}>
+            {CHANNEL_OPTIONS.map(opt => {
+              const Icon = opt.icon;
+              return (
+                <label
+                  key={opt.value}
+                  className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
+                >
+                  <RadioGroupItem value={opt.value} />
+                  <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">{opt.label}</p>
+                    <p className="text-xs text-muted-foreground">{opt.description}</p>
+                  </div>
+                </label>
+              );
+            })}
+          </RadioGroup>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleBackToSelect} disabled={sendInvitations.isPending}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+          <Button className="flex-1" onClick={handleConfirmSend} disabled={sendInvitations.isPending}>
+            {sendInvitations.isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4 mr-2" />
+            )}
+            Confirmar Envio
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Selection Step (both modes) ───
   return (
     <div className="space-y-4">
       {/* Search + Department filter */}
@@ -249,14 +338,22 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
         )}
       </div>
 
-      <Button onClick={handleSend} disabled={selected.size === 0 || sendInvitations.isPending}>
-        {sendInvitations.isPending ? (
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-        ) : (
+      {/* Action button */}
+      {isCollaborator ? (
+        <Button onClick={handleProceedToChannel} disabled={selected.size === 0 || sendInvitations.isPending}>
           <Send className="h-4 w-4 mr-2" />
-        )}
-        Convidar {selected.size > 0 ? `${selected.size} selecionado${selected.size > 1 ? 's' : ''}` : ''}
-      </Button>
+          Escolher canal de envio {selected.size > 0 ? `(${selected.size})` : ''}
+        </Button>
+      ) : (
+        <Button onClick={handleSendDirect} disabled={selected.size === 0 || sendInvitations.isPending}>
+          {sendInvitations.isPending ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4 mr-2" />
+          )}
+          Convidar {selected.size > 0 ? `${selected.size} selecionado${selected.size > 1 ? 's' : ''}` : ''}
+        </Button>
+      )}
     </div>
   );
 }
