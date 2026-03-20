@@ -163,6 +163,10 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
     }
 
     // 4. Async: Supabase checks (restore ref, detect completion, lazy sync)
+    // Skip Supabase queries if candidateId is not a valid UUID (e.g. 'temp', 'tm-xxx')
+    const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidateId);
+    if (!isValidUUID) return;
+
     getGaugeProService().then(async svc => {
       // Restore supabaseAssessmentIdRef (lost on page refresh)
       const existingAssessment = await svc.getAssessmentByCandidate(candidateId);
@@ -482,7 +486,9 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
 
       saveSession({ phase: 'completed', completedAt: new Date().toISOString(), part2CompletedAt: new Date().toISOString() });
 
-      // Fire-and-forget: persist result to Supabase
+      // Fire-and-forget: persist result to Supabase (skip if candidateId is not a valid UUID)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidateId);
+      if (!isUUID) return; // Unified flow: edge function handles persistence
       getGaugeProService().then(async svc => {
         let sbId = supabaseAssessmentIdRef.current;
 
