@@ -613,7 +613,7 @@ export function MemberProfile({
       {/* ── Tabs (only when mapped) ────────────────────────────────────── */}
       {isMapped && scores ? (
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Visão Geral</span>
@@ -621,6 +621,10 @@ export function MemberProfile({
             <TabsTrigger value="competencias" className="flex items-center gap-2">
               <Radar className="h-4 w-4" />
               <span className="hidden sm:inline">Competências</span>
+            </TabsTrigger>
+            <TabsTrigger value="arquetipo" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              <span className="hidden sm:inline">Arquétipo</span>
             </TabsTrigger>
             <TabsTrigger value="ia" className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
@@ -677,7 +681,22 @@ export function MemberProfile({
             )}
           </TabsContent>
 
-          {/* Tab 3: IA */}
+          {/* Tab 3: Arquétipo */}
+          <TabsContent value="arquetipo" className="space-y-6">
+            {aiResult ? (
+              <AIRecommendationsTab result={aiResult} />
+            ) : (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+                  <Brain className="h-10 w-10 mb-3 text-muted-foreground/40" />
+                  <p className="text-sm font-medium">Dados de arquétipo indisponíveis</p>
+                  <p className="text-xs mt-1">O colaborador precisa completar o teste comportamental.</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Tab 4: IA */}
           <TabsContent value="ia" className="space-y-6">
             <AllAnalysesAccordion
               candidateId={candidateId}
@@ -685,7 +704,6 @@ export function MemberProfile({
               memberName={member.name}
               testHistory={testHistory}
             />
-            {aiResult && <AIRecommendationsTab result={aiResult} />}
           </TabsContent>
 
           {/* Tab 4: Respostas */}
