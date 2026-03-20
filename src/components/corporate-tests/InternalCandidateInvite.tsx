@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Search, Send, Loader2, Link2, Mail, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Search, Send, Loader2, Link2, Mail, MessageCircle, ArrowLeft, Copy, Check } from 'lucide-react';
 import {
   useCompanyCandidates,
   useCompanyTeamMembersForInvite,
@@ -34,7 +34,12 @@ interface InternalCandidateInviteProps {
   targetAudience?: TargetAudience;
 }
 
-type SendStep = 'select' | 'channel';
+type SendStep = 'select' | 'channel' | 'links';
+
+interface GeneratedLink {
+  name: string;
+  link: string;
+}
 
 const GAUGE_STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
   unmapped: { label: 'Sem teste', variant: 'outline' },
@@ -60,6 +65,8 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [sendStep, setSendStep] = useState<SendStep>('select');
   const [selectedChannel, setSelectedChannel] = useState<InvitationMethod>('public_link');
+  const [generatedLinks, setGeneratedLinks] = useState<GeneratedLink[]>([]);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   // Candidate mode (default)
   const { data: candidates, isLoading: candidatesLoading } = useCompanyCandidates(
@@ -143,7 +150,7 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
           return;
         }
 
-        await sendInvitations.mutateAsync({
+        const result = await sendInvitations.mutateAsync({
           testId,
           invitations: newMembers.map(m => ({
             teamMemberId: m.id,
@@ -152,6 +159,18 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
             method: selectedChannel,
           })),
         });
+
+        // If channel is Link Unico, show generated links instead of resetting
+        if (selectedChannel === 'public_link' && result?.length > 0) {
+          const links = result.map((inv: { candidateName?: string; candidate_name?: string; token?: string }) => ({
+            name: (inv.candidateName ?? inv.candidate_name ?? '') as string,
+            link: `${window.location.origin}/convite/teste/${inv.token}`,
+          }));
+          setGeneratedLinks(links);
+          setSendStep('links');
+          setSelected(new Set());
+          return;
+        }
       } else if (candidates) {
       // Candidate mode: existing behavior (no channel step)
       const selectedCandidates = candidates.filter(c => selected.has(c.id));
@@ -204,6 +223,85 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
   const handleSendDirect = async () => {
     await handleConfirmSend();
   };
+
+  // ─── Links Display Step (after Link Unico send) ───
+  if (sendStep === 'links' && generatedLinks.length > 0) {
+    const handleCopyLink = async (link: string, index: number) => {
+      try {
+        await navigator.clipboard.writeText(link);
+        setCopiedIndex(index);
+        toast.success('Link copiado!');
+        setTimeout(() => setCopiedIndex(null), 2000);
+      } catch {
+        toast.error('Erro ao copiar link.');
+      }
+    };
+
+    const handleCopyAll = async () => {
+      try {
+        const allLinks = generatedLinks.map(l => `${l.name}: ${l.link}`).join('\n');
+        await navigator.clipboard.writeText(allLinks);
+        toast.success('Todos os links copiados!');
+      } catch {
+        toast.error('Erro ao copiar links.');
+      }
+    };
+
+    const handleFinish = () => {
+      setGeneratedLinks([]);
+      setSendStep('select');
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <Label className="text-sm font-medium">Links gerados</Label>
+          <p className="text-xs text-muted-foreground">
+            Copie e compartilhe os links com os colaboradores. Os links expiram em 30 dias.
+          </p>
+        </div>
+
+        <div className="space-y-3 max-h-[300px] overflow-y-auto">
+          {generatedLinks.map((item, index) => (
+            <div key={index} className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">{item.name}</p>
+              <div className="flex gap-2">
+                <Input
+                  value={item.link}
+                  readOnly
+                  className="bg-muted/50 text-xs font-mono"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleCopyLink(item.link, index)}
+                  className="shrink-0"
+                >
+                  {copiedIndex === index ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-2">
+          {generatedLinks.length > 1 && (
+            <Button variant="outline" onClick={handleCopyAll}>
+              <Copy className="h-4 w-4 mr-2" />
+              Copiar todos
+            </Button>
+          )}
+          <Button className="flex-1" onClick={handleFinish}>
+            Concluir
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // ─── Channel Selection Step (collaborator mode only) ───
   if (isCollaborator && sendStep === 'channel') {
