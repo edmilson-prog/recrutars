@@ -1,17 +1,23 @@
 {
   "versions": [
     {
-      "version": "1.42.1",
+      "version": "1.42.2",
       "codename": "Sentinel",
       "type": "patch",
-      "releaseDate": "2026-03-19",
-      "description": "Hotfix: seletor de canal de envio na tab Da Equipe do Hub de Testes e edge function send-test-invitation salva localmente.",
+      "releaseDate": "2026-03-20",
+      "description": "Hotfixes do fluxo unificado de teste para colaboradores: seletor de canal, deduplicacao de convites, links copiaveis, verificacao CPF com 4 digitos, e correcao da tela de analise travada.",
       "isCurrent": true,
       "changes": [
         {
           "type": "fixed",
           "items": [
             "Seletor de canal (Link Unico, Email, WhatsApp) adicionado ao envio de convites para colaboradores no Hub de Testes",
+            "Deduplicacao de convites no Hub: badge 'Convite ativo', checkbox desabilitado, toast informativo para duplicatas",
+            "Links copiaveis exibidos apos envio por 'Link Unico' com botao copiar individual e copiar todos",
+            "Verificacao CPF atualizada de 3 para 4 ultimos digitos para maior seguranca",
+            "Mascara de CPF ajustada para exibir menos digitos (***.XXX.***-**)",
+            "Tela 'Analisando seu perfil' nao trava mais no fluxo unificado (onComplete chamado antes do guard UUID)",
+            "Queries Supabase com candidateId invalido (temp, tm-xxx) nao geram mais erro 400 no DevTools",
             "Edge function send-test-invitation salva no repositorio local para controle de versao"
           ]
         }
