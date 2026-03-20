@@ -5,7 +5,9 @@
  * PRD-088 hotfix: Channel selection step for collaborator mode
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -75,6 +77,26 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
 
   const sendInvitations = useSendTestInvitations();
 
+  // Query active invitations for this test to detect duplicates (collaborator mode)
+  const { data: activeInvitations } = useQuery({
+    queryKey: ['active-invitations-for-test', testId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('test_invitations')
+        .select('team_member_id')
+        .eq('test_id', testId)
+        .in('status', ['sent', 'viewed', 'started'])
+        .not('team_member_id', 'is', null);
+      return data ?? [];
+    },
+    enabled: isCollaborator && !!testId,
+  });
+
+  const membersWithActiveInvite = useMemo(
+    () => new Set((activeInvitations ?? []).map(i => i.team_member_id as string)),
+    [activeInvitations],
+  );
+
   const isLoading = isCollaborator ? teamMembersLoading : candidatesLoading;
 
   // Filter team members by department
@@ -103,20 +125,34 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
   const handleConfirmSend = async () => {
     if (selected.size === 0) return;
 
-    if (isCollaborator && teamMembers) {
-      // Collaborator mode: send invitations with teamMemberId + selected channel
-      const selectedMembers = teamMembers.filter(m => selected.has(m.id));
+    try {
+      if (isCollaborator && teamMembers) {
+        // Collaborator mode: filter out members who already have active invitations
+        const selectedMembers = teamMembers.filter(m => selected.has(m.id));
+        const newMembers = selectedMembers.filter(m => !membersWithActiveInvite.has(m.id));
+        const duplicateMembers = selectedMembers.filter(m => membersWithActiveInvite.has(m.id));
 
-      await sendInvitations.mutateAsync({
-        testId,
-        invitations: selectedMembers.map(m => ({
-          teamMemberId: m.id,
-          candidateName: m.name,
-          candidateEmail: m.email,
-          method: selectedChannel,
-        })),
-      });
-    } else if (candidates) {
+        if (duplicateMembers.length > 0) {
+          const names = duplicateMembers.map(m => m.name).slice(0, 3).join(', ');
+          const extra = duplicateMembers.length > 3 ? ` e mais ${duplicateMembers.length - 3}` : '';
+          toast.info(`Convite ja ativo para: ${names}${extra}. Apenas novos convites serao enviados.`);
+        }
+
+        if (newMembers.length === 0) {
+          toast.warning('Todos os colaboradores selecionados ja possuem convite ativo para este teste.');
+          return;
+        }
+
+        await sendInvitations.mutateAsync({
+          testId,
+          invitations: newMembers.map(m => ({
+            teamMemberId: m.id,
+            candidateName: m.name,
+            candidateEmail: m.email,
+            method: selectedChannel,
+          })),
+        });
+      } else if (candidates) {
       // Candidate mode: existing behavior (no channel step)
       const selectedCandidates = candidates.filter(c => selected.has(c.id));
 
@@ -154,6 +190,14 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
 
     setSelected(new Set());
     setSendStep('select');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao enviar convites.';
+      if (msg.includes('unique constraint') || msg.includes('duplicate key')) {
+        toast.error('Alguns colaboradores ja possuem convite ativo para este teste.');
+      } else {
+        toast.error(`Erro ao enviar convites: ${msg}`);
+      }
+    }
   };
 
   // For candidate mode, send directly (no channel step)
@@ -272,15 +316,16 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
           ) : (
             (filteredTeamMembers ?? []).map(member => {
               const statusConfig = GAUGE_STATUS_LABELS[member.gaugeStatus] ?? GAUGE_STATUS_LABELS.unmapped;
+              const hasActiveInvite = membersWithActiveInvite.has(member.id);
               return (
                 <label
                   key={member.id}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
+                  className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer ${hasActiveInvite ? 'opacity-60' : 'hover:bg-muted/50'}`}
                 >
                   <Checkbox
                     checked={selected.has(member.id)}
                     onCheckedChange={() => toggleItem(member.id)}
-                    disabled={sendInvitations.isPending}
+                    disabled={sendInvitations.isPending || hasActiveInvite}
                   />
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="text-xs">
@@ -296,6 +341,11 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
                       {member.archetype && (
                         <Badge variant="outline" className="text-[10px] h-5">
                           {member.archetype}
+                        </Badge>
+                      )}
+                      {hasActiveInvite && (
+                        <Badge variant="secondary" className="text-[10px] h-5 bg-amber-100 text-amber-700">
+                          Convite ativo
                         </Badge>
                       )}
                     </div>
