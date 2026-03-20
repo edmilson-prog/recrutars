@@ -552,6 +552,11 @@ Deno.serve(async (req: Request) => {
         // Include test responses if provided (collaborator unified flow)
         if (result_data.word_step_responses) assessmentRow.word_step_responses = result_data.word_step_responses;
         if (result_data.scenario_responses) assessmentRow.scenario_responses = result_data.scenario_responses;
+        // Part timestamps for duration calculation in Respostas tab
+        if (result_data.part1_started_at) assessmentRow.part1_started_at = result_data.part1_started_at;
+        if (result_data.part1_completed_at) assessmentRow.part1_completed_at = result_data.part1_completed_at;
+        if (result_data.part2_started_at) assessmentRow.part2_started_at = result_data.part2_started_at;
+        if (result_data.part2_completed_at) assessmentRow.part2_completed_at = result_data.part2_completed_at;
 
         // Create assessment row
         const { data: assessmentRows, error: aErr } = await supabase

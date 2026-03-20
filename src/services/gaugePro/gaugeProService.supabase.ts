@@ -258,6 +258,20 @@ export class SupabaseGaugeProService implements IGaugeProService {
     return data ? rowToAssessment(data as Record<string, unknown>) : null;
   }
 
+  async getAssessmentByTeamMember(
+    teamMemberId: string,
+  ): Promise<GaugeProAssessment | null> {
+    const { data, error } = await supabase
+      .from('gauge_pro_assessments')
+      .select('*')
+      .eq('team_member_id', teamMemberId)
+      .order('started_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? rowToAssessment(data as Record<string, unknown>) : null;
+  }
+
   async updateAssessment(
     id: string,
     updates: Partial<GaugeProAssessment>,
@@ -303,6 +317,18 @@ export class SupabaseGaugeProService implements IGaugeProService {
       .from('gauge_pro_results')
       .select('*')
       .eq('candidate_id', candidateId)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? rowToResult(data as Record<string, unknown>) : null;
+  }
+
+  async getResultByTeamMember(teamMemberId: string): Promise<GaugeProResult | null> {
+    const { data, error } = await supabase
+      .from('gauge_pro_results')
+      .select('*')
+      .eq('team_member_id', teamMemberId)
       .order('generated_at', { ascending: false })
       .limit(1)
       .maybeSingle();

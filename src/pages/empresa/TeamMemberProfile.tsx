@@ -20,7 +20,7 @@ import { useTeamMember, useDepartments, usePositions, useUpdateTeamMember, useMe
 import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { useGaugeProSessionByCandidate, useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
+import { useGaugeProSessionByCandidate, useGaugeProResultByCandidate, useGaugeProSessionByTeamMember, useGaugeProResultByTeamMember } from '@/hooks/useGaugeProQuery';
 import type { GaugeProDimension, GaugeProResult, DimensionScores, DimensionClassification } from '@/types/gaugePro';
 import type { TestHistoryEntry } from '@/types/teamManagement';
 import { ARCHETYPE_PROFILES } from '@/data/gaugeProArchetypes';
@@ -42,8 +42,13 @@ export default function TeamMemberProfile() {
     ? positions.find((p) => p.id === member.positionId)
     : undefined;
   const candidateId = member?.importedFromCandidateId ?? '';
+  const teamMemberId = id ?? '';
   const { data: gaugeProAssessment } = useGaugeProSessionByCandidate(candidateId);
   const { data: gaugeProResult } = useGaugeProResultByCandidate(candidateId);
+  // Fallback: fetch by team_member_id when candidateId is empty (unified collaborator flow)
+  const { data: gaugeProAssessmentByTm } = useGaugeProSessionByTeamMember(!candidateId ? teamMemberId : '');
+  const { data: gaugeProResultByTm } = useGaugeProResultByTeamMember(!candidateId ? teamMemberId : '');
+  const effectiveAssessment = gaugeProAssessment ?? gaugeProAssessmentByTm;
 
   const { data: creditBalance } = useCompanyCreditBalance(companyId);
   const queryClient = useQueryClient();
@@ -174,7 +179,7 @@ export default function TeamMemberProfile() {
     : undefined;
 
   // Use selected result when user picks from timeline, otherwise fall back to the hook result
-  const effectiveGaugeProResult = selectedResultId ? selectedGaugeProResult : (gaugeProResult ?? selectedGaugeProResult);
+  const effectiveGaugeProResult = selectedResultId ? selectedGaugeProResult : (gaugeProResult ?? gaugeProResultByTm ?? selectedGaugeProResult);
 
   if (memberLoading) {
     return (
@@ -260,7 +265,7 @@ export default function TeamMemberProfile() {
           selectedTestId={selectedResultId}
           onSelectTest={setSelectedResultId}
           candidateId={candidateId || undefined}
-          gaugeProAssessment={gaugeProAssessment ?? undefined}
+          gaugeProAssessment={effectiveAssessment ?? undefined}
           gaugeProResult={effectiveGaugeProResult ?? undefined}
           testWeights={activeTestWeights}
           onEdit={() => setEditFormOpen(true)}

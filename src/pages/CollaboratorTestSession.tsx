@@ -414,6 +414,11 @@ export default function CollaboratorTestSession() {
               // PRD-089: Include test responses for Respostas tab
               word_step_responses: gaugePro.wordStepResponses,
               scenario_responses: gaugePro.scenarioResponses,
+              // Part timestamps for duration calculation
+              part1_started_at: gaugePro.assessment?.part1StartedAt || null,
+              part1_completed_at: gaugePro.assessment?.part1CompletedAt || null,
+              part2_started_at: gaugePro.assessment?.part2StartedAt || null,
+              part2_completed_at: gaugePro.assessment?.part2CompletedAt || null,
             },
           },
         });

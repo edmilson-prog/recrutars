@@ -43,6 +43,9 @@ export interface IGaugeProService {
   /** Get the latest assessment for a candidate */
   getAssessmentByCandidate(candidateId: string): Promise<GaugeProAssessment | null>;
 
+  /** Get the latest assessment for a team member (unified collaborator flow) */
+  getAssessmentByTeamMember(teamMemberId: string): Promise<GaugeProAssessment | null>;
+
   /** Persist intermediate assessment state (step progress, responses) */
   updateAssessment(
     id: string,
@@ -59,6 +62,9 @@ export interface IGaugeProService {
 
   /** Get the latest result for a candidate */
   getResultByCandidate(candidateId: string): Promise<GaugeProResult | null>;
+
+  /** Get the latest result for a team member (unified collaborator flow) */
+  getResultByTeamMember(teamMemberId: string): Promise<GaugeProResult | null>;
 
   /** Get all results (RLS-filtered) */
   getAllResults(): Promise<GaugeProResult[]>;
