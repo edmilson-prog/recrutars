@@ -48,9 +48,11 @@ interface AiAnalysisRow {
   updated_at: string;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function analysisToRow(a: AIAnalysis, teamMemberId?: string): Record<string, unknown> {
   return {
-    candidate_id: a.candidateId || null,
+    candidate_id: (a.candidateId && UUID_RE.test(a.candidateId)) ? a.candidateId : null,
     team_member_id: teamMemberId ?? null,
     test_result_id: a.testResultId,
     analysis_type: a.analysisType,

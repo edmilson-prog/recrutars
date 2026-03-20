@@ -70,14 +70,20 @@ export async function loadAgentSettingsAsync(): Promise<AIAgentSettings> {
     const { data: llm } = await supabase.rpc('get_llm_config');
 
     // Load analysis mode toggles + custom prompts (admin-only via SettingsService)
-    // These may return null for non-admin users — that's OK, defaults apply
-    const { SettingsServiceSupabase } = await import(
-      '@/services/settings/settingsService.supabase'
-    );
-    const service = new SettingsServiceSupabase();
-    const aiValues = await service.getSettingsRaw('admin', 'ai');
-    const agent = aiValues?.analysisAgent as Record<string, unknown> | undefined;
-    const promptSettings = aiValues?.prompts as Record<string, unknown> | undefined;
+    // These may return null/error for non-admin or unauthenticated users — defaults apply
+    let agent: Record<string, unknown> | undefined;
+    let promptSettings: Record<string, unknown> | undefined;
+    try {
+      const { SettingsServiceSupabase } = await import(
+        '@/services/settings/settingsService.supabase'
+      );
+      const service = new SettingsServiceSupabase();
+      const aiValues = await service.getSettingsRaw('admin', 'ai');
+      agent = aiValues?.analysisAgent as Record<string, unknown> | undefined;
+      promptSettings = aiValues?.prompts as Record<string, unknown> | undefined;
+    } catch {
+      // RLS blocks system_settings for unauthenticated users (collaborator flow) — use defaults
+    }
 
     if (llm && (llm.anthropicApiKey || llm.openaiApiKey || llm.openrouterApiKey)) {
       const provider = (llm.defaultProvider as LLMProvider) || 'anthropic';
