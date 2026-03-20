@@ -378,6 +378,11 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
             Confirmar Envio
           </Button>
         </div>
+        <InsufficientCreditsModal
+          open={insufficientCreditsOpen}
+          onOpenChange={setInsufficientCreditsOpen}
+          balance={creditBalance}
+        />
       </div>
     );
   }
