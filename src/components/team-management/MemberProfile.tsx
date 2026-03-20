@@ -308,17 +308,6 @@ function AllAnalysesAccordion({
                       </div>
                     </div>
                   )}
-                  {item.technical && item.technical.status !== 'error' && (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                        <ShieldCheck className="h-3 w-3" />
-                        Análise Técnica
-                      </div>
-                      <div className="max-w-none max-h-[520px] overflow-y-auto pr-3 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
-                        {renderAnalysisContent(item.technical.content)}
-                      </div>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-6 text-center">
