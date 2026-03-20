@@ -671,14 +671,14 @@ export function MemberProfile({
 
           {/* Tab 2: Competências */}
           <TabsContent value="competencias" className="space-y-6">
+            {fitScore !== undefined && fitClassification && (
+              <FitScoreDisplay score={fitScore} classification={fitClassification} />
+            )}
             <EmotionalFactorsCard scores={scores} />
             <div className="grid gap-6 lg:grid-cols-2">
               <CompetencyRadarChart scores={scores} />
               <RiskScoreCard scores={scores} fitScore={fitScore} />
             </div>
-            {fitScore !== undefined && fitClassification && (
-              <FitScoreDisplay score={fitScore} classification={fitClassification} />
-            )}
           </TabsContent>
 
           {/* Tab 3: Arquétipo */}
