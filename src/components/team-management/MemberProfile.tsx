@@ -55,7 +55,7 @@ import { AIRecommendationsTab } from '@/components/corporate-tests/AIRecommendat
 import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { loadAllAnalysesFromSupabase, loadAllAnalysesByResultIds, saveAnalysisResult } from '@/lib/aiAgent/storageService';
+import { loadAllAnalysesFromSupabase, loadAllAnalysesByResultIds, loadAllAnalysesByTeamMember, saveAnalysisResult } from '@/lib/aiAgent/storageService';
 import { useToast } from '@/hooks/use-toast';
 import { renderAnalysisContent } from '@/lib/renderAnalysisContent';
 import { ARCHETYPE_PROFILES } from '@/data/gaugeProArchetypes';
@@ -139,9 +139,10 @@ function AllAnalysesAccordion({
     queryKey: ['ai-analyses-all', candidateId ?? memberId, testResultIds],
     queryFn: () => {
       if (candidateId) return loadAllAnalysesFromSupabase(candidateId);
+      if (memberId) return loadAllAnalysesByTeamMember(memberId);
       return loadAllAnalysesByResultIds(testResultIds);
     },
-    enabled: !!candidateId || testResultIds.length > 0,
+    enabled: !!candidateId || !!memberId || testResultIds.length > 0,
   });
 
   const handleGenerateAnalysis = useCallback(async (testResultId: string) => {

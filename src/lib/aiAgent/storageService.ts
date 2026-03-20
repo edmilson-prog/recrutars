@@ -157,6 +157,20 @@ export async function loadAllAnalysesFromSupabase(
   return groupAnalysisRows(data as AiAnalysisRow[], candidateId);
 }
 
+/** Load all AI analyses for a team member by team_member_id */
+export async function loadAllAnalysesByTeamMember(
+  teamMemberId: string,
+): Promise<AIAnalysisResult[]> {
+  const { data, error } = await supabase
+    .from('ai_analyses')
+    .select('*')
+    .eq('team_member_id', teamMemberId)
+    .order('created_at', { ascending: false });
+
+  if (error || !data || data.length === 0) return [];
+  return groupAnalysisRows(data as AiAnalysisRow[]);
+}
+
 /** Load all AI analyses for a team member (by test_result_ids from their gauge_pro_results) */
 export async function loadAllAnalysesByResultIds(
   testResultIds: string[],
