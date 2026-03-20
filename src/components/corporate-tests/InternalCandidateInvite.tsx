@@ -22,7 +22,9 @@ import {
   useCompanyCandidates,
   useCompanyTeamMembersForInvite,
   useSendTestInvitations,
+  InsufficientCreditsError,
 } from '@/hooks/useCompanyTestsQuery';
+import { InsufficientCreditsModal } from '@/components/billing/InsufficientCreditsModal';
 import { useDepartments } from '@/hooks/useTeamsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -64,6 +66,8 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [sendStep, setSendStep] = useState<SendStep>('select');
+  const [insufficientCreditsOpen, setInsufficientCreditsOpen] = useState(false);
+  const [creditBalance, setCreditBalance] = useState(0);
   const [selectedChannel, setSelectedChannel] = useState<InvitationMethod>('public_link');
   const [generatedLinks, setGeneratedLinks] = useState<GeneratedLink[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -210,6 +214,11 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
     setSelected(new Set());
     setSendStep('select');
     } catch (err) {
+      if (err instanceof InsufficientCreditsError) {
+        setCreditBalance(err.available);
+        setInsufficientCreditsOpen(true);
+        return;
+      }
       const msg = err instanceof Error ? err.message : 'Erro ao enviar convites.';
       if (msg.includes('unique constraint') || msg.includes('duplicate key')) {
         toast.error('Alguns colaboradores ja possuem convite ativo para este teste.');
@@ -502,6 +511,11 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
           Convidar {selected.size > 0 ? `${selected.size} selecionado${selected.size > 1 ? 's' : ''}` : ''}
         </Button>
       )}
+      <InsufficientCreditsModal
+        open={insufficientCreditsOpen}
+        onOpenChange={setInsufficientCreditsOpen}
+        balance={creditBalance}
+      />
     </div>
   );
 }

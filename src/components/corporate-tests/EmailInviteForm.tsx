@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { X, Send, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useSendTestInvitations } from '@/hooks/useCompanyTestsQuery';
+import { useSendTestInvitations, InsufficientCreditsError } from '@/hooks/useCompanyTestsQuery';
+import { InsufficientCreditsModal } from '@/components/billing/InsufficientCreditsModal';
 
 interface EmailInviteFormProps {
   testId: string;
@@ -21,6 +22,8 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
   const { toast } = useToast();
   const [emailInput, setEmailInput] = useState('');
   const [emails, setEmails] = useState<string[]>([]);
+  const [insufficientCreditsOpen, setInsufficientCreditsOpen] = useState(false);
+  const [creditBalance, setCreditBalance] = useState(0);
   const sendInvitations = useSendTestInvitations();
 
   const addEmail = () => {
@@ -56,16 +59,22 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
       return;
     }
 
-    await sendInvitations.mutateAsync({
-      testId,
-      invitations: emails.map(email => ({
-        candidateName: email.split('@')[0],
-        candidateEmail: email,
-        method: 'email' as const,
-      })),
-    });
-
-    setEmails([]);
+    try {
+      await sendInvitations.mutateAsync({
+        testId,
+        invitations: emails.map(email => ({
+          candidateName: email.split('@')[0],
+          candidateEmail: email,
+          method: 'email' as const,
+        })),
+      });
+      setEmails([]);
+    } catch (err) {
+      if (err instanceof InsufficientCreditsError) {
+        setCreditBalance(err.available);
+        setInsufficientCreditsOpen(true);
+      }
+    }
   };
 
   return (
@@ -111,6 +120,11 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
         )}
         Enviar {emails.length > 0 ? `${emails.length} convite${emails.length > 1 ? 's' : ''}` : 'convites'}
       </Button>
+      <InsufficientCreditsModal
+        open={insufficientCreditsOpen}
+        onOpenChange={setInsufficientCreditsOpen}
+        balance={creditBalance}
+      />
     </div>
   );
 }

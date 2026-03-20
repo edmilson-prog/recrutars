@@ -231,6 +231,18 @@ export function useUpdateCompanyTest() {
   });
 }
 
+/** Custom error for insufficient credits — callers can check `error.insufficientCredits` */
+export class InsufficientCreditsError extends Error {
+  insufficientCredits = true;
+  available: number;
+  required: number;
+  constructor(available: number, required: number) {
+    super(`Creditos insuficientes. Disponivel: ${available}, Necessario: ${required}`);
+    this.available = available;
+    this.required = required;
+  }
+}
+
 export function useSendTestInvitations() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -241,6 +253,9 @@ export function useSendTestInvitations() {
         body: { action: 'send_invitations', test_id: testId, invitations },
       });
       if (error) throw error;
+      if (data?.insufficientCredits) {
+        throw new InsufficientCreditsError(data.available ?? 0, data.required ?? invitations.length);
+      }
       if (data?.error) throw new Error(data.error);
       return data.invitations as TestInvitation[];
     },
@@ -251,7 +266,9 @@ export function useSendTestInvitations() {
         description: `${invitations.length} convite${invitations.length > 1 ? 's' : ''} enviado${invitations.length > 1 ? 's' : ''} com sucesso.`,
       });
     },
-    onError: () => {
+    onError: (error) => {
+      // Don't show generic toast for insufficient credits — caller handles with modal
+      if (error instanceof InsufficientCreditsError) return;
       toast({ title: 'Erro ao enviar convites', variant: 'destructive' });
     },
   });
