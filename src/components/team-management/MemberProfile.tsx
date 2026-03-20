@@ -389,7 +389,7 @@ export function MemberProfile({
 
   // Build CompanyTestResult-like object for AIRecommendationsTab
   const aiResult: CompanyTestResult | undefined =
-    scores && archetypeProfile && candidateId
+    scores && archetypeProfile
       ? {
           id: gaugeProResult?.id ?? '',
           testId: '',
