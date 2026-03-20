@@ -117,6 +117,11 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
         </div>
       )}
 
+      {emails.length > 0 && (
+        <p className={`text-xs text-center ${(companyCredits ?? 0) < emails.length ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
+          Custo: {emails.length} {emails.length === 1 ? 'crédito' : 'créditos'} | Saldo: {companyCredits ?? 0}
+        </p>
+      )}
       <Button onClick={handleSend} disabled={emails.length === 0 || sendInvitations.isPending}>
         {sendInvitations.isPending ? (
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />

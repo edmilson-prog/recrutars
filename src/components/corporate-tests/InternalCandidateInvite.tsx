@@ -29,6 +29,7 @@ import { useDepartments } from '@/hooks/useTeamsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
 import { supabase } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 import type { TargetAudience, InvitationMethod } from '@/types/companyTest';
 
 interface InternalCandidateInviteProps {
@@ -362,6 +363,16 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
             })}
           </RadioGroup>
         </div>
+
+        {/* Cost preview */}
+        {selected.size > 0 && (
+          <p className={cn(
+            'text-xs text-center',
+            (companyCredits ?? 0) < selected.size ? 'text-red-500 font-medium' : 'text-muted-foreground',
+          )}>
+            Custo: {selected.size} {selected.size === 1 ? 'crédito' : 'créditos'} | Saldo: {companyCredits ?? 0}
+          </p>
+        )}
 
         {/* Actions */}
         <div className="flex gap-2">
