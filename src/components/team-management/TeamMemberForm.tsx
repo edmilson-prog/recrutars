@@ -78,9 +78,9 @@ export default function TeamMemberForm({
     if (open) {
       if (member) {
         setName(member.name ?? "");
-        setCpf(member.cpf ?? "");
+        setCpf(maskCpf(member.cpf ?? ""));
         setEmail(member.email ?? "");
-        setPhone(member.phone ?? "");
+        setPhone(maskPhone(member.phone ?? ""));
         setDepartmentId(member.departmentId ?? "");
         setPositionId(member.positionId ?? "");
         setHireDate(member.hireDate ?? "");
