@@ -174,7 +174,9 @@ export default function TeamManagement() {
         await createMember.mutateAsync({
           companyId,
           name: data.name || '',
+          cpf: data.cpf || undefined,
           email: data.email || '',
+          phone: data.phone || undefined,
           departmentId: data.departmentId || '',
           positionId: data.positionId || '',
           hireDate: data.hireDate || new Date().toISOString().split('T')[0],
