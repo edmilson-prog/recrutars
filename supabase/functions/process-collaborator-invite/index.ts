@@ -541,7 +541,7 @@ Deno.serve(async (req: Request) => {
         const now = new Date().toISOString();
         const genAt = result_data.generated_at || now;
 
-        // Build assessment row with appropriate owner
+        // Build assessment row with appropriate owner + responses
         const assessmentRow: Record<string, unknown> = {
           phase: 'completed',
           started_at: genAt,
@@ -549,6 +549,9 @@ Deno.serve(async (req: Request) => {
         };
         if (result_data.candidate_id) assessmentRow.candidate_id = result_data.candidate_id;
         if (team_member_id) assessmentRow.team_member_id = team_member_id;
+        // Include test responses if provided (collaborator unified flow)
+        if (result_data.word_step_responses) assessmentRow.word_step_responses = result_data.word_step_responses;
+        if (result_data.scenario_responses) assessmentRow.scenario_responses = result_data.scenario_responses;
 
         // Create assessment row
         const { data: assessmentRows, error: aErr } = await supabase

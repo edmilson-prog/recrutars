@@ -411,6 +411,9 @@ export default function CollaboratorTestSession() {
               xp_awarded: gaugeResult.xpAwarded,
               badge_awarded: gaugeResult.badgeAwarded,
               generated_at: gaugeResult.generatedAt,
+              // PRD-089: Include test responses for Respostas tab
+              word_step_responses: gaugePro.wordStepResponses,
+              scenario_responses: gaugePro.scenarioResponses,
             },
           },
         });
