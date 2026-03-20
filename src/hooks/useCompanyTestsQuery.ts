@@ -12,6 +12,9 @@ import type {
   CompanyTestResult,
   AuditLog,
   CreateInvitationInput,
+  EnhancedAuditLogFilters,
+  TestMetrics,
+  PeriodFilter,
 } from '@/types/companyTest';
 import { useToast } from '@/hooks/use-toast';
 
@@ -39,6 +42,10 @@ export const companyTestKeys = {
   auditLogs: (companyId: string, filters?: AuditLogFilters) =>
     [...companyTestKeys.all, 'auditLogs', companyId, filters ?? {}] as const,
   bySlug: (slug: string) => [...companyTestKeys.all, 'bySlug', slug] as const,
+  testMetrics: (companyId: string, period?: PeriodFilter) =>
+    [...companyTestKeys.all, 'testMetrics', companyId, period ?? 'all'] as const,
+  auditLogsPaginated: (companyId: string, filters?: EnhancedAuditLogFilters) =>
+    [...companyTestKeys.all, 'auditLogsPaginated', companyId, filters ?? {}] as const,
 };
 
 // ============================================================
@@ -348,5 +355,53 @@ export function useAddTestAuditLog() {
         queryClient.invalidateQueries({ queryKey: companyTestKeys.auditLogs(companyId) });
       }
     },
+  });
+}
+
+// ============================================================
+// PRD-089: Enhanced Metrics, Abandonment Detection, Paginated Audit
+// ============================================================
+
+function getPeriodDates(period?: PeriodFilter): { from?: string; to?: string } {
+  if (!period || period === 'all' || period === 'custom') return {};
+  const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+  const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  return { from };
+}
+
+export function useTestMetrics(companyId: string | undefined, period?: PeriodFilter) {
+  return useQuery<TestMetrics>({
+    queryKey: companyTestKeys.testMetrics(companyId ?? '', period),
+    queryFn: async () => {
+      const service = await getCompanyTestsService();
+      const { from, to } = getPeriodDates(period);
+      return service.getTestMetrics(companyId!, from, to);
+    },
+    enabled: !!companyId,
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+  });
+}
+
+export function useDetectAbandonment(companyId: string | undefined) {
+  return useQuery<number>({
+    queryKey: [...companyTestKeys.all, 'detectAbandonment', companyId ?? ''],
+    queryFn: async () => {
+      const service = await getCompanyTestsService();
+      return service.detectAbandonment(companyId!);
+    },
+    enabled: !!companyId,
+    staleTime: 10 * 60 * 1000, // 10 minutes — only runs once per Hub visit
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useAuditLogsPaginated(companyId: string | undefined, filters?: EnhancedAuditLogFilters) {
+  return useQuery<{ logs: AuditLog[]; total: number }>({
+    queryKey: companyTestKeys.auditLogsPaginated(companyId ?? '', filters),
+    queryFn: async () => {
+      const service = await getCompanyTestsService();
+      return service.getAuditLogsPaginated(companyId!, filters);
+    },
+    enabled: !!companyId,
   });
 }

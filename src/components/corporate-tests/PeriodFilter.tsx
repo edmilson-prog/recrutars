@@ -21,7 +21,7 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
         <SelectItem value="7d">Últimos 7 dias</SelectItem>
         <SelectItem value="30d">Últimos 30 dias</SelectItem>
         <SelectItem value="90d">Últimos 90 dias</SelectItem>
-        <SelectItem value="custom">Todo o período</SelectItem>
+        <SelectItem value="all">Todos</SelectItem>
       </SelectContent>
     </Select>
   );

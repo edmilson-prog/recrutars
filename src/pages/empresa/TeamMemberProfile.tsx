@@ -9,12 +9,14 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { motion } from 'framer-motion';
 import { pageTransition } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Send, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Send, Loader2, CalendarClock } from 'lucide-react';
 import { MemberProfile } from '@/components/team-management/MemberProfile';
 import SendTestModal from '@/components/team-management/SendTestModal';
 import TeamMemberForm from '@/components/team-management/TeamMemberForm';
+import { RetestScheduleModal } from '@/components/team-management/RetestScheduleModal';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTeamMember, useDepartments, usePositions, useUpdateTeamMember } from '@/hooks/useTeamsQuery';
+import { useTeamMember, useDepartments, usePositions, useUpdateTeamMember, useMemberRetestSchedule } from '@/hooks/useTeamsQuery';
 import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -47,7 +49,14 @@ export default function TeamMemberProfile() {
   const queryClient = useQueryClient();
   const [sendTestOpen, setSendTestOpen] = useState(false);
   const [editFormOpen, setEditFormOpen] = useState(false);
+  const [retestOpen, setRetestOpen] = useState(false);
   const updateMember = useUpdateTeamMember();
+
+  // PRD-089: Retest schedule
+  const { data: retestSchedule } = useMemberRetestSchedule(id);
+  const isRetestPending = retestSchedule?.nextDate
+    ? new Date(retestSchedule.nextDate) <= new Date()
+    : false;
 
   // Get active company test for behavioral assessments
   const { data: companyTests = [] } = useQuery({
@@ -219,7 +228,15 @@ export default function TeamMemberProfile() {
             </Button>
           </Link>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">Perfil do Colaborador</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold">Perfil do Colaborador</h1>
+              {isRetestPending && (
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-800">
+                  <CalendarClock className="h-3 w-3 mr-1" />
+                  Reteste pendente
+                </Badge>
+              )}
+            </div>
             <p className="text-muted-foreground">
               Visualize o perfil comportamental completo de {member.name}
             </p>
@@ -247,9 +264,7 @@ export default function TeamMemberProfile() {
           gaugeProResult={effectiveGaugeProResult ?? undefined}
           testWeights={activeTestWeights}
           onEdit={() => setEditFormOpen(true)}
-          onScheduleRetest={() => {
-            // Placeholder: open retest scheduling
-          }}
+          onScheduleRetest={() => setRetestOpen(true)}
           onViewDevelopment={() => navigate(`/empresa/equipes/desenvolvimento/${id}`)}
           onViewEvolution={() => navigate(`/empresa/equipes/evolucao/${id}`)}
         />
@@ -265,6 +280,16 @@ export default function TeamMemberProfile() {
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ['team-member-test-history'] });
             }}
+          />
+        )}
+
+        {member && (
+          <RetestScheduleModal
+            open={retestOpen}
+            onOpenChange={setRetestOpen}
+            memberId={member.id}
+            memberName={member.name}
+            existingSchedule={retestSchedule}
           />
         )}
 

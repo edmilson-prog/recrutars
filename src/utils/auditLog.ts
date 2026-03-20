@@ -15,17 +15,30 @@ export function getActionLabel(action: AuditAction): string {
     invite_sent: 'Convite enviado',
     invite_resent: 'Convite reenviado',
     invite_cancelled: 'Convite cancelado',
-    link_generated: 'Link público gerado',
-    link_deactivated: 'Link público desativado',
+    invite_viewed: 'Convite visualizado',
+    cpf_verified: 'CPF verificado',
+    cpf_failed: 'CPF falhou',
+    test_started: 'Teste iniciado',
+    test_completed: 'Teste concluido',
+    test_abandoned: 'Teste abandonado',
+    result_generated: 'Resultado gerado',
+    ai_analysis_generated: 'Analise IA gerada',
+    ai_analysis_regenerated: 'Analise IA regenerada',
+    credit_consumed: 'Credito consumido',
+    credit_refunded: 'Credito estornado',
+    retest_scheduled: 'Reteste agendado',
+    retest_triggered: 'Reteste disparado',
+    link_generated: 'Link publico gerado',
+    link_deactivated: 'Link publico desativado',
     result_viewed: 'Resultado visualizado',
     result_compared: 'Resultados comparados',
-    shortlist_added: 'Adicionado à shortlist',
+    shortlist_added: 'Adicionado a shortlist',
     shortlist_removed: 'Removido da shortlist',
     pdf_downloaded: 'PDF baixado',
     excel_downloaded: 'Excel baixado',
-    lgpd_report_generated: 'Relatório LGPD gerado',
+    lgpd_report_generated: 'Relatorio LGPD gerado',
   };
-  return labels[action];
+  return labels[action] ?? action;
 }
 
 export function getActionIcon(action: AuditAction): string {
@@ -38,6 +51,19 @@ export function getActionIcon(action: AuditAction): string {
     invite_sent: 'Send',
     invite_resent: 'RefreshCw',
     invite_cancelled: 'XCircle',
+    invite_viewed: 'Eye',
+    cpf_verified: 'ShieldCheck',
+    cpf_failed: 'ShieldX',
+    test_started: 'PlayCircle',
+    test_completed: 'CheckCircle',
+    test_abandoned: 'Clock',
+    result_generated: 'BarChart3',
+    ai_analysis_generated: 'Brain',
+    ai_analysis_regenerated: 'RotateCcw',
+    credit_consumed: 'CreditCard',
+    credit_refunded: 'Undo2',
+    retest_scheduled: 'CalendarClock',
+    retest_triggered: 'CalendarCheck',
     link_generated: 'Link',
     link_deactivated: 'Unlink',
     result_viewed: 'Eye',
@@ -48,5 +74,24 @@ export function getActionIcon(action: AuditAction): string {
     excel_downloaded: 'FileSpreadsheet',
     lgpd_report_generated: 'Shield',
   };
-  return icons[action];
+  return icons[action] ?? 'Activity';
+}
+
+export function getActionColor(action: AuditAction): string {
+  const colors: Partial<Record<AuditAction, string>> = {
+    invite_sent: 'text-blue-600',
+    invite_resent: 'text-blue-500',
+    invite_cancelled: 'text-red-500',
+    invite_viewed: 'text-cyan-600',
+    cpf_verified: 'text-green-600',
+    cpf_failed: 'text-red-600',
+    test_started: 'text-amber-600',
+    test_completed: 'text-green-600',
+    test_abandoned: 'text-orange-500',
+    credit_consumed: 'text-purple-600',
+    credit_refunded: 'text-emerald-600',
+    retest_scheduled: 'text-indigo-600',
+    retest_triggered: 'text-indigo-500',
+  };
+  return colors[action] ?? 'text-gray-600';
 }

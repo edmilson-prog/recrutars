@@ -8,6 +8,9 @@
  *   - identify: Identify/create user for public link invitations (legacy)
  *   - mark_started: Mark invitation as started
  *   - mark_completed: Mark invitation and team_member as completed
+ *
+ * PRD-089: Added audit logging, viewed_at tracking, chain linking,
+ *          in-app notifications, and WhatsApp opt-in notifications.
  */
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -23,6 +26,36 @@ function json(data: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
+}
+
+/** Fire-and-forget audit log. Never blocks the main flow (RNF-002). */
+async function auditLog(
+  supabase: ReturnType<typeof createClient>,
+  params: {
+    action: string;
+    userId?: string | null;
+    userName?: string | null;
+    resourceType: string;
+    resourceId: string;
+    resourceName?: string | null;
+    details?: string | null;
+    companyId: string;
+  }
+): Promise<void> {
+  try {
+    await supabase.from('test_audit_logs').insert({
+      action: params.action,
+      user_id: params.userId ?? '00000000-0000-0000-0000-000000000000',
+      user_name: params.userName ?? 'Sistema',
+      resource_type: params.resourceType,
+      resource_id: params.resourceId,
+      resource_name: params.resourceName ?? null,
+      details: params.details ?? null,
+      company_id: params.companyId,
+    });
+  } catch (err) {
+    console.error('[auditLog] Failed (non-blocking):', err);
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -77,6 +110,24 @@ Deno.serve(async (req: Request) => {
           .eq('id', test.company_id)
           .maybeSingle();
         companyName = company?.name || '';
+      }
+
+      // PRD-089: Track first view — set viewed_at + status if first access (RF-001)
+      if (test?.company_id && inv.status === 'sent' && !inv.viewed_at) {
+        await supabase
+          .from('test_invitations')
+          .update({ viewed_at: new Date().toISOString(), status: 'viewed' })
+          .eq('id', inv.id)
+          .eq('status', 'sent'); // Idempotent: only if still 'sent'
+
+        auditLog(supabase, {
+          action: 'invite_viewed',
+          resourceType: 'invitation',
+          resourceId: inv.id,
+          resourceName: inv.candidate_name,
+          details: `Primeiro acesso ao link - Teste: ${test.name}`,
+          companyId: test.company_id,
+        });
       }
 
       // Fetch departments for this company
@@ -151,7 +202,30 @@ Deno.serve(async (req: Request) => {
         : cpfDigits.slice(8, 11); // last 3 digits (legacy)
 
       if (cpfInput !== expectedDigits) {
+        // PRD-089: Audit CPF failure (RNF-004: never log actual CPF digits)
+        if (tm.company_id) {
+          auditLog(supabase, {
+            action: 'cpf_failed',
+            resourceType: 'team_member',
+            resourceId: team_member_id,
+            resourceName: tm.name,
+            details: 'CPF nao confere',
+            companyId: tm.company_id,
+          });
+        }
         return json({ error: 'CPF nao confere. Verifique os digitos informados.', valid: false });
+      }
+
+      // PRD-089: Audit CPF success (RNF-004: never log actual CPF digits)
+      if (tm.company_id) {
+        auditLog(supabase, {
+          action: 'cpf_verified',
+          resourceType: 'team_member',
+          resourceId: team_member_id,
+          resourceName: tm.name,
+          details: 'CPF verificado com sucesso',
+          companyId: tm.company_id,
+        });
       }
 
       // Check if this is a collaborator-audience test (unified flow — no shadow candidate)
@@ -395,6 +469,36 @@ Deno.serve(async (req: Request) => {
         .eq('id', invitation_id)
         .in('status', ['sent', 'viewed']);
 
+      // PRD-089: Audit test_started
+      try {
+        const { data: startedInv } = await supabase
+          .from('test_invitations')
+          .select('candidate_name, test_id')
+          .eq('id', invitation_id)
+          .maybeSingle();
+
+        if (startedInv) {
+          const { data: testData } = await supabase
+            .from('company_tests')
+            .select('company_id, name')
+            .eq('id', startedInv.test_id)
+            .maybeSingle();
+
+          if (testData) {
+            auditLog(supabase, {
+              action: 'test_started',
+              resourceType: 'assessment',
+              resourceId: invitation_id,
+              resourceName: startedInv.candidate_name,
+              details: `Teste: ${testData.name}`,
+              companyId: testData.company_id,
+            });
+          }
+        }
+      } catch (auditErr) {
+        console.error('[mark_started] audit error (non-blocking):', auditErr);
+      }
+
       return json({ success: true });
     }
 
@@ -431,6 +535,7 @@ Deno.serve(async (req: Request) => {
 
       // Persist assessment + result via service role (bypasses RLS)
       // Supports both: candidate_id (legacy) and team_member_id (unified flow PRD-088)
+      let finalAssessmentId: string | null = null;
       const hasOwner = result_data && result_data.final_scores && (result_data.candidate_id || team_member_id);
       if (hasOwner) {
         const now = new Date().toISOString();
@@ -451,13 +556,14 @@ Deno.serve(async (req: Request) => {
           .insert(assessmentRow)
           .select('id');
 
-        const assessmentId = assessmentRows?.[0]?.id;
-        console.log('[mark_completed] assessment insert:', { assessmentId, candidateId: result_data.candidate_id, teamMemberId: team_member_id, error: aErr?.message });
+        finalAssessmentId = assessmentRows?.[0]?.id ?? null;
+        console.log('[mark_completed] assessment insert:', { assessmentId: finalAssessmentId, candidateId: result_data.candidate_id, teamMemberId: team_member_id, error: aErr?.message });
 
-        if (assessmentId) {
+        if (finalAssessmentId) {
           // Build result row with appropriate owner
           const resultRow: Record<string, unknown> = {
-            assessment_id: assessmentId,
+            assessment_id: finalAssessmentId,
+            invitation_id, // PRD-089: chain linking (RF-005)
             final_scores: result_data.final_scores,
             part1_scores: result_data.part1_scores || null,
             part2_scores: result_data.part2_scores || null,
@@ -477,23 +583,140 @@ Deno.serve(async (req: Request) => {
           const { error: rErr } = await supabase
             .from('gauge_pro_results')
             .insert(resultRow);
-          console.log('[mark_completed] result insert:', { assessmentId, error: rErr?.message });
+          console.log('[mark_completed] result insert:', { assessmentId: finalAssessmentId, error: rErr?.message });
 
           // Link assessment back to the invitation for full traceability
           const { error: linkErr } = await supabase
             .from('test_invitations')
-            .update({ assessment_id: assessmentId })
+            .update({ assessment_id: finalAssessmentId })
             .eq('id', invitation_id);
 
           if (linkErr) {
             console.error('[mark_completed] failed to link assessment_id:', linkErr.message);
           } else {
-            console.log('[mark_completed] linked assessment_id to invitation:', { invitation_id, assessmentId });
+            console.log('[mark_completed] linked assessment_id to invitation:', { invitation_id, assessmentId: finalAssessmentId });
           }
         }
       }
 
-      return json({ success: true, assessmentId: assessmentRows?.[0]?.id ?? null });
+      // PRD-089: Audit, notifications, WhatsApp (all fire-and-forget)
+      try {
+        const { data: completedInv } = await supabase
+          .from('test_invitations')
+          .select('candidate_name, test_id')
+          .eq('id', invitation_id)
+          .maybeSingle();
+
+        if (completedInv) {
+          const { data: testInfo } = await supabase
+            .from('company_tests')
+            .select('company_id, name')
+            .eq('id', completedInv.test_id)
+            .maybeSingle();
+
+          if (testInfo) {
+            const archetypeName = archetype || result_data?.archetype_id || 'N/A';
+            const memberName = completedInv.candidate_name;
+
+            // Audit: test_completed (RF-017)
+            auditLog(supabase, {
+              action: 'test_completed',
+              resourceType: 'assessment',
+              resourceId: finalAssessmentId || invitation_id,
+              resourceName: memberName,
+              details: `Teste: ${testInfo.name}, Arquetipo: ${archetypeName}`,
+              companyId: testInfo.company_id,
+            });
+
+            // In-app notification for company admins (RF-022)
+            try {
+              const { data: companyAdmins } = await supabase
+                .from('company_users')
+                .select('profile_id')
+                .eq('company_id', testInfo.company_id)
+                .eq('role', 'admin');
+
+              const { data: companyOwner } = await supabase
+                .from('companies')
+                .select('profile_id')
+                .eq('id', testInfo.company_id)
+                .maybeSingle();
+
+              const adminIds = new Set<string>();
+              (companyAdmins ?? []).forEach(a => adminIds.add(a.profile_id));
+              if (companyOwner?.profile_id) adminIds.add(companyOwner.profile_id);
+
+              const memberId = team_member_id || '';
+              for (const adminId of adminIds) {
+                await supabase.from('notifications').insert({
+                  user_id: adminId,
+                  type: 'test_request',
+                  title: `${memberName} concluiu o teste`,
+                  description: `${memberName} concluiu ${testInfo.name} — Arquetipo: ${archetypeName}`,
+                  action_url: memberId ? `/empresa/equipes/membro/${memberId}` : '/empresa/testes',
+                  metadata: { teamMemberId: memberId, testName: testInfo.name, archetype: archetypeName, event: 'test_completed' },
+                  read: false,
+                });
+              }
+              console.log('[mark_completed] notifications sent to', adminIds.size, 'admins');
+            } catch (notifErr) {
+              console.error('[mark_completed] notification error (non-blocking):', notifErr);
+            }
+
+            // WhatsApp notification — opt-in (RF-023)
+            try {
+              const { data: settings } = await supabase
+                .from('system_settings')
+                .select('values')
+                .eq('panel', 'admin')
+                .eq('category', 'integrations')
+                .is('entity_id', null)
+                .maybeSingle();
+
+              const evolution = (settings?.values as Record<string, unknown>)?.evolution as Record<string, unknown> | undefined;
+              const whatsappEnabled = evolution?.evolutionEnabled === true;
+              const instanceName = evolution?.evolutionInstance as string | undefined;
+              const apiUrl = evolution?.evolutionApiUrl as string | undefined;
+              const apiKey = evolution?.evolutionApiKey as string | undefined;
+
+              if (whatsappEnabled && instanceName && apiUrl && apiKey) {
+                const { data: companyOwnerProfile } = await supabase
+                  .from('companies')
+                  .select('profile_id')
+                  .eq('id', testInfo.company_id)
+                  .maybeSingle();
+
+                if (companyOwnerProfile?.profile_id) {
+                  const { data: ownerProfile } = await supabase
+                    .from('profiles')
+                    .select('phone')
+                    .eq('id', companyOwnerProfile.profile_id)
+                    .maybeSingle();
+
+                  if (ownerProfile?.phone) {
+                    const phone = ownerProfile.phone.replace(/\D/g, '');
+                    const normalizedPhone = phone.length <= 11 ? `55${phone}` : phone;
+                    const text = `[RecrutaRS] ${memberName} concluiu o teste "${testInfo.name}" — Arquetipo: ${archetypeName}. Acesse a plataforma para ver o resultado completo.`;
+
+                    await fetch(`${apiUrl}/message/sendText/${instanceName}`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', apikey: apiKey },
+                      body: JSON.stringify({ number: normalizedPhone, text }),
+                    });
+                    console.log('[mark_completed] WhatsApp sent to owner');
+                  }
+                }
+              }
+            } catch (whatsappErr) {
+              console.error('[mark_completed] WhatsApp error (non-blocking):', whatsappErr);
+            }
+          }
+        }
+      } catch (postErr) {
+        console.error('[mark_completed] post-completion tasks error (non-blocking):', postErr);
+      }
+
+      return json({ success: true, assessmentId: finalAssessmentId });
     }
 
     return json({ error: 'Acao invalida: ' + action }, 400);

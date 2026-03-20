@@ -138,6 +138,19 @@ export type AuditAction =
   | 'invite_sent'
   | 'invite_resent'
   | 'invite_cancelled'
+  | 'invite_viewed'
+  | 'cpf_verified'
+  | 'cpf_failed'
+  | 'test_started'
+  | 'test_completed'
+  | 'test_abandoned'
+  | 'result_generated'
+  | 'ai_analysis_generated'
+  | 'ai_analysis_regenerated'
+  | 'credit_consumed'
+  | 'credit_refunded'
+  | 'retest_scheduled'
+  | 'retest_triggered'
   | 'link_generated'
   | 'link_deactivated'
   | 'result_viewed'
@@ -148,12 +161,14 @@ export type AuditAction =
   | 'excel_downloaded'
   | 'lgpd_report_generated';
 
+export type AuditResourceType = 'test' | 'invitation' | 'result' | 'report' | 'assessment' | 'ai_analysis' | 'credit_transaction' | 'team_member' | 'retest_schedule';
+
 export interface AuditLog {
   id: string;
   action: AuditAction;
   userId: string;
   userName: string;
-  resourceType: 'test' | 'invitation' | 'result' | 'report';
+  resourceType: AuditResourceType;
   resourceId: string;
   resourceName?: string;
   details?: string;
@@ -167,12 +182,19 @@ export interface HubDashboardKPIs {
   activeTests: number;
   pendingInvites: number;
   completionRate: number; // 0-100
-  avgCompletionTime: number; // days
+  avgCompletionTime: number; // hours
+  abandonRate: number; // 0-100
+  mappedMembers: number;
+  totalMembers: number;
+  creditsUsed: number;
+  creditsAvailable: number;
+  pendingRetests: number;
 }
 
 // --- Funnel Data ---
 export interface FunnelData {
   invited: number;
+  viewed: number;
   started: number;
   completed: number;
   analyzed: number;
@@ -200,7 +222,35 @@ export interface ActivityItem {
 }
 
 // --- Period Filter ---
-export type PeriodFilter = '7d' | '30d' | '90d' | 'custom';
+export type PeriodFilter = '7d' | '30d' | '90d' | 'all' | 'custom';
+
+// --- Enhanced Audit Log Filters ---
+export interface EnhancedAuditLogFilters {
+  action?: AuditAction;
+  period?: PeriodFilter;
+  search?: string;
+  resourceType?: AuditResourceType;
+  page?: number;
+  pageSize?: number;
+}
+
+// --- Test Metrics (from RPC get_test_metrics) ---
+export interface TestMetrics {
+  totalInvitations: number;
+  completed: number;
+  abandoned: number;
+  pending: number;
+  started: number;
+  viewed: number;
+  completionRate: number;
+  abandonRate: number;
+  avgCompletionHours: number;
+  mappedMembers: number;
+  totalMembers: number;
+  creditsUsed: number;
+  creditsAvailable: number;
+  pendingRetests: number;
+}
 
 // --- Competency Radar ---
 export type CompetencyName = 'lideranca' | 'comunicacao' | 'organizacao' | 'inovacao' | 'trabalhoEquipe' | 'analiseCritica';

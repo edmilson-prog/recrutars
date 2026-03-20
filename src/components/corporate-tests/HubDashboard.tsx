@@ -1,29 +1,34 @@
 /**
  * Hub Dashboard
- * PRD-052: Composição: KPIs + funil + alertas + feed
+ * PRD-052 + PRD-089: Composição: KPIs + funil + créditos + alertas + feed
  */
 
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { KPICards } from './KPICards';
 import { TestFunnel } from './TestFunnel';
 import { AlertsList } from './AlertsList';
 import { ActivityFeed } from './ActivityFeed';
 import { PeriodFilter } from './PeriodFilter';
+import { CreditSummaryCard } from './CreditSummaryCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCompanyTests, useCompanyTestStats, useTestAuditLogs, companyTestKeys } from '@/hooks/useCompanyTestsQuery';
+import { useCompanyTests, useCompanyTestStats, useTestAuditLogs, useTestMetrics, useDetectAbandonment } from '@/hooks/useCompanyTestsQuery';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
-import type { PeriodFilter as PeriodFilterType, HubDashboardKPIs, FunnelData, HubAlert, ActivityItem } from '@/types/companyTest';
+import { getActionLabel } from '@/utils/auditLog';
+import type { PeriodFilter as PeriodFilterType, HubDashboardKPIs, FunnelData, HubAlert, ActivityItem, AuditAction } from '@/types/companyTest';
 
-/** Map audit log actions to ActivityItem types (only supported types) */
+/** Map audit log actions to ActivityItem types */
 const auditToActivityType: Record<string, ActivityItem['type'] | null> = {
   test_created: 'test_created',
   test_activated: 'test_activated',
   invite_sent: 'invite_sent',
+  test_completed: 'test_completed',
   shortlist_added: 'shortlist_added',
   pdf_downloaded: 'report_downloaded',
   excel_downloaded: 'report_downloaded',
+  // PRD-089: new events mapped to existing activity types
+  invite_viewed: 'invite_sent',
+  credit_consumed: 'invite_sent',
+  test_started: 'test_completed',
 };
 
 export function HubDashboard() {
@@ -32,106 +37,64 @@ export function HubDashboard() {
 
   const [period, setPeriod] = useState<PeriodFilterType>('30d');
 
+  // PRD-089: Detect abandoned invitations on Hub load (fire-and-forget)
+  useDetectAbandonment(companyId);
+
   const { data: statsData, isLoading: loadingStats } = useCompanyTestStats(companyId);
   const { data: tests, isLoading: loadingTests } = useCompanyTests(companyId);
-  const { data: auditLogs, isLoading: loadingAudit } = useTestAuditLogs(companyId);
+  const { data: auditLogs } = useTestAuditLogs(companyId, { limit: 20 });
 
-  // Fetch all invitations and results across company tests for funnel + alerts
-  const testIds = useMemo(() => (tests ?? []).map(t => t.id), [tests]);
+  // PRD-089: Enhanced metrics from RPC
+  const { data: metricsData } = useTestMetrics(companyId, period);
 
-  const { data: allInvitations } = useQuery({
-    queryKey: [...companyTestKeys.all, 'allInvitations', companyId],
-    queryFn: async () => {
-      if (testIds.length === 0) return [];
-      const { data, error } = await supabase
-        .from('test_invitations')
-        .select('id, test_id, status, candidate_name, sent_at, expires_at')
-        .in('test_id', testIds);
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: testIds.length > 0,
-  });
-
-  const { data: allResults } = useQuery({
-    queryKey: [...companyTestKeys.all, 'allResults', companyId],
-    queryFn: async () => {
-      if (testIds.length === 0) return [];
-      const { data, error } = await supabase
-        .from('test_results')
-        .select('id, test_id, shortlisted')
-        .in('test_id', testIds);
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: testIds.length > 0,
-  });
-
+  // Build KPIs: prefer enhanced metrics when available, fallback to basic stats
   const kpis = useMemo<HubDashboardKPIs>(() => {
-    if (statsData) return statsData;
-    return { totalTests: 0, activeTests: 0, pendingInvites: 0, completionRate: 0, avgCompletionTime: 0 };
-  }, [statsData]);
-
-  const funnelData = useMemo<FunnelData>(() => {
-    const invitations = allInvitations ?? [];
-    const results = allResults ?? [];
-    return {
-      invited: invitations.length,
-      started: invitations.filter(i => ['started', 'completed'].includes(i.status)).length,
-      completed: invitations.filter(i => i.status === 'completed').length,
-      analyzed: results.filter(r => r.shortlisted !== undefined && r.shortlisted !== null).length,
+    const base = statsData ?? {
+      totalTests: 0, activeTests: 0, pendingInvites: 0,
+      completionRate: 0, avgCompletionTime: 0,
+      abandonRate: 0, mappedMembers: 0, totalMembers: 0,
+      creditsUsed: 0, creditsAvailable: 0, pendingRetests: 0,
     };
-  }, [allInvitations, allResults]);
 
-  // Derive alerts from real data
+    if (metricsData) {
+      return {
+        ...base,
+        pendingInvites: metricsData.pending,
+        completionRate: metricsData.completionRate,
+        avgCompletionTime: metricsData.avgCompletionHours,
+        abandonRate: metricsData.abandonRate,
+        mappedMembers: metricsData.mappedMembers,
+        totalMembers: metricsData.totalMembers,
+        creditsUsed: metricsData.creditsUsed,
+        creditsAvailable: metricsData.creditsAvailable,
+        pendingRetests: metricsData.pendingRetests,
+      };
+    }
+
+    return base;
+  }, [statsData, metricsData]);
+
+  // Build funnel from metrics RPC
+  const funnelData = useMemo<FunnelData>(() => {
+    if (metricsData) {
+      return {
+        invited: metricsData.totalInvitations,
+        viewed: metricsData.viewed,
+        started: metricsData.started + metricsData.completed,
+        completed: metricsData.completed,
+        analyzed: 0, // Will be enriched later if needed
+      };
+    }
+    return { invited: 0, viewed: 0, started: 0, completed: 0, analyzed: 0 };
+  }, [metricsData]);
+
+  // Derive alerts from tests + invitations
   const alerts = useMemo<HubAlert[]>(() => {
     const alertList: HubAlert[] = [];
-    const now = Date.now();
-    const invitations = allInvitations ?? [];
     const testsList = tests ?? [];
 
-    // Expired invitations per test
-    const testMap = new Map(testsList.map(t => [t.id, t]));
-    const expiredByTest = new Map<string, number>();
-    invitations.forEach(inv => {
-      if (inv.status === 'expired') {
-        expiredByTest.set(inv.test_id, (expiredByTest.get(inv.test_id) ?? 0) + 1);
-      }
-    });
-    expiredByTest.forEach((count, testId) => {
-      const test = testMap.get(testId);
-      if (test) {
-        alertList.push({
-          id: `alert-expired-${testId}`,
-          type: 'expired_invites',
-          message: `${count} convite${count > 1 ? 's' : ''} expirado${count > 1 ? 's' : ''} no teste "${test.name}"`,
-          testId,
-          testName: test.name,
-          severity: 'warning',
-          createdAt: new Date().toISOString(),
-        });
-      }
-    });
-
-    // Abandoned tests
-    invitations.forEach(inv => {
-      if (inv.status === 'abandoned') {
-        const test = testMap.get(inv.test_id);
-        if (test) {
-          alertList.push({
-            id: `alert-abandoned-${inv.id}`,
-            type: 'abandoned_tests',
-            message: `${inv.candidate_name ?? 'Candidato'} abandonou o teste "${test.name}"`,
-            testId: inv.test_id,
-            testName: test.name,
-            severity: 'error',
-            createdAt: new Date().toISOString(),
-          });
-        }
-      }
-    });
-
     // Deadline approaching (within 7 days)
+    const now = Date.now();
     const sevenDays = 7 * 24 * 60 * 60 * 1000;
     testsList.forEach(test => {
       if (test.status === 'active' && test.deadline) {
@@ -151,26 +114,34 @@ export function HubDashboard() {
       }
     });
 
-    // Tests with no candidates (draft or active with 0 invitations)
-    testsList.forEach(test => {
-      if (['draft', 'active'].includes(test.status)) {
-        const hasInvitations = invitations.some(inv => inv.test_id === test.id);
-        if (!hasInvitations) {
-          alertList.push({
-            id: `alert-nocand-${test.id}`,
-            type: 'no_candidates',
-            message: `Teste "${test.name}" ainda não possui candidatos`,
-            testId: test.id,
-            testName: test.name,
-            severity: 'info',
-            createdAt: new Date().toISOString(),
-          });
-        }
-      }
-    });
+    // PRD-089: Pending retests alert
+    if (metricsData && metricsData.pendingRetests > 0) {
+      alertList.push({
+        id: 'alert-pending-retests',
+        type: 'deadline_approaching',
+        message: `${metricsData.pendingRetests} reteste${metricsData.pendingRetests > 1 ? 's' : ''} pendente${metricsData.pendingRetests > 1 ? 's' : ''}`,
+        testId: '',
+        testName: '',
+        severity: 'warning',
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    // PRD-089: Abandonment alert
+    if (metricsData && metricsData.abandoned > 0) {
+      alertList.push({
+        id: 'alert-abandoned',
+        type: 'abandoned_tests',
+        message: `${metricsData.abandoned} teste${metricsData.abandoned > 1 ? 's' : ''} abandonado${metricsData.abandoned > 1 ? 's' : ''}`,
+        testId: '',
+        testName: '',
+        severity: 'error',
+        createdAt: new Date().toISOString(),
+      });
+    }
 
     return alertList;
-  }, [tests, allInvitations]);
+  }, [tests, metricsData]);
 
   // Convert audit logs to activity feed items
   const activities = useMemo<ActivityItem[]>(() => {
@@ -183,11 +154,11 @@ export function HubDashboard() {
           id: log.id,
           type: activityType,
           message: log.resourceName
-            ? `${log.resourceName} — ${log.details ?? log.action.replace(/_/g, ' ')}`
-            : log.details ?? log.action.replace(/_/g, ' '),
+            ? `${log.resourceName} — ${getActionLabel(log.action as AuditAction)}`
+            : getActionLabel(log.action as AuditAction),
           timestamp: log.timestamp,
           testId: log.resourceType === 'test' ? log.resourceId : undefined,
-          candidateName: ['invitation', 'result'].includes(log.resourceType) ? log.resourceName : undefined,
+          candidateName: ['invitation', 'result', 'assessment', 'team_member'].includes(log.resourceType) ? log.resourceName : undefined,
         } satisfies ActivityItem;
       })
       .filter((item): item is ActivityItem => item !== null);
@@ -202,8 +173,8 @@ export function HubDashboard() {
           <Skeleton className="h-7 w-32" />
           <Skeleton className="h-9 w-36" />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map(i => (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {[1, 2, 3, 4, 5].map(i => (
             <Skeleton key={i} className="h-24 rounded-lg" />
           ))}
         </div>
@@ -227,7 +198,13 @@ export function HubDashboard() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <TestFunnel data={funnelData} />
-        <AlertsList alerts={alerts} />
+        <div className="space-y-6">
+          <CreditSummaryCard
+            creditsAvailable={kpis.creditsAvailable}
+            creditsUsed={kpis.creditsUsed}
+          />
+          <AlertsList alerts={alerts} />
+        </div>
       </div>
 
       <ActivityFeed activities={activities} />
