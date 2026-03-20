@@ -146,18 +146,26 @@ export function CompanyNotificationItem({
                 {formatTimeAgo(notification.createdAt)}
               </span>
               {!notification.read && onMarkAsRead && (
-                <button
-                  type="button"
+                <span
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => {
                     e.stopPropagation();
                     onMarkAsRead(notification.id);
                   }}
-                  className="p-0.5 rounded hover:bg-muted transition-colors"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onMarkAsRead(notification.id);
+                    }
+                  }}
+                  className="p-0.5 rounded hover:bg-muted transition-colors cursor-pointer"
                   title="Marcar como lida"
                   aria-label="Marcar como lida"
                 >
                   <Check className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
-                </button>
+                </span>
               )}
             </div>
           </div>
