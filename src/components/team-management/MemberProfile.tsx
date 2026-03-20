@@ -37,8 +37,9 @@ import {
   ChevronUp,
   Bot,
   Clock,
+  Loader2,
 } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useCallback } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 import GaugeStatusBadge from './GaugeStatusBadge';
@@ -53,8 +54,9 @@ import { FitScoreDisplay } from '@/components/corporate-tests/FitScoreDisplay';
 import { AIRecommendationsTab } from '@/components/corporate-tests/AIRecommendationsTab';
 import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import { useQuery } from '@tanstack/react-query';
-import { loadAllAnalysesFromSupabase, loadAllAnalysesByResultIds } from '@/lib/aiAgent/storageService';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { loadAllAnalysesFromSupabase, loadAllAnalysesByResultIds, saveAnalysisResult } from '@/lib/aiAgent/storageService';
+import { useToast } from '@/hooks/use-toast';
 import { renderAnalysisContent } from '@/lib/renderAnalysisContent';
 import { ARCHETYPE_PROFILES } from '@/data/gaugeProArchetypes';
 import { calculateFitScore, classifyFitScore } from '@/utils/fitScore';
@@ -120,22 +122,89 @@ function formatAnalysisDate(iso: string): string {
 function AllAnalysesAccordion({
   candidateId,
   memberId,
+  memberName,
   testHistory,
 }: {
   candidateId?: string;
   memberId?: string;
+  memberName?: string;
   testHistory: TestHistoryEntry[];
 }) {
   const testResultIds = testHistory.map(t => t.id);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [generatingForId, setGeneratingForId] = useState<string | null>(null);
+
   const { data: allAnalyses = [], isLoading } = useQuery({
     queryKey: ['ai-analyses-all', candidateId ?? memberId, testResultIds],
     queryFn: () => {
       if (candidateId) return loadAllAnalysesFromSupabase(candidateId);
-      // For collaborators without candidateId: query by test result IDs
       return loadAllAnalysesByResultIds(testResultIds);
     },
     enabled: !!candidateId || testResultIds.length > 0,
   });
+
+  const handleGenerateAnalysis = useCallback(async (testResultId: string) => {
+    const entry = testHistory.find(t => t.id === testResultId);
+    if (!entry) return;
+
+    setGeneratingForId(testResultId);
+    try {
+      const { loadAgentSettingsAsync, generateBothAnalyses } = await import('@/lib/aiAgent');
+      const settings = await loadAgentSettingsAsync();
+
+      if (!settings.agentEnabled || !settings.apiKey) {
+        toast({ title: 'Agente IA desabilitado', description: 'Configure a API key nas configurações do admin.', variant: 'destructive' });
+        return;
+      }
+
+      // Reconstruct minimal GaugeProResult from TestHistoryEntry
+      const archetypeProfile = ARCHETYPE_PROFILES.find(p => p.id === entry.archetype || p.name === entry.archetype)
+        ?? { id: entry.archetype, name: entry.archetype, description: '', strengths: [], developmentAreas: [], idealRoles: [], workStyle: '', communicationStyle: '' };
+
+      const gaugeResult: GaugeProResult = {
+        id: entry.id,
+        assessmentId: '',
+        candidateId: candidateId || '',
+        part1Scores: entry.part1Scores ?? entry.scores,
+        part2Scores: entry.part2Scores ?? entry.scores,
+        finalScores: entry.scores,
+        classifications: (entry.classifications ?? {}) as Record<GaugeProDimension, import('@/types/gaugePro').DimensionClassification>,
+        archetype: archetypeProfile,
+        primaryDimension: (entry.primaryDimension ?? 'D1') as GaugeProDimension,
+        secondaryDimension: (entry.secondaryDimension ?? 'D2') as GaugeProDimension,
+        strengths: entry.strengths ?? [],
+        developmentAreas: entry.developmentAreas ?? [],
+        careerRecommendations: entry.careerRecommendations ?? [],
+        xpAwarded: entry.xpAwarded ?? 0,
+        badgeAwarded: entry.badgeAwarded ?? '',
+        generatedAt: entry.completedAt,
+      };
+
+      const name = memberName || 'Colaborador';
+      const analysisResult = await generateBothAnalyses(gaugeResult, name, settings);
+
+      const hasValid =
+        (analysisResult.practical && analysisResult.practical.status !== 'error') ||
+        (analysisResult.technical && analysisResult.technical.status !== 'error');
+
+      if (hasValid) {
+        if (!candidateId && memberId) {
+          analysisResult.teamMemberId = memberId;
+        }
+        saveAnalysisResult(analysisResult);
+        queryClient.invalidateQueries({ queryKey: ['ai-analyses-all'] });
+        toast({ title: 'Análise IA gerada', description: 'A análise foi gerada e salva com sucesso.' });
+      } else {
+        toast({ title: 'Erro na geração', description: 'A IA não conseguiu gerar uma análise válida.', variant: 'destructive' });
+      }
+    } catch (err) {
+      console.error('[AllAnalysesAccordion] generate error:', err);
+      toast({ title: 'Erro ao gerar análise', description: 'Tente novamente mais tarde.', variant: 'destructive' });
+    } finally {
+      setGeneratingForId(null);
+    }
+  }, [testHistory, candidateId, memberId, memberName, queryClient, toast]);
 
   // Merge: show analyses that exist + tests without analysis
   const testDates = new Map(testHistory.map((t) => [t.id, t.completedAt]));
@@ -255,9 +324,23 @@ function AllAnalysesAccordion({
                 <div className="flex flex-col items-center justify-center py-6 text-center">
                   <Sparkles className="h-8 w-8 text-muted-foreground/40 mb-2" />
                   <p className="text-sm text-muted-foreground">Nenhuma análise gerada para este teste</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">
-                    A análise é gerada automaticamente ao finalizar o teste comportamental.
-                  </p>
+                  {generatingForId === item.testResultId ? (
+                    <div className="flex items-center gap-2 mt-3 text-sm text-primary">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Gerando análise IA...
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3 gap-2"
+                      onClick={() => handleGenerateAnalysis(item.testResultId)}
+                      disabled={generatingForId !== null}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Gerar Análise IA
+                    </Button>
+                  )}
                 </div>
               )}
             </AccordionContent>
@@ -610,6 +693,7 @@ export function MemberProfile({
             <AllAnalysesAccordion
               candidateId={candidateId}
               memberId={member.id}
+              memberName={member.name}
               testHistory={testHistory}
             />
             {aiResult && <AIRecommendationsTab result={aiResult} />}
