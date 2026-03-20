@@ -48,9 +48,10 @@ interface AiAnalysisRow {
   updated_at: string;
 }
 
-function analysisToRow(a: AIAnalysis): Record<string, unknown> {
+function analysisToRow(a: AIAnalysis, teamMemberId?: string): Record<string, unknown> {
   return {
-    candidate_id: a.candidateId,
+    candidate_id: a.candidateId || null,
+    team_member_id: teamMemberId ?? null,
     test_result_id: a.testResultId,
     analysis_type: a.analysisType,
     content: a.content,
@@ -86,11 +87,11 @@ function rowToAnalysis(r: AiAnalysisRow): AIAnalysis {
 
 // --- Supabase persistence ---
 
-async function saveToSupabase(analysis: AIAnalysis): Promise<void> {
-  const row = analysisToRow(analysis);
+async function saveToSupabase(analysis: AIAnalysis, teamMemberId?: string): Promise<void> {
+  const row = analysisToRow(analysis, teamMemberId);
   const { error } = await supabase
     .from('ai_analyses')
-    .upsert(row, { onConflict: 'candidate_id,test_result_id,analysis_type' });
+    .upsert(row, { onConflict: 'test_result_id,analysis_type' });
   if (error) throw error;
 }
 
@@ -138,7 +139,27 @@ export async function loadAllAnalysesFromSupabase(
 
   if (error || !data || data.length === 0) return [];
 
-  const rows = data as AiAnalysisRow[];
+  return groupAnalysisRows(data as AiAnalysisRow[], candidateId);
+}
+
+/** Load all AI analyses for a team member (by test_result_ids from their gauge_pro_results) */
+export async function loadAllAnalysesByResultIds(
+  testResultIds: string[],
+): Promise<AIAnalysisResult[]> {
+  if (testResultIds.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from('ai_analyses')
+    .select('*')
+    .in('test_result_id', testResultIds)
+    .order('created_at', { ascending: false });
+
+  if (error || !data || data.length === 0) return [];
+
+  return groupAnalysisRows(data as AiAnalysisRow[]);
+}
+
+function groupAnalysisRows(rows: AiAnalysisRow[], candidateId?: string): AIAnalysisResult[] {
   const grouped = new Map<string, AiAnalysisRow[]>();
   for (const row of rows) {
     const key = row.test_result_id;
@@ -150,7 +171,7 @@ export async function loadAllAnalysesFromSupabase(
     const practical = group.find((r) => r.analysis_type === 'practical');
     const technical = group.find((r) => r.analysis_type === 'technical');
     return {
-      candidateId,
+      candidateId: candidateId ?? (practical ?? technical)!.candidate_id ?? '',
       testResultId,
       practical: practical ? rowToAnalysis(practical) : undefined,
       technical: technical ? rowToAnalysis(technical) : undefined,
@@ -173,7 +194,7 @@ export function saveAnalysisResult(result: AIAnalysisResult, localOnly = false):
   if (result.technical) analyses.push(result.technical);
 
   if (analyses.length > 0) {
-    Promise.all(analyses.map((a) => saveToSupabase(a))).catch((err) => {
+    Promise.all(analyses.map((a) => saveToSupabase(a, result.teamMemberId))).catch((err) => {
       console.warn('[AI Storage] Supabase save failed, localStorage has the data:', err);
     });
   }

@@ -54,7 +54,7 @@ import { AIRecommendationsTab } from '@/components/corporate-tests/AIRecommendat
 import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { useQuery } from '@tanstack/react-query';
-import { loadAllAnalysesFromSupabase } from '@/lib/aiAgent/storageService';
+import { loadAllAnalysesFromSupabase, loadAllAnalysesByResultIds } from '@/lib/aiAgent/storageService';
 import { renderAnalysisContent } from '@/lib/renderAnalysisContent';
 import { ARCHETYPE_PROFILES } from '@/data/gaugeProArchetypes';
 import { calculateFitScore, classifyFitScore } from '@/utils/fitScore';
@@ -119,15 +119,22 @@ function formatAnalysisDate(iso: string): string {
 
 function AllAnalysesAccordion({
   candidateId,
+  memberId,
   testHistory,
 }: {
-  candidateId: string;
+  candidateId?: string;
+  memberId?: string;
   testHistory: TestHistoryEntry[];
 }) {
+  const testResultIds = testHistory.map(t => t.id);
   const { data: allAnalyses = [], isLoading } = useQuery({
-    queryKey: ['ai-analyses-all', candidateId],
-    queryFn: () => loadAllAnalysesFromSupabase(candidateId),
-    enabled: !!candidateId,
+    queryKey: ['ai-analyses-all', candidateId ?? memberId, testResultIds],
+    queryFn: () => {
+      if (candidateId) return loadAllAnalysesFromSupabase(candidateId);
+      // For collaborators without candidateId: query by test result IDs
+      return loadAllAnalysesByResultIds(testResultIds);
+    },
+    enabled: !!candidateId || testResultIds.length > 0,
   });
 
   // Merge: show analyses that exist + tests without analysis
@@ -600,22 +607,11 @@ export function MemberProfile({
 
           {/* Tab 3: IA */}
           <TabsContent value="ia" className="space-y-6">
-            {candidateId ? (
-              <AllAnalysesAccordion
-                candidateId={candidateId}
-                testHistory={testHistory}
-              />
-            ) : (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-                  <Sparkles className="h-10 w-10 mb-3 text-muted-foreground/40" />
-                  <p className="text-sm font-medium">Análise IA indisponível</p>
-                  <p className="text-xs mt-1">
-                    A análise de inteligência artificial requer vínculo com um perfil de candidato.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+            <AllAnalysesAccordion
+              candidateId={candidateId}
+              memberId={member.id}
+              testHistory={testHistory}
+            />
             {aiResult && <AIRecommendationsTab result={aiResult} />}
           </TabsContent>
 

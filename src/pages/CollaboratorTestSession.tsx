@@ -416,8 +416,10 @@ export default function CollaboratorTestSession() {
         });
       }
 
-      // Fire-and-forget: gerar análises IA em background (mesmo padrão do useGaugeProAssessment)
-      if (candidateId && gaugeResult) {
+      // Fire-and-forget: gerar análises IA em background
+      // PRD-089 fix: trigger IA for collaborators too (team_member_id as fallback owner)
+      const aiOwnerId = candidateId || invitation?.teamMemberId;
+      if (aiOwnerId && gaugeResult) {
         import('@/lib/aiAgent').then(({ loadAgentSettingsAsync, generateBothAnalyses, saveAnalysisResult }) => {
           loadAgentSettingsAsync().then((agentSettings) => {
             if (agentSettings.agentEnabled && agentSettings.apiKey) {
@@ -428,6 +430,10 @@ export default function CollaboratorTestSession() {
                     (analysisResult.practical && analysisResult.practical.status !== 'error') ||
                     (analysisResult.technical && analysisResult.technical.status !== 'error');
                   if (hasValidAnalysis) {
+                    // For collaborators without candidateId, tag with teamMemberId
+                    if (!candidateId && invitation?.teamMemberId) {
+                      analysisResult.teamMemberId = invitation.teamMemberId;
+                    }
                     saveAnalysisResult(analysisResult);
                   }
                 })
