@@ -252,22 +252,30 @@ export function useSendTestInvitations() {
       const { data, error } = await supabase.functions.invoke('send-test-invitation', {
         body: { action: 'send_invitations', test_id: testId, invitations },
       });
-      // On 400, data may be null — extract body from error.context (FunctionsHttpError)
+      // On 400, extract the JSON body — may be in data, error.context, or error.message
       if (error) {
-        let errorBody: Record<string, unknown> | null = null;
-        try {
-          const ctx = (error as { context?: Response }).context;
-          if (ctx instanceof Response) {
-            errorBody = await ctx.json();
-          }
-        } catch { /* ignore parse errors */ }
-        if (errorBody?.insufficientCredits) {
+        // Try multiple ways to get the error body
+        let body: Record<string, unknown> | null = data as Record<string, unknown> | null;
+        if (!body) {
+          try {
+            const ctx = (error as Record<string, unknown>).context;
+            if (ctx && typeof ctx === 'object' && 'json' in ctx && typeof (ctx as Response).json === 'function') {
+              body = await (ctx as Response).json();
+            } else if (ctx && typeof ctx === 'object') {
+              body = ctx as Record<string, unknown>;
+            }
+          } catch { /* ignore */ }
+        }
+        if (!body) {
+          try { body = JSON.parse(error.message); } catch { /* not JSON */ }
+        }
+        if (body?.insufficientCredits) {
           throw new InsufficientCreditsError(
-            (errorBody.available as number) ?? 0,
-            (errorBody.required as number) ?? invitations.length,
+            (body.available as number) ?? 0,
+            (body.required as number) ?? invitations.length,
           );
         }
-        throw new Error((errorBody?.error as string) || error.message);
+        throw new Error((body?.error as string) || error.message);
       }
       if (data?.error) throw new Error(data.error);
       return data.invitations as TestInvitation[];
