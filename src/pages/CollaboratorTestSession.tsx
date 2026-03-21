@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Loader2, AlertCircle, ArrowRight, ArrowLeft, Clock, LogIn,
@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 import { ForceLightTheme } from '@/components/theme/ForceLightTheme';
 import { TestCompletionActivation } from '@/components/invite/TestCompletionActivation';
@@ -111,6 +112,12 @@ export default function CollaboratorTestSession() {
   const [cpfLast4, setCpfLast4] = useState('');
   const [cpfError, setCpfError] = useState('');
   const [verifyingCpf, setVerifyingCpf] = useState(false);
+
+  // Consent state
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [lgpdAccepted, setLgpdAccepted] = useState(false);
+  const consentComplete = termsAccepted && privacyAccepted && lgpdAccepted;
 
   // Login form
   const [loginPassword, setLoginPassword] = useState('');
@@ -255,6 +262,11 @@ export default function CollaboratorTestSession() {
           email: formEmail.trim(),
           department_id: formDepartmentId || null,
           method: invitation.method || 'public_link',
+          consent_timestamps: {
+            terms_accepted_at: new Date().toISOString(),
+            privacy_accepted_at: new Date().toISOString(),
+            lgpd_consent_at: new Date().toISOString(),
+          },
         },
       });
 
@@ -338,6 +350,11 @@ export default function CollaboratorTestSession() {
           action: 'verify_cpf',
           team_member_id: invitation.teamMemberId,
           cpf_last4: cpfLast4,
+          consent_timestamps: {
+            terms_accepted_at: new Date().toISOString(),
+            privacy_accepted_at: new Date().toISOString(),
+            lgpd_consent_at: new Date().toISOString(),
+          },
         },
       });
 
@@ -469,6 +486,58 @@ export default function CollaboratorTestSession() {
   // Render functions
   // ─────────────────────────────────────────────────────────────
 
+  const renderConsent = () => (
+    <div className="pt-4 border-t border-border/50 space-y-2">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        Termos e Consentimentos
+      </span>
+      <div className="rounded-lg border bg-muted/30 p-3 space-y-2.5">
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="consent-terms"
+            checked={termsAccepted}
+            onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+            className="mt-0.5"
+          />
+          <label htmlFor="consent-terms" className="text-xs leading-relaxed text-foreground/80 cursor-pointer">
+            Li e aceito os{' '}
+            <Link to="/termos-de-uso" target="_blank" className="text-primary underline underline-offset-2">
+              Termos de Uso
+            </Link>
+          </label>
+        </div>
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="consent-privacy"
+            checked={privacyAccepted}
+            onCheckedChange={(checked) => setPrivacyAccepted(checked === true)}
+            className="mt-0.5"
+          />
+          <label htmlFor="consent-privacy" className="text-xs leading-relaxed text-foreground/80 cursor-pointer">
+            Li e aceito a{' '}
+            <Link to="/politica-de-privacidade" target="_blank" className="text-primary underline underline-offset-2">
+              Politica de Privacidade
+            </Link>
+          </label>
+        </div>
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="consent-lgpd"
+            checked={lgpdAccepted}
+            onCheckedChange={(checked) => setLgpdAccepted(checked === true)}
+            className="mt-0.5"
+          />
+          <label htmlFor="consent-lgpd" className="text-xs leading-relaxed text-foreground/80 cursor-pointer">
+            Autorizo o tratamento dos meus dados conforme a{' '}
+            <Link to="/lgpd" target="_blank" className="text-primary underline underline-offset-2">
+              LGPD (Lei 13.709/2018)
+            </Link>
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderHeader = () => (
     <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -568,10 +637,12 @@ export default function CollaboratorTestSession() {
               )}
             </div>
 
+            {renderConsent()}
+
             <Button
               type="submit"
               className="w-full"
-              disabled={verifyingCpf || cpfLast4.length !== 4}
+              disabled={verifyingCpf || cpfLast4.length !== 4 || !consentComplete}
             >
               {verifyingCpf ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -657,10 +728,12 @@ export default function CollaboratorTestSession() {
               </div>
             )}
 
+            {renderConsent()}
+
             <Button
               type="submit"
               className="w-full"
-              disabled={submitting || !formName.trim() || !formEmail.trim()}
+              disabled={submitting || !formName.trim() || !formEmail.trim() || !consentComplete}
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
