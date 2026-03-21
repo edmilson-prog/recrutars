@@ -222,7 +222,15 @@ function AllAnalysesAccordion({
       hasAnalysis: true as const,
     })),
     ...testHistory
-      .filter((t) => !analysisTestIds.has(t.id))
+      .filter((t) => {
+        // Match by exact ID
+        if (analysisTestIds.has(t.id)) return false;
+        // Match by date proximity (fixes ID mismatch: local "gpr-..." vs DB UUID)
+        const testMs = new Date(t.completedAt).getTime();
+        return !allAnalyses.some(a =>
+          Math.abs(new Date(a.generatedAt).getTime() - testMs) < 300_000
+        );
+      })
       .map((t) => ({
         testResultId: t.id,
         date: t.completedAt,
@@ -233,9 +241,8 @@ function AllAnalysesAccordion({
       })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const latestTestId = testHistory.length > 0
-    ? [...testHistory].sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())[0].id
-    : undefined;
+  // "Atual" badge goes on the most recent item (first after sort)
+  const latestItemId = items.length > 0 ? items[0].testResultId : undefined;
 
   if (isLoading) {
     return (
@@ -268,7 +275,7 @@ function AllAnalysesAccordion({
       className="space-y-2"
     >
       {items.map((item) => {
-        const isLatest = item.testResultId === latestTestId;
+        const isLatest = item.testResultId === latestItemId;
         return (
           <AccordionItem
             key={item.testResultId}
