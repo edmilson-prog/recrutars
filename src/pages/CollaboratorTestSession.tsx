@@ -414,11 +414,15 @@ export default function CollaboratorTestSession() {
               // PRD-089: Include test responses for Respostas tab
               word_step_responses: gaugePro.wordStepResponses,
               scenario_responses: gaugePro.scenarioResponses,
+              // Actual assessment start time for total duration calculation
+              started_at: gaugePro.assessment?.startedAt || null,
               // Part timestamps for duration calculation
               part1_started_at: gaugePro.assessment?.part1StartedAt || null,
               part1_completed_at: gaugePro.assessment?.part1CompletedAt || null,
               part2_started_at: gaugePro.assessment?.part2StartedAt || null,
-              part2_completed_at: gaugePro.assessment?.part2CompletedAt || null,
+              // Fix: use current time — saveSession sets part2CompletedAt via async
+              // setAssessment, so gaugePro.assessment still has the stale value here
+              part2_completed_at: new Date().toISOString(),
             },
           },
         });

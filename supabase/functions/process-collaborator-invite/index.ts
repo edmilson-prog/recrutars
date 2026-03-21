@@ -544,7 +544,7 @@ Deno.serve(async (req: Request) => {
         // Build assessment row with appropriate owner + responses
         const assessmentRow: Record<string, unknown> = {
           phase: 'completed',
-          started_at: genAt,
+          started_at: result_data.started_at || genAt,
           completed_at: now,
         };
         if (result_data.candidate_id) assessmentRow.candidate_id = result_data.candidate_id;
