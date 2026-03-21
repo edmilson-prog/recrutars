@@ -38,6 +38,8 @@ import {
   Bot,
   Clock,
   Loader2,
+  Cpu,
+  Hash,
 } from 'lucide-react';
 import { Fragment, useState, useCallback } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -54,6 +56,8 @@ import { FitScoreDisplay } from '@/components/corporate-tests/FitScoreDisplay';
 import { AIRecommendationsTab } from '@/components/corporate-tests/AIRecommendationsTab';
 import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { Separator } from '@/components/ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { loadAllAnalysesFromSupabase, loadAllAnalysesByResultIds, loadAllAnalysesByTeamMember, saveAnalysisResult } from '@/lib/aiAgent/storageService';
 import { useToast } from '@/hooks/use-toast';
@@ -117,6 +121,12 @@ function formatPhone(value: string): string {
 function formatAnalysisDate(iso: string): string {
   const d = new Date(iso);
   return `${d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}, ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+function getProviderLabel(modelUsed: string): string {
+  if (modelUsed.startsWith('claude-')) return 'Anthropic';
+  if (modelUsed.startsWith('gpt-') || modelUsed.startsWith('o1') || modelUsed.startsWith('o3')) return 'OpenAI';
+  return 'OpenRouter';
 }
 
 function AllAnalysesAccordion({
@@ -314,6 +324,47 @@ function AllAnalysesAccordion({
                       <div className="max-w-none max-h-[520px] overflow-y-auto pr-3 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
                         {renderAnalysisContent(item.practical.content)}
                       </div>
+                      {item.practical.modelUsed && (
+                        <>
+                          <Separator className="my-3" />
+                          <Collapsible>
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="sm" className="gap-1 h-6 text-[11px] text-muted-foreground/50 px-1">
+                                <ChevronDown className="w-3 h-3 transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
+                                Metadados da geração
+                              </Button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="mt-2">
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground/50">
+                                <span className="flex items-center gap-1">
+                                  <Cpu className="w-3 h-3" />
+                                  {getProviderLabel(item.practical.modelUsed)} / {item.practical.modelUsed}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Hash className="w-3 h-3" />
+                                  {item.practical.tokensInput + item.practical.tokensOutput} tokens
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {(item.practical.generationTimeMs / 1000).toFixed(1)}s
+                                </span>
+                                <span>
+                                  Gerado em{' '}
+                                  {new Date(item.practical.createdAt).toLocaleDateString('pt-BR')}{' '}
+                                  {new Date(item.practical.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                {item.practical.regeneratedAt && (
+                                  <span>
+                                    Regenerado em{' '}
+                                    {new Date(item.practical.regeneratedAt).toLocaleDateString('pt-BR')}{' '}
+                                    {new Date(item.practical.regeneratedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                )}
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
