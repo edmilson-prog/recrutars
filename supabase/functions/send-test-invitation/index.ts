@@ -518,10 +518,10 @@ Deno.serve(async (req: Request) => {
 
         const originalStatus = inv?.status;
 
-        // Update status to expired
+        // Update status to cancelled
         const { error: cancelError } = await adminClient
           .from("test_invitations")
-          .update({ status: "expired" })
+          .update({ status: "cancelled" })
           .eq("id", invitation_id);
 
         if (cancelError) {
@@ -592,6 +592,143 @@ Deno.serve(async (req: Request) => {
         }
 
         return jsonResponse({ success: true });
+      }
+
+      case "extend_deadline": {
+        const { invitation_id, new_expires_at } = body;
+        if (!invitation_id || !new_expires_at) {
+          return jsonResponse({ error: "invitation_id and new_expires_at are required" }, 400);
+        }
+
+        const { data: inv, error: fetchErr } = await adminClient
+          .from("test_invitations")
+          .select("id, candidate_name, test_id, status")
+          .eq("id", invitation_id)
+          .single();
+
+        if (fetchErr || !inv) {
+          return jsonResponse({ error: "Invitation not found" }, 404);
+        }
+
+        if (["completed", "cancelled", "abandoned"].includes(inv.status)) {
+          return jsonResponse({ error: `Cannot extend deadline for invitation with status '${inv.status}'` }, 400);
+        }
+
+        if (new Date(new_expires_at) <= new Date()) {
+          return jsonResponse({ error: "new_expires_at must be in the future" }, 400);
+        }
+
+        const { data: extUpdated, error: extError } = await adminClient
+          .from("test_invitations")
+          .update({ expires_at: new_expires_at })
+          .eq("id", invitation_id)
+          .select()
+          .single();
+
+        if (extError) {
+          return jsonResponse({ error: extError.message }, 500);
+        }
+
+        if (callerId) {
+          const { data: test } = await adminClient
+            .from("company_tests")
+            .select("company_id, name")
+            .eq("id", inv.test_id)
+            .single();
+
+          const { data: callerProfile } = await adminClient
+            .from("profiles")
+            .select("full_name")
+            .eq("id", callerId)
+            .single();
+
+          if (test) {
+            auditLog(adminClient, {
+              action: "invite_extended",
+              userId: callerId,
+              userName: callerProfile?.full_name ?? "Usuario",
+              resourceType: "invitation",
+              resourceId: invitation_id,
+              resourceName: inv.candidate_name,
+              details: `Prazo estendido até ${new_expires_at} - Teste: ${test.name}`,
+              companyId: test.company_id,
+            });
+          }
+        }
+
+        return jsonResponse({ invitation: extUpdated });
+      }
+
+      case "update_recipient": {
+        const { invitation_id, candidate_name: newName, candidate_email: newEmail } = body;
+        if (!invitation_id) {
+          return jsonResponse({ error: "invitation_id is required" }, 400);
+        }
+        if (!newName && !newEmail) {
+          return jsonResponse({ error: "At least candidate_name or candidate_email is required" }, 400);
+        }
+
+        const { data: inv, error: fetchErr } = await adminClient
+          .from("test_invitations")
+          .select("id, candidate_name, candidate_email, test_id, status")
+          .eq("id", invitation_id)
+          .single();
+
+        if (fetchErr || !inv) {
+          return jsonResponse({ error: "Invitation not found" }, 404);
+        }
+
+        if (!["sent", "viewed"].includes(inv.status)) {
+          return jsonResponse({ error: `Cannot update recipient for invitation with status '${inv.status}'. Only 'sent' or 'viewed' invitations can be edited.` }, 400);
+        }
+
+        const updates: Record<string, string> = {};
+        if (newName) updates.candidate_name = newName;
+        if (newEmail) updates.candidate_email = newEmail;
+
+        const { data: recUpdated, error: recError } = await adminClient
+          .from("test_invitations")
+          .update(updates)
+          .eq("id", invitation_id)
+          .select()
+          .single();
+
+        if (recError) {
+          return jsonResponse({ error: recError.message }, 500);
+        }
+
+        if (callerId) {
+          const { data: test } = await adminClient
+            .from("company_tests")
+            .select("company_id, name")
+            .eq("id", inv.test_id)
+            .single();
+
+          const { data: callerProfile } = await adminClient
+            .from("profiles")
+            .select("full_name")
+            .eq("id", callerId)
+            .single();
+
+          if (test) {
+            const changes: string[] = [];
+            if (newName && newName !== inv.candidate_name) changes.push(`Nome: ${inv.candidate_name} → ${newName}`);
+            if (newEmail && newEmail !== inv.candidate_email) changes.push(`Email: ${inv.candidate_email} → ${newEmail}`);
+
+            auditLog(adminClient, {
+              action: "invite_updated",
+              userId: callerId,
+              userName: callerProfile?.full_name ?? "Usuario",
+              resourceType: "invitation",
+              resourceId: invitation_id,
+              resourceName: newName ?? inv.candidate_name,
+              details: `${changes.join('; ')} - Teste: ${test.name}`,
+              companyId: test.company_id,
+            });
+          }
+        }
+
+        return jsonResponse({ invitation: recUpdated });
       }
 
       default:

@@ -13,6 +13,7 @@ import type {
   CompanyCandidate,
   CompanyTeamMemberForInvite,
   EnhancedAuditLogFilters,
+  InvitationManagerFilters,
   TestMetrics,
 } from '@/types/companyTest';
 import type { ICompanyTestsService, CompanyTestFilters, AuditLogFilters } from './companyTestsService';
@@ -591,5 +592,99 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
       logs: (data ?? []).map(row => auditLogRowToModel(row as Record<string, unknown>)),
       total: count ?? 0,
     };
+  }
+
+  // --- Invitation Management (company-wide) ---
+
+  async getCompanyInvitations(
+    companyId: string,
+    filters?: InvitationManagerFilters
+  ): Promise<{ invitations: TestInvitation[]; total: number }> {
+    const page = filters?.page ?? 1;
+    const pageSize = filters?.pageSize ?? 25;
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('test_invitations')
+      .select(`
+        *,
+        company_tests!inner(company_id, name)
+      `, { count: 'exact' })
+      .eq('company_tests.company_id', companyId);
+
+    if (filters?.status && filters.status.length > 0) {
+      query = query.in('status', filters.status);
+    }
+    if (filters?.method && filters.method.length > 0) {
+      query = query.in('method', filters.method);
+    }
+    if (filters?.search) {
+      query = query.or(`candidate_name.ilike.%${filters.search}%,candidate_email.ilike.%${filters.search}%`);
+    }
+    if (filters?.testId) {
+      query = query.eq('test_id', filters.testId);
+    }
+    if (filters?.dateFrom) {
+      query = query.gte('sent_at', filters.dateFrom);
+    }
+    if (filters?.dateTo) {
+      query = query.lte('sent_at', filters.dateTo);
+    }
+
+    const sortColumn = filters?.sortBy
+      ? { sentAt: 'sent_at', expiresAt: 'expires_at', status: 'status', candidateName: 'candidate_name' }[filters.sortBy]
+      : 'sent_at';
+    const ascending = filters?.sortDir === 'asc';
+    query = query.order(sortColumn!, { ascending });
+
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error('[getCompanyInvitations] Error:', error);
+      return { invitations: [], total: 0 };
+    }
+
+    const invitations: TestInvitation[] = (data ?? []).map((row: any) => ({
+      id: row.id,
+      testId: row.test_id,
+      candidateId: row.candidate_id,
+      teamMemberId: row.team_member_id,
+      candidateName: row.candidate_name,
+      candidateEmail: row.candidate_email,
+      method: row.method,
+      status: row.status,
+      token: row.token,
+      assessmentId: row.assessment_id,
+      sentAt: row.sent_at,
+      viewedAt: row.viewed_at,
+      startedAt: row.started_at,
+      completedAt: row.completed_at,
+      expiresAt: row.expires_at,
+      sentBy: row.sent_by,
+      inviteOrigin: row.invite_origin,
+      departmentId: row.department_id,
+      testName: row.company_tests?.name ?? '',
+    }));
+
+    return { invitations, total: count ?? 0 };
+  }
+
+  async getInvitationAuditLogs(invitationId: string): Promise<AuditLog[]> {
+    const { data, error } = await supabase
+      .from('test_audit_logs')
+      .select('*')
+      .eq('resource_id', invitationId)
+      .eq('resource_type', 'invitation')
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('[getInvitationAuditLogs] Error:', error);
+      return [];
+    }
+
+    return (data ?? []).map((row: any) => auditLogRowToModel(row as Record<string, unknown>));
   }
 }
