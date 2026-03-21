@@ -90,6 +90,7 @@ export interface CompanyTeamMemberForInvite {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   departmentId?: string;
   gaugeStatus: string;
   archetype?: string;

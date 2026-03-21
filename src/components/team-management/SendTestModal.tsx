@@ -62,6 +62,8 @@ interface InvitationResult {
   success: boolean;
   link?: string;
   isResend?: boolean;
+  whatsappFailed?: boolean;
+  whatsappError?: string;
 }
 
 const ORIGIN_MAP: Record<InviteChannel, string> = {
@@ -158,10 +160,10 @@ export default function SendTestModal({
    * Send notification to collaborator via the specified channel.
    * Used both for new invitations and resends.
    */
-  async function notifyCollaborator(method: InviteChannel, link: string): Promise<void> {
+  async function notifyCollaborator(method: InviteChannel, link: string): Promise<{ success: boolean; error?: string }> {
     if (method === 'link') {
       // Link channel: no automatic notification, user copies manually
-      return;
+      return { success: true };
     }
 
     if (method === 'email') {
@@ -178,7 +180,7 @@ export default function SendTestModal({
       } catch (err) {
         console.error('Email notification failed (non-blocking):', err);
       }
-      return;
+      return { success: true };
     }
 
     if (method === 'whatsapp' && member.phone) {
@@ -190,13 +192,16 @@ export default function SendTestModal({
           recipientType: 'candidate',
         });
         if (!result.success) {
-          toast.error(result.error ?? 'Erro ao enviar mensagem via WhatsApp.');
+          return { success: false, error: result.error ?? 'Erro ao enviar mensagem via WhatsApp.' };
         }
+        return { success: true };
       } catch (err) {
         console.error('WhatsApp notification failed:', err);
-        toast.error('Erro ao enviar mensagem via WhatsApp. Tente novamente.');
+        return { success: false, error: 'Erro ao enviar mensagem via WhatsApp.' };
       }
     }
+
+    return { success: true };
   }
 
   /**
@@ -240,9 +245,15 @@ export default function SendTestModal({
       const link = `${window.location.origin}/convite/teste/${newToken}`;
 
       // Notify collaborator with the new link (old token is now invalid)
-      await notifyCollaborator(method, link);
+      const notifyResult = await notifyCollaborator(method, link);
 
-      return { success: true, link, isResend: true };
+      return {
+        success: true,
+        link,
+        isResend: true,
+        whatsappFailed: !notifyResult.success,
+        whatsappError: notifyResult.error,
+      };
     }
 
     // 2. NEW: create fresh invitation
@@ -268,9 +279,15 @@ export default function SendTestModal({
     const link = `${window.location.origin}/convite/teste/${newToken}`;
 
     // Notify collaborator with the link
-    await notifyCollaborator(method, link);
+    const notifyResult = await notifyCollaborator(method, link);
 
-    return { success: true, link, isResend: false };
+    return {
+      success: true,
+      link,
+      isResend: false,
+      whatsappFailed: !notifyResult.success,
+      whatsappError: notifyResult.error,
+    };
   }
 
   async function handleSendLink() {
@@ -317,11 +334,17 @@ export default function SendTestModal({
     try {
       const result = await createInvitation('whatsapp');
       if (result.success) {
-        toast.success(
-          result.isResend
-            ? `Convite reenviado via WhatsApp para ${member.phone}`
-            : `Convite enviado via WhatsApp para ${member.phone}`,
-        );
+        if (result.whatsappFailed) {
+          toast.warning(
+            `Convite criado, mas falha no envio WhatsApp: ${result.whatsappError ?? 'erro desconhecido'}`,
+          );
+        } else {
+          toast.success(
+            result.isResend
+              ? `Convite reenviado via WhatsApp para ${member.phone}`
+              : `Convite enviado via WhatsApp para ${member.phone}`,
+          );
+        }
         onSuccess();
         handleOpenChange(false);
       }

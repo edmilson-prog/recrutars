@@ -135,8 +135,8 @@ async function verifyAdmin(
     return { valid: false, error: 'User profile not found' };
   }
 
-  if (profile.type !== 'admin') {
-    return { valid: false, error: 'Admin access required' };
+  if (profile.type !== 'admin' && profile.type !== 'company') {
+    return { valid: false, error: 'Access denied' };
   }
 
   return { valid: true, userId: profile.id };

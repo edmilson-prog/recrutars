@@ -248,20 +248,36 @@ export function useSendTestInvitations() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ testId, invitations }: { testId: string; invitations: CreateInvitationInput[] }) => {
+    mutationFn: async ({ testId, invitations, channel }: { testId: string; invitations: CreateInvitationInput[]; channel?: string }) => {
       const { data, error } = await supabase.functions.invoke('send-test-invitation', {
-        body: { action: 'send_invitations', test_id: testId, invitations },
+        body: { action: 'send_invitations', test_id: testId, invitations, channel },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data.invitations as TestInvitation[];
+      return { invitations: data.invitations as TestInvitation[], whatsappResults: data.whatsappResults };
     },
-    onSuccess: (invitations, { testId }) => {
+    onSuccess: (result, { testId }) => {
+      const invitations = result.invitations;
+      const wp = result.whatsappResults;
       queryClient.invalidateQueries({ queryKey: companyTestKeys.invitations(testId) });
-      toast({
-        title: 'Convites enviados',
-        description: `${invitations.length} convite${invitations.length > 1 ? 's' : ''} enviado${invitations.length > 1 ? 's' : ''} com sucesso.`,
-      });
+
+      if (wp && wp.failed > 0 && wp.sent === 0) {
+        toast({
+          title: 'Convites criados',
+          description: `${invitations.length} convite${invitations.length > 1 ? 's' : ''} criado${invitations.length > 1 ? 's' : ''}, mas falha no envio WhatsApp: ${wp.errors?.[0] ?? 'erro desconhecido'}`,
+          variant: 'destructive',
+        });
+      } else if (wp && wp.failed > 0) {
+        toast({
+          title: 'Convites enviados parcialmente',
+          description: `${wp.sent} enviado${wp.sent > 1 ? 's' : ''} via WhatsApp, ${wp.failed} falhou.`,
+        });
+      } else {
+        toast({
+          title: 'Convites enviados',
+          description: `${invitations.length} convite${invitations.length > 1 ? 's' : ''} enviado${invitations.length > 1 ? 's' : ''} com sucesso.`,
+        });
+      }
     },
     onError: () => {
       toast({ title: 'Erro ao enviar convites', variant: 'destructive' });

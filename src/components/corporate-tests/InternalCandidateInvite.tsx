@@ -165,6 +165,13 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
           return;
         }
 
+        // Map UI channel selection to notification channel for Edge Function
+        const channelMap: Record<string, string> = {
+          public_link: 'link',
+          email: 'email',
+          internal: 'whatsapp',
+        };
+
         const result = await sendInvitations.mutateAsync({
           testId,
           invitations: newMembers.map(m => ({
@@ -173,11 +180,12 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
             candidateEmail: m.email,
             method: selectedChannel,
           })),
+          channel: channelMap[selectedChannel] ?? selectedChannel,
         });
 
         // If channel is Link Unico, show generated links instead of resetting
-        if (selectedChannel === 'public_link' && result?.length > 0) {
-          const links = result.map((inv: { candidateName?: string; candidate_name?: string; token?: string }) => ({
+        if (selectedChannel === 'public_link' && result?.invitations?.length > 0) {
+          const links = result.invitations.map((inv: { candidateName?: string; candidate_name?: string; token?: string }) => ({
             name: (inv.candidateName ?? inv.candidate_name ?? '') as string,
             link: `${window.location.origin}/convite/teste/${inv.token}`,
           }));

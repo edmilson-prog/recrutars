@@ -4,6 +4,7 @@
  *
  * PRD-089: Added credit consumption on send, credit refund on cancel,
  *          and enhanced audit logging.
+ * FIX: Added WhatsApp delivery via Evolution API when channel === 'whatsapp'.
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -51,6 +52,151 @@ async function auditLog(
   }
 }
 
+// ---------------------------------------------------------------------------
+// WhatsApp via Evolution API
+// ---------------------------------------------------------------------------
+
+interface EvolutionConfig {
+  apiUrl: string;
+  apiKey: string;
+  instanceName: string;
+}
+
+/** Normalize phone to include country code 55 for Brazil. */
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length <= 11) return "55" + digits;
+  return digits;
+}
+
+/** Fetch Evolution API credentials from system_settings. */
+async function getEvolutionConfig(
+  supabase: ReturnType<typeof createClient>,
+): Promise<EvolutionConfig | null> {
+  try {
+    const { data, error } = await supabase
+      .from("system_settings")
+      .select("values")
+      .eq("panel", "admin")
+      .eq("category", "integrations")
+      .is("entity_id", null)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    const values = data.values as Record<string, Record<string, unknown>>;
+    const evolution = values?.evolution;
+    if (!evolution) return null;
+
+    const enabled = evolution.evolutionEnabled as boolean;
+    const apiUrl = evolution.evolutionApiUrl as string;
+    const apiKey = evolution.evolutionApiKey as string;
+    const instanceName = evolution.evolutionInstanceName as string;
+
+    if (!enabled || !apiUrl || !apiKey || !instanceName) return null;
+
+    return {
+      apiUrl: apiUrl.replace(/\/+$/, ""),
+      apiKey,
+      instanceName,
+    };
+  } catch {
+    console.error("[send-test-invitation] Failed to load Evolution config");
+    return null;
+  }
+}
+
+/** Send a WhatsApp text message via Evolution API. */
+async function sendWhatsAppMessage(
+  config: EvolutionConfig,
+  phone: string,
+  text: string,
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    const url = `${config.apiUrl}/message/sendText/${config.instanceName}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: config.apiKey,
+      },
+      body: JSON.stringify({
+        number: normalizePhone(phone),
+        text,
+        delay: 1000,
+        linkPreview: true,
+      }),
+    });
+
+    const responseText = await res.text();
+    let json: Record<string, unknown>;
+    try {
+      json = JSON.parse(responseText);
+    } catch {
+      throw new Error(`Non-JSON response: ${responseText.slice(0, 200)}`);
+    }
+
+    if (!res.ok) {
+      throw new Error(
+        `Evolution API error (${res.status}): ${json?.message || json?.error || responseText.slice(0, 200)}`,
+      );
+    }
+
+    // Extract message ID
+    let messageId: string | null = null;
+    const keyObj = json?.key;
+    if (keyObj && typeof keyObj === "object") {
+      messageId = (keyObj as Record<string, unknown>).id as string || null;
+    }
+    if (!messageId && typeof json?.messageId === "string") {
+      messageId = json.messageId as string;
+    }
+
+    return { success: true, messageId: messageId ?? undefined };
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error(`[send-test-invitation] WhatsApp send failed for ${phone}: ${errMsg}`);
+    return { success: false, error: errMsg };
+  }
+}
+
+/** Record a WhatsApp message in the whatsapp_messages table. */
+async function recordWhatsAppMessage(
+  supabase: ReturnType<typeof createClient>,
+  params: {
+    phone: string;
+    text: string;
+    recipientId?: string;
+    recipientName?: string;
+    sentBy?: string;
+    status: "sent" | "failed";
+    whatsappMessageId?: string;
+    errorMessage?: string;
+  },
+): Promise<void> {
+  try {
+    await supabase.from("whatsapp_messages").insert({
+      recipient_phone: params.phone,
+      recipient_name: params.recipientName || null,
+      recipient_type: "candidate",
+      recipient_id: params.recipientId || null,
+      message_text: params.text,
+      sent_by: params.sentBy || null,
+      status: params.status,
+      whatsapp_message_id: params.whatsappMessageId || null,
+      error_message: params.errorMessage || null,
+      sent_at: params.status === "sent" ? new Date().toISOString() : null,
+    });
+  } catch (err) {
+    console.error("[send-test-invitation] Failed to record WhatsApp message:", err);
+  }
+}
+
+/** Random delay to avoid Evolution API rate limiting. */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -74,9 +220,12 @@ Deno.serve(async (req: Request) => {
     const body = await req.json();
     const { action } = body;
 
+    // Extract origin for building invitation links
+    const origin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/$/, "") || "";
+
     switch (action) {
       case "send_invitations": {
-        const { test_id, invitations } = body;
+        const { test_id, invitations, channel } = body;
         if (!test_id || !invitations?.length) {
           return jsonResponse({ error: "test_id and invitations are required" }, 400);
         }
@@ -230,7 +379,76 @@ Deno.serve(async (req: Request) => {
           }
         }
 
-        return jsonResponse({ invitations: created });
+        // WhatsApp delivery (when channel === 'whatsapp')
+        let whatsappResults: { sent: number; failed: number; errors: string[] } | undefined;
+
+        if (channel === "whatsapp" && origin) {
+          const evolutionConfig = await getEvolutionConfig(adminClient);
+
+          if (!evolutionConfig) {
+            console.error("[send_invitations] WhatsApp channel requested but Evolution API not configured");
+            whatsappResults = {
+              sent: 0,
+              failed: (created ?? []).length,
+              errors: ["WhatsApp nao configurado. Verifique Configuracoes > Integracoes."],
+            };
+          } else {
+            whatsappResults = { sent: 0, failed: 0, errors: [] };
+
+            for (const inv of created ?? []) {
+              // Look up phone from team_members table
+              let phone: string | null = null;
+              if (inv.team_member_id) {
+                const { data: member } = await adminClient
+                  .from("team_members")
+                  .select("phone")
+                  .eq("id", inv.team_member_id)
+                  .single();
+                phone = member?.phone ?? null;
+              }
+
+              if (!phone) {
+                console.warn(`[send_invitations] No phone for member ${inv.team_member_id}, skipping WhatsApp`);
+                whatsappResults.failed++;
+                whatsappResults.errors.push(`${inv.candidate_name}: telefone nao cadastrado`);
+                continue;
+              }
+
+              const link = `${origin}/convite/teste/${inv.token}`;
+              const messageText = `Ola ${inv.candidate_name}! Voce foi convidado(a) para realizar o teste comportamental Gauge-Pro pela empresa. Acesse o link para iniciar: ${link}\n\nEste link expira em 24 horas.`;
+
+              const result = await sendWhatsAppMessage(evolutionConfig, phone, messageText);
+
+              // Record in whatsapp_messages
+              await recordWhatsAppMessage(adminClient, {
+                phone,
+                text: messageText,
+                recipientId: inv.team_member_id ?? undefined,
+                recipientName: inv.candidate_name ?? undefined,
+                sentBy: callerId ?? undefined,
+                status: result.success ? "sent" : "failed",
+                whatsappMessageId: result.messageId,
+                errorMessage: result.error,
+              });
+
+              if (result.success) {
+                whatsappResults.sent++;
+              } else {
+                whatsappResults.failed++;
+                whatsappResults.errors.push(`${inv.candidate_name}: ${result.error}`);
+              }
+
+              // Delay between sends to avoid rate limiting
+              if ((created ?? []).indexOf(inv) < (created ?? []).length - 1) {
+                await delay(1500);
+              }
+            }
+
+            console.log(`[send_invitations] WhatsApp results: sent=${whatsappResults.sent}, failed=${whatsappResults.failed}`);
+          }
+        }
+
+        return jsonResponse({ invitations: created, whatsappResults });
       }
 
       case "resend": {

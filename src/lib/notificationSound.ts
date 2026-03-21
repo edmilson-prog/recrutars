@@ -6,6 +6,37 @@
 
 let audioContext: AudioContext | null = null;
 
+/**
+ * Warm up the AudioContext on the first user gesture so it's ready
+ * when a Realtime notification arrives (which is NOT a user gesture
+ * and would be blocked by Chrome's autoplay policy).
+ */
+function initOnUserGesture() {
+  try {
+    if (!audioContext || audioContext.state === 'closed') {
+      audioContext = new AudioContext();
+    }
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+  } catch {
+    // Ignore — getAudioContext will retry later
+  }
+  // Clean up listeners once the context is running
+  if (audioContext?.state === 'running') {
+    const events = ['click', 'keydown', 'touchstart', 'pointerdown'];
+    for (const evt of events) {
+      document.removeEventListener(evt, initOnUserGesture);
+    }
+  }
+}
+
+// Register listeners at module load — first interaction warms the context
+const gestureEvents = ['click', 'keydown', 'touchstart', 'pointerdown'];
+for (const evt of gestureEvents) {
+  document.addEventListener(evt, initOnUserGesture, { capture: true });
+}
+
 function getAudioContext(): AudioContext | null {
   try {
     if (!audioContext || audioContext.state === 'closed') {

@@ -386,7 +386,7 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
   async getCompanyTeamMembers(companyId: string, search?: string): Promise<CompanyTeamMemberForInvite[]> {
     let query = supabase
       .from('team_members')
-      .select('id, name, email, department_id, gauge_status, archetype')
+      .select('id, name, email, phone, department_id, gauge_status, archetype')
       .eq('company_id', companyId)
       .eq('is_active', true)
       .order('name');
@@ -402,6 +402,7 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
       id: row.id as string,
       name: row.name as string,
       email: row.email as string,
+      phone: (row.phone as string) ?? undefined,
       departmentId: row.department_id as string | undefined,
       gaugeStatus: (row.gauge_status as string) ?? 'unmapped',
       archetype: row.archetype as string | undefined,
