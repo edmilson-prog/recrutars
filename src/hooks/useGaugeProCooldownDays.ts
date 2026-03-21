@@ -17,7 +17,7 @@ export function useGaugeProCooldownDays(): number {
         .eq('panel', 'admin')
         .eq('category', 'ai')
         .is('entity_id', null)
-        .single();
+        .maybeSingle();
 
       if (!row?.values) return GAUGE_PRO_CONFIG.cooldownDays;
 
