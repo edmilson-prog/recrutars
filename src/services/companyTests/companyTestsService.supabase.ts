@@ -617,7 +617,12 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
       query = query.in('status', filters.status);
     }
     if (filters?.method && filters.method.length > 0) {
-      query = query.in('method', filters.method);
+      // Use delivery_channel for filtering (more accurate than method)
+      const channelMap: Record<string, string> = {
+        email: 'email', public_link: 'link', internal: 'email', whatsapp: 'whatsapp', link: 'link',
+      };
+      const channels = filters.method.map(m => channelMap[m] ?? m);
+      query = query.in('delivery_channel', channels);
     }
     if (filters?.search) {
       query = query.or(`candidate_name.ilike.%${filters.search}%,candidate_email.ilike.%${filters.search}%`);
@@ -667,6 +672,7 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
       inviteOrigin: row.invite_origin,
       departmentId: row.department_id,
       testName: row.company_tests?.name ?? '',
+      deliveryChannel: row.delivery_channel,
     }));
 
     return { invitations, total: count ?? 0 };

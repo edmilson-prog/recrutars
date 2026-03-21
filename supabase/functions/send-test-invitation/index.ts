@@ -300,6 +300,11 @@ Deno.serve(async (req: Request) => {
           else if (inv.method === "email") inviteOrigin = "invite_email";
           else if (inv.method === "internal") inviteOrigin = "invite_base";
 
+          // Determine delivery channel
+          const deliveryChannel = channel === "whatsapp" ? "whatsapp"
+            : inv.method === "public_link" ? "link"
+            : "email";
+
           return {
             test_id,
             candidate_id: inv.candidateId ?? null,
@@ -311,6 +316,7 @@ Deno.serve(async (req: Request) => {
             expires_at: expiresAt.toISOString(),
             sent_by: callerId,
             invite_origin: inviteOrigin,
+            delivery_channel: deliveryChannel,
           };
         });
 

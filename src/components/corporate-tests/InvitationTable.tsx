@@ -22,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, RefreshCw, XCircle, CalendarPlus, Pencil, Mail, Link2, MessageSquare, ArrowUpDown, Send, Eye } from 'lucide-react';
+import { MoreHorizontal, RefreshCw, XCircle, CalendarPlus, Pencil, Mail, Link2, MessageSquare, MessageCircle, ArrowUpDown, Send, Eye } from 'lucide-react';
 import { InvitationStatusBadge } from './InvitationStatusBadge';
 import { InvitationProgressDots } from './InvitationProgressDots';
 import type { TestInvitation, InvitationManagerFilters } from '@/types/companyTest';
@@ -47,6 +47,18 @@ const methodIcons: Record<string, typeof Mail> = {
   email: Mail,
   internal: MessageSquare,
   public_link: Link2,
+};
+
+const channelIcons: Record<string, typeof Mail> = {
+  email: Mail,
+  whatsapp: MessageCircle,
+  link: Link2,
+};
+
+const channelLabels: Record<string, string> = {
+  email: 'Email',
+  whatsapp: 'WhatsApp',
+  link: 'Link',
 };
 
 const methodLabels: Record<string, string> = {
@@ -184,7 +196,8 @@ export function InvitationTable({
           </TableHeader>
           <TableBody>
             {invitations.map((inv) => {
-              const MethodIcon = methodIcons[inv.method] ?? Mail;
+              const ChannelIcon = inv.deliveryChannel ? (channelIcons[inv.deliveryChannel] ?? Mail) : (methodIcons[inv.method] ?? Mail);
+              const channelTitle = inv.deliveryChannel ? (channelLabels[inv.deliveryChannel] ?? inv.deliveryChannel) : (methodLabels[inv.method] ?? inv.method);
               const remaining = getTimeRemaining(inv.expiresAt);
 
               return (
@@ -213,8 +226,8 @@ export function InvitationTable({
                     <InvitationStatusBadge status={inv.status} />
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1" title={methodLabels[inv.method]}>
-                      <MethodIcon className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center gap-1" title={channelTitle}>
+                      <ChannelIcon className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </TableCell>
                   <TableCell>
@@ -285,7 +298,8 @@ export function InvitationTable({
       {/* Mobile Card List */}
       <div className="md:hidden space-y-2">
         {invitations.map((inv) => {
-          const MethodIcon = methodIcons[inv.method] ?? Mail;
+          const MobileChannelIcon = inv.deliveryChannel ? (channelIcons[inv.deliveryChannel] ?? Mail) : (methodIcons[inv.method] ?? Mail);
+          const mobileChannelLabel = inv.deliveryChannel ? (channelLabels[inv.deliveryChannel] ?? inv.deliveryChannel) : (methodLabels[inv.method] ?? inv.method);
           const remaining = getTimeRemaining(inv.expiresAt);
 
           return (
@@ -312,8 +326,8 @@ export function InvitationTable({
               <div className="flex items-center justify-between mt-2 pl-8">
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <MethodIcon className="h-3 w-3" />
-                    {methodLabels[inv.method]}
+                    <MobileChannelIcon className="h-3 w-3" />
+                    {mobileChannelLabel}
                   </span>
                   <span>{formatRelativeDate(inv.sentAt)}</span>
                   <span className={remaining.urgent ? 'text-red-500' : ''}>

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Search, SlidersHorizontal, X, Check, Mail, MessageSquare, Link2, Globe } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Check, Mail, MessageSquare, MessageCircle, Link2, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { InvitationManagerFilters as FiltersType, InvitationStatus, InvitationMethod } from '@/types/companyTest';
 import { invitationStatusConfig } from './InvitationStatusBadge';
@@ -145,6 +145,10 @@ export function InvitationManagerFilters({ filters, onChange }: InvitationManage
           <ToggleGroupItem value="internal" aria-label="Da base" className="text-xs px-3">
             <MessageSquare className="h-3 w-3 mr-1" />
             Base
+          </ToggleGroupItem>
+          <ToggleGroupItem value="whatsapp" aria-label="WhatsApp" className="text-xs px-3">
+            <MessageCircle className="h-3 w-3 mr-1" />
+            WhatsApp
           </ToggleGroupItem>
           <ToggleGroupItem value="public_link" aria-label="Link" className="text-xs px-3">
             <Link2 className="h-3 w-3 mr-1" />

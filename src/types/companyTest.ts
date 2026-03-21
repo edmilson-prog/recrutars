@@ -67,6 +67,7 @@ export interface TestInvitation {
   inviteOrigin?: string;
   departmentId?: string;
   testName?: string;
+  deliveryChannel?: 'email' | 'whatsapp' | 'link';
 }
 
 // --- Create Invitation Input ---
