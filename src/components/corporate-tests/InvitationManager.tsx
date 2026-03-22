@@ -21,6 +21,7 @@ import {
   useBulkResendInvitations,
 } from '@/hooks/useInvitationManagerQuery';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRealtimeInvitations } from '@/hooks/useRealtimeInvitations';
 import type { InvitationManagerFilters as FiltersType } from '@/types/companyTest';
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -28,6 +29,9 @@ const DEFAULT_PAGE_SIZE = 25;
 export function InvitationManager() {
   const { currentCompany } = useAuth();
   const companyId = currentCompany?.id;
+
+  // Realtime: atualiza lista/KPIs/timeline quando status muda no banco
+  useRealtimeInvitations(companyId);
 
   // State
   const [filters, setFilters] = useState<FiltersType>({

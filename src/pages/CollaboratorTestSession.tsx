@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 
-import { ForceLightTheme } from '@/components/theme/ForceLightTheme';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { TestCompletionActivation } from '@/components/invite/TestCompletionActivation';
 
 // Gauge-Pro components (reused)
@@ -37,6 +37,7 @@ import { ScenarioIntro } from '@/components/gaugePro/ScenarioIntro';
 import { ScenarioCard } from '@/components/gaugePro/ScenarioCard';
 import { AnalyzingScreen } from '@/components/gaugePro/AnalyzingScreen';
 import { BlockCompleteDivider } from '@/components/gaugePro/BlockCompleteDivider';
+import { TestCompletionSummary } from '@/components/gaugePro/TestCompletionSummary';
 
 import { useGaugeProAssessment } from '@/hooks/useGaugeProAssessment';
 import { useAuth } from '@/contexts/AuthContext';
@@ -538,22 +539,35 @@ export default function CollaboratorTestSession() {
     </div>
   );
 
-  const renderHeader = () => (
-    <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-        <img
-          src="/images/logo-horizontal.png"
-          alt="RecrutaRS"
-          className="h-8 w-auto"
-        />
-        {companyName && (
-          <span className="text-sm text-muted-foreground hidden sm:inline">
-            {companyName}
-          </span>
-        )}
-      </div>
-    </header>
-  );
+  const renderHeader = () => {
+    const displayName = formName || invitation?.candidateName;
+    return (
+      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              src="/images/logo-horizontal.png"
+              alt="RecrutaRS"
+              className="h-8 w-auto"
+            />
+            {displayName && (
+              <span className="text-sm font-medium text-foreground truncate max-w-[200px] hidden sm:inline">
+                {displayName}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            {companyName && (
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                {companyName}
+              </span>
+            )}
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+    );
+  };
 
   const renderLoading = () => (
     <div className="text-center py-16">
@@ -913,44 +927,29 @@ export default function CollaboratorTestSession() {
   };
 
   const renderComplete = () => {
-    // Unified flow (PRD-088): simplified completion — no account activation
     const isUnifiedFlow = !candidateId && !!invitation?.teamMemberId;
 
-    if (isUnifiedFlow) {
-      return (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-lg mx-auto text-center space-y-6 py-12"
-        >
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-            <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold">Teste Concluido!</h2>
-          <p className="text-muted-foreground">
-            Obrigado, {formName || invitation?.candidateName}! Seus resultados foram registrados com sucesso.
-          </p>
-          {companyName && (
-            <p className="text-sm text-muted-foreground">
-              A equipe de {companyName} podera visualizar seu perfil comportamental.
-            </p>
-          )}
-        </motion.div>
-      );
-    }
-
-    // Legacy flow: full activation screen
     return (
-      <TestCompletionActivation
-        isNewUser={isNewUser}
+      <TestCompletionSummary
         candidateName={formName || invitation?.candidateName || ''}
         candidateEmail={formEmail || invitation?.candidateEmail || ''}
         companyName={companyName}
-        userId={user?.id}
-        invitationId={invitationId || undefined}
-      />
+        elapsedSeconds={gaugePro.elapsedSeconds}
+        isAnalysisReady={!!gaugePro.result}
+        onViewResult={!isUnifiedFlow ? () => navigate('/candidato/gauge-pro/resultado', { state: { analysisGenerating: !gaugePro.result } }) : undefined}
+      >
+        {/* Legacy flow: account activation section */}
+        {!isUnifiedFlow && (
+          <TestCompletionActivation
+            isNewUser={isNewUser}
+            candidateName={formName || invitation?.candidateName || ''}
+            candidateEmail={formEmail || invitation?.candidateEmail || ''}
+            companyName={companyName}
+            userId={user?.id}
+            invitationId={invitationId || undefined}
+          />
+        )}
+      </TestCompletionSummary>
     );
   };
 
@@ -969,7 +968,6 @@ export default function CollaboratorTestSession() {
 
   return (
     <>
-      <ForceLightTheme />
       <div className="min-h-screen bg-background">
         {renderHeader()}
         <main className="max-w-4xl mx-auto px-4 py-8">

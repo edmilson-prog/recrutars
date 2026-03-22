@@ -20,14 +20,14 @@ export function BlockCompleteDivider({
       <div className="text-center space-y-5 max-w-sm mx-auto">
         {/* Checkmark icon */}
         <div className="flex justify-center">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
-            <CheckCircle2 className="w-9 h-9 text-emerald-500" />
+          <div className="w-16 h-16 rounded-full bg-test-complete-bg flex items-center justify-center">
+            <CheckCircle2 className="w-9 h-9 text-test-complete-border" />
           </div>
         </div>
 
         {/* Title */}
         <div className="space-y-1">
-          <h2 className="text-xl font-bold text-emerald-400">Bloco Completo!</h2>
+          <h2 className="text-xl font-bold text-test-complete-text">Bloco Completo!</h2>
           <p className="text-sm text-muted-foreground">
             Dimensão: {DIMENSION_SHORT_NAMES[completedDimension]}
           </p>
@@ -41,7 +41,7 @@ export function BlockCompleteDivider({
           <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
             Próximo bloco
           </p>
-          <p className="text-lg font-semibold text-cyan-400">
+          <p className="text-lg font-semibold text-test-self-icon">
             {DIMENSION_SHORT_NAMES[nextDimension]}
           </p>
         </div>
@@ -53,7 +53,7 @@ export function BlockCompleteDivider({
               key={i}
               className={`w-2.5 h-2.5 rounded-full transition-all ${
                 i < completedBlockNumber
-                  ? 'bg-emerald-400'
+                  ? 'bg-test-complete-border'
                   : 'bg-muted'
               }`}
             />
