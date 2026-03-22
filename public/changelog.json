@@ -281,7 +281,89 @@
             "Modal de agendamento de reteste com frequencia configuravel (3/6/9/12 meses)",
             "Badge visual de reteste pendente no perfil do colaborador",
             "RLS append-only em test_audit_logs e test_credit_transactions (sem UPDATE/DELETE)"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "Campo viewed_at preenchido automaticamente na acao get_invitation da edge function quando o colaborador acessa o link de teste pela primeira vez.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "1": {
+              "description": "Campos invitation_id em gauge_pro_results e result_id em ai_analyses criam cadeia rastreavel convite→assessment→resultado→IA. View vw_test_tracking_chain unifica consulta.",
+              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "routes": []
+            },
+            "2": {
+              "description": "View PostgreSQL vw_test_tracking_chain faz JOIN entre test_invitations, gauge_pro_assessments, gauge_pro_results e ai_analyses para visualizar cadeia completa em uma query.",
+              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "routes": []
+            },
+            "3": {
+              "description": "RPC get_test_metrics retorna 14 metricas agregadas (total enviados, taxa conclusao, tempo medio, abandonos, etc.) filtraveis por empresa e periodo.",
+              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "routes": []
+            },
+            "4": {
+              "description": "RPC detect_abandoned_invitations identifica convites com status 'started' ha mais de 24h e os marca como 'abandoned'. Executavel on-demand sem dependencia de pg_cron.",
+              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "routes": []
+            },
+            "5": {
+              "description": "RPC consume_test_credit chamado automaticamente ao enviar convite. Debita 1 credito da empresa e registra transacao em test_credit_transactions.",
+              "files": ["supabase/functions/send-test-invitation/index.ts", "sql/migrations/064_tracking_observability.sql"],
+              "routes": ["/empresa/testes"]
+            },
+            "6": {
+              "description": "Ao cancelar convite pendente, credito e automaticamente estornado via RPC refund_test_credit. Transacao de estorno registrada com referencia ao debito original.",
+              "files": ["supabase/functions/send-test-invitation/index.ts"],
+              "routes": ["/empresa/testes"]
+            },
+            "7": {
+              "description": "Verificacao de saldo antes do envio no edge function. Retorna erro 402 com payload insufficientCredits quando empresa nao tem creditos disponiveis.",
+              "files": ["supabase/functions/send-test-invitation/index.ts"],
+              "routes": ["/empresa/testes"]
+            },
+            "8": {
+              "description": "Helper auditLog() fire-and-forget registra 16 tipos de evento (invite_sent, invite_viewed, test_started, test_completed, credit_consumed, etc.) em test_audit_logs sem bloquear o fluxo principal.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts", "supabase/functions/send-test-invitation/index.ts"],
+              "routes": []
+            },
+            "9": {
+              "description": "Notificacao inserida na tabela notifications para todos os admins da empresa (via company_users role='admin') quando um colaborador conclui o teste Gauge-Pro.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": []
+            },
+            "10": {
+              "description": "Notificacao WhatsApp opcional enviada ao owner da empresa via Evolution API quando colaborador conclui teste. Opt-in configuravel nas settings da empresa.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": []
+            },
+            "11": {
+              "description": "Hub de Testes expandido com 9 KPIs: total enviados, taxa conclusao, tempo medio, abandonos, colaboradores mapeados, creditos disponiveis, retestes pendentes, taxa visualizacao, taxa inicio.",
+              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "12": {
+              "description": "Funil visual de 5 etapas (Convidados→Visualizados→Iniciados→Concluidos→Analisados) com percentuais de conversao entre cada etapa e barras proporcionais.",
+              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "13": {
+              "description": "Card CreditSummaryCard exibe saldo de creditos, creditos consumidos no periodo, e link para historico de transacoes.",
+              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "14": {
+              "description": "RetestScheduleModal permite agendar reteste com frequencia configuravel (3, 6, 9 ou 12 meses). Badge de reteste pendente exibido no perfil do colaborador quando data esta proxima.",
+              "files": ["src/components/team-management/RetestScheduleModal.tsx", "src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "15": {
+              "description": "Policies RLS em test_audit_logs e test_credit_transactions permitem apenas SELECT e INSERT. UPDATE e DELETE bloqueados para garantir integridade do historico.",
+              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "routes": []
+            }
+          }
         },
         {
           "type": "changed",
@@ -291,14 +373,53 @@
             "Acao cancel em send-test-invitation agora le convite antes do update para verificar status original",
             "Activity Feed no Hub suporta novos tipos de evento (invite_viewed, test_started, credit_consumed etc.)",
             "PeriodFilter inclui opcao 'Todos' para visualizar historico completo"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "Todas as 5 acoes da edge function (identify, activate, send_activation_email, mark_started, mark_completed) agora registram eventos de auditoria via helper auditLog().",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": []
+            },
+            "1": {
+              "description": "Fluxo de envio chama consume_test_credit apos criar convite. Fluxo de cancelamento chama refund_test_credit antes de atualizar status. Ambos registram transacoes.",
+              "files": ["supabase/functions/send-test-invitation/index.ts"],
+              "routes": ["/empresa/testes"]
+            },
+            "2": {
+              "description": "Acao cancel agora faz SELECT do convite antes do UPDATE para verificar se status original permite cancelamento (apenas 'sent' e 'viewed'). Previne cancelamento de testes ja iniciados.",
+              "files": ["supabase/functions/send-test-invitation/index.ts"],
+              "routes": ["/empresa/testes"]
+            },
+            "3": {
+              "description": "Activity Feed no Hub processa novos tipos de evento do audit log: invite_viewed, test_started, test_completed, credit_consumed, credit_refunded, com icones e labels especificos.",
+              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "4": {
+              "description": "PeriodFilter recebe opcao 'Todos' (sem filtro de data) para permitir visualizacao do historico completo de atividades e metricas desde o inicio.",
+              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
+              "routes": ["/empresa/testes"]
+            }
+          }
         },
         {
           "type": "fixed",
           "items": [
             "Bug de escopo em mark_completed: assessmentRows referenciado fora do bloco if (corrigido com finalAssessmentId)",
             "Backfill de dados legados: vinculos assessment_id e invitation_id preenchidos para convites concluidos"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "Variavel assessmentRows era referenciada fora do bloco if onde era declarada, causando erro em runtime. Corrigido extraindo o ID para variavel finalAssessmentId no escopo correto.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": []
+            },
+            "1": {
+              "description": "Migration 065 faz backfill retroativo: vincula assessment_id em test_invitations concluidos e result_id em ai_analyses existentes usando JOINs por candidate_id e timestamps.",
+              "files": ["sql/migrations/065_backfill_tracking.sql"],
+              "routes": []
+            }
+          }
         }
       ]
     },
