@@ -28,72 +28,72 @@
           ],
           "details": {
             "0": {
-              "description": "Botao sol/lua no header sticky do teste permite alternar entre tema claro e escuro. Removido ForceLightTheme da sessao do colaborador.",
+              "description": "O colaborador agora pode alternar entre tema claro e escuro diretamente na tela do teste, usando o botao de sol/lua no topo da pagina.",
               "files": ["src/pages/CollaboratorTestSession.tsx", "src/components/theme/ThemeToggle.tsx"],
               "routes": ["/convite/teste/:token"]
             },
             "1": {
-              "description": "Nome do colaborador (formName ou candidateName) exibido ao lado do logo RecrutaRS no header, com truncate para nomes longos.",
+              "description": "O nome do colaborador aparece no topo da tela ao lado do logo durante todo o teste, facilitando a identificacao de quem esta respondendo.",
               "files": ["src/pages/CollaboratorTestSession.tsx"],
               "routes": ["/convite/teste/:token"]
             },
             "2": {
-              "description": "13 variaveis CSS --test-self-*, --test-others-*, --test-complete-* com valores distintos para light e dark mode, registradas em tailwind.config.ts como namespace test.*.",
+              "description": "As cores da tela de avaliacao (selecao de palavras, indicadores de progresso e conclusao) agora se adaptam automaticamente ao tema claro ou escuro.",
               "files": ["src/index.css", "tailwind.config.ts"],
               "routes": []
             },
             "3": {
-              "description": "Variaveis --gradient-primary, --gradient-hero, --gradient-card, --shadow-soft/medium/large/glow e --glass-* agora possuem variantes .dark com valores otimizados.",
+              "description": "Degradês, sombras e efeitos visuais da plataforma agora possuem versoes otimizadas para o modo escuro, com melhor contraste e legibilidade.",
               "files": ["src/index.css"],
               "routes": []
             },
             "4": {
-              "description": "Hook useRealtimeInvitations escuta postgres_changes em test_invitations e invalida invitationManagerKeys.all no React Query. Tabela adicionada a supabase_realtime.",
+              "description": "A lista de convites enviados agora atualiza automaticamente em tempo real. Quando um colaborador acessa, inicia ou conclui o teste, o status muda na tela sem precisar recarregar.",
               "files": ["src/hooks/useRealtimeInvitations.ts", "src/components/corporate-tests/InvitationManager.tsx"],
               "routes": ["/empresa/testes"]
             },
             "5": {
-              "description": "Componente TestCompletionSummary com 5 zonas: celebration header com glow, identity card, grid 2x3 com 6 stats animadas (count-up), timeline 3 passos, e acoes. Suporte light/dark.",
+              "description": "Ao concluir o teste, o colaborador ve uma tela redesenhada com resumo visual: tempo gasto, total de palavras e cenarios respondidos, dimensoes avaliadas, e os proximos passos do processo.",
               "files": ["src/components/gaugePro/TestCompletionSummary.tsx", "src/pages/CollaboratorTestSession.tsx"],
               "routes": ["/convite/teste/:token"]
             },
             "6": {
-              "description": "InvitationManager com tabela paginada, InvitationDetailSheet lateral, InvitationBulkActionBar para acoes em massa, e 4 KPIs (Total Enviados, Taxa Conclusao, Tempo Medio, Abandonos).",
+              "description": "Nova tela de gerenciamento de convites com lista completa, painel de detalhes ao clicar em um convite, acoes em massa (reenviar ou cancelar varios de uma vez) e 4 indicadores: total enviados, taxa de conclusao, tempo medio e abandonos.",
               "files": ["src/components/corporate-tests/InvitationManager.tsx", "src/components/corporate-tests/InvitationDetailSheet.tsx", "src/components/corporate-tests/InvitationTable.tsx", "src/components/corporate-tests/InvitationBulkActionBar.tsx", "src/components/corporate-tests/InvitationManagerKPIs.tsx"],
               "routes": ["/empresa/testes"]
             },
             "7": {
-              "description": "Chip de filtro WhatsApp nos InvitationManagerFilters permite filtrar convites enviados por canal WhatsApp.",
+              "description": "Novo filtro na lista de convites que permite ver apenas os convites enviados por WhatsApp, facilitando o acompanhamento por canal.",
               "files": ["src/components/corporate-tests/InvitationManagerFilters.tsx"],
               "routes": ["/empresa/testes"]
             },
             "8": {
-              "description": "WhatsAppConfirmModal exibido antes do envio com campo editavel de telefone e preview da mensagem que sera enviada.",
+              "description": "Antes de enviar um convite por WhatsApp, uma tela de confirmacao permite revisar e editar o numero de telefone e ver uma previa da mensagem que sera enviada.",
               "files": ["src/components/corporate-tests/WhatsAppConfirmModal.tsx"],
               "routes": ["/empresa/testes"]
             },
             "9": {
-              "description": "Tres checkboxes obrigatorios (Termos de Uso, Politica de Privacidade, LGPD) devem ser aceitos antes de iniciar a avaliacao Gauge-Pro.",
+              "description": "O colaborador precisa aceitar os Termos de Uso, Politica de Privacidade e LGPD antes de iniciar a avaliacao, garantindo conformidade com a lei de protecao de dados.",
               "files": ["src/pages/CollaboratorTestSession.tsx"],
               "routes": ["/convite/teste/:token"]
             },
             "10": {
-              "description": "Badge com saldo de creditos no header do CorporateTestsHub e indicador de custo proximo aos botoes de envio de convite.",
+              "description": "O saldo de creditos da empresa aparece no topo do Hub de Testes, e ao lado dos botoes de envio voce ve quantos creditos serao consumidos antes de confirmar.",
               "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
               "routes": ["/empresa/testes"]
             },
             "11": {
-              "description": "Botao na aba IA do perfil do colaborador para gerar analise retroativamente quando resultado existe mas analise IA nao foi gerada.",
+              "description": "Na aba de Inteligencia Artificial do perfil do colaborador, um botao permite gerar a analise comportamental mesmo para colaboradores que fizeram o teste antes dessa funcionalidade existir.",
               "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
               "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
             },
             "12": {
-              "description": "Nome do colaborador no InvitationDetailSheet e um link clicavel que abre o perfil do membro da equipe, quando team_member_id esta disponivel.",
+              "description": "Ao visualizar os detalhes de um convite, o nome do colaborador funciona como link direto para abrir o perfil completo dele na equipe.",
               "files": ["src/components/corporate-tests/InvitationDetailSheet.tsx"],
               "routes": ["/empresa/testes"]
             },
             "13": {
-              "description": "Cards de arquetipo comportamental (perfil primario, secundario, pontos fortes/desenvolvimento) movidos para aba dedicada 'Arquetipo' no perfil do colaborador.",
+              "description": "As informacoes de arquetipo comportamental (perfil primario, secundario, pontos fortes e areas de desenvolvimento) agora possuem sua propria aba no perfil do colaborador, mais organizada e facil de consultar.",
               "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
               "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
             }
@@ -114,47 +114,47 @@
           ],
           "details": {
             "0": {
-              "description": "Dark mode nao troca mais primary/secondary. Primary=navy (228 48% 50% dark, 33% light) e secondary=cyan (207 70% 58% dark, 53% light) em ambos os modos.",
+              "description": "A cor principal (azul marinho) e a cor de destaque (ciano) agora sao consistentes entre o modo claro e o modo escuro, evitando confusao visual ao trocar de tema.",
               "files": ["src/index.css"],
               "routes": []
             },
             "1": {
-              "description": "Accent agora usa tom sutil (210 40% 94% light, 222 40% 16% dark) para hovers e highlights, diferente do secondary vivido usado em botoes e links.",
+              "description": "Os destaques visuais ao passar o mouse agora usam um tom mais suave, diferente dos botoes e links que mantem a cor ciano vibrante para facilitar a distincao.",
               "files": ["src/index.css"],
               "routes": []
             },
             "2": {
-              "description": "Secondary-foreground usa texto escuro no cyan (207 100% 15%), destructive mais profundo (0 72% 51%), success (142 71% 35%), warning (38 92% 40%), muted-foreground (215 20% 43%).",
+              "description": "Textos sobre fundos coloridos (botoes, alertas de sucesso, avisos e erros) agora possuem contraste melhorado, facilitando a leitura para todos os usuarios, incluindo pessoas com baixa visao.",
               "files": ["src/index.css"],
               "routes": []
             },
             "3": {
-              "description": "Sidebar dark mode usa background 225 40% 12% (distinto do conteudo 222 47% 7%), com accent 225 40% 18% e foreground-muted 222 30% 60%.",
+              "description": "O menu lateral no modo escuro agora mantem a identidade visual azul marinho, distinguindo-se claramente da area de conteudo principal.",
               "files": ["src/index.css"],
               "routes": []
             },
             "4": {
-              "description": "Background dark reduzido para 7%, card aumentado para 12%, muted para 16%, borders para 22%. Cria hierarquia visual clara de 3 niveis.",
+              "description": "No modo escuro, os diferentes niveis de conteudo (fundo, cartoes e areas secundarias) possuem tonalidades distintas, criando uma hierarquia visual mais clara e organizada.",
               "files": ["src/index.css"],
               "routes": []
             },
             "5": {
-              "description": "WordGrid, GaugeProIntro, Part1Complete, ScenarioCard, ScenarioIntro, BlockCompleteDivider e AnalyzingScreen agora usam variaveis CSS semanticas em vez de cores Tailwind hardcoded.",
+              "description": "Todas as telas do teste comportamental (selecao de palavras, introducao, cenarios, progresso e analise) agora se adaptam corretamente ao modo claro e escuro.",
               "files": ["src/components/gaugePro/WordGrid.tsx", "src/components/gaugePro/GaugeProIntro.tsx", "src/components/gaugePro/Part1Complete.tsx", "src/components/gaugePro/ScenarioCard.tsx", "src/components/gaugePro/ScenarioIntro.tsx", "src/components/gaugePro/BlockCompleteDivider.tsx", "src/components/gaugePro/AnalyzingScreen.tsx"],
               "routes": ["/convite/teste/:token"]
             },
             "6": {
-              "description": "TestCompletionActivation agora renderiza apenas o formulario de senha/ativacao de conta. Header de sucesso, card de info e nota de compartilhamento movidos para TestCompletionSummary.",
+              "description": "A tela de conclusao do teste foi redesenhada com um resumo visual completo (estatisticas, proximos passos e informacoes do perfil), enquanto a ativacao de conta ficou mais simples e focada.",
               "files": ["src/components/invite/TestCompletionActivation.tsx", "src/components/gaugePro/TestCompletionSummary.tsx"],
               "routes": ["/convite/teste/:token"]
             },
             "7": {
-              "description": "InvitationDetailSheet com largura expandida para melhor leitura de metadados, timeline e historico de atividades.",
+              "description": "O painel lateral de detalhes do convite ficou mais largo para acomodar melhor as informacoes da jornada, historico de atividades e dados do colaborador.",
               "files": ["src/components/corporate-tests/InvitationDetailSheet.tsx"],
               "routes": ["/empresa/testes"]
             },
             "8": {
-              "description": "Aba Competencias reorganizada: fatores emocionais no topo, radar chart e indicadores de risco posicionados lado a lado.",
+              "description": "Na aba de competencias do perfil do colaborador, os fatores emocionais agora aparecem primeiro, e o grafico radar e os indicadores de risco ficam lado a lado para comparacao rapida.",
               "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
               "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
             }
@@ -180,72 +180,72 @@
           ],
           "details": {
             "0": {
-              "description": "Colaboradores sem candidateId agora exibem analise IA corretamente na aba IA do perfil, usando team_member_id como chave de busca.",
+              "description": "A analise de inteligencia artificial agora aparece corretamente na aba IA do perfil do colaborador, mesmo para aqueles cadastrados pelo fluxo de equipe.",
               "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
               "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
             },
             "1": {
-              "description": "Aba Respostas do perfil do colaborador agora carrega e exibe as respostas do Gauge-Pro (palavras e cenarios) e metricas de duracao usando team_member_id.",
+              "description": "As respostas do teste (palavras escolhidas e cenarios) e o tempo de duracao agora aparecem corretamente na aba Respostas do perfil do colaborador.",
               "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
               "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
             },
             "2": {
-              "description": "Respostas do teste (wordStepResponses e scenarioResponses) agora sao persistidas no banco para colaboradores no fluxo unificado via team_member_id.",
+              "description": "As respostas dos colaboradores durante o teste agora sao salvas corretamente no banco de dados, garantindo que nenhuma informacao seja perdida.",
               "files": ["src/pages/CollaboratorTestSession.tsx"],
               "routes": ["/convite/teste/:token"]
             },
             "3": {
-              "description": "Validacao de UUID aplicada ao candidateId antes de chamar servico de analise IA. IDs temporarios (temp, tm-xxx) nao geram mais erro 400 no Supabase.",
+              "description": "Corrigido um problema que gerava erro ao salvar a analise de inteligencia artificial para alguns colaboradores com identificadores temporarios.",
               "files": ["src/pages/CollaboratorTestSession.tsx"],
               "routes": ["/convite/teste/:token"]
             },
             "4": {
-              "description": "Frontend verifica saldo de creditos antes de chamar edge function de envio, exibindo InsufficientCreditsModal imediatamente sem roundtrip ao servidor.",
+              "description": "Ao tentar enviar convites sem creditos suficientes, o aviso de creditos insuficientes aparece imediatamente, sem esperar a resposta do servidor.",
               "files": ["src/components/corporate-tests/InvitePanelContainer.tsx"],
               "routes": ["/empresa/testes"]
             },
             "5": {
-              "description": "Erro insufficientCredits agora extraido de FunctionsHttpError.context e FunctionsHttpError.message para todas as variantes de resposta da edge function.",
+              "description": "Melhorada a deteccao de creditos insuficientes ao enviar convites, garantindo que a mensagem de aviso apareca em todos os cenarios possiveis.",
               "files": ["src/components/corporate-tests/InvitePanelContainer.tsx"],
               "routes": ["/empresa/testes"]
             },
             "6": {
-              "description": "Mascaras de CPF e telefone aplicadas corretamente ao carregar dados existentes do membro no formulario de edicao do TeamMemberProfile.",
+              "description": "Os campos de CPF e telefone agora exibem a formatacao correta (com pontos, tracos e parenteses) ao abrir o formulario de edicao de um membro da equipe.",
               "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
               "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
             },
             "7": {
-              "description": "Entradas duplicadas na aba IA removidas e badge 'Atual' corrigido para indicar apenas o teste mais recente do colaborador.",
+              "description": "Removidas entradas duplicadas na aba de IA e corrigido o indicador 'Atual' para mostrar apenas o teste mais recente do colaborador.",
               "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
               "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
             },
             "8": {
-              "description": "Timestamps startedAt e completedAt enviados corretamente ao salvar resultado do teste, permitindo calculo preciso de duracao.",
+              "description": "O tempo de duracao do teste agora e calculado corretamente, refletindo o periodo real entre o inicio e a conclusao da avaliacao.",
               "files": ["src/pages/CollaboratorTestSession.tsx"],
               "routes": ["/convite/teste/:token"]
             },
             "9": {
-              "description": "Botao aninhado dentro de outro botao em CompanyNotificationItem substituido por span para conformidade com HTML valido.",
+              "description": "Corrigido um problema visual nas notificacoes da empresa que poderia causar comportamento inesperado ao clicar em alguns itens.",
               "files": ["src/components/notifications/CompanyNotificationItem.tsx"],
               "routes": []
             },
             "10": {
-              "description": "Footer com informacoes de geracao (modelo, data, versao) adicionado ao card de analise IA do colaborador para rastreabilidade.",
+              "description": "O card de analise de IA do colaborador agora exibe informacoes sobre quando e como a analise foi gerada, para maior transparencia.",
               "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
               "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
             },
             "11": {
-              "description": "Canal WhatsApp habilitado para envio de convites de teste. Som de notificacao corrigido para tocar apenas uma vez por evento.",
+              "description": "O envio de convites por WhatsApp agora funciona corretamente, e o som de notificacao toca apenas uma vez por evento recebido.",
               "files": ["src/hooks/useRealtimeNotifications.ts"],
               "routes": ["/empresa/testes"]
             },
             "12": {
-              "description": "Query de system_settings para configuracao de IA agora usa maybeSingle() em vez de single() para prevenir erro 406 quando nenhuma config existe.",
+              "description": "Corrigido um erro que podia ocorrer ao carregar configuracoes de inteligencia artificial em empresas que ainda nao tinham definido suas preferencias.",
               "files": ["src/lib/aiAgent/settingsLoader.ts"],
               "routes": []
             },
             "13": {
-              "description": "Envio de convite via WhatsApp que falhava silenciosamente agora exibe toast de erro com detalhes da falha e permite reenvio.",
+              "description": "Quando o envio de um convite por WhatsApp falhava, o sistema nao mostrava nenhum aviso. Agora uma mensagem de erro clara aparece com opcao de tentar novamente.",
               "files": ["src/components/corporate-tests/WhatsAppConfirmModal.tsx"],
               "routes": ["/empresa/testes"]
             }
@@ -284,82 +284,82 @@
           ],
           "details": {
             "0": {
-              "description": "Campo viewed_at preenchido automaticamente na acao get_invitation da edge function quando o colaborador acessa o link de teste pela primeira vez.",
+              "description": "O sistema agora registra automaticamente quando um colaborador abre o link do teste pela primeira vez, permitindo acompanhar se o convite foi visualizado.",
               "files": ["supabase/functions/process-collaborator-invite/index.ts"],
               "routes": ["/convite/teste/:token"]
             },
             "1": {
-              "description": "Campos invitation_id em gauge_pro_results e result_id em ai_analyses criam cadeia rastreavel convite→assessment→resultado→IA. View vw_test_tracking_chain unifica consulta.",
+              "description": "Cada etapa do processo (convite, avaliacao, resultado e analise de IA) agora esta conectada, permitindo rastrear o caminho completo de cada colaborador.",
               "files": ["sql/migrations/064_tracking_observability.sql"],
               "routes": []
             },
             "2": {
-              "description": "View PostgreSQL vw_test_tracking_chain faz JOIN entre test_invitations, gauge_pro_assessments, gauge_pro_results e ai_analyses para visualizar cadeia completa em uma query.",
+              "description": "Uma consulta unificada permite visualizar toda a cadeia de um teste: desde o convite enviado ate a analise final de inteligencia artificial, em uma unica tela.",
               "files": ["sql/migrations/064_tracking_observability.sql"],
               "routes": []
             },
             "3": {
-              "description": "RPC get_test_metrics retorna 14 metricas agregadas (total enviados, taxa conclusao, tempo medio, abandonos, etc.) filtraveis por empresa e periodo.",
+              "description": "O sistema calcula automaticamente 14 indicadores de desempenho (total enviados, taxa de conclusao, tempo medio, abandonos, entre outros) por empresa e periodo.",
               "files": ["sql/migrations/064_tracking_observability.sql"],
               "routes": []
             },
             "4": {
-              "description": "RPC detect_abandoned_invitations identifica convites com status 'started' ha mais de 24h e os marca como 'abandoned'. Executavel on-demand sem dependencia de pg_cron.",
+              "description": "Testes iniciados ha mais de 24 horas sem conclusao sao detectados automaticamente e marcados como abandonados, facilitando o acompanhamento pela empresa.",
               "files": ["sql/migrations/064_tracking_observability.sql"],
               "routes": []
             },
             "5": {
-              "description": "RPC consume_test_credit chamado automaticamente ao enviar convite. Debita 1 credito da empresa e registra transacao em test_credit_transactions.",
+              "description": "Ao enviar um convite de teste, 1 credito e descontado automaticamente do saldo da empresa. A transacao fica registrada no historico para auditoria.",
               "files": ["supabase/functions/send-test-invitation/index.ts", "sql/migrations/064_tracking_observability.sql"],
               "routes": ["/empresa/testes"]
             },
             "6": {
-              "description": "Ao cancelar convite pendente, credito e automaticamente estornado via RPC refund_test_credit. Transacao de estorno registrada com referencia ao debito original.",
+              "description": "Ao cancelar um convite que ainda nao foi iniciado, o credito utilizado e devolvido automaticamente ao saldo da empresa.",
               "files": ["supabase/functions/send-test-invitation/index.ts"],
               "routes": ["/empresa/testes"]
             },
             "7": {
-              "description": "Verificacao de saldo antes do envio no edge function. Retorna erro 402 com payload insufficientCredits quando empresa nao tem creditos disponiveis.",
+              "description": "Se a empresa nao possui creditos suficientes, o envio de convites e bloqueado e uma mensagem clara informa quantos creditos sao necessarios.",
               "files": ["supabase/functions/send-test-invitation/index.ts"],
               "routes": ["/empresa/testes"]
             },
             "8": {
-              "description": "Helper auditLog() fire-and-forget registra 16 tipos de evento (invite_sent, invite_viewed, test_started, test_completed, credit_consumed, etc.) em test_audit_logs sem bloquear o fluxo principal.",
+              "description": "Todas as acoes do sistema (envio de convite, visualizacao, inicio do teste, conclusao, consumo de credito, etc.) sao registradas automaticamente em um historico de atividades para auditoria.",
               "files": ["supabase/functions/process-collaborator-invite/index.ts", "supabase/functions/send-test-invitation/index.ts"],
               "routes": []
             },
             "9": {
-              "description": "Notificacao inserida na tabela notifications para todos os admins da empresa (via company_users role='admin') quando um colaborador conclui o teste Gauge-Pro.",
+              "description": "Os administradores da empresa recebem uma notificacao automatica dentro da plataforma quando um colaborador conclui o teste comportamental.",
               "files": ["supabase/functions/process-collaborator-invite/index.ts"],
               "routes": []
             },
             "10": {
-              "description": "Notificacao WhatsApp opcional enviada ao owner da empresa via Evolution API quando colaborador conclui teste. Opt-in configuravel nas settings da empresa.",
+              "description": "Opcao para receber notificacao por WhatsApp quando um colaborador conclui o teste. Pode ser ativada ou desativada nas configuracoes da empresa.",
               "files": ["supabase/functions/process-collaborator-invite/index.ts"],
               "routes": []
             },
             "11": {
-              "description": "Hub de Testes expandido com 9 KPIs: total enviados, taxa conclusao, tempo medio, abandonos, colaboradores mapeados, creditos disponiveis, retestes pendentes, taxa visualizacao, taxa inicio.",
+              "description": "O Hub de Testes agora exibe 9 indicadores em destaque: total de convites enviados, taxa de conclusao, tempo medio, taxa de abandono, colaboradores mapeados, creditos disponiveis, retestes pendentes, entre outros.",
               "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
               "routes": ["/empresa/testes"]
             },
             "12": {
-              "description": "Funil visual de 5 etapas (Convidados→Visualizados→Iniciados→Concluidos→Analisados) com percentuais de conversao entre cada etapa e barras proporcionais.",
+              "description": "Novo funil visual de conversao com 5 etapas: Convidados, Visualizados, Iniciados, Concluidos e Analisados. Mostra o percentual de avanco entre cada etapa.",
               "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
               "routes": ["/empresa/testes"]
             },
             "13": {
-              "description": "Card CreditSummaryCard exibe saldo de creditos, creditos consumidos no periodo, e link para historico de transacoes.",
+              "description": "Card de resumo de creditos no Hub de Testes mostrando saldo disponivel, creditos consumidos no periodo selecionado e acesso rapido ao historico de transacoes.",
               "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
               "routes": ["/empresa/testes"]
             },
             "14": {
-              "description": "RetestScheduleModal permite agendar reteste com frequencia configuravel (3, 6, 9 ou 12 meses). Badge de reteste pendente exibido no perfil do colaborador quando data esta proxima.",
+              "description": "Possibilidade de agendar retestes com frequencia de 3, 6, 9 ou 12 meses. Um indicador visual aparece no perfil do colaborador quando a data de reteste esta proxima.",
               "files": ["src/components/team-management/RetestScheduleModal.tsx", "src/pages/empresa/TeamMemberProfile.tsx"],
               "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
             },
             "15": {
-              "description": "Policies RLS em test_audit_logs e test_credit_transactions permitem apenas SELECT e INSERT. UPDATE e DELETE bloqueados para garantir integridade do historico.",
+              "description": "O historico de atividades e de transacoes de creditos e protegido contra alteracoes e exclusoes, garantindo a integridade dos registros para fins de auditoria.",
               "files": ["sql/migrations/064_tracking_observability.sql"],
               "routes": []
             }
@@ -376,27 +376,27 @@
           ],
           "details": {
             "0": {
-              "description": "Todas as 5 acoes da edge function (identify, activate, send_activation_email, mark_started, mark_completed) agora registram eventos de auditoria via helper auditLog().",
+              "description": "Cada acao realizada no fluxo de convites (identificacao, ativacao, envio de email, inicio e conclusao do teste) agora e registrada automaticamente no historico de atividades.",
               "files": ["supabase/functions/process-collaborator-invite/index.ts"],
               "routes": []
             },
             "1": {
-              "description": "Fluxo de envio chama consume_test_credit apos criar convite. Fluxo de cancelamento chama refund_test_credit antes de atualizar status. Ambos registram transacoes.",
+              "description": "O consumo e a devolucao de creditos agora fazem parte do fluxo de envio e cancelamento de convites, com todas as transacoes registradas no historico.",
               "files": ["supabase/functions/send-test-invitation/index.ts"],
               "routes": ["/empresa/testes"]
             },
             "2": {
-              "description": "Acao cancel agora faz SELECT do convite antes do UPDATE para verificar se status original permite cancelamento (apenas 'sent' e 'viewed'). Previne cancelamento de testes ja iniciados.",
+              "description": "Agora so e possivel cancelar convites que ainda nao foram iniciados pelo colaborador. Testes em andamento nao podem mais ser cancelados acidentalmente.",
               "files": ["supabase/functions/send-test-invitation/index.ts"],
               "routes": ["/empresa/testes"]
             },
             "3": {
-              "description": "Activity Feed no Hub processa novos tipos de evento do audit log: invite_viewed, test_started, test_completed, credit_consumed, credit_refunded, com icones e labels especificos.",
+              "description": "O feed de atividades no Hub de Testes agora mostra novos tipos de eventos: convite visualizado, teste iniciado, teste concluido, credito consumido e credito devolvido, cada um com seu proprio icone.",
               "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
               "routes": ["/empresa/testes"]
             },
             "4": {
-              "description": "PeriodFilter recebe opcao 'Todos' (sem filtro de data) para permitir visualizacao do historico completo de atividades e metricas desde o inicio.",
+              "description": "Adicionada opcao 'Todos' no filtro de periodo, permitindo visualizar o historico completo de atividades e metricas desde o inicio da utilizacao.",
               "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
               "routes": ["/empresa/testes"]
             }
@@ -410,12 +410,12 @@
           ],
           "details": {
             "0": {
-              "description": "Variavel assessmentRows era referenciada fora do bloco if onde era declarada, causando erro em runtime. Corrigido extraindo o ID para variavel finalAssessmentId no escopo correto.",
+              "description": "Corrigido um erro que podia impedir o registro correto dos resultados ao finalizar o teste em alguns cenarios especificos.",
               "files": ["supabase/functions/process-collaborator-invite/index.ts"],
               "routes": []
             },
             "1": {
-              "description": "Migration 065 faz backfill retroativo: vincula assessment_id em test_invitations concluidos e result_id em ai_analyses existentes usando JOINs por candidate_id e timestamps.",
+              "description": "Testes concluidos anteriormente que nao tinham vinculos com seus respectivos resultados e analises foram corrigidos e reconectados automaticamente.",
               "files": ["sql/migrations/065_backfill_tracking.sql"],
               "routes": []
             }
