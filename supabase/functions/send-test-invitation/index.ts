@@ -220,8 +220,8 @@ Deno.serve(async (req: Request) => {
     const body = await req.json();
     const { action } = body;
 
-    // Extract origin for building invitation links
-    const origin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/$/, "") || "";
+    // Extract origin for building invitation links (body.origin as fallback for environments where headers are stripped)
+    const origin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/$/, "") || body.origin || "";
 
     switch (action) {
       case "send_invitations": {
@@ -388,7 +388,15 @@ Deno.serve(async (req: Request) => {
         // WhatsApp delivery (when channel === 'whatsapp')
         let whatsappResults: { sent: number; failed: number; errors: string[] } | undefined;
 
-        if (channel === "whatsapp" && origin) {
+        if (channel === "whatsapp") {
+          if (!origin) {
+            console.error("[send_invitations] WhatsApp channel requested but origin URL is empty");
+            whatsappResults = {
+              sent: 0,
+              failed: (created ?? []).length,
+              errors: ["URL de origem nao detectada. Tente novamente."],
+            };
+          } else {
           const evolutionConfig = await getEvolutionConfig(adminClient);
 
           if (!evolutionConfig) {
@@ -451,6 +459,7 @@ Deno.serve(async (req: Request) => {
             }
 
             console.log(`[send_invitations] WhatsApp results: sent=${whatsappResults.sent}, failed=${whatsappResults.failed}`);
+          }
           }
         }
 

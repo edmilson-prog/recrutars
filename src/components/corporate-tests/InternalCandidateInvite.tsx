@@ -25,12 +25,13 @@ import {
   InsufficientCreditsError,
 } from '@/hooks/useCompanyTestsQuery';
 import { InsufficientCreditsModal } from '@/components/billing/InsufficientCreditsModal';
+import { WhatsAppConfirmModal } from '@/components/corporate-tests/WhatsAppConfirmModal';
 import { useDepartments } from '@/hooks/useTeamsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import type { TargetAudience, InvitationMethod } from '@/types/companyTest';
+import type { TargetAudience, InvitationMethod, CompanyTeamMemberForInvite } from '@/types/companyTest';
 
 interface InternalCandidateInviteProps {
   testId: string;
@@ -73,6 +74,7 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
   const [selectedChannel, setSelectedChannel] = useState<InvitationMethod>('public_link');
   const [generatedLinks, setGeneratedLinks] = useState<GeneratedLink[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [whatsAppConfirmOpen, setWhatsAppConfirmOpen] = useState(false);
 
   // Candidate mode (default)
   const { data: candidates, isLoading: candidatesLoading } = useCompanyCandidates(
@@ -136,6 +138,13 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
     setSendStep('select');
   };
 
+  // Members eligible for sending (after duplicate filtering)
+  const getNewMembers = () => {
+    if (!isCollaborator || !teamMembers) return [];
+    const selectedMembers = teamMembers.filter(m => selected.has(m.id));
+    return selectedMembers.filter(m => !membersWithActiveInvite.has(m.id));
+  };
+
   const handleConfirmSend = async () => {
     if (selected.size === 0) return;
 
@@ -162,6 +171,12 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
 
         if (newMembers.length === 0) {
           toast.warning('Todos os colaboradores selecionados ja possuem convite ativo para este teste.');
+          return;
+        }
+
+        // WhatsApp channel: open confirmation modal instead of sending directly
+        if (selectedChannel === 'internal') {
+          setWhatsAppConfirmOpen(true);
           return;
         }
 
@@ -250,6 +265,35 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
   // For candidate mode, send directly (no channel step)
   const handleSendDirect = async () => {
     await handleConfirmSend();
+  };
+
+  // WhatsApp modal confirmation handler
+  const handleWhatsAppConfirm = async (confirmedMembers: CompanyTeamMemberForInvite[]) => {
+    try {
+      await sendInvitations.mutateAsync({
+        testId,
+        invitations: confirmedMembers.map(m => ({
+          teamMemberId: m.id,
+          candidateName: m.name,
+          candidateEmail: m.email,
+          method: 'internal' as const,
+        })),
+        channel: 'whatsapp',
+      });
+
+      setWhatsAppConfirmOpen(false);
+      setSelected(new Set());
+      setSendStep('select');
+    } catch (err) {
+      if (err instanceof InsufficientCreditsError) {
+        setCreditBalance(err.available);
+        setWhatsAppConfirmOpen(false);
+        setInsufficientCreditsOpen(true);
+        return;
+      }
+      const msg = err instanceof Error ? err.message : 'Erro ao enviar convites.';
+      toast.error(`Erro ao enviar convites: ${msg}`);
+    }
   };
 
   // ─── Links Display Step (after Link Unico send) ───
@@ -401,6 +445,14 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
           open={insufficientCreditsOpen}
           onOpenChange={setInsufficientCreditsOpen}
           balance={creditBalance}
+        />
+        <WhatsAppConfirmModal
+          open={whatsAppConfirmOpen}
+          onOpenChange={setWhatsAppConfirmOpen}
+          members={getNewMembers()}
+          creditCost={selected.size}
+          isPending={sendInvitations.isPending}
+          onConfirm={handleWhatsAppConfirm}
         />
       </div>
     );

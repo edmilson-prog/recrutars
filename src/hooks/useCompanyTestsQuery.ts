@@ -250,13 +250,13 @@ export function useSendTestInvitations() {
   return useMutation({
     mutationFn: async ({ testId, invitations, channel }: { testId: string; invitations: CreateInvitationInput[]; channel?: string }) => {
       const { data, error } = await supabase.functions.invoke('send-test-invitation', {
-        body: { action: 'send_invitations', test_id: testId, invitations, channel },
+        body: { action: 'send_invitations', test_id: testId, invitations, channel, origin: window.location.origin },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return { invitations: data.invitations as TestInvitation[], whatsappResults: data.whatsappResults };
     },
-    onSuccess: (result, { testId }) => {
+    onSuccess: (result, { testId, channel }) => {
       const invitations = result.invitations;
       const wp = result.whatsappResults;
       queryClient.invalidateQueries({ queryKey: companyTestKeys.invitations(testId) });
@@ -271,6 +271,12 @@ export function useSendTestInvitations() {
         toast({
           title: 'Convites enviados parcialmente',
           description: `${wp.sent} enviado${wp.sent > 1 ? 's' : ''} via WhatsApp, ${wp.failed} falhou.`,
+        });
+      } else if (channel === 'whatsapp' && !wp) {
+        toast({
+          title: 'Erro no envio WhatsApp',
+          description: 'Convites criados, mas o envio via WhatsApp falhou silenciosamente. Verifique as configuracoes.',
+          variant: 'destructive',
         });
       } else {
         toast({
