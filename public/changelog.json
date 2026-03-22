@@ -25,7 +25,79 @@
             "Botao 'Gerar Analise IA' para geracao retroativa de analise em colaboradores sem resultado",
             "Link para perfil do membro da equipe no detail sheet do convite",
             "Aba separada para cards de arquetipo no perfil do colaborador"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "Botao sol/lua no header sticky do teste permite alternar entre tema claro e escuro. Removido ForceLightTheme da sessao do colaborador.",
+              "files": ["src/pages/CollaboratorTestSession.tsx", "src/components/theme/ThemeToggle.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "1": {
+              "description": "Nome do colaborador (formName ou candidateName) exibido ao lado do logo RecrutaRS no header, com truncate para nomes longos.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "2": {
+              "description": "13 variaveis CSS --test-self-*, --test-others-*, --test-complete-* com valores distintos para light e dark mode, registradas em tailwind.config.ts como namespace test.*.",
+              "files": ["src/index.css", "tailwind.config.ts"],
+              "routes": []
+            },
+            "3": {
+              "description": "Variaveis --gradient-primary, --gradient-hero, --gradient-card, --shadow-soft/medium/large/glow e --glass-* agora possuem variantes .dark com valores otimizados.",
+              "files": ["src/index.css"],
+              "routes": []
+            },
+            "4": {
+              "description": "Hook useRealtimeInvitations escuta postgres_changes em test_invitations e invalida invitationManagerKeys.all no React Query. Tabela adicionada a supabase_realtime.",
+              "files": ["src/hooks/useRealtimeInvitations.ts", "src/components/corporate-tests/InvitationManager.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "5": {
+              "description": "Componente TestCompletionSummary com 5 zonas: celebration header com glow, identity card, grid 2x3 com 6 stats animadas (count-up), timeline 3 passos, e acoes. Suporte light/dark.",
+              "files": ["src/components/gaugePro/TestCompletionSummary.tsx", "src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "6": {
+              "description": "InvitationManager com tabela paginada, InvitationDetailSheet lateral, InvitationBulkActionBar para acoes em massa, e 4 KPIs (Total Enviados, Taxa Conclusao, Tempo Medio, Abandonos).",
+              "files": ["src/components/corporate-tests/InvitationManager.tsx", "src/components/corporate-tests/InvitationDetailSheet.tsx", "src/components/corporate-tests/InvitationTable.tsx", "src/components/corporate-tests/InvitationBulkActionBar.tsx", "src/components/corporate-tests/InvitationManagerKPIs.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "7": {
+              "description": "Chip de filtro WhatsApp nos InvitationManagerFilters permite filtrar convites enviados por canal WhatsApp.",
+              "files": ["src/components/corporate-tests/InvitationManagerFilters.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "8": {
+              "description": "WhatsAppConfirmModal exibido antes do envio com campo editavel de telefone e preview da mensagem que sera enviada.",
+              "files": ["src/components/corporate-tests/WhatsAppConfirmModal.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "9": {
+              "description": "Tres checkboxes obrigatorios (Termos de Uso, Politica de Privacidade, LGPD) devem ser aceitos antes de iniciar a avaliacao Gauge-Pro.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "10": {
+              "description": "Badge com saldo de creditos no header do CorporateTestsHub e indicador de custo proximo aos botoes de envio de convite.",
+              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "11": {
+              "description": "Botao na aba IA do perfil do colaborador para gerar analise retroativamente quando resultado existe mas analise IA nao foi gerada.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "12": {
+              "description": "Nome do colaborador no InvitationDetailSheet e um link clicavel que abre o perfil do membro da equipe, quando team_member_id esta disponivel.",
+              "files": ["src/components/corporate-tests/InvitationDetailSheet.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "13": {
+              "description": "Cards de arquetipo comportamental (perfil primario, secundario, pontos fortes/desenvolvimento) movidos para aba dedicada 'Arquetipo' no perfil do colaborador.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            }
+          }
         },
         {
           "type": "changed",
@@ -39,7 +111,54 @@
             "TestCompletionActivation simplificado para formulario de ativacao apenas (header movido para TestCompletionSummary)",
             "Detail sheet do convite com largura expandida e secoes organizadas",
             "Reordenacao da aba Competencias: fatores emocionais primeiro, radar + risco lado a lado"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "Dark mode nao troca mais primary/secondary. Primary=navy (228 48% 50% dark, 33% light) e secondary=cyan (207 70% 58% dark, 53% light) em ambos os modos.",
+              "files": ["src/index.css"],
+              "routes": []
+            },
+            "1": {
+              "description": "Accent agora usa tom sutil (210 40% 94% light, 222 40% 16% dark) para hovers e highlights, diferente do secondary vivido usado em botoes e links.",
+              "files": ["src/index.css"],
+              "routes": []
+            },
+            "2": {
+              "description": "Secondary-foreground usa texto escuro no cyan (207 100% 15%), destructive mais profundo (0 72% 51%), success (142 71% 35%), warning (38 92% 40%), muted-foreground (215 20% 43%).",
+              "files": ["src/index.css"],
+              "routes": []
+            },
+            "3": {
+              "description": "Sidebar dark mode usa background 225 40% 12% (distinto do conteudo 222 47% 7%), com accent 225 40% 18% e foreground-muted 222 30% 60%.",
+              "files": ["src/index.css"],
+              "routes": []
+            },
+            "4": {
+              "description": "Background dark reduzido para 7%, card aumentado para 12%, muted para 16%, borders para 22%. Cria hierarquia visual clara de 3 niveis.",
+              "files": ["src/index.css"],
+              "routes": []
+            },
+            "5": {
+              "description": "WordGrid, GaugeProIntro, Part1Complete, ScenarioCard, ScenarioIntro, BlockCompleteDivider e AnalyzingScreen agora usam variaveis CSS semanticas em vez de cores Tailwind hardcoded.",
+              "files": ["src/components/gaugePro/WordGrid.tsx", "src/components/gaugePro/GaugeProIntro.tsx", "src/components/gaugePro/Part1Complete.tsx", "src/components/gaugePro/ScenarioCard.tsx", "src/components/gaugePro/ScenarioIntro.tsx", "src/components/gaugePro/BlockCompleteDivider.tsx", "src/components/gaugePro/AnalyzingScreen.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "6": {
+              "description": "TestCompletionActivation agora renderiza apenas o formulario de senha/ativacao de conta. Header de sucesso, card de info e nota de compartilhamento movidos para TestCompletionSummary.",
+              "files": ["src/components/invite/TestCompletionActivation.tsx", "src/components/gaugePro/TestCompletionSummary.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "7": {
+              "description": "InvitationDetailSheet com largura expandida para melhor leitura de metadados, timeline e historico de atividades.",
+              "files": ["src/components/corporate-tests/InvitationDetailSheet.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "8": {
+              "description": "Aba Competencias reorganizada: fatores emocionais no topo, radar chart e indicadores de risco posicionados lado a lado.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            }
+          }
         },
         {
           "type": "fixed",
@@ -58,7 +177,79 @@
             "Entrega WhatsApp habilitada para convites de teste com correcao de som de notificacao",
             "Query maybeSingle() para system_settings AI previne erro 406",
             "Envio silencioso de convite WhatsApp corrigido (falha sem feedback)"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "Colaboradores sem candidateId agora exibem analise IA corretamente na aba IA do perfil, usando team_member_id como chave de busca.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "1": {
+              "description": "Aba Respostas do perfil do colaborador agora carrega e exibe as respostas do Gauge-Pro (palavras e cenarios) e metricas de duracao usando team_member_id.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "2": {
+              "description": "Respostas do teste (wordStepResponses e scenarioResponses) agora sao persistidas no banco para colaboradores no fluxo unificado via team_member_id.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "3": {
+              "description": "Validacao de UUID aplicada ao candidateId antes de chamar servico de analise IA. IDs temporarios (temp, tm-xxx) nao geram mais erro 400 no Supabase.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "4": {
+              "description": "Frontend verifica saldo de creditos antes de chamar edge function de envio, exibindo InsufficientCreditsModal imediatamente sem roundtrip ao servidor.",
+              "files": ["src/components/corporate-tests/InvitePanelContainer.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "5": {
+              "description": "Erro insufficientCredits agora extraido de FunctionsHttpError.context e FunctionsHttpError.message para todas as variantes de resposta da edge function.",
+              "files": ["src/components/corporate-tests/InvitePanelContainer.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "6": {
+              "description": "Mascaras de CPF e telefone aplicadas corretamente ao carregar dados existentes do membro no formulario de edicao do TeamMemberProfile.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "7": {
+              "description": "Entradas duplicadas na aba IA removidas e badge 'Atual' corrigido para indicar apenas o teste mais recente do colaborador.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "8": {
+              "description": "Timestamps startedAt e completedAt enviados corretamente ao salvar resultado do teste, permitindo calculo preciso de duracao.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "9": {
+              "description": "Botao aninhado dentro de outro botao em CompanyNotificationItem substituido por span para conformidade com HTML valido.",
+              "files": ["src/components/notifications/CompanyNotificationItem.tsx"],
+              "routes": []
+            },
+            "10": {
+              "description": "Footer com informacoes de geracao (modelo, data, versao) adicionado ao card de analise IA do colaborador para rastreabilidade.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "11": {
+              "description": "Canal WhatsApp habilitado para envio de convites de teste. Som de notificacao corrigido para tocar apenas uma vez por evento.",
+              "files": ["src/hooks/useRealtimeNotifications.ts"],
+              "routes": ["/empresa/testes"]
+            },
+            "12": {
+              "description": "Query de system_settings para configuracao de IA agora usa maybeSingle() em vez de single() para prevenir erro 406 quando nenhuma config existe.",
+              "files": ["src/lib/aiAgent/settingsLoader.ts"],
+              "routes": []
+            },
+            "13": {
+              "description": "Envio de convite via WhatsApp que falhava silenciosamente agora exibe toast de erro com detalhes da falha e permite reenvio.",
+              "files": ["src/components/corporate-tests/WhatsAppConfirmModal.tsx"],
+              "routes": ["/empresa/testes"]
+            }
+          }
         }
       ]
     },
