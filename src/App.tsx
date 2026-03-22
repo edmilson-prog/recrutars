@@ -91,6 +91,11 @@ import AdminNotifications from "./pages/admin/Notifications";
 import AdminNotificationCenter from "./pages/admin/NotificationCenter";
 import AdminWhatsAppCenter from "./pages/admin/WhatsAppCenter";
 
+// Gauge-Pro Admin pages
+import GaugeProAdjectives from "./pages/admin/GaugeProAdjectives";
+import GaugeProScenarios from "./pages/admin/GaugeProScenarios";
+import GaugeProArchetypes from "./pages/admin/GaugeProArchetypes";
+
 // PRD-062: Feature Flags "Switch"
 import AdminFeatureFlags from "./pages/admin/FeatureFlags";
 import AdminFeatureFlagEditor from "./pages/admin/FeatureFlagEditor";
@@ -529,6 +534,23 @@ const App = () => (
             <Route path="/admin/feature-flags/:id" element={
               <ProtectedRoute allowedTypes={['admin']}>
                 <AdminFeatureFlagEditor />
+              </ProtectedRoute>
+            } />
+
+            {/* Gauge-Pro Admin Routes */}
+            <Route path="/admin/gauge-pro/adjetivos" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <GaugeProAdjectives />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/gauge-pro/cenarios" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <GaugeProScenarios />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/gauge-pro/arquetipos" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <GaugeProArchetypes />
               </ProtectedRoute>
             } />
 

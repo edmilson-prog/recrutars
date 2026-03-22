@@ -141,6 +141,7 @@ export class SupabaseGaugeProService implements IGaugeProService {
       const { data, error } = await supabase
         .from('gauge_pro_words')
         .select('*')
+        .eq('is_active', true)
         .order('id');
       if (error) throw error;
       if (data && data.length > 0) {
@@ -162,6 +163,7 @@ export class SupabaseGaugeProService implements IGaugeProService {
       const { data, error } = await supabase
         .from('gauge_pro_scenarios')
         .select('*')
+        .eq('is_active', true)
         .order('sort_order');
       if (error) throw error;
       if (data && data.length > 0) {
@@ -184,6 +186,7 @@ export class SupabaseGaugeProService implements IGaugeProService {
       const { data, error } = await supabase
         .from('gauge_pro_archetypes')
         .select('*')
+        .eq('is_active', true)
         .order('name');
       if (error) throw error;
       if (data && data.length > 0) {
@@ -343,5 +346,277 @@ export class SupabaseGaugeProService implements IGaugeProService {
       .order('generated_at', { ascending: false });
     if (error) throw error;
     return (data ?? []).map((r: Record<string, unknown>) => rowToResult(r));
+  }
+
+  // ---- Admin CRUD — Words ----
+
+  async getAdminWords(): Promise<AdjectiveWord[]> {
+    const { data, error } = await supabase
+      .from('gauge_pro_words')
+      .select('*')
+      .order('id');
+    if (error) throw error;
+    return (data ?? []).map((r: Record<string, unknown>) => ({
+      id: r.id as number,
+      text: r.text as string,
+      dimension: r.dimension as GaugeProDimension,
+      polarity: r.polarity as 'high' | 'low',
+      isActive: r.is_active as boolean,
+    }));
+  }
+
+  async updateWord(
+    id: number,
+    data: { text?: string; isActive?: boolean },
+  ): Promise<AdjectiveWord> {
+    const row: Record<string, unknown> = {};
+    if (data.text !== undefined) row.text = data.text;
+    if (data.isActive !== undefined) row.is_active = data.isActive;
+
+    const { data: updated, error } = await supabase
+      .from('gauge_pro_words')
+      .update(row)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    const r = updated as Record<string, unknown>;
+    return {
+      id: r.id as number,
+      text: r.text as string,
+      dimension: r.dimension as GaugeProDimension,
+      polarity: r.polarity as 'high' | 'low',
+      isActive: r.is_active as boolean,
+    };
+  }
+
+  async createWord(data: {
+    text: string;
+    dimension: GaugeProDimension;
+    polarity: 'high' | 'low';
+  }): Promise<AdjectiveWord> {
+    const { data: created, error } = await supabase
+      .from('gauge_pro_words')
+      .insert({
+        text: data.text,
+        dimension: data.dimension,
+        polarity: data.polarity,
+        is_active: true,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    const r = created as Record<string, unknown>;
+    return {
+      id: r.id as number,
+      text: r.text as string,
+      dimension: r.dimension as GaugeProDimension,
+      polarity: r.polarity as 'high' | 'low',
+      isActive: r.is_active as boolean,
+    };
+  }
+
+  async toggleWordActive(id: number): Promise<void> {
+    // Fetch current state
+    const { data: current, error: fetchError } = await supabase
+      .from('gauge_pro_words')
+      .select('is_active')
+      .eq('id', id)
+      .single();
+    if (fetchError) throw fetchError;
+
+    const { error } = await supabase
+      .from('gauge_pro_words')
+      .update({ is_active: !(current as Record<string, unknown>).is_active })
+      .eq('id', id);
+    if (error) throw error;
+  }
+
+  async getWordUsageCount(_id: number): Promise<number> {
+    // Count all assessments that have word_step_responses (any completed word steps)
+    const { count, error } = await supabase
+      .from('gauge_pro_assessments')
+      .select('id', { count: 'exact', head: true })
+      .not('word_step_responses', 'eq', '[]');
+    if (error) throw error;
+    return count ?? 0;
+  }
+
+  // ---- Admin CRUD — Scenarios ----
+
+  async getAdminScenarios(): Promise<Scenario[]> {
+    const { data, error } = await supabase
+      .from('gauge_pro_scenarios')
+      .select('*')
+      .order('sort_order');
+    if (error) throw error;
+    return (data ?? []).map((r: Record<string, unknown>) => ({
+      id: r.id as number,
+      order: r.sort_order as number,
+      title: r.title as string,
+      situation: r.situation as string,
+      options: r.options as ScenarioOption[],
+      isActive: r.is_active as boolean,
+    }));
+  }
+
+  async updateScenario(
+    id: number,
+    data: {
+      title?: string;
+      situation?: string;
+      sortOrder?: number;
+      options?: ScenarioOption[];
+      isActive?: boolean;
+    },
+  ): Promise<Scenario> {
+    const row: Record<string, unknown> = {};
+    if (data.title !== undefined) row.title = data.title;
+    if (data.situation !== undefined) row.situation = data.situation;
+    if (data.sortOrder !== undefined) row.sort_order = data.sortOrder;
+    if (data.options !== undefined) row.options = data.options;
+    if (data.isActive !== undefined) row.is_active = data.isActive;
+
+    const { data: updated, error } = await supabase
+      .from('gauge_pro_scenarios')
+      .update(row)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    const r = updated as Record<string, unknown>;
+    return {
+      id: r.id as number,
+      order: r.sort_order as number,
+      title: r.title as string,
+      situation: r.situation as string,
+      options: r.options as ScenarioOption[],
+      isActive: r.is_active as boolean,
+    };
+  }
+
+  async createScenario(data: {
+    title: string;
+    situation: string;
+    sortOrder: number;
+    options: ScenarioOption[];
+  }): Promise<Scenario> {
+    const { data: created, error } = await supabase
+      .from('gauge_pro_scenarios')
+      .insert({
+        title: data.title,
+        situation: data.situation,
+        sort_order: data.sortOrder,
+        options: data.options,
+        is_active: true,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    const r = created as Record<string, unknown>;
+    return {
+      id: r.id as number,
+      order: r.sort_order as number,
+      title: r.title as string,
+      situation: r.situation as string,
+      options: r.options as ScenarioOption[],
+      isActive: r.is_active as boolean,
+    };
+  }
+
+  async toggleScenarioActive(id: number): Promise<void> {
+    const { data: current, error: fetchError } = await supabase
+      .from('gauge_pro_scenarios')
+      .select('is_active')
+      .eq('id', id)
+      .single();
+    if (fetchError) throw fetchError;
+
+    const { error } = await supabase
+      .from('gauge_pro_scenarios')
+      .update({ is_active: !(current as Record<string, unknown>).is_active })
+      .eq('id', id);
+    if (error) throw error;
+  }
+
+  async getScenarioUsageCount(_id: number): Promise<number> {
+    // Count all assessments that have scenario_responses (any completed scenario steps)
+    const { count, error } = await supabase
+      .from('gauge_pro_assessments')
+      .select('id', { count: 'exact', head: true })
+      .not('scenario_responses', 'eq', '[]');
+    if (error) throw error;
+    return count ?? 0;
+  }
+
+  // ---- Admin CRUD — Archetypes ----
+
+  async getAdminArchetypes(): Promise<ArchetypeProfile[]> {
+    const { data, error } = await supabase
+      .from('gauge_pro_archetypes')
+      .select('*')
+      .order('name');
+    if (error) throw error;
+    return (data ?? []).map((r: Record<string, unknown>) => ({
+      id: r.id as string,
+      name: r.name as string,
+      description: r.description as string,
+      strengths: r.strengths as string[],
+      developmentAreas: (r.development_areas as string[]) ?? [],
+      idealRoles: (r.ideal_roles as string[]) ?? [],
+      workStyle: r.work_style as string,
+      communicationStyle: r.communication_style as string,
+      isActive: r.is_active as boolean,
+    }));
+  }
+
+  async updateArchetype(
+    id: string,
+    data: Partial<Omit<ArchetypeProfile, 'id'>> & { isActive?: boolean },
+  ): Promise<ArchetypeProfile> {
+    const row: Record<string, unknown> = {};
+    if (data.name !== undefined) row.name = data.name;
+    if (data.description !== undefined) row.description = data.description;
+    if (data.strengths !== undefined) row.strengths = data.strengths;
+    if (data.developmentAreas !== undefined) row.development_areas = data.developmentAreas;
+    if (data.idealRoles !== undefined) row.ideal_roles = data.idealRoles;
+    if (data.workStyle !== undefined) row.work_style = data.workStyle;
+    if (data.communicationStyle !== undefined) row.communication_style = data.communicationStyle;
+    if (data.isActive !== undefined) row.is_active = data.isActive;
+
+    const { data: updated, error } = await supabase
+      .from('gauge_pro_archetypes')
+      .update(row)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    const r = updated as Record<string, unknown>;
+    return {
+      id: r.id as string,
+      name: r.name as string,
+      description: r.description as string,
+      strengths: r.strengths as string[],
+      developmentAreas: (r.development_areas as string[]) ?? [],
+      idealRoles: (r.ideal_roles as string[]) ?? [],
+      workStyle: r.work_style as string,
+      communicationStyle: r.communication_style as string,
+      isActive: r.is_active as boolean,
+    };
+  }
+
+  async toggleArchetypeActive(id: string): Promise<void> {
+    const { data: current, error: fetchError } = await supabase
+      .from('gauge_pro_archetypes')
+      .select('is_active')
+      .eq('id', id)
+      .single();
+    if (fetchError) throw fetchError;
+
+    const { error } = await supabase
+      .from('gauge_pro_archetypes')
+      .update({ is_active: !(current as Record<string, unknown>).is_active })
+      .eq('id', id);
+    if (error) throw error;
   }
 }

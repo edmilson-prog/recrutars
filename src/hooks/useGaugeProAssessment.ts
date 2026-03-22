@@ -10,6 +10,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getGaugeProService } from '@/services/gaugePro/gaugeProService';
 import { gaugeProKeys } from './useGaugeProQuery';
 import type {
+  AdjectiveWord,
+  Scenario,
   GaugeProPhase,
   GaugeProAssessment,
   GaugeProResult,
@@ -54,6 +56,22 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
   const [assessment, setAssessment] = useState<GaugeProAssessment | null>(null);
   const [result, setResult] = useState<GaugeProResult | null>(null);
 
+  // Active words/scenarios — initialized with bundled data, updated from service (filters is_active)
+  const [activeWords, setActiveWords] = useState<AdjectiveWord[]>(GAUGE_PRO_ADJECTIVES);
+  const [activeScenarios, setActiveScenarios] = useState<Scenario[]>(GAUGE_PRO_SCENARIOS);
+  const wordsLoadedRef = useRef(false);
+
+  // Preload active words/scenarios from service layer (filters is_active=true)
+  useEffect(() => {
+    if (wordsLoadedRef.current) return;
+    wordsLoadedRef.current = true;
+    getGaugeProService().then(async svc => {
+      const [words, scenarios] = await Promise.all([svc.getWords(), svc.getScenarios()]);
+      if (words.length > 0) setActiveWords(words);
+      if (scenarios.length > 0) setActiveScenarios(scenarios);
+    }).catch(() => { /* fallback to bundled data */ });
+  }, []);
+
   // Part 1 state — 10 steps (5 dimensions × 2 perspectives)
   const [currentWordStep, setCurrentWordStep] = useState(0);
   const [wordStepResponses, setWordStepResponses] = useState<WordStepResponse[]>([]);
@@ -90,9 +108,9 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
     ? 'Como VOCÊ se vê'
     : 'Como OUTROS te veem';
 
-  // Get words for current dimension
+  // Get words for current dimension (uses active words from service layer)
   const currentDimensionWords = currentDimension
-    ? GAUGE_PRO_ADJECTIVES.filter(w => w.dimension === currentDimension)
+    ? activeWords.filter(w => w.dimension === currentDimension)
     : [];
   const currentShuffledOrder = currentDimension ? (shuffledWordOrders[currentDimension] || []) : [];
 
@@ -265,7 +283,7 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
     const orders: Partial<Record<GaugeProDimension, number[]>> = {};
 
     for (const dim of DIMENSIONS) {
-      const dimWords = GAUGE_PRO_ADJECTIVES.filter(w => w.dimension === dim);
+      const dimWords = activeWords.filter(w => w.dimension === dim);
       orders[dim] = shuffleArray(dimWords.map(w => w.id));
     }
 
@@ -293,7 +311,7 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
         })
       ).catch(() => { /* Supabase unavailable — localStorage continues */ });
     }
-  }, [saveSession, candidateId]);
+  }, [saveSession, candidateId, activeWords]);
 
   // Toggle word selection for current step
   const toggleWord = useCallback((wordId: number) => {
@@ -408,7 +426,7 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
 
   // Submit scenario response
   const submitScenarioResponse = useCallback((selectedOption: 'A' | 'B' | 'C' | 'D') => {
-    const scenario = GAUGE_PRO_SCENARIOS[currentScenarioIndex];
+    const scenario = activeScenarios[currentScenarioIndex];
     if (!scenario) return;
 
     const response: ScenarioResponse = {
@@ -424,16 +442,16 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
       scenarioResponses: updated,
       currentScenarioIndex,
     });
-  }, [currentScenarioIndex, scenarioResponses, saveSession]);
+  }, [currentScenarioIndex, scenarioResponses, saveSession, activeScenarios]);
 
   // Navigate scenarios
   const goNextScenario = useCallback(() => {
     const next = currentScenarioIndex + 1;
-    if (next < GAUGE_PRO_SCENARIOS.length) {
+    if (next < activeScenarios.length) {
       setCurrentScenarioIndex(next);
       saveSession({ currentScenarioIndex: next });
     }
-  }, [currentScenarioIndex, saveSession]);
+  }, [currentScenarioIndex, saveSession, activeScenarios]);
 
   const goPreviousScenario = useCallback(() => {
     if (currentScenarioIndex > 0) {
@@ -445,15 +463,15 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
 
   // Finish assessment
   const finishAssessment = useCallback(() => {
-    if (scenarioResponses.length < GAUGE_PRO_SCENARIOS.length) return;
+    if (scenarioResponses.length < activeScenarios.length) return;
 
     setPhase('analyzing');
     saveSession({ phase: 'analyzing' });
 
     // Simulate analysis delay
     setTimeout(() => {
-      const part1Scores = calculateWordSelectionScores(wordStepResponses, GAUGE_PRO_ADJECTIVES);
-      const part2Scores = calculateScenarioScores(scenarioResponses, GAUGE_PRO_SCENARIOS);
+      const part1Scores = calculateWordSelectionScores(wordStepResponses, activeWords);
+      const part2Scores = calculateScenarioScores(scenarioResponses, activeScenarios);
       const finalScores = calculateFinalScores(part1Scores, part2Scores);
       const classifications = classifyAllDimensions(finalScores);
       const archetype = determineArchetype(finalScores, classifications);
@@ -521,7 +539,7 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
             scenarioResponses,
             shuffledWordOrders,
             currentWordStep: TOTAL_WORD_STEPS,
-            currentScenarioIndex: GAUGE_PRO_SCENARIOS.length - 1,
+            currentScenarioIndex: activeScenarios.length - 1,
           });
           // Save result
           await svc.saveResult({
@@ -553,11 +571,11 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
         });
       }).catch(() => { /* módulo IA indisponível */ });
     }, 2500);
-  }, [scenarioResponses, wordStepResponses, shuffledWordOrders, assessment, candidateId, resultKey, lastCompletedKey, storageKey, saveSession, onComplete, onXPAwarded, onBadgeAwarded, queryClient]);
+  }, [scenarioResponses, wordStepResponses, shuffledWordOrders, assessment, candidateId, resultKey, lastCompletedKey, storageKey, saveSession, onComplete, onXPAwarded, onBadgeAwarded, queryClient, activeWords, activeScenarios]);
 
   // Get current scenario's existing response
   const currentScenarioResponse = scenarioResponses.find(
-    r => r.scenarioId === GAUGE_PRO_SCENARIOS[currentScenarioIndex]?.id
+    r => r.scenarioId === activeScenarios[currentScenarioIndex]?.id
   );
 
   return {
@@ -582,15 +600,15 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
     currentStepSelections,
     wordStepResponses,
     selectionLimit: GAUGE_PRO_CONFIG.part1.selectionsPerList,
-    adjectives: GAUGE_PRO_ADJECTIVES,
+    adjectives: activeWords,
 
     // Part 2
-    scenarios: GAUGE_PRO_SCENARIOS,
+    scenarios: activeScenarios,
     currentScenarioIndex,
-    currentScenario: GAUGE_PRO_SCENARIOS[currentScenarioIndex],
+    currentScenario: activeScenarios[currentScenarioIndex],
     scenarioResponses,
     currentScenarioResponse,
-    totalScenarios: GAUGE_PRO_SCENARIOS.length,
+    totalScenarios: activeScenarios.length,
 
     // Actions
     startAssessment,

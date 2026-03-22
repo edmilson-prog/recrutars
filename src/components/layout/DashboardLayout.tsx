@@ -14,6 +14,7 @@ import {
   Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, ClipboardCheck, Heart, Calendar, HelpCircle, Bell,
   ChevronLeft, ChevronRight, Sparkles, Info, UserCog, MoreHorizontal,
   ShieldCheck, BarChart3, CreditCard, DollarSign, ToggleLeft, Headset, Package,
+  Fingerprint,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdminNavItemActive, getTabLabelForPath } from '@/config/adminTabConfig';
@@ -94,6 +95,7 @@ const adminNavGroups: NavGroup[] = [
       { href: '/admin/feature-flags', label: 'Feature Flags', icon: ToggleLeft },
       { href: '/admin/usuarios', label: 'Usuários & Permissões', icon: ShieldCheck },
       { href: '/admin/avaliacoes/categorias', label: 'Avaliações', icon: Brain },
+      { href: '/admin/gauge-pro/adjetivos', label: 'Gauge-Pro', icon: Fingerprint },
       { href: '/admin/relatorios/financeiro', label: 'Relatórios', icon: BarChart3 },
     ],
   },

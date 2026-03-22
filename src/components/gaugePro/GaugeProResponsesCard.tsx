@@ -7,7 +7,7 @@
  * Part 2: Cenarios situacionais com opcao escolhida
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Calendar, Check, ChevronDown, ChevronUp, Clock, Eye, ListChecks, Timer, Type, User2, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,15 +27,17 @@ import type {
   GaugeProResult,
   GaugeProDimension,
   AdjectiveWord,
+  Scenario,
 } from '@/types/gaugePro';
+import { useGaugeProAdminWords, useGaugeProAdminScenarios } from '@/hooks/useGaugeProAdminQuery';
 
 interface GaugeProResponsesCardProps {
   assessment: GaugeProAssessment;
   result: GaugeProResult;
 }
 
-// Build lookup map once
-const wordsById = new Map<number, AdjectiveWord>(
+// Bundled fallback map (used before service data loads)
+const bundledWordsById = new Map<number, AdjectiveWord>(
   GAUGE_PRO_ADJECTIVES.map((w) => [w.id, w])
 );
 
@@ -80,6 +82,23 @@ function formatDateTime(isoString?: string): string {
 
 export function GaugeProResponsesCard({ assessment, result }: GaugeProResponsesCardProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Load ALL words/scenarios from service (including inactive — needed for historical display)
+  const { data: allWords } = useGaugeProAdminWords();
+  const { data: allScenarios } = useGaugeProAdminScenarios();
+
+  // Build lookup maps (service data when available, bundled as fallback)
+  const wordsById = useMemo(() => {
+    if (allWords && allWords.length > 0) {
+      return new Map<number, AdjectiveWord>(allWords.map((w) => [w.id, w]));
+    }
+    return bundledWordsById;
+  }, [allWords]);
+
+  const scenariosById = useMemo(() => {
+    const source = (allScenarios && allScenarios.length > 0) ? allScenarios : GAUGE_PRO_SCENARIOS;
+    return new Map<number, Scenario>(source.map((s) => [s.id, s]));
+  }, [allScenarios]);
 
   // Group word responses by dimension
   const wordsByDimension = new Map<GaugeProDimension, { self: number[]; others: number[] }>();
@@ -294,7 +313,7 @@ export function GaugeProResponsesCard({ assessment, result }: GaugeProResponsesC
               </h3>
 
               <div className="space-y-3">
-                {GAUGE_PRO_SCENARIOS.map((scenario) => {
+                {Array.from(scenariosById.values()).sort((a, b) => a.order - b.order).map((scenario) => {
                   const response = assessment.scenarioResponses.find(
                     (r) => r.scenarioId === scenario.id
                   );
