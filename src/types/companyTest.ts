@@ -41,6 +41,7 @@ export interface CompanyTest {
   activatedAt?: string;
   closedAt?: string;
   archivedAt?: string;
+  defaultExpirationDays?: number;
 }
 
 // --- Invitation ---

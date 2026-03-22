@@ -18,9 +18,10 @@ import { InsufficientCreditsModal } from '@/components/billing/InsufficientCredi
 interface EmailInviteFormProps {
   testId: string;
   testName: string;
+  defaultExpirationDays?: number;
 }
 
-export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
+export function EmailInviteForm({ testId, testName, defaultExpirationDays }: EmailInviteFormProps) {
   const { toast } = useToast();
   const { currentCompany } = useAuth();
   const [emailInput, setEmailInput] = useState('');
@@ -77,6 +78,7 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
         candidateName: email.split('@')[0],
         candidateEmail: email,
         method: 'email' as const,
+        expiresInDays: defaultExpirationDays ?? 30,
       })),
     });
     setEmails([]);
@@ -130,6 +132,9 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
         )}
         Enviar {emails.length > 0 ? `${emails.length} convite${emails.length > 1 ? 's' : ''}` : 'convites'}
       </Button>
+      <p className="text-xs text-muted-foreground text-center">
+        Os convites expiram em {defaultExpirationDays ?? 30} dias após o envio.
+      </p>
       <InsufficientCreditsModal
         open={insufficientCreditsOpen}
         onOpenChange={setInsufficientCreditsOpen}

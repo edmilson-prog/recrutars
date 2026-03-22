@@ -44,6 +44,7 @@ function companyTestRowToModel(row: Record<string, unknown>): CompanyTest {
     activatedAt: row.activated_at as string | undefined,
     closedAt: row.closed_at as string | undefined,
     archivedAt: row.archived_at as string | undefined,
+    defaultExpirationDays: (row.default_expiration_days as number) ?? 30,
   };
 }
 
@@ -171,6 +172,7 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
         deadline: input.deadline ?? null,
         instructions: input.instructions ?? null,
         target_audience: input.targetAudience ?? 'candidate',
+        default_expiration_days: input.defaultExpirationDays ?? 30,
         created_by: input.createdAt ? undefined : undefined, // Will be set from auth context
       })
       .select()
@@ -197,6 +199,7 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
     if (updates.activatedAt !== undefined) row.activated_at = updates.activatedAt;
     if (updates.closedAt !== undefined) row.closed_at = updates.closedAt;
     if (updates.archivedAt !== undefined) row.archived_at = updates.archivedAt;
+    if (updates.defaultExpirationDays !== undefined) row.default_expiration_days = updates.defaultExpirationDays;
 
     const { data, error } = await supabase
       .from('company_tests')

@@ -37,6 +37,7 @@ interface InternalCandidateInviteProps {
   testId: string;
   testName: string;
   targetAudience?: TargetAudience;
+  defaultExpirationDays?: number;
 }
 
 type SendStep = 'select' | 'channel' | 'links';
@@ -56,12 +57,12 @@ const GAUGE_STATUS_LABELS: Record<string, { label: string; variant: 'default' | 
 };
 
 const CHANNEL_OPTIONS = [
-  { value: 'public_link' as InvitationMethod, label: 'Link Unico', description: 'Gera links copiaveis para compartilhar manualmente', icon: Link2 },
+  { value: 'public_link' as InvitationMethod, label: 'Link Único', description: 'Gera links copiáveis para compartilhar manualmente', icon: Link2 },
   { value: 'email' as InvitationMethod, label: 'Email', description: 'Envia email com o link do teste para cada colaborador', icon: Mail },
   { value: 'internal' as InvitationMethod, label: 'WhatsApp', description: 'Envia mensagem via WhatsApp (Evolution API)', icon: MessageCircle },
 ];
 
-export function InternalCandidateInvite({ testId, testName, targetAudience }: InternalCandidateInviteProps) {
+export function InternalCandidateInvite({ testId, testName, targetAudience, defaultExpirationDays }: InternalCandidateInviteProps) {
   const { currentCompany } = useAuth();
   const isCollaborator = targetAudience === 'collaborator';
 
@@ -194,6 +195,7 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
             candidateName: m.name,
             candidateEmail: m.email,
             method: selectedChannel,
+            expiresInDays: defaultExpirationDays ?? 30,
           })),
           channel: channelMap[selectedChannel] ?? selectedChannel,
         });
@@ -241,6 +243,7 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
           candidateName: c.name,
           candidateEmail: c.email,
           method: 'internal' as const,
+          expiresInDays: defaultExpirationDays ?? 30,
         })),
       });
     }
@@ -277,6 +280,7 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
           candidateName: m.name,
           candidateEmail: m.email,
           method: 'internal' as const,
+          expiresInDays: defaultExpirationDays ?? 30,
         })),
         channel: 'whatsapp',
       });
@@ -329,7 +333,7 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
         <div className="space-y-1">
           <Label className="text-sm font-medium">Links gerados</Label>
           <p className="text-xs text-muted-foreground">
-            Copie e compartilhe os links com os colaboradores. Os links expiram em 30 dias.
+            Copie e compartilhe os links com os colaboradores. Os links expiram em {defaultExpirationDays ?? 30} dias.
           </p>
         </div>
 

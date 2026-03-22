@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Save, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { TemplateSelector } from './TemplateSelector';
@@ -38,6 +39,7 @@ export function TestCreateForm({ onCreated }: TestCreateFormProps) {
   const [deadline, setDeadline] = useState('');
   const [instructions, setInstructions] = useState('');
   const [targetAudience, setTargetAudience] = useState<TargetAudience>('candidate');
+  const [expirationDays, setExpirationDays] = useState(30);
 
   const handleTemplateSelect = (template: TestTemplate) => {
     setSelectedTemplate(template);
@@ -67,6 +69,7 @@ export function TestCreateForm({ onCreated }: TestCreateFormProps) {
         deadline: deadline || undefined,
         instructions: instructions || undefined,
         targetAudience,
+        defaultExpirationDays: expirationDays,
         status: 'draft',
       });
 
@@ -165,7 +168,7 @@ export function TestCreateForm({ onCreated }: TestCreateFormProps) {
           <CardContent className="space-y-4">
             {/* Target Audience Selector */}
             <div className="space-y-2">
-              <Label>Publico-alvo do Teste</Label>
+              <Label>Público-alvo do Teste</Label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
@@ -234,6 +237,29 @@ export function TestCreateForm({ onCreated }: TestCreateFormProps) {
                   onChange={(e) => setDeadline(e.target.value)}
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="test-expiration">Validade dos convites</Label>
+              <Select
+                value={String(expirationDays)}
+                onValueChange={(v) => setExpirationDays(Number(v))}
+              >
+                <SelectTrigger id="test-expiration" className="w-full sm:w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 dia (24h)</SelectItem>
+                  <SelectItem value="3">3 dias</SelectItem>
+                  <SelectItem value="7">7 dias</SelectItem>
+                  <SelectItem value="14">14 dias</SelectItem>
+                  <SelectItem value="30">30 dias (padrão)</SelectItem>
+                  <SelectItem value="60">60 dias</SelectItem>
+                  <SelectItem value="90">90 dias</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Tempo que cada convite ficará ativo após o envio.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="test-instructions">Instruções para candidatos</Label>

@@ -28,6 +28,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { TestCompletionActivation } from '@/components/invite/TestCompletionActivation';
+import { ExpirationCountdown } from '@/components/invite/ExpirationCountdown';
 
 // Gauge-Pro components (reused)
 import { GaugeProIntro } from '@/components/gaugePro/GaugeProIntro';
@@ -57,6 +58,7 @@ interface InvitationData {
   departmentId: string | null;
   inviteOrigin: string | null;
   teamMemberId: string | null;
+  expiresAt: string | null;
 }
 
 interface TestInfo {
@@ -154,6 +156,7 @@ export default function CollaboratorTestSession() {
           departmentId: inv.department_id,
           inviteOrigin: inv.invite_origin,
           teamMemberId: inv.team_member_id,
+          expiresAt: inv.expires_at ?? null,
         };
 
         setInvitation(invData);
@@ -612,6 +615,8 @@ export default function CollaboratorTestSession() {
             </p>
           </div>
 
+          <ExpirationCountdown expiresAt={invitation?.expiresAt} />
+
           <div className="space-y-3 bg-muted/50 rounded-lg p-4">
             <div>
               <span className="text-xs text-muted-foreground">Nome</span>
@@ -628,7 +633,7 @@ export default function CollaboratorTestSession() {
           <form onSubmit={handleCpfVerify} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="cpf-last4">
-                Digite os 4 ultimos digitos do seu CPF
+                Digite os 4 últimos dígitos do seu CPF
               </Label>
               <Input
                 id="cpf-last4"
@@ -680,7 +685,7 @@ export default function CollaboratorTestSession() {
         <CardContent className="pt-6 space-y-6">
           <div className="text-center">
             <h2 className="text-xl font-bold text-foreground">
-              {testInfo?.name || 'Avaliacao Comportamental'}
+              {testInfo?.name || 'Avaliação Comportamental'}
             </h2>
             {testInfo?.description && (
               <p className="text-sm text-muted-foreground mt-2">{testInfo.description}</p>
@@ -692,6 +697,8 @@ export default function CollaboratorTestSession() {
               </div>
             )}
           </div>
+
+          <ExpirationCountdown expiresAt={invitation?.expiresAt} />
 
           <form onSubmit={handleIdentify} className="space-y-4">
             <div className="space-y-2">
@@ -752,7 +759,7 @@ export default function CollaboratorTestSession() {
               {submitting ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : null}
-              Iniciar Avaliacao
+              Iniciar Avaliação
               {!submitting && <ArrowRight className="w-4 h-4 ml-2" />}
             </Button>
           </form>
