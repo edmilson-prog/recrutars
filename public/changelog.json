@@ -1,12 +1,74 @@
 {
   "versions": [
     {
+      "version": "1.44.0",
+      "codename": "Prism",
+      "type": "minor",
+      "releaseDate": "2026-03-22",
+      "description": "Toggle de tema claro/escuro para colaboradores, refatoracao completa de cores com correcoes WCAG AA, atualizacao em tempo real da lista de convites, redesign da tela de conclusao do teste com estatisticas, gerenciamento granular de convites com bulk actions, e consentimento LGPD no teste.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Toggle manual de tema claro/escuro no header do teste do colaborador",
+            "Nome do colaborador visivel no header durante o teste",
+            "Variaveis CSS semanticas --test-* para componentes do Gauge-Pro (light e dark)",
+            "Gradientes, sombras e glassmorphism com variantes dark mode",
+            "Atualizacao em tempo real da lista de convites via Supabase Realtime (status, KPIs, timeline, audit log)",
+            "Tela de conclusao do teste redesenhada com 6 estatisticas animadas e timeline de proximos passos",
+            "Gerenciamento granular de convites com detail sheet, bulk actions (reenviar/cancelar) e 4 KPIs",
+            "Filtro por canal WhatsApp no gerenciador de convites",
+            "Modal de confirmacao WhatsApp com edicao de telefone antes do envio",
+            "Checkboxes de consentimento (Termos, Privacidade, LGPD) na tela de inicio do teste",
+            "Badge de saldo de creditos no header do Hub + preview de custo nos botoes de envio",
+            "Botao 'Gerar Analise IA' para geracao retroativa de analise em colaboradores sem resultado",
+            "Link para perfil do membro da equipe no detail sheet do convite",
+            "Aba separada para cards de arquetipo no perfil do colaborador"
+          ]
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Cores primary/secondary consistentes entre modos (primary=navy, secondary=cyan em ambos)",
+            "Accent diferenciado de secondary (tom sutil para hovers vs vivido para interacao)",
+            "9 correcoes de contraste WCAG AA (secondary, destructive, success, warning, muted-foreground)",
+            "Sidebar dark mode com identidade navy preservada (background distinto do conteudo)",
+            "Hierarquia visual dark mode melhorada (background 7% < card 12% < muted 16%)",
+            "7 componentes Gauge-Pro refatorados de cores hardcoded para CSS variables",
+            "TestCompletionActivation simplificado para formulario de ativacao apenas (header movido para TestCompletionSummary)",
+            "Detail sheet do convite com largura expandida e secoes organizadas",
+            "Reordenacao da aba Competencias: fatores emocionais primeiro, radar + risco lado a lado"
+          ]
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Analise IA comportamental agora exibida corretamente para colaboradores na aba IA",
+            "Respostas e duracoes Gauge-Pro visiveis para colaboradores na aba Respostas",
+            "Persistencia de respostas do teste no fluxo unificado (team_member_id)",
+            "Validacao de candidateId como UUID antes de salvar analise IA (evita erro 400)",
+            "Verificacao de saldo de creditos no frontend antes de enviar convites",
+            "Extracao robusta de erro insufficientCredits da edge function",
+            "Mascaras de CPF e telefone aplicadas ao carregar dados do membro para edicao",
+            "Entradas fantasma removidas e badge 'Atual' corrigido na aba IA",
+            "Timestamps corretos para metricas de duracao do teste do colaborador",
+            "Botao aninhado substituido por span em CompanyNotificationItem (HTML valido)",
+            "Footer de metadados de geracao adicionado ao card de analise IA do colaborador",
+            "Entrega WhatsApp habilitada para convites de teste com correcao de som de notificacao",
+            "Query maybeSingle() para system_settings AI previne erro 406",
+            "Envio silencioso de convite WhatsApp corrigido (falha sem feedback)"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.43.0",
       "codename": "Lighthouse",
       "type": "minor",
       "releaseDate": "2026-03-20",
       "description": "Rastreamento e observabilidade ponta a ponta do fluxo de testes Gauge-Pro. 7 dimensoes: ciclo de vida, cadeia de vinculos, retestes, creditos, auditoria completa, metricas agregadas e notificacoes em tempo real.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
