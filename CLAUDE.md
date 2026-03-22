@@ -90,7 +90,7 @@ All modules point directly to Supabase — no mock toggle, no mock implementatio
 - **Every item MUST have `details`** with `description` (string), `files` (string[]), `routes` (string[])
 - Details keys are string indices ("0", "1"...) matching the item's position in the `items` array
 - Only ONE version should have `isCurrent: true`
-- No accented characters in changelog text (charset safe)
+- Use proper Portuguese accents (ã, ç, é, í, ó, ú, â, ê, ô) — UTF-8 charset
 
 ### Design System
 - Colors: Navy (primary dark) + Cyan (accent)
