@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Sheet,
   SheetContent,
@@ -128,6 +129,7 @@ export function InvitationDetailSheet({
   onExtendDeadline,
   onUpdateRecipient,
 }: InvitationDetailSheetProps) {
+  const navigate = useNavigate();
   const [copiedToken, setCopiedToken] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -210,14 +212,26 @@ export function InvitationDetailSheet({
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-[480px] overflow-y-auto"
+        className="w-full sm:max-w-[600px] overflow-y-auto"
         aria-label={`Detalhes do convite para ${invitation.candidateName}`}
       >
         {/* Header */}
         <SheetHeader className="pb-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <SheetTitle className="text-lg truncate">{invitation.candidateName}</SheetTitle>
+              <SheetTitle className="text-lg truncate">
+                {invitation.teamMemberId ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/empresa/equipes/membro/${invitation.teamMemberId}`)}
+                    className="hover:underline hover:text-primary transition-colors text-left"
+                  >
+                    {invitation.candidateName}
+                  </button>
+                ) : (
+                  invitation.candidateName
+                )}
+              </SheetTitle>
               <p className="text-sm text-muted-foreground truncate">{invitation.candidateEmail}</p>
             </div>
             <InvitationStatusBadge status={invitation.status} />
