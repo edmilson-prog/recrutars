@@ -14,6 +14,7 @@ interface GaugeProRadarChartProps {
 }
 
 const sizeMap = { sm: 200, md: 300, lg: 400 };
+const outerRadiusMap = { sm: '50%', md: '55%', lg: '56%' };
 const DIMENSIONS: GaugeProDimension[] = ['D1', 'D2', 'D3', 'D4', 'D5'];
 
 export function GaugeProRadarChart({ scores, idealWeights, candidateName, size = 'md' }: GaugeProRadarChartProps) {
@@ -28,9 +29,21 @@ export function GaugeProRadarChart({ scores, idealWeights, candidateName, size =
   return (
     <div style={{ width: px, height: px }}>
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={data}>
+        <RadarChart data={data} outerRadius={outerRadiusMap[size]}>
           <PolarGrid />
-          <PolarAngleAxis dataKey="dimension" tick={{ fontSize: size === 'sm' ? 9 : 11 }} />
+          <PolarAngleAxis
+            dataKey="dimension"
+            tick={({ x, y, payload, cx, cy }: any) => {
+              const fs = size === 'sm' ? 8 : size === 'md' ? 10 : 12;
+              const anchor = x > cx + 2 ? 'start' : x < cx - 2 ? 'end' : 'middle';
+              const dy = y < cy ? -4 : y > cy + 2 ? 12 : 4;
+              return (
+                <text x={x} y={y} dy={dy} textAnchor={anchor} fontSize={fs} fill="hsl(var(--muted-foreground))">
+                  {payload.value}
+                </text>
+              );
+            }}
+          />
           <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
           <Tooltip
             formatter={(value: number, name: string) => [

@@ -12,7 +12,7 @@ interface TestFunnelProps {
   data: FunnelData;
 }
 
-const FUNNEL_COLORS = ['#64748b', '#06b6d4', '#3b82f6', '#22c55e', '#0891b2'];
+const FUNNEL_COLORS = ['#7c8db5', '#06b6d4', '#3b82f6', '#22c55e', '#0891b2'];
 
 export function TestFunnel({ data }: TestFunnelProps) {
   const total = data.invited || 1;
@@ -50,6 +50,7 @@ export function TestFunnel({ data }: TestFunnelProps) {
                   color: 'hsl(var(--foreground))',
                 }}
                 labelStyle={{ color: 'hsl(var(--foreground))' }}
+                itemStyle={{ color: 'hsl(var(--foreground))' }}
               />
               <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                 {chartData.map((_, index) => (
