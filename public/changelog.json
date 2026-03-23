@@ -462,7 +462,12 @@
               "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
             },
             "15": {
-              "description": "O histórico de atividades e de transações de créditos e protegido contra alterações e exclusões, garantindo a integridade dos registros para fins de auditoria.",
+              "description": "O histórico de atividades e de transações de créditos é protegido contra alterações e exclusões, garantindo a integridade dos registros para fins de auditoria.",
+              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "routes": []
+            },
+            "16": {
+              "description": "As tabelas de logs de auditoria e transações de crédito possuem políticas RLS que permitem apenas inserção e leitura, bloqueando atualização e exclusão para preservar a rastreabilidade completa.",
               "files": ["sql/migrations/064_tracking_observability.sql"],
               "routes": []
             }
@@ -537,15 +542,57 @@
         {
           "type": "fixed",
           "items": [
-            "Seletor de canal (Link Unico, Email, WhatsApp) adicionado ao envio de convites para colaboradores no Hub de Testes",
-            "Deduplicacao de convites no Hub: badge 'Convite ativo', checkbox desabilitado, toast informativo para duplicatas",
-            "Links copiaveis exibidos apos envio por 'Link Unico' com botão copiar individual e copiar todos",
-            "Verificacao CPF atualizada de 3 para 4 ultimos digitos para maior seguranca",
-            "Mascara de CPF ajustada para exibir menos digitos (***.XXX.***-**)",
-            "Tela 'Analisando seu perfil' nao trava mais no fluxo unificado (onComplete chamado antes do guard UUID)",
-            "Queries Supabase com candidateId invalido (temp, tm-xxx) nao geram mais erro 400 no DevTools",
-            "Edge function send-test-invitation salva no repositorio local para controle de versao"
-          ]
+            "Seletor de canal (Link Único, Email, WhatsApp) adicionado ao envio de convites para colaboradores no Hub de Testes",
+            "Deduplicação de convites no Hub: badge 'Convite ativo', checkbox desabilitado, toast informativo para duplicatas",
+            "Links copiáveis exibidos após envio por 'Link Único' com botão copiar individual e copiar todos",
+            "Verificação CPF atualizada de 3 para 4 últimos dígitos para maior segurança",
+            "Máscara de CPF ajustada para exibir menos dígitos (***.XXX.***-**)",
+            "Tela 'Analisando seu perfil' não trava mais no fluxo unificado (onComplete chamado antes do guard UUID)",
+            "Queries Supabase com candidateId inválido (temp, tm-xxx) não geram mais erro 400 no DevTools",
+            "Edge function send-test-invitation salva no repositório local para controle de versão"
+          ],
+          "details": {
+            "0": {
+              "description": "Ao enviar convites para colaboradores, o administrador agora escolhe entre três canais de entrega: Link Único (gera URL copiável), Email (envia convite por e-mail) ou WhatsApp (envia via integração WhatsApp).",
+              "files": ["src/pages/empresa/AdminTests.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "1": {
+              "description": "O sistema detecta quando um colaborador já possui convite ativo e impede o envio duplicado, mostrando badge visual, desabilitando o checkbox e exibindo toast explicativo.",
+              "files": ["src/pages/empresa/AdminTests.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "2": {
+              "description": "Após envio por Link Único, uma lista com os links gerados é exibida com botão de cópia individual para cada colaborador e botão de copiar todos de uma vez.",
+              "files": ["src/pages/empresa/AdminTests.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "3": {
+              "description": "A verificação de CPF no início do teste agora solicita os 4 últimos dígitos em vez de 3, aumentando a segurança da identificação do colaborador.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "4": {
+              "description": "A máscara de exibição do CPF foi ajustada para mostrar menos dígitos visíveis, protegendo melhor os dados pessoais do colaborador na tela de verificação.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "5": {
+              "description": "A tela de análise do perfil comportamental não ficava mais travada indefinidamente. O callback de conclusão agora é acionado antes da verificação de UUID, permitindo que o fluxo avance corretamente.",
+              "files": ["src/hooks/useGaugeProAssessment.ts"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "6": {
+              "description": "Queries ao Supabase que recebiam IDs temporários (como 'temp' ou 'tm-xxx') não geram mais erros HTTP 400 no console do navegador, pois agora são filtradas antes do envio.",
+              "files": ["src/hooks/useGaugeProAssessment.ts"],
+              "routes": []
+            },
+            "7": {
+              "description": "O código da Edge Function de envio de convites foi salvo no repositório local em supabase/functions/ para controle de versão e rastreabilidade das alterações.",
+              "files": ["supabase/functions/send-test-invitation/index.ts"],
+              "routes": []
+            }
+          }
         }
       ]
     },
@@ -567,7 +614,44 @@
             "Tela de conclusão simplificada para colaboradores (sem ativação de conta)",
             "Deep-link do Hub de Testes via URL params (?tab=convites)",
             "Query de histórico de testes por team_member_id no perfil do colaborador"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "Ao criar um novo teste comportamental, o administrador escolhe entre 'Candidatos Externos' e 'Colaboradores', determinando o fluxo de convite e a experiência de teste adequada para cada público.",
+              "files": ["src/pages/empresa/AdminTests.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "1": {
+              "description": "Nova aba 'Da Equipe' no painel de convites permite selecionar colaboradores da empresa, com filtro por departamento e badges indicando status atual (sem teste, teste pendente, teste concluído).",
+              "files": ["src/pages/empresa/AdminTests.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "2": {
+              "description": "Avaliações e resultados de colaboradores agora são vinculados diretamente pelo team_member_id, eliminando a necessidade de criar um usuário candidato fictício para cada colaborador testado.",
+              "files": ["sql/migrations/063_unified_collaborator_test_flow.sql", "src/services/gaugePro/gaugeProService.supabase.ts"],
+              "routes": []
+            },
+            "3": {
+              "description": "O colaborador acessa o teste por link de convite, confirma sua identidade via CPF sem precisar criar conta ou fazer login. Todo o fluxo acontece sem criação de usuário no sistema de autenticação.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "4": {
+              "description": "Após concluir o teste, colaboradores veem uma tela de conclusão simplificada sem o passo de ativação de conta, já que não precisam de acesso permanente à plataforma.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "5": {
+              "description": "É possível abrir o Hub de Testes diretamente na aba de convites usando parâmetros na URL, facilitando a navegação a partir de notificações e links internos.",
+              "files": ["src/pages/empresa/AdminTests.tsx"],
+              "routes": ["/empresa/testes?tab=convites"]
+            },
+            "6": {
+              "description": "O perfil do colaborador na gestão de equipes agora exibe o histórico de testes comportamentais realizados, buscando resultados pelo team_member_id em vez de depender de um candidato vinculado.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            }
+          }
         },
         {
           "type": "changed",
@@ -575,7 +659,24 @@
             "Tabs do InvitePanel condicionais: testes de colaborador mostram 'Da Equipe' + 'Por Email', testes de candidato mantêm 3 tabs",
             "Edge function verify_cpf pula criação de shadow candidate para testes com target_audience=collaborator",
             "Edge function mark_completed aceita team_member_id como owner alternativo ao candidate_id"
-          ]
+          ],
+          "details": {
+            "0": {
+              "description": "O painel de convites exibe abas diferentes conforme o público-alvo do teste: para colaboradores mostra 'Da Equipe' e 'Por Email', enquanto para candidatos mantém as 3 abas originais.",
+              "files": ["src/pages/empresa/AdminTests.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "1": {
+              "description": "A Edge Function de verificação de CPF foi atualizada para não criar um candidato fantasma quando o teste é destinado a colaboradores, preservando a integridade da base de candidatos.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": []
+            },
+            "2": {
+              "description": "A Edge Function de conclusão do teste agora aceita o team_member_id como identificador alternativo, permitindo registrar resultados de colaboradores que não possuem candidate_id.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": []
+            }
+          }
         }
       ]
     },
