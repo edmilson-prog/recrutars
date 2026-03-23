@@ -119,23 +119,18 @@ export function useCancelInvitation() {
 
 export function useResendInvitation() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (invitationId: string) => {
+    mutationFn: async ({ invitationId, channel }: { invitationId: string; channel?: 'link' | 'email' | 'whatsapp' }) => {
       const { data, error } = await supabase.functions.invoke('send-test-invitation', {
-        body: { action: 'resend', invitation_id: invitationId },
+        body: { action: 'resend', invitation_id: invitationId, channel, origin: window.location.origin },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data;
+      return data as { invitation: Record<string, unknown>; link: string; channel: string | null; deliveryTarget: string | null; deliveryError: string | null };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: invitationManagerKeys.all });
-      toast({ title: 'Convite reenviado com sucesso' });
-    },
-    onError: (error: Error) => {
-      toast({ title: 'Erro ao reenviar convite', description: error.message, variant: 'destructive' });
     },
   });
 }
@@ -176,23 +171,36 @@ export function useBulkResendInvitations() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (invitationIds: string[]) => {
+    mutationFn: async (items: Array<{ id: string; channel: string }>) => {
       const results = await Promise.allSettled(
-        invitationIds.map(id =>
+        items.map(item =>
           supabase.functions.invoke('send-test-invitation', {
-            body: { action: 'resend', invitation_id: id },
+            body: { action: 'resend', invitation_id: item.id, channel: item.channel, origin: window.location.origin },
           })
         )
       );
       const succeeded = results.filter(r => r.status === 'fulfilled').length;
       const failed = results.filter(r => r.status === 'rejected').length;
-      return { succeeded, failed, total: invitationIds.length };
+      // Count by channel
+      const byChannel: Record<string, number> = {};
+      items.forEach((item, i) => {
+        if (results[i].status === 'fulfilled') {
+          byChannel[item.channel] = (byChannel[item.channel] || 0) + 1;
+        }
+      });
+      return { succeeded, failed, total: items.length, byChannel };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: invitationManagerKeys.all });
+      const channelLabels: Record<string, string> = { link: 'link', email: 'email', whatsapp: 'WhatsApp' };
+      const breakdown = Object.entries(result.byChannel)
+        .map(([ch, count]) => `${count} por ${channelLabels[ch] ?? ch}`)
+        .join(', ');
       toast({
         title: `${result.succeeded} convite(s) reenviado(s)`,
-        description: result.failed > 0 ? `${result.failed} falharam` : undefined,
+        description: result.failed > 0
+          ? `${result.failed} falharam. ${breakdown}`
+          : breakdown || undefined,
         variant: result.failed > 0 ? 'destructive' : 'default',
       });
     },

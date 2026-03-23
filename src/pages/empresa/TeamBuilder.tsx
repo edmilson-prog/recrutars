@@ -9,11 +9,11 @@ import { motion } from 'framer-motion';
 import { pageTransition } from '@/lib/animations';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, FolderOpen } from 'lucide-react';
+import { ArrowLeft, FolderOpen, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamMembers } from '@/hooks/useTeamsQuery';
 import { mockTeamBuilderScenarios } from '@/data/teamManagementData';
-import { Loader2 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import type { TeamBuilderScenario } from '@/types/teamManagement';
 import TeamBuilderLayout from '@/components/team-management/TeamBuilderLayout';
 import ScenarioManager from '@/components/team-management/ScenarioManager';
@@ -86,27 +86,33 @@ export default function TeamBuilder() {
     <DashboardLayout userType="company">
       <motion.div {...pageTransition} className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Link to="/empresa/equipes">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold">Team Builder</h1>
-              <p className="text-muted-foreground">
-                Monte equipes ideais com base em perfis comportamentais
-              </p>
-            </div>
+        <div className="flex items-start gap-4">
+          <Link to="/empresa/equipes" className="shrink-0 mt-0.5">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div className="flex-1 min-w-0 space-y-4">
+            <PageHeader
+              title="Team Builder"
+              description="Monte equipes ideais com base em perfis comportamentais"
+              actions={
+                <Button
+                  variant="outline"
+                  onClick={() => setScenarioDialogOpen(true)}
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Cenários
+                </Button>
+              }
+              howItWorks={[
+                'Arraste membros entre grupos para montar equipes equilibradas',
+                'Analise o equilíbrio comportamental de cada equipe formada',
+                'Salve cenários para comparar diferentes composições',
+                'Apenas membros com perfil mapeado (Gauge-Pro) participam da montagem',
+              ]}
+            />
           </div>
-          <Button
-            variant="outline"
-            onClick={() => setScenarioDialogOpen(true)}
-          >
-            <FolderOpen className="h-4 w-4 mr-2" />
-            Cenarios
-          </Button>
         </div>
 
         {/* Team Builder Layout */}

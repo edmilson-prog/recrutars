@@ -16,10 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Filter } from 'lucide-react';
+import { ArrowLeft, Filter, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamMembers, useDepartments } from '@/hooks/useTeamsQuery';
-import { Loader2 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import type { TeamMember } from '@/types/teamManagement';
 import CompatibilityMatrix from '@/components/team-management/CompatibilityMatrix';
 import TopPairsList from '@/components/team-management/TopPairsList';
@@ -77,39 +77,42 @@ export default function TeamCompatibility() {
     <DashboardLayout userType="company">
       <motion.div {...pageTransition} className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4">
-            <Link to="/empresa/equipes">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold">
-                Compatibilidade entre Membros
-              </h1>
-              <p className="text-muted-foreground">
-                Analise a compatibilidade comportamental entre membros da equipe
-              </p>
-            </div>
-          </div>
-
-          {/* Department filter */}
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select value={selectedDeptId} onValueChange={setSelectedDeptId}>
-              <SelectTrigger className="w-[200px] h-9">
-                <SelectValue placeholder="Filtrar por departamento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os departamentos</SelectItem>
-                {allDepartments.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="flex items-start gap-4">
+          <Link to="/empresa/equipes" className="shrink-0 mt-0.5">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div className="flex-1 min-w-0 space-y-4">
+            <PageHeader
+              title="Compatibilidade entre Membros"
+              description="Analise a compatibilidade comportamental entre membros da equipe"
+              actions={
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <Select value={selectedDeptId} onValueChange={setSelectedDeptId}>
+                    <SelectTrigger className="w-[200px] h-9">
+                      <SelectValue placeholder="Filtrar por departamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os departamentos</SelectItem>
+                      {allDepartments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              }
+              howItWorks={[
+                'A matriz mostra o score de compatibilidade entre todos os membros com perfil mapeado',
+                'Clique em uma célula para ver o detalhamento por dimensão comportamental (D1–D5)',
+                'As "Melhores Duplas" destacam os pares com maior sinergia na equipe',
+                'Os "Alertas de Conflito" identificam pares com compatibilidade abaixo de 30%',
+                'Use o filtro de departamento para focar em equipes específicas',
+              ]}
+            />
           </div>
         </div>
 

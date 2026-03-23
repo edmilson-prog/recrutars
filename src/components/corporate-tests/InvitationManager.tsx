@@ -11,9 +11,9 @@ import { InvitationManagerFilters } from './InvitationManagerFilters';
 import { InvitationTable } from './InvitationTable';
 import { InvitationBulkActionBar } from './InvitationBulkActionBar';
 import { InvitationDetailSheet } from './InvitationDetailSheet';
+import { ResendInvitationModal } from './ResendInvitationModal';
 import {
   useCompanyInvitations,
-  useResendInvitation,
   useCancelInvitation,
   useExtendDeadline,
   useUpdateRecipient,
@@ -22,7 +22,7 @@ import {
 } from '@/hooks/useInvitationManagerQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRealtimeInvitations } from '@/hooks/useRealtimeInvitations';
-import type { InvitationManagerFilters as FiltersType } from '@/types/companyTest';
+import type { InvitationManagerFilters as FiltersType, TestInvitation } from '@/types/companyTest';
 
 const DEFAULT_PAGE_SIZE = 25;
 
@@ -42,6 +42,7 @@ export function InvitationManager() {
   });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [resendInvitation, setResendInvitation] = useState<TestInvitation | null>(null);
 
   // Data
   const { data, isLoading } = useCompanyInvitations(companyId, filters);
@@ -49,7 +50,6 @@ export function InvitationManager() {
   const total = data?.total ?? 0;
 
   // Mutations
-  const resendMutation = useResendInvitation();
   const cancelMutation = useCancelInvitation();
   const extendMutation = useExtendDeadline();
   const updateRecipientMutation = useUpdateRecipient();
@@ -91,8 +91,9 @@ export function InvitationManager() {
   }, []);
 
   const handleResend = useCallback((id: string) => {
-    resendMutation.mutate(id);
-  }, [resendMutation]);
+    const inv = invitations.find(i => i.id === id) ?? null;
+    setResendInvitation(inv);
+  }, [invitations]);
 
   const handleCancel = useCallback(async (id: string) => {
     await cancelMutation.mutateAsync(id);
@@ -107,10 +108,13 @@ export function InvitationManager() {
   }, [updateRecipientMutation]);
 
   const handleBulkResend = useCallback(async () => {
-    const ids = Array.from(selectedIds);
-    await bulkResendMutation.mutateAsync(ids);
+    const items = Array.from(selectedIds).map(id => {
+      const inv = invitations.find(i => i.id === id);
+      return { id, channel: inv?.deliveryChannel ?? 'link' };
+    });
+    await bulkResendMutation.mutateAsync(items);
     setSelectedIds(new Set());
-  }, [selectedIds, bulkResendMutation]);
+  }, [selectedIds, invitations, bulkResendMutation]);
 
   const handleBulkCancel = useCallback(async () => {
     const ids = Array.from(selectedIds);
@@ -195,6 +199,14 @@ export function InvitationManager() {
         onCancel={handleCancel}
         onExtendDeadline={handleExtendDeadline}
         onUpdateRecipient={handleUpdateRecipient}
+      />
+
+      {/* Resend Modal */}
+      <ResendInvitationModal
+        open={!!resendInvitation}
+        onOpenChange={(open) => { if (!open) setResendInvitation(null); }}
+        invitation={resendInvitation}
+        onSuccess={() => setResendInvitation(null)}
       />
     </div>
   );

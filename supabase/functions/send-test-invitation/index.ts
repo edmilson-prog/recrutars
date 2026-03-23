@@ -467,19 +467,32 @@ Deno.serve(async (req: Request) => {
       }
 
       case "resend": {
-        const { invitation_id } = body;
+        const { invitation_id, channel, origin } = body;
         if (!invitation_id) {
           return jsonResponse({ error: "invitation_id is required" }, 400);
         }
 
+        // Generate new token and expiration
+        const newToken = crypto.randomUUID();
+        const now = new Date().toISOString();
+        const newExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+        const updatePayload: Record<string, unknown> = {
+          token: newToken,
+          sent_at: now,
+          status: "sent",
+          viewed_at: null,
+          started_at: null,
+          expires_at: newExpiresAt,
+        };
+
+        if (channel) {
+          updatePayload.delivery_channel = channel;
+        }
+
         const { data: updated, error: updateError } = await adminClient
           .from("test_invitations")
-          .update({
-            sent_at: new Date().toISOString(),
-            status: "sent",
-            viewed_at: null,
-            started_at: null,
-          })
+          .update(updatePayload)
           .eq("id", invitation_id)
           .select()
           .single();
@@ -488,6 +501,76 @@ Deno.serve(async (req: Request) => {
           return jsonResponse({ error: updateError.message }, 500);
         }
 
+        // Build invite link
+        const frontendOrigin = origin || "https://recrutars.com";
+        const link = `${frontendOrigin}/convite/teste/${newToken}`;
+        let deliveryTarget: string | null = null;
+        let deliveryError: string | null = null;
+
+        // Deliver based on channel
+        if (channel === "email" && updated.candidate_email) {
+          deliveryTarget = updated.candidate_email;
+          try {
+            const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+            const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+            const messageText = `Ola ${updated.candidate_name}! Voce foi convidado(a) para realizar o teste comportamental Gauge-Pro. Acesse o link para iniciar: ${link}\n\nEste link expira em 24 horas.`;
+
+            await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${serviceKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "send_email_notification",
+                to: updated.candidate_email,
+                subject: "Convite para Teste Comportamental Gauge-Pro",
+                body: messageText,
+              }),
+            });
+            console.log(`[resend] Email sent to ${updated.candidate_email}`);
+          } catch (err) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            console.error(`[resend] Email delivery failed: ${errMsg}`);
+            deliveryError = errMsg;
+          }
+        } else if (channel === "whatsapp" && updated.team_member_id) {
+          // Fetch phone from team_members
+          const { data: member } = await adminClient
+            .from("team_members")
+            .select("phone")
+            .eq("id", updated.team_member_id)
+            .single();
+
+          if (member?.phone) {
+            deliveryTarget = member.phone;
+            const config = await getEvolutionConfig(adminClient);
+            if (config) {
+              const messageText = `Ola ${updated.candidate_name}! Voce foi convidado(a) para realizar o teste comportamental Gauge-Pro. Acesse o link para iniciar: ${link}\n\nEste link expira em 24 horas.`;
+              const result = await sendWhatsAppMessage(config, member.phone, messageText);
+              if (!result.success) {
+                deliveryError = result.error ?? "Erro ao enviar WhatsApp";
+              } else {
+                console.log(`[resend] WhatsApp sent to ${member.phone}`);
+                await recordWhatsAppMessage(adminClient, {
+                  phone: member.phone,
+                  text: messageText,
+                  recipientId: updated.team_member_id,
+                  recipientName: updated.candidate_name,
+                  sentBy: callerId ?? undefined,
+                  status: "sent",
+                  whatsappMessageId: result.messageId,
+                });
+              }
+            } else {
+              deliveryError = "WhatsApp nao configurado";
+            }
+          } else {
+            deliveryError = "Telefone nao cadastrado";
+          }
+        }
+
+        // Audit log (fire-and-forget)
         if (callerId && updated) {
           const { data: test } = await adminClient
             .from("company_tests")
@@ -502,6 +585,7 @@ Deno.serve(async (req: Request) => {
             .single();
 
           if (test) {
+            const channelLabel = channel === "email" ? "Email" : channel === "whatsapp" ? "WhatsApp" : "Link";
             auditLog(adminClient, {
               action: "invite_resent",
               userId: callerId,
@@ -509,13 +593,19 @@ Deno.serve(async (req: Request) => {
               resourceType: "invitation",
               resourceId: invitation_id,
               resourceName: updated.candidate_name,
-              details: `Reenvio - Teste: ${test.name}`,
+              details: `Reenvio via ${channelLabel} - Teste: ${test.name}`,
               companyId: test.company_id,
             });
           }
         }
 
-        return jsonResponse({ invitation: updated });
+        return jsonResponse({
+          invitation: updated,
+          link,
+          channel: channel ?? null,
+          deliveryTarget,
+          deliveryError,
+        });
       }
 
       case "cancel": {

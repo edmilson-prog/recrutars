@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, FileText, Download, Users, TrendingUp, Heart, BarChart3 } from 'lucide-react';
+import { ArrowLeft, FileText, Download, Users, TrendingUp, Heart, BarChart3, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { pdf } from '@react-pdf/renderer';
 import { EvolutionPDFReport } from '@/components/team-management/pdf/EvolutionPDFReport';
@@ -23,7 +23,7 @@ import {
   mockEvolutionAnnotations,
   mockCultureSnapshots,
 } from '@/data/teamManagementData';
-import { Loader2 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useToast } from '@/hooks/use-toast';
 
 /** Download a @react-pdf/renderer document as a PDF file. */
@@ -147,17 +147,23 @@ export default function TeamReports() {
     <DashboardLayout userType="company">
       <motion.div {...pageTransition} className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Link to="/empresa/equipes">
+        <div className="flex items-start gap-4">
+          <Link to="/empresa/equipes" className="shrink-0 mt-0.5">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <div>
-            <h1 className="text-2xl font-bold">Relatorios de Equipe</h1>
-            <p className="text-muted-foreground">
-              Gere e exporte relatorios detalhados sobre sua equipe
-            </p>
+          <div className="flex-1 min-w-0 space-y-4">
+            <PageHeader
+              title="Relatórios de Equipe"
+              description="Gere e exporte relatórios detalhados sobre sua equipe"
+              howItWorks={[
+                'Selecione o tipo de relatório desejado nos cards abaixo',
+                'Para evolução comportamental, escolha o colaborador e clique em "Gerar PDF"',
+                'O relatório de cultura organizacional exporta o DNA e manifesto da equipe',
+                'Os PDFs incluem gráficos, análises e recomendações prontas para compartilhar',
+              ]}
+            />
           </div>
         </div>
 
