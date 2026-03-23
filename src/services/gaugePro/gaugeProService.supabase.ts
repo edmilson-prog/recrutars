@@ -558,6 +558,18 @@ export class SupabaseGaugeProService implements IGaugeProService {
     if (error) throw error;
   }
 
+  async updateScenarioSortOrders(updates: { id: number; sortOrder: number }[]): Promise<void> {
+    const promises = updates.map(({ id, sortOrder }) =>
+      supabase
+        .from('gauge_pro_scenarios')
+        .update({ sort_order: sortOrder })
+        .eq('id', id)
+    );
+    const results = await Promise.all(promises);
+    const error = results.find(r => r.error)?.error;
+    if (error) throw error;
+  }
+
   async getScenarioUsageCount(_id: number): Promise<number> {
     // Count all assessments that have scenario_responses (any completed scenario steps)
     const { count, error } = await supabase

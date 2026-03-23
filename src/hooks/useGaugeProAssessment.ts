@@ -21,11 +21,13 @@ import type {
   Perspective,
   DimensionScores,
   WordOrderMode,
+  ScenarioOrderMode,
 } from '@/types/gaugePro';
 import { DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 import { GAUGE_PRO_CONFIG } from '@/data/gaugeProConfig';
 import { useGaugeProCooldownDays } from '@/hooks/useGaugeProCooldownDays';
 import { useGaugeProWordOrderMode } from '@/hooks/useGaugeProWordOrderMode';
+import { useGaugeProScenarioOrderMode } from '@/hooks/useGaugeProScenarioOrderMode';
 import { GAUGE_PRO_ADJECTIVES } from '@/data/gaugeProWords';
 import { GAUGE_PRO_SCENARIOS } from '@/data/gaugeProScenarios';
 import { determineArchetype } from '@/data/gaugeProArchetypes';
@@ -71,6 +73,18 @@ function resolveWordOrder(dimWords: AdjectiveWord[], mode: WordOrderMode): numbe
   }
 }
 
+/** Resolves scenario display order based on the configured mode */
+function resolveScenarioOrder(scenarios: Scenario[], mode: ScenarioOrderMode): Scenario[] {
+  switch (mode) {
+    case 'random':
+      return shuffleArray([...scenarios]);
+    case 'fixed':
+      return [...scenarios].sort((a, b) => a.order - b.order);
+    case 'alphabetical':
+      return [...scenarios].sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'));
+  }
+}
+
 export interface UseGaugeProOptions {
   candidateId: string;
   /** When true, ignores localStorage/Supabase history and starts a fresh assessment (retest flow). */
@@ -85,6 +99,7 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
   const queryClient = useQueryClient();
   const cooldownDays = useGaugeProCooldownDays();
   const { wordOrderMode } = useGaugeProWordOrderMode();
+  const { scenarioOrderMode } = useGaugeProScenarioOrderMode();
 
   const [phase, setPhase] = useState<GaugeProPhase>('intro');
   const [assessment, setAssessment] = useState<GaugeProAssessment | null>(null);
@@ -93,6 +108,7 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
   // Active words/scenarios — initialized with bundled data, updated from service (filters is_active)
   const [activeWords, setActiveWords] = useState<AdjectiveWord[]>(GAUGE_PRO_ADJECTIVES);
   const [activeScenarios, setActiveScenarios] = useState<Scenario[]>(GAUGE_PRO_SCENARIOS);
+  const [orderedScenarios, setOrderedScenarios] = useState<Scenario[]>([]);
   const wordsLoadedRef = useRef(false);
 
   // Preload active words/scenarios from service layer (filters is_active=true)
@@ -449,6 +465,8 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
   }, [saveSession]);
 
   const startPart2Scenarios = useCallback(() => {
+    const ordered = resolveScenarioOrder(activeScenarios, scenarioOrderMode);
+    setOrderedScenarios(ordered);
     setPhase('part2_scenarios');
     setCurrentScenarioIndex(0);
     saveSession({
@@ -456,11 +474,14 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
       part2StartedAt: new Date().toISOString(),
       currentScenarioIndex: 0,
     });
-  }, [saveSession]);
+  }, [saveSession, activeScenarios, scenarioOrderMode]);
 
   // Submit scenario response
+  const displayScenarios = orderedScenarios.length > 0 ? orderedScenarios : activeScenarios;
+
   const submitScenarioResponse = useCallback((selectedOption: 'A' | 'B' | 'C' | 'D') => {
-    const scenario = activeScenarios[currentScenarioIndex];
+    const scenariosToUse = orderedScenarios.length > 0 ? orderedScenarios : activeScenarios;
+    const scenario = scenariosToUse[currentScenarioIndex];
     if (!scenario) return;
 
     const response: ScenarioResponse = {
@@ -476,16 +497,17 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
       scenarioResponses: updated,
       currentScenarioIndex,
     });
-  }, [currentScenarioIndex, scenarioResponses, saveSession, activeScenarios]);
+  }, [currentScenarioIndex, scenarioResponses, saveSession, activeScenarios, orderedScenarios]);
 
   // Navigate scenarios
   const goNextScenario = useCallback(() => {
+    const scenariosToUse = orderedScenarios.length > 0 ? orderedScenarios : activeScenarios;
     const next = currentScenarioIndex + 1;
-    if (next < activeScenarios.length) {
+    if (next < scenariosToUse.length) {
       setCurrentScenarioIndex(next);
       saveSession({ currentScenarioIndex: next });
     }
-  }, [currentScenarioIndex, saveSession, activeScenarios]);
+  }, [currentScenarioIndex, saveSession, activeScenarios, orderedScenarios]);
 
   const goPreviousScenario = useCallback(() => {
     if (currentScenarioIndex > 0) {
@@ -497,7 +519,8 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
 
   // Finish assessment
   const finishAssessment = useCallback(() => {
-    if (scenarioResponses.length < activeScenarios.length) return;
+    const scenariosToUse = orderedScenarios.length > 0 ? orderedScenarios : activeScenarios;
+    if (scenarioResponses.length < scenariosToUse.length) return;
 
     setPhase('analyzing');
     saveSession({ phase: 'analyzing' });
@@ -573,7 +596,7 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
             scenarioResponses,
             shuffledWordOrders,
             currentWordStep: TOTAL_WORD_STEPS,
-            currentScenarioIndex: activeScenarios.length - 1,
+            currentScenarioIndex: scenariosToUse.length - 1,
           });
           // Save result
           await svc.saveResult({
@@ -605,11 +628,11 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
         });
       }).catch(() => { /* módulo IA indisponível */ });
     }, 2500);
-  }, [scenarioResponses, wordStepResponses, shuffledWordOrders, assessment, candidateId, resultKey, lastCompletedKey, storageKey, saveSession, onComplete, onXPAwarded, onBadgeAwarded, queryClient, activeWords, activeScenarios]);
+  }, [scenarioResponses, wordStepResponses, shuffledWordOrders, assessment, candidateId, resultKey, lastCompletedKey, storageKey, saveSession, onComplete, onXPAwarded, onBadgeAwarded, queryClient, activeWords, activeScenarios, orderedScenarios]);
 
   // Get current scenario's existing response
   const currentScenarioResponse = scenarioResponses.find(
-    r => r.scenarioId === activeScenarios[currentScenarioIndex]?.id
+    r => r.scenarioId === displayScenarios[currentScenarioIndex]?.id
   );
 
   return {
@@ -637,12 +660,12 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
     adjectives: activeWords,
 
     // Part 2
-    scenarios: activeScenarios,
+    scenarios: displayScenarios,
     currentScenarioIndex,
-    currentScenario: activeScenarios[currentScenarioIndex],
+    currentScenario: displayScenarios[currentScenarioIndex],
     scenarioResponses,
     currentScenarioResponse,
-    totalScenarios: activeScenarios.length,
+    totalScenarios: displayScenarios.length,
 
     // Actions
     startAssessment,

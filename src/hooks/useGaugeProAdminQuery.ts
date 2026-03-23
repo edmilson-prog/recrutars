@@ -165,6 +165,21 @@ export function useUpdateWordSortOrders() {
   });
 }
 
+export function useUpdateScenarioSortOrders() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (updates: { id: number; sortOrder: number }[]) => {
+      const svc = await getGaugeProService();
+      return svc.updateScenarioSortOrders(updates);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: gaugeProAdminKeys.scenarios() });
+      qc.invalidateQueries({ queryKey: gaugeProKeys.scenarios() });
+    },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Mutations — Scenarios
 // ---------------------------------------------------------------------------

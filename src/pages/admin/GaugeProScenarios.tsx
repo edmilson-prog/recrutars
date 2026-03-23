@@ -2,6 +2,7 @@
  * Gauge-Pro Scenarios Admin Page
  * CRUD interface for managing 15 situational scenarios,
  * each with 4 options (A/B/C/D) mapped to behavioral dimensions.
+ * Includes scenario order mode selector with preview and fixed-mode reordering.
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -16,7 +17,13 @@ import {
   BookOpen,
   AlertTriangle,
   Loader2,
+  Eye,
+  Shuffle,
+  ArrowDownAZ,
+  ListOrdered,
+  Info,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
@@ -27,11 +34,20 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Sheet,
   SheetContent,
@@ -54,16 +70,25 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   useGaugeProAdminScenarios,
   useUpdateScenario,
   useToggleScenarioActive,
   useScenarioUsageCount,
+  useUpdateScenarioSortOrders,
 } from '@/hooks/useGaugeProAdminQuery';
+import { useGaugeProScenarioOrderMode } from '@/hooks/useGaugeProScenarioOrderMode';
 import type {
   Scenario,
   ScenarioOption,
   DimensionMapping,
   GaugeProDimension,
+  ScenarioOrderMode,
 } from '@/types/gaugePro';
 import { DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 import { cn } from '@/lib/utils';
@@ -82,6 +107,18 @@ const OPTION_KEY_COLORS: Record<string, string> = {
   D: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
 };
 
+const SCENARIO_MODE_DESCRIPTIONS: Record<ScenarioOrderMode, string> = {
+  fixed: 'Os cenários aparecem na mesma ordem para todos, conforme definido pelo administrador.',
+  random: 'Os cenários aparecem em ordem diferente para cada candidato.',
+  alphabetical: 'Os cenários aparecem em ordem alfabética pelo título (A-Z).',
+};
+
+const SCENARIO_MODE_ICONS: Record<ScenarioOrderMode, LucideIcon> = {
+  fixed: ListOrdered,
+  random: Shuffle,
+  alphabetical: ArrowDownAZ,
+};
+
 function getHexForDimension(d: GaugeProDimension): string {
   switch (d) {
     case 'D1': return '#ef4444';
@@ -89,6 +126,21 @@ function getHexForDimension(d: GaugeProDimension): string {
     case 'D3': return '#22c55e';
     case 'D4': return '#3b82f6';
     case 'D5': return '#a855f7';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Helper: Preview order
+// ---------------------------------------------------------------------------
+
+function computeScenarioPreviewOrder(scenarios: Scenario[], mode: ScenarioOrderMode): Scenario[] {
+  switch (mode) {
+    case 'random':
+      return [...scenarios].sort(() => Math.random() - 0.5);
+    case 'fixed':
+      return [...scenarios].sort((a, b) => a.order - b.order);
+    case 'alphabetical':
+      return [...scenarios].sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'));
   }
 }
 
@@ -620,10 +672,19 @@ export default function GaugeProScenarios() {
   const { data: scenarios, isLoading, error } = useGaugeProAdminScenarios();
   const updateScenario = useUpdateScenario();
   const toggleActive = useToggleScenarioActive();
+  const { scenarioOrderMode, setScenarioOrderMode } = useGaugeProScenarioOrderMode();
+  const updateSortOrders = useUpdateScenarioSortOrders();
 
   const [showInactive, setShowInactive] = useState(false);
   const [editingScenario, setEditingScenario] = useState<Scenario | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  // Preview dialog state
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  // Fixed-mode sort orders: { [scenarioId]: sortOrderValue }
+  const [localSortOrders, setLocalSortOrders] = useState<Record<number, number>>({});
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
 
   // Stats
   const stats = useMemo(() => {
@@ -644,6 +705,73 @@ export default function GaugeProScenarios() {
       : scenarios.filter((s) => s.isActive !== false);
     return list.sort((a, b) => a.order - b.order);
   }, [scenarios, showInactive]);
+
+  // All active scenarios for preview & reorder
+  const activeScenarios = useMemo(() => {
+    if (!scenarios) return [];
+    return scenarios.filter((s) => s.isActive !== false);
+  }, [scenarios]);
+
+  // Preview scenarios computed by mode
+  const previewScenarios = useMemo(() => {
+    return computeScenarioPreviewOrder(activeScenarios, scenarioOrderMode);
+  }, [activeScenarios, scenarioOrderMode]);
+
+  // Fixed-mode reorder helpers
+  const getLocalSortOrder = useCallback(
+    (scenario: Scenario) => {
+      if (localSortOrders[scenario.id] !== undefined) {
+        return localSortOrders[scenario.id];
+      }
+      return scenario.order;
+    },
+    [localSortOrders],
+  );
+
+  const sortedForFixedMode = useMemo(() => {
+    return [...filteredScenarios].sort(
+      (a, b) => getLocalSortOrder(a) - getLocalSortOrder(b)
+    );
+  }, [filteredScenarios, getLocalSortOrder]);
+
+  const handleSortOrderChange = (scenarioId: number, value: string) => {
+    const num = parseInt(value, 10);
+    if (!isNaN(num) && num > 0) {
+      setLocalSortOrders((prev) => ({ ...prev, [scenarioId]: num }));
+    }
+  };
+
+  const handleSaveSortOrders = () => {
+    if (!scenarios) return;
+    const updates: { id: number; sortOrder: number }[] = filteredScenarios.map((s) => ({
+      id: s.id,
+      sortOrder: localSortOrders[s.id] ?? s.order,
+    }));
+
+    setIsSavingOrder(true);
+    updateSortOrders.mutate(updates, {
+      onSuccess: () => {
+        toast.success('Ordem dos cenários salva com sucesso.');
+        setLocalSortOrders({});
+        setIsSavingOrder(false);
+      },
+      onError: () => {
+        toast.error('Erro ao salvar ordem. Tente novamente.');
+        setIsSavingOrder(false);
+      },
+    });
+  };
+
+  const handleResetSortOrders = () => {
+    if (!scenarios) return;
+    const sorted = [...filteredScenarios].sort((a, b) => a.id - b.id);
+    const resetOrders: Record<number, number> = {};
+    sorted.forEach((s, idx) => {
+      resetOrders[s.id] = idx + 1;
+    });
+    setLocalSortOrders(resetOrders);
+    toast.info('Ordem restaurada ao padrão. Clique em "Salvar Ordem" para confirmar.');
+  };
 
   // Handlers
   const handleEdit = (scenario: Scenario) => {
@@ -690,6 +818,16 @@ export default function GaugeProScenarios() {
       }
     );
   };
+
+  const handleModeChange = (newMode: string) => {
+    setScenarioOrderMode.mutate(newMode as ScenarioOrderMode, {
+      onSuccess: () => toast.success('Modo de ordenação atualizado'),
+      onError: () => toast.error('Erro ao salvar modo de ordenação'),
+    });
+  };
+
+  // Mode icon for preview
+  const ModeIcon = SCENARIO_MODE_ICONS[scenarioOrderMode];
 
   return (
     <DashboardLayout userType="admin">
@@ -745,6 +883,139 @@ export default function GaugeProScenarios() {
             </div>
           </div>
         </div>
+
+        {/* Scenario Order Mode Selector */}
+        <div className="bg-card border rounded-lg p-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold">Modo de Ordenação</h3>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-[280px]">
+                  <p className="text-xs">
+                    Define como os cenários situacionais são apresentados aos candidatos durante o
+                    teste Gauge-Pro. O modo fixo mantém a ordem definida pelo administrador.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+            <div className="flex-1 space-y-2">
+              <Select
+                value={scenarioOrderMode}
+                onValueChange={handleModeChange}
+              >
+                <SelectTrigger className="w-full sm:w-[320px]">
+                  <SelectValue placeholder="Selecione o modo..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">
+                    <span className="flex items-center gap-2">
+                      Ordem Fixa
+                      <Badge className="bg-green-600 text-white text-[10px] px-1.5 py-0 hover:bg-green-600">
+                        Padrão
+                      </Badge>
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="random">
+                    <span className="flex items-center gap-2">
+                      Aleatória
+                      <Badge className="bg-amber-600 text-white text-[10px] px-1.5 py-0 hover:bg-amber-600">
+                        Avançado
+                      </Badge>
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="alphabetical">
+                    Alfabética
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {SCENARIO_MODE_DESCRIPTIONS[scenarioOrderMode]}
+              </p>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPreviewOpen(true)}
+              className="shrink-0"
+            >
+              <Eye className="h-4 w-4 mr-1.5" />
+              Pré-visualizar
+            </Button>
+          </div>
+
+          {/* Alert for random mode */}
+          {scenarioOrderMode === 'random' && (
+            <Alert className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30">
+              <Info className="h-4 w-4 text-amber-500" />
+              <AlertDescription className="text-amber-700 dark:text-amber-300">
+                No modo aleatório, cada candidato verá os cenários em ordem diferente.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+
+        {/* Fixed mode — reorder UI */}
+        {scenarioOrderMode === 'fixed' && filteredScenarios.length > 0 && !isLoading && !error && (
+          <div className="bg-card border rounded-lg p-4 space-y-3">
+            <h3 className="text-sm font-semibold">Reordenar Cenários</h3>
+            <div className="space-y-1">
+              {sortedForFixedMode.map((scenario, idx) => {
+                const isInactive = scenario.isActive === false;
+                return (
+                  <div
+                    key={scenario.id}
+                    className={cn(
+                      'flex items-center gap-3 rounded-md px-3 py-2 text-sm',
+                      idx % 2 === 0 ? 'bg-muted/40' : 'bg-transparent',
+                      isInactive && 'opacity-50',
+                    )}
+                  >
+                    <Input
+                      type="number"
+                      min={1}
+                      className="w-[60px] h-8 text-center text-xs font-mono"
+                      value={getLocalSortOrder(scenario)}
+                      onChange={(e) => handleSortOrderChange(scenario.id, e.target.value)}
+                    />
+                    <span className={cn('flex-1 text-left', isInactive && 'line-through')}>
+                      {scenario.title}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] shrink-0"
+                    >
+                      #{getLocalSortOrder(scenario)}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-2 pt-2 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetSortOrders}
+                disabled={isSavingOrder}
+              >
+                Restaurar Padrão
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveSortOrders}
+                disabled={isSavingOrder}
+              >
+                {isSavingOrder ? 'Salvando...' : 'Salvar Ordem'}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Show inactive toggle */}
         <div className="flex items-center gap-2">
@@ -817,6 +1088,69 @@ export default function GaugeProScenarios() {
           onSave={handleSave}
           isSaving={updateScenario.isPending}
         />
+
+        {/* Preview Dialog */}
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Pré-visualização da Ordem
+              </DialogTitle>
+              <DialogDescription>
+                Veja como os cenários serão apresentados ao candidato durante o teste.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Mode indicator */}
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <ModeIcon className="h-4 w-4" />
+                <span>
+                  Modo: <strong>{scenarioOrderMode === 'fixed' ? 'Ordem Fixa' : scenarioOrderMode === 'random' ? 'Aleatória' : 'Alfabética'}</strong>
+                </span>
+              </div>
+
+              {/* Scenario list */}
+              <div className="space-y-1 max-h-[400px] overflow-y-auto">
+                {previewScenarios.map((scenario, idx) => (
+                  <div
+                    key={scenario.id}
+                    className={cn(
+                      'flex items-start gap-3 rounded-md px-3 py-2.5 text-sm',
+                      idx % 2 === 0 ? 'bg-muted/40' : 'bg-transparent',
+                    )}
+                  >
+                    <span className="w-6 text-right font-mono text-xs text-muted-foreground shrink-0 mt-0.5">
+                      {idx + 1}.
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground">{scenario.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                        {scenario.situation.length > 80
+                          ? scenario.situation.slice(0, 80) + '...'
+                          : scenario.situation}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Random mode note */}
+              {scenarioOrderMode === 'random' && (
+                <p className="text-xs text-muted-foreground italic text-center">
+                  Cada candidato verá uma ordem diferente
+                </p>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPreviewOpen(false)}>
+                Fechar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

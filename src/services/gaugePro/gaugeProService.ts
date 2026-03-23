@@ -86,6 +86,9 @@ export interface IGaugeProService {
   /** Count how many assessments used this word */
   getWordUsageCount(id: number): Promise<number>;
 
+  /** Bulk update sort_order for multiple scenarios */
+  updateScenarioSortOrders(updates: { id: number; sortOrder: number }[]): Promise<void>;
+
   /** Get all scenarios including inactive (admin) */
   getAdminScenarios(): Promise<Scenario[]>;
   /** Update a scenario */

@@ -43,6 +43,8 @@ export interface AdjectiveWord {
 
 export type WordOrderMode = 'random' | 'fixed' | 'alternating' | 'grouped' | 'alphabetical';
 
+export type ScenarioOrderMode = 'random' | 'fixed' | 'alphabetical';
+
 export type Perspective = 'self' | 'others';
 
 export interface WordStepResponse {
