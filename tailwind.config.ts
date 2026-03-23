@@ -83,6 +83,27 @@ export default {
           900: "#1e2a54",
           950: "#141a33",
         },
+        test: {
+          self: {
+            bg: "hsl(var(--test-self-bg))",
+            "bg-strong": "hsl(var(--test-self-bg-strong))",
+            border: "hsl(var(--test-self-border))",
+            text: "hsl(var(--test-self-text))",
+            icon: "hsl(var(--test-self-icon))",
+          },
+          others: {
+            bg: "hsl(var(--test-others-bg))",
+            "bg-strong": "hsl(var(--test-others-bg-strong))",
+            border: "hsl(var(--test-others-border))",
+            text: "hsl(var(--test-others-text))",
+            icon: "hsl(var(--test-others-icon))",
+          },
+          complete: {
+            bg: "hsl(var(--test-complete-bg))",
+            border: "hsl(var(--test-complete-border))",
+            text: "hsl(var(--test-complete-text))",
+          },
+        },
         cyan: {
           50: "#ecfeff",
           100: "#cffafe",

@@ -48,9 +48,11 @@ interface AiAnalysisRow {
   updated_at: string;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function analysisToRow(a: AIAnalysis, teamMemberId?: string): Record<string, unknown> {
   return {
-    candidate_id: a.candidateId || null,
+    candidate_id: (a.candidateId && UUID_RE.test(a.candidateId)) ? a.candidateId : null,
     team_member_id: teamMemberId ?? null,
     test_result_id: a.testResultId,
     analysis_type: a.analysisType,
@@ -88,10 +90,23 @@ function rowToAnalysis(r: AiAnalysisRow): AIAnalysis {
 // --- Supabase persistence ---
 
 async function saveToSupabase(analysis: AIAnalysis, teamMemberId?: string): Promise<void> {
-  const row = analysisToRow(analysis, teamMemberId);
-  const { error } = await supabase
-    .from('ai_analyses')
-    .upsert(row, { onConflict: 'test_result_id,analysis_type' });
+  const validCandidateId = (analysis.candidateId && UUID_RE.test(analysis.candidateId)) ? analysis.candidateId : null;
+  const validTeamMemberId = (teamMemberId && UUID_RE.test(teamMemberId)) ? teamMemberId : null;
+
+  // Use SECURITY DEFINER RPC to bypass RLS (collaborators are unauthenticated)
+  const { error } = await supabase.rpc('save_ai_analysis', {
+    p_candidate_id: validCandidateId,
+    p_team_member_id: validTeamMemberId,
+    p_test_result_id: analysis.testResultId,
+    p_analysis_type: analysis.analysisType,
+    p_content: analysis.content,
+    p_status: analysis.status,
+    p_model_used: analysis.modelUsed || null,
+    p_tokens_input: analysis.tokensInput || 0,
+    p_tokens_output: analysis.tokensOutput || 0,
+    p_generation_time_ms: analysis.generationTimeMs || 0,
+    p_error_message: analysis.errorMessage || null,
+  });
   if (error) throw error;
 }
 
@@ -140,6 +155,20 @@ export async function loadAllAnalysesFromSupabase(
   if (error || !data || data.length === 0) return [];
 
   return groupAnalysisRows(data as AiAnalysisRow[], candidateId);
+}
+
+/** Load all AI analyses for a team member by team_member_id */
+export async function loadAllAnalysesByTeamMember(
+  teamMemberId: string,
+): Promise<AIAnalysisResult[]> {
+  const { data, error } = await supabase
+    .from('ai_analyses')
+    .select('*')
+    .eq('team_member_id', teamMemberId)
+    .order('created_at', { ascending: false });
+
+  if (error || !data || data.length === 0) return [];
+  return groupAnalysisRows(data as AiAnalysisRow[]);
 }
 
 /** Load all AI analyses for a team member (by test_result_ids from their gauge_pro_results) */

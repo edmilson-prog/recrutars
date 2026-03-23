@@ -46,11 +46,11 @@ export function InsufficientCreditsModal({
               <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
             <AlertDialogTitle className="text-lg">
-              Creditos insuficientes
+              Créditos insuficientes
             </AlertDialogTitle>
           </div>
           <AlertDialogDescription className="mt-2">
-            Voce nao possui creditos de teste disponiveis para enviar este convite.
+            Você não possui créditos de teste disponíveis para enviar este convite.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -72,7 +72,7 @@ export function InsufficientCreditsModal({
                 : 'text-foreground',
             )}
           >
-            {balance} {balance === 1 ? 'credito' : 'creditos'}
+            {balance} {balance === 1 ? 'crédito' : 'créditos'}
           </span>
         </div>
 
@@ -83,7 +83,7 @@ export function InsufficientCreditsModal({
             className="gap-2 bg-cyan-600 hover:bg-cyan-700 text-white"
           >
             <CreditCard className="w-4 h-4" />
-            Comprar Creditos
+            Comprar Créditos
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

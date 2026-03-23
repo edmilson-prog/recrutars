@@ -231,25 +231,59 @@ export function useUpdateCompanyTest() {
   });
 }
 
+/** Custom error for insufficient credits — callers can check `error.insufficientCredits` */
+export class InsufficientCreditsError extends Error {
+  insufficientCredits = true;
+  available: number;
+  required: number;
+  constructor(available: number, required: number) {
+    super(`Creditos insuficientes. Disponivel: ${available}, Necessario: ${required}`);
+    this.available = available;
+    this.required = required;
+  }
+}
+
 export function useSendTestInvitations() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ testId, invitations }: { testId: string; invitations: CreateInvitationInput[] }) => {
+    mutationFn: async ({ testId, invitations, channel }: { testId: string; invitations: CreateInvitationInput[]; channel?: string }) => {
       const { data, error } = await supabase.functions.invoke('send-test-invitation', {
-        body: { action: 'send_invitations', test_id: testId, invitations },
+        body: { action: 'send_invitations', test_id: testId, invitations, channel, origin: window.location.origin },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data.invitations as TestInvitation[];
+      return { invitations: data.invitations as TestInvitation[], whatsappResults: data.whatsappResults };
     },
-    onSuccess: (invitations, { testId }) => {
+    onSuccess: (result, { testId, channel }) => {
+      const invitations = result.invitations;
+      const wp = result.whatsappResults;
       queryClient.invalidateQueries({ queryKey: companyTestKeys.invitations(testId) });
-      toast({
-        title: 'Convites enviados',
-        description: `${invitations.length} convite${invitations.length > 1 ? 's' : ''} enviado${invitations.length > 1 ? 's' : ''} com sucesso.`,
-      });
+
+      if (wp && wp.failed > 0 && wp.sent === 0) {
+        toast({
+          title: 'Convites criados',
+          description: `${invitations.length} convite${invitations.length > 1 ? 's' : ''} criado${invitations.length > 1 ? 's' : ''}, mas falha no envio WhatsApp: ${wp.errors?.[0] ?? 'erro desconhecido'}`,
+          variant: 'destructive',
+        });
+      } else if (wp && wp.failed > 0) {
+        toast({
+          title: 'Convites enviados parcialmente',
+          description: `${wp.sent} enviado${wp.sent > 1 ? 's' : ''} via WhatsApp, ${wp.failed} falhou.`,
+        });
+      } else if (channel === 'whatsapp' && !wp) {
+        toast({
+          title: 'Erro no envio WhatsApp',
+          description: 'Convites criados, mas o envio via WhatsApp falhou silenciosamente. Verifique as configuracoes.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Convites enviados',
+          description: `${invitations.length} convite${invitations.length > 1 ? 's' : ''} enviado${invitations.length > 1 ? 's' : ''} com sucesso.`,
+        });
+      }
     },
     onError: () => {
       toast({ title: 'Erro ao enviar convites', variant: 'destructive' });

@@ -26,6 +26,18 @@ export { EmailInviteForm } from './EmailInviteForm';
 export { PublicLinkManager } from './PublicLinkManager';
 export { InternalCandidateInvite } from './InternalCandidateInvite';
 
+// Invitation Management (Gestão Granular de Convites)
+export { InvitePanelContainer } from './InvitePanelContainer';
+export { InvitationManager } from './InvitationManager';
+export { InvitationManagerKPIs } from './InvitationManagerKPIs';
+export { InvitationManagerFilters } from './InvitationManagerFilters';
+export { InvitationTable } from './InvitationTable';
+export { InvitationStatusBadge } from './InvitationStatusBadge';
+export { InvitationProgressDots } from './InvitationProgressDots';
+export { InvitationBulkActionBar } from './InvitationBulkActionBar';
+export { InvitationDetailSheet } from './InvitationDetailSheet';
+export { InvitationTimeline } from './InvitationTimeline';
+
 // PRD-053: Results & Comparisons
 export { CandidateResultView } from './CandidateResultView';
 export { GaugeProRadarChart } from './GaugeProRadarChart';

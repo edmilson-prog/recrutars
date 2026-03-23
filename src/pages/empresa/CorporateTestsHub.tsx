@@ -17,8 +17,9 @@ import {
   HubDashboard,
   TestCreateForm,
   TestList,
-  InvitePanel,
+  InvitePanelContainer,
 } from '@/components/corporate-tests';
+import { CreditBadge } from '@/components/corporate-tests/CreditBadge';
 import { useCompanyTests } from '@/hooks/useCompanyTestsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -58,6 +59,7 @@ export default function CorporateTestsHub() {
           description="Gerencie testes Gauge-Pro, analise resultados e compare candidatos para decisões mais assertivas no recrutamento."
           actions={
             <>
+              <CreditBadge />
               <Button
                 variant="outline"
                 size="sm"
@@ -106,7 +108,7 @@ export default function CorporateTestsHub() {
           </TabsContent>
 
           <TabsContent value="invites" className="mt-6">
-            <InvitePanel />
+            <InvitePanelContainer />
           </TabsContent>
         </Tabs>
       </div>

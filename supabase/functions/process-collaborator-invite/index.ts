@@ -541,14 +541,22 @@ Deno.serve(async (req: Request) => {
         const now = new Date().toISOString();
         const genAt = result_data.generated_at || now;
 
-        // Build assessment row with appropriate owner
+        // Build assessment row with appropriate owner + responses
         const assessmentRow: Record<string, unknown> = {
           phase: 'completed',
-          started_at: genAt,
+          started_at: result_data.started_at || genAt,
           completed_at: now,
         };
         if (result_data.candidate_id) assessmentRow.candidate_id = result_data.candidate_id;
         if (team_member_id) assessmentRow.team_member_id = team_member_id;
+        // Include test responses if provided (collaborator unified flow)
+        if (result_data.word_step_responses) assessmentRow.word_step_responses = result_data.word_step_responses;
+        if (result_data.scenario_responses) assessmentRow.scenario_responses = result_data.scenario_responses;
+        // Part timestamps for duration calculation in Respostas tab
+        if (result_data.part1_started_at) assessmentRow.part1_started_at = result_data.part1_started_at;
+        if (result_data.part1_completed_at) assessmentRow.part1_completed_at = result_data.part1_completed_at;
+        if (result_data.part2_started_at) assessmentRow.part2_started_at = result_data.part2_started_at;
+        if (result_data.part2_completed_at) assessmentRow.part2_completed_at = result_data.part2_completed_at;
 
         // Create assessment row
         const { data: assessmentRows, error: aErr } = await supabase

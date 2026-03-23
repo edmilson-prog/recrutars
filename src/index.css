@@ -19,21 +19,21 @@
     --primary-foreground: 0 0% 100%;
 
     --secondary: 207 70% 53%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 207 100% 15%;
 
     --muted: 210 20% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 215 20% 43%;
 
-    --accent: 207 70% 53%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 210 40% 94%;
+    --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 71% 45%;
+    --success: 142 71% 35%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 38 92% 40%;
     --warning-foreground: 0 0% 100%;
 
     --border: 214 32% 91%;
@@ -98,53 +98,101 @@
     --glass-border: rgba(255, 255, 255, 0.2);
     --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     --glass-blur: 10px;
+
+    /* Test semantic tokens (Gauge-Pro word grid) */
+    --test-self-bg: 207 80% 96%;
+    --test-self-bg-strong: 207 70% 53%;
+    --test-self-border: 207 70% 60%;
+    --test-self-text: 207 70% 30%;
+    --test-self-icon: 207 70% 53%;
+    --test-others-bg: 228 60% 96%;
+    --test-others-bg-strong: 228 55% 55%;
+    --test-others-border: 228 55% 62%;
+    --test-others-text: 228 55% 28%;
+    --test-others-icon: 228 55% 55%;
+    --test-complete-bg: 142 60% 95%;
+    --test-complete-border: 142 60% 55%;
+    --test-complete-text: 142 60% 28%;
   }
 
   .dark {
-    --background: 222 47% 8%;
+    --background: 222 47% 7%;
     --foreground: 210 20% 98%;
 
-    --card: 222 47% 11%;
+    --card: 222 40% 12%;
     --card-foreground: 210 20% 98%;
 
-    --popover: 222 47% 11%;
+    --popover: 222 40% 12%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 207 70% 53%;
+    --primary: 228 48% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 228 48% 33%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 207 70% 58%;
+    --secondary-foreground: 207 100% 12%;
 
-    --muted: 222 47% 15%;
-    --muted-foreground: 215 16% 65%;
+    --muted: 222 40% 16%;
+    --muted-foreground: 215 16% 70%;
 
-    --accent: 207 70% 53%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 222 40% 16%;
+    --accent-foreground: 210 20% 95%;
 
-    --destructive: 0 62% 30%;
+    --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 47% 20%;
-    --input: 222 47% 20%;
+    --success: 142 60% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 80% 45%;
+    --warning-foreground: 38 100% 10%;
+
+    --border: 222 35% 22%;
+    --input: 222 35% 22%;
     --ring: 207 70% 53%;
 
-    --sidebar-background: 222 47% 8%;
+    /* Sidebar — navy identity preserved */
+    --sidebar-background: 225 40% 12%;
     --sidebar-foreground: 210 20% 98%;
     --sidebar-primary: 207 70% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 15%;
+    --sidebar-accent: 225 40% 18%;
     --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 222 47% 15%;
+    --sidebar-border: 225 40% 18%;
     --sidebar-ring: 207 70% 53%;
-    --sidebar-foreground-muted: 222 47% 50%;
-    --sidebar-hover: 222 47% 12%;
+    --sidebar-foreground-muted: 222 30% 60%;
+    --sidebar-hover: 225 40% 16%;
+
+    /* Gradients (dark) */
+    --gradient-primary: linear-gradient(135deg, hsl(228, 48%, 50%) 0%, hsl(207, 70%, 58%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(222, 47%, 10%) 0%, hsl(225, 40%, 16%) 50%, hsl(207, 60%, 25%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(222, 40%, 13%) 0%, hsl(222, 40%, 10%) 100%);
+
+    /* Shadows (dark) */
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.4);
+    --shadow-medium: 0 4px 16px -4px hsl(0 0% 0% / 0.5);
+    --shadow-large: 0 8px 32px -8px hsl(0 0% 0% / 0.6);
+    --shadow-glow: 0 0 24px hsl(207 70% 53% / 0.15);
 
     /* Glassmorphism tokens (dark) */
-    --glass-bg: rgba(0, 0, 0, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-    --glass-blur: 10px;
+    --glass-bg: rgba(15, 23, 42, 0.75);
+    --glass-border: rgba(148, 163, 184, 0.1);
+    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    --glass-blur: 12px;
+
+    /* Test semantic tokens (dark) */
+    --test-self-bg: 207 50% 15%;
+    --test-self-bg-strong: 207 70% 50%;
+    --test-self-border: 207 60% 40%;
+    --test-self-text: 207 60% 80%;
+    --test-self-icon: 207 65% 60%;
+    --test-others-bg: 228 40% 16%;
+    --test-others-bg-strong: 228 50% 50%;
+    --test-others-border: 228 45% 40%;
+    --test-others-text: 228 45% 80%;
+    --test-others-icon: 228 50% 60%;
+    --test-complete-bg: 142 40% 14%;
+    --test-complete-border: 142 50% 40%;
+    --test-complete-text: 142 50% 75%;
   }
 }
 

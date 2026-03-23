@@ -13,6 +13,7 @@ import type {
   CompanyCandidate,
   CompanyTeamMemberForInvite,
   EnhancedAuditLogFilters,
+  InvitationManagerFilters,
   TestMetrics,
 } from '@/types/companyTest';
 import type { ICompanyTestsService, CompanyTestFilters, AuditLogFilters } from './companyTestsService';
@@ -43,6 +44,7 @@ function companyTestRowToModel(row: Record<string, unknown>): CompanyTest {
     activatedAt: row.activated_at as string | undefined,
     closedAt: row.closed_at as string | undefined,
     archivedAt: row.archived_at as string | undefined,
+    defaultExpirationDays: (row.default_expiration_days as number) ?? 30,
   };
 }
 
@@ -170,6 +172,7 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
         deadline: input.deadline ?? null,
         instructions: input.instructions ?? null,
         target_audience: input.targetAudience ?? 'candidate',
+        default_expiration_days: input.defaultExpirationDays ?? 30,
         created_by: input.createdAt ? undefined : undefined, // Will be set from auth context
       })
       .select()
@@ -196,6 +199,7 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
     if (updates.activatedAt !== undefined) row.activated_at = updates.activatedAt;
     if (updates.closedAt !== undefined) row.closed_at = updates.closedAt;
     if (updates.archivedAt !== undefined) row.archived_at = updates.archivedAt;
+    if (updates.defaultExpirationDays !== undefined) row.default_expiration_days = updates.defaultExpirationDays;
 
     const { data, error } = await supabase
       .from('company_tests')
@@ -386,7 +390,7 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
   async getCompanyTeamMembers(companyId: string, search?: string): Promise<CompanyTeamMemberForInvite[]> {
     let query = supabase
       .from('team_members')
-      .select('id, name, email, department_id, gauge_status, archetype')
+      .select('id, name, email, phone, department_id, gauge_status, archetype')
       .eq('company_id', companyId)
       .eq('is_active', true)
       .order('name');
@@ -402,6 +406,7 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
       id: row.id as string,
       name: row.name as string,
       email: row.email as string,
+      phone: (row.phone as string) ?? undefined,
       departmentId: row.department_id as string | undefined,
       gaugeStatus: (row.gauge_status as string) ?? 'unmapped',
       archetype: row.archetype as string | undefined,
@@ -590,5 +595,105 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
       logs: (data ?? []).map(row => auditLogRowToModel(row as Record<string, unknown>)),
       total: count ?? 0,
     };
+  }
+
+  // --- Invitation Management (company-wide) ---
+
+  async getCompanyInvitations(
+    companyId: string,
+    filters?: InvitationManagerFilters
+  ): Promise<{ invitations: TestInvitation[]; total: number }> {
+    const page = filters?.page ?? 1;
+    const pageSize = filters?.pageSize ?? 25;
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('test_invitations')
+      .select(`
+        *,
+        company_tests!inner(company_id, name)
+      `, { count: 'exact' })
+      .eq('company_tests.company_id', companyId);
+
+    if (filters?.status && filters.status.length > 0) {
+      query = query.in('status', filters.status);
+    }
+    if (filters?.method && filters.method.length > 0) {
+      // Use delivery_channel for filtering (more accurate than method)
+      const channelMap: Record<string, string> = {
+        email: 'email', public_link: 'link', internal: 'email', whatsapp: 'whatsapp', link: 'link',
+      };
+      const channels = filters.method.map(m => channelMap[m] ?? m);
+      query = query.in('delivery_channel', channels);
+    }
+    if (filters?.search) {
+      query = query.or(`candidate_name.ilike.%${filters.search}%,candidate_email.ilike.%${filters.search}%`);
+    }
+    if (filters?.testId) {
+      query = query.eq('test_id', filters.testId);
+    }
+    if (filters?.dateFrom) {
+      query = query.gte('sent_at', filters.dateFrom);
+    }
+    if (filters?.dateTo) {
+      query = query.lte('sent_at', filters.dateTo);
+    }
+
+    const sortColumn = filters?.sortBy
+      ? { sentAt: 'sent_at', expiresAt: 'expires_at', status: 'status', candidateName: 'candidate_name' }[filters.sortBy]
+      : 'sent_at';
+    const ascending = filters?.sortDir === 'asc';
+    query = query.order(sortColumn!, { ascending });
+
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error('[getCompanyInvitations] Error:', error);
+      return { invitations: [], total: 0 };
+    }
+
+    const invitations: TestInvitation[] = (data ?? []).map((row: any) => ({
+      id: row.id,
+      testId: row.test_id,
+      candidateId: row.candidate_id,
+      teamMemberId: row.team_member_id,
+      candidateName: row.candidate_name,
+      candidateEmail: row.candidate_email,
+      method: row.method,
+      status: row.status,
+      token: row.token,
+      assessmentId: row.assessment_id,
+      sentAt: row.sent_at,
+      viewedAt: row.viewed_at,
+      startedAt: row.started_at,
+      completedAt: row.completed_at,
+      expiresAt: row.expires_at,
+      sentBy: row.sent_by,
+      inviteOrigin: row.invite_origin,
+      departmentId: row.department_id,
+      testName: row.company_tests?.name ?? '',
+      deliveryChannel: row.delivery_channel,
+    }));
+
+    return { invitations, total: count ?? 0 };
+  }
+
+  async getInvitationAuditLogs(invitationId: string): Promise<AuditLog[]> {
+    const { data, error } = await supabase
+      .from('test_audit_logs')
+      .select('*')
+      .eq('resource_id', invitationId)
+      .eq('resource_type', 'invitation')
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('[getInvitationAuditLogs] Error:', error);
+      return [];
+    }
+
+    return (data ?? []).map((row: any) => auditLogRowToModel(row as Record<string, unknown>));
   }
 }

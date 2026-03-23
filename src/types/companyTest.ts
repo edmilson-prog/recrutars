@@ -41,10 +41,11 @@ export interface CompanyTest {
   activatedAt?: string;
   closedAt?: string;
   archivedAt?: string;
+  defaultExpirationDays?: number;
 }
 
 // --- Invitation ---
-export type InvitationStatus = 'sent' | 'viewed' | 'started' | 'completed' | 'expired' | 'abandoned';
+export type InvitationStatus = 'sent' | 'viewed' | 'started' | 'completed' | 'expired' | 'cancelled' | 'abandoned';
 export type InvitationMethod = 'email' | 'public_link' | 'internal';
 
 export interface TestInvitation {
@@ -64,6 +65,10 @@ export interface TestInvitation {
   completedAt?: string;
   expiresAt: string;
   sentBy?: string;
+  inviteOrigin?: string;
+  departmentId?: string;
+  testName?: string;
+  deliveryChannel?: 'email' | 'whatsapp' | 'link';
 }
 
 // --- Create Invitation Input ---
@@ -90,6 +95,7 @@ export interface CompanyTeamMemberForInvite {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   departmentId?: string;
   gaugeStatus: string;
   archetype?: string;
@@ -159,7 +165,9 @@ export type AuditAction =
   | 'shortlist_removed'
   | 'pdf_downloaded'
   | 'excel_downloaded'
-  | 'lgpd_report_generated';
+  | 'lgpd_report_generated'
+  | 'invite_extended'
+  | 'invite_updated';
 
 export type AuditResourceType = 'test' | 'invitation' | 'result' | 'report' | 'assessment' | 'ai_analysis' | 'credit_transaction' | 'team_member' | 'retest_schedule';
 
@@ -232,6 +240,20 @@ export interface EnhancedAuditLogFilters {
   resourceType?: AuditResourceType;
   page?: number;
   pageSize?: number;
+}
+
+// --- Invitation Manager Filters ---
+export interface InvitationManagerFilters {
+  status?: InvitationStatus[];
+  method?: InvitationMethod[];
+  search?: string;
+  testId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  pageSize?: number;
+  sortBy?: 'sentAt' | 'expiresAt' | 'status' | 'candidateName';
+  sortDir?: 'asc' | 'desc';
 }
 
 // --- Test Metrics (from RPC get_test_metrics) ---

@@ -16,7 +16,7 @@ export function KPICards({ kpis }: KPICardsProps) {
     ? `${Math.round(kpis.avgCompletionTime / 24 * 10) / 10}d`
     : `${Math.round(kpis.avgCompletionTime)}h`;
 
-  const cards = [
+  const cards: { label: string; value: string | number; icon: typeof ClipboardList; color: string; valueColor?: string }[] = [
     { label: 'Total de Testes', value: kpis.totalTests, icon: ClipboardList, color: 'text-foreground' },
     { label: 'Testes Ativos', value: kpis.activeTests, icon: Play, color: 'text-green-500' },
     { label: 'Convites Pendentes', value: kpis.pendingInvites, icon: Clock, color: 'text-amber-500' },
@@ -24,7 +24,7 @@ export function KPICards({ kpis }: KPICardsProps) {
     { label: 'Tempo Médio', value: avgTimeLabel, icon: Timer, color: 'text-purple-500' },
     { label: 'Taxa de Abandono', value: `${kpis.abandonRate}%`, icon: AlertTriangle, color: 'text-orange-500' },
     { label: 'Colaboradores Mapeados', value: `${kpis.mappedMembers}/${kpis.totalMembers}`, icon: Users, color: 'text-cyan-500' },
-    { label: 'Créditos Disponíveis', value: kpis.creditsAvailable, icon: CreditCard, color: 'text-emerald-500' },
+    { label: 'Créditos Disponíveis', value: kpis.creditsAvailable, icon: CreditCard, color: kpis.creditsAvailable === 0 ? 'text-red-500' : kpis.creditsAvailable <= 4 ? 'text-amber-500' : 'text-emerald-500', valueColor: kpis.creditsAvailable === 0 ? 'text-red-500' : undefined },
     { label: 'Retestes Pendentes', value: kpis.pendingRetests, icon: CalendarClock, color: kpis.pendingRetests > 0 ? 'text-red-500' : 'text-gray-400' },
   ];
 
@@ -40,7 +40,7 @@ export function KPICards({ kpis }: KPICardsProps) {
                   <Icon className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{card.value}</p>
+                  <p className={`text-2xl font-bold ${card.valueColor ?? ''}`}>{card.value}</p>
                   <p className="text-xs text-muted-foreground">{card.label}</p>
                 </div>
               </div>

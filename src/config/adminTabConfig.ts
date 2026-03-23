@@ -12,6 +12,7 @@ import {
   DollarSign, TrendingUp, Activity, Rss, Download,
   CreditCard, BarChart3, ToggleLeft, Webhook, FlaskConical, Settings,
   Headset, MessageSquare, BookOpen, Phone,
+  Type, UserCircle,
 } from 'lucide-react';
 
 export interface AdminTab {
@@ -43,6 +44,15 @@ export const ADMIN_TAB_GROUPS: AdminTabGroup[] = [
     tabs: [
       { href: '/admin/avaliacoes/categorias', label: 'Categorias', icon: FolderTree },
       { href: '/admin/avaliacoes/perguntas', label: 'Perguntas', icon: FileQuestion },
+    ],
+  },
+  {
+    id: 'gauge-pro',
+    parentHref: '/admin/gauge-pro/adjetivos',
+    tabs: [
+      { href: '/admin/gauge-pro/adjetivos', label: 'Adjetivos', icon: Type },
+      { href: '/admin/gauge-pro/cenarios', label: 'Cenários', icon: BookOpen },
+      { href: '/admin/gauge-pro/arquetipos', label: 'Arquétipos', icon: UserCircle },
     ],
   },
   {

@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Loader2, AlertCircle, ArrowRight, ArrowLeft, Clock, LogIn,
@@ -24,9 +24,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
-import { ForceLightTheme } from '@/components/theme/ForceLightTheme';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { TestCompletionActivation } from '@/components/invite/TestCompletionActivation';
+import { ExpirationCountdown } from '@/components/invite/ExpirationCountdown';
 
 // Gauge-Pro components (reused)
 import { GaugeProIntro } from '@/components/gaugePro/GaugeProIntro';
@@ -36,6 +38,7 @@ import { ScenarioIntro } from '@/components/gaugePro/ScenarioIntro';
 import { ScenarioCard } from '@/components/gaugePro/ScenarioCard';
 import { AnalyzingScreen } from '@/components/gaugePro/AnalyzingScreen';
 import { BlockCompleteDivider } from '@/components/gaugePro/BlockCompleteDivider';
+import { TestCompletionSummary } from '@/components/gaugePro/TestCompletionSummary';
 
 import { useGaugeProAssessment } from '@/hooks/useGaugeProAssessment';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,6 +58,7 @@ interface InvitationData {
   departmentId: string | null;
   inviteOrigin: string | null;
   teamMemberId: string | null;
+  expiresAt: string | null;
 }
 
 interface TestInfo {
@@ -112,6 +116,12 @@ export default function CollaboratorTestSession() {
   const [cpfError, setCpfError] = useState('');
   const [verifyingCpf, setVerifyingCpf] = useState(false);
 
+  // Consent state
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [lgpdAccepted, setLgpdAccepted] = useState(false);
+  const consentComplete = termsAccepted && privacyAccepted && lgpdAccepted;
+
   // Login form
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -146,6 +156,7 @@ export default function CollaboratorTestSession() {
           departmentId: inv.department_id,
           inviteOrigin: inv.invite_origin,
           teamMemberId: inv.team_member_id,
+          expiresAt: inv.expires_at ?? null,
         };
 
         setInvitation(invData);
@@ -255,6 +266,11 @@ export default function CollaboratorTestSession() {
           email: formEmail.trim(),
           department_id: formDepartmentId || null,
           method: invitation.method || 'public_link',
+          consent_timestamps: {
+            terms_accepted_at: new Date().toISOString(),
+            privacy_accepted_at: new Date().toISOString(),
+            lgpd_consent_at: new Date().toISOString(),
+          },
         },
       });
 
@@ -338,6 +354,11 @@ export default function CollaboratorTestSession() {
           action: 'verify_cpf',
           team_member_id: invitation.teamMemberId,
           cpf_last4: cpfLast4,
+          consent_timestamps: {
+            terms_accepted_at: new Date().toISOString(),
+            privacy_accepted_at: new Date().toISOString(),
+            lgpd_consent_at: new Date().toISOString(),
+          },
         },
       });
 
@@ -411,6 +432,18 @@ export default function CollaboratorTestSession() {
               xp_awarded: gaugeResult.xpAwarded,
               badge_awarded: gaugeResult.badgeAwarded,
               generated_at: gaugeResult.generatedAt,
+              // PRD-089: Include test responses for Respostas tab
+              word_step_responses: gaugePro.wordStepResponses,
+              scenario_responses: gaugePro.scenarioResponses,
+              // Actual assessment start time for total duration calculation
+              started_at: gaugePro.assessment?.startedAt || null,
+              // Part timestamps for duration calculation
+              part1_started_at: gaugePro.assessment?.part1StartedAt || null,
+              part1_completed_at: gaugePro.assessment?.part1CompletedAt || null,
+              part2_started_at: gaugePro.assessment?.part2StartedAt || null,
+              // Fix: use current time — saveSession sets part2CompletedAt via async
+              // setAssessment, so gaugePro.assessment still has the stale value here
+              part2_completed_at: new Date().toISOString(),
             },
           },
         });
@@ -457,22 +490,87 @@ export default function CollaboratorTestSession() {
   // Render functions
   // ─────────────────────────────────────────────────────────────
 
-  const renderHeader = () => (
-    <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-        <img
-          src="/images/logo-horizontal.png"
-          alt="RecrutaRS"
-          className="h-8 w-auto"
-        />
-        {companyName && (
-          <span className="text-sm text-muted-foreground hidden sm:inline">
-            {companyName}
-          </span>
-        )}
+  const renderConsent = () => (
+    <div className="pt-4 border-t border-border/50 space-y-2">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        Termos e Consentimentos
+      </span>
+      <div className="rounded-lg border bg-muted/30 p-3 space-y-2.5">
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="consent-terms"
+            checked={termsAccepted}
+            onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+            className="mt-0.5"
+          />
+          <label htmlFor="consent-terms" className="text-xs leading-relaxed text-foreground/80 cursor-pointer">
+            Li e aceito os{' '}
+            <Link to="/termos-de-uso" target="_blank" className="text-primary underline underline-offset-2">
+              Termos de Uso
+            </Link>
+          </label>
+        </div>
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="consent-privacy"
+            checked={privacyAccepted}
+            onCheckedChange={(checked) => setPrivacyAccepted(checked === true)}
+            className="mt-0.5"
+          />
+          <label htmlFor="consent-privacy" className="text-xs leading-relaxed text-foreground/80 cursor-pointer">
+            Li e aceito a{' '}
+            <Link to="/politica-de-privacidade" target="_blank" className="text-primary underline underline-offset-2">
+              Politica de Privacidade
+            </Link>
+          </label>
+        </div>
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="consent-lgpd"
+            checked={lgpdAccepted}
+            onCheckedChange={(checked) => setLgpdAccepted(checked === true)}
+            className="mt-0.5"
+          />
+          <label htmlFor="consent-lgpd" className="text-xs leading-relaxed text-foreground/80 cursor-pointer">
+            Autorizo o tratamento dos meus dados conforme a{' '}
+            <Link to="/lgpd" target="_blank" className="text-primary underline underline-offset-2">
+              LGPD (Lei 13.709/2018)
+            </Link>
+          </label>
+        </div>
       </div>
-    </header>
+    </div>
   );
+
+  const renderHeader = () => {
+    const displayName = formName || invitation?.candidateName;
+    return (
+      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              src="/images/logo-horizontal.png"
+              alt="RecrutaRS"
+              className="h-8 w-auto"
+            />
+            {displayName && (
+              <span className="text-sm font-medium text-foreground truncate max-w-[200px] hidden sm:inline">
+                {displayName}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            {companyName && (
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                {companyName}
+              </span>
+            )}
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+    );
+  };
 
   const renderLoading = () => (
     <div className="text-center py-16">
@@ -517,6 +615,8 @@ export default function CollaboratorTestSession() {
             </p>
           </div>
 
+          <ExpirationCountdown expiresAt={invitation?.expiresAt} />
+
           <div className="space-y-3 bg-muted/50 rounded-lg p-4">
             <div>
               <span className="text-xs text-muted-foreground">Nome</span>
@@ -533,7 +633,7 @@ export default function CollaboratorTestSession() {
           <form onSubmit={handleCpfVerify} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="cpf-last4">
-                Digite os 4 ultimos digitos do seu CPF
+                Digite os 4 últimos dígitos do seu CPF
               </Label>
               <Input
                 id="cpf-last4"
@@ -556,10 +656,12 @@ export default function CollaboratorTestSession() {
               )}
             </div>
 
+            {renderConsent()}
+
             <Button
               type="submit"
               className="w-full"
-              disabled={verifyingCpf || cpfLast4.length !== 4}
+              disabled={verifyingCpf || cpfLast4.length !== 4 || !consentComplete}
             >
               {verifyingCpf ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -583,7 +685,7 @@ export default function CollaboratorTestSession() {
         <CardContent className="pt-6 space-y-6">
           <div className="text-center">
             <h2 className="text-xl font-bold text-foreground">
-              {testInfo?.name || 'Avaliacao Comportamental'}
+              {testInfo?.name || 'Avaliação Comportamental'}
             </h2>
             {testInfo?.description && (
               <p className="text-sm text-muted-foreground mt-2">{testInfo.description}</p>
@@ -595,6 +697,8 @@ export default function CollaboratorTestSession() {
               </div>
             )}
           </div>
+
+          <ExpirationCountdown expiresAt={invitation?.expiresAt} />
 
           <form onSubmit={handleIdentify} className="space-y-4">
             <div className="space-y-2">
@@ -645,15 +749,17 @@ export default function CollaboratorTestSession() {
               </div>
             )}
 
+            {renderConsent()}
+
             <Button
               type="submit"
               className="w-full"
-              disabled={submitting || !formName.trim() || !formEmail.trim()}
+              disabled={submitting || !formName.trim() || !formEmail.trim() || !consentComplete}
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : null}
-              Iniciar Avaliacao
+              Iniciar Avaliação
               {!submitting && <ArrowRight className="w-4 h-4 ml-2" />}
             </Button>
           </form>
@@ -828,44 +934,29 @@ export default function CollaboratorTestSession() {
   };
 
   const renderComplete = () => {
-    // Unified flow (PRD-088): simplified completion — no account activation
     const isUnifiedFlow = !candidateId && !!invitation?.teamMemberId;
 
-    if (isUnifiedFlow) {
-      return (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-lg mx-auto text-center space-y-6 py-12"
-        >
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-            <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold">Teste Concluido!</h2>
-          <p className="text-muted-foreground">
-            Obrigado, {formName || invitation?.candidateName}! Seus resultados foram registrados com sucesso.
-          </p>
-          {companyName && (
-            <p className="text-sm text-muted-foreground">
-              A equipe de {companyName} podera visualizar seu perfil comportamental.
-            </p>
-          )}
-        </motion.div>
-      );
-    }
-
-    // Legacy flow: full activation screen
     return (
-      <TestCompletionActivation
-        isNewUser={isNewUser}
+      <TestCompletionSummary
         candidateName={formName || invitation?.candidateName || ''}
         candidateEmail={formEmail || invitation?.candidateEmail || ''}
         companyName={companyName}
-        userId={user?.id}
-        invitationId={invitationId || undefined}
-      />
+        elapsedSeconds={gaugePro.elapsedSeconds}
+        isAnalysisReady={!!gaugePro.result}
+        onViewResult={!isUnifiedFlow ? () => navigate('/candidato/gauge-pro/resultado', { state: { analysisGenerating: !gaugePro.result } }) : undefined}
+      >
+        {/* Legacy flow: account activation section */}
+        {!isUnifiedFlow && (
+          <TestCompletionActivation
+            isNewUser={isNewUser}
+            candidateName={formName || invitation?.candidateName || ''}
+            candidateEmail={formEmail || invitation?.candidateEmail || ''}
+            companyName={companyName}
+            userId={user?.id}
+            invitationId={invitationId || undefined}
+          />
+        )}
+      </TestCompletionSummary>
     );
   };
 
@@ -884,7 +975,6 @@ export default function CollaboratorTestSession() {
 
   return (
     <>
-      <ForceLightTheme />
       <div className="min-h-screen bg-background">
         {renderHeader()}
         <main className="max-w-4xl mx-auto px-4 py-8">

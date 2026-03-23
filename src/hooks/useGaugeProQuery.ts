@@ -26,12 +26,17 @@ export const gaugeProKeys = {
   sessionByCandidate: (candidateId: string) =>
     [...gaugeProKeys.sessions(), 'candidate', candidateId] as const,
 
+  sessionByTeamMember: (teamMemberId: string) =>
+    [...gaugeProKeys.sessions(), 'teamMember', teamMemberId] as const,
+
   // Results
   results: () => [...gaugeProKeys.all, 'results'] as const,
   result: (assessmentId: string) =>
     [...gaugeProKeys.results(), assessmentId] as const,
   resultByCandidate: (candidateId: string) =>
     [...gaugeProKeys.results(), 'candidate', candidateId] as const,
+  resultByTeamMember: (teamMemberId: string) =>
+    [...gaugeProKeys.results(), 'teamMember', teamMemberId] as const,
   allResults: () => [...gaugeProKeys.results(), 'all'] as const,
 
   // AI Analysis
@@ -115,6 +120,17 @@ export function useGaugeProSessionByCandidate(candidateId: string) {
   });
 }
 
+export function useGaugeProSessionByTeamMember(teamMemberId: string) {
+  return useQuery({
+    queryKey: gaugeProKeys.sessionByTeamMember(teamMemberId),
+    queryFn: async () => {
+      const svc = await getGaugeProService();
+      return svc.getAssessmentByTeamMember(teamMemberId);
+    },
+    enabled: !!teamMemberId,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Result Queries
 // ---------------------------------------------------------------------------
@@ -138,6 +154,17 @@ export function useGaugeProResultByCandidate(candidateId: string) {
       return svc.getResultByCandidate(candidateId);
     },
     enabled: !!candidateId,
+  });
+}
+
+export function useGaugeProResultByTeamMember(teamMemberId: string) {
+  return useQuery({
+    queryKey: gaugeProKeys.resultByTeamMember(teamMemberId),
+    queryFn: async () => {
+      const svc = await getGaugeProService();
+      return svc.getResultByTeamMember(teamMemberId);
+    },
+    enabled: !!teamMemberId,
   });
 }
 

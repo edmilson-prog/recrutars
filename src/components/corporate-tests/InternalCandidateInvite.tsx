@@ -22,16 +22,22 @@ import {
   useCompanyCandidates,
   useCompanyTeamMembersForInvite,
   useSendTestInvitations,
+  InsufficientCreditsError,
 } from '@/hooks/useCompanyTestsQuery';
+import { InsufficientCreditsModal } from '@/components/billing/InsufficientCreditsModal';
+import { WhatsAppConfirmModal } from '@/components/corporate-tests/WhatsAppConfirmModal';
 import { useDepartments } from '@/hooks/useTeamsQuery';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
 import { supabase } from '@/lib/supabase';
-import type { TargetAudience, InvitationMethod } from '@/types/companyTest';
+import { cn } from '@/lib/utils';
+import type { TargetAudience, InvitationMethod, CompanyTeamMemberForInvite } from '@/types/companyTest';
 
 interface InternalCandidateInviteProps {
   testId: string;
   testName: string;
   targetAudience?: TargetAudience;
+  defaultExpirationDays?: number;
 }
 
 type SendStep = 'select' | 'channel' | 'links';
@@ -51,12 +57,12 @@ const GAUGE_STATUS_LABELS: Record<string, { label: string; variant: 'default' | 
 };
 
 const CHANNEL_OPTIONS = [
-  { value: 'public_link' as InvitationMethod, label: 'Link Unico', description: 'Gera links copiaveis para compartilhar manualmente', icon: Link2 },
+  { value: 'public_link' as InvitationMethod, label: 'Link Único', description: 'Gera links copiáveis para compartilhar manualmente', icon: Link2 },
   { value: 'email' as InvitationMethod, label: 'Email', description: 'Envia email com o link do teste para cada colaborador', icon: Mail },
   { value: 'internal' as InvitationMethod, label: 'WhatsApp', description: 'Envia mensagem via WhatsApp (Evolution API)', icon: MessageCircle },
 ];
 
-export function InternalCandidateInvite({ testId, testName, targetAudience }: InternalCandidateInviteProps) {
+export function InternalCandidateInvite({ testId, testName, targetAudience, defaultExpirationDays }: InternalCandidateInviteProps) {
   const { currentCompany } = useAuth();
   const isCollaborator = targetAudience === 'collaborator';
 
@@ -64,9 +70,12 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [sendStep, setSendStep] = useState<SendStep>('select');
+  const [insufficientCreditsOpen, setInsufficientCreditsOpen] = useState(false);
+  const [creditBalance, setCreditBalance] = useState(0);
   const [selectedChannel, setSelectedChannel] = useState<InvitationMethod>('public_link');
   const [generatedLinks, setGeneratedLinks] = useState<GeneratedLink[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [whatsAppConfirmOpen, setWhatsAppConfirmOpen] = useState(false);
 
   // Candidate mode (default)
   const { data: candidates, isLoading: candidatesLoading } = useCompanyCandidates(
@@ -83,6 +92,7 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
   const { data: departments } = useDepartments(isCollaborator ? currentCompany?.id : undefined);
 
   const sendInvitations = useSendTestInvitations();
+  const { data: companyCredits } = useCompanyCreditBalance(currentCompany?.id);
 
   // Query active invitations for this test to detect duplicates (collaborator mode)
   const { data: activeInvitations } = useQuery({
@@ -129,8 +139,23 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
     setSendStep('select');
   };
 
+  // Members eligible for sending (after duplicate filtering)
+  const getNewMembers = () => {
+    if (!isCollaborator || !teamMembers) return [];
+    const selectedMembers = teamMembers.filter(m => selected.has(m.id));
+    return selectedMembers.filter(m => !membersWithActiveInvite.has(m.id));
+  };
+
   const handleConfirmSend = async () => {
     if (selected.size === 0) return;
+
+    // PRD-089: Check credits before sending (frontend pre-check)
+    const balance = companyCredits ?? 0;
+    if (balance < selected.size) {
+      setCreditBalance(balance);
+      setInsufficientCreditsOpen(true);
+      return;
+    }
 
     try {
       if (isCollaborator && teamMembers) {
@@ -150,6 +175,19 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
           return;
         }
 
+        // WhatsApp channel: open confirmation modal instead of sending directly
+        if (selectedChannel === 'internal') {
+          setWhatsAppConfirmOpen(true);
+          return;
+        }
+
+        // Map UI channel selection to notification channel for Edge Function
+        const channelMap: Record<string, string> = {
+          public_link: 'link',
+          email: 'email',
+          internal: 'whatsapp',
+        };
+
         const result = await sendInvitations.mutateAsync({
           testId,
           invitations: newMembers.map(m => ({
@@ -157,12 +195,14 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
             candidateName: m.name,
             candidateEmail: m.email,
             method: selectedChannel,
+            expiresInDays: defaultExpirationDays ?? 30,
           })),
+          channel: channelMap[selectedChannel] ?? selectedChannel,
         });
 
         // If channel is Link Unico, show generated links instead of resetting
-        if (selectedChannel === 'public_link' && result?.length > 0) {
-          const links = result.map((inv: { candidateName?: string; candidate_name?: string; token?: string }) => ({
+        if (selectedChannel === 'public_link' && result?.invitations?.length > 0) {
+          const links = result.invitations.map((inv: { candidateName?: string; candidate_name?: string; token?: string }) => ({
             name: (inv.candidateName ?? inv.candidate_name ?? '') as string,
             link: `${window.location.origin}/convite/teste/${inv.token}`,
           }));
@@ -203,6 +243,7 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
           candidateName: c.name,
           candidateEmail: c.email,
           method: 'internal' as const,
+          expiresInDays: defaultExpirationDays ?? 30,
         })),
       });
     }
@@ -210,6 +251,11 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
     setSelected(new Set());
     setSendStep('select');
     } catch (err) {
+      if (err instanceof InsufficientCreditsError) {
+        setCreditBalance(err.available);
+        setInsufficientCreditsOpen(true);
+        return;
+      }
       const msg = err instanceof Error ? err.message : 'Erro ao enviar convites.';
       if (msg.includes('unique constraint') || msg.includes('duplicate key')) {
         toast.error('Alguns colaboradores ja possuem convite ativo para este teste.');
@@ -222,6 +268,36 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
   // For candidate mode, send directly (no channel step)
   const handleSendDirect = async () => {
     await handleConfirmSend();
+  };
+
+  // WhatsApp modal confirmation handler
+  const handleWhatsAppConfirm = async (confirmedMembers: CompanyTeamMemberForInvite[]) => {
+    try {
+      await sendInvitations.mutateAsync({
+        testId,
+        invitations: confirmedMembers.map(m => ({
+          teamMemberId: m.id,
+          candidateName: m.name,
+          candidateEmail: m.email,
+          method: 'internal' as const,
+          expiresInDays: defaultExpirationDays ?? 30,
+        })),
+        channel: 'whatsapp',
+      });
+
+      setWhatsAppConfirmOpen(false);
+      setSelected(new Set());
+      setSendStep('select');
+    } catch (err) {
+      if (err instanceof InsufficientCreditsError) {
+        setCreditBalance(err.available);
+        setWhatsAppConfirmOpen(false);
+        setInsufficientCreditsOpen(true);
+        return;
+      }
+      const msg = err instanceof Error ? err.message : 'Erro ao enviar convites.';
+      toast.error(`Erro ao enviar convites: ${msg}`);
+    }
   };
 
   // ─── Links Display Step (after Link Unico send) ───
@@ -257,7 +333,7 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
         <div className="space-y-1">
           <Label className="text-sm font-medium">Links gerados</Label>
           <p className="text-xs text-muted-foreground">
-            Copie e compartilhe os links com os colaboradores. Os links expiram em 30 dias.
+            Copie e compartilhe os links com os colaboradores. Os links expiram em {defaultExpirationDays ?? 30} dias.
           </p>
         </div>
 
@@ -344,6 +420,16 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
           </RadioGroup>
         </div>
 
+        {/* Cost preview */}
+        {selected.size > 0 && (
+          <p className={cn(
+            'text-xs text-center',
+            (companyCredits ?? 0) < selected.size ? 'text-red-500 font-medium' : 'text-muted-foreground',
+          )}>
+            Custo: {selected.size} {selected.size === 1 ? 'crédito' : 'créditos'} | Saldo: {companyCredits ?? 0}
+          </p>
+        )}
+
         {/* Actions */}
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleBackToSelect} disabled={sendInvitations.isPending}>
@@ -359,6 +445,19 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
             Confirmar Envio
           </Button>
         </div>
+        <InsufficientCreditsModal
+          open={insufficientCreditsOpen}
+          onOpenChange={setInsufficientCreditsOpen}
+          balance={creditBalance}
+        />
+        <WhatsAppConfirmModal
+          open={whatsAppConfirmOpen}
+          onOpenChange={setWhatsAppConfirmOpen}
+          members={getNewMembers()}
+          creditCost={selected.size}
+          isPending={sendInvitations.isPending}
+          onConfirm={handleWhatsAppConfirm}
+        />
       </div>
     );
   }
@@ -502,6 +601,11 @@ export function InternalCandidateInvite({ testId, testName, targetAudience }: In
           Convidar {selected.size > 0 ? `${selected.size} selecionado${selected.size > 1 ? 's' : ''}` : ''}
         </Button>
       )}
+      <InsufficientCreditsModal
+        open={insufficientCreditsOpen}
+        onOpenChange={setInsufficientCreditsOpen}
+        balance={creditBalance}
+      />
     </div>
   );
 }

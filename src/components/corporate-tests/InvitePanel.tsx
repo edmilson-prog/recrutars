@@ -3,13 +3,14 @@
  * PRD-052: Painel de convites (3 modos) — Supabase-backed
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Mail, Link2, Users } from 'lucide-react';
+import { Mail, Link2, Users, Clock } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmailInviteForm } from './EmailInviteForm';
 import { PublicLinkManager } from './PublicLinkManager';
 import { InternalCandidateInvite } from './InternalCandidateInvite';
@@ -24,10 +25,22 @@ export function InvitePanel() {
   const activeTests = tests ?? [];
 
   const [selectedTestId, setSelectedTestId] = useState('');
+  const [expirationOverride, setExpirationOverride] = useState<number | null>(null);
+  const [showExpirationSelect, setShowExpirationSelect] = useState(false);
 
   // Auto-select first test when data loads
   const effectiveTestId = selectedTestId || activeTests[0]?.id || '';
   const selectedTest = activeTests.find(t => t.id === effectiveTestId);
+
+  const testDefault = selectedTest?.defaultExpirationDays ?? 30;
+  const effectiveExpiration = expirationOverride ?? testDefault;
+  const isOverridden = expirationOverride !== null;
+
+  // Reset override when test changes
+  useEffect(() => {
+    setExpirationOverride(null);
+    setShowExpirationSelect(false);
+  }, [effectiveTestId]);
 
   const { data: invitations, isLoading: invitationsLoading } = useTestInvitations(
     effectiveTestId || undefined
@@ -86,7 +99,80 @@ export function InvitePanel() {
                 {stats.expired > 0 && (
                   <Badge variant="destructive">Expirados: {stats.expired}</Badge>
                 )}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="outline"
+                        className={isOverridden ? 'border-primary/50 text-primary' : 'text-muted-foreground'}
+                      >
+                        <Clock className="h-3 w-3 mr-1" />
+                        Validade: {effectiveExpiration} dias{isOverridden ? ' (personalizado)' : ''}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        {isOverridden
+                          ? `Override ativo: ${effectiveExpiration} dias (padrão do teste: ${testDefault} dias)`
+                          : `Convites enviados para este teste expiram em ${testDefault} dias`
+                        }
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </>
+            )}
+          </div>
+
+          {/* Expiration Override */}
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            {showExpirationSelect ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground">Validade dos convites</span>
+                <Select
+                  value={String(expirationOverride ?? testDefault)}
+                  onValueChange={(v) => setExpirationOverride(Number(v) === testDefault ? null : Number(v))}
+                >
+                  <SelectTrigger className="w-36 h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 dia (24h)</SelectItem>
+                    <SelectItem value="3">3 dias</SelectItem>
+                    <SelectItem value="7">7 dias</SelectItem>
+                    <SelectItem value="14">14 dias</SelectItem>
+                    <SelectItem value="30">30 dias</SelectItem>
+                    <SelectItem value="60">60 dias</SelectItem>
+                    <SelectItem value="90">90 dias</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-xs text-muted-foreground">
+                  Padrão do teste: {testDefault} dias.
+                </span>
+                {isOverridden && (
+                  <button
+                    type="button"
+                    className="text-xs text-primary hover:underline"
+                    onClick={() => { setExpirationOverride(null); setShowExpirationSelect(false); }}
+                  >
+                    Restaurar padrão
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">
+                  Validade dos convites: {effectiveExpiration} dias{!isOverridden ? ' (padrão do teste)' : ''}
+                </span>
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline"
+                  onClick={() => setShowExpirationSelect(true)}
+                >
+                  Alterar
+                </button>
+              </div>
             )}
           </div>
 
@@ -112,7 +198,7 @@ export function InvitePanel() {
                       {!isCollaborator && (
                         <TabsTrigger value="link" className="text-xs">
                           <Link2 className="h-3.5 w-3.5 mr-1.5" />
-                          Link Publico
+                          Link Público
                         </TabsTrigger>
                       )}
                       <TabsTrigger value="internal" className="text-xs">
@@ -128,7 +214,7 @@ export function InvitePanel() {
                     </TabsList>
 
                     <TabsContent value="email" className="mt-4">
-                      <EmailInviteForm testId={effectiveTestId} testName={selectedTest.name} />
+                      <EmailInviteForm testId={effectiveTestId} testName={selectedTest.name} defaultExpirationDays={effectiveExpiration} />
                     </TabsContent>
                     {!isCollaborator && (
                       <TabsContent value="link" className="mt-4">
@@ -145,6 +231,7 @@ export function InvitePanel() {
                         testId={effectiveTestId}
                         testName={selectedTest.name}
                         targetAudience={selectedTest.targetAudience}
+                        defaultExpirationDays={effectiveExpiration}
                       />
                     </TabsContent>
                   </Tabs>

@@ -15,6 +15,7 @@ import type {
   CompanyTeamMemberForInvite,
   CreateInvitationInput,
   EnhancedAuditLogFilters,
+  InvitationManagerFilters,
   TestMetrics,
   PeriodFilter,
 } from '@/types/companyTest';
@@ -67,6 +68,10 @@ export interface ICompanyTestsService {
   getTestMetrics(companyId: string, from?: string, to?: string): Promise<TestMetrics>;
   detectAbandonment(companyId: string): Promise<number>;
   getAuditLogsPaginated(companyId: string, filters?: EnhancedAuditLogFilters): Promise<{ logs: AuditLog[]; total: number }>;
+
+  // Invitation Management (company-wide)
+  getCompanyInvitations(companyId: string, filters?: InvitationManagerFilters): Promise<{ invitations: TestInvitation[]; total: number }>;
+  getInvitationAuditLogs(invitationId: string): Promise<AuditLog[]>;
 }
 
 let _instance: ICompanyTestsService | null = null;

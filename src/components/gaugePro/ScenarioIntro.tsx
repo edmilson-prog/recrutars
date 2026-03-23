@@ -20,7 +20,7 @@ export function ScenarioIntro({ onStart }: ScenarioIntroProps) {
     <div className="max-w-lg mx-auto space-y-6 py-6">
       {/* Header */}
       <div className="text-center space-y-4">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-cyan-500/20 border border-primary/10">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/10">
           <MessageSquare className="w-8 h-8 text-primary" />
         </div>
         <div className="space-y-2">
@@ -34,12 +34,12 @@ export function ScenarioIntro({ onStart }: ScenarioIntroProps) {
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl border bg-card p-4 text-center space-y-1">
-          <ListChecks className="w-5 h-5 text-cyan-500 mx-auto" />
+          <ListChecks className="w-5 h-5 text-secondary mx-auto" />
           <p className="text-2xl font-bold text-foreground">{totalScenarios}</p>
           <p className="text-xs text-muted-foreground">cenários</p>
         </div>
         <div className="rounded-xl border bg-card p-4 text-center space-y-1">
-          <Clock className="w-5 h-5 text-cyan-500 mx-auto" />
+          <Clock className="w-5 h-5 text-secondary mx-auto" />
           <p className="text-2xl font-bold text-foreground">~5 min</p>
           <p className="text-xs text-muted-foreground">tempo estimado</p>
         </div>
@@ -72,7 +72,7 @@ export function ScenarioIntro({ onStart }: ScenarioIntroProps) {
             { icon: RotateCcw, text: 'Você pode voltar e alterar respostas a qualquer momento' },
           ].map((tip, i) => (
             <div key={i} className="flex items-center gap-3 rounded-lg bg-muted/50 px-4 py-2.5">
-              <tip.icon className="w-4 h-4 text-cyan-500 shrink-0" />
+              <tip.icon className="w-4 h-4 text-secondary shrink-0" />
               <span className="text-sm text-foreground/80">{tip.text}</span>
             </div>
           ))}

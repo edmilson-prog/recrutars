@@ -82,6 +82,16 @@ src/services/
 
 All modules point directly to Supabase — no mock toggle, no mock implementations.
 
+### Changelog & Versioning
+- **Changelog file**: `public/changelog.json` (feeds About page and footer version tooltip)
+- **Version constants**: `src/constants/app.ts` (`APP_VERSION`, `APP_CODENAME`)
+- **Types**: `src/types/changelog.ts` — valid types: `added`, `changed`, `deprecated`, `removed`, `fixed`, `security`
+- **NEVER use** `enhanced` or other custom types (causes crash in VersionAccordion)
+- **Every item MUST have `details`** with `description` (string), `files` (string[]), `routes` (string[])
+- Details keys are string indices ("0", "1"...) matching the item's position in the `items` array
+- Only ONE version should have `isCurrent: true`
+- Use proper Portuguese accents (ã, ç, é, í, ó, ú, â, ê, ô) — UTF-8 charset
+
 ### Design System
 - Colors: Navy (primary dark) + Cyan (accent)
 - Font: Roboto Mono

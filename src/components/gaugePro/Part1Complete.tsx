@@ -19,7 +19,7 @@ export function Part1Complete({ onContinue }: Part1CompleteProps) {
         </div>
         <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-1000 ease-out"
+            className="h-full rounded-full bg-gradient-to-r from-test-complete-border to-test-self-icon transition-all duration-1000 ease-out"
             style={{ width: '50%' }}
           />
         </div>
@@ -27,13 +27,13 @@ export function Part1Complete({ onContinue }: Part1CompleteProps) {
       </div>
 
       {/* Success icon */}
-      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-green-50 border border-emerald-200/50">
-        <CheckCircle className="w-10 h-10 text-emerald-500" />
+      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-test-complete-bg to-test-complete-bg border border-test-complete-border/50">
+        <CheckCircle className="w-10 h-10 text-test-complete-border" />
       </div>
 
       {/* Title */}
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-emerald-500">Parte 1 Concluída!</h2>
+        <h2 className="text-2xl font-bold text-test-complete-text">Parte 1 Concluída!</h2>
         <p className="text-muted-foreground">
           Suas seleções de palavras foram registradas com sucesso.
         </p>
@@ -42,12 +42,12 @@ export function Part1Complete({ onContinue }: Part1CompleteProps) {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl border bg-card p-4 space-y-1">
-          <Brain className="w-5 h-5 text-cyan-500 mx-auto" />
+          <Brain className="w-5 h-5 text-test-self-icon mx-auto" />
           <p className="text-2xl font-bold text-foreground">5</p>
           <p className="text-xs text-muted-foreground">dimensões avaliadas</p>
         </div>
         <div className="rounded-xl border bg-card p-4 space-y-1">
-          <Sparkles className="w-5 h-5 text-cyan-500 mx-auto" />
+          <Sparkles className="w-5 h-5 text-test-self-icon mx-auto" />
           <p className="text-2xl font-bold text-foreground">{totalWords}</p>
           <p className="text-xs text-muted-foreground">palavras selecionadas</p>
         </div>

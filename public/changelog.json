@@ -1,51 +1,528 @@
 {
   "versions": [
     {
-      "version": "1.43.0",
-      "codename": "Lighthouse",
+      "version": "1.45.0",
+      "codename": "Compass",
       "type": "minor",
-      "releaseDate": "2026-03-20",
-      "description": "Rastreamento e observabilidade ponta a ponta do fluxo de testes Gauge-Pro. 7 dimensoes: ciclo de vida, cadeia de vinculos, retestes, creditos, auditoria completa, metricas agregadas e notificacoes em tempo real.",
+      "releaseDate": "2026-03-23",
+      "description": "Gestão completa do conteúdo do teste Gauge-Pro via painel admin, com CRUD para adjetivos, cenários e arquétipos, controle de ordenação configurável com 5 modos para adjetivos e 3 para cenários, e expiração automática de convites.",
       "isCurrent": true,
       "changes": [
         {
           "type": "added",
           "items": [
-            "Rastreamento do ciclo de vida completo do convite: viewed_at automatico ao primeiro acesso ao link",
-            "Cadeia de vinculos convite-assessment-resultado-IA via campos invitation_id e result_id",
-            "View unificada vw_test_tracking_chain para consulta da cadeia completa",
-            "RPC get_test_metrics com 14 metricas agregadas por empresa e periodo",
-            "Deteccao on-demand de testes abandonados (convites em started ha mais de 24h)",
-            "Consumo automatico de creditos ao enviar convites de teste (RF-012)",
-            "Estorno automatico de credito ao cancelar convite pendente (RF-014)",
-            "Bloqueio de envio quando creditos insuficientes com mensagem clara (RF-013)",
-            "Audit logging completo: 16 tipos de evento fire-and-forget (nunca bloqueia fluxo)",
-            "Notificacao in-app para admins da empresa quando colaborador conclui teste",
-            "Notificacao WhatsApp opt-in para owner da empresa na conclusao de teste",
-            "KPIs expandidos no Hub: taxa de abandono, colaboradores mapeados, creditos, retestes pendentes",
-            "Funil de conversao com 5 etapas (Convidados-Visualizados-Iniciados-Concluidos-Analisados) e percentuais",
-            "Card de resumo de creditos no Hub de Testes",
-            "Modal de agendamento de reteste com frequencia configuravel (3/6/9/12 meses)",
-            "Badge visual de reteste pendente no perfil do colaborador",
-            "RLS append-only em test_audit_logs e test_credit_transactions (sem UPDATE/DELETE)"
-          ]
+            "Seção admin Gauge-Pro com 3 páginas: Adjetivos, Cenários e Arquétipos",
+            "CRUD completo para os 100 adjetivos comportamentais com soft-delete",
+            "CRUD completo para os 15 cenários situacionais com editor de opções e mapeamentos",
+            "CRUD completo para os 16 arquétipos comportamentais com listas dinâmicas",
+            "Controle de ordenação de adjetivos com 5 modos: aleatória, fixa, alternada, agrupada e alfabética",
+            "Controle de ordenação de cenários com 3 modos: ordem fixa, aleatória e alfabética",
+            "Pré-visualização da ordem dos adjetivos e cenários como o candidato verá",
+            "Alertas psicométricos ao selecionar modos que podem comprometer a validade do teste",
+            "Expiração configurável de convites com contagem regressiva visual"
+          ],
+          "details": {
+            "0": {
+              "description": "Nova seção no painel administrativo em /admin/gauge-pro com navegação por abas entre Adjetivos, Cenários e Arquétipos. Acessível pelo menu lateral na área Sistema.",
+              "files": ["src/pages/admin/GaugeProAdjectives.tsx", "src/pages/admin/GaugeProScenarios.tsx", "src/pages/admin/GaugeProArchetypes.tsx", "src/config/adminTabConfig.ts"],
+              "routes": ["/admin/gauge-pro/adjetivos", "/admin/gauge-pro/cenarios", "/admin/gauge-pro/arquetipos"]
+            },
+            "1": {
+              "description": "Página de adjetivos com accordion por dimensão (D1-D5), exibindo 20 palavras por dimensão organizadas por polaridade alta e baixa. Permite editar texto e desativar adjetivos sem afetar resultados já calculados.",
+              "files": ["src/pages/admin/GaugeProAdjectives.tsx", "src/services/gaugePro/gaugeProService.supabase.ts"],
+              "routes": ["/admin/gauge-pro/adjetivos"]
+            },
+            "2": {
+              "description": "Página de cenários com cards expansíveis mostrando situação completa e 4 opções (A/B/C/D) com badges de mapeamento dimensional. Editor lateral permite alterar texto, opções e mapeamentos de dimensão.",
+              "files": ["src/pages/admin/GaugeProScenarios.tsx", "src/services/gaugePro/gaugeProService.supabase.ts"],
+              "routes": ["/admin/gauge-pro/cenarios"]
+            },
+            "3": {
+              "description": "Página de arquétipos com grid de cards mostrando nome, descrição e pontos fortes. Editor lateral com listas dinâmicas para pontos fortes, áreas de desenvolvimento e papéis ideais.",
+              "files": ["src/pages/admin/GaugeProArchetypes.tsx", "src/services/gaugePro/gaugeProService.supabase.ts"],
+              "routes": ["/admin/gauge-pro/arquetipos"]
+            },
+            "4": {
+              "description": "O administrador escolhe entre 5 modos de exibição para os adjetivos do teste: aleatória (recomendada), ordem fixa definida manualmente, polaridade alternada, agrupada por polaridade, ou alfabética. A configuração é global e afeta todos os testes futuros.",
+              "files": ["src/hooks/useGaugeProWordOrderMode.ts", "src/hooks/useGaugeProAssessment.ts", "src/pages/admin/GaugeProAdjectives.tsx"],
+              "routes": ["/admin/gauge-pro/adjetivos"]
+            },
+            "5": {
+              "description": "O administrador escolhe entre 3 modos de exibição para os cenários: ordem fixa (padrão), aleatória, ou alfabética pelo título. A configuração é global e cada candidato verá os cenários na ordem configurada.",
+              "files": ["src/hooks/useGaugeProScenarioOrderMode.ts", "src/hooks/useGaugeProAssessment.ts", "src/pages/admin/GaugeProScenarios.tsx"],
+              "routes": ["/admin/gauge-pro/cenarios"]
+            },
+            "6": {
+              "description": "Botão de pré-visualização nas páginas de adjetivos e cenários que abre um diálogo mostrando exatamente como os itens aparecerão para o candidato, incluindo a grade de 3 colunas dos adjetivos.",
+              "files": ["src/pages/admin/GaugeProAdjectives.tsx", "src/pages/admin/GaugeProScenarios.tsx"],
+              "routes": ["/admin/gauge-pro/adjetivos", "/admin/gauge-pro/cenarios"]
+            },
+            "7": {
+              "description": "Ao selecionar modos diferentes de aleatória, o sistema exibe alertas informando sobre possíveis impactos na validade psicométrica dos resultados, orientando o administrador a tomar decisões informadas.",
+              "files": ["src/pages/admin/GaugeProAdjectives.tsx", "src/pages/admin/GaugeProScenarios.tsx"],
+              "routes": ["/admin/gauge-pro/adjetivos", "/admin/gauge-pro/cenarios"]
+            },
+            "8": {
+              "description": "Convites de teste agora podem ter prazo de validade configurável. Após expirar, o convite é automaticamente marcado como expirado e o colaborador não consegue mais acessar o teste.",
+              "files": ["sql/migrations/069_invitation_expiration_config.sql", "sql/migrations/070_auto_expire_invitations.sql"],
+              "routes": ["/empresa/testes"]
+            }
+          }
         },
         {
           "type": "changed",
           "items": [
-            "Edge function process-collaborator-invite instrumentada com auditoria completa em todas as acoes",
-            "Edge function send-test-invitation: consumo de credito integrado ao envio e estorno ao cancelamento",
+            "Dados do teste Gauge-Pro migrados de arquivos TypeScript para tabelas Supabase",
+            "Service layer do Gauge-Pro atualizado para buscar dados do banco com fallback para dados bundled"
+          ],
+          "details": {
+            "0": {
+              "description": "Os 100 adjetivos, 15 cenários e 16 arquétipos que antes estavam em arquivos .ts fixos agora são armazenados em tabelas do Supabase, permitindo edição sem necessidade de redeploy da aplicação.",
+              "files": ["sql/migrations/071_gauge_pro_content_tables.sql", "src/services/gaugePro/gaugeProService.supabase.ts"],
+              "routes": []
+            },
+            "1": {
+              "description": "O service layer agora busca dados ativos do banco de dados, filtrando itens desativados pelo admin. Se as tabelas estiverem vazias, mantém fallback para os dados originais no código.",
+              "files": ["src/services/gaugePro/gaugeProService.supabase.ts", "src/hooks/useGaugeProAssessment.ts"],
+              "routes": []
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Contraste e layout do hub de testes corporativos melhorados para acessibilidade"
+          ],
+          "details": {
+            "0": {
+              "description": "Ajustes de contraste de cores e espaçamento no hub de testes da empresa para melhor legibilidade e conformidade com padrões de acessibilidade.",
+              "files": ["src/pages/empresa/AdminTests.tsx"],
+              "routes": ["/empresa/testes"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "version": "1.44.0",
+      "codename": "Prism",
+      "type": "minor",
+      "releaseDate": "2026-03-22",
+      "description": "Toggle de tema claro/escuro para colaboradores, refatoração completa de cores com correções WCAG AA, atualização em tempo real da lista de convites, redesign da tela de conclusão do teste com estatisticas, gerenciamento granular de convites com bulk actions, e consentimento LGPD no teste.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Toggle manual de tema claro/escuro no header do teste do colaborador",
+            "Nome do colaborador visivel no header durante o teste",
+            "Variaveis CSS semanticas --test-* para componentes do Gauge-Pro (light e dark)",
+            "Gradientes, sombras e glassmorphism com variantes dark mode",
+            "Atualizacao em tempo real da lista de convites via Supabase Realtime (status, KPIs, timeline, audit log)",
+            "Tela de conclusão do teste redesenhada com 6 estatisticas animadas e timeline de próximos passos",
+            "Gerenciamento granular de convites com detail sheet, bulk actions (reenviar/cancelar) e 4 KPIs",
+            "Filtro por canal WhatsApp no gerenciador de convites",
+            "Modal de confirmacao WhatsApp com edicao de telefone antes do envio",
+            "Checkboxes de consentimento (Termos, Privacidade, LGPD) na tela de inicio do teste",
+            "Badge de saldo de créditos no header do Hub + preview de custo nos botoes de envio",
+            "Botao 'Gerar Analise IA' para geração retroativa de analise em colaboradores sem resultado",
+            "Link para perfil do membro da equipe no detail sheet do convite",
+            "Aba separada para cards de arquetipo no perfil do colaborador"
+          ],
+          "details": {
+            "0": {
+              "description": "O colaborador agora pode alternar entre tema claro e escuro diretamente na tela do teste, usando o botão de sol/lua no topo da pagina.",
+              "files": ["src/pages/CollaboratorTestSession.tsx", "src/components/theme/ThemeToggle.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "1": {
+              "description": "O nome do colaborador aparece no topo da tela ao lado do logo durante todo o teste, fácilitando a identificação de quem esta respondendo.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "2": {
+              "description": "As cores da tela de avaliação (seleção de palavras, indicadores de progressó e conclusão) agora se adaptam automaticamente ao tema claro ou escuro.",
+              "files": ["src/index.css", "tailwind.config.ts"],
+              "routes": []
+            },
+            "3": {
+              "description": "Degradês, sombras e efeitos visuais da plataforma agora possuem versoes otimizadas para o modo escuro, com melhor contraste e legibilidade.",
+              "files": ["src/index.css"],
+              "routes": []
+            },
+            "4": {
+              "description": "A lista de convites enviados agora atualiza automaticamente em tempo real. Quando um colaborador acessa, inicia ou conclui o teste, o status muda na tela sem precisar recarregar.",
+              "files": ["src/hooks/useRealtimeInvitations.ts", "src/components/corporate-tests/InvitationManager.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "5": {
+              "description": "Ao concluir o teste, o colaborador ve uma tela redesenhada com resumo visual: tempo gasto, total de palavras e cenários respondidos, dimensões avaliadas, e os próximos passos do processo.",
+              "files": ["src/components/gaugePro/TestCompletionSummary.tsx", "src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "6": {
+              "description": "Nova tela de gerenciamento de convites com lista completa, painel de detalhes ao clicar em um convite, ações em massa (reenviar ou cancelar vários de uma vez) e 4 indicadores: total enviados, taxa de conclusão, tempo medio e abandonos.",
+              "files": ["src/components/corporate-tests/InvitationManager.tsx", "src/components/corporate-tests/InvitationDetailSheet.tsx", "src/components/corporate-tests/InvitationTable.tsx", "src/components/corporate-tests/InvitationBulkActionBar.tsx", "src/components/corporate-tests/InvitationManagerKPIs.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "7": {
+              "description": "Novo filtro na lista de convites que permite ver apenas os convites enviados por WhatsApp, fácilitando o acompanhamento por canal.",
+              "files": ["src/components/corporate-tests/InvitationManagerFilters.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "8": {
+              "description": "Antes de enviar um convite por WhatsApp, uma tela de confirmacao permite revisar e editar o número de telefone e ver uma prévia da mensagem que sera enviada.",
+              "files": ["src/components/corporate-tests/WhatsAppConfirmModal.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "9": {
+              "description": "O colaborador precisa aceitar os Termos de Uso, Politica de Privacidade e LGPD antes de iniciar a avaliação, garantindo conformidade com a lei de proteção de dados.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "10": {
+              "description": "O saldo de créditos da empresa aparece no topo do Hub de Testes, e ao lado dos botoes de envio voce ve quantos créditos serao consumidos antes de confirmar.",
+              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "11": {
+              "description": "Na aba de Inteligencia Artificial do perfil do colaborador, um botão permite gerar a analise comportamental mesmo para colaboradores que fizeram o teste antes dessa funcionalidade existir.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "12": {
+              "description": "Ao visualizar os detalhes de um convite, o nome do colaborador funciona como link direto para abrir o perfil completo dele na equipe.",
+              "files": ["src/components/corporate-tests/InvitationDetailSheet.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "13": {
+              "description": "As informações de arquetipo comportamental (perfil primario, secundario, pontos fortes e areas de desenvolvimento) agora possuem sua própria aba no perfil do colaborador, mais organizada e fácil de consultar.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Cores primary/secondary consistentes entre modos (primary=navy, secondary=cyan em ambos)",
+            "Accent diferenciado de secondary (tom sutil para hovers vs vivido para interação)",
+            "9 correções de contraste WCAG AA (secondary, destructive, success, warning, muted-foreground)",
+            "Sidebar dark mode com identidade navy preservada (background distinto do conteudo)",
+            "Hierarquia visual dark mode melhorada (background 7% < card 12% < muted 16%)",
+            "7 componentes Gauge-Pro refatorados de cores hardcoded para CSS variables",
+            "TestCompletionActivation simplificado para formulario de ativação apenas (header movido para TestCompletionSummary)",
+            "Detail sheet do convite com largura expandida e secoes organizadas",
+            "Reordenacao da aba Competencias: fatores emocionais primeiro, radar + risco lado a lado"
+          ],
+          "details": {
+            "0": {
+              "description": "A cor principal (azul marinho) e a cor de destaque (ciano) agora sao consistentes entre o modo claro e o modo escuro, evitando confusao visual ao trocar de tema.",
+              "files": ["src/index.css"],
+              "routes": []
+            },
+            "1": {
+              "description": "Os destaques visuais ao passar o mouse agora usam um tom mais suave, diferente dos botoes e links que mantem a cor ciano vibrante para fácilitar a distinção.",
+              "files": ["src/index.css"],
+              "routes": []
+            },
+            "2": {
+              "description": "Textos sobre fundos coloridos (botoes, alertas de sucesso, avisos e erros) agora possuem contraste melhorado, fácilitando a leitura para todos os usuarios, incluindo pessoas com baixa visao.",
+              "files": ["src/index.css"],
+              "routes": []
+            },
+            "3": {
+              "description": "O menu lateral no modo escuro agora mantem a identidade visual azul marinho, distinguindo-se claramente da area de conteudo principal.",
+              "files": ["src/index.css"],
+              "routes": []
+            },
+            "4": {
+              "description": "No modo escuro, os diferentes niveis de conteudo (fundo, cartoes e areas secundarias) possuem tonalidades distintas, criando uma hierarquia visual mais clara e organizada.",
+              "files": ["src/index.css"],
+              "routes": []
+            },
+            "5": {
+              "description": "Todas as telas do teste comportamental (seleção de palavras, introducao, cenários, progressó e analise) agora se adaptam corretamente ao modo claro e escuro.",
+              "files": ["src/components/gaugePro/WordGrid.tsx", "src/components/gaugePro/GaugeProIntro.tsx", "src/components/gaugePro/Part1Complete.tsx", "src/components/gaugePro/ScenárioCard.tsx", "src/components/gaugePro/ScenárioIntro.tsx", "src/components/gaugePro/BlockCompleteDivider.tsx", "src/components/gaugePro/AnalyzingScreen.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "6": {
+              "description": "A tela de conclusão do teste foi redesenhada com um resumo visual completo (estatisticas, próximos passos e informações do perfil), enquanto a ativação de conta ficou mais simples e focada.",
+              "files": ["src/components/invite/TestCompletionActivation.tsx", "src/components/gaugePro/TestCompletionSummary.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "7": {
+              "description": "O painel lateral de detalhes do convite ficou mais largo para acomodar melhor as informações da jornada, histórico de atividades e dados do colaborador.",
+              "files": ["src/components/corporate-tests/InvitationDetailSheet.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "8": {
+              "description": "Na aba de competencias do perfil do colaborador, os fatores emocionais agora aparecem primeiro, e o gráfico radar e os indicadores de risco ficam lado a lado para comparação rápida.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Analise IA comportamental agora exibida corretamente para colaboradores na aba IA",
+            "Respostas e durações Gauge-Pro visiveis para colaboradores na aba Respostas",
+            "Persistencia de respostas do teste no fluxo unificado (team_member_id)",
+            "Validacao de candidateId como UUID antes de salvar analise IA (evita erro 400)",
+            "Verificacao de saldo de créditos no frontend antes de enviar convites",
+            "Extracao robusta de erro insufficientCredits da edge function",
+            "Mascaras de CPF e telefone aplicadas ao carregar dados do membro para edicao",
+            "Entradas fantasma removidas e badge 'Atual' corrigido na aba IA",
+            "Timestamps corretos para métricas de duração do teste do colaborador",
+            "Botao aninhado substituido por span em CompanyNotificationItem (HTML valido)",
+            "Footer de metadados de geração adicionado ao card de analise IA do colaborador",
+            "Entrega WhatsApp habilitada para convites de teste com correção de som de notificação",
+            "Query maybeSingle() para system_settings AI previne erro 406",
+            "Envio silenciosó de convite WhatsApp corrigido (falha sem feedback)"
+          ],
+          "details": {
+            "0": {
+              "description": "A analise de inteligência artificial agora aparece corretamente na aba IA do perfil do colaborador, mesmo para aqueles cadastrados pelo fluxo de equipe.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "1": {
+              "description": "As respostas do teste (palavras escolhidas e cenários) e o tempo de duração agora aparecem corretamente na aba Respostas do perfil do colaborador.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "2": {
+              "description": "As respostas dos colaboradores durante o teste agora sao salvas corretamente no banco de dados, garantindo que nenhuma informacao seja perdida.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "3": {
+              "description": "Corrigido um problema que gerava erro ao salvar a analise de inteligência artificial para alguns colaboradores com identificadores temporários.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "4": {
+              "description": "Ao tentar enviar convites sem créditos suficientes, o avisó de créditos insuficientes aparece imediatamente, sem esperar a resposta do servidor.",
+              "files": ["src/components/corporate-tests/InvitePanelContainer.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "5": {
+              "description": "Melhorada a detecção de créditos insuficientes ao enviar convites, garantindo que a mensagem de avisó apareca em todos os cenários possíveis.",
+              "files": ["src/components/corporate-tests/InvitePanelContainer.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "6": {
+              "description": "Os campos de CPF e telefone agora exibem a formatação correta (com pontos, tracos e parenteses) ao abrir o formulario de edicao de um membro da equipe.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "7": {
+              "description": "Removidas entradas duplicadas na aba de IA e corrigido o indicador 'Atual' para mostrar apenas o teste mais recente do colaborador.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "8": {
+              "description": "O tempo de duração do teste agora e calculado corretamente, refletindo o período real entre o inicio e a conclusão da avaliação.",
+              "files": ["src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "9": {
+              "description": "Corrigido um problema visual nas notificações da empresa que poderia causar comportamento inesperado ao clicar em alguns itens.",
+              "files": ["src/components/notifications/CompanyNotificationItem.tsx"],
+              "routes": []
+            },
+            "10": {
+              "description": "O card de analise de IA do colaborador agora exibe informações sobre quando e como a analise foi gerada, para maior transparência.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "11": {
+              "description": "O envio de convites por WhatsApp agora funciona corretamente, e o som de notificação toca apenas uma vez por evento recebido.",
+              "files": ["src/hooks/useRealtimeNotifications.ts"],
+              "routes": ["/empresa/testes"]
+            },
+            "12": {
+              "description": "Corrigido um erro que podia ocorrer ao carregar configurações de inteligência artificial em empresas que ainda nao tinham definido suas preferências.",
+              "files": ["src/lib/aiAgent/settingsLoader.ts"],
+              "routes": []
+            },
+            "13": {
+              "description": "Quando o envio de um convite por WhatsApp falhava, o sistema nao mostrava nenhum aviso. Agora uma mensagem de erro clara aparece com opção de tentar novamente.",
+              "files": ["src/components/corporate-tests/WhatsAppConfirmModal.tsx"],
+              "routes": ["/empresa/testes"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "version": "1.43.0",
+      "codename": "Lighthouse",
+      "type": "minor",
+      "releaseDate": "2026-03-20",
+      "description": "Rastreamento e observabilidade ponta a ponta do fluxo de testes Gauge-Pro. 7 dimensões: ciclo de vida, cadeia de vínculos, retestes, créditos, auditoria completa, métricas agregadas e notificações em tempo real.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Rastreamento do ciclo de vida completo do convite: viewed_at automático ao primeiro acessó ao link",
+            "Cadeia de vínculos convite-assessment-resultado-IA via campos invitation_id e result_id",
+            "View unificada vw_test_tracking_chain para consulta da cadeia completa",
+            "RPC get_test_metrics com 14 métricas agregadas por empresa e período",
+            "Deteccao on-demand de testes abandonados (convites em started ha mais de 24h)",
+            "Consumo automático de créditos ao enviar convites de teste (RF-012)",
+            "Estorno automático de crédito ao cancelar convite pendente (RF-014)",
+            "Bloqueio de envio quando créditos insuficientes com mensagem clara (RF-013)",
+            "Audit logging completo: 16 tipos de evento fire-and-forget (nunca bloqueia fluxo)",
+            "Notificacao in-app para admins da empresa quando colaborador conclui teste",
+            "Notificacao WhatsApp opt-in para owner da empresa na conclusão de teste",
+            "KPIs expandidos no Hub: taxa de abandono, colaboradores mapeados, créditos, retestes pendentes",
+            "Funil de conversão com 5 etapas (Convidados-Visualizados-Iniciados-Concluidos-Analisados) e percentuais",
+            "Card de resumo de créditos no Hub de Testes",
+            "Modal de agendamento de reteste com frequência configurável (3/6/9/12 meses)",
+            "Badge visual de reteste pendente no perfil do colaborador",
+            "RLS append-only em test_audit_logs e test_credit_transactions (sem UPDATE/DELETE)"
+          ],
+          "details": {
+            "0": {
+              "description": "O sistema agora registra automaticamente quando um colaborador abre o link do teste pela primeira vez, permitindo acompanhar se o convite foi visualizado.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": ["/convite/teste/:token"]
+            },
+            "1": {
+              "description": "Cada etapa do processó (convite, avaliação, resultado e analise de IA) agora esta conectada, permitindo rastrear o caminho completo de cada colaborador.",
+              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "routes": []
+            },
+            "2": {
+              "description": "Uma consulta unificada permite visualizar toda a cadeia de um teste: desde o convite enviado ate a analise final de inteligência artificial, em uma única tela.",
+              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "routes": []
+            },
+            "3": {
+              "description": "O sistema calcula automaticamente 14 indicadores de desempenho (total enviados, taxa de conclusão, tempo medio, abandonos, entre outros) por empresa e período.",
+              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "routes": []
+            },
+            "4": {
+              "description": "Testes iniciados ha mais de 24 horas sem conclusão sao detectados automaticamente e marcados como abandonados, fácilitando o acompanhamento pela empresa.",
+              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "routes": []
+            },
+            "5": {
+              "description": "Ao enviar um convite de teste, 1 crédito e descontado automaticamente do saldo da empresa. A transação fica registrada no histórico para auditoria.",
+              "files": ["supabase/functions/send-test-invitation/index.ts", "sql/migrations/064_tracking_observability.sql"],
+              "routes": ["/empresa/testes"]
+            },
+            "6": {
+              "description": "Ao cancelar um convite que ainda nao foi iniciado, o crédito utilizado e devolvido automaticamente ao saldo da empresa.",
+              "files": ["supabase/functions/send-test-invitation/index.ts"],
+              "routes": ["/empresa/testes"]
+            },
+            "7": {
+              "description": "Se a empresa nao possui créditos suficientes, o envio de convites e bloqueado e uma mensagem clara informa quantos créditos sao necessários.",
+              "files": ["supabase/functions/send-test-invitation/index.ts"],
+              "routes": ["/empresa/testes"]
+            },
+            "8": {
+              "description": "Todas as ações do sistema (envio de convite, visualização, inicio do teste, conclusão, consumo de crédito, etc.) sao registradas automaticamente em um histórico de atividades para auditoria.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts", "supabase/functions/send-test-invitation/index.ts"],
+              "routes": []
+            },
+            "9": {
+              "description": "Os administradores da empresa recebem uma notificação automatica dentro da plataforma quando um colaborador conclui o teste comportamental.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": []
+            },
+            "10": {
+              "description": "Opcao para receber notificação por WhatsApp quando um colaborador conclui o teste. Pode ser ativada ou desativada nas configurações da empresa.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": []
+            },
+            "11": {
+              "description": "O Hub de Testes agora exibe 9 indicadores em destaque: total de convites enviados, taxa de conclusão, tempo medio, taxa de abandono, colaboradores mapeados, créditos disponíveis, retestes pendentes, entre outros.",
+              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "12": {
+              "description": "Novo funil visual de conversão com 5 etapas: Convidados, Visualizados, Iniciados, Concluidos e Analisados. Mostra o percentual de avanco entre cada etapa.",
+              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "13": {
+              "description": "Card de resumo de créditos no Hub de Testes mostrando saldo disponível, créditos consumidos no período selecionado e acessó rapido ao histórico de transações.",
+              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "14": {
+              "description": "Possibilidade de agendar retestes com frequência de 3, 6, 9 ou 12 meses. Um indicador visual aparece no perfil do colaborador quando a data de reteste esta próxima.",
+              "files": ["src/components/team-management/RetestScheduleModal.tsx", "src/pages/empresa/TeamMemberProfile.tsx"],
+              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+            },
+            "15": {
+              "description": "O histórico de atividades e de transações de créditos e protegido contra alterações e exclusões, garantindo a integridade dos registros para fins de auditoria.",
+              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "routes": []
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Edge function process-collaborator-invite instrumentada com auditoria completa em todas as ações",
+            "Edge function send-test-invitation: consumo de crédito integrado ao envio e estorno ao cancelamento",
             "Acao cancel em send-test-invitation agora le convite antes do update para verificar status original",
             "Activity Feed no Hub suporta novos tipos de evento (invite_viewed, test_started, credit_consumed etc.)",
-            "PeriodFilter inclui opcao 'Todos' para visualizar historico completo"
-          ]
+            "PeriodFilter inclui opção 'Todos' para visualizar histórico completo"
+          ],
+          "details": {
+            "0": {
+              "description": "Cada acao realizada no fluxo de convites (identificação, ativação, envio de email, inicio e conclusão do teste) agora e registrada automaticamente no histórico de atividades.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": []
+            },
+            "1": {
+              "description": "O consumo e a devolução de créditos agora fazem parte do fluxo de envio e cancelamento de convites, com todas as transações registradas no histórico.",
+              "files": ["supabase/functions/send-test-invitation/index.ts"],
+              "routes": ["/empresa/testes"]
+            },
+            "2": {
+              "description": "Agora só e possivel cancelar convites que ainda nao foram iniciados pelo colaborador. Testes em andamento nao podem mais ser cancelados acidentalmente.",
+              "files": ["supabase/functions/send-test-invitation/index.ts"],
+              "routes": ["/empresa/testes"]
+            },
+            "3": {
+              "description": "O feed de atividades no Hub de Testes agora mostra novos tipos de eventos: convite visualizado, teste iniciado, teste concluido, crédito consumido e crédito devolvido, cada um com seu próprio icone.",
+              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "4": {
+              "description": "Adicionada opção 'Todos' no filtro de período, permitindo visualizar o histórico completo de atividades e métricas desde o inicio da utilizacao.",
+              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
+              "routes": ["/empresa/testes"]
+            }
+          }
         },
         {
           "type": "fixed",
           "items": [
             "Bug de escopo em mark_completed: assessmentRows referenciado fora do bloco if (corrigido com finalAssessmentId)",
-            "Backfill de dados legados: vinculos assessment_id e invitation_id preenchidos para convites concluidos"
-          ]
+            "Backfill de dados legados: vínculos assessment_id e invitation_id preenchidos para convites concluidos"
+          ],
+          "details": {
+            "0": {
+              "description": "Corrigido um erro que podia impedir o registro correto dos resultados ao finalizar o teste em alguns cenários específicos.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": []
+            },
+            "1": {
+              "description": "Testes concluidos anteriormente que nao tinham vínculos com seus respectivos resultados e analises foram corrigidos e reconectados automaticamente.",
+              "files": ["sql/migrations/065_backfill_tracking.sql"],
+              "routes": []
+            }
+          }
         }
       ]
     },
@@ -54,7 +531,7 @@
       "codename": "Sentinel",
       "type": "patch",
       "releaseDate": "2026-03-20",
-      "description": "Hotfixes do fluxo unificado de teste para colaboradores: seletor de canal, deduplicacao de convites, links copiaveis, verificacao CPF com 4 digitos, e correcao da tela de analise travada.",
+      "description": "Hotfixes do fluxo unificado de teste para colaboradores: seletor de canal, deduplicacao de convites, links copiaveis, verificacao CPF com 4 digitos, e correção da tela de analise travada.",
       "isCurrent": false,
       "changes": [
         {
@@ -62,7 +539,7 @@
           "items": [
             "Seletor de canal (Link Unico, Email, WhatsApp) adicionado ao envio de convites para colaboradores no Hub de Testes",
             "Deduplicacao de convites no Hub: badge 'Convite ativo', checkbox desabilitado, toast informativo para duplicatas",
-            "Links copiaveis exibidos apos envio por 'Link Unico' com botao copiar individual e copiar todos",
+            "Links copiaveis exibidos apos envio por 'Link Unico' com botão copiar individual e copiar todos",
             "Verificacao CPF atualizada de 3 para 4 ultimos digitos para maior seguranca",
             "Mascara de CPF ajustada para exibir menos digitos (***.XXX.***-**)",
             "Tela 'Analisando seu perfil' nao trava mais no fluxo unificado (onComplete chamado antes do guard UUID)",
@@ -166,7 +643,7 @@
             "4": {
               "description": "Admin pode adicionar, debitar e transferir créditos de teste manualmente entre empresas.",
               "files": ["src/pages/admin/CreditManagement.tsx"],
-              "routes": ["/admin/creditos"]
+              "routes": ["/admin/créditos"]
             },
             "5": {
               "description": "Timeline visual mostrando histórico de testes realizados pelo colaborador com datas e status.",
@@ -192,7 +669,7 @@
           ],
           "details": {
             "0": {
-              "description": "PublicLinkManager exibe aviso amber de depreciação. O fluxo recomendado agora é enviar convites individuais via SendTestModal.",
+              "description": "PublicLinkManager exibe avisó amber de depreciação. O fluxo recomendado agora é enviar convites individuais via SendTestModal.",
               "files": ["src/components/team-management/PublicLinkManager.tsx"],
               "routes": ["/empresa/equipes"]
             }
@@ -237,7 +714,7 @@
           ],
           "details": {
             "0": {
-              "description": "Cria ou atualiza o produto e preço do pacote no Stripe, salvando os IDs de volta no banco de dados para uso no checkout.",
+              "description": "Cria ou atualiza o produto e preço do pacote no Stripe, salvando os IDs de volta no banco de dados para usó no checkout.",
               "files": ["supabase/functions/stripe-sync-package/index.ts"],
               "routes": ["/admin/pacotes-testes"]
             },
@@ -344,7 +821,7 @@
           ],
           "details": {
             "0": {
-              "description": "Perfil do colaborador agora tem 4 abas organizadas: Visão Geral, Competências, Análise IA e Respostas do teste, facilitando a consulta completa do perfil.",
+              "description": "Perfil do colaborador agora tem 4 abas organizadas: Visão Geral, Competências, Análise IA e Respostas do teste, fácilitando a consulta completa do perfil.",
               "files": ["src/components/team-management/MemberProfile.tsx"],
               "routes": ["/empresa/equipe/:id"]
             },
@@ -397,7 +874,7 @@
               "files": ["supabase/functions/process-collaborator-invite/index.ts"]
             },
             "11": {
-              "description": "O link público de teste exibe aviso de descontinuação. Convites individuais oferecem melhor rastreamento e controle por colaborador.",
+              "description": "O link público de teste exibe avisó de descontinuação. Convites individuais oferecem melhor rastreamento e controle por colaborador.",
               "files": ["src/components/empresa/PublicLinkManager.tsx"],
               "routes": ["/empresa/testes"]
             }
@@ -479,7 +956,7 @@
               "routes": ["/admin/testes"]
             },
             "1": {
-              "description": "Acesso rápido à página de Testes pelo menu lateral do admin, no grupo Principal.",
+              "description": "Acessó rápido à página de Testes pelo menu lateral do admin, no grupo Principal.",
               "files": ["src/config/adminTabConfig.ts"],
               "routes": ["/admin/testes"]
             }
@@ -549,7 +1026,7 @@
             "4": {
               "description": "Controle individual para cada tipo de notificação automática: novo candidato, teste concluído, nova mensagem e outros eventos.",
               "files": ["src/pages/empresa/NotificationSettings.tsx"],
-              "routes": ["/empresa/configuracoes/notificacoes"]
+              "routes": ["/empresa/configurações/notificações"]
             },
             "5": {
               "description": "Foto do usuário visível na tabela de listagem e atalho rápido para permissões nos detalhes de candidato e empresa.",
@@ -559,7 +1036,7 @@
             "6": {
               "description": "Administradores podem definir quantos dias o candidato deve esperar para refazer o teste Gauge-Pro. Padrão: 30 dias.",
               "files": ["src/pages/admin/Settings.tsx"],
-              "routes": ["/admin/configuracoes"]
+              "routes": ["/admin/configurações"]
             },
             "7": {
               "description": "Contagem regressiva visível mostrando quanto tempo falta para o candidato poder refazer o teste comportamental.",
@@ -567,7 +1044,7 @@
               "routes": ["/candidato/testes"]
             },
             "8": {
-              "description": "Competências antigas foram migradas para o novo padrão. Candidatos com competências desatualizadas veem um aviso para revisá-las.",
+              "description": "Competências antigas foram migradas para o novo padrão. Candidatos com competências desatualizadas veem um avisó para revisá-las.",
               "files": ["src/services/standardizedSkills/standardizedSkillsService.supabase.ts"],
               "routes": ["/candidato/perfil"]
             }
@@ -761,13 +1238,13 @@
             "Empresas selecionam até 5 competências técnicas e 5 comportamentais por vaga na aba Competências",
             "Candidatos selecionam até 10 habilidades técnicas e 10 comportamentais no perfil profissional",
             "Competências pontuam no Assistente de Redação — nova categoria com 10pts substituindo Soft Skills (5pts de busca textual)",
-            "Match padronizado entre candidato e vaga baseado em IDs de competências com peso por prioridade"
+            "Match padronizado entre candidato e vaga baseado em IDs de competências com pesó por prioridade"
           ]
         },
         {
           "type": "changed",
           "items": [
-            "Peso do critério Faixa Salarial reduzido de 25 para 20 pontos no Assistente de Redação para acomodar nova categoria Competências"
+            "Pesó do critério Faixa Salarial reduzido de 25 para 20 pontos no Assistente de Redação para acomodar nova categoria Competências"
           ]
         },
         {
@@ -789,7 +1266,7 @@
         {
           "type": "added",
           "items": [
-            "Período avulso (one_time) para planos — permite criar cobranças não recorrentes para candidatos e empresas",
+            "Período avulsó (one_time) para planos — permite criar cobranças não recorrentes para candidatos e empresas",
             "Botão Duplicar plano no admin — clona todos os dados do plano-fonte com prefixo 'Cópia de' e limpeza de campos Stripe",
             "Tooltips informativos em todos os campos do formulário de criação de planos"
           ]
@@ -937,7 +1414,7 @@
       "codename": "Insight",
       "type": "patch",
       "releaseDate": "2026-02-22",
-      "description": "Melhorias na experiência do candidato e empresa: crop/zoom de imagens em uploads de avatar e logo, dados reais de uso do plano, redesign visual do teste Gauge-Pro e correções de UX.",
+      "description": "Melhorias na experiência do candidato e empresa: crop/zoom de imagens em uploads de avatar e logo, dados reais de usó do plano, redesign visual do teste Gauge-Pro e correções de UX.",
       "isCurrent": false,
       "changes": [
         {
@@ -957,10 +1434,10 @@
             "Scroll wrapper aprimorado nos cards de análise prática, técnica e corporativa com fade-out gradiente e scrollbar estilizada",
             "Prompts de IA atualizados com instruções de formatação markdown para gerar conteúdo mais estruturado",
             "Layout da página de resultado Gauge-Pro ampliado de 896px para 1400px (+56%)",
-            "Redesign da tela de conclusão da Parte 1 do Gauge-Pro com barra de progresso e estatísticas",
+            "Redesign da tela de conclusão da Parte 1 do Gauge-Pro com barra de progressó e estatísticas",
             "Redesign do intro de cenários situacionais com grid de estatísticas e preview de formato",
             "Redesign dos labels de perspectiva do Gauge-Pro com cards visuais distintos",
-            "Uso do plano do candidato agora exibe dados reais do Supabase em vez de valores fixos",
+            "Usó do plano do candidato agora exibe dados reais do Supabase em vez de valores fixos",
             "Barra de candidaturas mostra formato X/Y com limite real do plano (5 gratuito, 50 pago)"
           ]
         },
@@ -993,7 +1470,7 @@
           "type": "added",
           "items": [
             "Tooltips descritivos para as 5 dimensões comportamentais (D1-D5) com explicação prática de alta e baixa pontuação",
-            "Constante DIMENSION_DESCRIPTIONS centralizada em gaugePro.ts para reuso em toda a aplicação",
+            "Constante DIMENSION_DESCRIPTIONS centralizada em gaugePro.ts para reusó em toda a aplicação",
             "Tooltips nas barras de dimensão da página de resultado do candidato (GaugeProResult)",
             "Tooltips nas barras de dimensão do perfil do candidato na visão da empresa (Banco de Talentos > Detalhes)",
             "Tooltips enriquecidos no componente reutilizável DimensionBarsGaugePro (testes corporativos, admin, equipes)"
@@ -1012,9 +1489,9 @@
         {
           "type": "changed",
           "items": [
-            "Redesign dos componentes WordGrid, ScenarioCard, ScenarioIntro e BlockCompleteDivider com hierarquia visual aprimorada",
+            "Redesign dos componentes WordGrid, ScenárioCard, ScenárioIntro e BlockCompleteDivider com hierarquia visual aprimorada",
             "Redesign da tela de conclusão do onboarding com confetti real, checkmark animado SVG, gradient text e orbs decorativos",
-            "Barra de progresso geral no teste Gauge-Pro cobrindo Parte 1 (palavras) e Parte 2 (cenários)",
+            "Barra de progressó geral no teste Gauge-Pro cobrindo Parte 1 (palavras) e Parte 2 (cenários)",
             "Logo monocromática para dark mode na tela de conclusão do onboarding",
             "Checklist de etapas concluídas redesenhada como mini-cards com labels de etapa",
             "Layout e espaçamento do perfil profissional ajustados"
@@ -1023,8 +1500,8 @@
         {
           "type": "fixed",
           "items": [
-            "Seleção de respostas nos cenários situacionais (Parte 2) não funcionava — passava objeto em vez de string para submitScenarioResponse",
-            "Campo selectedOption lia propriedade inexistente (selectedOptionId) do tipo ScenarioResponse",
+            "Seleção de respostas nos cenários situacionais (Parte 2) não funcionava — passava objeto em vez de string para submitScenárioResponse",
+            "Campo selectedOption lia propriedade inexistente (selectedOptionId) do tipo ScenárioResponse",
             "Erro 401 na geração de análise inteligente para candidatos — RLS bloqueava leitura das configurações de LLM do admin",
             "Loop infinito de polling de ai_analyses no DevTools após falha na geração",
             "Mensagem de erro da análise inteligente não era exibida na UI — candidato não recebia feedback"
@@ -1033,7 +1510,7 @@
         {
           "type": "security",
           "items": [
-            "RPC get_llm_config() com SECURITY DEFINER permite acesso seguro as configurações de LLM sem expor toda a tabela system_settings"
+            "RPC get_llm_config() com SECURITY DEFINER permite acessó seguro as configurações de LLM sem expor toda a tabela system_settings"
           ]
         }
       ]
@@ -1056,7 +1533,7 @@
             "PRD-083: Aceite obrigatório de Termos de Uso, Política de Privacidade e consentimento LGPD com timestamps",
             "PRD-083: OnboardingGuard que redireciona candidatos para etapa pendente do onboarding",
             "PRD-083: OnboardingStepIndicator reutilizável com 4 etapas e indicadores visuais de progresso",
-            "PRD-084: Tela de perfil pessoal com 7 campos obrigatorios (nascimento, gênero, estado, cidade, foto, estado civil, nacionalidade)",
+            "PRD-084: Tela de perfil pessoal com 7 campos obrigatórios (nascimento, gênero, estado, cidade, foto, estado civil, nacionalidade)",
             "PRD-084: Upload de foto de perfil direto para Supabase Storage com validação de formato e tamanho",
             "PRD-084: Salvamento progressivo automático ao sair de cada campo",
             "PRD-085: Perfil profissional no onboarding reutilizando ProfessionalProfile com modo onboarding (sem sidebar)",
@@ -1103,7 +1580,7 @@
             "Aba Teste no detalhe do candidato (admin) agora exibe resultado Gauge-Pro em vez de DISC legado",
             "Crash 'Rendered more hooks' ao abrir detalhe do candidato admin (useMemo após early return)",
             "Erro 405 na análise IA causado por fire-and-forget com API key vazia (fallback DEFAULT_SETTINGS)",
-            "Cards de análise IA agora permitem geração on-demand com botão 'Gerar Análise' e retry em caso de erro",
+            "Cards de análise IA agora permitem geração on-demand com botão 'Gerar Análise' e retry em casó de erro",
             "Bug de visibilidade de vagas corrigido e moderação admin conectada ao Supabase",
             "KPIs hardcoded no dashboard admin substituidos por dados reais"
           ]
@@ -1170,7 +1647,7 @@
           "items": [
             "Página standalone de teste para colaboradores convidados (/convite/teste/:token) — sem sidebar, reutiliza componentes Gauge-Pro",
             "Tela de conclusão com ativação de conta (criar senha + indicador de força) após avaliação",
-            "Edge Function process-collaborator-invite: pré-cadastro silencioso via admin.createUser + magic link",
+            "Edge Function process-collaborator-invite: pré-cadastro silenciosó via admin.createUser + magic link",
             "Canal Link Público: campo departamento na identificação + redirecionamento para teste standalone",
             "Canal Email Direto: link no email aponta para página standalone com dados pré-preenchidos",
             "Canal Da Base: seleção de candidatos existentes cria team_members com status 'invited'",
@@ -1304,7 +1781,7 @@
           "type": "added",
           "items": [
             "Aba Documentos no perfil profissional do candidato",
-            "Upload de curriculo em PDF com drag-and-drop e progresso visual",
+            "Upload de curriculo em PDF com drag-and-drop e progressó visual",
             "Card de curriculo salvo com nome, tamanho, data de envio e botoes Visualizar/Remover",
             "Video de apresentação: toggle entre upload de arquivo e link externo",
             "Preview automático de thumbnail para videos do YouTube",
@@ -1458,7 +1935,7 @@
             "Duração dinâmica: trial lido de plans.trial_duration_days, sem hardcode no código (RF-003)",
             "Migração: empresas existentes sem subscription normalizadas para trial com auditoria",
             "Bloqueio pós-trial: empresa com trial expirado vê tela de conversão com planos pagos",
-            "Aviso visual progressivo: badge sutil (16+ dias), banner (8-15 dias), alerta (2-7 dias), urgente (0-1 dia)",
+            "Avisó visual progressivo: badge sutil (16+ dias), banner (8-15 dias), alerta (2-7 dias), urgente (0-1 dia)",
             "TrialGuard: paths de checkout e meu-plano acessiveis mesmo com trial expirado"
           ]
         },
@@ -1715,7 +2192,7 @@
             "Tooltip do gráfico Funil de Conversão agora respeita dark mode com fundo e texto do tema",
             "Rota quebrada no card 'Testes do Plano' do dashboard da empresa (/empresa/plano → /empresa/meu-plano)",
             "Tooltips com ícone HelpCircle adicionados em todos os cards do dashboard da empresa",
-            "Tabela 'Últimas Candidaturas': removido match% falso (gerado por hash mock) e substituído por status real do teste comportamental",
+            "Tabela 'Últimas Candidaturas': removido match% falsó (gerado por hash mock) e substituído por status real do teste comportamental",
             "Tabela 'Últimas Candidaturas': datas agora exibidas em formato relativo ('há 2 dias') em vez de ISO 8601 cru",
             "Removida referência a 'DISC' no prompt do agente de IA — agora usa 'avaliação comportamental'"
           ]
@@ -1959,7 +2436,7 @@
       "codename": "Bridge",
       "type": "patch",
       "releaseDate": "2026-02-12",
-      "description": "Match Score corrigido — perfil comportamental sempre 50% (IDs mock), skills matching impreciso (frases vs tags) e nível Estágio não reconhecido.",
+      "description": "Match Score corrigido — perfil comportamental sempre 50% (IDs mock), skills matching imprecisó (frases vs tags) e nível Estágio não reconhecido.",
       "isCurrent": false,
       "changes": [
         {
@@ -1991,7 +2468,7 @@
             "Transição atômica: cria colaborador em Equipes com perfil Gauge-Pro preservado",
             "Verificação inteligente de posições com sugestão de encerramento",
             "Modal de encerramento de vaga com 3 opções",
-            "Notificação de parabéns ao contratado e aviso aos dispensados",
+            "Notificação de parabéns ao contratado e avisó aos dispensados",
             "Métricas: tempo de preenchimento, tempo no pipeline, estágios percorridos",
             "Seção 'Contratados' colapsável no Kanban",
             "Tabela hirings e RPCs atômicas hire_candidate/close_job_with_remaining"
@@ -2174,7 +2651,7 @@
             "TrialBanner: banner informativo dismissable (urgência media)",
             "TrialAlert: alerta não-dispensável (urgência alta/urgente)",
             "TrialIndicator: wrapper que seleciona componente por nível de urgência",
-            "TrialGuard: guard de rota que bloqueia acesso quando trial expira",
+            "TrialGuard: guard de rota que bloqueia acessó quando trial expira",
             "Tela de conversão fullscreen (TrialExpired) com comparativo de planos pagos",
             "Lógica pura de trial (trialRules.ts): cálculo de status, níveis, mensagens",
             "Hook useTrialStatus para status do trial da empresa atual",
@@ -2826,7 +3303,7 @@
         {
           "type": "added",
           "items": [
-            "Aba Competências: radar de 6 eixos (Liderança, Comunicação, Organização, Inovação, Trabalho em Equipe, Análise Crítica)",
+            "Aba Competências: radar de 6 eixos (Liderança, Comúnicação, Organização, Inovação, Trabalho em Equipe, Análise Crítica)",
             "Aba Competências: card de Fatores Emocionais com 5 barras (Empatia, Autocontrole, Sociabilidade, Resiliência, IE)",
             "Aba Competências: card de Avaliação de Risco com classificação Baixo/Moderado/Alto/Crítico e flags",
             "Aba IA & Recomendações: análise IA expandida, recomendação de contratação, plano de desenvolvimento, posicionamento em equipe, mitigação de riscos",
@@ -2853,7 +3330,7 @@
             "Aba Perfil: formulário pessoal com novo campo Data de Nascimento",
             "Aba Conta: segurança (alterar email/senha), notificações e zona de perigo",
             "Aba Aparência: seleção de tema (claro/escuro/sistema) via ThemeSettings",
-            "Aba Plano: resumo do plano atual, uso de recursos e link para página de planos",
+            "Aba Plano: resumo do plano atual, usó de recursos e link para página de planos",
             "Card de completude do perfil removido da página de perfil",
             "Tabs responsivas: apenas ícones em telas pequenas, ícones + texto em telas maiores"
           ]
@@ -2880,7 +3357,7 @@
           "items": [
             "Criação de vagas convertida de modal para página dedicada com layout em abas e sidebar do Assistente IA",
             "Formulário de vaga dividido em 6 abas: Básico, Salário, Descrição, Requisitos, Benefícios, Competências",
-            "Barra de progresso no header indicando completude dos campos obrigatórios",
+            "Barra de progressó no header indicando completude dos campos obrigatórios",
             "Assistente IA posicionado em sidebar fixa ao lado do formulário",
             "Rotas dedicadas: /empresa/vagas/nova e /empresa/vagas/:id/editar",
             "Proteção contra saída acidental com beforeunload",
@@ -2939,8 +3416,8 @@
         {
           "type": "fixed",
           "items": [
-            "Scrollbar adicionada na aba de carregar cenários do ScenarioManager",
-            "ScrollArea Radix substituída por overflow-y-auto nativo no ScenarioManager"
+            "Scrollbar adicionada na aba de carregar cenários do ScenárioManager",
+            "ScrollArea Radix substituída por overflow-y-auto nativo no ScenárioManager"
           ]
         }
       ]
@@ -2973,7 +3450,7 @@
             "Relatório Excel consolidado com 4 abas (Resumo, Resultados, Estatísticas, Convites)",
             "Dashboard de métricas: gauges, distribuição de perfis, tendências temporais",
             "Sistema de auditoria com log imutável de todas as ações",
-            "Relatório de conformidade LGPD (acesso a dados por candidato)"
+            "Relatório de conformidade LGPD (acessó a dados por candidato)"
           ]
         }
       ]
@@ -3131,7 +3608,7 @@
           "type": "changed",
           "items": [
             "Menu lateral candidato com Teste Comportamental",
-            "Menu de ações das vagas com acesso ao teste"
+            "Menu de ações das vagas com acessó ao teste"
           ]
         }
       ]
@@ -3641,7 +4118,7 @@
             "Página de listagem de currículos com abas",
             "Duplicar, arquivar/desarquivar currículos",
             "Cálculo de completude detalhado",
-            "Barra de progresso visual por currículo",
+            "Barra de progressó visual por currículo",
             "Editor de currículo em 5 abas",
             "Badge 'Atual' nas experiências em andamento"
           ]
@@ -3925,7 +4402,7 @@
           "type": "added",
           "items": [
             "Botão 'Anterior' para navegação entre questões",
-            "Persistência de progresso via localStorage",
+            "Persistência de progressó via localStorage",
             "Tela de processamento animada ao finalizar",
             "Seção 'Características Principais' no resultado",
             "Botão 'Baixar PDF'"
@@ -3946,7 +4423,7 @@
           "items": [
             "Modal de confirmação de candidatura",
             "Campo opcional de mensagem ao recrutador",
-            "Modal de sucesso com opções de navegação",
+            "Modal de sucessó com opções de navegação",
             "Indicador visual 'Candidatado' nas vagas já aplicadas",
             "Hook useApplications para gerenciamento de candidaturas"
           ]

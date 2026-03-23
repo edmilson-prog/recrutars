@@ -37,7 +37,13 @@ export interface AdjectiveWord {
   text: string;
   dimension: GaugeProDimension;
   polarity: 'high' | 'low'; // high = +2, low = -2
+  isActive?: boolean; // Added for admin
+  sortOrder?: number;
 }
+
+export type WordOrderMode = 'random' | 'fixed' | 'alternating' | 'grouped' | 'alphabetical';
+
+export type ScenarioOrderMode = 'random' | 'fixed' | 'alphabetical';
 
 export type Perspective = 'self' | 'others';
 
@@ -67,6 +73,7 @@ export interface Scenario {
   title: string;
   situation: string;
   options: ScenarioOption[];
+  isActive?: boolean; // Added for admin
 }
 
 export interface ScenarioResponse {
@@ -92,6 +99,7 @@ export interface ArchetypeProfile {
   idealRoles: string[];
   workStyle: string;
   communicationStyle: string;
+  isActive?: boolean; // Added for admin
 }
 
 // --- Assessment Session ---

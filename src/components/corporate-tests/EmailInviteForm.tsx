@@ -11,17 +11,25 @@ import { Badge } from '@/components/ui/badge';
 import { X, Send, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSendTestInvitations } from '@/hooks/useCompanyTestsQuery';
+import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
+import { useAuth } from '@/contexts/AuthContext';
+import { InsufficientCreditsModal } from '@/components/billing/InsufficientCreditsModal';
 
 interface EmailInviteFormProps {
   testId: string;
   testName: string;
+  defaultExpirationDays?: number;
 }
 
-export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
+export function EmailInviteForm({ testId, testName, defaultExpirationDays }: EmailInviteFormProps) {
   const { toast } = useToast();
+  const { currentCompany } = useAuth();
   const [emailInput, setEmailInput] = useState('');
   const [emails, setEmails] = useState<string[]>([]);
+  const [insufficientCreditsOpen, setInsufficientCreditsOpen] = useState(false);
+  const [creditBalance, setCreditBalance] = useState(0);
   const sendInvitations = useSendTestInvitations();
+  const { data: companyCredits } = useCompanyCreditBalance(currentCompany?.id);
 
   const addEmail = () => {
     const email = emailInput.trim().toLowerCase();
@@ -56,15 +64,23 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
       return;
     }
 
+    // PRD-089: Check credits before sending
+    const balance = companyCredits ?? 0;
+    if (balance < emails.length) {
+      setCreditBalance(balance);
+      setInsufficientCreditsOpen(true);
+      return;
+    }
+
     await sendInvitations.mutateAsync({
       testId,
       invitations: emails.map(email => ({
         candidateName: email.split('@')[0],
         candidateEmail: email,
         method: 'email' as const,
+        expiresInDays: defaultExpirationDays ?? 30,
       })),
     });
-
     setEmails([]);
   };
 
@@ -103,6 +119,11 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
         </div>
       )}
 
+      {emails.length > 0 && (
+        <p className={`text-xs text-center ${(companyCredits ?? 0) < emails.length ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
+          Custo: {emails.length} {emails.length === 1 ? 'crédito' : 'créditos'} | Saldo: {companyCredits ?? 0}
+        </p>
+      )}
       <Button onClick={handleSend} disabled={emails.length === 0 || sendInvitations.isPending}>
         {sendInvitations.isPending ? (
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -111,6 +132,14 @@ export function EmailInviteForm({ testId, testName }: EmailInviteFormProps) {
         )}
         Enviar {emails.length > 0 ? `${emails.length} convite${emails.length > 1 ? 's' : ''}` : 'convites'}
       </Button>
+      <p className="text-xs text-muted-foreground text-center">
+        Os convites expiram em {defaultExpirationDays ?? 30} dias após o envio.
+      </p>
+      <InsufficientCreditsModal
+        open={insufficientCreditsOpen}
+        onOpenChange={setInsufficientCreditsOpen}
+        balance={creditBalance}
+      />
     </div>
   );
 }

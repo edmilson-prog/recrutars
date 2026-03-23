@@ -9,7 +9,9 @@
 import type {
   AdjectiveWord,
   Scenario,
+  ScenarioOption,
   ArchetypeProfile,
+  GaugeProDimension,
   GaugeProAssessment,
   GaugeProResult,
 } from '@/types/gaugePro';
@@ -43,6 +45,9 @@ export interface IGaugeProService {
   /** Get the latest assessment for a candidate */
   getAssessmentByCandidate(candidateId: string): Promise<GaugeProAssessment | null>;
 
+  /** Get the latest assessment for a team member (unified collaborator flow) */
+  getAssessmentByTeamMember(teamMemberId: string): Promise<GaugeProAssessment | null>;
+
   /** Persist intermediate assessment state (step progress, responses) */
   updateAssessment(
     id: string,
@@ -60,8 +65,47 @@ export interface IGaugeProService {
   /** Get the latest result for a candidate */
   getResultByCandidate(candidateId: string): Promise<GaugeProResult | null>;
 
+  /** Get the latest result for a team member (unified collaborator flow) */
+  getResultByTeamMember(teamMemberId: string): Promise<GaugeProResult | null>;
+
   /** Get all results (RLS-filtered) */
   getAllResults(): Promise<GaugeProResult[]>;
+
+  // ---- Admin CRUD ----
+
+  /** Get all words including inactive (admin) */
+  getAdminWords(): Promise<AdjectiveWord[]>;
+  /** Update a word's text, is_active, or sort_order */
+  updateWord(id: number, data: { text?: string; isActive?: boolean; sortOrder?: number }): Promise<AdjectiveWord>;
+  /** Create a new word */
+  createWord(data: { text: string; dimension: GaugeProDimension; polarity: 'high' | 'low' }): Promise<AdjectiveWord>;
+  /** Toggle word active status */
+  toggleWordActive(id: number): Promise<void>;
+  /** Bulk update sort_order for multiple words */
+  updateWordSortOrders(updates: { id: number; sortOrder: number }[]): Promise<void>;
+  /** Count how many assessments used this word */
+  getWordUsageCount(id: number): Promise<number>;
+
+  /** Bulk update sort_order for multiple scenarios */
+  updateScenarioSortOrders(updates: { id: number; sortOrder: number }[]): Promise<void>;
+
+  /** Get all scenarios including inactive (admin) */
+  getAdminScenarios(): Promise<Scenario[]>;
+  /** Update a scenario */
+  updateScenario(id: number, data: { title?: string; situation?: string; sortOrder?: number; options?: ScenarioOption[]; isActive?: boolean }): Promise<Scenario>;
+  /** Create a new scenario */
+  createScenario(data: { title: string; situation: string; sortOrder: number; options: ScenarioOption[] }): Promise<Scenario>;
+  /** Toggle scenario active status */
+  toggleScenarioActive(id: number): Promise<void>;
+  /** Count how many assessments used this scenario */
+  getScenarioUsageCount(id: number): Promise<number>;
+
+  /** Get all archetypes including inactive (admin) */
+  getAdminArchetypes(): Promise<ArchetypeProfile[]>;
+  /** Update an archetype */
+  updateArchetype(id: string, data: Partial<Omit<ArchetypeProfile, 'id'>> & { isActive?: boolean }): Promise<ArchetypeProfile>;
+  /** Toggle archetype active status */
+  toggleArchetypeActive(id: string): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
