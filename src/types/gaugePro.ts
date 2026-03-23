@@ -38,7 +38,10 @@ export interface AdjectiveWord {
   dimension: GaugeProDimension;
   polarity: 'high' | 'low'; // high = +2, low = -2
   isActive?: boolean; // Added for admin
+  sortOrder?: number;
 }
+
+export type WordOrderMode = 'random' | 'fixed' | 'alternating' | 'grouped' | 'alphabetical';
 
 export type Perspective = 'self' | 'others';
 

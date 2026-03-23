@@ -20,10 +20,12 @@ import type {
   GaugeProDimension,
   Perspective,
   DimensionScores,
+  WordOrderMode,
 } from '@/types/gaugePro';
 import { DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 import { GAUGE_PRO_CONFIG } from '@/data/gaugeProConfig';
 import { useGaugeProCooldownDays } from '@/hooks/useGaugeProCooldownDays';
+import { useGaugeProWordOrderMode } from '@/hooks/useGaugeProWordOrderMode';
 import { GAUGE_PRO_ADJECTIVES } from '@/data/gaugeProWords';
 import { GAUGE_PRO_SCENARIOS } from '@/data/gaugeProScenarios';
 import { determineArchetype } from '@/data/gaugeProArchetypes';
@@ -38,6 +40,37 @@ import {
 const DIMENSIONS: GaugeProDimension[] = ['D1', 'D2', 'D3', 'D4', 'D5'];
 const TOTAL_WORD_STEPS = 10;
 
+/** Resolves word display order based on the configured mode */
+function resolveWordOrder(dimWords: AdjectiveWord[], mode: WordOrderMode): number[] {
+  switch (mode) {
+    case 'random':
+      return shuffleArray(dimWords.map(w => w.id));
+    case 'fixed':
+      return [...dimWords]
+        .sort((a, b) => (a.sortOrder ?? a.id) - (b.sortOrder ?? b.id))
+        .map(w => w.id);
+    case 'alternating': {
+      const high = dimWords.filter(w => w.polarity === 'high');
+      const low = dimWords.filter(w => w.polarity === 'low');
+      const result: number[] = [];
+      for (let i = 0; i < Math.max(high.length, low.length); i++) {
+        if (high[i]) result.push(high[i].id);
+        if (low[i]) result.push(low[i].id);
+      }
+      return result;
+    }
+    case 'grouped':
+      return [
+        ...dimWords.filter(w => w.polarity === 'high').map(w => w.id),
+        ...dimWords.filter(w => w.polarity === 'low').map(w => w.id),
+      ];
+    case 'alphabetical':
+      return [...dimWords]
+        .sort((a, b) => a.text.localeCompare(b.text, 'pt-BR'))
+        .map(w => w.id);
+  }
+}
+
 export interface UseGaugeProOptions {
   candidateId: string;
   /** When true, ignores localStorage/Supabase history and starts a fresh assessment (retest flow). */
@@ -51,6 +84,7 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
   const { candidateId, forceNew, onComplete, onXPAwarded, onBadgeAwarded } = options;
   const queryClient = useQueryClient();
   const cooldownDays = useGaugeProCooldownDays();
+  const { wordOrderMode } = useGaugeProWordOrderMode();
 
   const [phase, setPhase] = useState<GaugeProPhase>('intro');
   const [assessment, setAssessment] = useState<GaugeProAssessment | null>(null);
@@ -278,13 +312,13 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
     return updated;
   }, [assessment, candidateId, phase, storageKey]);
 
-  // Start assessment — generate shuffled orders per dimension
+  // Start assessment — generate word orders per dimension based on configured mode
   const startAssessment = useCallback(() => {
     const orders: Partial<Record<GaugeProDimension, number[]>> = {};
 
     for (const dim of DIMENSIONS) {
       const dimWords = activeWords.filter(w => w.dimension === dim);
-      orders[dim] = shuffleArray(dimWords.map(w => w.id));
+      orders[dim] = resolveWordOrder(dimWords, wordOrderMode);
     }
 
     setShuffledWordOrders(orders);
@@ -311,7 +345,7 @@ export function useGaugeProAssessment(options: UseGaugeProOptions) {
         })
       ).catch(() => { /* Supabase unavailable — localStorage continues */ });
     }
-  }, [saveSession, candidateId, activeWords]);
+  }, [saveSession, candidateId, activeWords, wordOrderMode]);
 
   // Toggle word selection for current step
   const toggleWord = useCallback((wordId: number) => {

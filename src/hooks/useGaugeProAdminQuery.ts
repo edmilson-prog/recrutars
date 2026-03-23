@@ -150,6 +150,21 @@ export function useToggleWordActive() {
   });
 }
 
+export function useUpdateWordSortOrders() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (updates: { id: number; sortOrder: number }[]) => {
+      const svc = await getGaugeProService();
+      return svc.updateWordSortOrders(updates);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: gaugeProAdminKeys.words() });
+      qc.invalidateQueries({ queryKey: gaugeProKeys.words() });
+    },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Mutations — Scenarios
 // ---------------------------------------------------------------------------

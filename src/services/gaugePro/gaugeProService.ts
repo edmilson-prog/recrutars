@@ -75,12 +75,14 @@ export interface IGaugeProService {
 
   /** Get all words including inactive (admin) */
   getAdminWords(): Promise<AdjectiveWord[]>;
-  /** Update a word's text or is_active */
-  updateWord(id: number, data: { text?: string; isActive?: boolean }): Promise<AdjectiveWord>;
+  /** Update a word's text, is_active, or sort_order */
+  updateWord(id: number, data: { text?: string; isActive?: boolean; sortOrder?: number }): Promise<AdjectiveWord>;
   /** Create a new word */
   createWord(data: { text: string; dimension: GaugeProDimension; polarity: 'high' | 'low' }): Promise<AdjectiveWord>;
   /** Toggle word active status */
   toggleWordActive(id: number): Promise<void>;
+  /** Bulk update sort_order for multiple words */
+  updateWordSortOrders(updates: { id: number; sortOrder: number }[]): Promise<void>;
   /** Count how many assessments used this word */
   getWordUsageCount(id: number): Promise<number>;
 

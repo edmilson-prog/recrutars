@@ -142,7 +142,8 @@ export class SupabaseGaugeProService implements IGaugeProService {
         .from('gauge_pro_words')
         .select('*')
         .eq('is_active', true)
-        .order('id');
+        .order('dimension')
+        .order('sort_order');
       if (error) throw error;
       if (data && data.length > 0) {
         return data.map((r: Record<string, unknown>) => ({
@@ -150,6 +151,7 @@ export class SupabaseGaugeProService implements IGaugeProService {
           text: r.text as string,
           dimension: r.dimension as GaugeProDimension,
           polarity: r.polarity as 'high' | 'low',
+          sortOrder: r.sort_order as number,
         }));
       }
     } catch {
@@ -354,7 +356,8 @@ export class SupabaseGaugeProService implements IGaugeProService {
     const { data, error } = await supabase
       .from('gauge_pro_words')
       .select('*')
-      .order('id');
+      .order('dimension')
+      .order('sort_order');
     if (error) throw error;
     return (data ?? []).map((r: Record<string, unknown>) => ({
       id: r.id as number,
@@ -362,16 +365,18 @@ export class SupabaseGaugeProService implements IGaugeProService {
       dimension: r.dimension as GaugeProDimension,
       polarity: r.polarity as 'high' | 'low',
       isActive: r.is_active as boolean,
+      sortOrder: r.sort_order as number,
     }));
   }
 
   async updateWord(
     id: number,
-    data: { text?: string; isActive?: boolean },
+    data: { text?: string; isActive?: boolean; sortOrder?: number },
   ): Promise<AdjectiveWord> {
     const row: Record<string, unknown> = {};
     if (data.text !== undefined) row.text = data.text;
     if (data.isActive !== undefined) row.is_active = data.isActive;
+    if (data.sortOrder !== undefined) row.sort_order = data.sortOrder;
 
     const { data: updated, error } = await supabase
       .from('gauge_pro_words')
@@ -387,6 +392,7 @@ export class SupabaseGaugeProService implements IGaugeProService {
       dimension: r.dimension as GaugeProDimension,
       polarity: r.polarity as 'high' | 'low',
       isActive: r.is_active as boolean,
+      sortOrder: r.sort_order as number,
     };
   }
 
@@ -429,6 +435,19 @@ export class SupabaseGaugeProService implements IGaugeProService {
       .from('gauge_pro_words')
       .update({ is_active: !(current as Record<string, unknown>).is_active })
       .eq('id', id);
+    if (error) throw error;
+  }
+
+  async updateWordSortOrders(updates: { id: number; sortOrder: number }[]): Promise<void> {
+    // Use Promise.all with individual updates (Supabase doesn't support bulk update easily)
+    const promises = updates.map(({ id, sortOrder }) =>
+      supabase
+        .from('gauge_pro_words')
+        .update({ sort_order: sortOrder })
+        .eq('id', id)
+    );
+    const results = await Promise.all(promises);
+    const error = results.find(r => r.error)?.error;
     if (error) throw error;
   }
 
