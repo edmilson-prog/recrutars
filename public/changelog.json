@@ -1,12 +1,115 @@
 {
   "versions": [
     {
+      "version": "1.45.0",
+      "codename": "Compass",
+      "type": "minor",
+      "releaseDate": "2026-03-23",
+      "description": "Gestão completa do conteúdo do teste Gauge-Pro via painel admin, com CRUD para adjetivos, cenários e arquétipos, controle de ordenação configurável com 5 modos para adjetivos e 3 para cenários, e expiração automática de convites.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Seção admin Gauge-Pro com 3 páginas: Adjetivos, Cenários e Arquétipos",
+            "CRUD completo para os 100 adjetivos comportamentais com soft-delete",
+            "CRUD completo para os 15 cenários situacionais com editor de opções e mapeamentos",
+            "CRUD completo para os 16 arquétipos comportamentais com listas dinâmicas",
+            "Controle de ordenação de adjetivos com 5 modos: aleatória, fixa, alternada, agrupada e alfabética",
+            "Controle de ordenação de cenários com 3 modos: ordem fixa, aleatória e alfabética",
+            "Pré-visualização da ordem dos adjetivos e cenários como o candidato verá",
+            "Alertas psicométricos ao selecionar modos que podem comprometer a validade do teste",
+            "Expiração configurável de convites com contagem regressiva visual"
+          ],
+          "details": {
+            "0": {
+              "description": "Nova seção no painel administrativo em /admin/gauge-pro com navegação por abas entre Adjetivos, Cenários e Arquétipos. Acessível pelo menu lateral na área Sistema.",
+              "files": ["src/pages/admin/GaugeProAdjectives.tsx", "src/pages/admin/GaugeProScenarios.tsx", "src/pages/admin/GaugeProArchetypes.tsx", "src/config/adminTabConfig.ts"],
+              "routes": ["/admin/gauge-pro/adjetivos", "/admin/gauge-pro/cenarios", "/admin/gauge-pro/arquetipos"]
+            },
+            "1": {
+              "description": "Página de adjetivos com accordion por dimensão (D1-D5), exibindo 20 palavras por dimensão organizadas por polaridade alta e baixa. Permite editar texto e desativar adjetivos sem afetar resultados já calculados.",
+              "files": ["src/pages/admin/GaugeProAdjectives.tsx", "src/services/gaugePro/gaugeProService.supabase.ts"],
+              "routes": ["/admin/gauge-pro/adjetivos"]
+            },
+            "2": {
+              "description": "Página de cenários com cards expansíveis mostrando situação completa e 4 opções (A/B/C/D) com badges de mapeamento dimensional. Editor lateral permite alterar texto, opções e mapeamentos de dimensão.",
+              "files": ["src/pages/admin/GaugeProScenarios.tsx", "src/services/gaugePro/gaugeProService.supabase.ts"],
+              "routes": ["/admin/gauge-pro/cenarios"]
+            },
+            "3": {
+              "description": "Página de arquétipos com grid de cards mostrando nome, descrição e pontos fortes. Editor lateral com listas dinâmicas para pontos fortes, áreas de desenvolvimento e papéis ideais.",
+              "files": ["src/pages/admin/GaugeProArchetypes.tsx", "src/services/gaugePro/gaugeProService.supabase.ts"],
+              "routes": ["/admin/gauge-pro/arquetipos"]
+            },
+            "4": {
+              "description": "O administrador escolhe entre 5 modos de exibição para os adjetivos do teste: aleatória (recomendada), ordem fixa definida manualmente, polaridade alternada, agrupada por polaridade, ou alfabética. A configuração é global e afeta todos os testes futuros.",
+              "files": ["src/hooks/useGaugeProWordOrderMode.ts", "src/hooks/useGaugeProAssessment.ts", "src/pages/admin/GaugeProAdjectives.tsx"],
+              "routes": ["/admin/gauge-pro/adjetivos"]
+            },
+            "5": {
+              "description": "O administrador escolhe entre 3 modos de exibição para os cenários: ordem fixa (padrão), aleatória, ou alfabética pelo título. A configuração é global e cada candidato verá os cenários na ordem configurada.",
+              "files": ["src/hooks/useGaugeProScenarioOrderMode.ts", "src/hooks/useGaugeProAssessment.ts", "src/pages/admin/GaugeProScenarios.tsx"],
+              "routes": ["/admin/gauge-pro/cenarios"]
+            },
+            "6": {
+              "description": "Botão de pré-visualização nas páginas de adjetivos e cenários que abre um diálogo mostrando exatamente como os itens aparecerão para o candidato, incluindo a grade de 3 colunas dos adjetivos.",
+              "files": ["src/pages/admin/GaugeProAdjectives.tsx", "src/pages/admin/GaugeProScenarios.tsx"],
+              "routes": ["/admin/gauge-pro/adjetivos", "/admin/gauge-pro/cenarios"]
+            },
+            "7": {
+              "description": "Ao selecionar modos diferentes de aleatória, o sistema exibe alertas informando sobre possíveis impactos na validade psicométrica dos resultados, orientando o administrador a tomar decisões informadas.",
+              "files": ["src/pages/admin/GaugeProAdjectives.tsx", "src/pages/admin/GaugeProScenarios.tsx"],
+              "routes": ["/admin/gauge-pro/adjetivos", "/admin/gauge-pro/cenarios"]
+            },
+            "8": {
+              "description": "Convites de teste agora podem ter prazo de validade configurável. Após expirar, o convite é automaticamente marcado como expirado e o colaborador não consegue mais acessar o teste.",
+              "files": ["sql/migrations/069_invitation_expiration_config.sql", "sql/migrations/070_auto_expire_invitations.sql"],
+              "routes": ["/empresa/testes"]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Dados do teste Gauge-Pro migrados de arquivos TypeScript para tabelas Supabase",
+            "Service layer do Gauge-Pro atualizado para buscar dados do banco com fallback para dados bundled"
+          ],
+          "details": {
+            "0": {
+              "description": "Os 100 adjetivos, 15 cenários e 16 arquétipos que antes estavam em arquivos .ts fixos agora são armazenados em tabelas do Supabase, permitindo edição sem necessidade de redeploy da aplicação.",
+              "files": ["sql/migrations/071_gauge_pro_content_tables.sql", "src/services/gaugePro/gaugeProService.supabase.ts"],
+              "routes": []
+            },
+            "1": {
+              "description": "O service layer agora busca dados ativos do banco de dados, filtrando itens desativados pelo admin. Se as tabelas estiverem vazias, mantém fallback para os dados originais no código.",
+              "files": ["src/services/gaugePro/gaugeProService.supabase.ts", "src/hooks/useGaugeProAssessment.ts"],
+              "routes": []
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Contraste e layout do hub de testes corporativos melhorados para acessibilidade"
+          ],
+          "details": {
+            "0": {
+              "description": "Ajustes de contraste de cores e espaçamento no hub de testes da empresa para melhor legibilidade e conformidade com padrões de acessibilidade.",
+              "files": ["src/pages/empresa/AdminTests.tsx"],
+              "routes": ["/empresa/testes"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.44.0",
       "codename": "Prism",
       "type": "minor",
       "releaseDate": "2026-03-22",
       "description": "Toggle de tema claro/escuro para colaboradores, refatoração completa de cores com correções WCAG AA, atualização em tempo real da lista de convites, redesign da tela de conclusão do teste com estatisticas, gerenciamento granular de convites com bulk actions, e consentimento LGPD no teste.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
