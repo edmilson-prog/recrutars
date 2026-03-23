@@ -521,7 +521,7 @@ export default function CompanySettings() {
 
         {/* Tabs */}
         <Tabs defaultValue={initialTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="perfil" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
               <span className="hidden sm:inline">Perfil</span>
@@ -541,10 +541,6 @@ export default function CompanySettings() {
             <TabsTrigger value="aparencia" className="flex items-center gap-2">
               <Bell className="w-4 h-4" />
               <span className="hidden sm:inline">Aparência</span>
-            </TabsTrigger>
-            <TabsTrigger value="plano" className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4" />
-              <span className="hidden sm:inline">Plano</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1151,139 +1147,6 @@ export default function CompanySettings() {
             <ThemeSettings />
           </TabsContent>
 
-          {/* Tab: Plano */}
-          <TabsContent value="plano" className="space-y-6">
-            {/* Plano atual — dados dinamicos via Supabase */}
-            {currentSubscription ? (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Plano {(currentSubscription as Record<string, unknown>).plan_name as string ?? (currentSubscription as Record<string, unknown>).planName as string ?? '—'}</CardTitle>
-                    <Badge variant="secondary" className="text-lg px-3 py-1">
-                      {formatBRL((currentSubscription as Record<string, unknown>).price_paid as number ?? (currentSubscription as Record<string, unknown>).pricePaid as number ?? 0)}/mês
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={(currentSubscription as Record<string, unknown>).status === 'active' ? 'default' : 'outline'}>
-                      {(currentSubscription as Record<string, unknown>).status === 'active' ? 'Ativa' :
-                       (currentSubscription as Record<string, unknown>).status === 'trial' ? 'Trial' :
-                       (currentSubscription as Record<string, unknown>).status === 'past_due' ? 'Pagamento Pendente' :
-                       String((currentSubscription as Record<string, unknown>).status ?? '')}
-                    </Badge>
-                  </div>
-                  <Separator />
-                  <p className="text-sm text-muted-foreground">
-                    Renovacao: {(currentSubscription as Record<string, unknown>).renewal_date
-                      ? new Date(String((currentSubscription as Record<string, unknown>).renewal_date)).toLocaleDateString('pt-BR')
-                      : (currentSubscription as Record<string, unknown>).renewalDate
-                      ? new Date(String((currentSubscription as Record<string, unknown>).renewalDate)).toLocaleDateString('pt-BR')
-                      : '—'}
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Sem assinatura ativa</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Escolha um plano abaixo para comecar.</p>
-                </CardContent>
-              </Card>
-            )}
-
-            <Separator />
-
-            {/* Todos os Planos — dados dinamicos via usePlans */}
-            <div className="space-y-6">
-              <h2 className="text-lg font-semibold">Todos os Planos</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {companyPlans.map((p) => {
-                  const plan = p as Record<string, unknown>;
-                  const planName = (plan.name as string) ?? '';
-                  const planSlug = (plan.slug as string) ?? '';
-                  const prices = (plan.prices as Record<string, number>) ?? {};
-                  const monthlyPrice = prices.monthly ?? 0;
-                  const isFree = (plan.is_free ?? plan.isFree) as boolean;
-                  const features = (plan.features as string[]) ?? [];
-                  const descShort = (plan.description_short ?? plan.descriptionShort) as string ?? '';
-                  const isCurrent = currentSubscription &&
-                    ((currentSubscription as Record<string, unknown>).plan_slug === planSlug ||
-                     (currentSubscription as Record<string, unknown>).planSlug === planSlug);
-                  const badge = plan.badge as string | undefined;
-
-                  return (
-                    <Card
-                      key={planSlug}
-                      className={isCurrent ? 'border-primary shadow-lg relative' : 'relative'}
-                    >
-                      {badge && (
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                          <Badge className="gap-1">
-                            <Star className="w-3 h-3" />
-                            {badge}
-                          </Badge>
-                        </div>
-                      )}
-                      <CardHeader className="text-center pb-2">
-                        <CardTitle className="text-lg">{planName}</CardTitle>
-                        <div className="mt-2">
-                          <span className="text-3xl font-bold">
-                            {isFree ? 'Gratis' : formatBRL(monthlyPrice)}
-                          </span>
-                          {!isFree && <span className="text-muted-foreground text-sm">/mês</span>}
-                        </div>
-                        <CardDescription className="mt-2">{descShort}</CardDescription>
-                      </CardHeader>
-                      <Separator />
-                      <CardContent className="pt-4">
-                        <ul className="space-y-2">
-                          {features.map((feat, idx) => (
-                            <li key={idx} className="flex items-start gap-2 text-sm text-foreground">
-                              <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                              {feat}
-                            </li>
-                          ))}
-                        </ul>
-                        <div className="mt-6">
-                          {isCurrent ? (
-                            <Button variant="outline" className="w-full" disabled>
-                              Plano Atual
-                            </Button>
-                          ) : (
-                            <Button
-                              className="w-full"
-                              variant={badge ? 'default' : 'outline'}
-                              onClick={() => navigate('/planos')}
-                            >
-                              {isFree ? 'Plano Gratuito' : `Assinar ${planName}`}
-                            </Button>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Perguntas Frequentes */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Perguntas Frequentes</h2>
-              <div className="grid gap-4">
-                {companyFaq.map((item) => (
-                  <Card key={item.question}>
-                    <CardContent className="pt-4">
-                      <h3 className="font-medium text-sm">{item.question}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{item.answer}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </TabsContent>
         </Tabs>
       </div>
 

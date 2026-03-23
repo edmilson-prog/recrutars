@@ -18,7 +18,7 @@ interface TrialBadgeProps {
 
 export function TrialBadge({ daysRemaining, className }: TrialBadgeProps) {
   return (
-    <Link to="/empresa/configuracoes?tab=plano" className={cn('no-underline', className)}>
+    <Link to="/empresa/pacotes?tab=plano" className={cn('no-underline', className)}>
       <Badge
         variant="outline"
         className={cn(

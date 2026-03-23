@@ -13,7 +13,7 @@ import {
   LayoutDashboard, Building2, Users, Settings, LogOut,
   Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, ClipboardCheck, Heart, Calendar, HelpCircle, Bell,
   ChevronLeft, ChevronRight, Sparkles, Info, UserCog, MoreHorizontal,
-  ShieldCheck, BarChart3, CreditCard, DollarSign, ToggleLeft, Headset, Package,
+  ShieldCheck, BarChart3, CreditCard, DollarSign, ToggleLeft, Headset, Package, Store,
   Fingerprint,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -126,7 +126,6 @@ const companyNavGroups: NavGroup[] = [
       { href: '/empresa/candidatos', label: 'Banco de Talentos', icon: Users },
       { href: '/empresa/candidatos-salvos', label: 'Candidatos Salvos', icon: Heart, countKey: 'savedCandidates' },
       { href: '/empresa/testes', label: 'Testes', icon: Brain },
-      { href: '/empresa/pacotes', label: 'Pacotes de Testes', icon: Package },
       { href: '/empresa/equipes', label: 'Gestão de Equipes', icon: UserCog },
     ],
   },
@@ -140,6 +139,7 @@ const companyNavGroups: NavGroup[] = [
   {
     label: 'Geral',
     items: [
+      { href: '/empresa/pacotes', label: 'Loja', icon: Store },
       { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
       { href: '/empresa/configuracoes', label: 'Configurações', icon: Settings },
       { href: '/sobre', label: 'Sobre', icon: Info },
