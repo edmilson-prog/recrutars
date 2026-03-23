@@ -11,6 +11,7 @@ import {
   Building2,
   Star,
   RefreshCw,
+  HelpCircle,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -54,14 +55,14 @@ interface KPICardDef {
 const cardDefinitions: KPICardDef[] = [
   {
     label: 'Total de Colaboradores',
-    tooltip: 'Numero total de colaboradores cadastrados na equipe, incluindo ativos e inativos.',
+    tooltip: 'Número total de colaboradores cadastrados na equipe, incluindo ativos e inativos.',
     icon: Users,
     color: 'blue',
     getValue: (p) => p.totalMembers,
   },
   {
     label: 'Mapeados',
-    tooltip: 'Percentual de colaboradores com perfil comportamental Gauge-Pro concluido.',
+    tooltip: 'Percentual de colaboradores com perfil comportamental Gauge-Pro concluído.',
     icon: CheckCircle2,
     color: 'green',
     getValue: (p) =>
@@ -72,7 +73,7 @@ const cardDefinitions: KPICardDef[] = [
   },
   {
     label: 'Pendentes',
-    tooltip: 'Colaboradores que ainda nao completaram o mapeamento comportamental.',
+    tooltip: 'Colaboradores que ainda não completaram o mapeamento comportamental.',
     icon: Clock,
     color: 'amber',
     getValue: (p) => p.pendingMembers,
@@ -85,8 +86,8 @@ const cardDefinitions: KPICardDef[] = [
     getValue: (p) => p.activeDepartments,
   },
   {
-    label: 'Arquetipo Predominante',
-    tooltip: 'Arquetipo comportamental mais frequente entre os colaboradores mapeados.',
+    label: 'Arquétipo Predominante',
+    tooltip: 'Arquétipo comportamental mais frequente entre os colaboradores mapeados.',
     icon: Star,
     color: 'cyan',
     getValue: (p) => p.predominantArchetype,
@@ -117,38 +118,44 @@ export function TeamKPICards(props: TeamKPICardsProps) {
 
           return (
             <motion.div key={card.label} variants={staggerItem}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Card className="h-full cursor-default">
-                    <CardContent className="pt-4 pb-4">
-                      <div className="flex flex-col items-start gap-3">
-                        <div
-                          className={cn(
-                            'flex items-center justify-center w-10 h-10 rounded-full',
-                            iconColorMap[card.color]
-                          )}
-                        >
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="text-2xl font-bold leading-tight">{value}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {card.label}
-                          </p>
-                          {subtitle && (
-                            <p className="text-xs text-muted-foreground/70 mt-0.5">
-                              {subtitle}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[220px] text-center">
-                  <p>{card.tooltip}</p>
-                </TooltipContent>
-              </Tooltip>
+              <Card className="h-full relative">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="absolute top-2.5 right-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-help"
+                    >
+                      <HelpCircle className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[220px] text-center">
+                    <p>{card.tooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex flex-col items-start gap-3">
+                    <div
+                      className={cn(
+                        'flex items-center justify-center w-10 h-10 rounded-full',
+                        iconColorMap[card.color]
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold leading-tight">{value}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {card.label}
+                      </p>
+                      {subtitle && (
+                        <p className="text-xs text-muted-foreground/70 mt-0.5">
+                          {subtitle}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </motion.div>
           );
         })}

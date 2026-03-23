@@ -15,11 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, SearchCheck } from 'lucide-react';
+import { ArrowLeft, SearchCheck, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamMembers, useDepartments } from '@/hooks/useTeamsQuery';
-import { Loader2 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { performGapAnalysis } from '@/utils/gapAnalysis';
 import GapAnalysisRadar from '@/components/team-management/GapAnalysisRadar';
 import GapCardsPanel from '@/components/team-management/GapCardsPanel';
@@ -72,44 +72,49 @@ export default function TeamGapAnalysis() {
     <DashboardLayout userType="company">
       <motion.div {...pageTransition} className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="flex items-center gap-4 flex-1">
-            <Link to="/empresa/equipes">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <SearchCheck className="h-5 w-5 text-cyan-600" />
-                <h1 className="text-2xl font-bold">Gap Analysis</h1>
-              </div>
-              <p className="text-muted-foreground text-sm mt-1">
-                Identifique lacunas comportamentais e de competencias na equipe
-                {filteredMembers.length > 0 && (
-                  <> &mdash; {filteredMembers.length} membros analisados ({deptLabel})</>
-                )}
-              </p>
-            </div>
-          </div>
-
-          {/* Department Filter */}
-          <div className="w-full sm:w-56">
-            <Select value={selectedDept} onValueChange={setSelectedDept}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filtrar departamento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os departamentos</SelectItem>
-                {allDepartments
-                  .filter((d) => d.isActive)
-                  .map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+        <div className="flex items-start gap-4">
+          <Link to="/empresa/equipes" className="shrink-0 mt-0.5">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div className="flex-1 min-w-0 space-y-4">
+            <PageHeader
+              title="Gap Analysis"
+              description={
+                <span>
+                  Identifique lacunas comportamentais e de competências na equipe
+                  {filteredMembers.length > 0 && (
+                    <> &mdash; {filteredMembers.length} membros analisados ({deptLabel})</>
+                  )}
+                </span>
+              }
+              actions={
+                <div className="w-full sm:w-56">
+                  <Select value={selectedDept} onValueChange={setSelectedDept}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Filtrar departamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os departamentos</SelectItem>
+                      {allDepartments
+                        .filter((d) => d.isActive)
+                        .map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              }
+              howItWorks={[
+                'O gráfico radar mostra o perfil médio da equipe por dimensão comportamental',
+                'Cards de lacuna indicam onde a equipe tem déficit ou excesso',
+                'Recomendações sugerem perfis ideais para preencher as lacunas identificadas',
+                'Filtre por departamento para análises segmentadas',
+              ]}
+            />
           </div>
         </div>
 

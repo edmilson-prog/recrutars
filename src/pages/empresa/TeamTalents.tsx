@@ -15,11 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamMembers, useDepartments } from '@/hooks/useTeamsQuery';
-import { Loader2 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import TalentProfileCards from '@/components/team-management/TalentProfileCards';
 import NineBoxChart from '@/components/team-management/NineBoxChart';
 
@@ -56,41 +56,42 @@ export default function TeamTalents() {
     <DashboardLayout userType="company">
       <motion.div {...pageTransition} className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="flex items-center gap-4 flex-1">
-            <Link to="/empresa/equipes">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-cyan-600" />
-                <h1 className="text-2xl font-bold">Identificacao de Talentos</h1>
-              </div>
-              <p className="text-muted-foreground text-sm mt-1">
-                Descubra e mapeie os perfis de talento dentro da sua equipe ({mappedCount} membros mapeados)
-              </p>
-            </div>
-          </div>
-
-          {/* Department Filter */}
-          <div className="w-full sm:w-56">
-            <Select value={selectedDept} onValueChange={setSelectedDept}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filtrar departamento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os departamentos</SelectItem>
-                {allDepartments
-                  .filter((d) => d.isActive)
-                  .map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+        <div className="flex items-start gap-4">
+          <Link to="/empresa/equipes" className="shrink-0 mt-0.5">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div className="flex-1 min-w-0 space-y-4">
+            <PageHeader
+              title="Identificação de Talentos"
+              description={`Descubra e mapeie os perfis de talento dentro da sua equipe (${mappedCount} membros mapeados)`}
+              actions={
+                <div className="w-full sm:w-56">
+                  <Select value={selectedDept} onValueChange={setSelectedDept}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Filtrar departamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os departamentos</SelectItem>
+                      {allDepartments
+                        .filter((d) => d.isActive)
+                        .map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              }
+              howItWorks={[
+                'Visualize os perfis de talento da equipe em cards detalhados',
+                'Posicione membros no Nine-Box comportamental (potencial × desempenho)',
+                'Identifique estrelas, talentos emergentes e áreas de desenvolvimento',
+                'Filtre por departamento para focar em equipes específicas',
+              ]}
+            />
           </div>
         </div>
 

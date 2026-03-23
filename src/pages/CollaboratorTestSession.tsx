@@ -77,6 +77,7 @@ interface TeamMemberInfo {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   maskedCpf: string | null;
   hasCpf: boolean;
 }
@@ -175,6 +176,15 @@ export default function CollaboratorTestSession() {
         }
 
         // Determine initial step
+        // Block terminal statuses
+        if (['cancelled', 'abandoned'].includes(inv.status)) {
+          setErrorMessage(inv.status === 'cancelled'
+            ? 'Este convite foi cancelado. Solicite um novo à sua empresa.'
+            : 'Este convite foi encerrado.');
+          setStep('error');
+          return;
+        }
+
         if (inv.status === 'completed') {
           setStep('complete');
           setIsNewUser(false);
@@ -939,7 +949,8 @@ export default function CollaboratorTestSession() {
     return (
       <TestCompletionSummary
         candidateName={formName || invitation?.candidateName || ''}
-        candidateEmail={formEmail || invitation?.candidateEmail || ''}
+        candidateCpf={teamMemberInfo?.maskedCpf ?? undefined}
+        candidatePhone={teamMemberInfo?.phone ?? undefined}
         companyName={companyName}
         elapsedSeconds={gaugePro.elapsedSeconds}
         isAnalysisReady={!!gaugePro.result}

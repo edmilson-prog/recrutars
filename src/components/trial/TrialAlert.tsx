@@ -43,7 +43,7 @@ export function TrialAlert({ level, daysRemaining, className }: TrialAlertProps)
       <p className="flex-1 text-sm font-medium">
         {message}
       </p>
-      <Link to="/empresa/configuracoes?tab=plano">
+      <Link to="/empresa/pacotes?tab=plano">
         <Button
           size="sm"
           className={cn(

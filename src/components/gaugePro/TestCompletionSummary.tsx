@@ -14,7 +14,8 @@ import { GAUGE_PRO_CONFIG } from '@/data/gaugeProConfig';
 
 interface TestCompletionSummaryProps {
   candidateName: string;
-  candidateEmail: string;
+  candidateCpf?: string;
+  candidatePhone?: string;
   companyName: string;
   elapsedSeconds: number;
   isAnalysisReady: boolean;
@@ -38,6 +39,14 @@ function getInitials(name: string) {
     .map(w => w[0])
     .join('')
     .toUpperCase();
+}
+
+function formatPhoneDisplay(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  const local = digits.startsWith('55') && digits.length > 11 ? digits.slice(2) : digits;
+  if (local.length === 11) return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+  if (local.length === 10) return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+  return phone;
 }
 
 // --- Animated Counter ---
@@ -194,7 +203,8 @@ function TimelineStep({ label, status, isLast }: TimelineStepProps) {
 
 export function TestCompletionSummary({
   candidateName,
-  candidateEmail,
+  candidateCpf,
+  candidatePhone,
   companyName,
   elapsedSeconds,
   isAnalysisReady,
@@ -238,7 +248,19 @@ export function TestCompletionSummary({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-foreground truncate">{candidateName}</p>
-          <p className="text-xs text-muted-foreground truncate">{candidateEmail}</p>
+          {(candidateCpf || candidatePhone) && (
+            <p className="text-xs text-muted-foreground truncate">
+              {candidateCpf && (
+                <span className="font-mono">CPF: {candidateCpf}</span>
+              )}
+              {candidateCpf && candidatePhone && (
+                <span className="mx-1">·</span>
+              )}
+              {candidatePhone && (
+                <span>{formatPhoneDisplay(candidatePhone)}</span>
+              )}
+            </p>
+          )}
         </div>
         {companyName && (
           <span className="shrink-0 bg-secondary/10 text-secondary text-xs font-medium rounded-full px-3 py-1 hidden sm:inline">

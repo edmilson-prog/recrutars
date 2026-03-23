@@ -19,7 +19,7 @@ export function TestList() {
   const { data: tests, isLoading } = useCompanyTests(companyId);
 
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<CompanyTestStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<CompanyTestStatus | 'all'>('active');
 
   const filtered = useMemo(() => {
     return (tests ?? []).filter((test) => {

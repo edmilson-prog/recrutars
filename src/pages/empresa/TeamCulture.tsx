@@ -16,12 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, FlaskConical, Building2 } from 'lucide-react';
+import { ArrowLeft, FlaskConical, Building2, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamMembers, usePositions } from '@/hooks/useTeamsQuery';
 import { mockCultureSnapshots } from '@/data/teamManagementData';
-import { Loader2 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { calculateCompanyDNA, generateManifesto, calculateCulturalFit } from '@/utils/culturalFit';
 import CultureDNARadar from '@/components/team-management/CultureDNARadar';
 import CultureManifesto from '@/components/team-management/CultureManifesto';
@@ -84,20 +84,23 @@ export default function TeamCulture() {
     <DashboardLayout userType="company">
       <motion.div {...pageTransition} className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Link to="/empresa/equipes">
+        <div className="flex items-start gap-4">
+          <Link to="/empresa/equipes" className="shrink-0 mt-0.5">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-cyan-600" />
-              <h1 className="text-2xl font-bold">Cultura Organizacional</h1>
-            </div>
-            <p className="text-muted-foreground text-sm mt-1">
-              Analise e acompanhe o DNA cultural da sua equipe
-            </p>
+          <div className="flex-1 min-w-0 space-y-4">
+            <PageHeader
+              title="Cultura Organizacional"
+              description="Analise e acompanhe o DNA cultural da sua equipe"
+              howItWorks={[
+                'O DNA cultural é calculado a partir dos perfis comportamentais mapeados',
+                'O manifesto cultural é gerado automaticamente com base no DNA da equipe',
+                'Acompanhe a evolução cultural ao longo do tempo no gráfico de snapshots',
+                'Simule o fit cultural de membros com o perfil da empresa',
+              ]}
+            />
           </div>
         </div>
 

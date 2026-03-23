@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Package,
   History,
@@ -13,9 +13,13 @@ import {
   ShoppingCart,
   Loader2,
   Sparkles,
+  Check,
+  Star,
   Minus,
   Plus,
   Inbox,
+  Store,
+  Coins,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -31,6 +35,8 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { formatBRL, formatDateTimeBR } from '@/lib/formatters';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,6 +45,7 @@ import {
   useCompanyCreditBalance,
   useCreditTransactions,
 } from '@/hooks/useTestPackagesQuery';
+import { usePlans, useSubscription } from '@/hooks/usePlansQuery';
 import { getStripeService } from '@/services/stripe/stripeService';
 import type { StripeEnvironment } from '@/types/plans';
 import type { TestPackage, TestCreditTransaction } from '@/types/testPackages';
@@ -67,7 +74,7 @@ const TYPE_BADGES: Record<string, { label: string; className: string }> = {
     className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
   },
   refund: {
-    label: 'Devolucao',
+    label: 'Devolução',
     className: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800',
   },
 };
@@ -91,23 +98,39 @@ function CreditBalanceBar({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-600 to-cyan-500 dark:from-cyan-700 dark:to-cyan-600 p-6 text-white shadow-lg"
+      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-600 via-cyan-500 to-blue-600 dark:from-cyan-700 dark:via-cyan-600 dark:to-blue-700 p-8 text-white shadow-xl"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.12),transparent_60%)]" />
-      <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {/* Mesh gradient overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.15),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(59,130,246,0.25),transparent_50%)]" />
+      {/* Subtle dot pattern */}
+      <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+
+      <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div>
-          <p className="text-sm font-medium text-cyan-100">Creditos disponiveis</p>
-          <p className="text-5xl font-bold tracking-tight mt-1">{balance}</p>
-          <p className="text-sm text-cyan-100 mt-2">
-            Total comprado: {totalPurchased} | Utilizados: {totalUsed}
-          </p>
+          <div className="flex items-center gap-2 mb-1">
+            <Coins className="w-5 h-5 text-cyan-200" />
+            <p className="text-sm font-semibold uppercase tracking-wider text-cyan-100">Créditos disponíveis</p>
+          </div>
+          <p className="text-6xl font-bold tracking-tight mt-2">{balance}</p>
+          <div className="flex items-center gap-4 mt-3">
+            <span className="inline-flex items-center gap-1.5 text-sm text-cyan-100">
+              <Plus className="w-3.5 h-3.5" />
+              Comprados: <span className="font-semibold text-white">{totalPurchased}</span>
+            </span>
+            <span className="text-cyan-300">|</span>
+            <span className="inline-flex items-center gap-1.5 text-sm text-cyan-100">
+              <Minus className="w-3.5 h-3.5" />
+              Utilizados: <span className="font-semibold text-white">{totalUsed}</span>
+            </span>
+          </div>
         </div>
         <button
           onClick={onViewHistory}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-white/90 hover:text-white underline underline-offset-4 transition-colors self-start md:self-auto"
+          className="inline-flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur-sm px-5 py-2.5 text-sm font-medium text-white hover:bg-white/20 transition-all duration-200 self-start md:self-auto border border-white/10"
         >
           <History className="w-4 h-4" />
-          Ver historico
+          Ver histórico
         </button>
       </div>
     </motion.div>
@@ -131,9 +154,13 @@ function PackageCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.02 }}
+      transition={{ duration: 0.3 }}
       className={cn(
-        'relative flex flex-col bg-card rounded-2xl shadow-soft overflow-hidden transition-shadow hover:shadow-md',
-        isHighlighted && 'ring-2 ring-cyan-500 dark:ring-cyan-400',
+        'relative flex flex-col bg-card rounded-2xl overflow-hidden transition-all duration-300',
+        isHighlighted
+          ? 'ring-2 ring-cyan-500 dark:ring-cyan-400 shadow-xl scale-[1.02]'
+          : 'shadow-soft hover:shadow-xl',
       )}
     >
       {/* Top color bar */}
@@ -141,70 +168,75 @@ function PackageCard({
         className={cn(
           'h-1.5',
           isHighlighted
-            ? 'bg-gradient-to-r from-cyan-500 to-blue-500'
+            ? 'bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-400'
             : 'bg-gradient-to-r from-muted-foreground/20 to-muted-foreground/10',
         )}
       />
 
-      {/* Highlight badge */}
+      {/* Floating badge */}
       {isHighlighted && (
-        <div className="absolute top-4 right-4">
-          <Badge className="bg-cyan-500 text-white border-0 shadow-sm">
-            <Sparkles className="w-3 h-3 mr-1" />
+        <div className="absolute -top-0 left-1/2 -translate-x-1/2 translate-y-4 z-10">
+          <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-0 shadow-lg px-4 py-1 text-xs font-semibold">
+            <Sparkles className="w-3 h-3 mr-1.5" />
             {pkg.badge}
           </Badge>
         </div>
       )}
 
-      <div className="flex flex-col flex-1 p-6">
+      <div className={cn('flex flex-col flex-1 p-8', isHighlighted && 'pt-10')}>
         {/* Header */}
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-1">
+        <div className="mb-5">
+          <div className="flex items-center gap-2 mb-1.5">
             <Package className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
             <h3 className="text-lg font-bold text-foreground">{pkg.name}</h3>
           </div>
           {pkg.descriptionShort && (
-            <p className="text-sm text-muted-foreground">{pkg.descriptionShort}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{pkg.descriptionShort}</p>
           )}
           {pkg.description && !pkg.descriptionShort && (
-            <p className="text-sm text-muted-foreground">{pkg.description}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{pkg.description}</p>
           )}
         </div>
 
-        {/* Credits */}
-        <div className="bg-muted/50 rounded-lg p-3 mb-4 text-center">
-          <p className="text-3xl font-bold text-foreground">{pkg.credits}</p>
-          <p className="text-xs text-muted-foreground">
-            {pkg.credits === 1 ? 'credito de teste' : 'creditos de teste'}
+        {/* Credits pill */}
+        <div className={cn(
+          'rounded-xl p-4 mb-5 text-center',
+          isHighlighted
+            ? 'bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30'
+            : 'bg-muted/50',
+        )}>
+          <p className="text-4xl font-bold text-foreground">{pkg.credits}</p>
+          <p className="text-xs font-medium text-muted-foreground mt-1">
+            {pkg.credits === 1 ? 'crédito de teste' : 'créditos de teste'}
           </p>
         </div>
 
         {/* Price */}
-        <div className="mb-4">
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-foreground">{formatBRL(pkg.price)}</span>
+        <div className="mb-5">
+          <div className="flex items-baseline gap-3">
+            <span className="text-4xl font-bold text-foreground">{formatBRL(pkg.price)}</span>
             {pkg.originalPrice && pkg.originalPrice > pkg.price && (
-              <span className="text-sm text-muted-foreground line-through">
+              <span className="text-base text-muted-foreground line-through">
                 {formatBRL(pkg.originalPrice)}
               </span>
             )}
           </div>
           {discount && (
-            <Badge variant="outline" className="mt-1 text-green-700 bg-green-50 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800">
+            <Badge variant="outline" className="mt-2 text-green-700 bg-green-50 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800">
               Economize {discount}%
             </Badge>
           )}
-          <p className="text-xs text-muted-foreground mt-1.5">
+          <p className="text-sm text-muted-foreground mt-2">
             {formatBRL(perTest)} por teste
           </p>
         </div>
 
         {/* Features */}
         {pkg.features && pkg.features.length > 0 && (
-          <ul className="space-y-1.5 mb-6 flex-1">
+          <ul className="space-y-2.5 mb-8 flex-1">
             {pkg.features.map((feature, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <CheckCircle className="w-4 h-4 text-cyan-600 dark:text-cyan-400 flex-shrink-0 mt-0.5" />
+              <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                <CheckCircle className="w-4 h-4 text-cyan-500 dark:text-cyan-400 flex-shrink-0 mt-0.5" />
                 {feature}
               </li>
             ))}
@@ -216,9 +248,9 @@ function PackageCard({
           onClick={() => onPurchase(pkg)}
           disabled={purchasing}
           className={cn(
-            'w-full gap-2 mt-auto',
+            'w-full h-12 gap-2 mt-auto text-base font-semibold transition-all duration-200',
             isHighlighted
-              ? 'bg-cyan-600 hover:bg-cyan-700 text-white'
+              ? 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40'
               : '',
           )}
         >
@@ -261,9 +293,9 @@ function TransactionsTable({ transactions }: { transactions: TestCreditTransacti
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <Inbox className="w-12 h-12 text-muted-foreground/40 mb-3" />
-        <p className="text-lg font-medium text-foreground">Nenhuma transacao</p>
+        <p className="text-lg font-medium text-foreground">Nenhuma transação</p>
         <p className="text-sm text-muted-foreground mt-1">
-          Seu historico de creditos aparecera aqui apos a primeira compra.
+          Seu histórico de créditos aparecerá aqui após a primeira compra.
         </p>
       </div>
     );
@@ -296,8 +328,8 @@ function TransactionsTable({ transactions }: { transactions: TestCreditTransacti
           <TableRow>
             <TableHead>Data</TableHead>
             <TableHead>Tipo</TableHead>
-            <TableHead>Descricao</TableHead>
-            <TableHead className="text-right">Creditos</TableHead>
+            <TableHead>Descrição</TableHead>
+            <TableHead className="text-right">Créditos</TableHead>
             <TableHead className="text-right">Saldo</TableHead>
           </TableRow>
         </TableHeader>
@@ -339,9 +371,15 @@ function TransactionsTable({ transactions }: { transactions: TestCreditTransacti
 
 export default function Packages() {
   const { user, currentCompany } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState('loja');
+  const initialTab = searchParams.get('tab') || 'pacotes';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
+
+  // Plan data
+  const { data: companyPlans = [] } = usePlans('company');
+  const { data: currentSubscription } = useSubscription(user?.id);
 
   const { data: packages = [], isLoading: packagesLoading } = useTestPackages();
   const { data: balance = 0 } = useCompanyCreditBalance(currentCompany?.id);
@@ -372,7 +410,7 @@ export default function Packages() {
   // Handle purchase
   const handlePurchase = async (pkg: TestPackage) => {
     if (!user?.id || !currentCompany?.id) {
-      toast.error('Voce precisa estar logado em uma empresa para comprar.');
+      toast.error('Você precisa estar logado em uma empresa para comprar.');
       return;
     }
 
@@ -403,31 +441,41 @@ export default function Packages() {
   return (
     <DashboardLayout userType="company">
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <CreditCard className="w-8 h-8 text-cyan-600" />
-            Pacotes de Testes
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Compre creditos para enviar testes comportamentais aos seus colaboradores e candidatos.
-          </p>
+        {/* Header with gradient background */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-50 via-background to-blue-50 dark:from-cyan-950/20 dark:via-background dark:to-blue-950/20 p-8 mb-2">
+          {/* Subtle decorative elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-cyan-100/40 to-transparent dark:from-cyan-900/20 rounded-full -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-blue-100/30 to-transparent dark:from-blue-900/15 rounded-full translate-y-1/2 -translate-x-1/4" />
+
+          <div className="relative z-10">
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+              <Store className="w-8 h-8 text-cyan-600 dark:text-cyan-400" />
+              Loja
+            </h1>
+            <p className="text-muted-foreground mt-2 max-w-xl">
+              Adquira créditos e escolha o plano ideal para sua empresa.
+            </p>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
-            <TabsTrigger value="loja" className="gap-2">
-              <ShoppingCart className="w-4 h-4" />
-              Loja
+            <TabsTrigger value="pacotes" className="gap-2">
+              <Package className="w-4 h-4" />
+              Pacotes
+            </TabsTrigger>
+            <TabsTrigger value="plano" className="gap-2">
+              <CreditCard className="w-4 h-4" />
+              Meu Plano
             </TabsTrigger>
             <TabsTrigger value="historico" className="gap-2">
               <History className="w-4 h-4" />
-              Historico
+              Histórico
             </TabsTrigger>
           </TabsList>
 
-          {/* ── Tab: Loja ── */}
-          <TabsContent value="loja" className="space-y-6 mt-6">
+          {/* -- Tab: Pacotes -- */}
+          <TabsContent value="pacotes" className="space-y-6 mt-6">
             {/* Credit balance bar */}
             <CreditBalanceBar
               balance={balance as number}
@@ -444,9 +492,9 @@ export default function Packages() {
             ) : sortedPackages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <Package className="w-12 h-12 text-muted-foreground/40 mb-3" />
-                <p className="text-lg font-medium text-foreground">Nenhum pacote disponivel</p>
+                <p className="text-lg font-medium text-foreground">Nenhum pacote disponível</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Novos pacotes serao adicionados em breve.
+                  Novos pacotes serão adicionados em breve.
                 </p>
               </div>
             ) : (
@@ -463,7 +511,126 @@ export default function Packages() {
             )}
           </TabsContent>
 
-          {/* ── Tab: Historico ── */}
+          {/* -- Tab: Meu Plano -- */}
+          <TabsContent value="plano" className="space-y-6 mt-6">
+            {/* Plano atual */}
+            {currentSubscription ? (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Plano {(currentSubscription as Record<string, unknown>).plan_name as string ?? (currentSubscription as Record<string, unknown>).planName as string ?? '—'}</CardTitle>
+                    <Badge variant="secondary" className="text-lg px-3 py-1">
+                      {formatBRL((currentSubscription as Record<string, unknown>).price_paid as number ?? (currentSubscription as Record<string, unknown>).pricePaid as number ?? 0)}/mês
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={(currentSubscription as Record<string, unknown>).status === 'active' ? 'default' : 'outline'}>
+                      {(currentSubscription as Record<string, unknown>).status === 'active' ? 'Ativa' :
+                       (currentSubscription as Record<string, unknown>).status === 'trial' ? 'Trial' :
+                       (currentSubscription as Record<string, unknown>).status === 'past_due' ? 'Pagamento Pendente' :
+                       String((currentSubscription as Record<string, unknown>).status ?? '')}
+                    </Badge>
+                  </div>
+                  <Separator />
+                  <p className="text-sm text-muted-foreground">
+                    Renovação: {(currentSubscription as Record<string, unknown>).renewal_date
+                      ? new Date(String((currentSubscription as Record<string, unknown>).renewal_date)).toLocaleDateString('pt-BR')
+                      : (currentSubscription as Record<string, unknown>).renewalDate
+                      ? new Date(String((currentSubscription as Record<string, unknown>).renewalDate)).toLocaleDateString('pt-BR')
+                      : '—'}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sem assinatura ativa</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Escolha um plano abaixo para começar.</p>
+                </CardContent>
+              </Card>
+            )}
+
+            <Separator />
+
+            {/* Todos os Planos */}
+            <div className="space-y-6">
+              <h2 className="text-lg font-semibold">Todos os Planos</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {companyPlans.map((p) => {
+                  const plan = p as Record<string, unknown>;
+                  const planName = (plan.name as string) ?? '';
+                  const planSlug = (plan.slug as string) ?? '';
+                  const prices = (plan.prices as Record<string, number>) ?? {};
+                  const monthlyPrice = prices.monthly ?? 0;
+                  const isFree = (plan.is_free ?? plan.isFree) as boolean;
+                  const features = (plan.features as string[]) ?? [];
+                  const descShort = (plan.description_short ?? plan.descriptionShort) as string ?? '';
+                  const isCurrent = currentSubscription &&
+                    ((currentSubscription as Record<string, unknown>).plan_slug === planSlug ||
+                     (currentSubscription as Record<string, unknown>).planSlug === planSlug);
+                  const badge = plan.badge as string | undefined;
+
+                  return (
+                    <Card
+                      key={planSlug}
+                      className={isCurrent ? 'border-primary shadow-lg relative' : 'relative'}
+                    >
+                      {badge && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                          <Badge className="gap-1">
+                            <Star className="w-3 h-3" />
+                            {badge}
+                          </Badge>
+                        </div>
+                      )}
+                      <CardHeader className="text-center pb-2">
+                        <CardTitle className="text-lg">{planName}</CardTitle>
+                        <div className="mt-2">
+                          <span className="text-3xl font-bold">
+                            {isFree ? 'Grátis' : formatBRL(monthlyPrice)}
+                          </span>
+                          {!isFree && <span className="text-muted-foreground text-sm">/mês</span>}
+                        </div>
+                        <CardDescription className="mt-2">{descShort}</CardDescription>
+                      </CardHeader>
+                      <Separator />
+                      <CardContent className="pt-4">
+                        <ul className="space-y-2">
+                          {features.map((feat, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-sm text-foreground">
+                              <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                              {feat}
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="mt-6">
+                          {isCurrent ? (
+                            <Button variant="outline" className="w-full" disabled>
+                              Plano Atual
+                            </Button>
+                          ) : (
+                            <Button
+                              className="w-full"
+                              variant={badge ? 'default' : 'outline'}
+                              onClick={() => navigate('/planos')}
+                            >
+                              {isFree ? 'Plano Gratuito' : `Assinar ${planName}`}
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* -- Tab: Histórico -- */}
           <TabsContent value="historico" className="space-y-6 mt-6">
             {transactionsLoading ? (
               <div className="flex items-center justify-center py-16">

@@ -687,7 +687,7 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
       .select('*')
       .eq('resource_id', invitationId)
       .eq('resource_type', 'invitation')
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('[getInvitationAuditLogs] Error:', error);

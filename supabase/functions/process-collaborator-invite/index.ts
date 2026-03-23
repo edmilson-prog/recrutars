@@ -94,6 +94,16 @@ Deno.serve(async (req: Request) => {
         return json({ error: 'Este convite expirou. Solicite um novo a sua empresa.' }, 410);
       }
 
+      // Block cancelled/abandoned invitations
+      const terminalStatuses = ['cancelled', 'abandoned'];
+      if (terminalStatuses.includes(inv.status)) {
+        const statusLabel = inv.status === 'cancelled' ? 'cancelado' : 'encerrado';
+        return json({
+          error: `Este convite foi ${statusLabel}. Solicite um novo a sua empresa.`,
+          status: inv.status,
+        }, 410);
+      }
+
       // Fetch test info
       const { data: test } = await supabase
         .from('company_tests')
@@ -160,6 +170,7 @@ Deno.serve(async (req: Request) => {
             id: tm.id,
             name: tm.name,
             email: tm.email,
+            phone: tm.phone || null,
             maskedCpf,
             hasCpf: !!tm.cpf && cpfDigits.length === 11,
           };
