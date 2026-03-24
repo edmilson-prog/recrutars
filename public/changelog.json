@@ -1,12 +1,115 @@
 {
   "versions": [
     {
+      "version": "1.46.0",
+      "codename": "Storefront",
+      "type": "minor",
+      "releaseDate": "2026-03-23",
+      "description": "Modal de reenvio de convites com seleção de canal, bloqueio de convites cancelados, redesign da Loja com estilo pricing page moderna e reorganização da navegação.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Modal de reenvio de convites com seleção de canal (Link, Email, WhatsApp)",
+            "Aba 'Meu Plano' na página da Loja com informações do plano atual e opções de upgrade",
+            "Regeneração automática de token e nova validade ao reenviar convites"
+          ],
+          "details": {
+            "0": {
+              "description": "Ao clicar em 'Reenviar' em um convite, agora abre um painel com três opções: gerar um novo link para copiar, reenviar por email ou reenviar por WhatsApp. O canal original do convite já vem pré-selecionado. Cada opção mostra uma confirmação específica com os dados do destinatário.",
+              "files": ["src/components/corporate-tests/ResendInvitationModal.tsx", "src/components/corporate-tests/InvitationManager.tsx", "src/hooks/useInvitationManagerQuery.ts", "supabase/functions/send-test-invitation/index.ts"],
+              "routes": ["/empresa/testes"]
+            },
+            "1": {
+              "description": "A página da Loja agora tem uma aba 'Meu Plano' que mostra o plano atual da empresa (nome, status, valor mensal e data de renovação) e todas as opções de planos disponíveis para upgrade ou mudança.",
+              "files": ["src/pages/empresa/Packages.tsx", "src/pages/empresa/Settings.tsx"],
+              "routes": ["/empresa/pacotes"]
+            },
+            "2": {
+              "description": "Quando um convite é reenviado, o link anterior é automaticamente invalidado e um novo é gerado com validade de 24 horas. Isso garante que apenas o link mais recente funcione, aumentando a segurança do processo.",
+              "files": ["supabase/functions/send-test-invitation/index.ts"],
+              "routes": []
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Redesign da página Loja com estilo pricing page moderna",
+            "Reenvio em massa usa o canal original de cada convite automaticamente",
+            "Grid de adjetivos do teste Gauge-Pro agora exibe 4 por linha",
+            "Filtro padrão da lista 'Meus Testes' agora é 'Ativo'",
+            "Histórico de atividades do convite exibe o mais recente primeiro",
+            "Tela de conclusão do teste exibe CPF parcial e telefone ao invés de email",
+            "Item 'Loja' movido para o grupo 'Geral' na navegação lateral"
+          ],
+          "details": {
+            "0": {
+              "description": "A página da Loja foi completamente redesenhada com visual moderno: cards de pacotes com preços em destaque, badges de 'Mais Popular', botões de compra mais chamativos com gradientes, e barra de créditos redesenhada com visual premium.",
+              "files": ["src/pages/empresa/Packages.tsx"],
+              "routes": ["/empresa/pacotes"]
+            },
+            "1": {
+              "description": "Ao reenviar vários convites de uma vez, cada convite é automaticamente reenviado pelo mesmo canal usado no envio original (link, email ou WhatsApp). O resumo mostra quantos foram enviados por cada canal.",
+              "files": ["src/hooks/useInvitationManagerQuery.ts"],
+              "routes": ["/empresa/testes"]
+            },
+            "2": {
+              "description": "Na tela do teste comportamental, as palavras (adjetivos) agora aparecem em 4 colunas por linha no desktop, facilitando a visualização de todas as opções disponíveis.",
+              "files": ["src/components/gaugePro/WordGrid.tsx"],
+              "routes": ["/convite/teste"]
+            },
+            "3": {
+              "description": "Ao acessar a lista de testes na aba 'Meus Testes', o filtro de status já vem selecionado como 'Ativo', mostrando apenas os testes em andamento por padrão.",
+              "files": ["src/components/corporate-tests/TestList.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "4": {
+              "description": "O histórico de atividades de um convite (acessado ao clicar em 'Ver detalhes') agora mostra as ações mais recentes no topo, facilitando o acompanhamento das últimas atualizações.",
+              "files": ["src/services/companyTests/companyTestsService.supabase.ts"],
+              "routes": ["/empresa/testes"]
+            },
+            "5": {
+              "description": "Ao concluir o teste comportamental, a tela de finalização agora exibe o CPF parcial e o telefone do colaborador (quando disponíveis), em vez do endereço de email.",
+              "files": ["src/components/gaugePro/TestCompletionSummary.tsx", "src/pages/CollaboratorTestSession.tsx", "supabase/functions/process-collaborator-invite/index.ts"],
+              "routes": ["/convite/teste"]
+            },
+            "6": {
+              "description": "O item 'Loja' na navegação lateral foi movido do grupo 'Talentos' para o grupo 'Geral', junto com Configurações e Central de Ajuda, refletindo melhor sua função administrativa.",
+              "files": ["src/components/layout/DashboardLayout.tsx"],
+              "routes": ["/empresa/pacotes"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Convites cancelados agora bloqueiam acesso ao teste imediatamente",
+            "Links de trial agora direcionam para a aba correta na Loja"
+          ],
+          "details": {
+            "0": {
+              "description": "Correção de segurança: quando um convite era cancelado pela empresa, o colaborador ainda conseguia acessar o link e realizar o teste. Agora, ao acessar um link de convite cancelado, uma mensagem de aviso é exibida imediatamente informando que o convite foi revogado.",
+              "files": ["supabase/functions/process-collaborator-invite/index.ts", "src/pages/CollaboratorTestSession.tsx"],
+              "routes": ["/convite/teste"]
+            },
+            "1": {
+              "description": "Os links do banner e badge de período de teste ('Ver planos') agora direcionam corretamente para a aba 'Meu Plano' dentro da Loja, em vez da antiga localização nas Configurações.",
+              "files": ["src/components/trial/TrialBanner.tsx", "src/components/trial/TrialBadge.tsx", "src/components/trial/TrialAlert.tsx"],
+              "routes": ["/empresa/pacotes"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.45.0",
       "codename": "Compass",
       "type": "minor",
       "releaseDate": "2026-03-23",
       "description": "Gestão completa do conteúdo do teste Gauge-Pro via painel admin, com CRUD para adjetivos, cenários e arquétipos, controle de ordenação configurável com 5 modos para adjetivos e 3 para cenários, e expiração automática de convites.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
