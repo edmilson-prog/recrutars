@@ -34,7 +34,7 @@ export function CohortTable({ data }: CohortTableProps) {
   if (data.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-8">
-        Sem dados de cohort para o periodo selecionado
+        Sem dados de cohort para o período selecionado
       </div>
     );
   }
@@ -57,7 +57,7 @@ export function CohortTable({ data }: CohortTableProps) {
               Cohort
             </th>
             <th className="p-2 text-center font-medium text-muted-foreground border-b bg-muted/50">
-              Usuarios
+              Usuários
             </th>
             {Array.from({ length: maxCols }, (_, i) => (
               <th

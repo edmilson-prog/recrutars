@@ -124,8 +124,8 @@ export default function ReportsOperational() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Relatorio Operacional</h1>
-            <p className="text-muted-foreground">Metricas de recrutamento, contratacoes e eficiencia</p>
+            <h1 className="text-2xl font-bold text-foreground">Relatório Operacional</h1>
+            <p className="text-muted-foreground">Métricas de recrutamento, contratações e eficiência</p>
           </div>
           <TimeFilter value={timeFilter} onChange={setTimeFilter} />
         </div>
@@ -143,7 +143,7 @@ export default function ReportsOperational() {
             index={0}
           />
           <KPICard
-            title="Total Contratacoes"
+            title="Total Contratações"
             value={operationalKPIs.totalHires}
             previousValue={prevOperationalKPIs?.totalHires}
             format="number"
@@ -167,7 +167,7 @@ export default function ReportsOperational() {
             index={3}
           />
           <KPICard
-            title="Taxa Conversao"
+            title="Taxa Conversão"
             value={operationalKPIs.conversionRate}
             previousValue={prevOperationalKPIs?.conversionRate}
             format="percent"
@@ -202,7 +202,7 @@ export default function ReportsOperational() {
           >
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Contratacoes Mensais</CardTitle>
+                <CardTitle className="text-lg">Contratações Mensais</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -213,7 +213,7 @@ export default function ReportsOperational() {
                     <Tooltip contentStyle={tooltipStyle} />
                     <Bar
                       dataKey="contratacoes"
-                      name="Contratacoes"
+                      name="Contratações"
                       fill="#10b981"
                       radius={[4, 4, 0, 0]}
                     />
@@ -234,7 +234,7 @@ export default function ReportsOperational() {
           >
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Top 10 Empresas por Contratacoes</CardTitle>
+                <CardTitle className="text-lg">Top 10 Empresas por Contratações</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={350}>
@@ -251,7 +251,7 @@ export default function ReportsOperational() {
                     <Tooltip contentStyle={tooltipStyle} />
                     <Bar
                       dataKey="contratacoes"
-                      name="Contratacoes"
+                      name="Contratações"
                       fill="#3b82f6"
                       radius={[0, 4, 4, 0]}
                     />

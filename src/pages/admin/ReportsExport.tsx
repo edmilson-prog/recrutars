@@ -38,7 +38,7 @@ import { useReportsData } from '@/hooks/useReportsData';
 import { formatDateBR } from '@/lib/formatters';
 import type { ReportSchedule } from '@/types';
 
-const WEEKDAY_NAMES = ['Domingo', 'Segunda', 'Terca', 'Quarta', 'Quinta', 'Sexta', 'Sabado'];
+const WEEKDAY_NAMES = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 export default function ReportsExport() {
   const {
@@ -110,8 +110,8 @@ export default function ReportsExport() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Exportar Relatorios</h1>
-          <p className="text-muted-foreground">Exporte relatorios e configure envios automaticos</p>
+          <h1 className="text-2xl font-bold text-foreground">Exportar Relatórios</h1>
+          <p className="text-muted-foreground">Exporte relatórios e configure envios automáticos</p>
         </div>
 
         <AdminTabNav />
@@ -133,21 +133,21 @@ export default function ReportsExport() {
                   <div>
                     <CardTitle className="text-lg">PDF Executivo</CardTitle>
                     <CardDescription>
-                      Relatorio consolidado com KPIs, graficos e insights para apresentacoes executivas
+                      Relatório consolidado com KPIs, gráficos e insights para apresentações executivas
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-foreground">Periodo:</span>
+                  <span className="text-sm font-medium text-foreground">Período:</span>
                   <Select value={pdfPeriod} onValueChange={setPdfPeriod}>
                     <SelectTrigger className="w-40">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="7d">Ultimos 7 dias</SelectItem>
-                      <SelectItem value="30d">Ultimos 30 dias</SelectItem>
+                      <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                      <SelectItem value="30d">Últimos 30 dias</SelectItem>
                       <SelectItem value="quarter">Trimestre</SelectItem>
                       <SelectItem value="year">Ano</SelectItem>
                     </SelectContent>
@@ -196,14 +196,14 @@ export default function ReportsExport() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-foreground">Periodo:</span>
+                  <span className="text-sm font-medium text-foreground">Período:</span>
                   <Select value={excelPeriod} onValueChange={setExcelPeriod}>
                     <SelectTrigger className="w-40">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="7d">Ultimos 7 dias</SelectItem>
-                      <SelectItem value="30d">Ultimos 30 dias</SelectItem>
+                      <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                      <SelectItem value="30d">Últimos 30 dias</SelectItem>
                       <SelectItem value="quarter">Trimestre</SelectItem>
                       <SelectItem value="year">Ano</SelectItem>
                     </SelectContent>
@@ -245,7 +245,7 @@ export default function ReportsExport() {
                   <CalendarClock className="w-5 h-5 text-primary" />
                   <div>
                     <CardTitle className="text-lg">Agendamentos</CardTitle>
-                    <CardDescription>Envio automatico de relatorios por e-mail</CardDescription>
+                    <CardDescription>Envio automático de relatórios por e-mail</CardDescription>
                   </div>
                 </div>
                 <Button onClick={handleNewSchedule} size="sm">
@@ -306,7 +306,7 @@ export default function ReportsExport() {
                         </div>
                         {schedule.lastSentAt && (
                           <div className="text-xs text-muted-foreground mt-1">
-                            Ultimo envio: {formatDateBR(schedule.lastSentAt)}
+                            Último envio: {formatDateBR(schedule.lastSentAt)}
                           </div>
                         )}
                       </div>

@@ -61,9 +61,9 @@ const EVENT_LABELS: Record<ActivityEventType, string> = {
   test_completed: 'Teste Completado',
   subscription: 'Assinatura',
   cancellation: 'Cancelamento',
-  hire: 'Contratacao',
+  hire: 'Contratação',
   interview_scheduled: 'Entrevista',
-  moderation_action: 'Moderacao',
+  moderation_action: 'Moderação',
 };
 
 export function ActivityEventItem({ event, onClick }: ActivityEventItemProps) {

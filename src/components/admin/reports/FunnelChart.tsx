@@ -44,7 +44,7 @@ export function FunnelChart({ stages }: FunnelChartProps) {
             {stageConversion !== null && (
               <div className="flex items-center justify-center mb-1">
                 <div className="text-xs text-muted-foreground font-medium bg-muted px-2 py-0.5 rounded-full">
-                  {stageConversion}% conversao
+                  {stageConversion}% conversão
                 </div>
               </div>
             )}
