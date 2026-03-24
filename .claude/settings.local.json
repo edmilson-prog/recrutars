@@ -127,11 +127,50 @@
       "Bash(find /d/claude/recrutars-maike -path \"*/node_modules\" -prune -o -type f \\\\\\( -name \"*stripe*\" -o -name \"*checkout*\" \\\\\\) -print 2>/dev/null | grep -v node_modules | grep -v \".git\" | head -20)",
       "Bash(cd D:/claude/recrutars-maike && node -p \"require\\('./package.json'\\).version\")",
       "Bash(cd \"D:/claude/recrutars-maike\" && mv fix-accents.js fix-accents.cjs && node fix-accents.cjs)",
-      "Bash(cd \"D:/claude/recrutars-maike\" && rm -f fix-accents.cjs fix-accents2.cjs check-accents.cjs check-accents2.cjs check-accents3.cjs check-final.cjs check-broad.cjs check-misc.cjs)"
+      "Bash(cd \"D:/claude/recrutars-maike\" && rm -f fix-accents.cjs fix-accents2.cjs check-accents.cjs check-accents2.cjs check-accents3.cjs check-final.cjs check-broad.cjs check-misc.cjs)",
+      "Bash(cd D:/claude/recrutars-maike && for f in src/pages/candidato/Profile.tsx src/pages/candidato/Dashboard.tsx src/pages/candidato/Applications.tsx src/pages/candidato/JobDetails.tsx src/pages/candidato/JobSearch.tsx src/pages/candidato/SavedJobs.tsx src/pages/candidato/Tests.tsx src/pages/candidato/BehavioralTestResult.tsx; do sed -i 's/rounded-2xl p-6 shadow-soft/rounded-2xl p-4 sm:p-6 shadow-soft/g' \"$f\" && echo \"OK: $f\"; done)",
+      "Bash(npm run:*)",
+      "Bash(find /d/claude/recrutars-maike -type f \\\\\\( -name \"*.sql\" -o -name \"*.ts\" \\\\\\) -path \"*/migrations/*\" -o -path \"*/supabase/*\" 2>/dev/null | xargs grep -l \"platform_metrics\\\\|create.*platform\\\\|populate.*metric\" 2>/dev/null)",
+      "Bash(for file:*)",
+      "Bash(/tmp/test_conversion.txt:*)",
+      "Read(//tmp/**)",
+      "Bash(then echo:*)",
+      "Read(//d/claude/recrutars-maike/**)",
+      "Bash(git:*)",
+      "WebFetch(domain:doc.evolution-api.com)",
+      "Bash(bash \"C:/Users/Edmilson Souza/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.2/skills/brainstorming/scripts/start-server.sh\" --project-dir \"D:/claude/recrutars-maike\")",
+      "Bash(bash \"C:\\\\Users\\\\Edmilson Souza\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\5.0.2\\\\skills\\\\brainstorming\\\\scripts\\\\start-server.sh\" --project-dir \"D:\\\\claude\\\\recrutars-maike\")",
+      "Bash(npm search:*)",
+      "Bash(for i:*)",
+      "Bash(bash \"C:\\\\Users\\\\Edmilson Souza\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\5.0.4\\\\skills\\\\brainstorming\\\\scripts\\\\start-server.sh\" --project-dir \"D:\\\\claude\\\\recrutars-maike\" 2>&1)",
+      "Bash(sed \"s/.*invoke\\(''''//\")",
+      "Bash(sed \"s/''''.*//\")",
+      "Bash(echo \"ALTER TABLE public.test_packages ADD COLUMN payment_methods TEXT[] NOT NULL DEFAULT ''''{card}''''::TEXT[];\")",
+      "Bash(grep '\"\"version\"\"' package.json)",
+      "Bash(bash \"C:/Users/Edmilson Souza/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.5/skills/brainstorming/scripts/start-server.sh\" --project-dir \"D:/claude/recrutars-maike\")",
+      "Bash(cat /d/claude/recrutars-maike/sql/migrations/*.sql)",
+      "mcp__claude_ai_Vercel__list_teams",
+      "mcp__claude_ai_Vercel__list_projects",
+      "mcp__claude_ai_Vercel__list_deployments",
+      "Bash(while read:*)",
+      "Bash(xargs -I {} grep -l \"ai_analyses\" {})",
+      "Bash(if grep:*)",
+      "Bash(then)",
+      "Bash(basename \"$f\")",
+      "Bash(bash \"C:\\\\Users\\\\Edmilson Souza\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\5.0.5\\\\skills\\\\brainstorming\\\\scripts\\\\start-server.sh\" --project-dir \"D:\\\\claude\\\\recrutars-maike\")",
+      "Bash(grep -r .channel\\\\\\(/d/claude/recrutars-maike/src --include=*.tsx --include=*.ts -A 5)",
+      "Bash(2)",
+      "Bash(mcp_supabase_list_tables /d/claude/recrutars-maike)",
+      "Bash(ls \"D:\\\\claude\\\\recrutars-maike\\\\.superpowers\\\\brainstorm\"\" 2>/dev/null && for d in \"D:clauderecrutars-maike.superpowersbrainstorm\"\"*/)",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); print\\(data[0][''''text''''][:8000]\\)\")",
+      "Skill(commit-commands:commit-push-pr)"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "supabase"
-  ]
+  ],
+  "enabledPlugins": {
+    "stripe@claude-plugins-official": true
+  }
 }

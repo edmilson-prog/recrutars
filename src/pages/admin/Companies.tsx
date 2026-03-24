@@ -321,7 +321,7 @@ export default function AdminCompanies() {
 
   // Planos dinamicos para Select
   const { companyPlans } = usePlans();
-  const PLANS = companyPlans.map(p => p.name);
+  const PLANS = [...new Set(companyPlans.map(p => p.name))];
 
   // Local state for companies (to allow status/plan changes)
   const [companies, setCompanies] = useState<Company[]>([]);

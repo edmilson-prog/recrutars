@@ -484,7 +484,7 @@ function OverviewTab() {
     if (!allResults || allResults.length === 0) return [];
     const counts: Record<string, number> = {};
     for (const r of allResults) {
-      const name = r.archetype?.name ?? 'Desconhecido';
+      const name = r.gauge_pro_archetypes?.name ?? 'Desconhecido';
       counts[name] = (counts[name] ?? 0) + 1;
     }
     return Object.entries(counts)
