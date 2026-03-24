@@ -65,3 +65,40 @@ export { default as CultureDNARadar } from './CultureDNARadar';
 export { default as CultureManifesto } from './CultureManifesto';
 export { default as CultureEvolution } from './CultureEvolution';
 export { default as CulturalFitBadge } from './CulturalFitBadge';
+
+// ---------------------------------------------------------------------------
+// PRD-090 — Ciclo de Vida do Colaborador
+// ---------------------------------------------------------------------------
+
+// Phase 2: Termination & Unlinking
+export { TerminationWizard } from './TerminationWizard';
+export { UnlinkModal } from './UnlinkModal';
+export { ReactivateModal } from './ReactivateModal';
+export { TerminatedBadge } from './TerminatedBadge';
+export { ScheduledTerminationBanner } from './ScheduledTerminationBanner';
+export { OffboardingChecklistCard } from './OffboardingChecklistCard';
+export { LifecycleActionsDropdown } from './LifecycleActionsDropdown';
+
+// Phase 3: Leave Management
+export { LeaveModal } from './LeaveModal';
+export { ReturnFromLeaveModal } from './ReturnFromLeaveModal';
+export { LeaveBadge } from './LeaveBadge';
+
+// Phase 4: Internal Movements
+export { PromotionModal } from './PromotionModal';
+export { DepartmentTransferModal } from './DepartmentTransferModal';
+export { PositionChangeModal } from './PositionChangeModal';
+export { PositionHistoryCard } from './PositionHistoryCard';
+
+// Phase 5: Consolidated Timeline
+export { TeamMemberTimeline } from './TeamMemberTimeline';
+
+// Phase 6: Bulk Actions
+export { BulkTerminationModal } from './BulkTerminationModal';
+export { BulkDepartmentTransferModal } from './BulkDepartmentTransferModal';
+export { BulkActionProgressBar } from './BulkActionProgressBar';
+export { BulkActionToolbar } from './BulkActionToolbar';
+
+// Phase 7: LGPD Anonymization
+export { AnonymizationModal } from './AnonymizationModal';
+export { AnonymizedBadge } from './AnonymizedBadge';

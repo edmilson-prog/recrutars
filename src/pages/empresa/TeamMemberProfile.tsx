@@ -15,6 +15,27 @@ import { MemberProfile } from '@/components/team-management/MemberProfile';
 import SendTestModal from '@/components/team-management/SendTestModal';
 import TeamMemberForm from '@/components/team-management/TeamMemberForm';
 import { RetestScheduleModal } from '@/components/team-management/RetestScheduleModal';
+// PRD-090 lifecycle modals (Phase 2)
+import { TerminationWizard } from '@/components/team-management/TerminationWizard';
+import { UnlinkModal } from '@/components/team-management/UnlinkModal';
+import { ReactivateModal } from '@/components/team-management/ReactivateModal';
+import { ScheduledTerminationBanner } from '@/components/team-management/ScheduledTerminationBanner';
+import { TerminatedBadge } from '@/components/team-management/TerminatedBadge';
+import { OffboardingChecklistCard } from '@/components/team-management/OffboardingChecklistCard';
+// PRD-090 Phase 3+4 modals
+import { LeaveModal } from '@/components/team-management/LeaveModal';
+import { ReturnFromLeaveModal } from '@/components/team-management/ReturnFromLeaveModal';
+import { LeaveBadge } from '@/components/team-management/LeaveBadge';
+import { PromotionModal } from '@/components/team-management/PromotionModal';
+import { DepartmentTransferModal } from '@/components/team-management/DepartmentTransferModal';
+import { PositionChangeModal } from '@/components/team-management/PositionChangeModal';
+import { PositionHistoryCard } from '@/components/team-management/PositionHistoryCard';
+// PRD-090 Phase 5: Timeline
+import { TeamMemberTimeline } from '@/components/team-management/TeamMemberTimeline';
+// PRD-090 Phase 7: LGPD
+import { AnonymizationModal } from '@/components/team-management/AnonymizationModal';
+import { AnonymizedBadge } from '@/components/team-management/AnonymizedBadge';
+import { useCancelScheduledTermination } from '@/hooks/useTeamLifecycleMutation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamMember, useDepartments, usePositions, useUpdateTeamMember, useMemberRetestSchedule } from '@/hooks/useTeamsQuery';
 import { useCompanyCreditBalance } from '@/hooks/useTestPackagesQuery';
@@ -55,7 +76,19 @@ export default function TeamMemberProfile() {
   const [sendTestOpen, setSendTestOpen] = useState(false);
   const [editFormOpen, setEditFormOpen] = useState(false);
   const [retestOpen, setRetestOpen] = useState(false);
+  // PRD-090 lifecycle modals (Phase 2)
+  const [terminateOpen, setTerminateOpen] = useState(false);
+  const [unlinkOpen, setUnlinkOpen] = useState(false);
+  const [reactivateOpen, setReactivateOpen] = useState(false);
+  // PRD-090 Phase 3+4 modals
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [returnLeaveOpen, setReturnLeaveOpen] = useState(false);
+  const [promoteOpen, setPromoteOpen] = useState(false);
+  const [transferDeptOpen, setTransferDeptOpen] = useState(false);
+  const [changePositionOpen, setChangePositionOpen] = useState(false);
+  const [anonymizeOpen, setAnonymizeOpen] = useState(false);
   const updateMember = useUpdateTeamMember();
+  const cancelScheduled = useCancelScheduledTermination();
 
   // PRD-089: Retest schedule
   const { data: retestSchedule } = useMemberRetestSchedule(id);
@@ -246,7 +279,13 @@ export default function TeamMemberProfile() {
               Visualize o perfil comportamental completo de {member.name}
             </p>
           </div>
-          {activeTestId && (
+          <div className="flex items-center gap-2 shrink-0">
+            {member.status === 'terminated' && member.terminationDate && (
+              <TerminatedBadge date={member.terminationDate} />
+            )}
+            {member.anonymized && <AnonymizedBadge />}
+          </div>
+          {activeTestId && member.status === 'active' && (
             <Button
               className="bg-cyan-600 hover:bg-cyan-700 shrink-0"
               onClick={() => setSendTestOpen(true)}
@@ -256,6 +295,20 @@ export default function TeamMemberProfile() {
             </Button>
           )}
         </div>
+
+        {/* PRD-090: Scheduled termination banner */}
+        {member.terminationScheduledDate && member.status === 'active' && (
+          <ScheduledTerminationBanner
+            date={member.terminationScheduledDate}
+            onCancel={() => {
+              cancelScheduled.mutate(
+                { teamMemberId: member.id, performedBy: currentCompany?.profileId ?? '' },
+                { onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teams'] }) },
+              );
+            }}
+            isCancelling={cancelScheduled.isPending}
+          />
+        )}
 
         <MemberProfile
           member={member}
@@ -272,7 +325,47 @@ export default function TeamMemberProfile() {
           onScheduleRetest={() => setRetestOpen(true)}
           onViewDevelopment={() => navigate(`/empresa/equipes/desenvolvimento/${id}`)}
           onViewEvolution={() => navigate(`/empresa/equipes/evolucao/${id}`)}
+          onTerminate={() => setTerminateOpen(true)}
+          onUnlink={() => setUnlinkOpen(true)}
+          onReactivate={() => setReactivateOpen(true)}
+          onStartLeave={() => setLeaveOpen(true)}
+          onReturnFromLeave={() => setReturnLeaveOpen(true)}
+          onPromote={() => setPromoteOpen(true)}
+          onTransferDepartment={() => setTransferDeptOpen(true)}
+          onChangePosition={() => setChangePositionOpen(true)}
+          onAnonymize={() => setAnonymizeOpen(true)}
         />
+
+        {/* PRD-090 Phase 3: Leave badge */}
+        {member.status === 'on_leave' && member.leaveStartDate && (
+          <LeaveBadge
+            startDate={member.leaveStartDate}
+            expectedReturn={member.leaveExpectedReturn}
+          />
+        )}
+
+        {/* PRD-090 Phase 4: Position history */}
+        <PositionHistoryCard
+          memberId={member.id}
+          currentDepartmentName={department?.name}
+          currentPositionTitle={position?.title}
+        />
+
+        {/* PRD-090 Phase 5: Consolidated timeline */}
+        <TeamMemberTimeline
+          memberId={member.id}
+          companyId={companyId}
+          performedBy={currentCompany?.profileId}
+        />
+
+        {/* PRD-090: Offboarding checklist for terminated members */}
+        {member.status === 'terminated' && (
+          <OffboardingChecklistCard
+            teamMemberId={member.id}
+            companyId={companyId}
+            currentUserId={currentCompany?.profileId ?? ''}
+          />
+        )}
 
         {member && activeTestId && (
           <SendTestModal
@@ -314,6 +407,109 @@ export default function TeamMemberProfile() {
                 // Toast de erro é tratado pelo mutation
               }
             }}
+          />
+        )}
+
+        {/* PRD-090: Lifecycle modals */}
+        {member && (
+          <TerminationWizard
+            open={terminateOpen}
+            onOpenChange={setTerminateOpen}
+            member={member}
+            companyId={companyId}
+            performedBy={currentCompany?.profileId ?? ''}
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
+          />
+        )}
+
+        {member && (
+          <UnlinkModal
+            open={unlinkOpen}
+            onOpenChange={setUnlinkOpen}
+            member={member}
+            performedBy={currentCompany?.profileId ?? ''}
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
+          />
+        )}
+
+        {member && (
+          <ReactivateModal
+            open={reactivateOpen}
+            onOpenChange={setReactivateOpen}
+            member={member}
+            companyId={companyId}
+            performedBy={currentCompany?.profileId ?? ''}
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
+          />
+        )}
+
+        {/* PRD-090 Phase 3: Leave modals */}
+        {member && (
+          <LeaveModal
+            open={leaveOpen}
+            onOpenChange={setLeaveOpen}
+            member={member}
+            performedBy={currentCompany?.profileId ?? ''}
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
+          />
+        )}
+
+        {member && (
+          <ReturnFromLeaveModal
+            open={returnLeaveOpen}
+            onOpenChange={setReturnLeaveOpen}
+            member={member}
+            performedBy={currentCompany?.profileId ?? ''}
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
+          />
+        )}
+
+        {/* PRD-090 Phase 4: Movement modals */}
+        {member && (
+          <PromotionModal
+            open={promoteOpen}
+            onOpenChange={setPromoteOpen}
+            member={member}
+            companyId={companyId}
+            currentDepartment={department}
+            currentPosition={position}
+            performedBy={currentCompany?.profileId ?? ''}
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
+          />
+        )}
+
+        {member && (
+          <DepartmentTransferModal
+            open={transferDeptOpen}
+            onOpenChange={setTransferDeptOpen}
+            member={member}
+            companyId={companyId}
+            currentDepartment={department}
+            performedBy={currentCompany?.profileId ?? ''}
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
+          />
+        )}
+
+        {member && (
+          <PositionChangeModal
+            open={changePositionOpen}
+            onOpenChange={setChangePositionOpen}
+            member={member}
+            currentPosition={position}
+            performedBy={currentCompany?.profileId ?? ''}
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
+          />
+        )}
+
+        {/* PRD-090 Phase 7: LGPD Anonymization */}
+        {member && (
+          <AnonymizationModal
+            open={anonymizeOpen}
+            onOpenChange={setAnonymizeOpen}
+            member={member}
+            companyId={companyId}
+            performedBy={currentCompany?.profileId ?? ''}
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
           />
         )}
       </motion.div>

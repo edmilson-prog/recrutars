@@ -10,6 +10,9 @@
  *
  * PRD-057: Gestao de Equipes - Desenvolvimento & Evolucao
  *   Development plans, objectives, retest scheduling, evolution annotations.
+ *
+ * PRD-090: Ciclo de Vida do Colaborador (Empresa)
+ *   Lifecycle events, termination, leave, movements, timeline, anonymization.
  */
 
 import type { GaugeProDimension, DimensionScores, DimensionClassification } from './gaugePro';
@@ -23,6 +26,104 @@ export type HierarchyLevel = 'operational' | 'tactical' | 'strategic';
 
 /** Current Gauge-Pro assessment status of a team member. */
 export type GaugeStatus = 'unmapped' | 'invited' | 'in_progress' | 'mapped' | 'retest_pending';
+
+// ---------------------------------------------------------------------------
+// PRD-090 — Ciclo de Vida do Colaborador
+// ---------------------------------------------------------------------------
+
+/** Lifecycle status of a team member. */
+export type TeamMemberStatus = 'active' | 'inactive' | 'on_leave' | 'terminated' | 'unlinked';
+
+/** Reason for termination. */
+export type TerminationReason =
+  | 'voluntary'
+  | 'involuntary'
+  | 'contract_end'
+  | 'retirement'
+  | 'mutual_agreement'
+  | 'other';
+
+/** Type of temporary leave. */
+export type LeaveType =
+  | 'medical_leave'
+  | 'maternity'
+  | 'vacation_extended'
+  | 'unpaid_leave'
+  | 'sabbatical'
+  | 'other';
+
+/** Type of lifecycle event in the consolidated timeline. */
+export type TeamMemberEventType =
+  | 'hired'
+  | 'terminated'
+  | 'unlinked'
+  | 'reactivated'
+  | 'leave_started'
+  | 'leave_returned'
+  | 'promoted'
+  | 'department_transferred'
+  | 'position_changed'
+  | 'note_added'
+  | 'test_completed'
+  | 'test_invited'
+  | 'anonymized'
+  | 'offboarding_item_completed'
+  | 'scheduled_termination_set'
+  | 'scheduled_termination_cancelled';
+
+/** Visibility scope for timeline events. */
+export type EventVisibility = 'all_managers' | 'managers_and_admin';
+
+/** Reason for unlinking a team member. */
+export type UnlinkReason = 'error' | 'company_change' | 'duplicate' | 'other';
+
+/** A lifecycle event in the consolidated timeline. */
+export interface TeamMemberEvent {
+  id: string;
+  teamMemberId: string;
+  companyId: string;
+  eventType: TeamMemberEventType;
+  eventDate: string;
+  description?: string;
+  metadata: Record<string, unknown>;
+  performedBy?: string;
+  performedByName?: string;
+  visibility: EventVisibility;
+  createdAt: string;
+}
+
+/** An offboarding checklist item for a terminated member. */
+export interface OffboardingChecklist {
+  id: string;
+  companyId: string;
+  teamMemberId: string;
+  itemLabel: string;
+  isCompleted: boolean;
+  completedAt?: string;
+  completedBy?: string;
+  sortOrder: number;
+  createdAt: string;
+}
+
+/** A reusable offboarding template item for a company. */
+export interface OffboardingTemplate {
+  id: string;
+  companyId: string;
+  itemLabel: string;
+  isDefault: boolean;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+/** Company-level LGPD data retention configuration. */
+export interface DataRetentionSettings {
+  id: string;
+  companyId: string;
+  retentionYears: number;
+  updatedAt: string;
+  updatedBy?: string;
+}
 
 /** A department within the company. */
 export interface Department {
@@ -43,7 +144,7 @@ export interface Position {
   isActive: boolean;
 }
 
-/** A team member with optional Gauge-Pro behavioural data. */
+/** A team member with optional Gauge-Pro behavioural data and lifecycle state. */
 export interface TeamMember {
   id: string;
   companyId?: string;
@@ -63,6 +164,34 @@ export interface TeamMember {
   importedFromCandidateId?: string;
   lastTestDate?: string;
   testHistory?: TestHistoryEntry[];
+
+  // PRD-090 — Lifecycle fields
+  /** Lifecycle status (replaces boolean isActive for richer semantics). */
+  status?: TeamMemberStatus;
+  /** Effective termination date. */
+  terminationDate?: string;
+  /** Reason for termination. */
+  terminationReason?: TerminationReason;
+  /** Detail text when terminationReason = 'other'. */
+  terminationReasonDetail?: string;
+  /** Confidential termination notes (managers/admins only). */
+  terminationNotes?: string;
+  /** Future date for scheduled termination. */
+  terminationScheduledDate?: string;
+  /** Type of temporary leave. */
+  leaveType?: LeaveType;
+  /** Leave start date. */
+  leaveStartDate?: string;
+  /** Expected return date from leave. */
+  leaveExpectedReturn?: string;
+  /** Whether to include in metrics during leave. */
+  leaveIncludeMetrics?: boolean;
+  /** FK to previous team_member record if rehired. */
+  previousTeamMemberId?: string;
+  /** Whether personal data has been anonymized (LGPD). */
+  anonymized?: boolean;
+  /** Timestamp of anonymization. */
+  anonymizedAt?: string;
 }
 
 /** A single historical Gauge-Pro test result for a member. */

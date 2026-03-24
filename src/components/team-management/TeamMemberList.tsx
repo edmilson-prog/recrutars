@@ -3,7 +3,7 @@
  * PRD-055: Listagem de colaboradores com filtros, busca e modos lista/grid.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { staggerContainer, staggerItem } from "@/lib/animations";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,10 +52,18 @@ import { classifyAllDimensions } from "@/lib/gaugeProScoring";
 
 import type {
   TeamMember,
+  TeamMemberStatus,
   Department,
   Position,
   GaugeStatus,
 } from "@/types/teamManagement";
+
+const LIFECYCLE_STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "active", label: "Ativos" },
+  { value: "on_leave", label: "Afastados" },
+  { value: "terminated", label: "Desligados" },
+  { value: "unlinked", label: "Desvinculados" },
+];
 
 /** Resolve archetype name: from DB field, or computed from scores as fallback */
 function resolveArchetypeName(member: TeamMember): string | null {
@@ -74,6 +83,10 @@ interface TeamMemberListProps {
   onViewProfile: (memberId: string) => void;
   onEdit: (member: TeamMember) => void;
   onCreate: () => void;
+  // PRD-090 Phase 6: Bulk actions
+  onBulkTerminate?: (members: TeamMember[]) => void;
+  onBulkTransferDepartment?: (members: TeamMember[]) => void;
+  onBulkStartLeave?: (members: TeamMember[]) => void;
 }
 
 type ViewMode = "list" | "grid";
@@ -93,11 +106,26 @@ export default function TeamMemberList({
   onViewProfile,
   onEdit,
   onCreate,
+  onBulkTerminate,
+  onBulkTransferDepartment,
+  onBulkStartLeave,
 }: TeamMemberListProps) {
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [lifecycleFilter, setLifecycleFilter] = useState<string>("active");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  // PRD-090 Phase 6: Multi-select
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   // Lookup maps
   const departmentMap = useMemo(
@@ -133,9 +161,28 @@ export default function TeamMemberList({
         return false;
       }
 
+      // PRD-090: Lifecycle status filter
+      if (lifecycleFilter !== "all") {
+        const memberStatus = m.status ?? (m.isActive ? "active" : "inactive");
+        if (memberStatus !== lifecycleFilter) return false;
+      }
+
       return true;
     });
-  }, [members, search, departmentFilter, statusFilter]);
+  }, [members, search, departmentFilter, statusFilter, lifecycleFilter]);
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) =>
+      prev.size === filteredMembers.length
+        ? new Set()
+        : new Set(filteredMembers.map((m) => m.id)),
+    );
+  }, [filteredMembers]);
+
+  const selectedMembers = useMemo(
+    () => members.filter((m) => selectedIds.has(m.id)),
+    [members, selectedIds],
+  );
 
   const getInitials = (name: string) =>
     name
@@ -199,10 +246,25 @@ export default function TeamMemberList({
             </SelectContent>
           </Select>
 
-          {/* Status filter */}
+          {/* PRD-090: Lifecycle status filter */}
+          <Select value={lifecycleFilter} onValueChange={setLifecycleFilter}>
+            <SelectTrigger className="w-full sm:w-[170px]">
+              <SelectValue placeholder="Situação" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as Situações</SelectItem>
+              {LIFECYCLE_STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Gauge status filter */}
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder="Status Gauge" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os Status</SelectItem>
@@ -250,6 +312,13 @@ export default function TeamMemberList({
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={filteredMembers.length > 0 && selectedIds.size === filteredMembers.length}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Selecionar todos"
+                    />
+                  </TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Departamento</TableHead>
                   <TableHead>Cargo</TableHead>
@@ -262,7 +331,7 @@ export default function TeamMemberList({
                 {filteredMembers.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="h-24 text-center text-muted-foreground"
                     >
                       Nenhum colaborador encontrado.
@@ -280,9 +349,18 @@ export default function TeamMemberList({
                         className={cn(
                           "cursor-pointer transition-colors hover:bg-muted/50",
                           !member.isActive && "opacity-60",
+                          selectedIds.has(member.id) && "bg-primary/5",
                         )}
                         onClick={() => onViewProfile(member.id)}
                       >
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.has(member.id)}
+                            onCheckedChange={() => toggleSelect(member.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label={`Selecionar ${member.name}`}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
@@ -389,6 +467,49 @@ export default function TeamMemberList({
           </motion.div>
         )}
       </CardContent>
+
+      {/* PRD-090 Phase 6: Bulk action floating toolbar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-primary/10 border border-primary/30 backdrop-blur-md rounded-lg px-5 py-3 shadow-lg">
+          <span className="text-sm font-medium">
+            {selectedIds.size} selecionado{selectedIds.size !== 1 ? "s" : ""}
+          </span>
+          {onBulkTerminate && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onBulkTerminate(selectedMembers)}
+            >
+              Desligar ({selectedIds.size})
+            </Button>
+          )}
+          {onBulkTransferDepartment && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onBulkTransferDepartment(selectedMembers)}
+            >
+              Mover Departamento
+            </Button>
+          )}
+          {onBulkStartLeave && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onBulkStartLeave(selectedMembers)}
+            >
+              Registrar Afastamento
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            Limpar
+          </Button>
+        </div>
+      )}
     </Card>
   );
 }
