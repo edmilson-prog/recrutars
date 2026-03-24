@@ -45,6 +45,8 @@ import { Fragment, useState, useCallback } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 import GaugeStatusBadge from './GaugeStatusBadge';
+import { AnonymizedBadge } from './AnonymizedBadge';
+import { LifecycleActionsDropdown } from './LifecycleActionsDropdown';
 import { GaugeProRadarChart } from '@/components/corporate-tests/GaugeProRadarChart';
 import { DimensionBarsGaugePro } from '@/components/corporate-tests/DimensionBarsGaugePro';
 import { ArchetypeCard } from '@/components/corporate-tests/ArchetypeCard';
@@ -78,6 +80,16 @@ const DIMENSION_LABELS: Record<string, string> = {
 
 interface MemberProfileProps {
   member: TeamMember;
+  // PRD-090 lifecycle callbacks (optional for backward compat)
+  onTerminate?: () => void;
+  onUnlink?: () => void;
+  onReactivate?: () => void;
+  onStartLeave?: () => void;
+  onReturnFromLeave?: () => void;
+  onPromote?: () => void;
+  onTransferDepartment?: () => void;
+  onChangePosition?: () => void;
+  onAnonymize?: () => void;
   department?: Department;
   position?: Position;
   testHistory?: TestHistoryEntry[];
@@ -414,6 +426,15 @@ export function MemberProfile({
   onScheduleRetest,
   onViewDevelopment,
   onViewEvolution,
+  onTerminate,
+  onUnlink,
+  onReactivate,
+  onStartLeave,
+  onReturnFromLeave,
+  onPromote,
+  onTransferDepartment,
+  onChangePosition,
+  onAnonymize,
 }: MemberProfileProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
@@ -487,6 +508,7 @@ export function MemberProfile({
               {/* Row 1: Name + badges */}
               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <h2 className="text-xl font-bold">{member.name}</h2>
+                {member.anonymized && <AnonymizedBadge />}
                 <GaugeStatusBadge status={member.gaugeStatus} />
                 {!member.isActive && (
                   <Badge variant="secondary" className="text-xs">
@@ -503,21 +525,30 @@ export function MemberProfile({
 
               {/* Row 2: Contact info */}
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <Mail className="h-3.5 w-3.5" />
-                  {member.email}
-                </span>
-                {member.cpf && (
-                  <span className="flex items-center gap-1.5">
+                {member.anonymized ? (
+                  <span className="flex items-center gap-1.5 italic text-muted-foreground/60">
                     <ShieldCheck className="h-3.5 w-3.5" />
-                    CPF: {maskCpf(member.cpf)}
+                    Dados anonimizados
                   </span>
-                )}
-                {member.phone && (
-                  <span className="flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5" />
-                    {formatPhone(member.phone)}
-                  </span>
+                ) : (
+                  <>
+                    <span className="flex items-center gap-1.5">
+                      <Mail className="h-3.5 w-3.5" />
+                      {member.email}
+                    </span>
+                    {member.cpf && (
+                      <span className="flex items-center gap-1.5">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        CPF: {maskCpf(member.cpf)}
+                      </span>
+                    )}
+                    {member.phone && (
+                      <span className="flex items-center gap-1.5">
+                        <Phone className="h-3.5 w-3.5" />
+                        {formatPhone(member.phone)}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -558,14 +589,30 @@ export function MemberProfile({
 
             {/* Action buttons */}
             <div className="flex flex-col gap-2 shrink-0">
-              <Button variant="outline" size="sm" onClick={onEdit}>
-                <Pencil className="h-4 w-4 mr-2" />
-                Editar
-              </Button>
-              <Button variant="outline" size="sm" onClick={onScheduleRetest}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Agendar Reteste
-              </Button>
+              {member.status !== 'terminated' && member.status !== 'unlinked' && (
+                <>
+                  <Button variant="outline" size="sm" onClick={onEdit}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Editar
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={onScheduleRetest}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Agendar Reteste
+                  </Button>
+                </>
+              )}
+              <LifecycleActionsDropdown
+                member={member}
+                onTerminate={onTerminate ?? (() => {})}
+                onUnlink={onUnlink ?? (() => {})}
+                onReactivate={onReactivate ?? (() => {})}
+                onStartLeave={onStartLeave ?? (() => {})}
+                onReturnFromLeave={onReturnFromLeave ?? (() => {})}
+                onPromote={onPromote ?? (() => {})}
+                onTransferDepartment={onTransferDepartment ?? (() => {})}
+                onChangePosition={onChangePosition ?? (() => {})}
+                onAnonymize={onAnonymize ?? (() => {})}
+              />
             </div>
           </div>
         </CardContent>

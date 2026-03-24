@@ -30,11 +30,17 @@ interface CollectiveRadarChartProps {
   selectedDepartmentId?: string | null;
 }
 
+/** PRD-090: Filter members eligible for metrics (active or on_leave with includeMetrics). */
+function isEligibleForMetrics(m: TeamMember): boolean {
+  const status = m.status ?? (m.isActive ? 'active' : 'inactive');
+  return status === 'active' || (status === 'on_leave' && !!m.leaveIncludeMetrics);
+}
+
 function calcAverage(
   memberList: TeamMember[],
 ): DimensionScores | null {
   const mapped = memberList.filter(
-    (m) => m.gaugeStatus === 'mapped' && m.gaugeScores,
+    (m) => isEligibleForMetrics(m) && m.gaugeStatus === 'mapped' && m.gaugeScores,
   );
   if (mapped.length === 0) return null;
 

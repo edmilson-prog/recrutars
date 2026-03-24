@@ -15,6 +15,12 @@ import type { TeamMember, Department } from '@/types/teamManagement';
 
 const DIMENSIONS: GaugeProDimension[] = ['D1', 'D2', 'D3', 'D4', 'D5'];
 
+/** PRD-090: Filter members eligible for metrics. */
+function isEligibleForMetrics(m: TeamMember): boolean {
+  const status = m.status ?? (m.isActive ? 'active' : 'inactive');
+  return status === 'active' || (status === 'on_leave' && !!m.leaveIncludeMetrics);
+}
+
 interface DimensionHeatmapProps {
   members: TeamMember[];
   departments: Department[];
@@ -49,6 +55,7 @@ export default function DimensionHeatmap({
       const deptMembers = members.filter(
         (m) =>
           m.departmentId === dept.id &&
+          isEligibleForMetrics(m) &&
           m.gaugeStatus === 'mapped' &&
           m.gaugeScores,
       );
@@ -74,7 +81,7 @@ export default function DimensionHeatmap({
 
     // Overall averages
     const allMapped = members.filter(
-      (m) => m.gaugeStatus === 'mapped' && m.gaugeScores,
+      (m) => isEligibleForMetrics(m) && m.gaugeStatus === 'mapped' && m.gaugeScores,
     );
     const overall = {} as Partial<DimensionScores>;
     if (allMapped.length > 0) {

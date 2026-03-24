@@ -15,8 +15,12 @@ import type {
   DevelopmentObjective,
   RetestSchedule,
   EvolutionAnnotation,
+  TeamMemberEvent,
+  OffboardingChecklist,
+  OffboardingTemplate,
+  DataRetentionSettings,
 } from '@/types/teamManagement';
-import type { ITeamsService, TeamsFilters } from './teamsService';
+import type { ITeamsService, TeamsFilters, EventsFilters } from './teamsService';
 
 export class TeamsServiceSupabase implements ITeamsService {
   // ---------------------------------------------------------------------------
@@ -147,7 +151,13 @@ export class TeamsServiceSupabase implements ITeamsService {
     if (filters?.departmentId) {
       query = query.eq('department_id', filters.departmentId);
     }
-    if (filters?.isActive !== undefined) {
+    if (filters?.status) {
+      if (Array.isArray(filters.status)) {
+        query = query.in('status', filters.status);
+      } else {
+        query = query.eq('status', filters.status);
+      }
+    } else if (filters?.isActive !== undefined) {
       query = query.eq('is_active', filters.isActive);
     }
     if (filters?.gaugeStatus) {
@@ -372,6 +382,178 @@ export class TeamsServiceSupabase implements ITeamsService {
   }
 
   // ---------------------------------------------------------------------------
+  // PRD-090 — Lifecycle Events
+  // ---------------------------------------------------------------------------
+
+  async getTeamMemberEvents(teamMemberId: string, filters?: EventsFilters): Promise<TeamMemberEvent[]> {
+    let query = supabase
+      .from('team_member_events')
+      .select('*, profiles:performed_by(name)')
+      .eq('team_member_id', teamMemberId)
+      .order('event_date', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    if (filters?.eventType) {
+      query = query.eq('event_type', filters.eventType);
+    }
+    if (filters?.startDate) {
+      query = query.gte('event_date', filters.startDate);
+    }
+    if (filters?.endDate) {
+      query = query.lte('event_date', filters.endDate);
+    }
+    if (filters?.limit) {
+      query = query.limit(filters.limit);
+    }
+    if (filters?.offset) {
+      query = query.range(filters.offset, filters.offset + (filters.limit ?? 50) - 1);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw new Error(`Failed to fetch events: ${error.message}`);
+
+    return (data ?? []).map(this.mapEvent);
+  }
+
+  async createTeamMemberEvent(input: Omit<TeamMemberEvent, 'id' | 'createdAt'>): Promise<TeamMemberEvent> {
+    const { data, error } = await supabase
+      .from('team_member_events')
+      .insert({
+        team_member_id: input.teamMemberId,
+        company_id: input.companyId,
+        event_type: input.eventType,
+        event_date: input.eventDate,
+        description: input.description ?? null,
+        metadata: input.metadata ?? {},
+        performed_by: input.performedBy ?? null,
+        visibility: input.visibility ?? 'all_managers',
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to create event: ${error.message}`);
+
+    return this.mapEvent(data);
+  }
+
+  // ---------------------------------------------------------------------------
+  // PRD-090 — Offboarding
+  // ---------------------------------------------------------------------------
+
+  async getOffboardingChecklist(teamMemberId: string): Promise<OffboardingChecklist[]> {
+    const { data, error } = await supabase
+      .from('offboarding_checklists')
+      .select('*')
+      .eq('team_member_id', teamMemberId)
+      .order('sort_order', { ascending: true });
+
+    if (error) throw new Error(`Failed to fetch offboarding checklist: ${error.message}`);
+
+    return (data ?? []).map(this.mapOffboardingChecklist);
+  }
+
+  async toggleOffboardingItem(id: string, isCompleted: boolean, completedBy: string): Promise<OffboardingChecklist> {
+    const { data, error } = await supabase
+      .from('offboarding_checklists')
+      .update({
+        is_completed: isCompleted,
+        completed_at: isCompleted ? new Date().toISOString() : null,
+        completed_by: isCompleted ? completedBy : null,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to toggle offboarding item: ${error.message}`);
+
+    return this.mapOffboardingChecklist(data);
+  }
+
+  async getOffboardingTemplates(companyId: string): Promise<OffboardingTemplate[]> {
+    const { data, error } = await supabase
+      .from('offboarding_templates')
+      .select('*')
+      .or(`company_id.eq.${companyId},company_id.is.null`)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (error) throw new Error(`Failed to fetch offboarding templates: ${error.message}`);
+
+    return (data ?? []).map(this.mapOffboardingTemplate);
+  }
+
+  async createOffboardingTemplate(input: Omit<OffboardingTemplate, 'id' | 'createdAt'>): Promise<OffboardingTemplate> {
+    const { data, error } = await supabase
+      .from('offboarding_templates')
+      .insert({
+        company_id: input.companyId,
+        item_label: input.itemLabel,
+        is_default: input.isDefault ?? false,
+        sort_order: input.sortOrder ?? 0,
+        is_active: input.isActive ?? true,
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to create offboarding template: ${error.message}`);
+
+    return this.mapOffboardingTemplate(data);
+  }
+
+  async updateOffboardingTemplate(id: string, updates: Partial<OffboardingTemplate>): Promise<OffboardingTemplate> {
+    const payload: Record<string, unknown> = {};
+    if (updates.itemLabel !== undefined) payload.item_label = updates.itemLabel;
+    if (updates.isDefault !== undefined) payload.is_default = updates.isDefault;
+    if (updates.sortOrder !== undefined) payload.sort_order = updates.sortOrder;
+    if (updates.isActive !== undefined) payload.is_active = updates.isActive;
+
+    const { data, error } = await supabase
+      .from('offboarding_templates')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to update offboarding template: ${error.message}`);
+
+    return this.mapOffboardingTemplate(data);
+  }
+
+  // ---------------------------------------------------------------------------
+  // PRD-090 — Data Retention Settings (LGPD)
+  // ---------------------------------------------------------------------------
+
+  async getDataRetentionSettings(companyId: string): Promise<DataRetentionSettings | null> {
+    const { data, error } = await supabase
+      .from('data_retention_settings')
+      .select('*')
+      .eq('company_id', companyId)
+      .maybeSingle();
+
+    if (error) throw new Error(`Failed to fetch retention settings: ${error.message}`);
+
+    return data ? this.mapRetentionSettings(data) : null;
+  }
+
+  async saveDataRetentionSettings(companyId: string, retentionYears: number, updatedBy: string): Promise<DataRetentionSettings> {
+    const { data, error } = await supabase
+      .from('data_retention_settings')
+      .upsert({
+        company_id: companyId,
+        retention_years: retentionYears,
+        updated_at: new Date().toISOString(),
+        updated_by: updatedBy,
+      }, { onConflict: 'company_id' })
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to save retention settings: ${error.message}`);
+
+    return this.mapRetentionSettings(data);
+  }
+
+  // ---------------------------------------------------------------------------
   // Mappers (snake_case DB -> camelCase TS)
   // ---------------------------------------------------------------------------
 
@@ -419,6 +601,20 @@ export class TeamsServiceSupabase implements ITeamsService {
       isActive: row.is_active,
       importedFromCandidateId: row.imported_from_candidate_id ?? undefined,
       lastTestDate: row.last_test_date ?? undefined,
+      // PRD-090 lifecycle fields
+      status: row.status ?? (row.is_active ? 'active' : 'inactive'),
+      terminationDate: row.termination_date ?? undefined,
+      terminationReason: row.termination_reason ?? undefined,
+      terminationReasonDetail: row.termination_reason_detail ?? undefined,
+      terminationNotes: row.termination_notes ?? undefined,
+      terminationScheduledDate: row.termination_scheduled_date ?? undefined,
+      leaveType: row.leave_type ?? undefined,
+      leaveStartDate: row.leave_start_date ?? undefined,
+      leaveExpectedReturn: row.leave_expected_return ?? undefined,
+      leaveIncludeMetrics: row.leave_include_metrics ?? false,
+      previousTeamMemberId: row.previous_team_member_id ?? undefined,
+      anonymized: row.anonymized ?? false,
+      anonymizedAt: row.anonymized_at ?? undefined,
     };
   }
 
@@ -467,6 +663,58 @@ export class TeamsServiceSupabase implements ITeamsService {
       type: row.type,
       date: row.date,
       createdAt: row.created_at,
+    };
+  }
+
+  private mapEvent(row: any): TeamMemberEvent {
+    return {
+      id: row.id,
+      teamMemberId: row.team_member_id,
+      companyId: row.company_id,
+      eventType: row.event_type,
+      eventDate: row.event_date,
+      description: row.description ?? undefined,
+      metadata: row.metadata ?? {},
+      performedBy: row.performed_by ?? undefined,
+      performedByName: row.profiles?.name ?? undefined,
+      visibility: row.visibility,
+      createdAt: row.created_at,
+    };
+  }
+
+  private mapOffboardingChecklist(row: any): OffboardingChecklist {
+    return {
+      id: row.id,
+      companyId: row.company_id,
+      teamMemberId: row.team_member_id,
+      itemLabel: row.item_label,
+      isCompleted: row.is_completed,
+      completedAt: row.completed_at ?? undefined,
+      completedBy: row.completed_by ?? undefined,
+      sortOrder: row.sort_order,
+      createdAt: row.created_at,
+    };
+  }
+
+  private mapOffboardingTemplate(row: any): OffboardingTemplate {
+    return {
+      id: row.id,
+      companyId: row.company_id,
+      itemLabel: row.item_label,
+      isDefault: row.is_default,
+      sortOrder: row.sort_order,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+    };
+  }
+
+  private mapRetentionSettings(row: any): DataRetentionSettings {
+    return {
+      id: row.id,
+      companyId: row.company_id,
+      retentionYears: row.retention_years,
+      updatedAt: row.updated_at,
+      updatedBy: row.updated_by ?? undefined,
     };
   }
   /* eslint-enable @typescript-eslint/no-explicit-any */

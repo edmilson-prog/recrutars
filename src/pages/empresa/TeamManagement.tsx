@@ -44,6 +44,8 @@ import SpreadsheetImport from '@/components/team-management/SpreadsheetImport';
 import CollectiveRadarChart from '@/components/team-management/CollectiveRadarChart';
 import DimensionHeatmap from '@/components/team-management/DimensionHeatmap';
 import DepartmentArchetypeChart from '@/components/team-management/DepartmentArchetypeChart';
+import { BulkTerminationModal } from '@/components/team-management/BulkTerminationModal';
+import { BulkDepartmentTransferModal } from '@/components/team-management/BulkDepartmentTransferModal';
 import type { Department, Position, TeamMember } from '@/types/teamManagement';
 
 const quickActions = [
@@ -84,6 +86,10 @@ export default function TeamManagement() {
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [spreadsheetImportOpen, setSpreadsheetImportOpen] = useState(false);
+  // PRD-090 Phase 6: Bulk actions
+  const [bulkTerminateOpen, setBulkTerminateOpen] = useState(false);
+  const [bulkTransferOpen, setBulkTransferOpen] = useState(false);
+  const [bulkMembers, setBulkMembers] = useState<TeamMember[]>([]);
 
   // Behavioral map filter
   const [mapDeptFilter, setMapDeptFilter] = useState<string | null>(null);
@@ -273,6 +279,25 @@ export default function TeamManagement() {
               onViewProfile={(memberId) => navigate(`/empresa/equipes/membro/${memberId}`)}
               onEdit={(member) => { setEditingMember(member); setMemberFormOpen(true); }}
               onCreate={() => { setEditingMember(null); setMemberFormOpen(true); }}
+              onBulkTerminate={(selected) => { setBulkMembers(selected); setBulkTerminateOpen(true); }}
+              onBulkTransferDepartment={(selected) => { setBulkMembers(selected); setBulkTransferOpen(true); }}
+            />
+
+            {/* PRD-090 Phase 6: Bulk modals */}
+            <BulkTerminationModal
+              open={bulkTerminateOpen}
+              onOpenChange={setBulkTerminateOpen}
+              members={bulkMembers}
+              performedBy={currentCompany?.profileId ?? ''}
+              onSuccess={() => { setBulkMembers([]); }}
+            />
+            <BulkDepartmentTransferModal
+              open={bulkTransferOpen}
+              onOpenChange={setBulkTransferOpen}
+              members={bulkMembers}
+              companyId={companyId}
+              performedBy={currentCompany?.profileId ?? ''}
+              onSuccess={() => { setBulkMembers([]); }}
             />
             <TeamMemberForm
               member={editingMember}

@@ -25,6 +25,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   completed: { label: 'Concluído', color: 'bg-green-100 text-green-700' },
   expired: { label: 'Expirado', color: 'bg-red-100 text-red-600' },
   abandoned: { label: 'Abandonado', color: 'bg-red-100 text-red-600' },
+  cancelled: { label: 'Cancelado', color: 'bg-gray-100 text-gray-600' },
 };
 
 const methodIcons: Record<string, typeof Mail> = {
@@ -60,7 +61,7 @@ export function TestCandidateList({ testId, invitations, results }: TestCandidat
           <div className="space-y-3">
             {invitations.map((inv) => {
               const result = getResult(inv.candidateId);
-              const config = statusConfig[inv.status];
+              const config = statusConfig[inv.status] ?? { label: inv.status, color: 'bg-gray-100 text-gray-500' };
               const MethodIcon = methodIcons[inv.method] || Mail;
 
               return (

@@ -10,16 +10,32 @@ import type {
   Department,
   Position,
   TeamMember,
+  TeamMemberStatus,
   DevelopmentPlan,
   RetestSchedule,
   EvolutionAnnotation,
+  TeamMemberEvent,
+  TeamMemberEventType,
+  OffboardingChecklist,
+  OffboardingTemplate,
+  DataRetentionSettings,
 } from '@/types/teamManagement';
+
 export interface TeamsFilters {
   companyId?: string;
   departmentId?: string;
   isActive?: boolean;
+  status?: TeamMemberStatus | TeamMemberStatus[];
   gaugeStatus?: string;
   search?: string;
+}
+
+export interface EventsFilters {
+  eventType?: TeamMemberEventType;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  offset?: number;
 }
 
 export interface ITeamsService {
@@ -50,6 +66,21 @@ export interface ITeamsService {
   // Annotations
   getAnnotations(memberId: string): Promise<EvolutionAnnotation[]>;
   createAnnotation(data: Omit<EvolutionAnnotation, 'id' | 'createdAt'>): Promise<EvolutionAnnotation>;
+
+  // PRD-090 — Lifecycle Events
+  getTeamMemberEvents(teamMemberId: string, filters?: EventsFilters): Promise<TeamMemberEvent[]>;
+  createTeamMemberEvent(data: Omit<TeamMemberEvent, 'id' | 'createdAt'>): Promise<TeamMemberEvent>;
+
+  // PRD-090 — Offboarding
+  getOffboardingChecklist(teamMemberId: string): Promise<OffboardingChecklist[]>;
+  toggleOffboardingItem(id: string, isCompleted: boolean, completedBy: string): Promise<OffboardingChecklist>;
+  getOffboardingTemplates(companyId: string): Promise<OffboardingTemplate[]>;
+  createOffboardingTemplate(data: Omit<OffboardingTemplate, 'id' | 'createdAt'>): Promise<OffboardingTemplate>;
+  updateOffboardingTemplate(id: string, updates: Partial<OffboardingTemplate>): Promise<OffboardingTemplate>;
+
+  // PRD-090 — Data Retention (LGPD)
+  getDataRetentionSettings(companyId: string): Promise<DataRetentionSettings | null>;
+  saveDataRetentionSettings(companyId: string, retentionYears: number, updatedBy: string): Promise<DataRetentionSettings>;
 }
 
 // ---------------------------------------------------------------------------

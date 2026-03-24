@@ -17,6 +17,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { TeamMember, Department } from '@/types/teamManagement';
 
+/** PRD-090: Filter members eligible for metrics. */
+function isEligibleForMetrics(m: TeamMember): boolean {
+  const status = m.status ?? (m.isActive ? 'active' : 'inactive');
+  return status === 'active' || (status === 'on_leave' && !!m.leaveIncludeMetrics);
+}
+
 const PALETTE = [
   '#0891b2',
   '#059669',
@@ -55,7 +61,7 @@ export default function DepartmentArchetypeChart({
 
     // Build data per department
     const data = departments.map((dept) => {
-      const deptMembers = members.filter((m) => m.departmentId === dept.id);
+      const deptMembers = members.filter((m) => m.departmentId === dept.id && isEligibleForMetrics(m));
       const row: Record<string, string | number> = {
         department: dept.name,
       };
