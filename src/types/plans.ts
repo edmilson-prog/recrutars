@@ -4,6 +4,7 @@
  */
 
 export type PlanPeriod = 'monthly' | 'quarterly' | 'semiannual' | 'annual' | 'one_time';
+export type BillingModel = 'recurring' | 'one_time';
 export type PlanStatus = 'active' | 'inactive' | 'archived';
 export type SubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'suspended' | 'pending' | 'trial' | 'past_due';
 
@@ -18,6 +19,7 @@ export interface Plan {
   description: string;
   descriptionShort: string;
   badge?: string;
+  billingModel: BillingModel;
   prices: Record<PlanPeriod, number>;
   launchPrices?: Record<PlanPeriod, number>;
   launchPriceEndDate?: string;

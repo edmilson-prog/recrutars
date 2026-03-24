@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import type {
   Plan,
   PlanPeriod,
+  BillingModel,
   PlanCapability,
   PlanCapabilityAssignment,
   Subscription,
@@ -30,6 +31,7 @@ function normalizePlanRow(row: Record<string, unknown>): Plan {
     description: (row.description as string) ?? '',
     descriptionShort: (row.description_short as string) ?? '',
     badge: row.badge as string | undefined,
+    billingModel: (row.billing_model as BillingModel) ?? 'recurring',
     prices: (row.prices as Record<PlanPeriod, number>) ?? { monthly: 0, quarterly: 0, semiannual: 0, annual: 0 },
     launchPrices: row.launch_prices as Record<PlanPeriod, number> | undefined,
     launchPriceEndDate: row.launch_price_end_date as string | undefined,
