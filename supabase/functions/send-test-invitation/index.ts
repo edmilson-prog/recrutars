@@ -216,6 +216,7 @@ Deno.serve(async (req: Request) => {
       const { data: { user } } = await anonClient.auth.getUser(token);
       callerId = user?.id ?? null;
     }
+    console.log(`[send-test-invitation] callerId: ${callerId}, authHeader present: ${!!authHeader}`);
 
     const body = await req.json();
     const { action } = body;
@@ -242,30 +243,36 @@ Deno.serve(async (req: Request) => {
         }
 
         // Verify caller belongs to the company
+        console.log(`[send-test-invitation] test found: ${test.id}, company_id: ${test.company_id}`);
         if (callerId) {
-          const { data: membership } = await adminClient
+          const { data: membership, error: membershipError } = await adminClient
             .from("company_users")
             .select("id")
             .eq("company_id", test.company_id)
             .eq("profile_id", callerId)
-            .single();
+            .maybeSingle();
+
+          console.log(`[send-test-invitation] membership check: ${JSON.stringify(membership)}, error: ${membershipError?.message ?? "none"}`);
 
           if (!membership) {
-            const { data: company } = await adminClient
+            const { data: company, error: companyError } = await adminClient
               .from("companies")
               .select("id")
               .eq("id", test.company_id)
               .eq("profile_id", callerId)
-              .single();
+              .maybeSingle();
+
+            console.log(`[send-test-invitation] company owner check: ${JSON.stringify(company)}, error: ${companyError?.message ?? "none"}`);
 
             if (!company) {
               const { data: profile } = await adminClient
                 .from("profiles")
-                .select("user_type")
+                .select("type")
                 .eq("id", callerId)
-                .single();
+                .maybeSingle();
 
-              if (profile?.user_type !== "admin") {
+              if (profile?.type !== "admin") {
+                console.log(`[send-test-invitation] DENIED: callerId=${callerId}, test.company_id=${test.company_id}, profile.type=${profile?.type}`);
                 return jsonResponse({ error: "Unauthorized" }, 403);
               }
             }
@@ -334,10 +341,10 @@ Deno.serve(async (req: Request) => {
         if (callerId) {
           const { data: callerProfile } = await adminClient
             .from("profiles")
-            .select("full_name")
+            .select("name")
             .eq("id", callerId)
             .single();
-          callerName = callerProfile?.full_name ?? "Usuario";
+          callerName = callerProfile?.name ?? "Usuario";
         }
 
         // Audit + Credit consumption for each invitation (RF-012, RF-016)
@@ -580,7 +587,7 @@ Deno.serve(async (req: Request) => {
 
           const { data: callerProfile } = await adminClient
             .from("profiles")
-            .select("full_name")
+            .select("name")
             .eq("id", callerId)
             .single();
 
@@ -589,7 +596,7 @@ Deno.serve(async (req: Request) => {
             auditLog(adminClient, {
               action: "invite_resent",
               userId: callerId,
-              userName: callerProfile?.full_name ?? "Usuario",
+              userName: callerProfile?.name ?? "Usuario",
               resourceType: "invitation",
               resourceId: invitation_id,
               resourceName: updated.candidate_name,
@@ -644,10 +651,10 @@ Deno.serve(async (req: Request) => {
           if (callerId) {
             const { data: callerProfile } = await adminClient
               .from("profiles")
-              .select("full_name")
+              .select("name")
               .eq("id", callerId)
               .single();
-            callerName = callerProfile?.full_name ?? "Usuario";
+            callerName = callerProfile?.name ?? "Usuario";
           }
 
           if (test) {
@@ -743,7 +750,7 @@ Deno.serve(async (req: Request) => {
 
           const { data: callerProfile } = await adminClient
             .from("profiles")
-            .select("full_name")
+            .select("name")
             .eq("id", callerId)
             .single();
 
@@ -751,7 +758,7 @@ Deno.serve(async (req: Request) => {
             auditLog(adminClient, {
               action: "invite_extended",
               userId: callerId,
-              userName: callerProfile?.full_name ?? "Usuario",
+              userName: callerProfile?.name ?? "Usuario",
               resourceType: "invitation",
               resourceId: invitation_id,
               resourceName: inv.candidate_name,
@@ -811,7 +818,7 @@ Deno.serve(async (req: Request) => {
 
           const { data: callerProfile } = await adminClient
             .from("profiles")
-            .select("full_name")
+            .select("name")
             .eq("id", callerId)
             .single();
 
@@ -823,7 +830,7 @@ Deno.serve(async (req: Request) => {
             auditLog(adminClient, {
               action: "invite_updated",
               userId: callerId,
-              userName: callerProfile?.full_name ?? "Usuario",
+              userName: callerProfile?.name ?? "Usuario",
               resourceType: "invitation",
               resourceId: invitation_id,
               resourceName: newName ?? inv.candidate_name,

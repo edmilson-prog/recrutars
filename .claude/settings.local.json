@@ -163,7 +163,8 @@
       "Bash(mcp_supabase_list_tables /d/claude/recrutars-maike)",
       "Bash(ls \"D:\\\\claude\\\\recrutars-maike\\\\.superpowers\\\\brainstorm\"\" 2>/dev/null && for d in \"D:clauderecrutars-maike.superpowersbrainstorm\"\"*/)",
       "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); print\\(data[0][''''text''''][:8000]\\)\")",
-      "Skill(commit-commands:commit-push-pr)"
+      "Skill(commit-commands:commit-push-pr)",
+      "Bash(gh pr:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
