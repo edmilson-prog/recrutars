@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCreateCheckoutSession } from '@/hooks/useStripeQuery';
+import { useStripeEnvironment } from '@/hooks/useStripeEnvironment';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { PlanPeriod, StripeEnvironment } from '@/types/plans';
@@ -31,9 +32,11 @@ export function CheckoutButton({
   size = 'lg',
   className,
   children,
-  environment = 'test',
+  environment,
 }: CheckoutButtonProps) {
   const { user } = useAuth();
+  const configuredEnv = useStripeEnvironment();
+  const effectiveEnv = environment ?? configuredEnv;
   const createCheckout = useCreateCheckoutSession();
   const [loading, setLoading] = useState(false);
 
@@ -53,13 +56,14 @@ export function CheckoutButton({
         userType,
         planId,
         period,
-        environment,
+        environment: effectiveEnv,
         successUrl: `${baseUrl}/${userType === 'company' ? 'empresa' : 'candidato'}/checkout/sucesso?plan=${encodeURIComponent(planName)}`,
         cancelUrl: `${baseUrl}/${userType === 'company' ? 'empresa' : 'candidato'}/checkout/cancelado`,
       });
 
-      // Redirect to Stripe Checkout
-      window.location.href = result.url;
+      // Open Stripe Checkout in a new tab
+      window.open(result.url, '_blank');
+      setLoading(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao criar sessao de checkout';
       toast.error(message);

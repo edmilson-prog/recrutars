@@ -121,8 +121,9 @@ export default function PlansPage() {
             )}>
               {activePlans.map((plan, index) => {
                 const isTrial = !!plan.trialDurationDays;
-                const basePrice = plan.prices.monthly ?? 0;
-                const periodPrice = plan.prices[selectedPeriod] ?? basePrice;
+                const isOneTime = plan.billingModel === 'one_time';
+                const basePrice = isOneTime ? (plan.prices.one_time ?? 0) : (plan.prices.monthly ?? 0);
+                const periodPrice = isOneTime ? basePrice : (plan.prices[selectedPeriod] ?? basePrice);
                 const planDiscount = plan.discountPercentage ?? 0;
                 const hasDiscount = !isTrial && planDiscount > 0
                   && shouldApplyDiscount(selectedPeriod, plan.discountMinPeriod)
@@ -186,7 +187,7 @@ export default function PlansPage() {
                             <span className="text-3xl font-bold text-foreground">
                               {formatBRL(periodPrice)}
                             </span>
-                            <span className="text-muted-foreground text-sm">/mes</span>
+                            {!isOneTime && <span className="text-muted-foreground text-sm">/mês</span>}
                           </div>
                           {hasDiscount && (
                             <Badge className="mt-2 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-0 text-xs">

@@ -47,7 +47,9 @@ import {
 } from '@/hooks/useTestPackagesQuery';
 import { usePlans, useSubscription } from '@/hooks/usePlansQuery';
 import { getStripeService } from '@/services/stripe/stripeService';
-import type { StripeEnvironment } from '@/types/plans';
+import { CheckoutButton } from '@/components/billing/CheckoutButton';
+import { useStripeEnvironment } from '@/hooks/useStripeEnvironment';
+import type { StripeEnvironment, PlanPeriod } from '@/types/plans';
 import type { TestPackage, TestCreditTransaction } from '@/types/testPackages';
 
 // ---------------------------------------------------------------------------
@@ -371,6 +373,7 @@ function TransactionsTable({ transactions }: { transactions: TestCreditTransacti
 
 export default function Packages() {
   const { user, currentCompany } = useAuth();
+  const stripeEnv = useStripeEnvironment();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'pacotes';
@@ -421,11 +424,12 @@ export default function Packages() {
         packageId: pkg.id,
         companyId: currentCompany.id,
         userId: user.id,
-        environment: 'live' as StripeEnvironment,
+        environment: stripeEnv,
         successUrl: `${window.location.origin}/empresa/pacotes?compra=sucesso&pacote=${pkg.slug}`,
         cancelUrl: `${window.location.origin}/empresa/pacotes?compra=cancelada`,
       });
-      window.location.href = result.url;
+      window.open(result.url, '_blank');
+      setPurchasingId(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao iniciar checkout';
       toast.error(message);
@@ -565,7 +569,9 @@ export default function Packages() {
                   const planName = (plan.name as string) ?? '';
                   const planSlug = (plan.slug as string) ?? '';
                   const prices = (plan.prices as Record<string, number>) ?? {};
-                  const monthlyPrice = prices.monthly ?? 0;
+                  const billingModel = (plan.billing_model ?? plan.billingModel) as string ?? 'recurring';
+                  const isOneTime = billingModel === 'one_time';
+                  const displayPrice = isOneTime ? (prices.one_time ?? 0) : (prices.monthly ?? 0);
                   const isFree = (plan.is_free ?? plan.isFree) as boolean;
                   const features = (plan.features as string[]) ?? [];
                   const descShort = (plan.description_short ?? plan.descriptionShort) as string ?? '';
@@ -591,9 +597,9 @@ export default function Packages() {
                         <CardTitle className="text-lg">{planName}</CardTitle>
                         <div className="mt-2">
                           <span className="text-3xl font-bold">
-                            {isFree ? 'Grátis' : formatBRL(monthlyPrice)}
+                            {isFree ? 'Grátis' : formatBRL(displayPrice)}
                           </span>
-                          {!isFree && <span className="text-muted-foreground text-sm">/mês</span>}
+                          {!isFree && !isOneTime && <span className="text-muted-foreground text-sm">/mês</span>}
                         </div>
                         <CardDescription className="mt-2">{descShort}</CardDescription>
                       </CardHeader>
@@ -612,14 +618,21 @@ export default function Packages() {
                             <Button variant="outline" className="w-full" disabled>
                               Plano Atual
                             </Button>
-                          ) : (
-                            <Button
-                              className="w-full"
-                              variant={badge ? 'default' : 'outline'}
-                              onClick={() => navigate('/planos')}
-                            >
-                              {isFree ? 'Plano Gratuito' : `Assinar ${planName}`}
+                          ) : isFree ? (
+                            <Button variant="outline" className="w-full" disabled>
+                              Plano Gratuito
                             </Button>
+                          ) : (
+                            <CheckoutButton
+                              planId={(plan.id as string) ?? ''}
+                              planName={planName}
+                              period={(isOneTime ? 'one_time' : 'monthly') as PlanPeriod}
+                              variant={badge ? 'default' : 'outline'}
+                              size="default"
+                              className="w-full"
+                            >
+                              Assinar {planName}
+                            </CheckoutButton>
                           )}
                         </div>
                       </CardContent>

@@ -30,7 +30,7 @@ import { usePlan, useUpdatePlan, useCreatePlan } from '@/hooks/usePlansQuery';
 import { useSyncPlan } from '@/hooks/useStripeQuery';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import type { Plan, PlanPeriod, StripeEnvironment } from '@/types';
+import type { Plan, PlanPeriod, BillingModel, StripeEnvironment } from '@/types';
 
 const PERIOD_LABELS: Record<PlanPeriod, string> = {
   monthly: 'Mensal',
@@ -40,6 +40,8 @@ const PERIOD_LABELS: Record<PlanPeriod, string> = {
   one_time: 'Avulso',
 };
 
+const RECURRING_PERIODS: Exclude<PlanPeriod, 'one_time'>[] = ['monthly', 'quarterly', 'semiannual', 'annual'];
+
 const BLANK_PLAN: Plan = {
   id: '',
   name: '',
@@ -48,6 +50,7 @@ const BLANK_PLAN: Plan = {
   description: '',
   descriptionShort: '',
   badge: undefined,
+  billingModel: 'recurring',
   prices: { monthly: 0, quarterly: 0, semiannual: 0, annual: 0, one_time: 0 },
   isActive: true,
   isFree: false,
@@ -121,6 +124,30 @@ export default function PlanDetail() {
     setEditState(prev => ({ ...prev, ...updates }));
   };
 
+  const handleBillingModelChange = (model: BillingModel) => {
+    setEditState(prev => {
+      if (model === 'one_time') {
+        return {
+          ...prev,
+          billingModel: model,
+          prices: { monthly: 0, quarterly: 0, semiannual: 0, annual: 0, one_time: prev.prices.one_time || 0 },
+          trialDurationDays: undefined,
+          launchPrices: prev.launchPrices
+            ? { monthly: 0, quarterly: 0, semiannual: 0, annual: 0, one_time: prev.launchPrices.one_time || 0 }
+            : undefined,
+        };
+      }
+      return {
+        ...prev,
+        billingModel: model,
+        prices: { ...prev.prices, one_time: 0 },
+        launchPrices: prev.launchPrices
+          ? { ...prev.launchPrices, one_time: 0 }
+          : undefined,
+      };
+    });
+  };
+
   const addFeature = () => {
     if (!newFeature.trim()) return;
     setEditState(prev => ({ ...prev, features: [...prev.features, newFeature.trim()] }));
@@ -146,10 +173,11 @@ export default function PlanDetail() {
       features: editState.features,
       prices: editState.prices,
       badge: editState.badge || null,
+      billing_model: editState.billingModel,
       is_free: editState.isFree,
       is_active: editState.isActive,
       sort_order: editState.order || 0,
-      trial_duration_days: editState.trialDurationDays ?? null,
+      trial_duration_days: editState.billingModel === 'one_time' ? null : (editState.trialDurationDays ?? null),
       discount_percentage: editState.discountPercentage ?? null,
       discount_min_period: editState.discountMinPeriod ?? null,
       bonus_tests: editState.bonusTests ?? null,
@@ -332,7 +360,8 @@ export default function PlanDetail() {
                         <Input
                           type="number"
                           min="0"
-                          value={editState.order}
+                          value={editState.order || ''}
+                          placeholder="0,00"
                           onChange={(e) => handleFieldChange('order', parseInt(e.target.value) || 0)}
                         />
                       </div>
@@ -372,7 +401,8 @@ export default function PlanDetail() {
                         <Input
                           type="number"
                           min="0"
-                          value={editState.order}
+                          value={editState.order || ''}
+                          placeholder="0,00"
                           onChange={(e) => handleFieldChange('order', parseInt(e.target.value) || 0)}
                         />
                       </div>
@@ -469,41 +499,92 @@ export default function PlanDetail() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Billing model selector */}
+                  <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                    <button
+                      className={cn(
+                        'flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                        editState.billingModel === 'recurring'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                      onClick={() => handleBillingModelChange('recurring')}
+                      disabled={editState.isFree}
+                    >
+                      Recorrente
+                    </button>
+                    <button
+                      className={cn(
+                        'flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                        editState.billingModel === 'one_time'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                      onClick={() => handleBillingModelChange('one_time')}
+                      disabled={editState.isFree}
+                    >
+                      Pagamento Único
+                    </button>
+                  </div>
+
                   <div>
                     <div className="flex items-center gap-1 mb-3">
-                      <Label className="text-sm font-semibold">Preços Regulares</Label>
+                      <Label className="text-sm font-semibold">
+                        {editState.billingModel === 'one_time' ? 'Preço Único' : 'Preços Regulares'}
+                      </Label>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <HelpCircle className="w-4 h-4 text-muted-foreground/50 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p>Valores cobrados por período. Deixe em branco ou zero para não oferecer esse período</p>
+                          <p>
+                            {editState.billingModel === 'one_time'
+                              ? 'Valor cobrado uma única vez, sem recorrência'
+                              : 'Valores cobrados por período. Deixe em branco ou zero para não oferecer esse período'}
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                      {(Object.keys(PERIOD_LABELS) as PlanPeriod[]).map((period) => (
-                        <div key={period} className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">{PERIOD_LABELS[period]}</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={editState.prices[period] || ''}
-                            placeholder="0"
-                            onChange={(e) => handlePriceChange(period, e.target.value)}
-                            className="h-9"
-                            disabled={editState.isFree}
-                          />
-                        </div>
-                      ))}
-                    </div>
+
+                    {editState.billingModel === 'one_time' ? (
+                      <div className="flex items-center gap-3 max-w-md">
+                        <span className="text-lg font-semibold text-muted-foreground">R$</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editState.prices.one_time || ''}
+                          placeholder="0,00"
+                          onChange={(e) => handlePriceChange('one_time', e.target.value)}
+                          className="h-11 text-lg"
+                          disabled={editState.isFree}
+                        />
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        {RECURRING_PERIODS.map((period) => (
+                          <div key={period} className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">{PERIOD_LABELS[period]}</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={editState.prices[period] || ''}
+                              placeholder="0,00"
+                              onChange={(e) => handlePriceChange(period, e.target.value)}
+                              className="h-9"
+                              disabled={editState.isFree}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {!editState.isFree && (
                     <>
                       <Separator />
-                      <LaunchPriceEditor plan={editState} onChange={handlePartialChange} />
+                      <LaunchPriceEditor plan={editState} onChange={handlePartialChange} billingModel={editState.billingModel} />
                     </>
                   )}
                 </CardContent>
@@ -537,7 +618,11 @@ export default function PlanDetail() {
                         value={editState.trialDurationDays ?? ''}
                         onChange={(e) => handleFieldChange('trialDurationDays', e.target.value ? parseInt(e.target.value) : undefined)}
                         placeholder="Ex: 90"
+                        disabled={editState.billingModel === 'one_time'}
                       />
+                      {editState.billingModel === 'one_time' && (
+                        <p className="text-xs text-muted-foreground mt-1">Trial não se aplica a pagamento único</p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1">
@@ -556,7 +641,8 @@ export default function PlanDetail() {
                         min="0"
                         max="100"
                         step="1"
-                        value={editState.discountPercentage ?? 0}
+                        value={editState.discountPercentage || ''}
+                        placeholder="0,00"
                         onChange={(e) => handleFieldChange('discountPercentage', parseFloat(e.target.value) || 0)}
                         disabled={editState.isFree}
                       />
@@ -609,7 +695,8 @@ export default function PlanDetail() {
                           <Input
                             type="number"
                             min="0"
-                            value={editState.bonusTests?.semiannual ?? 0}
+                            value={editState.bonusTests?.semiannual || ''}
+                            placeholder="0,00"
                             onChange={(e) => handleFieldChange('bonusTests', {
                               ...editState.bonusTests,
                               semiannual: parseInt(e.target.value) || 0,
@@ -621,7 +708,8 @@ export default function PlanDetail() {
                           <Input
                             type="number"
                             min="0"
-                            value={editState.bonusTests?.annual ?? 0}
+                            value={editState.bonusTests?.annual || ''}
+                            placeholder="0,00"
                             onChange={(e) => handleFieldChange('bonusTests', {
                               ...editState.bonusTests,
                               annual: parseInt(e.target.value) || 0,
