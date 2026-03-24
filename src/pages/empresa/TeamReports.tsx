@@ -49,7 +49,7 @@ export default function TeamReports() {
 
   const { data: allMembers = [], isLoading: membersLoading } = useTeamMembers({ companyId });
   const { data: allDepartments = [], isLoading: deptsLoading } = useDepartments(companyId);
-  const { data: allPositions = [], isLoading: positionsLoading } = usePositions('all');
+  const { data: allPositions = [], isLoading: positionsLoading } = usePositions('all', companyId);
 
   const isLoading = membersLoading || deptsLoading || positionsLoading;
 

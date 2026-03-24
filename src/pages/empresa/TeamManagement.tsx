@@ -65,7 +65,7 @@ export default function TeamManagement() {
   const { data: fetchedDepartments = [], isLoading: deptsLoading } = useDepartments(companyId);
   const { data: fetchedMembers = [], isLoading: membersLoading } = useTeamMembers({ companyId });
   // Fetch all positions (using 'all' as departmentId to load all)
-  const { data: fetchedPositions = [], isLoading: positionsLoading } = usePositions('all');
+  const { data: fetchedPositions = [], isLoading: positionsLoading } = usePositions('all', companyId);
 
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');

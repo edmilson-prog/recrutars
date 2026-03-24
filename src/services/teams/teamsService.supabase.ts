@@ -81,7 +81,7 @@ export class TeamsServiceSupabase implements ITeamsService {
   // Positions
   // ---------------------------------------------------------------------------
 
-  async getPositions(departmentId: string): Promise<Position[]> {
+  async getPositions(departmentId: string, companyId?: string): Promise<Position[]> {
     let query = supabase
       .from('positions')
       .select('*')
@@ -89,6 +89,14 @@ export class TeamsServiceSupabase implements ITeamsService {
 
     if (departmentId && departmentId !== 'all') {
       query = query.eq('department_id', departmentId);
+    } else if (companyId) {
+      const { data: depts } = await supabase
+        .from('departments')
+        .select('id')
+        .eq('company_id', companyId);
+      const deptIds = (depts ?? []).map((d: { id: string }) => d.id);
+      if (deptIds.length === 0) return [];
+      query = query.in('department_id', deptIds);
     }
 
     const { data, error } = await query;

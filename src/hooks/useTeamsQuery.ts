@@ -49,13 +49,13 @@ export function useDepartments(companyId: string | undefined) {
   });
 }
 
-/** Fetch positions for a department */
-export function usePositions(departmentId: string) {
+/** Fetch positions for a department (or all positions for a company when departmentId === 'all') */
+export function usePositions(departmentId: string, companyId?: string) {
   return useQuery({
-    queryKey: teamKeys.positions(departmentId),
+    queryKey: [...teamKeys.positions(departmentId), companyId],
     queryFn: async () => {
       const service = await getTeamsService();
-      return service.getPositions(departmentId);
+      return service.getPositions(departmentId, companyId);
     },
     enabled: !!departmentId,
   });
