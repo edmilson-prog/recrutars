@@ -1,12 +1,155 @@
 {
   "versions": [
     {
+      "version": "1.48.0",
+      "codename": "Lifecycle",
+      "type": "minor",
+      "releaseDate": "2026-03-24",
+      "description": "Ciclo de vida completo de colaboradores em 7 fases: desligamento com wizard, afastamentos temporários, movimentações internas, timeline de eventos e anonimização LGPD.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Wizard de desligamento com 3 etapas: motivo/data, checklist e confirmação",
+            "Modal de desvinculação de colaborador sem exclusão de conta",
+            "Reativação (recontratação) de colaboradores com histórico preservado",
+            "Afastamentos temporários: médico, maternidade, férias, não-remunerado e sabático",
+            "Movimentações internas: promoção, transferência de departamento e mudança de cargo",
+            "Timeline consolidada com 14 tipos de eventos por colaborador",
+            "Ações em massa: desligamento e transferência simultâneos para múltiplos colaboradores",
+            "Anonimização LGPD de dados pessoais com dupla confirmação e política de retenção"
+          ],
+          "details": {
+            "0": {
+              "description": "O desligamento de colaboradores agora passa por um guia de 3 passos: primeiro o RH escolhe o motivo (pedido de demissão, demissão sem justa causa, término de contrato, aposentadoria, etc.) e pode agendar uma data futura; depois marca os itens do checklist de offboarding (devolução de equipamentos, encerramento de acessos, etc.); e por fim confirma o desligamento com um resumo. Um banner de contagem regressiva aparece no perfil do colaborador quando há desligamento agendado.",
+              "files": [
+                "src/components/team-management/TerminationWizard.tsx",
+                "src/components/team-management/ScheduledTerminationBanner.tsx",
+                "src/components/team-management/OffboardingChecklistCard.tsx",
+                "src/components/team-management/TerminatedBadge.tsx",
+                "src/pages/empresa/TeamMemberProfile.tsx",
+                "supabase/functions/manage-team-lifecycle/index.ts",
+                "sql/migrations/075_team_lifecycle.sql"
+              ],
+              "routes": ["/empresa/equipe/:id"]
+            },
+            "1": {
+              "description": "É possível desvincular um colaborador da empresa sem excluir sua conta na plataforma. O colaborador perde o acesso aos dados da empresa, mas sua conta permanece ativa. Útil para casos de prestadores de serviço, estagiários ou colaboradores que migram para outra empresa parceira.",
+              "files": [
+                "src/components/team-management/UnlinkModal.tsx",
+                "supabase/functions/manage-team-lifecycle/index.ts"
+              ],
+              "routes": ["/empresa/equipe/:id"]
+            },
+            "2": {
+              "description": "Colaboradores desligados ou desvinculados podem ser reativados (recontratados) pelo RH. O histórico completo de eventos anteriores é preservado na timeline, e o colaborador retorna ao status ativo com uma nova entrada de 'recontratação' registrada automaticamente.",
+              "files": [
+                "src/components/team-management/ReactivateModal.tsx",
+                "supabase/functions/manage-team-lifecycle/index.ts"
+              ],
+              "routes": ["/empresa/equipe/:id"]
+            },
+            "3": {
+              "description": "O RH pode registrar afastamentos temporários de colaboradores com cinco categorias: licença médica, licença-maternidade/paternidade, férias, licença não-remunerada e sabático. Ao registrar, é possível informar a data de início, o retorno previsto e se o colaborador deve ser incluído ou excluído das métricas de equipe durante o afastamento. Quando o colaborador retorna, o RH registra o retorno com notas.",
+              "files": [
+                "src/components/team-management/LeaveModal.tsx",
+                "src/components/team-management/ReturnFromLeaveModal.tsx",
+                "src/components/team-management/LeaveBadge.tsx",
+                "supabase/functions/manage-team-movement/index.ts"
+              ],
+              "routes": ["/empresa/equipe/:id"]
+            },
+            "4": {
+              "description": "É possível registrar três tipos de movimentação interna: promoção (novo cargo com possível aumento), transferência de departamento e mudança de cargo dentro do mesmo departamento. Todas as movimentações ficam registradas na timeline do colaborador, e um cartão de histórico de cargos exibe a trajetória completa dentro da empresa.",
+              "files": [
+                "src/components/team-management/PromotionModal.tsx",
+                "src/components/team-management/DepartmentTransferModal.tsx",
+                "src/components/team-management/PositionChangeModal.tsx",
+                "src/components/team-management/PositionHistoryCard.tsx",
+                "supabase/functions/manage-team-movement/index.ts"
+              ],
+              "routes": ["/empresa/equipe/:id"]
+            },
+            "5": {
+              "description": "O perfil de cada colaborador agora possui uma timeline vertical com todo o histórico desde a contratação: admissão, desligamentos, afastamentos, retornos, promoções, transferências, testes realizados, convites enviados, notas do RH e anonimizações. Cada evento mostra data, responsável e detalhes. É possível filtrar por tipo de evento e intervalo de datas, além de adicionar notas manuais diretamente na linha do tempo.",
+              "files": [
+                "src/components/team-management/TeamMemberTimeline.tsx",
+                "src/hooks/useTeamMemberEventsQuery.ts"
+              ],
+              "routes": ["/empresa/equipe/:id"]
+            },
+            "6": {
+              "description": "Na lista de colaboradores é possível selecionar vários ao mesmo tempo e executar ações em lote: desligar todos os selecionados de uma vez ou transferi-los para outro departamento. Uma barra de progresso mostra em tempo real quantos foram processados com sucesso e quantos tiveram erro, sem travar a tela.",
+              "files": [
+                "src/components/team-management/BulkTerminationModal.tsx",
+                "src/components/team-management/BulkDepartmentTransferModal.tsx",
+                "src/components/team-management/BulkActionToolbar.tsx",
+                "src/components/team-management/BulkActionProgressBar.tsx",
+                "src/pages/empresa/TeamManagement.tsx"
+              ],
+              "routes": ["/empresa/equipe"]
+            },
+            "7": {
+              "description": "Em conformidade com a LGPD, é possível anonimizar os dados pessoais de colaboradores desligados (nome, e-mail, telefone). O processo exige dupla confirmação e respeita a política de retenção configurada pelo administrador. Após a anonimização, os dados são substituídos por identificadores genéricos e um selo 'Anonimizado' aparece no perfil. O histórico de eventos é preservado, mas sem dados identificáveis.",
+              "files": [
+                "src/components/team-management/AnonymizationModal.tsx",
+                "src/components/team-management/AnonymizedBadge.tsx",
+                "supabase/functions/manage-team-anonymization/index.ts",
+                "sql/migrations/075_team_lifecycle.sql"
+              ],
+              "routes": ["/empresa/equipe/:id"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Acentos portugueses ausentes em páginas de relatórios administrativos",
+            "Crash ao visualizar colaborador com convite em status cancelado",
+            "Erro de inicialização na lista de colaboradores ao aplicar filtros"
+          ],
+          "details": {
+            "0": {
+              "description": "Diversas telas do painel administrativo de relatórios exibiam textos sem acentuação correta em português: palavras como 'Relatório', 'Contratações', 'Retenção', 'Conversão', 'Frequência', 'Métricas', 'Período', 'Destinatários', 'Terça', 'Sábado' apareciam sem os acentos. Todas as ocorrências foram corrigidas.",
+              "files": [
+                "src/components/admin/reports/ActivityEventItem.tsx",
+                "src/components/admin/reports/CohortTable.tsx",
+                "src/components/admin/reports/FunnelChart.tsx",
+                "src/components/admin/reports/ScheduleEditor.tsx",
+                "src/components/admin/reports/TimeFilter.tsx",
+                "src/pages/admin/ActivityFeed.tsx",
+                "src/pages/admin/ReportsExport.tsx",
+                "src/pages/admin/ReportsGrowth.tsx",
+                "src/pages/admin/ReportsOperational.tsx"
+              ],
+              "routes": ["/admin/relatorios", "/admin/atividades"]
+            },
+            "1": {
+              "description": "A tela de candidatos em testes travava com erro ao tentar exibir um convite com status 'cancelado'. O sistema não reconhecia esse status e exibia uma tela em branco. Agora o status cancelado é exibido corretamente com o rótulo e a cor correspondentes.",
+              "files": [
+                "src/components/team-management/TeamMemberList.tsx"
+              ],
+              "routes": ["/empresa/testes"]
+            },
+            "2": {
+              "description": "A lista de colaboradores apresentava um erro silencioso ao inicializar os filtros antes que os dados estivessem disponíveis, causando comportamento inesperado na primeira carga da tela. O problema foi corrigido ajustando a ordem de inicialização das variáveis.",
+              "files": [
+                "src/components/team-management/TeamMemberList.tsx"
+              ],
+              "routes": ["/empresa/equipe"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.47.0",
       "codename": "Cashier",
       "type": "minor",
       "releaseDate": "2026-03-23",
       "description": "Seletor de modelo de cobrança (recorrente ou pagamento único), integração completa com Stripe Checkout para planos e pacotes, e configuração dinâmica do ambiente Stripe.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
