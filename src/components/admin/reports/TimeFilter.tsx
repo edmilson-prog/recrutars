@@ -20,7 +20,7 @@ interface TimeFilterProps {
 const PRESETS: { label: string; value: TimeFilterPreset }[] = [
   { label: '7d', value: '7d' },
   { label: '30d', value: '30d' },
-  { label: 'Mes', value: 'month' },
+  { label: 'Mês', value: 'month' },
   { label: 'Trimestre', value: 'quarter' },
   { label: 'Ano', value: 'year' },
   { label: 'Personalizado', value: 'custom' },
@@ -76,7 +76,7 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
             onChange={(e) => handleCustomDateChange(e.target.value, customEnd)}
             className="h-8 w-36 text-xs"
           />
-          <span className="text-muted-foreground text-xs">ate</span>
+          <span className="text-muted-foreground text-xs">até</span>
           <Input
             type="date"
             value={customEnd}

@@ -87,11 +87,11 @@ export function ScheduleEditor({ schedule, open, onClose, onSave }: ScheduleEdit
   const WEEKDAYS = [
     { value: 0, label: 'Domingo' },
     { value: 1, label: 'Segunda' },
-    { value: 2, label: 'Terca' },
+    { value: 2, label: 'Terça' },
     { value: 3, label: 'Quarta' },
     { value: 4, label: 'Quinta' },
     { value: 5, label: 'Sexta' },
-    { value: 6, label: 'Sabado' },
+    { value: 6, label: 'Sábado' },
   ];
 
   return (
@@ -102,7 +102,7 @@ export function ScheduleEditor({ schedule, open, onClose, onSave }: ScheduleEdit
             {schedule ? 'Editar Agendamento' : 'Novo Agendamento'}
           </DialogTitle>
           <DialogDescription>
-            Configure o envio automatico de relatorios por e-mail.
+            Configure o envio automático de relatórios por e-mail.
           </DialogDescription>
         </DialogHeader>
 
@@ -114,13 +114,13 @@ export function ScheduleEditor({ schedule, open, onClose, onSave }: ScheduleEdit
               id="schedule-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Relatorio Semanal Executivo"
+              placeholder="Ex: Relatório Semanal Executivo"
             />
           </div>
 
           {/* Type */}
           <div className="space-y-2">
-            <Label>Tipo de Relatorio</Label>
+            <Label>Tipo de Relatório</Label>
             <Select value={type} onValueChange={(v) => setType(v as 'pdf' | 'excel')}>
               <SelectTrigger>
                 <SelectValue />
@@ -134,7 +134,7 @@ export function ScheduleEditor({ schedule, open, onClose, onSave }: ScheduleEdit
 
           {/* Frequency */}
           <div className="space-y-2">
-            <Label>Frequencia</Label>
+            <Label>Frequência</Label>
             <Select value={frequency} onValueChange={(v) => setFrequency(v as 'weekly' | 'monthly')}>
               <SelectTrigger>
                 <SelectValue />
@@ -168,7 +168,7 @@ export function ScheduleEditor({ schedule, open, onClose, onSave }: ScheduleEdit
             </div>
           ) : (
             <div className="space-y-2">
-              <Label>Dia do Mes</Label>
+              <Label>Dia do Mês</Label>
               <Select
                 value={String(dayOfMonth)}
                 onValueChange={(v) => setDayOfMonth(Number(v))}
@@ -189,7 +189,7 @@ export function ScheduleEditor({ schedule, open, onClose, onSave }: ScheduleEdit
 
           {/* Hour */}
           <div className="space-y-2">
-            <Label>Horario (hora)</Label>
+            <Label>Horário (hora)</Label>
             <Select value={String(hour)} onValueChange={(v) => setHour(Number(v))}>
               <SelectTrigger>
                 <SelectValue />
@@ -206,7 +206,7 @@ export function ScheduleEditor({ schedule, open, onClose, onSave }: ScheduleEdit
 
           {/* Recipients */}
           <div className="space-y-2">
-            <Label htmlFor="schedule-recipients">Destinatarios (separados por virgula)</Label>
+            <Label htmlFor="schedule-recipients">Destinatários (separados por vírgula)</Label>
             <Input
               id="schedule-recipients"
               value={recipients}

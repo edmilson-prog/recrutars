@@ -1,12 +1,103 @@
 {
   "versions": [
     {
+      "version": "1.47.0",
+      "codename": "Cashier",
+      "type": "minor",
+      "releaseDate": "2026-03-23",
+      "description": "Seletor de modelo de cobrança (recorrente ou pagamento único), integração completa com Stripe Checkout para planos e pacotes, e configuração dinâmica do ambiente Stripe.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Seletor de modelo de cobrança (Recorrente / Pagamento Único) no editor de planos",
+            "Edge Function stripe-sync-plan para sincronizar planos com a Stripe",
+            "Edge Function stripe-create-checkout para criar sessões de pagamento",
+            "Hook useStripeEnvironment para leitura dinâmica do ambiente Stripe configurado",
+            "Plano 'Vaga Avulsa' (pagamento único R$ 1.621,00) para empresas"
+          ],
+          "details": {
+            "0": {
+              "description": "O editor de planos agora possui um seletor no topo da seção de preços que permite escolher entre cobrança recorrente (mensal, trimestral, semestral, anual) ou pagamento único. Ao selecionar pagamento único, o formulário se adapta mostrando apenas um campo de preço. O campo de trial é automaticamente desabilitado para planos de pagamento único.",
+              "files": ["src/pages/admin/PlanDetail.tsx", "src/types/plans.ts", "src/services/plans/plansService.supabase.ts", "src/components/admin/plans/LaunchPriceEditor.tsx", "sql/migrations/045_billing_model.sql"],
+              "routes": ["/admin/planos/:id"]
+            },
+            "1": {
+              "description": "Agora é possível sincronizar os planos diretamente com a Stripe pelo painel administrativo. A sincronização cria automaticamente o produto e os preços na Stripe, tanto para planos recorrentes (com os intervalos corretos) quanto para pagamento único.",
+              "files": ["supabase/functions/stripe-sync-plan/index.ts"],
+              "routes": ["/admin/planos/:id"]
+            },
+            "2": {
+              "description": "O botão 'Assinar' nos planos da loja agora abre diretamente a página de pagamento da Stripe em uma nova aba, ao invés de redirecionar para a página pública de planos. Funciona tanto para assinaturas recorrentes quanto para pagamentos únicos.",
+              "files": ["supabase/functions/stripe-create-checkout/index.ts", "src/pages/empresa/Packages.tsx", "src/components/billing/CheckoutButton.tsx"],
+              "routes": ["/empresa/pacotes"]
+            },
+            "3": {
+              "description": "O ambiente de pagamento (Teste ou Produção) agora é lido automaticamente das configurações do administrador. Quando o admin seleciona 'Produção (real)' nas configurações da Stripe, todos os checkouts passam a usar o modo real, sem necessidade de alteração em código.",
+              "files": ["src/hooks/useStripeEnvironment.ts", "src/components/billing/CheckoutButton.tsx", "src/pages/empresa/Packages.tsx", "sql/migrations/046_allow_integrations_read.sql"],
+              "routes": ["/empresa/pacotes", "/planos"]
+            },
+            "4": {
+              "description": "Novo plano disponível para empresas: 'Vaga Avulsa' no valor de R$ 1.621,00, com pagamento único (sem assinatura). Inclui 1 vaga ativa, até 15 candidatos por vaga e acesso por 30 dias.",
+              "files": [],
+              "routes": ["/empresa/pacotes"]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Checkout da Stripe abre em nova aba para todos os planos e pacotes",
+            "Campos numéricos do editor de planos usam placeholder '0,00' ao invés de valor pré-preenchido",
+            "Preços de lançamento adaptados para modo pagamento único (campo único ao invés de grid)"
+          ],
+          "details": {
+            "0": {
+              "description": "Ao clicar em qualquer botão de assinatura ou compra (planos e pacotes de testes), a página de pagamento da Stripe agora abre em uma nova aba do navegador, permitindo que o usuário mantenha a plataforma aberta enquanto realiza o pagamento.",
+              "files": ["src/components/billing/CheckoutButton.tsx", "src/pages/empresa/Packages.tsx"],
+              "routes": ["/empresa/pacotes", "/planos"]
+            },
+            "1": {
+              "description": "Os campos de preço, desconto, bônus e ordem no editor de planos agora aparecem vazios quando não têm valor, mostrando '0,00' como texto de orientação. Antes, todos vinham preenchidos com '0', dificultando a visualização.",
+              "files": ["src/pages/admin/PlanDetail.tsx"],
+              "routes": ["/admin/planos/:id"]
+            },
+            "2": {
+              "description": "A seção de preços de lançamento no editor de planos se adapta ao modelo de cobrança: para planos recorrentes mostra os 4 períodos, e para pagamento único mostra apenas um campo de preço promocional.",
+              "files": ["src/components/admin/plans/LaunchPriceEditor.tsx"],
+              "routes": ["/admin/planos/:id"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Toggle de preços de lançamento não persistia ao desativar e salvar",
+            "Planos de pagamento único exibiam 'R$ 0,00/mês' na loja ao invés do preço real"
+          ],
+          "details": {
+            "0": {
+              "description": "Ao desativar o toggle de preços de lançamento e salvar o plano, os preços promocionais voltavam a aparecer ao recarregar a página. Agora a desativação é salva corretamente no banco de dados.",
+              "files": ["src/pages/admin/PlanDetail.tsx"],
+              "routes": ["/admin/planos/:id"]
+            },
+            "1": {
+              "description": "Planos de pagamento único (como 'Vaga Avulsa') mostravam 'R$ 0,00/mês' nos cards da loja e da página de planos. Agora exibem o preço correto sem o sufixo '/mês'.",
+              "files": ["src/pages/empresa/Packages.tsx", "src/pages/Plans.tsx"],
+              "routes": ["/empresa/pacotes", "/planos"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.46.0",
       "codename": "Storefront",
       "type": "minor",
       "releaseDate": "2026-03-23",
       "description": "Modal de reenvio de convites com seleção de canal, bloqueio de convites cancelados, redesign da Loja com estilo pricing page moderna e reorganização da navegação.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

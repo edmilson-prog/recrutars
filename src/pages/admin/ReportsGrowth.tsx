@@ -102,7 +102,7 @@ export default function ReportsGrowth() {
       { name: 'Perfil Completo', value: Math.round(totalCandidates * 0.65) },
       { name: 'Primeira Candidatura', value: Math.round(totalCandidates * 0.42) },
       { name: 'Teste Realizado', value: Math.round(totalCandidates * 0.28) },
-      { name: 'Contratacao', value: Math.round(totalCandidates * 0.08) },
+      { name: 'Contratação', value: Math.round(totalCandidates * 0.08) },
     ];
     return buildFunnel(stages);
   }, [growthKPIs.totalCandidates]);
@@ -113,8 +113,8 @@ export default function ReportsGrowth() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Relatorio de Crescimento</h1>
-            <p className="text-muted-foreground">Metricas de usuarios, cadastros e retencao</p>
+            <h1 className="text-2xl font-bold text-foreground">Relatório de Crescimento</h1>
+            <p className="text-muted-foreground">Métricas de usuários, cadastros e retenção</p>
           </div>
           <TimeFilter value={timeFilter} onChange={setTimeFilter} />
         </div>
@@ -263,7 +263,7 @@ export default function ReportsGrowth() {
           >
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Funil de Ativacao</CardTitle>
+                <CardTitle className="text-lg">Funil de Ativação</CardTitle>
               </CardHeader>
               <CardContent>
                 <FunnelChart stages={activationFunnel} />
@@ -279,7 +279,7 @@ export default function ReportsGrowth() {
           >
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Retencao por Cohort</CardTitle>
+                <CardTitle className="text-lg">Retenção por Cohort</CardTitle>
               </CardHeader>
               <CardContent>
                 <CohortTable data={cohortData} />
