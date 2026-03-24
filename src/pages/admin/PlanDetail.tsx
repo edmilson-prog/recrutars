@@ -154,8 +154,8 @@ export default function PlanDetail() {
       discount_min_period: editState.discountMinPeriod ?? null,
       bonus_tests: editState.bonusTests ?? null,
     };
-    if (editState.launchPrices) payload.launch_prices = editState.launchPrices;
-    if (editState.launchPriceEndDate) payload.launch_price_end_date = editState.launchPriceEndDate;
+    payload.launch_prices = editState.launchPrices ?? null;
+    payload.launch_price_end_date = editState.launchPriceEndDate ?? null;
 
     try {
       if (isNew) {
