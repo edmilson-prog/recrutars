@@ -38,7 +38,7 @@ export function TestCreateForm({ onCreated }: TestCreateFormProps) {
   const [jobTitle, setJobTitle] = useState('');
   const [deadline, setDeadline] = useState('');
   const [instructions, setInstructions] = useState('');
-  const [targetAudience, setTargetAudience] = useState<TargetAudience>('candidate');
+  const [targetAudience, setTargetAudience] = useState<TargetAudience>('collaborator');
   const [expirationDays, setExpirationDays] = useState(30);
 
   const handleTemplateSelect = (template: TestTemplate) => {
