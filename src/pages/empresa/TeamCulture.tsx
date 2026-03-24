@@ -34,7 +34,7 @@ export default function TeamCulture() {
   const { currentCompany } = useAuth();
   const companyId = currentCompany?.id ?? '';
   const { data: allMembers = [], isLoading: membersLoading } = useTeamMembers({ companyId });
-  const { data: allPositions = [], isLoading: positionsLoading } = usePositions('all');
+  const { data: allPositions = [], isLoading: positionsLoading } = usePositions('all', companyId);
 
   const [selectedCandidateId, setSelectedCandidateId] = useState<string>('');
 

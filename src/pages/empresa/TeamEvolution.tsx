@@ -38,7 +38,7 @@ export default function TeamEvolution() {
   // Service layer hooks
   const { data: member, isLoading: memberLoading } = useTeamMember(id ?? '');
   const { data: departments = [] } = useDepartments(companyId);
-  const { data: positions = [] } = usePositions('all');
+  const { data: positions = [] } = usePositions('all', companyId);
   const { data: fetchedAnnotations = [], isLoading: annotationsLoading } = useAnnotations(id ?? '');
   const createAnnotationMutation = useCreateAnnotation();
 

@@ -54,7 +54,7 @@ export default function TeamMemberProfile() {
 
   const { data: member, isLoading: memberLoading } = useTeamMember(id ?? '');
   const { data: departments = [] } = useDepartments(companyId);
-  const { data: positions = [] } = usePositions('all');
+  const { data: positions = [] } = usePositions('all', companyId);
 
   const department = member
     ? departments.find((d) => d.id === member.departmentId)

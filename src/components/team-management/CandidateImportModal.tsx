@@ -102,7 +102,7 @@ export default function CandidateImportModal({
   const companyId = currentCompany?.id ?? '';
 
   const { data: departments = [] } = useDepartments(companyId);
-  const { data: allPositions = [] } = usePositions('all');
+  const { data: allPositions = [] } = usePositions('all', companyId);
 
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [departmentId, setDepartmentId] = useState('');

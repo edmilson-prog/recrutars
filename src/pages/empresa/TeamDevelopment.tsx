@@ -43,7 +43,7 @@ export default function TeamDevelopment() {
   // Service layer hooks
   const { data: member, isLoading: memberLoading } = useTeamMember(id ?? '');
   const { data: departments = [] } = useDepartments(companyId);
-  const { data: positions = [] } = usePositions('all');
+  const { data: positions = [] } = usePositions('all', companyId);
   const { data: fetchedPlan, isLoading: planLoading } = useDevelopmentPlan(id ?? '');
   const { data: retestSchedules = [] } = useRetestSchedules(companyId);
 
