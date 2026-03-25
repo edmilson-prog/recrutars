@@ -470,7 +470,83 @@ Deno.serve(async (req: Request) => {
           }
         }
 
-        return jsonResponse({ invitations: created, whatsappResults });
+        // Email delivery (when channel === 'email')
+        let emailResults: { sent: number; failed: number; errors: string[] } | undefined;
+
+        if (channel === "email") {
+          emailResults = { sent: 0, failed: 0, errors: [] };
+
+          // Fetch company name for the email template
+          let batchCompanyName = "";
+          try {
+            const { data: companyInfo } = await adminClient
+              .from("companies")
+              .select("name")
+              .eq("id", test.company_id)
+              .maybeSingle();
+            batchCompanyName = companyInfo?.name || "";
+          } catch {
+            console.warn("[send_invitations] Could not fetch company name for email template");
+          }
+
+          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+          for (const inv of created ?? []) {
+            if (!inv.candidate_email) {
+              emailResults.failed++;
+              emailResults.errors.push(`${inv.candidate_name}: email não cadastrado`);
+              continue;
+            }
+
+            if (!origin) {
+              emailResults.failed++;
+              emailResults.errors.push(`${inv.candidate_name}: URL de origem não detectada`);
+              continue;
+            }
+
+            const link = `${origin}/convite/teste/${inv.token}`;
+
+            try {
+              const emailResp = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${serviceKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  action: "send_invitation_email",
+                  to: inv.candidate_email,
+                  candidateName: inv.candidate_name || "",
+                  companyName: batchCompanyName,
+                  testName: test.name || "Gauge-Pro",
+                  inviteLink: link,
+                }),
+              });
+
+              const emailResult = await emailResp.json();
+              if (!emailResp.ok || emailResult.error) {
+                emailResults.failed++;
+                emailResults.errors.push(`${inv.candidate_name}: ${emailResult.error || `HTTP ${emailResp.status}`}`);
+              } else {
+                emailResults.sent++;
+              }
+            } catch (err) {
+              const errMsg = err instanceof Error ? err.message : String(err);
+              emailResults.failed++;
+              emailResults.errors.push(`${inv.candidate_name}: ${errMsg}`);
+            }
+
+            // Small delay between sends to avoid rate limiting
+            if ((created ?? []).indexOf(inv) < (created ?? []).length - 1) {
+              await delay(500);
+            }
+          }
+
+          console.log(`[send_invitations] Email results: sent=${emailResults.sent}, failed=${emailResults.failed}`);
+        }
+
+        return jsonResponse({ invitations: created, whatsappResults, emailResults });
       }
 
       case "resend": {

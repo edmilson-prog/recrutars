@@ -51,6 +51,7 @@ interface SendTestModalProps {
   onOpenChange: (open: boolean) => void;
   member: TeamMember;
   companyId: string;
+  companyName?: string;
   testId: string;
   creditBalance: number;
   onSuccess: () => void;
@@ -91,6 +92,7 @@ export default function SendTestModal({
   onOpenChange,
   member,
   companyId,
+  companyName = '',
   testId,
   creditBalance,
   onSuccess,
@@ -173,7 +175,7 @@ export default function SendTestModal({
             action: 'send_invitation_email',
             to: member.email,
             candidateName: member.name,
-            companyName: '',
+            companyName,
             testName: 'Gauge-Pro',
             inviteLink: link,
           },

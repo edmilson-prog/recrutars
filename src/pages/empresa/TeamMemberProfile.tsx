@@ -373,6 +373,7 @@ export default function TeamMemberProfile() {
             onOpenChange={setSendTestOpen}
             member={member}
             companyId={companyId}
+            companyName={currentCompany?.name ?? ''}
             testId={activeTestId}
             creditBalance={creditBalance ?? 0}
             onSuccess={() => {
