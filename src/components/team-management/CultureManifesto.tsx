@@ -3,7 +3,12 @@
  * PRD-057: Exibicao do manifesto cultural gerado automaticamente
  */
 
-import { Scroll } from 'lucide-react';
+import { Scroll, HelpCircle } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DIMENSION_SHORT_NAMES, type GaugeProDimension, type DimensionScores } from '@/types/gaugePro';
@@ -16,6 +21,7 @@ import { cn } from '@/lib/utils';
 interface CultureManifestoProps {
   manifesto: string;
   dnaScores: DimensionScores;
+  tooltip?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -36,9 +42,24 @@ const DIMENSION_COLORS: Record<GaugeProDimension, string> = {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function CultureManifesto({ manifesto, dnaScores }: CultureManifestoProps) {
+const DEFAULT_TOOLTIP = 'Texto gerado automaticamente a partir das duas dimensões mais fortes do DNA cultural da empresa.';
+
+export default function CultureManifesto({ manifesto, dnaScores, tooltip = DEFAULT_TOOLTIP }: CultureManifestoProps) {
   return (
-    <Card className="h-full">
+    <Card className="relative h-full">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="absolute top-2.5 right-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-help"
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-[220px] text-center">
+          <p>{tooltip}</p>
+        </TooltipContent>
+      </Tooltip>
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
           <Scroll className="h-5 w-5 text-cyan-600" />

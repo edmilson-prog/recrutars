@@ -106,7 +106,8 @@ interface CompanyTestRow {
 interface GaugeProResultRow {
   id: string;
   assessment_id: string;
-  candidate_id: string;
+  candidate_id: string | null;
+  team_member_id: string | null;
   archetype_id: string | null;
   final_scores: Record<string, number> | null;
   primary_dimension: string | null;
@@ -126,6 +127,10 @@ interface GaugeProResultRow {
   candidates: {
     name: string;
     email: string;
+  } | null;
+  team_members: {
+    name: string;
+    email: string | null;
   } | null;
 }
 
@@ -273,7 +278,7 @@ function useGaugeProResultsDetailed() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('gauge_pro_results')
-        .select('*, gauge_pro_archetypes(name), candidates(name, email)')
+        .select('*, gauge_pro_archetypes(name), candidates(name, email), team_members(name, email)')
         .order('generated_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as GaugeProResultRow[];
@@ -703,7 +708,7 @@ function OverviewTab() {
 // ---------------------------------------------------------------------------
 
 function ResultsTab() {
-  const { data: results, isLoading } = useGaugeProResultsDetailed();
+  const { data: results, isLoading, isError } = useGaugeProResultsDetailed();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'gauge-pro' | 'legacy'>('all');
   const [periodFilter, setPeriodFilter] = useState<'all' | '7d' | '30d' | '90d'>('all');
@@ -718,8 +723,8 @@ function ResultsTab() {
       const q = search.toLowerCase();
       list = list.filter(
         (r) =>
-          (r.candidates?.name ?? '').toLowerCase().includes(q) ||
-          (r.candidates?.email ?? '').toLowerCase().includes(q) ||
+          (r.candidates?.name ?? r.team_members?.name ?? '').toLowerCase().includes(q) ||
+          (r.candidates?.email ?? r.team_members?.email ?? '').toLowerCase().includes(q) ||
           (r.gauge_pro_archetypes?.name ?? '').toLowerCase().includes(q)
       );
     }
@@ -795,6 +800,12 @@ function ResultsTab() {
       >
         {isLoading ? (
           <TableSkeleton rows={6} cols={6} />
+        ) : isError ? (
+          <EmptyState
+            icon={Brain}
+            title="Erro ao carregar resultados"
+            description="Não foi possível buscar os resultados de testes. Tente novamente mais tarde."
+          />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={Brain}
@@ -819,10 +830,10 @@ function ResultsTab() {
                   <TableCell>
                     <div>
                       <div className="font-medium text-foreground">
-                        {row.candidates?.name ?? 'Candidato'}
+                        {row.candidates?.name ?? row.team_members?.name ?? 'Sem nome'}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {row.candidates?.email ?? row.candidate_id}
+                        {row.candidates?.email ?? row.team_members?.email ?? '—'}
                       </div>
                     </div>
                   </TableCell>
@@ -868,10 +879,10 @@ function ResultsTab() {
             <>
               <SheetHeader>
                 <SheetTitle>
-                  {selectedResult.candidates?.name ?? 'Candidato'}
+                  {selectedResult.candidates?.name ?? selectedResult.team_members?.name ?? 'Sem nome'}
                 </SheetTitle>
                 <SheetDescription>
-                  {selectedResult.candidates?.email ?? selectedResult.candidate_id}
+                  {selectedResult.candidates?.email ?? selectedResult.team_members?.email ?? '—'}
                 </SheetDescription>
               </SheetHeader>
 

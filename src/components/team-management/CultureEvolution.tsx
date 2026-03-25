@@ -11,11 +11,16 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   ResponsiveContainer,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   Legend,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, Minus, Calendar, Users } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Calendar, Users, HelpCircle } from 'lucide-react';
+import {
+  Tooltip as ShadcnTooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import {
   DIMENSION_SHORT_NAMES,
@@ -29,6 +34,7 @@ import type { CompanyCultureSnapshot } from '@/types/teamManagement';
 
 interface CultureEvolutionProps {
   snapshots: CompanyCultureSnapshot[];
+  tooltip?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -53,7 +59,9 @@ function formatDate(dateStr: string): string {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function CultureEvolution({ snapshots }: CultureEvolutionProps) {
+const DEFAULT_TOOLTIP = 'Compara o DNA cultural entre o primeiro e o último snapshot registrado, mostrando a variação por dimensão.';
+
+export default function CultureEvolution({ snapshots, tooltip = DEFAULT_TOOLTIP }: CultureEvolutionProps) {
   const sorted = useMemo(
     () => [...snapshots].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     [snapshots],
@@ -99,11 +107,24 @@ export default function CultureEvolution({ snapshots }: CultureEvolutionProps) {
   const memberChange = newest.mappedMembers - oldest.mappedMembers;
 
   return (
-    <Card>
+    <Card className="relative">
+      <ShadcnTooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="absolute top-2.5 right-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-help"
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-[220px] text-center">
+          <p>{tooltip}</p>
+        </TooltipContent>
+      </ShadcnTooltip>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-base">Evolucao Cultural</CardTitle>
+            <CardTitle className="text-base">Evolução Cultural</CardTitle>
             <div className="flex items-center gap-1.5 mt-1">
               <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
               <p className="text-xs text-muted-foreground">
@@ -144,7 +165,7 @@ export default function CultureEvolution({ snapshots }: CultureEvolutionProps) {
                   tick={false}
                   axisLine={false}
                 />
-                <Tooltip
+                <RechartsTooltip
                   formatter={(value: number, name: string) => [
                     `${Math.round(value)}`,
                     name === 'old' ? formatDate(oldest.date) : formatDate(newest.date),
