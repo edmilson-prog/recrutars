@@ -167,20 +167,27 @@ export default function SendTestModal({
     }
 
     if (method === 'email') {
-      // Email: use existing edge function or Supabase email (best-effort)
       try {
-        await supabase.functions.invoke('send-whatsapp', {
+        const { data, error } = await supabase.functions.invoke('send-email', {
           body: {
-            action: 'send_email_notification',
+            action: 'send_invitation_email',
             to: member.email,
-            subject: 'Convite para Teste Comportamental Gauge-Pro',
-            body: `Ola ${member.name}! Voce foi convidado(a) para realizar o teste comportamental Gauge-Pro. Acesse o link para iniciar: ${link}\n\nEste link expira em 24 horas.`,
+            candidateName: member.name,
+            companyName: '',
+            testName: 'Gauge-Pro',
+            inviteLink: link,
           },
         });
+        if (error || data?.error) {
+          const errorMsg = data?.error || error?.message || 'Falha ao enviar email';
+          console.error('Email notification failed:', errorMsg);
+          return { success: false, error: errorMsg };
+        }
+        return { success: true };
       } catch (err) {
-        console.error('Email notification failed (non-blocking):', err);
+        console.error('Email notification failed:', err);
+        return { success: false, error: 'Falha ao enviar email de convite.' };
       }
-      return { success: true };
     }
 
     if (method === 'whatsapp' && member.phone) {

@@ -8,6 +8,7 @@
  *   - identify: Identify/create user for public link invitations (legacy)
  *   - mark_started: Mark invitation as started
  *   - mark_completed: Mark invitation and team_member as completed
+ *   - send_activation_email: Generate magic link and send activation email
  *
  * PRD-089: Added audit logging, viewed_at tracking, chain linking,
  *          in-app notifications, and WhatsApp opt-in notifications.
@@ -736,6 +737,74 @@ Deno.serve(async (req: Request) => {
       }
 
       return json({ success: true, assessmentId: finalAssessmentId });
+    }
+
+    // -----------------------------------------------------------------------
+    // ACTION: send_activation_email
+    // -----------------------------------------------------------------------
+    if (action === 'send_activation_email') {
+      const { email, invitation_token } = body;
+      if (!email) return json({ error: 'Email obrigatório.' }, 400);
+
+      // Find the invitation to get candidate name
+      let candidateName = '';
+      if (invitation_token) {
+        const { data: inv } = await supabase
+          .from('test_invitations')
+          .select('candidate_name')
+          .eq('token', invitation_token)
+          .maybeSingle();
+        candidateName = inv?.candidate_name || '';
+      }
+
+      // Generate magic link for account activation
+      const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+        type: 'magiclink',
+        email,
+      });
+
+      if (linkError) {
+        console.error('[send_activation_email] Failed to generate magic link:', linkError.message);
+        return json({ error: 'Erro ao gerar link de ativação.' }, 500);
+      }
+
+      const hashedToken = linkData?.properties?.hashed_token;
+      if (!hashedToken) {
+        return json({ error: 'Erro ao gerar token de ativação.' }, 500);
+      }
+
+      // Build activation link
+      const activationLink = `${supabaseUrl}/auth/v1/verify?token=${hashedToken}&type=magiclink&redirect_to=${encodeURIComponent(body.redirect_to || 'https://recrutars.com/candidato/conta')}`;
+
+      // Send activation email via send-email Edge Function
+      try {
+        const emailResp = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${serviceRoleKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'send_activation_email',
+            to: email,
+            candidateName: candidateName,
+            activationLink: activationLink,
+          }),
+        });
+
+        const emailResult = await emailResp.json();
+        if (!emailResp.ok || emailResult.error) {
+          console.error('[send_activation_email] Email send failed:', emailResult.error);
+          return json({ error: emailResult.error || 'Erro ao enviar email de ativação.' }, 500);
+        }
+
+        console.log(`[send_activation_email] Activation email sent to ${email}`);
+        return json({ success: true, emailSent: true });
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error('[send_activation_email] Error:', errMsg);
+        return json({ error: 'Erro ao enviar email de ativação.' }, 500);
+      }
     }
 
     return json({ error: 'Acao invalida: ' + action }, 400);

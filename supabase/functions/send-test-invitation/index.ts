@@ -514,27 +514,50 @@ Deno.serve(async (req: Request) => {
         let deliveryTarget: string | null = null;
         let deliveryError: string | null = null;
 
+        // Fetch test + company info for email delivery
+        const { data: testInfo } = await adminClient
+          .from("company_tests")
+          .select("company_id, name")
+          .eq("id", updated.test_id)
+          .single();
+
+        let companyName = "";
+        if (testInfo?.company_id) {
+          const { data: companyInfo } = await adminClient
+            .from("companies")
+            .select("name")
+            .eq("id", testInfo.company_id)
+            .single();
+          companyName = companyInfo?.name || "";
+        }
+
         // Deliver based on channel
         if (channel === "email" && updated.candidate_email) {
           deliveryTarget = updated.candidate_email;
           try {
             const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
             const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-            const messageText = `Ola ${updated.candidate_name}! Voce foi convidado(a) para realizar o teste comportamental Gauge-Pro. Acesse o link para iniciar: ${link}\n\nEste link expira em 24 horas.`;
 
-            await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+            const emailResp = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
               method: "POST",
               headers: {
                 "Authorization": `Bearer ${serviceKey}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                action: "send_email_notification",
+                action: "send_invitation_email",
                 to: updated.candidate_email,
-                subject: "Convite para Teste Comportamental Gauge-Pro",
-                body: messageText,
+                candidateName: updated.candidate_name || "",
+                companyName: companyName || "",
+                testName: testInfo?.name || "Gauge-Pro",
+                inviteLink: link,
               }),
             });
+
+            const emailResult = await emailResp.json();
+            if (!emailResp.ok || emailResult.error) {
+              throw new Error(emailResult.error || `HTTP ${emailResp.status}`);
+            }
             console.log(`[resend] Email sent to ${updated.candidate_email}`);
           } catch (err) {
             const errMsg = err instanceof Error ? err.message : String(err);
@@ -577,21 +600,15 @@ Deno.serve(async (req: Request) => {
           }
         }
 
-        // Audit log (fire-and-forget)
+        // Audit log (fire-and-forget) — reuses testInfo fetched above
         if (callerId && updated) {
-          const { data: test } = await adminClient
-            .from("company_tests")
-            .select("company_id, name")
-            .eq("id", updated.test_id)
-            .single();
-
           const { data: callerProfile } = await adminClient
             .from("profiles")
             .select("name")
             .eq("id", callerId)
             .single();
 
-          if (test) {
+          if (testInfo) {
             const channelLabel = channel === "email" ? "Email" : channel === "whatsapp" ? "WhatsApp" : "Link";
             auditLog(adminClient, {
               action: "invite_resent",
@@ -600,8 +617,8 @@ Deno.serve(async (req: Request) => {
               resourceType: "invitation",
               resourceId: invitation_id,
               resourceName: updated.candidate_name,
-              details: `Reenvio via ${channelLabel} - Teste: ${test.name}`,
-              companyId: test.company_id,
+              details: `Reenvio via ${channelLabel} - Teste: ${testInfo.name}`,
+              companyId: testInfo.company_id,
             });
           }
         }
