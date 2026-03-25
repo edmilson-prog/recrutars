@@ -28,6 +28,7 @@ const SENSITIVE_KEYS = new Set([
   'stripeLiveWebhookSecret',
   'anthropicApiKey',
   'openaiApiKey',
+  'resendApiKey',
 ]);
 const MASK_PLACEHOLDER = '••••';
 
