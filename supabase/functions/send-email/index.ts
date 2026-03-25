@@ -217,7 +217,7 @@ function buildInvitationEmailHtml(params: {
             <td style="padding: 40px;">
               <h2 style="margin: 0 0 8px; font-size: 22px; color: #0f172a;">Olá, ${escapeHtml(params.candidateName)}!</h2>
               <p style="margin: 0 0 24px; font-size: 16px; color: #475569; line-height: 1.6;">
-                Você foi convidado(a) pela <strong style="color: #0f172a;">${escapeHtml(params.companyName)}</strong> para realizar o teste comportamental <strong style="color: #0f172a;">${escapeHtml(params.testName)}</strong>.
+                Você foi convidado(a)${params.companyName ? ` pela <strong style="color: #0f172a;">${escapeHtml(params.companyName)}</strong>` : ''} para realizar o teste comportamental <strong style="color: #0f172a;">${escapeHtml(params.testName)}</strong>.
               </p>
               <p style="margin: 0 0 32px; font-size: 16px; color: #475569; line-height: 1.6;">
                 O teste é rápido e simples. Clique no botão abaixo para começar:
@@ -427,9 +427,6 @@ async function handleSendInvitationEmail(
   if (!candidateName) {
     return errorResponse('Campo obrigatório ausente: candidateName');
   }
-  if (!companyName) {
-    return errorResponse('Campo obrigatório ausente: companyName');
-  }
   if (!testName) {
     return errorResponse('Campo obrigatório ausente: testName');
   }
@@ -449,7 +446,7 @@ async function handleSendInvitationEmail(
 
   const result = await sendEmail(config, {
     to,
-    subject: `Convite para Teste Comportamental — ${companyName}`,
+    subject: companyName ? `Convite para Teste Comportamental — ${companyName}` : 'Convite para Teste Comportamental — RecrutaRS',
     html,
   });
 
