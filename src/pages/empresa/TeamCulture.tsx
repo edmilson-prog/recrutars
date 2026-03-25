@@ -16,7 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, FlaskConical, Building2, Loader2 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { ArrowLeft, FlaskConical, Building2, HelpCircle, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamMembers, usePositions } from '@/hooks/useTeamsQuery';
@@ -82,6 +88,7 @@ export default function TeamCulture() {
 
   return (
     <DashboardLayout userType="company">
+      <TooltipProvider delayDuration={300}>
       <motion.div {...pageTransition} className="space-y-6">
         {/* Header */}
         <div className="flex items-start gap-4">
@@ -104,23 +111,21 @@ export default function TeamCulture() {
           </div>
         </div>
 
-        {/* DNA Radar + Manifesto — top row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CultureDNARadar
-            dnaScores={companyDNA}
-            companyName="Empresa RecrutaRS"
-          />
-          <CultureManifesto
-            manifesto={manifesto}
-            dnaScores={companyDNA}
-          />
-        </div>
-
-        {/* Culture Evolution */}
-        <CultureEvolution snapshots={mockCultureSnapshots} />
-
         {/* Cultural Fit Simulator */}
-        <Card>
+        <Card className="relative">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="absolute top-2.5 right-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-help"
+              >
+                <HelpCircle className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-[220px] text-center">
+              <p>Compara os scores Gauge-Pro de um colaborador com o DNA médio da empresa. O fit é calculado pela diferença absoluta média em cada dimensão.</p>
+            </TooltipContent>
+          </Tooltip>
           <CardHeader>
             <div className="flex items-center gap-2">
               <FlaskConical className="h-5 w-5 text-cyan-600" />
@@ -161,7 +166,7 @@ export default function TeamCulture() {
                   />
 
                   <div className="text-xs text-muted-foreground">
-                    <p className="font-medium mb-1">Gaps por dimensao:</p>
+                    <p className="font-medium mb-1">Gaps por dimensão:</p>
                     <div className="flex flex-wrap gap-x-3 gap-y-0.5">
                       {(['D1', 'D2', 'D3', 'D4', 'D5'] as const).map((dim) => {
                         const gap = fitResult.dimensionGaps[dim];
@@ -184,7 +189,23 @@ export default function TeamCulture() {
             </div>
           </CardContent>
         </Card>
+
+        {/* DNA Radar + Manifesto */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CultureDNARadar
+            dnaScores={companyDNA}
+            companyName="Empresa RecrutaRS"
+          />
+          <CultureManifesto
+            manifesto={manifesto}
+            dnaScores={companyDNA}
+          />
+        </div>
+
+        {/* Culture Evolution */}
+        <CultureEvolution snapshots={mockCultureSnapshots} />
       </motion.div>
+      </TooltipProvider>
     </DashboardLayout>
   );
 }

@@ -20,6 +20,10 @@ import {
   Inbox,
   Store,
   Coins,
+  Clock,
+  Tag,
+  Settings,
+  Target,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -49,8 +53,16 @@ import { usePlans, useSubscription } from '@/hooks/usePlansQuery';
 import { getStripeService } from '@/services/stripe/stripeService';
 import { CheckoutButton } from '@/components/billing/CheckoutButton';
 import { useStripeEnvironment } from '@/hooks/useStripeEnvironment';
+import { shouldApplyDiscount } from '@/lib/subscriptionRules';
 import type { StripeEnvironment, PlanPeriod } from '@/types/plans';
 import type { TestPackage, TestCreditTransaction } from '@/types/testPackages';
+
+const PLAN_PERIOD_LABELS: Partial<Record<PlanPeriod, string>> = {
+  monthly: 'Mensal',
+  quarterly: 'Trimestral',
+  semiannual: 'Semestral',
+  annual: 'Anual',
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -383,6 +395,22 @@ export default function Packages() {
   // Plan data
   const { data: companyPlans = [] } = usePlans('company');
   const { data: currentSubscription } = useSubscription(user?.id);
+  const [selectedPlanPeriod, setSelectedPlanPeriod] = useState<PlanPeriod>('monthly');
+
+  // Discount aggregation for period selector badges (same pattern as Plans.tsx)
+  const maxDiscount = companyPlans.length > 0
+    ? Math.max(...companyPlans.map(p => {
+        const plan = p as Record<string, unknown>;
+        return (plan.discount_percentage ?? plan.discountPercentage ?? 0) as number;
+      }))
+    : 0;
+  const periodHasDiscount = (period: PlanPeriod) =>
+    maxDiscount > 0 && companyPlans.some(p => {
+      const plan = p as Record<string, unknown>;
+      const disc = (plan.discount_percentage ?? plan.discountPercentage ?? 0) as number;
+      const minPeriod = (plan.discount_min_period ?? plan.discountMinPeriod) as PlanPeriod | undefined;
+      return disc > 0 && shouldApplyDiscount(period, minPeriod);
+    });
 
   const { data: packages = [], isLoading: packagesLoading } = useTestPackages();
   const { data: balance = 0 } = useCompanyCreditBalance(currentCompany?.id);
@@ -517,130 +545,361 @@ export default function Packages() {
 
           {/* -- Tab: Meu Plano -- */}
           <TabsContent value="plano" className="space-y-6 mt-6">
-            {/* Plano atual */}
-            {currentSubscription ? (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Plano {(currentSubscription as Record<string, unknown>).plan_name as string ?? (currentSubscription as Record<string, unknown>).planName as string ?? '—'}</CardTitle>
-                    <Badge variant="secondary" className="text-lg px-3 py-1">
-                      {formatBRL((currentSubscription as Record<string, unknown>).price_paid as number ?? (currentSubscription as Record<string, unknown>).pricePaid as number ?? 0)}/mês
-                    </Badge>
+            {/* Hero: Plano Atual */}
+            {currentSubscription ? (() => {
+              const sub = currentSubscription as Record<string, unknown>;
+              const subPlanName = (sub.plan_name ?? sub.planName ?? '—') as string;
+              const subPricePaid = (sub.price_paid ?? sub.pricePaid ?? 0) as number;
+              const subStatus = (sub.status ?? '') as string;
+              const subPeriod = (sub.period ?? '') as string;
+              const subRenewalDate = (sub.renewal_date ?? sub.renewalDate) as string | undefined;
+
+              const statusLabel: Record<string, string> = {
+                active: 'Ativa',
+                trial: 'Trial',
+                cancelled: 'Cancelada',
+                past_due: 'Pagamento Pendente',
+                expired: 'Expirada',
+                suspended: 'Suspensa',
+              };
+              const statusColor: Record<string, string> = {
+                active: 'bg-green-500/15 text-green-500 border-green-500/30',
+                trial: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+                cancelled: 'bg-red-500/15 text-red-400 border-red-500/30',
+                past_due: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+                expired: 'bg-muted text-muted-foreground border-border',
+                suspended: 'bg-red-500/15 text-red-400 border-red-500/30',
+              };
+              const periodLabel: Record<string, string> = {
+                monthly: 'Mensal',
+                quarterly: 'Trimestral',
+                semiannual: 'Semestral',
+                annual: 'Anual',
+                one_time: 'Avulso',
+              };
+
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-900/60 via-cyan-800/40 to-blue-900/60 p-7 border border-cyan-500/20"
+                >
+                  {/* Decorative radial */}
+                  <div className="absolute top-0 right-0 w-56 h-56 bg-[radial-gradient(circle,rgba(34,211,238,0.08),transparent_70%)]" />
+
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-start md:justify-between gap-5">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[1.5px] text-cyan-400 mb-1.5">
+                        Seu Plano Atual
+                      </p>
+                      <h3 className="text-xl font-bold text-foreground">{subPlanName}</h3>
+                      <div className="flex items-center gap-2.5 mt-3">
+                        <Badge
+                          variant="outline"
+                          className={cn('text-xs', statusColor[subStatus] ?? 'bg-muted text-muted-foreground')}
+                        >
+                          {statusLabel[subStatus] ?? subStatus}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {periodLabel[subPeriod] ?? subPeriod}
+                          {subRenewalDate && (
+                            <> · Renova em {new Date(subRenewalDate).toLocaleDateString('pt-BR')}</>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-left md:text-right">
+                      <p className="text-3xl font-extrabold text-foreground">
+                        {formatBRL(subPricePaid)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        /{periodLabel[subPeriod]?.toLowerCase() ?? 'mês'}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2.5 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-1.5"
+                        onClick={() => navigate('/empresa/meu-plano')}
+                      >
+                        <Settings className="w-3.5 h-3.5" />
+                        Gerenciar assinatura
+                      </Button>
+                    </div>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={(currentSubscription as Record<string, unknown>).status === 'active' ? 'default' : 'outline'}>
-                      {(currentSubscription as Record<string, unknown>).status === 'active' ? 'Ativa' :
-                       (currentSubscription as Record<string, unknown>).status === 'trial' ? 'Trial' :
-                       (currentSubscription as Record<string, unknown>).status === 'past_due' ? 'Pagamento Pendente' :
-                       String((currentSubscription as Record<string, unknown>).status ?? '')}
-                    </Badge>
-                  </div>
-                  <Separator />
-                  <p className="text-sm text-muted-foreground">
-                    Renovação: {(currentSubscription as Record<string, unknown>).renewal_date
-                      ? new Date(String((currentSubscription as Record<string, unknown>).renewal_date)).toLocaleDateString('pt-BR')
-                      : (currentSubscription as Record<string, unknown>).renewalDate
-                      ? new Date(String((currentSubscription as Record<string, unknown>).renewalDate)).toLocaleDateString('pt-BR')
-                      : '—'}
+                </motion.div>
+              );
+            })() : (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-900/60 via-cyan-800/40 to-blue-900/60 p-7 border border-cyan-500/20"
+              >
+                <div className="relative z-10">
+                  <p className="text-[11px] font-semibold uppercase tracking-[1.5px] text-cyan-400 mb-1.5">
+                    Seu Plano Atual
                   </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Sem assinatura ativa</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Escolha um plano abaixo para começar.</p>
-                </CardContent>
-              </Card>
+                  <h3 className="text-xl font-bold text-foreground">Sem assinatura ativa</h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Escolha um plano abaixo para começar.
+                  </p>
+                </div>
+              </motion.div>
             )}
 
-            <Separator />
+            {/* Seção: Alterar Plano */}
+            <div>
+              <h2 className="text-lg font-bold text-foreground mb-1">Alterar Plano</h2>
+              <p className="text-sm text-muted-foreground">
+                Compare os planos e escolha o melhor para sua empresa.
+              </p>
+            </div>
 
-            {/* Todos os Planos */}
-            <div className="space-y-6">
-              <h2 className="text-lg font-semibold">Todos os Planos</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {companyPlans.map((p) => {
-                  const plan = p as Record<string, unknown>;
-                  const planName = (plan.name as string) ?? '';
-                  const planSlug = (plan.slug as string) ?? '';
-                  const prices = (plan.prices as Record<string, number>) ?? {};
-                  const billingModel = (plan.billing_model ?? plan.billingModel) as string ?? 'recurring';
-                  const isOneTime = billingModel === 'one_time';
-                  const displayPrice = isOneTime ? (prices.one_time ?? 0) : (prices.monthly ?? 0);
-                  const isFree = (plan.is_free ?? plan.isFree) as boolean;
-                  const features = (plan.features as string[]) ?? [];
-                  const descShort = (plan.description_short ?? plan.descriptionShort) as string ?? '';
-                  const isCurrent = currentSubscription &&
-                    ((currentSubscription as Record<string, unknown>).plan_slug === planSlug ||
-                     (currentSubscription as Record<string, unknown>).planSlug === planSlug);
-                  const badge = plan.badge as string | undefined;
+            {/* Seletor de Período Global */}
+            <div className="flex items-center gap-1.5 bg-muted rounded-xl p-1 w-fit flex-wrap">
+              {(Object.keys(PLAN_PERIOD_LABELS) as PlanPeriod[]).map((period) => (
+                <button
+                  key={period}
+                  className={cn(
+                    'px-4 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-1.5',
+                    selectedPlanPeriod === period
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                  onClick={() => setSelectedPlanPeriod(period)}
+                >
+                  {PLAN_PERIOD_LABELS[period]}
+                  {periodHasDiscount(period) && (
+                    <span className="bg-green-600/20 text-green-500 dark:bg-green-500/20 dark:text-green-400 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                      -{maxDiscount}%
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
 
-                  return (
-                    <Card
-                      key={planSlug}
-                      className={isCurrent ? 'border-primary shadow-lg relative' : 'relative'}
-                    >
-                      {badge && (
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                          <Badge className="gap-1">
-                            <Star className="w-3 h-3" />
-                            {badge}
-                          </Badge>
+            {/* Grid de Planos */}
+            <div className={cn(
+              'grid grid-cols-1 md:grid-cols-2 gap-6',
+              companyPlans.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
+            )}>
+              {companyPlans.map((p, index) => {
+                const plan = p as Record<string, unknown>;
+                const planId = (plan.id as string) ?? '';
+                const planName = (plan.name as string) ?? '';
+                const planSlug = (plan.slug as string) ?? '';
+                const prices = (plan.prices as Record<string, number>) ?? {};
+                const launchPrices = (plan.launch_prices ?? plan.launchPrices) as Record<string, number> | undefined;
+                const launchPriceEndDate = (plan.launch_price_end_date ?? plan.launchPriceEndDate) as string | undefined;
+                const billingModel = (plan.billing_model ?? plan.billingModel) as string ?? 'recurring';
+                const isOneTime = billingModel === 'one_time';
+                const isFree = (plan.is_free ?? plan.isFree) as boolean;
+                const isTrial = !!((plan.trial_duration_days ?? plan.trialDurationDays) as number | undefined);
+                const trialDays = (plan.trial_duration_days ?? plan.trialDurationDays) as number | undefined;
+                const features = (plan.features as string[]) ?? [];
+                const descShort = (plan.description_short ?? plan.descriptionShort) as string ?? '';
+                const badge = plan.badge as string | undefined;
+                const discountPct = (plan.discount_percentage ?? plan.discountPercentage ?? 0) as number;
+                const discountMinPeriod = (plan.discount_min_period ?? plan.discountMinPeriod) as PlanPeriod | undefined;
+                const bonusTests = (plan.bonus_tests ?? plan.bonusTests) as Record<string, number> | undefined;
+
+                const isCurrent = currentSubscription &&
+                  ((currentSubscription as Record<string, unknown>).plan_slug === planSlug ||
+                   (currentSubscription as Record<string, unknown>).planSlug === planSlug);
+
+                // Price calculation
+                const basePrice = prices.monthly ?? 0;
+                const periodPrice = isOneTime ? (prices.one_time ?? 0) : (prices[selectedPlanPeriod] ?? basePrice);
+
+                // Launch price check (priority 1)
+                const launchPrice = launchPrices?.[selectedPlanPeriod];
+                const hasLaunchPrice = !isFree && !isTrial && launchPrice !== undefined && launchPrice > 0 && launchPrice < periodPrice;
+                const isLaunchActive = hasLaunchPrice && launchPriceEndDate && new Date(launchPriceEndDate) > new Date();
+
+                // Discount check (priority 2, only if no launch price)
+                const hasDiscount = !isFree && !isTrial && !isLaunchActive && discountPct > 0
+                  && shouldApplyDiscount(selectedPlanPeriod, discountMinPeriod)
+                  && periodPrice < basePrice;
+
+                // Bonus tests for selected period
+                const periodBonusTests = bonusTests?.[selectedPlanPeriod] ?? 0;
+                const showBonusTests = periodBonusTests > 0 && shouldApplyDiscount(selectedPlanPeriod, discountMinPeriod);
+
+                return (
+                  <motion.div
+                    key={planSlug || planId}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.08 }}
+                    className={cn(
+                      'relative flex flex-col bg-card rounded-2xl overflow-hidden transition-all',
+                      isCurrent
+                        ? 'ring-2 ring-cyan-500 dark:ring-cyan-400 shadow-xl'
+                        : 'shadow-soft hover:shadow-lg',
+                    )}
+                  >
+                    {/* Gradient top bar */}
+                    <div className={cn(
+                      'h-1',
+                      isTrial || isFree
+                        ? 'bg-gradient-to-r from-teal-400 to-cyan-500'
+                        : 'bg-gradient-to-r from-cyan-500 to-blue-600'
+                    )} />
+
+                    {/* Floating badge */}
+                    {badge && (
+                      <div className="absolute -top-0 left-1/2 -translate-x-1/2 translate-y-3 z-10">
+                        <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-0 shadow-lg px-3 py-0.5 text-[10px] font-semibold gap-1">
+                          <Star className="w-3 h-3" />
+                          {badge}
+                        </Badge>
+                      </div>
+                    )}
+
+                    <div className={cn('flex flex-col flex-1 p-6', badge && 'pt-8')}>
+                      {/* Plan name & description */}
+                      <div className="text-center mb-5">
+                        <h3 className="text-base font-bold text-foreground mb-1">{planName}</h3>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{descShort}</p>
+                      </div>
+
+                      {/* Price section */}
+                      <div className="text-center mb-5">
+                        {isFree || isTrial ? (
+                          <>
+                            <span className="text-3xl font-extrabold text-foreground">Grátis</span>
+                            {isTrial && trialDays && (
+                              <div className="mt-2 inline-flex items-center gap-1.5 text-xs text-teal-500 dark:text-teal-400 bg-teal-500/10 px-3 py-1 rounded-full">
+                                <Clock className="w-3 h-3" />
+                                {trialDays} dias de teste
+                              </div>
+                            )}
+                          </>
+                        ) : isLaunchActive ? (
+                          <>
+                            <div className="text-sm text-muted-foreground line-through mb-0.5">
+                              {formatBRL(periodPrice)}
+                            </div>
+                            <span className="text-3xl font-extrabold text-cyan-500">
+                              {formatBRL(launchPrice!)}
+                            </span>
+                            {!isOneTime && <span className="text-muted-foreground text-sm ml-1">/mês</span>}
+                            <div className="mt-2">
+                              <Badge variant="outline" className="text-[10px] text-cyan-500 border-cyan-500/30 bg-cyan-500/10 gap-1">
+                                <Tag className="w-3 h-3" />
+                                Preço de lançamento
+                              </Badge>
+                            </div>
+                          </>
+                        ) : hasDiscount ? (
+                          <>
+                            <div className="text-sm text-muted-foreground line-through mb-0.5">
+                              {formatBRL(basePrice)}
+                            </div>
+                            <span className="text-3xl font-extrabold text-foreground">
+                              {formatBRL(periodPrice)}
+                            </span>
+                            {!isOneTime && <span className="text-muted-foreground text-sm ml-1">/mês</span>}
+                            <div className="mt-2">
+                              <Badge variant="outline" className="text-[10px] text-green-600 dark:text-green-400 border-green-500/30 bg-green-500/10">
+                                Economize {discountPct}%
+                              </Badge>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-3xl font-extrabold text-foreground">
+                              {formatBRL(periodPrice)}
+                            </span>
+                            {!isOneTime && <span className="text-muted-foreground text-sm ml-1">/mês</span>}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Bonus tests */}
+                      {showBonusTests && (
+                        <div className="text-center mb-4">
+                          <span className="inline-flex items-center gap-1.5 text-xs text-cyan-500 dark:text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full">
+                            <Target className="w-3 h-3" />
+                            +{periodBonusTests} {periodBonusTests === 1 ? 'teste comportamental' : 'testes comportamentais'}
+                          </span>
                         </div>
                       )}
-                      <CardHeader className="text-center pb-2">
-                        <CardTitle className="text-lg">{planName}</CardTitle>
-                        <div className="mt-2">
-                          <span className="text-3xl font-bold">
-                            {isFree ? 'Grátis' : formatBRL(displayPrice)}
-                          </span>
-                          {!isFree && !isOneTime && <span className="text-muted-foreground text-sm">/mês</span>}
-                        </div>
-                        <CardDescription className="mt-2">{descShort}</CardDescription>
-                      </CardHeader>
-                      <Separator />
-                      <CardContent className="pt-4">
-                        <ul className="space-y-2">
-                          {features.map((feat, idx) => (
-                            <li key={idx} className="flex items-start gap-2 text-sm text-foreground">
-                              <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                              {feat}
-                            </li>
-                          ))}
-                        </ul>
-                        <div className="mt-6">
-                          {isCurrent ? (
-                            <Button variant="outline" className="w-full" disabled>
-                              Plano Atual
-                            </Button>
-                          ) : isFree ? (
-                            <Button variant="outline" className="w-full" disabled>
-                              Plano Gratuito
-                            </Button>
-                          ) : (
-                            <CheckoutButton
-                              planId={(plan.id as string) ?? ''}
-                              planName={planName}
-                              period={(isOneTime ? 'one_time' : 'monthly') as PlanPeriod}
-                              variant={badge ? 'default' : 'outline'}
-                              size="default"
-                              className="w-full"
-                            >
-                              Assinar {planName}
-                            </CheckoutButton>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+
+                      {/* Features */}
+                      <ul className="space-y-2 mb-6 flex-1">
+                        {features.map((feat, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <Check className="w-4 h-4 text-green-600 dark:text-green-500 mt-0.5 flex-shrink-0" />
+                            <span>{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {/* Action button */}
+                      <div className="mt-auto">
+                        {isCurrent ? (
+                          <Button variant="outline" className="w-full gap-2" disabled>
+                            <CheckCircle className="w-4 h-4" />
+                            Plano Atual
+                          </Button>
+                        ) : isFree ? (
+                          <Button variant="outline" className="w-full" disabled>
+                            Plano Gratuito
+                          </Button>
+                        ) : (
+                          <CheckoutButton
+                            planId={planId}
+                            planName={planName}
+                            period={(isOneTime ? 'one_time' : selectedPlanPeriod) as PlanPeriod}
+                            variant={badge ? 'default' : 'outline'}
+                            size="default"
+                            className={cn(
+                              'w-full',
+                              badge && 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white border-0 shadow-lg shadow-cyan-500/25'
+                            )}
+                          >
+                            {currentSubscription ? 'Fazer upgrade' : `Assinar ${planName}`}
+                          </CheckoutButton>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
+
+            {/* Banner: Preço de Lançamento */}
+            {companyPlans.some(p => {
+              const plan = p as Record<string, unknown>;
+              const lp = (plan.launch_prices ?? plan.launchPrices) as Record<string, number> | undefined;
+              const lpEnd = (plan.launch_price_end_date ?? plan.launchPriceEndDate) as string | undefined;
+              return lp && Object.values(lp).some(v => v > 0) && lpEnd && new Date(lpEnd) > new Date();
+            }) && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="flex items-center gap-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 px-5 py-3.5"
+              >
+                <Tag className="w-4 h-4 text-cyan-500 flex-shrink-0" />
+                <p className="text-sm text-cyan-600 dark:text-cyan-400">
+                  <span className="font-semibold">Preço de lançamento</span> disponível para planos selecionados.
+                  {(() => {
+                    const dates = companyPlans
+                      .map(p => {
+                        const plan = p as Record<string, unknown>;
+                        return (plan.launch_price_end_date ?? plan.launchPriceEndDate) as string | undefined;
+                      })
+                      .filter(d => d && new Date(d) > new Date())
+                      .sort();
+                    if (dates.length > 0) {
+                      return ` Válido até ${new Date(dates[0]!).toLocaleDateString('pt-BR')}.`;
+                    }
+                    return '';
+                  })()}
+                </p>
+              </motion.div>
+            )}
           </TabsContent>
 
           {/* -- Tab: Histórico -- */}

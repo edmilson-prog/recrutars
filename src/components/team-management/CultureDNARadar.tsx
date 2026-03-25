@@ -11,10 +11,15 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   ResponsiveContainer,
-  Tooltip,
+  Tooltip as RechartsTooltip,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dna } from 'lucide-react';
+import { Dna, HelpCircle } from 'lucide-react';
+import {
+  Tooltip as ShadcnTooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { DIMENSION_SHORT_NAMES, type GaugeProDimension, type DimensionScores } from '@/types/gaugePro';
 
 // ---------------------------------------------------------------------------
@@ -24,6 +29,7 @@ import { DIMENSION_SHORT_NAMES, type GaugeProDimension, type DimensionScores } f
 interface CultureDNARadarProps {
   dnaScores: DimensionScores;
   companyName?: string;
+  tooltip?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -36,7 +42,9 @@ const DIMENSIONS: GaugeProDimension[] = ['D1', 'D2', 'D3', 'D4', 'D5'];
 // Component
 // ---------------------------------------------------------------------------
 
-export default function CultureDNARadar({ dnaScores, companyName }: CultureDNARadarProps) {
+const DEFAULT_TOOLTIP = 'Média ponderada dos scores D1-D5 de todos os colaboradores mapeados. Cargos estratégicos têm peso 1,5×, táticos 1,2× e operacionais 1,0×.';
+
+export default function CultureDNARadar({ dnaScores, companyName, tooltip = DEFAULT_TOOLTIP }: CultureDNARadarProps) {
   const data = useMemo(() => {
     return DIMENSIONS.map((dim) => ({
       dimension: DIMENSION_SHORT_NAMES[dim],
@@ -45,7 +53,20 @@ export default function CultureDNARadar({ dnaScores, companyName }: CultureDNARa
   }, [dnaScores]);
 
   return (
-    <Card className="h-full">
+    <Card className="relative h-full">
+      <ShadcnTooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="absolute top-2.5 right-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-help"
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-[220px] text-center">
+          <p>{tooltip}</p>
+        </TooltipContent>
+      </ShadcnTooltip>
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
           <Dna className="h-5 w-5 text-cyan-600" />
@@ -73,7 +94,7 @@ export default function CultureDNARadar({ dnaScores, companyName }: CultureDNARa
               tick={{ fontSize: 9 }}
               axisLine={false}
             />
-            <Tooltip
+            <RechartsTooltip
               formatter={(value: number) => [`${value}`, 'Score']}
               contentStyle={{ fontSize: 12, borderRadius: 8 }}
             />
