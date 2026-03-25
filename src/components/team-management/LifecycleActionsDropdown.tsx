@@ -71,30 +71,31 @@ export function LifecycleActionsDropdown({
           <>
             <DropdownMenuItem
               onClick={onTerminate}
+              title="Encerra o vínculo empregatício e registra a data de desligamento no histórico."
               className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
             >
               <UserMinus className="h-4 w-4 mr-2" />
               Desligar Colaborador
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onUnlink}>
+            <DropdownMenuItem onClick={onUnlink} title="Remove o colaborador da empresa sem excluir a conta dele na plataforma.">
               <Unlink className="h-4 w-4 mr-2" />
               Desvincular
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onStartLeave}>
+            <DropdownMenuItem onClick={onStartLeave} title="Registra um período de afastamento por licença, férias ou motivo médico.">
               <PauseCircle className="h-4 w-4 mr-2" />
               Registrar Afastamento
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onPromote}>
+            <DropdownMenuItem onClick={onPromote} title="Registra uma promoção com novo cargo e atualiza o histórico profissional.">
               <TrendingUp className="h-4 w-4 mr-2" />
               Promoção
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onTransferDepartment}>
+            <DropdownMenuItem onClick={onTransferDepartment} title="Move o colaborador para outro departamento mantendo o cargo atual.">
               <ArrowRightLeft className="h-4 w-4 mr-2" />
               Transferência de Departamento
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onChangePosition}>
+            <DropdownMenuItem onClick={onChangePosition} title="Altera o cargo do colaborador dentro do mesmo departamento.">
               <Briefcase className="h-4 w-4 mr-2" />
               Mudança de Cargo
             </DropdownMenuItem>
@@ -104,12 +105,13 @@ export function LifecycleActionsDropdown({
         {/* On leave actions */}
         {status === 'on_leave' && (
           <>
-            <DropdownMenuItem onClick={onReturnFromLeave}>
+            <DropdownMenuItem onClick={onReturnFromLeave} title="Encerra o período de afastamento e reativa o colaborador como ativo.">
               <PlayCircle className="h-4 w-4 mr-2" />
               Registrar Retorno
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={onTerminate}
+              title="Encerra o vínculo empregatício mesmo durante o período de afastamento."
               className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
             >
               <UserMinus className="h-4 w-4 mr-2" />
@@ -121,13 +123,14 @@ export function LifecycleActionsDropdown({
         {/* Terminated member actions */}
         {status === 'terminated' && (
           <>
-            <DropdownMenuItem onClick={onReactivate}>
+            <DropdownMenuItem onClick={onReactivate} title="Reativa o colaborador criando um novo vínculo com a empresa.">
               <RotateCcw className="h-4 w-4 mr-2" />
               Recontratar
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={onAnonymize}
+              title="Solicita a remoção dos dados pessoais conforme a LGPD. Esta ação é irreversível."
               className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
             >
               <ShieldOff className="h-4 w-4 mr-2" />
@@ -139,13 +142,14 @@ export function LifecycleActionsDropdown({
         {/* Unlinked member actions */}
         {status === 'unlinked' && (
           <>
-            <DropdownMenuItem onClick={onReactivate}>
+            <DropdownMenuItem onClick={onReactivate} title="Reativa o colaborador criando um novo vínculo com a empresa.">
               <RotateCcw className="h-4 w-4 mr-2" />
               Recontratar
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={onAnonymize}
+              title="Solicita a remoção dos dados pessoais conforme a LGPD. Esta ação é irreversível."
               className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
             >
               <ShieldOff className="h-4 w-4 mr-2" />

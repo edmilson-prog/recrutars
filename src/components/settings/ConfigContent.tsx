@@ -25,6 +25,7 @@ const LLMProvidersPanel = lazy(() => import('./custom/LLMProvidersPanel'));
 const ChatbotDashboard = lazy(() => import('./custom/ChatbotDashboard'));
 const LLMTestPlayground = lazy(() => import('./custom/LLMTestPlayground'));
 const EvolutionPanel = lazy(() => import('./custom/EvolutionPanel'));
+const ResendPanel = lazy(() => import('./custom/ResendPanel'));
 
 interface ConfigContentProps {
   category: ConfigCategory;
@@ -125,6 +126,26 @@ export function ConfigContent({
         }
       >
         <EvolutionPanel
+          values={values}
+          onValueChange={onValueChange}
+          onSave={onSave}
+        />
+      </Suspense>
+    );
+  }
+
+  if (subcategory.customComponent === 'ResendPanel') {
+    return (
+      <Suspense
+        fallback={
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </CardContent>
+          </Card>
+        }
+      >
+        <ResendPanel
           values={values}
           onValueChange={onValueChange}
           onSave={onSave}

@@ -1,12 +1,69 @@
 {
   "versions": [
     {
+      "version": "1.48.1",
+      "codename": "Lifecycle",
+      "type": "patch",
+      "releaseDate": "2026-03-24",
+      "description": "Correções no envio de convites de teste (erro 403), gráfico de arquétipos, filtro de planos, isolamento de cargos por empresa e interface de convite de colaboradores.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Interface de convite de colaboradores sempre exibe 2 abas (Da Equipe / Por Email)",
+            "Cargos exibidos no gerenciamento de equipe agora filtrados por empresa",
+            "Gráfico de arquétipos corrigido no painel de testes administrativos",
+            "Nomes de planos duplicados no filtro de empresas do painel admin",
+            "Erro 403 ao enviar convites de teste comportamental corrigido"
+          ],
+          "details": {
+            "0": {
+              "description": "A tela de envio de convites para testes comportamentais agora sempre mostra as duas abas de seleção: 'Da Equipe' (para selecionar colaboradores já cadastrados) e 'Por Email' (para convidar por endereço de e-mail). Antes, a aba 'Da Equipe' não aparecia em alguns testes.",
+              "files": [
+                "src/components/corporate-tests/InternalCandidateInvite.tsx"
+              ],
+              "routes": ["/empresa/testes"]
+            },
+            "1": {
+              "description": "Na tela de gerenciamento de equipe, os cargos disponíveis nos filtros e formulários agora são filtrados corretamente pela empresa do usuário. Antes, cargos de outras empresas podiam aparecer na lista.",
+              "files": [
+                "src/hooks/useTeamManagementQuery.ts"
+              ],
+              "routes": ["/empresa/equipe"]
+            },
+            "2": {
+              "description": "O gráfico de distribuição de perfis comportamentais na aba de visão geral dos testes administrativos não estava carregando os nomes dos arquétipos. O campo de referência foi corrigido e os nomes agora aparecem corretamente no gráfico.",
+              "files": [
+                "src/pages/admin/AdminTests.tsx"
+              ],
+              "routes": ["/admin/testes"]
+            },
+            "3": {
+              "description": "O filtro de planos na lista de empresas do painel administrativo mostrava o mesmo nome de plano repetido quando havia mais de uma empresa naquele plano. Agora cada nome aparece apenas uma vez na lista.",
+              "files": [
+                "src/pages/admin/Companies.tsx"
+              ],
+              "routes": ["/admin/empresas"]
+            },
+            "4": {
+              "description": "Ao clicar em 'Confirmar Envio' na tela de convites para testes comportamentais, o sistema retornava um erro e não enviava o convite. A causa era uma referência incorreta a campos internos do banco de dados na verificação de permissão. O problema foi corrigido e o envio de convites funciona normalmente.",
+              "files": [
+                "supabase/functions/send-test-invitation/index.ts"
+              ],
+              "routes": ["/empresa/testes"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.48.0",
       "codename": "Lifecycle",
       "type": "minor",
       "releaseDate": "2026-03-24",
       "description": "Ciclo de vida completo de colaboradores em 7 fases: desligamento com wizard, afastamentos temporários, movimentações internas, timeline de eventos e anonimização LGPD.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
