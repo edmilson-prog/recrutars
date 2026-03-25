@@ -164,7 +164,10 @@
       "Bash(ls \"D:\\\\claude\\\\recrutars-maike\\\\.superpowers\\\\brainstorm\"\" 2>/dev/null && for d in \"D:clauderecrutars-maike.superpowersbrainstorm\"\"*/)",
       "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); print\\(data[0][''''text''''][:8000]\\)\")",
       "Skill(commit-commands:commit-push-pr)",
-      "Bash(gh pr:*)"
+      "Bash(gh pr:*)",
+      "Bash(xargs -0 grep -l \"company_tests\")",
+      "Bash(xargs basename:*)",
+      "Bash(for f:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
