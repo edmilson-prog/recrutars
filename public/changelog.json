@@ -1,12 +1,108 @@
 {
   "versions": [
     {
+      "version": "1.49.0",
+      "codename": "Fulfillment",
+      "type": "minor",
+      "releaseDate": "2026-03-25",
+      "description": "Pagamento automático via webhook do Stripe, integração de e-mail com Resend, agendamento automático de retestes, redesign da aba Meu Plano e sub-abas para testes arquivados.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Webhook do Stripe para fulfillment automático de créditos e assinaturas",
+            "Integração de envio de e-mails via Resend (Edge Function + painel admin)",
+            "Agendamento automático de retestes via pg_cron",
+            "Redesign da aba Meu Plano com seletor de ciclo e card destacado",
+            "Sub-abas para testes arquivados na página Meus Testes",
+            "Painel administrativo de configuração do Resend"
+          ],
+          "details": {
+            "0": {
+              "description": "Quando uma compra é concluída no Stripe (pacote de testes ou plano), o sistema agora credita automaticamente os testes ou ativa a assinatura sem intervenção manual. O evento de pagamento é registrado e pode ser monitorado na aba Webhooks do painel financeiro.",
+              "files": ["supabase/functions/stripe-webhook/index.ts"],
+              "routes": ["/admin/assinaturas/webhooks"]
+            },
+            "1": {
+              "description": "O sistema agora envia e-mails transacionais (convites, notificações) através do serviço Resend. No painel de configurações do administrador, é possível cadastrar a chave da API e configurar o remetente padrão.",
+              "files": ["supabase/functions/send-email/index.ts", "src/pages/admin/Settings.tsx"],
+              "routes": ["/admin/configuracoes"]
+            },
+            "2": {
+              "description": "Testes comportamentais podem ser configurados para reaplicação automática após um período definido. O sistema agenda o reenvio de convites sem que o gestor precise lembrar de fazê-lo manualmente.",
+              "files": ["sql/migrations/"],
+              "routes": ["/empresa/testes"]
+            },
+            "3": {
+              "description": "A aba 'Meu Plano' na página de pacotes foi redesenhada com um seletor visual de ciclo de cobrança (mensal, trimestral, semestral, anual) e um card em destaque mostrando o plano atual com todos os benefícios.",
+              "files": ["src/pages/empresa/Packages.tsx"],
+              "routes": ["/empresa/pacotes"]
+            },
+            "4": {
+              "description": "Na página 'Meus Testes', os testes arquivados agora aparecem em sub-abas separadas com indicação visual, facilitando a organização e o acesso ao histórico.",
+              "files": ["src/pages/empresa/MeusTestesPage.tsx"],
+              "routes": ["/empresa/testes"]
+            },
+            "5": {
+              "description": "No painel administrativo, uma nova seção permite configurar a integração com o Resend para envio de e-mails: chave da API, domínio verificado e remetente padrão.",
+              "files": ["src/data/settingsConfig.ts"],
+              "routes": ["/admin/configuracoes"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Métodos de pagamento dinâmicos no checkout de pacotes (antes fixo em cartão)",
+            "Referência de arquétipos corrigida na aba de resultados administrativos",
+            "Nome da empresa agora opcional na validação de envio de e-mail",
+            "Nome da empresa incluído no template de e-mail e envio em lote habilitado",
+            "Entrega de e-mails redirecionada pela Edge Function send-email",
+            "Referência de eventos de equipe corrigida para perfis e tooltips de ação adicionados"
+          ],
+          "details": {
+            "0": {
+              "description": "Na compra de pacotes de testes, os métodos de pagamento aceitos agora vêm do cadastro do pacote no banco de dados (cartão, Pix, etc.), em vez de aceitar somente cartão de crédito.",
+              "files": ["supabase/functions/stripe-package-checkout/index.ts"],
+              "routes": ["/empresa/pacotes"]
+            },
+            "1": {
+              "description": "Na aba de resultados dos testes no painel administrativo, o gráfico de distribuição de perfis comportamentais não carregava os nomes dos arquétipos. A referência foi corrigida e os dados agora aparecem corretamente.",
+              "files": ["src/pages/admin/AdminTests.tsx"],
+              "routes": ["/admin/testes"]
+            },
+            "2": {
+              "description": "O envio de e-mails falhava quando o nome da empresa não estava preenchido. Agora esse campo é opcional na validação, permitindo o envio mesmo sem essa informação.",
+              "files": ["supabase/functions/send-email/index.ts"],
+              "routes": []
+            },
+            "3": {
+              "description": "Os e-mails enviados pelo sistema agora incluem o nome da empresa no corpo da mensagem. Além disso, o envio em lote para múltiplos destinatários foi habilitado.",
+              "files": ["supabase/functions/send-email/index.ts"],
+              "routes": []
+            },
+            "4": {
+              "description": "Todas as entregas de e-mail do sistema agora passam pela função centralizada de envio, garantindo rastreabilidade e uso consistente do serviço Resend.",
+              "files": ["supabase/functions/send-email/index.ts"],
+              "routes": []
+            },
+            "5": {
+              "description": "Na tela de gerenciamento de equipe, os registros de eventos (entrada, saída, transferência) agora referenciam corretamente o perfil do colaborador. Tooltips explicativos foram adicionados aos botões de ação.",
+              "files": ["src/pages/empresa/TeamManagement.tsx"],
+              "routes": ["/empresa/equipe"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.48.1",
       "codename": "Lifecycle",
       "type": "patch",
       "releaseDate": "2026-03-24",
       "description": "Correções no envio de convites de teste (erro 403), gráfico de arquétipos, filtro de planos, isolamento de cargos por empresa e interface de convite de colaboradores.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
