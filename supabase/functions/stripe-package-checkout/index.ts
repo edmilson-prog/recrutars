@@ -105,9 +105,7 @@ Deno.serve(async (req: Request) => {
     // 3. Create Stripe Checkout Session (one-time payment)
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      payment_method_types: (pkg.payment_methods as string[])?.length > 0
-        ? (pkg.payment_methods as string[])
-        : ['card'],
+      payment_method_types: (pkg.payment_methods as string[]) ?? ['card'],
       line_items: [
         {
           price: priceId,
@@ -132,6 +130,7 @@ Deno.serve(async (req: Request) => {
       url: session.url,
     });
   } catch (err) {
+    console.error('stripe-package-checkout error:', err);
     const message = err instanceof Error ? err.message : 'Unknown error';
     return jsonResponse({ success: false, error: message }, 500);
   }

@@ -167,7 +167,11 @@
       "Bash(gh pr:*)",
       "Bash(xargs -0 grep -l \"company_tests\")",
       "Bash(xargs basename:*)",
-      "Bash(for f:*)"
+      "Bash(for f:*)",
+      "mcp__plugin_stripe_stripe__get_stripe_account_info",
+      "mcp__plugin_stripe_stripe__list_products",
+      "mcp__plugin_stripe_stripe__list_prices",
+      "mcp__plugin_stripe_stripe__search_stripe_documentation"
     ]
   },
   "enableAllProjectMcpServers": true,
