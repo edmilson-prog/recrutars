@@ -210,13 +210,26 @@ async function handlePlanSubscription(
     .eq('status', 'active')
     .maybeSingle();
 
+  // Calculate end_date based on billing period
+  const startDate = new Date();
+  const endDate = new Date(startDate);
+  const effectivePeriod = period ?? 'monthly';
+  switch (effectivePeriod) {
+    case 'quarterly': endDate.setMonth(endDate.getMonth() + 3); break;
+    case 'semiannual': endDate.setMonth(endDate.getMonth() + 6); break;
+    case 'annual': endDate.setFullYear(endDate.getFullYear() + 1); break;
+    default: endDate.setMonth(endDate.getMonth() + 1); break; // monthly
+  }
+
   const subscriptionData = {
     user_id,
     plan_id,
     status: 'active',
-    period: period ?? 'monthly',
+    period: effectivePeriod,
     price_paid: (session.amount_total ?? 0) / 100,
-    start_date: new Date().toISOString(),
+    start_date: startDate.toISOString(),
+    end_date: endDate.toISOString(),
+    renewal_date: endDate.toISOString(),
     stripe_customer_id: stripeCustomerId,
     stripe_subscription_id: stripeSubscriptionId,
     stripe_price_id: session.metadata?.stripe_price_id ?? null,

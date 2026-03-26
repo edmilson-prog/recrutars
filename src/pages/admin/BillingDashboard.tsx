@@ -3,7 +3,7 @@
  * PRD-076: Admin billing analytics with KPIs
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   DollarSign,
@@ -14,6 +14,7 @@ import {
   ArrowDown,
   XCircle,
   RefreshCw,
+  Package,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -22,9 +23,52 @@ import { cn } from '@/lib/utils';
 import { formatBRL } from '@/lib/formatters';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { AdminTabNav } from '@/components/admin/AdminTabNav';
+import { supabase } from '@/lib/supabase';
+
+interface PackageSale {
+  packageName: string;
+  count: number;
+  revenue: number;
+}
 
 export default function BillingDashboard() {
   const { subscriptions, isLoading } = useSubscriptions();
+  const [packageRevenue, setPackageRevenue] = useState(0);
+  const [packageSales, setPackageSales] = useState<PackageSale[]>([]);
+  const [packageCount, setPackageCount] = useState(0);
+
+  // Fetch test package revenue
+  useEffect(() => {
+    async function fetchPackageRevenue() {
+      const { data } = await supabase
+        .from('test_credits')
+        .select('id, total_credits, package_id, test_packages(name, price, slug)')
+        .eq('origin', 'purchase');
+
+      if (!data) return;
+
+      const salesMap: Record<string, PackageSale> = {};
+      let total = 0;
+
+      data.forEach((credit: Record<string, unknown>) => {
+        const pkg = credit.test_packages as Record<string, unknown> | null;
+        if (!pkg) return;
+        const price = (pkg.price as number) ?? 0;
+        const name = (pkg.name as string) ?? 'Pacote desconhecido';
+        total += price;
+        if (!salesMap[name]) {
+          salesMap[name] = { packageName: name, count: 0, revenue: 0 };
+        }
+        salesMap[name].count += 1;
+        salesMap[name].revenue += price;
+      });
+
+      setPackageRevenue(Math.round(total * 100) / 100);
+      setPackageCount(data.length);
+      setPackageSales(Object.values(salesMap).sort((a, b) => b.revenue - a.revenue));
+    }
+    fetchPackageRevenue();
+  }, []);
 
   const kpis = useMemo(() => {
     const active = subscriptions.filter(s => s.status === 'active');
@@ -71,7 +115,9 @@ export default function BillingDashboard() {
 
   const cards = [
     { label: 'MRR (Receita Mensal Recorrente)', value: formatBRL(kpis.mrr), icon: DollarSign, color: 'text-green-600' },
+    { label: 'Receita de Pacotes', value: formatBRL(packageRevenue), icon: Package, color: 'text-purple-600' },
     { label: 'Assinaturas Ativas', value: kpis.activeCount.toString(), icon: Users, color: 'text-blue-600' },
+    { label: 'Pacotes Vendidos', value: packageCount.toString(), icon: Package, color: 'text-purple-600' },
     { label: 'Em Trial', value: kpis.trialCount.toString(), icon: RefreshCw, color: 'text-cyan-600' },
     { label: 'Canceladas', value: kpis.cancelledCount.toString(), icon: XCircle, color: 'text-red-600' },
     { label: 'Pagamento Pendente', value: kpis.pastDueCount.toString(), icon: TrendingDown, color: 'text-yellow-600' },
@@ -88,7 +134,7 @@ export default function BillingDashboard() {
           description="Métricas de faturamento, receita recorrente e acompanhamento financeiro da plataforma."
           howItWorks={[
             'Métricas financeiras: receita, assinaturas ativas e inadimplência',
-            'Gráficos mostram evolução da receita ao longo do tempo',
+            'Receita de Pacotes mostra o total de compras avulsas de testes',
             'Acompanhe taxa de conversão de trials para pagantes',
           ]}
         />
@@ -102,7 +148,7 @@ export default function BillingDashboard() {
         ) : (
           <>
             {/* KPI Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {cards.map((card, idx) => {
                 const Icon = card.icon;
                 return (
@@ -123,35 +169,73 @@ export default function BillingDashboard() {
               })}
             </div>
 
-            {/* Revenue by plan */}
-            <div className="bg-card rounded-xl p-6 shadow-soft">
-              <h2 className="text-lg font-bold text-foreground mb-4">Receita por Plano</h2>
-              <div className="space-y-3">
-                {Object.entries(kpis.revenueByPlan)
-                  .sort(([, a], [, b]) => b - a)
-                  .map(([name, revenue]) => {
-                    const maxRevenue = Math.max(...Object.values(kpis.revenueByPlan), 1);
-                    const pct = (revenue / maxRevenue) * 100;
+            {/* Revenue sections */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Revenue by plan */}
+              <div className="bg-card rounded-xl p-6 shadow-soft">
+                <h2 className="text-lg font-bold text-foreground mb-4">Receita por Plano</h2>
+                <div className="space-y-3">
+                  {Object.entries(kpis.revenueByPlan)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([name, revenue]) => {
+                      const maxRevenue = Math.max(...Object.values(kpis.revenueByPlan), 1);
+                      const pct = (revenue / maxRevenue) * 100;
+                      return (
+                        <div key={name} className="space-y-1">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="font-medium text-foreground">{name}</span>
+                            <span className="text-muted-foreground">{formatBRL(revenue)}</span>
+                          </div>
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  {Object.keys(kpis.revenueByPlan).length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Nenhuma receita de planos registrada.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Revenue by package */}
+              <div className="bg-card rounded-xl p-6 shadow-soft">
+                <h2 className="text-lg font-bold text-foreground mb-4">Vendas de Pacotes</h2>
+                <div className="space-y-3">
+                  {packageSales.map((sale) => {
+                    const maxRevenue = Math.max(...packageSales.map(s => s.revenue), 1);
+                    const pct = (sale.revenue / maxRevenue) * 100;
                     return (
-                      <div key={name} className="space-y-1">
+                      <div key={sale.packageName} className="space-y-1">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="font-medium text-foreground">{name}</span>
-                          <span className="text-muted-foreground">{formatBRL(revenue)}</span>
+                          <span className="font-medium text-foreground">
+                            {sale.packageName}
+                            <span className="text-xs text-muted-foreground ml-2">
+                              ({sale.count} {sale.count === 1 ? 'venda' : 'vendas'})
+                            </span>
+                          </span>
+                          <span className="text-muted-foreground">{formatBRL(sale.revenue)}</span>
                         </div>
                         <div className="h-2 bg-muted rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full transition-all"
+                            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
                             style={{ width: `${pct}%` }}
                           />
                         </div>
                       </div>
                     );
                   })}
-                {Object.keys(kpis.revenueByPlan).length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhuma receita registrada ainda.
-                  </p>
-                )}
+                  {packageSales.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Nenhuma venda de pacote registrada.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </>
