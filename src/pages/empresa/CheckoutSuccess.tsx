@@ -4,10 +4,11 @@
  */
 
 import { useSearchParams, Link } from 'react-router-dom';
-import { CheckCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle, ArrowRight, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import { ConfettiTrigger } from '@/components/ui/confetti';
 
 export default function CheckoutSuccess() {
   const [searchParams] = useSearchParams();
@@ -15,6 +16,7 @@ export default function CheckoutSuccess() {
 
   return (
     <DashboardLayout userType="company">
+      <ConfettiTrigger trigger={true} variant="explosion" />
       <div className="flex items-center justify-center min-h-[60vh]">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -30,21 +32,22 @@ export default function CheckoutSuccess() {
               Assinatura ativada!
             </h1>
             <p className="text-muted-foreground">
-              Seu plano <strong>{planName}</strong> esta ativo. Agora voce tem acesso completo
+              Seu plano <strong>{planName}</strong> está ativo. Agora você tem acesso completo
               a todas as funcionalidades do seu plano.
             </p>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
             <Button asChild size="lg">
               <Link to="/empresa" className="gap-2">
                 Ir para o Dashboard
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
-            <Button variant="ghost" asChild size="sm">
-              <Link to="/empresa/configuracoes">
-                Ver detalhes da assinatura
+            <Button variant="outline" asChild size="lg">
+              <Link to="/empresa/meu-plano" className="gap-2">
+                <CreditCard className="w-4 h-4" />
+                Ver detalhes do plano
               </Link>
             </Button>
           </div>

@@ -164,7 +164,7 @@ export default function MyPlan() {
         {/* Actions */}
         <div className="flex flex-wrap gap-3">
           <Button asChild variant="default" size="sm" className="gap-2">
-            <Link to="/planos">
+            <Link to="/empresa/pacotes">
               <ArrowUp className="w-4 h-4" />
               Fazer Upgrade
             </Link>
@@ -172,7 +172,7 @@ export default function MyPlan() {
           {status === 'active' && (
             <>
               <Button variant="outline" size="sm" className="gap-2" asChild>
-                <Link to="/planos">
+                <Link to="/empresa/pacotes">
                   <ArrowDown className="w-4 h-4" />
                   Fazer Downgrade
                 </Link>
