@@ -26,6 +26,7 @@ const ChatbotDashboard = lazy(() => import('./custom/ChatbotDashboard'));
 const LLMTestPlayground = lazy(() => import('./custom/LLMTestPlayground'));
 const EvolutionPanel = lazy(() => import('./custom/EvolutionPanel'));
 const ResendPanel = lazy(() => import('./custom/ResendPanel'));
+const StripePanel = lazy(() => import('./custom/StripePanel'));
 
 interface ConfigContentProps {
   category: ConfigCategory;
@@ -146,6 +147,26 @@ export function ConfigContent({
         }
       >
         <ResendPanel
+          values={values}
+          onValueChange={onValueChange}
+          onSave={onSave}
+        />
+      </Suspense>
+    );
+  }
+
+  if (subcategory.customComponent === 'StripePanel') {
+    return (
+      <Suspense
+        fallback={
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </CardContent>
+          </Card>
+        }
+      >
+        <StripePanel
           values={values}
           onValueChange={onValueChange}
           onSave={onSave}
