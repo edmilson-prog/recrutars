@@ -143,30 +143,11 @@ export class MessagesServiceSupabase implements IMessagesService {
     companyId: string,
     jobId?: string,
   ): Promise<Conversation> {
-    // Check for existing conversation
-    let query = supabase
-      .from('conversations')
-      .select(CONVERSATION_SELECT)
-      .eq('candidate_id', candidateId)
-      .eq('company_id', companyId);
-
-    if (jobId) {
-      query = query.eq('job_id', jobId);
-    }
-
-    const { data: existing } = await query.maybeSingle();
-
-    if (existing) return this.mapConversation(existing);
-
-    const { data, error } = await supabase
-      .from('conversations')
-      .insert({
-        candidate_id: candidateId,
-        company_id: companyId,
-        job_id: jobId ?? null,
-      })
-      .select(CONVERSATION_SELECT)
-      .single();
+    const { data, error } = await supabase.rpc('get_or_create_conversation', {
+      p_candidate_id: candidateId,
+      p_company_id: companyId,
+      p_job_id: jobId ?? null,
+    });
 
     if (error) throw error;
 
