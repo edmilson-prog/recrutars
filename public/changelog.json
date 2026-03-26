@@ -1,12 +1,72 @@
 {
   "versions": [
     {
+      "version": "1.50.0",
+      "codename": "Keyring",
+      "type": "minor",
+      "releaseDate": "2026-03-26",
+      "description": "Painel customizado do Stripe nas configurações com agrupamento por ambiente, exibição parcial de chaves de API e botão de teste de conexão. Correção de erro ao enviar mensagem para candidatos.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Painel customizado de configuração do Stripe com abas Teste/Produção",
+            "Exibição parcial de chaves de API (início e final visíveis, meio oculto)",
+            "Botão 'Testar Conexão' do Stripe com indicador de status",
+            "Banner contextual de ambiente ativo (teste ou produção)"
+          ],
+          "details": {
+            "0": {
+              "description": "As configurações do Stripe foram reorganizadas em um painel dedicado com duas abas: 'Teste' e 'Produção'. Agora é fácil identificar qual ambiente está ativo e gerenciar as chaves de cada um separadamente, sem confusão.",
+              "files": ["src/components/settings/custom/StripePanel.tsx", "src/data/settingsConfig.ts", "src/components/settings/ConfigContent.tsx"],
+              "routes": ["/admin/configuracoes"]
+            },
+            "1": {
+              "description": "As chaves de API do Stripe agora mostram o início e o final do valor (por exemplo, 'pk_test...m4Kz'), permitindo ao administrador identificar qual chave está cadastrada sem expor o valor completo. Para editar, basta clicar no botão de edição ao lado.",
+              "files": ["src/components/settings/custom/StripePanel.tsx"],
+              "routes": ["/admin/configuracoes"]
+            },
+            "2": {
+              "description": "Um novo botão permite testar se a conexão com o Stripe está funcionando corretamente. O resultado aparece na tela com indicador colorido: verde para conectado, vermelho para erro, amarelo para não testado.",
+              "files": ["src/components/settings/custom/StripePanel.tsx"],
+              "routes": ["/admin/configuracoes"]
+            },
+            "3": {
+              "description": "Um aviso visual no topo do painel indica claramente se o sistema está usando o ambiente de teste (nenhuma cobrança real) ou de produção (cobranças reais habilitadas), evitando configurações acidentais.",
+              "files": ["src/components/settings/custom/StripePanel.tsx"],
+              "routes": ["/admin/configuracoes"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Erro 403 ao enviar mensagem para candidato via botão 'Enviar Mensagem'",
+            "Animação de sucesso, redirecionamento e data de cobrança no checkout"
+          ],
+          "details": {
+            "0": {
+              "description": "Ao clicar em 'Enviar Mensagem' no perfil de um candidato, o sistema apresentava um erro e não conseguia abrir a conversa. Agora a conversa é criada corretamente, inclusive quando o administrador está visualizando como outra empresa.",
+              "files": ["src/services/messages/messagesService.supabase.ts", "sql/migrations/079_get_or_create_conversation_rpc.sql"],
+              "routes": ["/empresa/mensagens", "/empresa/candidatos"]
+            },
+            "1": {
+              "description": "Após concluir uma compra, a animação de confirmação, o redirecionamento para a página correta e a exibição da data de cobrança foram ajustados para funcionar corretamente em todos os cenários.",
+              "files": ["src/pages/empresa/Packages.tsx"],
+              "routes": ["/empresa/pacotes"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.49.0",
       "codename": "Fulfillment",
       "type": "minor",
       "releaseDate": "2026-03-25",
       "description": "Pagamento automático via webhook do Stripe, integração de e-mail com Resend, agendamento automático de retestes, redesign da aba Meu Plano e sub-abas para testes arquivados.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

@@ -13,6 +13,8 @@ export interface AdminNotificationMetadata {
   userName?: string;
   userEmail?: string;
   userType?: string;
+  candidateId?: string;
+  companyId?: string;
   companyName?: string;
   jobId?: string;
   jobTitle?: string;
