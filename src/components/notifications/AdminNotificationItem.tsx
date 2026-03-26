@@ -13,7 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { AdminNotification, AdminNotificationType } from '@/types/adminNotifications';
-import { formatTimeAgo } from '@/lib/notificationHelpers';
+import { formatTimeAgo, resolveAdminNotificationUrl } from '@/lib/notificationHelpers';
 
 interface AdminNotificationItemProps {
   notification: AdminNotification;
@@ -89,7 +89,7 @@ export function AdminNotificationItem({
 
   const handleClick = () => {
     onRead(notification.id);
-    navigate(notification.actionUrl);
+    navigate(resolveAdminNotificationUrl(notification));
   };
 
   const { metadata } = notification;

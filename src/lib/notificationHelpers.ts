@@ -4,6 +4,31 @@
  * during the Supabase migration.
  */
 
+import type { AdminNotification } from '@/types/adminNotifications';
+
+/** Resolve deep-link URL for admin notifications based on type + metadata */
+export function resolveAdminNotificationUrl(notification: AdminNotification): string {
+  const { type, metadata, actionUrl } = notification;
+
+  switch (type) {
+    case 'new_candidate':
+      if (metadata.candidateId) return `/admin/candidatos/${metadata.candidateId}`;
+      break;
+    case 'new_company':
+      if (metadata.companyId) return `/admin/empresas/${metadata.companyId}`;
+      break;
+    case 'job_pending_moderation':
+      if (metadata.jobId) return `/admin/vagas/${metadata.jobId}`;
+      break;
+    case 'new_ticket':
+    case 'ticket_reply':
+      if (metadata.ticketId) return `/admin/helpdesk/tickets/${metadata.ticketId}`;
+      break;
+  }
+
+  return actionUrl;
+}
+
 /** Format a date string as relative time in Portuguese */
 export function formatTimeAgo(dateStr: string): string {
   const date = new Date(dateStr);
