@@ -827,6 +827,7 @@ export const adminSettingsCategories: ConfigCategory[] = [
         name: 'Stripe',
         description: 'Gateway de pagamento Stripe para assinaturas',
         order: 3,
+        customComponent: 'StripePanel',
         fields: [
           {
             id: 'stripe-environment',
