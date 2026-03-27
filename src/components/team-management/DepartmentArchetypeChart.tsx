@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { TeamMember, Department } from '@/types/teamManagement';
+import { getArchetypeDisplayName } from '@/data/gaugeProArchetypes';
 
 /** PRD-090: Filter members eligible for metrics. */
 function isEligibleForMetrics(m: TeamMember): boolean {
@@ -46,10 +47,10 @@ export default function DepartmentArchetypeChart({
   departments,
 }: DepartmentArchetypeChartProps) {
   const { chartData, archetypeList, archetypeColors } = useMemo(() => {
-    // Collect all unique archetypes
+    // Collect all unique archetypes (translated to Portuguese)
     const archetypeSet = new Set<string>();
     members.forEach((m) => {
-      if (m.archetype) archetypeSet.add(m.archetype);
+      if (m.archetype) archetypeSet.add(getArchetypeDisplayName(m.archetype));
     });
     const allArchetypes = Array.from(archetypeSet).sort();
 
@@ -66,7 +67,9 @@ export default function DepartmentArchetypeChart({
         department: dept.name,
       };
       allArchetypes.forEach((arch) => {
-        row[arch] = deptMembers.filter((m) => m.archetype === arch).length;
+        row[arch] = deptMembers.filter(
+          (m) => m.archetype && getArchetypeDisplayName(m.archetype) === arch
+        ).length;
       });
       return row;
     });
@@ -82,11 +85,11 @@ export default function DepartmentArchetypeChart({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Distribuicao por Departamento</CardTitle>
+          <CardTitle className="text-base">Distribuição por Departamento</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground text-center py-8">
-            Nenhum dado de arquetipo disponivel.
+            Nenhum dado de arquétipo disponível.
           </p>
         </CardContent>
       </Card>
@@ -96,7 +99,7 @@ export default function DepartmentArchetypeChart({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Distribuicao por Departamento</CardTitle>
+        <CardTitle className="text-base">Distribuição por Departamento</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>

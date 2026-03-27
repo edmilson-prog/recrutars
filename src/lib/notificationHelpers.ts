@@ -5,6 +5,7 @@
  */
 
 import type { AdminNotification } from '@/types/adminNotifications';
+import type { CompanyNotification } from '@/types/companyNotifications';
 
 /** Resolve deep-link URL for admin notifications based on type + metadata */
 export function resolveAdminNotificationUrl(notification: AdminNotification): string {
@@ -23,6 +24,31 @@ export function resolveAdminNotificationUrl(notification: AdminNotification): st
     case 'new_ticket':
     case 'ticket_reply':
       if (metadata.ticketId) return `/admin/helpdesk/tickets/${metadata.ticketId}`;
+      break;
+  }
+
+  return actionUrl;
+}
+
+/** Resolve deep-link URL for company notifications based on type + metadata */
+export function resolveCompanyNotificationUrl(notification: CompanyNotification): string {
+  const { type, metadata, actionUrl } = notification;
+
+  switch (type) {
+    case 'new_application':
+    case 'invite_accepted':
+    case 'invite_declined':
+    case 'test_completed':
+    case 'interview_confirmed':
+    case 'interview_suggested':
+    case 'interview_cancelled':
+      if (metadata.candidateId) return `/empresa/candidatos/${metadata.candidateId}`;
+      break;
+    case 'new_message':
+      return '/empresa/mensagens';
+    case 'job_expiring':
+    case 'job_expired':
+      if (metadata.jobId) return `/empresa/vagas/${metadata.jobId}`;
       break;
   }
 
