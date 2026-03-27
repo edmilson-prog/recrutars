@@ -1,12 +1,47 @@
 {
   "versions": [
     {
+      "version": "1.50.1",
+      "codename": "Keyring",
+      "type": "patch",
+      "releaseDate": "2026-03-26",
+      "description": "Correção nas notificações do administrador: ao clicar em uma notificação, o sistema agora abre diretamente a página de detalhes do candidato, empresa, vaga ou ticket correspondente, em vez de redirecionar para a lista genérica.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Notificações do admin agora navegam para a página de detalhes do item específico",
+            "Correção do identificador usado nas notificações de candidatos e empresas",
+            "Atualização retroativa de notificações existentes com os links corretos"
+          ],
+          "details": {
+            "0": {
+              "description": "Ao clicar em uma notificação no painel do administrador (por exemplo, 'Novo candidato cadastrado' ou 'Teste Gauge-Pro concluído'), o sistema redirecionava para a lista geral de candidatos. Agora o clique abre diretamente a página de detalhes do candidato, empresa, vaga ou ticket mencionado na notificação.",
+              "files": ["src/lib/notificationHelpers.ts", "src/components/notifications/AdminNotificationItem.tsx"],
+              "routes": ["/admin/candidatos/:id", "/admin/empresas/:id", "/admin/vagas/:id", "/admin/helpdesk/tickets/:id"]
+            },
+            "1": {
+              "description": "As notificações de novos cadastros estavam usando um identificador interno incorreto, fazendo com que o link levasse a uma página de 'Candidato não encontrado'. Os alertas automáticos agora usam o identificador correto, garantindo que o administrador veja o perfil certo ao clicar.",
+              "files": ["sql/migrations/080_fix_admin_notification_action_urls.sql"],
+              "routes": ["/admin/candidatos/:id", "/admin/empresas/:id"]
+            },
+            "2": {
+              "description": "Todas as notificações já existentes no sistema foram corrigidas automaticamente para apontar para a página correta. Não é necessário nenhuma ação do administrador.",
+              "files": ["sql/migrations/080_fix_admin_notification_action_urls.sql"],
+              "routes": []
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.50.0",
       "codename": "Keyring",
       "type": "minor",
       "releaseDate": "2026-03-26",
       "description": "Painel customizado do Stripe nas configurações com agrupamento por ambiente, exibição parcial de chaves de API e botão de teste de conexão. Correção de erro ao enviar mensagem para candidatos.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

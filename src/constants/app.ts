@@ -4,7 +4,7 @@
  * PRD-044: Pagina "Sobre" e Tooltip de Versao
  */
 
-export const APP_VERSION = "1.50.0";
+export const APP_VERSION = "1.50.1";
 export const APP_CODENAME = "Keyring";
 export const APP_NAME = "RecrutaRS";
 export const APP_COMPANY = "AILA - Sistemas Inteligentes";
