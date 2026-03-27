@@ -1,12 +1,54 @@
 {
   "versions": [
     {
+      "version": "1.51.0",
+      "codename": "Beacon",
+      "type": "minor",
+      "releaseDate": "2026-03-27",
+      "description": "Nomes de arquétipos comportamentais agora aparecem em português no painel de equipes, e as notificações da empresa abrem diretamente o perfil do candidato ou a vaga correspondente.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Notificações da empresa agora abrem diretamente o perfil do candidato ou detalhe da vaga"
+          ],
+          "details": {
+            "0": {
+              "description": "Ao clicar em uma notificação como 'Nova candidatura recebida' ou 'Teste comportamental concluído', o sistema agora abre diretamente a página do candidato mencionado, em vez de redirecionar para a lista genérica. O mesmo vale para notificações de vagas, que agora abrem a vaga específica.",
+              "files": ["src/lib/notificationHelpers.ts", "src/components/notifications/CompanyNotificationItem.tsx"],
+              "routes": ["/empresa/candidatos/:id", "/empresa/vagas/:id"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Nomes de arquétipos comportamentais traduzidos de inglês para português no painel de equipes",
+            "Correção de acentuação em títulos e mensagens do gráfico de distribuição por departamento"
+          ],
+          "details": {
+            "0": {
+              "description": "No painel de gestão de equipes, o card 'Arquétipo Predominante' e os gráficos de distribuição mostravam o nome do perfil comportamental em inglês (por exemplo, 'counselor' em vez de 'O Conselheiro'). Agora todos os nomes aparecem corretamente em português.",
+              "files": ["src/components/team-management/TeamDashboard.tsx", "src/components/team-management/ArchetypeDistributionChart.tsx", "src/components/team-management/DepartmentArchetypeChart.tsx"],
+              "routes": ["/empresa/equipe"]
+            },
+            "1": {
+              "description": "Títulos e mensagens do gráfico de distribuição de arquétipos por departamento estavam sem acentuação correta (por exemplo, 'Distribuicao' em vez de 'Distribuição'). Os textos foram corrigidos.",
+              "files": ["src/components/team-management/DepartmentArchetypeChart.tsx"],
+              "routes": ["/empresa/equipe"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.50.1",
       "codename": "Keyring",
       "type": "patch",
       "releaseDate": "2026-03-26",
       "description": "Correção nas notificações do administrador: ao clicar em uma notificação, o sistema agora abre diretamente a página de detalhes do candidato, empresa, vaga ou ticket correspondente, em vez de redirecionar para a lista genérica.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
