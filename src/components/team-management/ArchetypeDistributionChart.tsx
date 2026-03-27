@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getArchetypeDisplayName } from "@/data/gaugeProArchetypes";
 
 const COLORS = [
   "#0891b2",
@@ -91,7 +92,9 @@ export default function ArchetypeDistributionChart({
     const counts: Record<string, number> = {};
 
     members.forEach((member) => {
-      const archetype = member.archetype || "Não definido";
+      const archetype = member.archetype
+        ? getArchetypeDisplayName(member.archetype)
+        : "Não definido";
       counts[archetype] = (counts[archetype] || 0) + 1;
     });
 

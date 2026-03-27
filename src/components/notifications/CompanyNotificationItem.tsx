@@ -20,7 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { CompanyNotification, CompanyNotificationType } from '@/types/companyNotifications';
-import { formatTimeAgo } from '@/lib/notificationHelpers';
+import { formatTimeAgo, resolveCompanyNotificationUrl } from '@/lib/notificationHelpers';
 
 interface CompanyNotificationItemProps {
   notification: CompanyNotification;
@@ -95,7 +95,7 @@ export function CompanyNotificationItem({
 
   const handleClick = () => {
     onRead(notification.id);
-    navigate(notification.actionUrl);
+    navigate(resolveCompanyNotificationUrl(notification));
   };
 
   const { metadata } = notification;

@@ -6,6 +6,7 @@ import { TeamAlertsList } from "./TeamAlertsList";
 import { ManagerRecommendations } from "./ManagerRecommendations";
 import ArchetypeDistributionChart from "./ArchetypeDistributionChart";
 import type { TeamMember, Department, TeamAlert } from "@/types/teamManagement";
+import { getArchetypeDisplayName } from "@/data/gaugeProArchetypes";
 
 interface TeamDashboardProps {
   members: TeamMember[];
@@ -41,10 +42,14 @@ export default function TeamDashboard({
       }
     });
 
-    const predominantArchetype =
+    const predominantArchetypeId =
       Object.entries(archetypeCounts).sort(
         ([, a], [, b]) => b - a
-      )[0]?.[0] ?? "N/A";
+      )[0]?.[0] ?? null;
+
+    const predominantArchetype = predominantArchetypeId
+      ? getArchetypeDisplayName(predominantArchetypeId)
+      : "N/A";
 
     const retestPending = members.filter(
       (m) => m.gaugeStatus === "retest_pending"
