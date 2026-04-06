@@ -60,7 +60,7 @@ import { ScheduleInterviewModal } from '@/components/empresa/ScheduleInterviewMo
 import { useCompanyInterviews } from '@/hooks/useCompanyInterviews';
 import { useCandidateActivity, type ActivityType } from '@/hooks/useCandidateActivity';
 import { getOrGenerateIdealProfile, gaugeProToBehavioralProfile } from '@/lib/behavioralProfiles';
-import { useJobs } from '@/hooks/useJobsQuery';
+import { useJobsByCompany } from '@/hooks/useJobsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useApplications, useApplicationNotes, useAddApplicationNote, useCreateApplication } from '@/hooks/useApplicationsQuery';
 import { useCreateConversation, useSendMessage } from '@/hooks/useMessagesQuery';
@@ -82,6 +82,9 @@ import { MatchBreakdown } from '@/components/match/MatchBreakdown';
 import { MatchStrengths } from '@/components/match/MatchStrengths';
 import { MatchOpportunities } from '@/components/match/MatchOpportunities';
 import { MatchMethodologyModal } from '@/components/match/MatchMethodologyModal';
+import { JobMatchTabs } from '@/components/match/JobMatchTabs';
+import { MatchOverviewChart } from '@/components/match/MatchOverviewChart';
+import type { MatchResult } from '@/types/disc';
 import { cn } from '@/lib/utils';
 import { getCandidateDisplayName, getCandidateInitials } from '@/lib/candidateDisplayName';
 
@@ -204,8 +207,7 @@ export default function CandidateProfile() {
   const sendMessageMutation = useSendMessage();
 
   // Fetch data from service layer
-  const { data: jobsResult } = useJobs();
-  const allJobs = jobsResult?.data ?? [];
+  const { data: allJobs = [] } = useJobsByCompany(companyId);
   const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
   const allCandidates = candidatesResult?.data ?? [];
   const { data: applicationsResult } = useApplications(undefined, { page: 1, pageSize: 1000 });
@@ -220,9 +222,9 @@ export default function CandidateProfile() {
   // PRD-073: Professional profile + highlights
   const { data: profile } = useProfile(candidate?.id || '');
 
-  // Get company jobs (company-1)
+  // Get company active jobs
   const companyJobs = useMemo(
-    () => allJobs.filter((job) => job.companyId === companyId && job.status === 'active'),
+    () => allJobs.filter((job) => job.status === 'active'),
     [allJobs]
   );
 
@@ -256,6 +258,66 @@ export default function CandidateProfile() {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [serverNotes, localNotes]);
 
+  // PRD-035: Cálculo dinâmico de match (com perfil Gauge-Pro real)
+  const candidateBehavioralProfile = gaugeProResult
+    ? gaugeProToBehavioralProfile(gaugeProResult.finalScores)
+    : undefined;
+
+  // Compute match results for ALL active jobs
+  const allMatchResults = useMemo(() => {
+    const results = new Map<string, MatchResult>();
+    if (!candidate) return results;
+    companyJobs.forEach((job) => {
+      const ideal = getOrGenerateIdealProfile(job);
+      const result = calculateMatchBreakdown(candidate, job, ideal, candidateBehavioralProfile);
+      results.set(job.id, result);
+    });
+    return results;
+  }, [candidate, companyJobs, candidateBehavioralProfile]);
+
+  // Match scores map for JobMatchTabs
+  const matchScoresMap = useMemo(() => {
+    const map = new Map<string, number>();
+    allMatchResults.forEach((result, jobId) => {
+      map.set(jobId, result.totalScore);
+    });
+    return map;
+  }, [allMatchResults]);
+
+  // Job scores for MatchOverviewChart
+  const jobScoresForChart = useMemo(() =>
+    companyJobs.map((job) => ({
+      jobId: job.id,
+      title: job.title,
+      score: allMatchResults.get(job.id)?.totalScore ?? 0,
+    })),
+    [companyJobs, allMatchResults]
+  );
+
+  // Determine initial selected job: URL param > best score > first job
+  const bestJobId = useMemo(() => {
+    let best = '';
+    let bestScore = -1;
+    allMatchResults.forEach((result, jobId) => {
+      if (result.totalScore > bestScore) {
+        bestScore = result.totalScore;
+        best = jobId;
+      }
+    });
+    return best;
+  }, [allMatchResults]);
+
+  const initialJobId = jobIdFromUrl && companyJobs.find(j => j.id === jobIdFromUrl)
+    ? jobIdFromUrl
+    : bestJobId || companyJobs[0]?.id || '';
+
+  const [selectedMatchJobId, setSelectedMatchJobId] = useState<string>(initialJobId);
+
+  // Active match result for selected job
+  const activeMatchJob = companyJobs.find((j) => j.id === selectedMatchJobId) ?? companyJobs[0];
+  const matchResult = activeMatchJob ? (allMatchResults.get(selectedMatchJobId) ?? null) : null;
+  const matchScore = matchResult?.totalScore || 0;
+
   if (!candidate) {
     return (
       <DashboardLayout userType="company">
@@ -273,20 +335,6 @@ export default function CandidateProfile() {
       </DashboardLayout>
     );
   }
-
-  // PRD-035: Cálculo dinâmico de match (com perfil Gauge-Pro real)
-  // Usa a vaga do query param (vindo do kanban) ou fallback para primeira vaga
-  const firstJob = (jobIdFromUrl
-    ? companyJobs.find(j => j.id === jobIdFromUrl)
-    : null) || companyJobs[0];
-  const idealProfile = firstJob ? getOrGenerateIdealProfile(firstJob) : undefined;
-  const candidateBehavioralProfile = gaugeProResult
-    ? gaugeProToBehavioralProfile(gaugeProResult.finalScores)
-    : undefined;
-  const matchResult = firstJob
-    ? calculateMatchBreakdown(candidate, firstJob, idealProfile, candidateBehavioralProfile)
-    : null;
-  const matchScore = matchResult?.totalScore || 0;
 
   const handleOpenInviteModal = (job: Job) => {
     setSelectedJob(job);
@@ -464,7 +512,7 @@ export default function CandidateProfile() {
                         className={`${getMatchScoreColor(matchScore).bg} ${getMatchScoreColor(matchScore).text} border ${getMatchScoreColor(matchScore).border}`}
                       >
                         <Star className="w-3 h-3 mr-1" />
-                        {matchScore}% match com suas vagas
+                        {matchScore}% match com {activeMatchJob?.title || 'suas vagas'}
                       </Badge>
                     )}
                     {/* PRD-030: Botão de favoritar */}
@@ -928,28 +976,83 @@ export default function CandidateProfile() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* PRD-035: Match Breakdown */}
-            {matchResult && (
+            {/* PRD-035: Match Breakdown with job selector */}
+            {companyJobs.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
                 className="space-y-2"
               >
-                <MatchBreakdown
-                  totalScore={matchResult.totalScore}
-                  categories={matchResult.categories}
-                  title={`Match com ${firstJob?.title || 'vaga'}`}
-                />
+                {/* Job selector (pills or dropdown) */}
+                {companyJobs.length > 1 && (
+                  <JobMatchTabs
+                    jobs={companyJobs}
+                    selectedJobId={selectedMatchJobId}
+                    matchScores={matchScoresMap}
+                    onJobChange={setSelectedMatchJobId}
+                    className="mb-3"
+                  />
+                )}
+
+                {matchResult && (
+                  <div key={selectedMatchJobId} aria-live="polite">
+                    <MatchBreakdown
+                      totalScore={matchResult.totalScore}
+                      categories={matchResult.categories}
+                      title={`Match com ${activeMatchJob?.title || 'vaga'}`}
+                    />
+                  </div>
+                )}
                 <div className="flex justify-end">
                   <MatchMethodologyModal />
                 </div>
               </motion.div>
             )}
 
+            {companyJobs.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <Briefcase className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Nenhuma vaga ativa para comparar
+                    </p>
+                    <Button size="sm" variant="outline" asChild>
+                      <Link to="/empresa/vagas/nova">Criar vaga</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Match Overview Chart */}
+            {companyJobs.length > 1 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12 }}
+              >
+                <Card>
+                  <CardContent className="p-4">
+                    <MatchOverviewChart
+                      jobScores={jobScoresForChart}
+                      activeJobId={selectedMatchJobId}
+                      onJobClick={setSelectedMatchJobId}
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
             {/* PRD-035: Strengths and Opportunities */}
             {matchResult && matchResult.strengths.length > 0 && (
               <motion.div
+                key={`strengths-${selectedMatchJobId}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
@@ -964,6 +1067,7 @@ export default function CandidateProfile() {
 
             {matchResult && matchResult.opportunities.length > 0 && (
               <motion.div
+                key={`opportunities-${selectedMatchJobId}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
