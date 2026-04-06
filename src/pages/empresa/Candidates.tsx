@@ -106,6 +106,8 @@ import type { ExportContext } from '@/types/export';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCreateApplication } from '@/hooks/useApplicationsQuery';
 import { useCreateConversation, useSendMessage } from '@/hooks/useMessagesQuery';
+import { JobMatchSelector } from '@/components/match/JobMatchSelector';
+import type { MatchResult } from '@/types/disc';
 
 // Filter options
 const legacyBehavioralProfiles = ['Executor', 'Influenciador', 'Analítico', 'Estável'];
@@ -130,6 +132,39 @@ const getExperienceRange = (years: number): string => {
 };
 
 // PRD-035: Cálculo dinâmico de match usando matchCalculator
+interface CandidateJobScores {
+  bestScore: number;
+  bestJobId: string;
+  allScores: { jobId: string; title: string; score: number }[];
+}
+
+const calculateAllJobScores = (
+  candidate: Candidate,
+  jobs: Job[],
+  behavioralTests: Array<{ candidateId: string; status: string; result?: { dominance: number; influence: number; steadiness: number; compliance: number } | null }> = [],
+  gaugeResultsByCandidate: Map<string, GaugeProResult> = new Map()
+): CandidateJobScores => {
+  if (jobs.length === 0) return { bestScore: 0, bestJobId: '', allScores: [] };
+
+  const candidateProfile = getCompositeBehavioralProfile(candidate.id, behavioralTests, gaugeResultsByCandidate);
+
+  const allScores = jobs.map((job) => {
+    const idealProfile = getOrGenerateIdealProfile(job);
+    const result = calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile);
+    return { jobId: job.id, title: job.title, score: result.totalScore };
+  });
+
+  // Sort by score descending
+  allScores.sort((a, b) => b.score - a.score);
+
+  return {
+    bestScore: allScores[0]?.score ?? 0,
+    bestJobId: allScores[0]?.jobId ?? '',
+    allScores,
+  };
+};
+
+// Legacy single-score helper (for export modal, comparison, etc.)
 const calculateMatch = (
   candidate: Candidate,
   jobs: Job[],
@@ -137,35 +172,114 @@ const calculateMatch = (
   gaugeResultsByCandidate: Map<string, GaugeProResult> = new Map()
 ): number => {
   if (jobs.length === 0) return 0;
-
   const job = jobs[0];
   const idealProfile = getOrGenerateIdealProfile(job);
   const candidateProfile = getCompositeBehavioralProfile(candidate.id, behavioralTests, gaugeResultsByCandidate);
-  const matchResult = calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile);
-
-  return matchResult.totalScore;
+  return calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile).totalScore;
 };
 
 // Match score ring indicator
-const MatchRing = ({ score }: { score: number }) => {
+const MatchRing = ({ score, label }: { score: number; label?: string }) => {
   const radius = 16;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
   const color = score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : score >= 40 ? 'text-sky-500' : 'text-muted-foreground';
 
   return (
-    <div className="relative w-10 h-10 flex-shrink-0">
-      <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
-        <circle cx="18" cy="18" r={radius} fill="none" stroke="currentColor"
-          className="text-muted/20" strokeWidth="3" />
-        <circle cx="18" cy="18" r={radius} fill="none" stroke="currentColor"
-          className={color} strokeWidth="3"
-          strokeDasharray={circumference} strokeDashoffset={offset}
-          strokeLinecap="round" />
-      </svg>
-      <span className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${color}`}>
-        {score}
-      </span>
+    <div className="flex-shrink-0 text-center" role="img" aria-label={`Compatibilidade ${score}%${label ? ` com ${label}` : ''}`}>
+      <div className="relative w-10 h-10">
+        <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r={radius} fill="none" stroke="currentColor"
+            className="text-muted/20" strokeWidth="3" />
+          <circle cx="18" cy="18" r={radius} fill="none" stroke="currentColor"
+            className={color} strokeWidth="3"
+            strokeDasharray={circumference} strokeDashoffset={offset}
+            strokeLinecap="round" />
+        </svg>
+        <span className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${color}`}>
+          {score}
+        </span>
+      </div>
+      {label && (
+        <span className="block text-[9px] text-muted-foreground truncate max-w-[52px] mt-0.5">
+          {label}
+        </span>
+      )}
+    </div>
+  );
+};
+
+// Mini bars for multi-job scores
+const MiniJobBars = ({
+  allScores,
+  selectedJobId,
+  maxBars = 3,
+}: {
+  allScores: { jobId: string; title: string; score: number }[];
+  selectedJobId: string;
+  maxBars?: number;
+}) => {
+  if (allScores.length === 0) return null;
+
+  const visibleScores = allScores.slice(0, maxBars);
+  const remaining = allScores.length - maxBars;
+
+  return (
+    <div className="hidden md:flex flex-col gap-1 min-w-[180px] max-w-[220px]">
+      {visibleScores.map((item) => {
+        const isHighlighted =
+          selectedJobId === 'best'
+            ? item === allScores[0] // best score is first (already sorted)
+            : item.jobId === selectedJobId;
+        const barColor =
+          item.score >= 80
+            ? 'bg-emerald-500'
+            : item.score >= 60
+              ? 'bg-amber-500'
+              : item.score >= 40
+                ? 'bg-sky-500'
+                : 'bg-muted-foreground';
+        const textColor =
+          item.score >= 80
+            ? 'text-emerald-500'
+            : item.score >= 60
+              ? 'text-amber-500'
+              : item.score >= 40
+                ? 'text-sky-500'
+                : 'text-muted-foreground';
+
+        return (
+          <div
+            key={item.jobId}
+            className={`flex items-center gap-1.5 text-[11px] ${
+              isHighlighted ? 'px-1.5 py-0.5 rounded border border-primary/20 bg-primary/5' : ''
+            }`}
+          >
+            <span
+              className={`w-[72px] text-right truncate flex-shrink-0 ${
+                isHighlighted ? 'text-primary font-medium' : 'text-muted-foreground'
+              }`}
+              title={item.title}
+            >
+              {item.title}
+            </span>
+            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden min-w-[40px]">
+              <div
+                className={`h-full rounded-full ${barColor}`}
+                style={{ width: `${item.score}%` }}
+              />
+            </div>
+            <span className={`w-[30px] text-right font-medium ${textColor}`}>
+              {item.score}%
+            </span>
+          </div>
+        );
+      })}
+      {remaining > 0 && (
+        <span className="text-[10px] text-muted-foreground text-right">
+          +{remaining} vaga{remaining > 1 ? 's' : ''}
+        </span>
+      )}
     </div>
   );
 };
@@ -256,6 +370,9 @@ export default function CompanyCandidates() {
   // Sort order
   const [sortBy, setSortBy] = useState<string>('match');
 
+  // Match job selector
+  const [matchJobId, setMatchJobId] = useState<string>('best');
+
   // PRD-030: Hook de candidatos favoritos
   const { isFavorite, toggleFavorite } = useFavoriteCandidates();
   const createApplicationMutation = useCreateApplication();
@@ -271,13 +388,48 @@ export default function CompanyCandidates() {
   // Job skills set for matching highlight (stores lowercase)
   const jobSkillsSet = useMemo(() => {
     if (companyJobs.length === 0) return new Set<string>();
-    const reqText = companyJobs[0].requirements.join(' ').toLowerCase();
+    const targetJob = matchJobId === 'best'
+      ? companyJobs[0]
+      : companyJobs.find((j) => j.id === matchJobId) ?? companyJobs[0];
+    const reqText = targetJob.requirements.join(' ').toLowerCase();
     return new Set(
       allSkills
         .filter(skill => reqText.includes(skill.toLowerCase()))
         .map(skill => skill.toLowerCase())
     );
-  }, [companyJobs, allSkills]);
+  }, [companyJobs, allSkills, matchJobId]);
+
+  // Pre-compute all job scores for all candidates
+  const candidateScoresMap = useMemo(() => {
+    const map = new Map<string, CandidateJobScores>();
+    allCandidates.forEach((candidate) => {
+      map.set(
+        candidate.id,
+        calculateAllJobScores(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate)
+      );
+    });
+    return map;
+  }, [allCandidates, companyJobs, behavioralTests, gaugeResultsByCandidate]);
+
+  // Helper to get display score for a candidate based on matchJobId
+  const getDisplayScore = (candidateId: string): number => {
+    const scores = candidateScoresMap.get(candidateId);
+    if (!scores) return 0;
+    if (matchJobId === 'best') return scores.bestScore;
+    return scores.allScores.find((s) => s.jobId === matchJobId)?.score ?? 0;
+  };
+
+  // Helper to get the job label for a candidate's ring
+  const getDisplayJobLabel = (candidateId: string): string => {
+    if (matchJobId !== 'best') {
+      const job = companyJobs.find((j) => j.id === matchJobId);
+      return job?.title ?? '';
+    }
+    const scores = candidateScoresMap.get(candidateId);
+    if (!scores || !scores.bestJobId) return '';
+    const job = companyJobs.find((j) => j.id === scores.bestJobId);
+    return job?.title ?? '';
+  };
 
   // Filter candidates (PRD-026: respeita visibilidade)
   const filteredCandidates = allCandidates.filter((candidate) => {
@@ -328,10 +480,7 @@ export default function CompanyCandidates() {
     const sorted = [...filteredCandidates];
     switch (sortBy) {
       case 'match':
-        return sorted.sort((a, b) =>
-          calculateMatch(b, companyJobs, behavioralTests, gaugeResultsByCandidate) -
-          calculateMatch(a, companyJobs, behavioralTests, gaugeResultsByCandidate)
-        );
+        return sorted.sort((a, b) => getDisplayScore(b.id) - getDisplayScore(a.id));
       case 'name':
         return sorted.sort((a, b) =>
           getDisplayName(a).localeCompare(getDisplayName(b), 'pt-BR')
@@ -345,7 +494,8 @@ export default function CompanyCandidates() {
       default:
         return sorted;
     }
-  }, [filteredCandidates, sortBy, companyJobs, behavioralTests, gaugeResultsByCandidate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredCandidates, sortBy, candidateScoresMap, matchJobId]);
 
   // Pagination
   const totalPages = Math.ceil(sortedCandidates.length / pageSize);
@@ -357,7 +507,7 @@ export default function CompanyCandidates() {
   // Reset page when filters, sort, or page size change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, locationFilter, profileFilter, experienceFilter, skillsFilter, sortBy, pageSize]);
+  }, [debouncedSearch, locationFilter, profileFilter, experienceFilter, skillsFilter, sortBy, pageSize, matchJobId]);
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -379,7 +529,7 @@ export default function CompanyCandidates() {
     const withGauge = filteredCandidates.filter(c => gaugeResultsByCandidate.has(c.id)).length;
     const favCount = filteredCandidates.filter(c => isFavorite(c.id)).length;
     const matchScores = filteredCandidates
-      .map(c => calculateMatch(c, companyJobs, behavioralTests, gaugeResultsByCandidate))
+      .map(c => getDisplayScore(c.id))
       .filter(s => s > 0);
     const avgMatch = matchScores.length > 0
       ? Math.round(matchScores.reduce((a, b) => a + b, 0) / matchScores.length)
@@ -391,7 +541,8 @@ export default function CompanyCandidates() {
       { label: 'Match Médio', value: avgMatch > 0 ? `${avgMatch}%` : '—', icon: TrendingUp, iconBg: 'bg-amber-500/10' },
       { label: 'Favoritos', value: favCount, icon: Heart, iconBg: 'bg-rose-500/10' },
     ];
-  }, [filteredCandidates, gaugeResultsByCandidate, companyJobs, behavioralTests, isFavorite]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredCandidates, gaugeResultsByCandidate, companyJobs, behavioralTests, isFavorite, candidateScoresMap, matchJobId]);
 
   // Active filter chips
   const activeFilterChips = useMemo(() => {
@@ -747,6 +898,16 @@ export default function CompanyCandidates() {
               </div>
             )}
 
+            {/* Job match selector */}
+            {companyJobs.length > 0 && (
+              <JobMatchSelector
+                jobs={companyJobs}
+                selectedJobId={matchJobId}
+                onJobChange={setMatchJobId}
+                className="flex-wrap"
+              />
+            )}
+
             {/* Results count + controls */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -754,6 +915,9 @@ export default function CompanyCandidates() {
                   {filteredCandidates.length} candidato
                   {filteredCandidates.length !== 1 ? 's' : ''} encontrado
                   {filteredCandidates.length !== 1 ? 's' : ''}
+                  {matchJobId !== 'best' && companyJobs.find(j => j.id === matchJobId) && (
+                    <span className="text-xs"> · ordenados por match com {companyJobs.find(j => j.id === matchJobId)?.title}</span>
+                  )}
                 </p>
                 <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
                   <SelectTrigger className="w-[100px] h-8 text-xs">
@@ -815,7 +979,9 @@ export default function CompanyCandidates() {
               : 'space-y-4'
             }>
             {paginatedCandidates.map((candidate, index) => {
-              const matchScore = calculateMatch(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate);
+              const candidateScores = candidateScoresMap.get(candidate.id);
+              const matchScore = getDisplayScore(candidate.id);
+              const matchLabel = matchJobId === 'best' ? 'Melhor' : getDisplayJobLabel(candidate.id);
               // PRD-026: Verificar se candidato é anônimo
               const candidateIsAnonymous = isAnonymous(candidate);
               const displayName = getDisplayName(candidate);
@@ -896,9 +1062,9 @@ export default function CompanyCandidates() {
 
                       {/* Name + match ring */}
                       <div className="flex items-center gap-2">
-                        {matchScore > 0 && <MatchRing score={matchScore} />}
+                        {matchScore > 0 && <MatchRing score={matchScore} label={matchLabel} />}
                         <div className="min-w-0">
-                          <Link to={`/empresa/candidatos/${candidate.id}`}>
+                          <Link to={`/empresa/candidatos/${candidate.id}${matchJobId !== 'best' ? `?jobId=${matchJobId}` : candidateScores?.bestJobId ? `?jobId=${candidateScores.bestJobId}` : ''}`}>
                             <h3 className="text-sm font-semibold text-foreground hover:text-primary hover:underline transition-colors truncate">
                               {displayName}
                             </h3>
@@ -963,7 +1129,7 @@ export default function CompanyCandidates() {
                       {/* Actions */}
                       <div className="flex gap-2 w-full mt-1">
                         <Button variant="outline" size="sm" className="flex-1 text-xs" asChild>
-                          <Link to={`/empresa/candidatos/${candidate.id}`}>
+                          <Link to={`/empresa/candidatos/${candidate.id}${matchJobId !== 'best' ? `?jobId=${matchJobId}` : candidateScores?.bestJobId ? `?jobId=${candidateScores.bestJobId}` : ''}`}>
                             Ver perfil
                           </Link>
                         </Button>
@@ -1036,14 +1202,14 @@ export default function CompanyCandidates() {
                         )}
                       </Avatar>
                       {/* Match ring */}
-                      {matchScore > 0 && <MatchRing score={matchScore} />}
+                      {matchScore > 0 && <MatchRing score={matchScore} label={matchLabel} />}
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                         <div>
                           <div className="flex items-center gap-2">
-                            <Link to={`/empresa/candidatos/${candidate.id}`}>
+                            <Link to={`/empresa/candidatos/${candidate.id}${matchJobId !== 'best' ? `?jobId=${matchJobId}` : candidateScores?.bestJobId ? `?jobId=${candidateScores.bestJobId}` : ''}`}>
                               <h3 className="text-xl font-semibold text-foreground hover:text-primary hover:underline transition-colors cursor-pointer">
                                 {displayName}
                               </h3>
@@ -1164,10 +1330,18 @@ export default function CompanyCandidates() {
                       </div>
                     </div>
 
+                    {/* Mini job bars (right side) */}
+                    {candidateScores && candidateScores.allScores.length > 1 && (
+                      <MiniJobBars
+                        allScores={candidateScores.allScores}
+                        selectedJobId={matchJobId}
+                      />
+                    )}
+
                     {/* Actions */}
                     <div className="flex flex-col gap-2 mt-4 md:mt-0">
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/empresa/candidatos/${candidate.id}`}>
+                        <Link to={`/empresa/candidatos/${candidate.id}${matchJobId !== 'best' ? `?jobId=${matchJobId}` : candidateScores?.bestJobId ? `?jobId=${candidateScores.bestJobId}` : ''}`}>
                           Ver perfil
                           <ChevronRight className="w-4 h-4 ml-1" />
                         </Link>
