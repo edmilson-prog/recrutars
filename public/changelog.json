@@ -1,12 +1,66 @@
 {
   "versions": [
     {
+      "version": "1.52.0",
+      "codename": "Crossmatch",
+      "type": "minor",
+      "releaseDate": "2026-04-06",
+      "description": "Match flexível no Banco de Talentos: agora é possível escolher contra qual vaga comparar os candidatos, ver a compatibilidade com todas as vagas simultaneamente e alternar entre vagas no detalhamento do candidato.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Seletor global de vaga no Banco de Talentos com opção 'Melhor match (todas as vagas)'",
+            "Mini barras de compatibilidade multi-vaga nos cards de candidatos",
+            "Abas de seleção de vaga no detalhamento do candidato (pills ou dropdown conforme quantidade)",
+            "Gráfico comparativo entre vagas na sidebar do detalhamento"
+          ],
+          "details": {
+            "0": {
+              "description": "Na tela do Banco de Talentos, agora existe um seletor 'Comparar com' que permite escolher contra qual vaga calcular a compatibilidade dos candidatos. A opção padrão 'Melhor match (todas as vagas)' mostra automaticamente o maior score de cada candidato entre todas as vagas ativas da empresa.",
+              "files": ["src/components/match/JobMatchSelector.tsx", "src/pages/empresa/Candidates.tsx"],
+              "routes": ["/empresa/candidatos"]
+            },
+            "1": {
+              "description": "Cada card de candidato na lista agora exibe pequenas barras horizontais mostrando a compatibilidade com cada vaga da empresa. A vaga com melhor score fica destacada em verde, permitindo uma visão rápida de qual vaga combina mais com cada candidato.",
+              "files": ["src/pages/empresa/Candidates.tsx"],
+              "routes": ["/empresa/candidatos"]
+            },
+            "2": {
+              "description": "Ao acessar o perfil detalhado de um candidato, agora é possível alternar entre as vagas da empresa para ver como o candidato se encaixa em cada uma. Com até 5 vagas, as opções aparecem como botões lado a lado com o percentual visível. Com mais de 5, aparece um menu de seleção.",
+              "files": ["src/components/match/JobMatchTabs.tsx", "src/pages/empresa/CandidateProfile.tsx"],
+              "routes": ["/empresa/candidatos/:id"]
+            },
+            "3": {
+              "description": "No detalhamento do candidato, um novo painel 'Comparativo entre vagas' mostra barras horizontais com o score de compatibilidade de todas as vagas da empresa, ordenadas da maior para a menor. Clicar em uma barra altera automaticamente a vaga selecionada acima.",
+              "files": ["src/components/match/MatchOverviewChart.tsx", "src/pages/empresa/CandidateProfile.tsx"],
+              "routes": ["/empresa/candidatos/:id"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Correção na listagem de vagas do detalhamento do candidato que exibia apenas 2 vagas ao invés de todas"
+          ],
+          "details": {
+            "0": {
+              "description": "No perfil detalhado do candidato, o sistema buscava todas as vagas da plataforma e filtrava pela empresa, o que limitava o resultado e fazia com que apenas 2 vagas aparecessem mesmo com 5 ativas. Agora o sistema busca diretamente as vagas da empresa, exibindo todas corretamente.",
+              "files": ["src/pages/empresa/CandidateProfile.tsx"],
+              "routes": ["/empresa/candidatos/:id"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.51.0",
       "codename": "Beacon",
       "type": "minor",
       "releaseDate": "2026-03-27",
       "description": "Nomes de arquétipos comportamentais agora aparecem em português no painel de equipes, e as notificações da empresa abrem diretamente o perfil do candidato ou a vaga correspondente.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
