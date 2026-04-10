@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -219,6 +219,7 @@ async function insertAuditLog(params: {
 
 export default function AdminCandidateDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -458,13 +459,13 @@ export default function AdminCandidateDetail() {
     <DashboardLayout userType="admin">
       <div className="space-y-6">
         {/* Back link */}
-        <Link
-          to="/admin/candidatos"
+        <button
+          onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar para candidatos
-        </Link>
+        </button>
 
         {/* Header */}
         <motion.div

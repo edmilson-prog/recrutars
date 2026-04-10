@@ -4,8 +4,9 @@
  * PRD-026: Respeita visibilidade do perfil
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { usePaginationParams } from '@/hooks/usePaginationParams';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -339,9 +340,11 @@ export default function CompanyCandidates() {
   const [experienceFilter, setExperienceFilter] = useState<string>('all');
   const [skillsFilter, setSkillsFilter] = useState<string[]>([]);
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  // Pagination (synced with URL search params)
+  const { page: currentPage, pageSize, setPage: setCurrentPage, setPageSize, resetPage } = usePaginationParams({
+    defaultPage: 1,
+    defaultPageSize: DEFAULT_PAGE_SIZE,
+  });
 
   // UI state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -504,10 +507,15 @@ export default function CompanyCandidates() {
     currentPage * pageSize
   );
 
-  // Reset page when filters, sort, or page size change
+  // Reset page when filters, sort, or page size change (skip initial mount to preserve URL state)
+  const isFirstRender = useRef(true);
   useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch, locationFilter, profileFilter, experienceFilter, skillsFilter, sortBy, pageSize, matchJobId]);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    resetPage();
+  }, [debouncedSearch, locationFilter, profileFilter, experienceFilter, skillsFilter, sortBy, pageSize, matchJobId, resetPage]);
 
   const clearFilters = () => {
     setSearchTerm('');

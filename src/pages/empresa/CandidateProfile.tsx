@@ -442,7 +442,7 @@ export default function CandidateProfile() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/empresa/candidatos')}
+          onClick={() => navigate(-1)}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar ao Banco de Talentos
