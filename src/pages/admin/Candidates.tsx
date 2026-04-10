@@ -3,8 +3,9 @@
  * PRD-021: Gestão de Candidatos
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { usePaginationParams } from '@/hooks/usePaginationParams';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -287,8 +288,8 @@ export default function AdminCandidates() {
     searchParams.get('origin') === 'collaborator' ? 'collaborator' : 'all'
   );
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
+  // Pagination (synced with URL search params)
+  const { page: currentPage, setPage: setCurrentPage, resetPage } = usePaginationParams({ defaultPage: 1 });
 
   // UI state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -334,10 +335,15 @@ export default function AdminCandidates() {
     }
   }, [candidatesResult]);
 
-  // Reset page on filter change
+  // Reset page on filter change (skip initial mount to preserve URL state)
+  const isFirstRender = useRef(true);
   useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch, statusFilter, testStatusFilter, behavioralProfileFilter, originFilter]);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    resetPage();
+  }, [debouncedSearch, statusFilter, testStatusFilter, behavioralProfileFilter, originFilter, resetPage]);
 
   // Filter logic
   const filteredCandidates = candidates.filter((candidate) => {

@@ -4,8 +4,9 @@
  * PRD-007: Indicador visual de candidatura
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePaginationParams } from '@/hooks/usePaginationParams';
 import { motion } from 'framer-motion';
 import { Search, MapPin, Briefcase, DollarSign, Building2, Clock, Heart, Filter, X, ArrowUpDown, CheckCircle, TrendingUp, Brain, List, LayoutGrid } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -131,10 +132,12 @@ export default function CandidateJobSearch() {
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [salaryRange, setSalaryRange] = useState([0, 30000]);
 
-  // Sorting and pagination
+  // Sorting and pagination (synced with URL search params)
   const [sortBy, setSortBy] = useState<SortOption>('recent');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const { page: currentPage, pageSize, setPage: setCurrentPage, setPageSize, resetPage } = usePaginationParams({
+    defaultPage: 1,
+    defaultPageSize: DEFAULT_PAGE_SIZE,
+  });
 
   // UI state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -207,10 +210,15 @@ export default function CandidateJobSearch() {
     currentPage * pageSize
   );
 
-  // Reset page when filters, sort, or page size change
+  // Reset page when filters, sort, or page size change (skip initial mount to preserve URL state)
+  const isFirstRender = useRef(true);
   useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch, locationFilter, typeFilter, areaFilter, levelFilter, salaryRange, sortBy, pageSize]);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    resetPage();
+  }, [debouncedSearch, locationFilter, typeFilter, areaFilter, levelFilter, salaryRange, sortBy, pageSize, resetPage]);
 
   const toggleSaveJob = (jobId: string) => {
     const isNowFavorite = toggleFavorite(jobId);

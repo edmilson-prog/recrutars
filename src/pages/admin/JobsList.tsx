@@ -6,6 +6,7 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { usePaginationParams } from '@/hooks/usePaginationParams';
 import {
   Search,
   Star,
@@ -69,7 +70,7 @@ export default function JobsList() {
   const navigate = useNavigate();
   const { jobs, filterJobs, toggleHighlight } = useAdminJobs();
   const [filters, setFilters] = useState<Record<string, unknown>>({});
-  const [page, setPage] = useState(0);
+  const { page, setPage, resetPage } = usePaginationParams({ defaultPage: 1, zeroIndexed: true });
 
   // Unique values for filter options
   const companies = useMemo(() => [...new Set(jobs.map((j) => j.companyName))].sort(), [jobs]);
@@ -93,7 +94,7 @@ export default function JobsList() {
 
   const handleFilterChange = (newFilters: Record<string, unknown>) => {
     setFilters(newFilters);
-    setPage(0);
+    resetPage();
   };
 
   const formatDate = (dateStr?: string) => {
