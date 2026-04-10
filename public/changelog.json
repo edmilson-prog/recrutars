@@ -1,12 +1,60 @@
 {
   "versions": [
     {
+      "version": "1.53.0",
+      "codename": "Bookmark",
+      "type": "minor",
+      "releaseDate": "2026-04-10",
+      "description": "Persistência de paginação: ao navegar para o detalhamento de um candidato ou vaga e voltar, o sistema agora lembra em qual página você estava, sem precisar recomeçar do início.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Persistência da página atual na URL ao navegar entre listagem e detalhamento",
+            "Hook reutilizável usePaginationParams para sincronizar paginação com parâmetros da URL",
+            "Suporte a paginação baseada em zero (0-indexed) para compatibilidade com listagens admin"
+          ],
+          "details": {
+            "0": {
+              "description": "Ao navegar em uma lista com várias páginas (como Banco de Talentos, Busca de Vagas ou Candidatos no painel administrativo), clicar em um item para ver os detalhes e depois voltar agora mantém a mesma página em que você estava. Antes, o sistema voltava sempre para a primeira página, obrigando a navegar novamente até onde estava.",
+              "files": ["src/pages/empresa/Candidates.tsx", "src/pages/candidato/JobSearch.tsx", "src/pages/admin/Candidates.tsx", "src/pages/admin/JobsList.tsx"],
+              "routes": ["/empresa/candidatos", "/candidato/vagas", "/admin/candidatos", "/admin/vagas"]
+            },
+            "1": {
+              "description": "Foi criado um mecanismo interno que salva automaticamente o número da página atual no endereço do navegador. Isso permite que o botão 'Voltar' do navegador e os botões de retorno dentro do sistema restaurem a posição exata na lista.",
+              "files": ["src/hooks/usePaginationParams.ts"],
+              "routes": []
+            },
+            "2": {
+              "description": "Listagens do painel administrativo que usam numeração diferente de páginas (começando do zero) agora também são compatíveis com o novo sistema de persistência de paginação.",
+              "files": ["src/hooks/usePaginationParams.ts", "src/pages/admin/JobsList.tsx"],
+              "routes": ["/admin/vagas"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Correção dos botões 'Voltar' que usavam caminho fixo e perdiam o contexto de navegação"
+          ],
+          "details": {
+            "0": {
+              "description": "Os botões 'Voltar ao Banco de Talentos' e 'Voltar para candidatos' nas telas de detalhamento agora utilizam o histórico do navegador para retornar à página anterior, preservando filtros e a página em que o usuário estava. Antes, esses botões sempre direcionavam para o início da lista.",
+              "files": ["src/pages/empresa/CandidateProfile.tsx", "src/pages/admin/CandidateDetail.tsx"],
+              "routes": ["/empresa/candidatos/:id", "/admin/candidatos/:id"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.52.0",
       "codename": "Crossmatch",
       "type": "minor",
       "releaseDate": "2026-04-06",
       "description": "Match flexível no Banco de Talentos: agora é possível escolher contra qual vaga comparar os candidatos, ver a compatibilidade com todas as vagas simultaneamente e alternar entre vagas no detalhamento do candidato.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
