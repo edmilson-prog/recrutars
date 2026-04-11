@@ -1,11 +1,66 @@
 {
   "versions": [
     {
+      "version": "1.54.0",
+      "codename": "Region",
+      "type": "minor",
+      "releaseDate": "2026-04-11",
+      "description": "Filtro por estado no Banco de Talentos: agora é possível filtrar candidatos por estado brasileiro usando um campo de busca inteligente, com as cidades se ajustando automaticamente ao estado selecionado.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Filtro por estado com campo de busca no Banco de Talentos",
+            "Seção 'Região' agrupando filtros geográficos na sidebar",
+            "Cascata automática entre estado e cidade no filtro de localização",
+            "Indicador visual do estado selecionado no filtro de cidades"
+          ],
+          "details": {
+            "0": {
+              "description": "No Banco de Talentos, agora existe um novo filtro 'Estado' que permite selecionar qualquer um dos 27 estados brasileiros. O campo possui busca integrada: basta começar a digitar o nome do estado para encontrá-lo rapidamente, sem precisar rolar a lista inteira.",
+              "files": ["src/pages/empresa/Candidates.tsx"],
+              "routes": ["/empresa/candidatos"]
+            },
+            "1": {
+              "description": "Os filtros de Estado e Localização agora aparecem agrupados sob uma seção chamada 'Região', com um separador visual. Isso organiza melhor a sidebar de filtros e deixa claro que esses dois campos trabalham juntos para refinar a busca geográfica.",
+              "files": ["src/pages/empresa/Candidates.tsx"],
+              "routes": ["/empresa/candidatos"]
+            },
+            "2": {
+              "description": "Ao selecionar um estado, o filtro de cidades se ajusta automaticamente para mostrar apenas as cidades dos candidatos daquele estado. Se uma cidade já estava selecionada e não pertence ao novo estado, ela é automaticamente limpa. Isso evita combinações impossíveis e resultados vazios.",
+              "files": ["src/pages/empresa/Candidates.tsx"],
+              "routes": ["/empresa/candidatos"]
+            },
+            "3": {
+              "description": "Quando um estado está selecionado, uma pequena etiqueta com a sigla do estado (como 'RS' ou 'SP') aparece ao lado do título 'Localização'. Isso indica visualmente que as cidades exibidas estão filtradas por aquele estado, evitando confusão sobre por que a lista de cidades ficou menor.",
+              "files": ["src/pages/empresa/Candidates.tsx"],
+              "routes": ["/empresa/candidatos"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Correção de cidades duplicadas no filtro de localização (formato inconsistente do estado)"
+          ],
+          "details": {
+            "0": {
+              "description": "Algumas cidades apareciam duplicadas no filtro de localização — uma com a sigla do estado (ex: 'Frederico Westphalen, RS') e outra com o nome completo (ex: 'Frederico Westphalen, Rio Grande do Sul'). Isso acontecia porque o cadastro inicial salvava o nome do estado por extenso, enquanto edições posteriores usavam a sigla. Agora todos os registros seguem o mesmo formato com a sigla, e os dados existentes foram corrigidos.",
+              "files": ["src/pages/candidato/OnboardingPersonalProfile.tsx"],
+              "routes": ["/candidato/onboarding/perfil-pessoal"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.53.0",
       "codename": "Bookmark",
       "type": "minor",
       "releaseDate": "2026-04-10",
       "description": "Persistência de paginação: ao navegar para o detalhamento de um candidato ou vaga e voltar, o sistema agora lembra em qual página você estava, sem precisar recomeçar do início.",
+      "isCurrent": false,
       "isCurrent": true,
       "changes": [
         {
