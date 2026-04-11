@@ -28,6 +28,8 @@ import {
   List,
   LayoutGrid,
   ArrowUpDown,
+  Check,
+  ChevronsUpDown,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -65,6 +67,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
   Pagination,
   PaginationContent,
   PaginationItem,
@@ -72,6 +87,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { cn } from '@/lib/utils';
 import { getOrGenerateIdealProfile, getCompositeBehavioralProfile } from '@/lib/behavioralProfiles';
 import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
 import { useJobsByCompany } from '@/hooks/useJobsQuery';
@@ -108,6 +124,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCreateApplication } from '@/hooks/useApplicationsQuery';
 import { useCreateConversation, useSendMessage } from '@/hooks/useMessagesQuery';
 import { JobMatchSelector } from '@/components/match/JobMatchSelector';
+import { brazilianStates } from '@/data/settingsConfig';
 import type { MatchResult } from '@/types/disc';
 
 // Filter options
@@ -314,15 +331,25 @@ export default function CompanyCandidates() {
     return Array.from(names).sort();
   }, [allGaugeResults]);
 
-  // Dynamic location options from real candidate data
-  const allLocations = useMemo(() =>
-    Array.from(new Set(
-      allCandidates
+  // State filter (must be declared before allLocations which depends on it)
+  const [stateFilter, setStateFilter] = useState<string>('all');
+  const [stateComboOpen, setStateComboOpen] = useState(false);
+  const stateOptions = useMemo(() =>
+    brazilianStates.filter(s => s.value !== '__none__'),
+    []
+  );
+
+  // Dynamic location options from real candidate data (cascaded by state filter)
+  const allLocations = useMemo(() => {
+    const candidates = stateFilter === 'all'
+      ? allCandidates
+      : allCandidates.filter(c => c.state === stateFilter);
+    return Array.from(new Set(
+      candidates
         .map((c) => c.location)
         .filter((loc) => loc && loc.trim() !== '')
-    )).sort(),
-    [allCandidates]
-  );
+    )).sort();
+  }, [allCandidates, stateFilter]);
 
   // Helper to extract all unique skills from candidates
   const allSkills = useMemo(() =>
@@ -339,6 +366,15 @@ export default function CompanyCandidates() {
   const [profileFilter, setProfileFilter] = useState<string>('all');
   const [experienceFilter, setExperienceFilter] = useState<string>('all');
   const [skillsFilter, setSkillsFilter] = useState<string[]>([]);
+
+  // Cascade: reset city when state changes and city is no longer valid
+  useEffect(() => {
+    if (stateFilter !== 'all' && locationFilter !== 'all') {
+      if (!allLocations.includes(locationFilter)) {
+        setLocationFilter('all');
+      }
+    }
+  }, [stateFilter, allLocations, locationFilter]);
 
   // Pagination (synced with URL search params)
   const { page: currentPage, pageSize, setPage: setCurrentPage, setPageSize, resetPage } = usePaginationParams({
@@ -449,6 +485,9 @@ export default function CompanyCandidates() {
       candidate.title.toLowerCase().includes(searchLower) ||
       candidate.skills.some((s) => s.toLowerCase().includes(searchLower));
 
+    const matchesState =
+      stateFilter === 'all' || candidate.state === stateFilter;
+
     const matchesLocation =
       locationFilter === 'all' || candidate.location.includes(locationFilter);
 
@@ -471,6 +510,7 @@ export default function CompanyCandidates() {
 
     return (
       matchesSearch &&
+      matchesState &&
       matchesLocation &&
       matchesProfile &&
       matchesExperience &&
@@ -515,10 +555,11 @@ export default function CompanyCandidates() {
       return;
     }
     resetPage();
-  }, [debouncedSearch, locationFilter, profileFilter, experienceFilter, skillsFilter, sortBy, pageSize, matchJobId, resetPage]);
+  }, [debouncedSearch, stateFilter, locationFilter, profileFilter, experienceFilter, skillsFilter, sortBy, pageSize, matchJobId, resetPage]);
 
   const clearFilters = () => {
     setSearchTerm('');
+    setStateFilter('all');
     setLocationFilter('all');
     setProfileFilter('all');
     setExperienceFilter('all');
@@ -527,6 +568,7 @@ export default function CompanyCandidates() {
 
   const hasActiveFilters =
     searchTerm !== '' ||
+    stateFilter !== 'all' ||
     locationFilter !== 'all' ||
     profileFilter !== 'all' ||
     experienceFilter !== 'all' ||
@@ -555,6 +597,11 @@ export default function CompanyCandidates() {
   // Active filter chips
   const activeFilterChips = useMemo(() => {
     const chips: { key: string; label: string; onRemove: () => void }[] = [];
+    if (stateFilter !== 'all') chips.push({
+      key: 'state',
+      label: stateOptions.find(s => s.value === stateFilter)?.label ?? stateFilter,
+      onRemove: () => setStateFilter('all'),
+    });
     if (locationFilter !== 'all') chips.push({
       key: 'location', label: locationFilter, onRemove: () => setLocationFilter('all')
     });
@@ -570,7 +617,7 @@ export default function CompanyCandidates() {
       key: `skill-${skill}`, label: skill, onRemove: () => setSkillsFilter(prev => prev.filter(s => s !== skill))
     }));
     return chips;
-  }, [locationFilter, profileFilter, experienceFilter, skillsFilter]);
+  }, [stateFilter, stateOptions, locationFilter, profileFilter, experienceFilter, skillsFilter]);
 
   const handleOpenInviteModal = (candidate: Candidate, job: Job) => {
     setSelectedCandidate(candidate);
@@ -678,22 +725,90 @@ export default function CompanyCandidates() {
 
   const FilterContent = () => (
     <div className="space-y-6">
-      {/* Location */}
-      <div className="space-y-3">
-        <label className="text-sm font-medium text-foreground">Localização</label>
-        <Select value={locationFilter} onValueChange={setLocationFilter}>
-          <SelectTrigger>
-            <SelectValue placeholder="Todas as cidades" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as cidades</SelectItem>
-            {allLocations.map((loc) => (
-              <SelectItem key={loc} value={loc}>
-                {loc}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Region section header */}
+      <div>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Região</span>
+        <div className="border-b border-border/50 mt-1.5 mb-4" />
+
+        <div className="space-y-4">
+          {/* State (combobox) */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-foreground">Estado</label>
+            <Popover open={stateComboOpen} onOpenChange={setStateComboOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={stateComboOpen}
+                  className="w-full justify-between font-normal"
+                >
+                  {stateFilter === 'all'
+                    ? 'Todos os estados'
+                    : stateOptions.find(s => s.value === stateFilter)?.label}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Buscar estado..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhum estado encontrado.</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem
+                        value="all"
+                        onSelect={() => {
+                          setStateFilter('all');
+                          setStateComboOpen(false);
+                        }}
+                      >
+                        <Check className={cn('mr-2 h-4 w-4', stateFilter === 'all' ? 'opacity-100' : 'opacity-0')} />
+                        Todos os estados
+                      </CommandItem>
+                      {stateOptions.map((state) => (
+                        <CommandItem
+                          key={state.value}
+                          value={state.label}
+                          onSelect={() => {
+                            setStateFilter(state.value);
+                            setStateComboOpen(false);
+                          }}
+                        >
+                          <Check className={cn('mr-2 h-4 w-4', stateFilter === state.value ? 'opacity-100' : 'opacity-0')} />
+                          {state.label}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Location (cascaded by state) */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+              Localização
+              {stateFilter !== 'all' && (
+                <span className="bg-secondary/15 text-secondary text-xs px-1.5 py-0.5 rounded font-semibold">
+                  {stateFilter}
+                </span>
+              )}
+            </label>
+            <Select value={locationFilter} onValueChange={setLocationFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todas as cidades" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as cidades</SelectItem>
+                {allLocations.map((loc) => (
+                  <SelectItem key={loc} value={loc}>
+                    {loc}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
       {/* Behavioral Profile */}

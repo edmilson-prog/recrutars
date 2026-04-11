@@ -261,7 +261,7 @@ export default function OnboardingPersonalProfile() {
     setSaving(true);
 
     try {
-      const locationParts = [selectedCity, STATE_NAMES[selectedState] || selectedState].filter(Boolean);
+      const locationParts = [selectedCity, selectedState].filter(Boolean);
       const { error: updateError } = await supabase
         .from('candidates')
         .update({
