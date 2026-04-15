@@ -49,7 +49,7 @@ import { ARCHETYPE_PROFILES } from '@/data/gaugeProArchetypes';
 export default function TeamMemberProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { currentCompany } = useAuth();
+  const { currentCompany, user } = useAuth();
   const companyId = currentCompany?.id ?? '';
 
   const { data: member, isLoading: memberLoading } = useTeamMember(id ?? '');
@@ -302,7 +302,7 @@ export default function TeamMemberProfile() {
             date={member.terminationScheduledDate}
             onCancel={() => {
               cancelScheduled.mutate(
-                { teamMemberId: member.id, performedBy: currentCompany?.profileId ?? '' },
+                { teamMemberId: member.id, performedBy: user?.id ?? '' },
                 { onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teams'] }) },
               );
             }}
@@ -355,7 +355,7 @@ export default function TeamMemberProfile() {
         <TeamMemberTimeline
           memberId={member.id}
           companyId={companyId}
-          performedBy={currentCompany?.profileId}
+          performedBy={user?.id}
         />
 
         {/* PRD-090: Offboarding checklist for terminated members */}
@@ -363,7 +363,7 @@ export default function TeamMemberProfile() {
           <OffboardingChecklistCard
             teamMemberId={member.id}
             companyId={companyId}
-            currentUserId={currentCompany?.profileId ?? ''}
+            currentUserId={user?.id ?? ''}
           />
         )}
 
@@ -418,7 +418,7 @@ export default function TeamMemberProfile() {
             onOpenChange={setTerminateOpen}
             member={member}
             companyId={companyId}
-            performedBy={currentCompany?.profileId ?? ''}
+            performedBy={user?.id ?? ''}
             onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
           />
         )}
@@ -428,7 +428,7 @@ export default function TeamMemberProfile() {
             open={unlinkOpen}
             onOpenChange={setUnlinkOpen}
             member={member}
-            performedBy={currentCompany?.profileId ?? ''}
+            performedBy={user?.id ?? ''}
             onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
           />
         )}
@@ -439,7 +439,7 @@ export default function TeamMemberProfile() {
             onOpenChange={setReactivateOpen}
             member={member}
             companyId={companyId}
-            performedBy={currentCompany?.profileId ?? ''}
+            performedBy={user?.id ?? ''}
             onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
           />
         )}
@@ -450,7 +450,7 @@ export default function TeamMemberProfile() {
             open={leaveOpen}
             onOpenChange={setLeaveOpen}
             member={member}
-            performedBy={currentCompany?.profileId ?? ''}
+            performedBy={user?.id ?? ''}
             onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
           />
         )}
@@ -460,7 +460,7 @@ export default function TeamMemberProfile() {
             open={returnLeaveOpen}
             onOpenChange={setReturnLeaveOpen}
             member={member}
-            performedBy={currentCompany?.profileId ?? ''}
+            performedBy={user?.id ?? ''}
             onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
           />
         )}
@@ -474,7 +474,7 @@ export default function TeamMemberProfile() {
             companyId={companyId}
             currentDepartment={department}
             currentPosition={position}
-            performedBy={currentCompany?.profileId ?? ''}
+            performedBy={user?.id ?? ''}
             onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
           />
         )}
@@ -486,7 +486,7 @@ export default function TeamMemberProfile() {
             member={member}
             companyId={companyId}
             currentDepartment={department}
-            performedBy={currentCompany?.profileId ?? ''}
+            performedBy={user?.id ?? ''}
             onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
           />
         )}
@@ -497,7 +497,7 @@ export default function TeamMemberProfile() {
             onOpenChange={setChangePositionOpen}
             member={member}
             currentPosition={position}
-            performedBy={currentCompany?.profileId ?? ''}
+            performedBy={user?.id ?? ''}
             onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
           />
         )}
@@ -509,7 +509,7 @@ export default function TeamMemberProfile() {
             onOpenChange={setAnonymizeOpen}
             member={member}
             companyId={companyId}
-            performedBy={currentCompany?.profileId ?? ''}
+            performedBy={user?.id ?? ''}
             onSuccess={() => queryClient.invalidateQueries({ queryKey: ['teams'] })}
           />
         )}

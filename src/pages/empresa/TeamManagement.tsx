@@ -59,7 +59,7 @@ const quickActions = [
 
 export default function TeamManagement() {
   const navigate = useNavigate();
-  const { currentCompany } = useAuth();
+  const { currentCompany, user } = useAuth();
   const companyId = currentCompany?.id ?? '';
 
   const { data: fetchedDepartments = [], isLoading: deptsLoading } = useDepartments(companyId);
@@ -288,7 +288,7 @@ export default function TeamManagement() {
               open={bulkTerminateOpen}
               onOpenChange={setBulkTerminateOpen}
               members={bulkMembers}
-              performedBy={currentCompany?.profileId ?? ''}
+              performedBy={user?.id ?? ''}
               onSuccess={() => { setBulkMembers([]); }}
             />
             <BulkDepartmentTransferModal
@@ -296,7 +296,7 @@ export default function TeamManagement() {
               onOpenChange={setBulkTransferOpen}
               members={bulkMembers}
               companyId={companyId}
-              performedBy={currentCompany?.profileId ?? ''}
+              performedBy={user?.id ?? ''}
               onSuccess={() => { setBulkMembers([]); }}
             />
             <TeamMemberForm

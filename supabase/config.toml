@@ -1,0 +1,43 @@
+project_id = "filackbesialiapjwijb"
+
+# Edge Functions are invoked from the browser via supabase.functions.invoke().
+# The Supabase JWT relay rejects user tokens before reaching the function handler
+# when verify_jwt = true (default), which causes CORS preflight failures with no
+# CORS headers attached. Security is enforced inside each function by using
+# SUPABASE_SERVICE_ROLE_KEY together with RLS policies on the database.
+
+[functions.manage-team-lifecycle]
+verify_jwt = false
+
+[functions.manage-team-movement]
+verify_jwt = false
+
+[functions.manage-team-anonymization]
+verify_jwt = false
+
+[functions.process-collaborator-invite]
+verify_jwt = false
+
+[functions.send-test-invitation]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.send-whatsapp]
+verify_jwt = false
+
+[functions.stripe-create-checkout]
+verify_jwt = false
+
+[functions.stripe-package-checkout]
+verify_jwt = false
+
+[functions.stripe-sync-package]
+verify_jwt = false
+
+[functions.stripe-sync-plan]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
