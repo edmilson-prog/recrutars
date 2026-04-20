@@ -1,12 +1,54 @@
 {
   "versions": [
     {
+      "version": "1.54.1",
+      "codename": "Region",
+      "type": "patch",
+      "releaseDate": "2026-04-20",
+      "description": "Correção crítica na gestão de equipes: todas as ações do ciclo de vida do colaborador (desvincular, desligar, promover, transferir, licença, etc.) agora funcionam corretamente.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Corrigido erro que impedia desvincular, desligar, promover, transferir e demais ações de gestão de equipe (erro 400)",
+            "Corrigida identificação do usuário que realiza ações de gestão de equipe (auditoria)"
+          ],
+          "details": {
+            "0": {
+              "description": "Ao tentar desvincular, desligar, promover, transferir de departamento, alterar cargo, iniciar licença ou qualquer outra ação na tela de gestão de equipes, o sistema mostrava um erro e a ação não era concluída. Isso acontecia porque a informação de quem estava realizando a ação não era enviada corretamente ao servidor. Agora todas as ações funcionam normalmente e são registradas na linha do tempo do colaborador.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx", "src/pages/empresa/TeamManagement.tsx"],
+              "routes": ["/empresa/equipes/membro/:id", "/empresa/equipes"]
+            },
+            "1": {
+              "description": "Quando um membro da equipe de RH (que não é o dono da conta da empresa) realizava uma ação sobre um colaborador, o sistema registrava incorretamente o dono da empresa como responsável pela ação. Agora o registro identifica corretamente qual usuário realizou cada ação, garantindo rastreabilidade precisa para fins de auditoria e conformidade.",
+              "files": ["src/pages/empresa/TeamMemberProfile.tsx", "src/pages/empresa/TeamManagement.tsx"],
+              "routes": ["/empresa/equipes/membro/:id", "/empresa/equipes"]
+            }
+          }
+        },
+        {
+          "type": "added",
+          "items": [
+            "Arquivo de configuração para garantir deploys seguros das funções de servidor"
+          ],
+          "details": {
+            "0": {
+              "description": "Adicionado um arquivo de configuração que garante que as funções internas do sistema sejam publicadas corretamente no servidor. Isso previne que erros de conexão (como os que bloqueavam a gestão de equipes) voltem a acontecer em atualizações futuras.",
+              "files": ["supabase/config.toml"],
+              "routes": []
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.54.0",
       "codename": "Region",
       "type": "minor",
       "releaseDate": "2026-04-11",
       "description": "Filtro por estado no Banco de Talentos: agora é possível filtrar candidatos por estado brasileiro usando um campo de busca inteligente, com as cidades se ajustando automaticamente ao estado selecionado.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
@@ -61,7 +103,6 @@
       "releaseDate": "2026-04-10",
       "description": "Persistência de paginação: ao navegar para o detalhamento de um candidato ou vaga e voltar, o sistema agora lembra em qual página você estava, sem precisar recomeçar do início.",
       "isCurrent": false,
-      "isCurrent": true,
       "changes": [
         {
           "type": "added",
