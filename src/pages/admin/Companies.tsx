@@ -3,8 +3,10 @@
  * PRD-020: Gestão de Empresas
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePaginationParams } from '@/hooks/usePaginationParams';
+import { useAdminCompanyFilters } from '@/hooks/useAdminCompanyFilters';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -291,17 +293,41 @@ export default function AdminCompanies() {
   const { data: jobsResult } = useJobs();
   const allJobs = jobsResult?.data ?? [];
 
-  // Search with debounce
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearch = useDebounce(searchTerm, 300);
+  // Filters synced with URL search params (survive navigation to company detail)
+  const {
+    searchTerm,
+    statusFilter,
+    planFilter,
+    industryFilter,
+    setSearchTerm,
+    setStatusFilter,
+    setPlanFilter,
+    setIndustryFilter,
+    clearFilters,
+    hasActiveFilters,
+  } = useAdminCompanyFilters();
 
-  // Filters
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [planFilter, setPlanFilter] = useState<string>('all');
-  const [industryFilter, setIndustryFilter] = useState<string>('all');
+  // Search input: local state for responsive typing, debounced sync to URL
+  const [searchInput, setSearchInput] = useState(searchTerm);
+  const debouncedSearch = useDebounce(searchInput, 300);
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
+  const lastUrlSearchRef = useRef(searchTerm);
+  useEffect(() => {
+    if (searchTerm !== lastUrlSearchRef.current) {
+      lastUrlSearchRef.current = searchTerm;
+      setSearchInput(searchTerm);
+    }
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (debouncedSearch !== searchTerm) {
+      lastUrlSearchRef.current = debouncedSearch;
+      setSearchTerm(debouncedSearch);
+    }
+  }, [debouncedSearch, searchTerm, setSearchTerm]);
+
+  // Pagination (synced with URL search params)
+  const { page: currentPage, setPage: setCurrentPage } = usePaginationParams({ defaultPage: 1 });
 
   // UI state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -361,23 +387,7 @@ export default function AdminCompanies() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch, statusFilter, planFilter, industryFilter]);
-
-  const clearFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('all');
-    setPlanFilter('all');
-    setIndustryFilter('all');
-  };
-
-  const hasActiveFilters =
-    searchTerm !== '' ||
-    statusFilter !== 'all' ||
-    planFilter !== 'all' ||
-    industryFilter !== 'all';
+  // Filter changes reset page automatically via useAdminCompanyFilters
 
   const handleCardClick = (company: Company) => {
     navigate(`/admin/empresas/${company.id}`);
@@ -648,15 +658,15 @@ export default function AdminCompanies() {
             <Input
               placeholder="Buscar por nome ou CNPJ..."
               className="pl-10 pr-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
-            {searchTerm && (
+            {searchInput && (
               <Button
                 variant="ghost"
                 size="icon"
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                onClick={() => setSearchTerm('')}
+                onClick={() => setSearchInput('')}
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -746,7 +756,7 @@ export default function AdminCompanies() {
                   <PaginationContent>
                     <PaginationItem>
                       <PaginationPrevious
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                         className={
                           currentPage === 1
                             ? 'pointer-events-none opacity-50'
@@ -773,9 +783,7 @@ export default function AdminCompanies() {
 
                     <PaginationItem>
                       <PaginationNext
-                        onClick={() =>
-                          setCurrentPage((p) => Math.min(totalPages, p + 1))
-                        }
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                         className={
                           currentPage === totalPages
                             ? 'pointer-events-none opacity-50'

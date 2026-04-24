@@ -31,6 +31,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { formatDateTimeBR } from '@/lib/formatters';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useJobsByCompany, useUpdateJob, useDeleteJob, useCreateJob } from '@/hooks/useJobsQuery';
 import { useAuth } from '@/contexts/AuthContext';
@@ -370,7 +371,7 @@ export default function CompanyJobs() {
                         <span>R$ {job.salary.min.toLocaleString('pt-BR')} - {job.salary.max.toLocaleString('pt-BR')}</span>
                       )}
                       <span>•</span>
-                      <span>Criada em {job.createdAt}</span>
+                      <span>Criada em {formatDateTimeBR(job.createdAt)}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
