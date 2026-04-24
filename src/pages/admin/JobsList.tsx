@@ -3,10 +3,11 @@
  * PRD-058: Listagem de todas as vagas com filtros avançados
  */
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { usePaginationParams } from '@/hooks/usePaginationParams';
+import { useAdminJobsListFilters } from '@/hooks/useAdminJobsListFilters';
 import {
   Search,
   Star,
@@ -69,8 +70,8 @@ const MODERATION_BADGES: Record<string, { label: string; className: string }> = 
 export default function JobsList() {
   const navigate = useNavigate();
   const { jobs, filterJobs, toggleHighlight } = useAdminJobs();
-  const [filters, setFilters] = useState<Record<string, unknown>>({});
-  const { page, setPage, resetPage } = usePaginationParams({ defaultPage: 1, zeroIndexed: true });
+  const { filters, setFilters } = useAdminJobsListFilters();
+  const { page, setPage } = usePaginationParams({ defaultPage: 1, zeroIndexed: true });
 
   // Unique values for filter options
   const companies = useMemo(() => [...new Set(jobs.map((j) => j.companyName))].sort(), [jobs]);
@@ -93,8 +94,8 @@ export default function JobsList() {
   const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const handleFilterChange = (newFilters: Record<string, unknown>) => {
+    // Filter changes reset page automatically via useAdminJobsListFilters
     setFilters(newFilters);
-    resetPage();
   };
 
   const formatDate = (dateStr?: string) => {

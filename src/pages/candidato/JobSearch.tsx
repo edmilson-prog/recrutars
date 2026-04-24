@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePaginationParams } from '@/hooks/usePaginationParams';
+import { useJobSearchFilters } from '@/hooks/useJobSearchFilters';
 import { motion } from 'framer-motion';
 import { Search, MapPin, Briefcase, DollarSign, Building2, Clock, Heart, Filter, X, ArrowUpDown, CheckCircle, TrendingUp, Brain, List, LayoutGrid } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -121,19 +122,48 @@ export default function CandidateJobSearch() {
   // Favorites hook (PRD-024)
   const { isFavorite, toggleFavorite } = useFavoriteJobs();
 
-  // Search with debounce
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearch = useDebounce(searchTerm, 300);
+  // Filters synced with URL search params (survive navigation to job detail)
+  const {
+    searchTerm,
+    locationFilter,
+    typeFilter,
+    areaFilter,
+    levelFilter,
+    salaryRange,
+    sortBy,
+    viewMode,
+    setSearchTerm,
+    setLocationFilter,
+    setTypeFilter,
+    setAreaFilter,
+    setLevelFilter,
+    setSalaryRange,
+    setSortBy,
+    setViewMode,
+    clearFilters,
+    hasActiveFilters,
+  } = useJobSearchFilters();
 
-  // Filters
-  const [locationFilter, setLocationFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [areaFilter, setAreaFilter] = useState<string>('all');
-  const [levelFilter, setLevelFilter] = useState<string>('all');
-  const [salaryRange, setSalaryRange] = useState([0, 30000]);
+  // Search input: local state for responsive typing, debounced sync to URL
+  const [searchInput, setSearchInput] = useState(searchTerm);
+  const debouncedSearch = useDebounce(searchInput, 300);
 
-  // Sorting and pagination (synced with URL search params)
-  const [sortBy, setSortBy] = useState<SortOption>('recent');
+  const lastUrlSearchRef = useRef(searchTerm);
+  useEffect(() => {
+    if (searchTerm !== lastUrlSearchRef.current) {
+      lastUrlSearchRef.current = searchTerm;
+      setSearchInput(searchTerm);
+    }
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (debouncedSearch !== searchTerm) {
+      lastUrlSearchRef.current = debouncedSearch;
+      setSearchTerm(debouncedSearch);
+    }
+  }, [debouncedSearch, searchTerm, setSearchTerm]);
+
+  // Pagination (synced with URL search params)
   const { page: currentPage, pageSize, setPage: setCurrentPage, setPageSize, resetPage } = usePaginationParams({
     defaultPage: 1,
     defaultPageSize: DEFAULT_PAGE_SIZE,
@@ -141,7 +171,6 @@ export default function CandidateJobSearch() {
 
   // UI state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const activeJobs = allJobs;
 
@@ -210,7 +239,7 @@ export default function CandidateJobSearch() {
     currentPage * pageSize
   );
 
-  // Reset page when filters, sort, or page size change (skip initial mount to preserve URL state)
+  // Reset page when sort or page size change (filter changes already reset page via useJobSearchFilters)
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
@@ -218,25 +247,12 @@ export default function CandidateJobSearch() {
       return;
     }
     resetPage();
-  }, [debouncedSearch, locationFilter, typeFilter, areaFilter, levelFilter, salaryRange, sortBy, pageSize, resetPage]);
+  }, [sortBy, pageSize, resetPage]);
 
   const toggleSaveJob = (jobId: string) => {
     const isNowFavorite = toggleFavorite(jobId);
     toast.success(isNowFavorite ? 'Vaga salva!' : 'Vaga removida');
   };
-
-  const clearFilters = () => {
-    setSearchTerm('');
-    setLocationFilter('all');
-    setTypeFilter('all');
-    setAreaFilter('all');
-    setLevelFilter('all');
-    setSalaryRange([0, 30000]);
-  };
-
-  const hasActiveFilters = searchTerm !== '' || locationFilter !== 'all' || typeFilter !== 'all' ||
-                           areaFilter !== 'all' || levelFilter !== 'all' ||
-                           salaryRange[0] > 0 || salaryRange[1] < 30000;
 
   // Active filter chips
   const activeFilterChips = useMemo(() => {
@@ -261,7 +277,7 @@ export default function CandidateJobSearch() {
       onRemove: () => setSalaryRange([0, 30000])
     });
     return chips;
-  }, [locationFilter, typeFilter, areaFilter, levelFilter, salaryRange]);
+  }, [locationFilter, typeFilter, areaFilter, levelFilter, salaryRange, setLocationFilter, setTypeFilter, setAreaFilter, setLevelFilter, setSalaryRange]);
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -432,15 +448,15 @@ export default function CandidateJobSearch() {
             <Input
               placeholder="Buscar por cargo, empresa ou palavra-chave..."
               className="pl-10 pr-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
-            {searchTerm && (
+            {searchInput && (
               <Button
                 variant="ghost"
                 size="icon"
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                onClick={() => setSearchTerm('')}
+                onClick={() => setSearchInput('')}
               >
                 <X className="w-4 h-4" />
               </Button>

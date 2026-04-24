@@ -100,6 +100,7 @@ import { calculateMatchBreakdown } from '@/lib/matchCalculator';
 import { getMatchScoreColor } from '@/types/disc';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useCandidateFilters } from '@/hooks/useCandidateFilters';
 import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
 import {
   Tooltip,
@@ -331,8 +332,30 @@ export default function CompanyCandidates() {
     return Array.from(names).sort();
   }, [allGaugeResults]);
 
-  // State filter (must be declared before allLocations which depends on it)
-  const [stateFilter, setStateFilter] = useState<string>('all');
+  // Filters synced with URL search params (survive navigation to candidate detail)
+  const {
+    searchTerm,
+    stateFilter,
+    locationFilter,
+    profileFilter,
+    experienceFilter,
+    skillsFilter,
+    sortBy,
+    matchJobId,
+    viewMode,
+    setSearchTerm,
+    setStateFilter,
+    setLocationFilter,
+    setProfileFilter,
+    setExperienceFilter,
+    setSkillsFilter,
+    setSortBy,
+    setMatchJobId,
+    setViewMode,
+    clearFilters,
+    hasActiveFilters,
+  } = useCandidateFilters();
+
   const [stateComboOpen, setStateComboOpen] = useState(false);
   const stateOptions = useMemo(() =>
     brazilianStates.filter(s => s.value !== '__none__'),
@@ -357,15 +380,26 @@ export default function CompanyCandidates() {
     [allCandidates]
   );
 
-  // Search with debounce
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearch = useDebounce(searchTerm, 300);
+  // Search input: local state for responsive typing, debounced sync to URL
+  const [searchInput, setSearchInput] = useState(searchTerm);
+  const debouncedSearch = useDebounce(searchInput, 300);
 
-  // Filters
-  const [locationFilter, setLocationFilter] = useState<string>('all');
-  const [profileFilter, setProfileFilter] = useState<string>('all');
-  const [experienceFilter, setExperienceFilter] = useState<string>('all');
-  const [skillsFilter, setSkillsFilter] = useState<string[]>([]);
+  // Initialize input from URL on mount / when URL changes externally (e.g. clearFilters)
+  const lastUrlSearchRef = useRef(searchTerm);
+  useEffect(() => {
+    if (searchTerm !== lastUrlSearchRef.current) {
+      lastUrlSearchRef.current = searchTerm;
+      setSearchInput(searchTerm);
+    }
+  }, [searchTerm]);
+
+  // Push debounced value back into URL
+  useEffect(() => {
+    if (debouncedSearch !== searchTerm) {
+      lastUrlSearchRef.current = debouncedSearch;
+      setSearchTerm(debouncedSearch);
+    }
+  }, [debouncedSearch, searchTerm, setSearchTerm]);
 
   // Cascade: reset city when state changes and city is no longer valid
   useEffect(() => {
@@ -374,7 +408,7 @@ export default function CompanyCandidates() {
         setLocationFilter('all');
       }
     }
-  }, [stateFilter, allLocations, locationFilter]);
+  }, [stateFilter, allLocations, locationFilter, setLocationFilter]);
 
   // Pagination (synced with URL search params)
   const { page: currentPage, pageSize, setPage: setCurrentPage, setPageSize, resetPage } = usePaginationParams({
@@ -402,15 +436,6 @@ export default function CompanyCandidates() {
 
   // PRD-032: Estado do modal de exportação
   const [showExportModal, setShowExportModal] = useState(false);
-
-  // View mode toggle
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-
-  // Sort order
-  const [sortBy, setSortBy] = useState<string>('match');
-
-  // Match job selector
-  const [matchJobId, setMatchJobId] = useState<string>('best');
 
   // PRD-030: Hook de candidatos favoritos
   const { isFavorite, toggleFavorite } = useFavoriteCandidates();
@@ -547,7 +572,7 @@ export default function CompanyCandidates() {
     currentPage * pageSize
   );
 
-  // Reset page when filters, sort, or page size change (skip initial mount to preserve URL state)
+  // Reset page when sort or page size change (filter changes already reset page via useCandidateFilters)
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
@@ -555,24 +580,7 @@ export default function CompanyCandidates() {
       return;
     }
     resetPage();
-  }, [debouncedSearch, stateFilter, locationFilter, profileFilter, experienceFilter, skillsFilter, sortBy, pageSize, matchJobId, resetPage]);
-
-  const clearFilters = () => {
-    setSearchTerm('');
-    setStateFilter('all');
-    setLocationFilter('all');
-    setProfileFilter('all');
-    setExperienceFilter('all');
-    setSkillsFilter([]);
-  };
-
-  const hasActiveFilters =
-    searchTerm !== '' ||
-    stateFilter !== 'all' ||
-    locationFilter !== 'all' ||
-    profileFilter !== 'all' ||
-    experienceFilter !== 'all' ||
-    skillsFilter.length > 0;
+  }, [sortBy, pageSize, matchJobId, resetPage]);
 
   // Stats bar metrics
   const statsMetrics = useMemo(() => {
@@ -617,7 +625,7 @@ export default function CompanyCandidates() {
       key: `skill-${skill}`, label: skill, onRemove: () => setSkillsFilter(prev => prev.filter(s => s !== skill))
     }));
     return chips;
-  }, [stateFilter, stateOptions, locationFilter, profileFilter, experienceFilter, skillsFilter]);
+  }, [stateFilter, stateOptions, locationFilter, profileFilter, experienceFilter, skillsFilter, setStateFilter, setLocationFilter, setProfileFilter, setExperienceFilter, setSkillsFilter]);
 
   const handleOpenInviteModal = (candidate: Candidate, job: Job) => {
     setSelectedCandidate(candidate);
@@ -948,15 +956,15 @@ export default function CompanyCandidates() {
             <Input
               placeholder="Buscar por nome, cargo ou skill..."
               className="pl-10 pr-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
-            {searchTerm && (
+            {searchInput && (
               <Button
                 variant="ghost"
                 size="icon"
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                onClick={() => setSearchTerm('')}
+                onClick={() => setSearchInput('')}
               >
                 <X className="w-4 h-4" />
               </Button>

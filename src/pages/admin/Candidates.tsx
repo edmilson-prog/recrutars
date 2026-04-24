@@ -4,8 +4,9 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { usePaginationParams } from '@/hooks/usePaginationParams';
+import { useAdminCandidateFilters } from '@/hooks/useAdminCandidateFilters';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -268,7 +269,6 @@ const BEHAVIORAL_PROFILES = ARCHETYPE_PROFILES.map((a) => ({
 
 export default function AdminCandidates() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   // Fetch candidates via service layer
   const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates(
@@ -276,17 +276,39 @@ export default function AdminCandidates() {
     { page: 1, pageSize: 1000 }
   );
 
-  // Search with debounce
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearch = useDebounce(searchTerm, 300);
+  // Filters synced with URL search params (survive navigation to candidate detail)
+  const {
+    searchTerm,
+    statusFilter,
+    testStatusFilter,
+    behavioralProfileFilter,
+    originFilter,
+    setSearchTerm,
+    setStatusFilter,
+    setTestStatusFilter,
+    setBehavioralProfileFilter: setDiscProfileFilter,
+    setOriginFilter,
+    clearFilters: handleClearFilters,
+  } = useAdminCandidateFilters();
 
-  // Filters
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [testStatusFilter, setTestStatusFilter] = useState<string>('all');
-  const [behavioralProfileFilter, setDiscProfileFilter] = useState<string>('all');
-  const [originFilter, setOriginFilter] = useState<string>(
-    searchParams.get('origin') === 'collaborator' ? 'collaborator' : 'all'
-  );
+  // Search input: local state for responsive typing, debounced sync to URL
+  const [searchInput, setSearchInput] = useState(searchTerm);
+  const debouncedSearch = useDebounce(searchInput, 300);
+
+  const lastUrlSearchRef = useRef(searchTerm);
+  useEffect(() => {
+    if (searchTerm !== lastUrlSearchRef.current) {
+      lastUrlSearchRef.current = searchTerm;
+      setSearchInput(searchTerm);
+    }
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (debouncedSearch !== searchTerm) {
+      lastUrlSearchRef.current = debouncedSearch;
+      setSearchTerm(debouncedSearch);
+    }
+  }, [debouncedSearch, searchTerm, setSearchTerm]);
 
   // Pagination (synced with URL search params)
   const { page: currentPage, setPage: setCurrentPage, resetPage } = usePaginationParams({ defaultPage: 1 });
@@ -335,15 +357,7 @@ export default function AdminCandidates() {
     }
   }, [candidatesResult]);
 
-  // Reset page on filter change (skip initial mount to preserve URL state)
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    resetPage();
-  }, [debouncedSearch, statusFilter, testStatusFilter, behavioralProfileFilter, originFilter, resetPage]);
+  // Filter changes reset page automatically via useAdminCandidateFilters
 
   // Filter logic
   const filteredCandidates = candidates.filter((candidate) => {
@@ -519,13 +533,7 @@ export default function AdminCandidates() {
     setNotificationMessage('');
   };
 
-  const handleClearFilters = () => {
-    setStatusFilter('all');
-    setOriginFilter('all');
-    setTestStatusFilter('all');
-    setDiscProfileFilter('all');
-    setSearchTerm('');
-  };
+  // handleClearFilters is provided by useAdminCandidateFilters (aliased above)
 
   // Filter content component (reusable for sidebar and mobile sheet)
   const FilterContent = () => (
@@ -1057,15 +1065,15 @@ export default function AdminCandidates() {
             <Input
               placeholder="Buscar por nome ou email..."
               className="pl-10 pr-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
-            {searchTerm && (
+            {searchInput && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                onClick={() => setSearchTerm('')}
+                onClick={() => setSearchInput('')}
               >
                 <X className="h-4 w-4" />
               </Button>
