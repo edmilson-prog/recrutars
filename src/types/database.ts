@@ -1962,6 +1962,7 @@ export type Database = {
           applications_count: number
           area: string | null
           benefits: string[] | null
+          city: string | null
           company_id: string
           correction_fields: string[] | null
           created_at: string
@@ -1982,6 +1983,7 @@ export type Database = {
           requirements: string[] | null
           salary_max: number | null
           salary_min: number | null
+          state: string | null
           status: string
           title: string
           type: string
@@ -1992,6 +1994,7 @@ export type Database = {
           applications_count?: number
           area?: string | null
           benefits?: string[] | null
+          city?: string | null
           company_id: string
           correction_fields?: string[] | null
           created_at?: string
@@ -2012,6 +2015,7 @@ export type Database = {
           requirements?: string[] | null
           salary_max?: number | null
           salary_min?: number | null
+          state?: string | null
           status?: string
           title: string
           type?: string
@@ -2022,6 +2026,7 @@ export type Database = {
           applications_count?: number
           area?: string | null
           benefits?: string[] | null
+          city?: string | null
           company_id?: string
           correction_fields?: string[] | null
           created_at?: string
@@ -2042,6 +2047,7 @@ export type Database = {
           requirements?: string[] | null
           salary_max?: number | null
           salary_min?: number | null
+          state?: string | null
           status?: string
           title?: string
           type?: string

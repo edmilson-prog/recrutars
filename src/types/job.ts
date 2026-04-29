@@ -23,6 +23,10 @@ export interface Job {
   requirements: string[];
   benefits: string[];
   location: string;
+  /** UF brasileira (2 letras maiúsculas, ex: "SP"). Opcional para vagas remotas e legado não-parseado. */
+  state?: string;
+  /** Cidade da vaga. Opcional para vagas remotas e legado não-parseado. */
+  city?: string;
   type: JobType;
   level: string;
   salary: SalaryRange;

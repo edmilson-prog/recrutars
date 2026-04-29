@@ -22,7 +22,8 @@ export const COMMON_BENEFITS = [
 export const INITIAL_FORM_STATE = {
   title: '',
   description: '',
-  location: '',
+  state: '',
+  city: '',
   type: '' as '' | 'remote' | 'hybrid' | 'onsite',
   level: '',
   area: '',
@@ -33,6 +34,34 @@ export const INITIAL_FORM_STATE = {
   positionsCount: '1',
   isAnonymous: false,
 };
+
+const VALID_UFS = new Set([
+  'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG',
+  'PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO',
+]);
+
+/**
+ * Best-effort parsing of a free-text legacy location ("São Paulo, SP",
+ * "São Paulo - SP", "São Paulo/SP") into structured city/state. Used
+ * as fallback when editing a job whose backfill has not run yet.
+ * Returns empty strings when no valid UF is detected.
+ */
+function parseLegacyLocation(loc: string): { city: string; state: string } {
+  if (!loc) return { city: '', state: '' };
+  const cleaned = loc.replace(/[/|]|\s-\s|\s+-\s+/g, ',');
+  const tokens = cleaned.split(',').map((t) => t.trim()).filter(Boolean);
+  let state = '';
+  let city = '';
+  for (const tok of tokens) {
+    const upper = tok.toUpperCase();
+    if (VALID_UFS.has(upper)) {
+      state = upper;
+    } else if (!city) {
+      city = tok;
+    }
+  }
+  return { city, state };
+}
 
 export const DESCRIPTION_LIMIT = 2000;
 export const REQUIREMENTS_LIMIT = 1500;
@@ -79,19 +108,26 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       return;
     }
     if (!job) return; // still loading
+    const loadedJob = job as Job;
+    // Prefer structured city/state; fall back to parsing legacy location
+    // for jobs created before the migration.
+    const fallback = (!loadedJob.state || !loadedJob.city)
+      ? parseLegacyLocation(loadedJob.location ?? '')
+      : { city: '', state: '' };
     setFormData({
-      title: (job as Job).title,
-      description: (job as Job).description,
-      location: (job as Job).location,
-      type: (job as Job).type,
-      level: (job as Job).level,
-      area: (job as Job).area,
-      salaryMin: (job as Job).salary.min.toString(),
-      salaryMax: (job as Job).salary.max.toString(),
-      salaryNegotiable: (job as Job).salary.min === 0 && (job as Job).salary.max === 0,
-      requirements: (job as Job).requirements.join('\n'),
-      positionsCount: ((job as Job).positionsCount ?? 1).toString(),
-      isAnonymous: (job as Job).isAnonymous ?? false,
+      title: loadedJob.title,
+      description: loadedJob.description,
+      state: loadedJob.state ?? fallback.state,
+      city: loadedJob.city ?? fallback.city,
+      type: loadedJob.type,
+      level: loadedJob.level,
+      area: loadedJob.area,
+      salaryMin: loadedJob.salary.min.toString(),
+      salaryMax: loadedJob.salary.max.toString(),
+      salaryNegotiable: loadedJob.salary.min === 0 && loadedJob.salary.max === 0,
+      requirements: loadedJob.requirements.join('\n'),
+      positionsCount: (loadedJob.positionsCount ?? 1).toString(),
+      isAnonymous: loadedJob.isAnonymous ?? false,
     });
     const common = (job as Job).benefits.filter(b => COMMON_BENEFITS.includes(b));
     const other = (job as Job).benefits.filter(b => !COMMON_BENEFITS.includes(b));
@@ -138,21 +174,25 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
   // Progress calculation
   const progress = useMemo(() => {
     let filled = 0;
-    const total = 5; // title, area, location, description, requirements
+    const total = 5; // title, area, location (state+city OR remote), description, requirements
     if (formData.title.trim()) filled++;
     if (formData.area) filled++;
-    if (formData.location.trim()) filled++;
+    // Localização "preenchida" = remoto OU (estado + cidade)
+    if (formData.type === 'remote' || (formData.state && formData.city)) filled++;
     if (formData.description.trim()) filled++;
     if (formData.requirements.trim()) filled++;
     return Math.round((filled / total) * 100);
   }, [formData]);
 
-  // Validation
+  // Validation — city/state obrigatórios apenas quando NÃO for remoto
   const validate = useCallback(() => {
     const errors: Record<string, string> = {};
     if (!formData.title.trim()) errors.title = 'Título é obrigatório';
     if (!formData.description.trim()) errors.description = 'Descrição é obrigatória';
-    if (!formData.location.trim()) errors.location = 'Localização é obrigatória';
+    if (formData.type !== 'remote') {
+      if (!formData.state) errors.state = 'Estado é obrigatório para vagas presenciais e híbridas';
+      if (!formData.city) errors.city = 'Cidade é obrigatória para vagas presenciais e híbridas';
+    }
     if (!formData.requirements.trim()) errors.requirements = 'Requisitos são obrigatórios';
     return { valid: Object.keys(errors).length === 0, errors };
   }, [formData]);
@@ -213,9 +253,18 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       case 'requirements':
         setFormData(prev => ({ ...prev, requirements: value }));
         break;
-      case 'location':
-        setFormData(prev => ({ ...prev, location: value }));
+      case 'location': {
+        // AI suggestions ainda chegam como string livre — converter para city/state
+        const parsed = parseLegacyLocation(value);
+        if (parsed.state) {
+          setFormData(prev => ({
+            ...prev,
+            state: parsed.state,
+            city: parsed.city || prev.city,
+          }));
+        }
         break;
+      }
       case 'salary': {
         const salaryMatch = value.match(/R\$\s*([\d.]+)\s*-\s*R\$\s*([\d.]+)/);
         if (salaryMatch) {
@@ -277,10 +326,19 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       ...otherBenefits.split('\n').filter(b => b.trim()),
     ];
 
+    // Derive legacy location string for retrocompatibility (DB trigger also
+    // syncs this, but we send a sensible value so cards/listings render
+    // correctly even before the migration is applied).
+    const derivedLocation = (formData.state && formData.city)
+      ? `${formData.city}, ${formData.state}`
+      : (formData.type === 'remote' ? 'Remoto' : '');
+
     const jobData: Partial<Job> = {
       title: formData.title,
       description: formData.description,
-      location: formData.location,
+      state: formData.state || undefined,
+      city: formData.city || undefined,
+      location: derivedLocation,
       type: (formData.type || 'remote') as Job['type'],
       level: formData.level,
       area: formData.area,

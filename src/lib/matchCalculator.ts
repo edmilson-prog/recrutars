@@ -94,7 +94,7 @@ function resolveAlias(token: string): string {
 function extractTokens(text: string): string[] {
   const normalized = normalizeString(text);
   // Split por espacos, virgulas, pontos, parenteses, barras
-  const raw = normalized.split(/[\s,;.()\/]+/).filter(Boolean);
+  const raw = normalized.split(/[\s,;.()/]+/).filter(Boolean);
   return raw
     .filter(w => !STOP_WORDS.has(w) && w.length >= 2)
     .map(resolveAlias);
@@ -267,54 +267,111 @@ export function calculateBehavioralScore(
 }
 
 /**
- * Calcula o score de localização baseado na compatibilidade
- * entre localização do candidato e da vaga
+ * Entrada estruturada de localização. `state` e `city` têm prioridade;
+ * `location` (string livre legada) é usada como fallback de parsing.
+ */
+export interface LocationInput {
+  state?: string | null;
+  city?: string | null;
+  location?: string | null;
+}
+
+const VALID_UFS_RE = /^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)$/;
+
+/** Normaliza acentos para comparação case/diacritics-insensitive. */
+function _normalizeLoc(loc: string): string {
+  return loc.toLowerCase().trim().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+/**
+ * Extrai (city, state) de um LocationInput. Preferimos os campos
+ * estruturados; se faltarem, tentamos parsear a string livre `location`.
+ */
+function resolveCityState(input: LocationInput | string): {
+  city: string;
+  state: string;
+} {
+  // Compat: aceita string crua (chamadas antigas)
+  if (typeof input === 'string') {
+    return resolveCityState({ location: input });
+  }
+
+  let state = (input.state ?? '').trim().toUpperCase();
+  let city = (input.city ?? '').trim();
+
+  if (state && city) {
+    return { city: _normalizeLoc(city), state };
+  }
+
+  // Fallback: parse legacy location string ("São Paulo, SP" / "São Paulo - SP")
+  const loc = input.location ?? '';
+  if (!loc) return { city: _normalizeLoc(city), state };
+
+  const cleaned = loc.replace(/[/|]|\s-\s|\s+-\s+/g, ',');
+  const tokens = cleaned.split(',').map((t) => t.trim()).filter(Boolean);
+
+  for (const tok of tokens) {
+    const upper = tok.toUpperCase();
+    if (!state && VALID_UFS_RE.test(upper)) {
+      state = upper;
+    } else if (!city) {
+      city = tok;
+    }
+  }
+
+  return { city: _normalizeLoc(city), state };
+}
+
+/**
+ * Calcula o score de localização entre candidato e vaga.
+ *
+ * Aceita entrada estruturada (LocationInput com city/state) ou string livre
+ * legada — para compatibilidade com chamadas antigas. Quando ambos os lados
+ * fornecem dados estruturados, a comparação é direta (sem split por vírgula),
+ * eliminando a discrepância causada por variações de formato.
  */
 export function calculateLocationScore(
-  candidateLocation: string,
-  jobLocation: string,
+  candidate: LocationInput | string,
+  job: LocationInput | string,
   jobType: 'remote' | 'hybrid' | 'onsite'
 ): number {
-  if (!candidateLocation || !jobLocation) {
-    return 50;
-  }
-
   // Trabalho remoto = sempre 100%
-  if (jobType === 'remote') {
-    return 100;
-  }
+  if (jobType === 'remote') return 100;
 
-  const normalizeLocation = (loc: string) =>
-    loc.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const candidateLoc = resolveCityState(candidate);
+  const jobLoc = resolveCityState(job);
 
-  const candidateLoc = normalizeLocation(candidateLocation);
-  const jobLoc = normalizeLocation(jobLocation);
+  // Se algum lado não tem nada, score neutro
+  if (!candidateLoc.city && !candidateLoc.state) return 50;
+  if (!jobLoc.city && !jobLoc.state) return 50;
 
-  // Extrai cidade e estado
-  const [candidateCity, candidateState] = candidateLoc.split(',').map(s => s?.trim());
-  const [jobCity, jobState] = jobLoc.split(',').map(s => s?.trim());
+  // Categoriza o cenário
+  const sameCity =
+    !!candidateLoc.city &&
+    !!jobLoc.city &&
+    candidateLoc.city === jobLoc.city;
+  const sameState =
+    !!candidateLoc.state &&
+    !!jobLoc.state &&
+    candidateLoc.state === jobLoc.state;
+  const cityOnly = !candidateLoc.state || !jobLoc.state; // só dá pra comparar cidade
 
-  // Se um dos lados nao tem estado, compara apenas cidade
-  if (!jobState || !candidateState) {
-    if (candidateCity === jobCity) return 100;
+  // Tabela de pesos por cenário (decisão de produto):
+  //   - Mesma cidade: match perfeito independente do tipo.
+  //   - Cidade diferente no mesmo estado: híbrido tolera mais (85) que presencial (70).
+  //   - Estado diferente: presencial penaliza mais (30); híbrido aceita melhor (50).
+  //   - cityOnly (UF ausente em algum lado): tratado como dado incompleto —
+  //     mesma cidade ainda dá 100, cidade diferente cai para piso (30/50).
+  const score: number = (() => {
+    if (sameCity) return 100;
+    if (cityOnly) return jobType === 'hybrid' ? 50 : 30;
+    if (sameState) return jobType === 'hybrid' ? 85 : 70;
     return jobType === 'hybrid' ? 50 : 30;
-  }
+  })();
 
-  // Mesma cidade = 100%
-  if (candidateCity === jobCity && candidateState === jobState) {
-    return 100;
-  }
-
-  // Mesmo estado = 70% (ou 85% se híbrido)
-  if (candidateState === jobState) {
-    return jobType === 'hybrid' ? 85 : 70;
-  }
-
-  // Estado diferente
-  // Híbrido com estado diferente = 50%
-  // Presencial com estado diferente = 30%
-  return jobType === 'hybrid' ? 50 : 30;
+  return Math.round(Math.max(0, Math.min(100, score)));
 }
+
 
 /**
  * Retorna skills do candidato que correspondem aos requisitos da vaga
@@ -593,8 +650,8 @@ export function calculateMatchBreakdown(
     : (!candidateProfile ? 20 : 50); // Sem teste = baixo; sem perfil ideal = neutro
 
   const locationScore = calculateLocationScore(
-    candidate.location || '',
-    job.location || '',
+    { city: candidate.city, state: candidate.state, location: candidate.location },
+    { city: job.city, state: job.state, location: job.location },
     (job.type as 'remote' | 'hybrid' | 'onsite') || 'hybrid'
   );
 
