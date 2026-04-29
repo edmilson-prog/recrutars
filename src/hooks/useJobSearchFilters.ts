@@ -7,6 +7,8 @@ export type ViewMode = 'list' | 'grid';
 export interface JobSearchFilters {
   searchTerm: string;
   locationFilter: string;
+  stateFilter: string;
+  cityFilter: string;
   typeFilter: string;
   areaFilter: string;
   levelFilter: string;
@@ -18,6 +20,8 @@ export interface JobSearchFilters {
 export interface UseJobSearchFiltersReturn extends JobSearchFilters {
   setSearchTerm: (v: string) => void;
   setLocationFilter: (v: string) => void;
+  setStateFilter: (v: string) => void;
+  setCityFilter: (v: string) => void;
   setTypeFilter: (v: string) => void;
   setAreaFilter: (v: string) => void;
   setLevelFilter: (v: string) => void;
@@ -31,6 +35,8 @@ export interface UseJobSearchFiltersReturn extends JobSearchFilters {
 const DEFAULTS = {
   q: '',
   location: 'all',
+  state: 'all',
+  city: 'all',
   type: 'all',
   area: 'all',
   level: 'all',
@@ -43,7 +49,7 @@ const DEFAULTS = {
 const SALARY_MIN_DEFAULT = 0;
 const SALARY_MAX_DEFAULT = 30000;
 
-const FILTER_KEYS = ['q', 'location', 'type', 'area', 'level', 'salaryMin', 'salaryMax'] as const;
+const FILTER_KEYS = ['q', 'location', 'state', 'city', 'type', 'area', 'level', 'salaryMin', 'salaryMax'] as const;
 
 /**
  * URL-synced filters for /candidato/vagas (Job Search).
@@ -59,6 +65,8 @@ export function useJobSearchFilters(): UseJobSearchFiltersReturn {
 
   const searchTerm = read('q');
   const locationFilter = read('location');
+  const stateFilter = read('state');
+  const cityFilter = read('city');
   const typeFilter = read('type');
   const areaFilter = read('area');
   const levelFilter = read('level');
@@ -97,6 +105,26 @@ export function useJobSearchFilters(): UseJobSearchFiltersReturn {
   const setTypeFilter = useCallback((v: string) => setParam('type', v), [setParam]);
   const setAreaFilter = useCallback((v: string) => setParam('area', v), [setParam]);
   const setLevelFilter = useCallback((v: string) => setParam('level', v), [setParam]);
+
+  // Estado/cidade em cascata: trocar UF limpa cidade (evita combinacao invalida).
+  const setStateFilter = useCallback(
+    (v: string) => {
+      setRef.current(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (v === '' || v === DEFAULTS.state) next.delete('state');
+          else next.set('state', v);
+          // Limpar cidade quando estado muda
+          next.delete('city');
+          next.delete('page');
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    []
+  );
+  const setCityFilter = useCallback((v: string) => setParam('city', v), [setParam]);
   const setSortBy = useCallback((v: SortOption) => setParam('sort', v), [setParam]);
   const setViewMode = useCallback((v: ViewMode) => setParam('view', v), [setParam]);
 
@@ -134,6 +162,8 @@ export function useJobSearchFilters(): UseJobSearchFiltersReturn {
   const hasActiveFilters =
     searchTerm !== '' ||
     locationFilter !== 'all' ||
+    stateFilter !== 'all' ||
+    cityFilter !== 'all' ||
     typeFilter !== 'all' ||
     areaFilter !== 'all' ||
     levelFilter !== 'all' ||
@@ -143,6 +173,8 @@ export function useJobSearchFilters(): UseJobSearchFiltersReturn {
   return {
     searchTerm,
     locationFilter,
+    stateFilter,
+    cityFilter,
     typeFilter,
     areaFilter,
     levelFilter,
@@ -151,6 +183,8 @@ export function useJobSearchFilters(): UseJobSearchFiltersReturn {
     viewMode,
     setSearchTerm,
     setLocationFilter,
+    setStateFilter,
+    setCityFilter,
     setTypeFilter,
     setAreaFilter,
     setLevelFilter,

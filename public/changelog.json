@@ -1,12 +1,91 @@
 {
   "versions": [
     {
+      "version": "1.55.0",
+      "codename": "Atlas",
+      "type": "minor",
+      "releaseDate": "2026-04-29",
+      "description": "Localização estruturada nas vagas: cadastro e busca agora usam dropdowns Estado→Cidade em cascata, eliminando inconsistências de formato e corrigindo discrepâncias no cálculo de match.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Campos Estado e Cidade estruturados na tabela de vagas (com 27 UFs validadas)",
+            "Filtros Estado e Cidade em cascata na busca de vagas",
+            "Sincronização automática do campo de localização legado a partir de Estado/Cidade",
+            "Migração SQL com backfill automático das vagas existentes (parser robusto)"
+          ],
+          "details": {
+            "0": {
+              "description": "A tabela de vagas agora possui dois campos estruturados — Estado (UF de 2 letras) e Cidade — alinhados ao padrão IBGE e ao mesmo modelo já usado para candidatos. Isso elimina a inconsistência que existia quando o mesmo município era escrito de formas diferentes (por exemplo, 'São Paulo, SP', 'São Paulo - SP' ou 'São Paulo/SP'), garantindo que comparações geográficas sejam sempre exatas.",
+              "files": ["sql/migrations/081_jobs_city_state.sql", "src/types/database.ts", "src/types/job.ts"],
+              "routes": []
+            },
+            "1": {
+              "description": "Na busca de vagas, o filtro único de localização foi substituído por dois dropdowns em cascata: primeiro o estado (com os 27 estados brasileiros ordenados alfabeticamente) e, em seguida, a cidade (filtrada automaticamente pelo estado escolhido). Trocar de estado limpa a cidade selecionada, evitando combinações inválidas.",
+              "files": ["src/hooks/useJobSearchFilters.ts", "src/pages/candidato/JobSearch.tsx"],
+              "routes": ["/candidato/vagas"]
+            },
+            "2": {
+              "description": "Para manter compatibilidade com telas que ainda exibem a localização como texto único (como cards de vagas e listagens), o sistema atualiza automaticamente o campo legado no formato 'Cidade, UF' sempre que cidade e estado são preenchidos. Nenhum ponto de exibição precisou ser alterado.",
+              "files": ["sql/migrations/081_jobs_city_state.sql"],
+              "routes": []
+            },
+            "3": {
+              "description": "Todas as vagas existentes foram analisadas e, quando possível, tiveram o estado e a cidade extraídos automaticamente do texto livre original. As vagas em que o parser não conseguiu identificar uma UF válida permanecem com o texto original preservado e podem ser revisadas manualmente pelo administrador.",
+              "files": ["sql/migrations/081_jobs_city_state.sql"],
+              "routes": []
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Cadastro e edição de vagas agora usam dropdowns Estado→Cidade em vez de campo de texto livre",
+            "Algoritmo de match de localização passou a comparar Estado e Cidade estruturados",
+            "Tabela de pesos do score de localização revisada por modalidade (presencial vs híbrido)"
+          ],
+          "details": {
+            "0": {
+              "description": "Ao criar ou editar uma vaga, o campo único 'Localização' foi substituído por dois selects: Estado e Cidade. A cidade é filtrada automaticamente pelo estado escolhido, e os campos só são obrigatórios para vagas presenciais ou híbridas — vagas remotas continuam podendo ser cadastradas sem informar localização. Isso reduz drasticamente o atrito do cadastro e elimina erros de digitação.",
+              "files": ["src/components/empresa/job-form/JobFormBasicInfo.tsx", "src/hooks/useJobForm.ts", "src/hooks/useJobAnalyzer.ts", "src/services/jobs/jobsService.supabase.ts"],
+              "routes": ["/empresa/vagas/criar", "/empresa/vagas/:id/editar"]
+            },
+            "1": {
+              "description": "O cálculo de compatibilidade de localização entre candidato e vaga agora usa diretamente os campos Estado e Cidade quando disponíveis, em vez de tentar interpretar a string de localização. Quando faltam dados estruturados, o sistema mantém o parser legado como fallback. O resultado é um score de localização mais preciso e estável.",
+              "files": ["src/lib/matchCalculator.ts"],
+              "routes": []
+            },
+            "2": {
+              "description": "Os pesos do score de localização foram revisados: vagas híbridas toleram melhor distâncias dentro do mesmo estado (85 pontos vs 70 para presencial) e candidatos em estado diferente recebem 50 pontos em híbridas e 30 em presenciais. Quando há mesma cidade, o score é sempre 100 — independente da modalidade.",
+              "files": ["src/lib/matchCalculator.ts"],
+              "routes": []
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Discrepâncias no match score causadas por variações de formato no campo de localização das vagas"
+          ],
+          "details": {
+            "0": {
+              "description": "Antes, o algoritmo de match dependia de dividir a string de localização da vaga por vírgula para extrair cidade e estado. Como o campo era texto livre, qualquer variação de formato ('São Paulo - SP', 'São Paulo/SP', 'Sao Paulo' sem acento) fazia o match falhar e zerar o score de localização do candidato. Agora a comparação é feita diretamente sobre os campos estruturados (com UF padronizada em duas letras), eliminando esse tipo de falsa-negativa.",
+              "files": ["src/lib/matchCalculator.ts"],
+              "routes": []
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.54.1",
       "codename": "Region",
       "type": "patch",
       "releaseDate": "2026-04-20",
       "description": "Correção crítica na gestão de equipes: todas as ações do ciclo de vida do colaborador (desvincular, desligar, promover, transferir, licença, etc.) agora funcionam corretamente.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

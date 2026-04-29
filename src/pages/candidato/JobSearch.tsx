@@ -38,7 +38,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { useJobs, useJobLocations } from '@/hooks/useJobsQuery';
+import { useJobs } from '@/hooks/useJobsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { getOrGenerateIdealProfile } from '@/lib/behavioralProfiles';
 import type { Job } from '@/types';
@@ -51,9 +51,24 @@ import { calculateMatchBreakdown } from '@/lib/matchCalculator';
 import { useMemo } from 'react';
 import { getMatchScoreColor } from '@/types/disc';
 import { Loader2 } from 'lucide-react';
+import { brazilianCitiesByState } from '@/data/brazilianCities';
 
 const areas = ['Tecnologia', 'Produto', 'Design', 'Dados', 'Marketing', 'Comercial', 'RH', 'Financeiro'];
 const levels = ['Estágio', 'Junior', 'Pleno', 'Senior', 'Especialista', 'Gerente'];
+
+const STATE_NAMES: Record<string, string> = {
+  AC: 'Acre', AL: 'Alagoas', AP: 'Amapá', AM: 'Amazonas', BA: 'Bahia',
+  CE: 'Ceará', DF: 'Distrito Federal', ES: 'Espírito Santo', GO: 'Goiás',
+  MA: 'Maranhão', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', MG: 'Minas Gerais',
+  PA: 'Pará', PB: 'Paraíba', PR: 'Paraná', PE: 'Pernambuco', PI: 'Piauí',
+  RJ: 'Rio de Janeiro', RN: 'Rio Grande do Norte', RS: 'Rio Grande do Sul',
+  RO: 'Rondônia', RR: 'Roraima', SC: 'Santa Catarina', SP: 'São Paulo',
+  SE: 'Sergipe', TO: 'Tocantins',
+};
+
+const SORTED_STATES = Object.keys(brazilianCitiesByState).sort((a, b) =>
+  STATE_NAMES[a].localeCompare(STATE_NAMES[b], 'pt-BR'),
+);
 
 const PAGE_SIZE_OPTIONS = [12, 24, 48];
 const DEFAULT_PAGE_SIZE = 12;
@@ -113,9 +128,6 @@ export default function CandidateJobSearch() {
   );
   const allJobs = jobsResult?.data ?? [];
 
-  // Dynamic locations derived from actual job data in the database
-  const { data: locations = [] } = useJobLocations();
-
   // Applications hook for checking applied status
   const { hasApplied } = useApplications(candidateId);
 
@@ -125,7 +137,8 @@ export default function CandidateJobSearch() {
   // Filters synced with URL search params (survive navigation to job detail)
   const {
     searchTerm,
-    locationFilter,
+    stateFilter,
+    cityFilter,
     typeFilter,
     areaFilter,
     levelFilter,
@@ -133,7 +146,8 @@ export default function CandidateJobSearch() {
     sortBy,
     viewMode,
     setSearchTerm,
-    setLocationFilter,
+    setStateFilter,
+    setCityFilter,
     setTypeFilter,
     setAreaFilter,
     setLevelFilter,
@@ -143,6 +157,12 @@ export default function CandidateJobSearch() {
     clearFilters,
     hasActiveFilters,
   } = useJobSearchFilters();
+
+  // Cidades disponiveis no estado selecionado
+  const cityOptions = useMemo(() => {
+    if (stateFilter === 'all') return [];
+    return brazilianCitiesByState[stateFilter] ?? [];
+  }, [stateFilter]);
 
   // Search input: local state for responsive typing, debounced sync to URL
   const [searchInput, setSearchInput] = useState(searchTerm);
@@ -208,13 +228,14 @@ export default function CandidateJobSearch() {
     const matchesSearch = job.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
                           getDisplayCompanyName(job).toLowerCase().includes(debouncedSearch.toLowerCase()) ||
                           job.description.toLowerCase().includes(debouncedSearch.toLowerCase());
-    const matchesLocation = locationFilter === 'all' || job.location.includes(locationFilter);
+    const matchesState = stateFilter === 'all' || job.state === stateFilter;
+    const matchesCity = cityFilter === 'all' || job.city === cityFilter;
     const matchesType = typeFilter === 'all' || job.type === typeFilter;
     const matchesArea = areaFilter === 'all' || job.area === areaFilter;
     const matchesLevel = levelFilter === 'all' || job.level === levelFilter;
     const matchesSalary = job.salary.min >= salaryRange[0] && job.salary.max <= salaryRange[1];
 
-    return matchesSearch && matchesLocation && matchesType && matchesArea && matchesLevel && matchesSalary;
+    return matchesSearch && matchesState && matchesCity && matchesType && matchesArea && matchesLevel && matchesSalary;
   });
 
   // Sort jobs
@@ -257,8 +278,14 @@ export default function CandidateJobSearch() {
   // Active filter chips
   const activeFilterChips = useMemo(() => {
     const chips: { key: string; label: string; onRemove: () => void }[] = [];
-    if (locationFilter !== 'all') chips.push({
-      key: 'location', label: locationFilter, onRemove: () => setLocationFilter('all')
+    if (stateFilter !== 'all') chips.push({
+      key: 'state',
+      label: STATE_NAMES[stateFilter] ?? stateFilter,
+      // Limpar estado tambem limpa cidade (cascata)
+      onRemove: () => setStateFilter('all'),
+    });
+    if (cityFilter !== 'all') chips.push({
+      key: 'city', label: cityFilter, onRemove: () => setCityFilter('all')
     });
     if (typeFilter !== 'all') chips.push({
       key: 'type',
@@ -277,21 +304,45 @@ export default function CandidateJobSearch() {
       onRemove: () => setSalaryRange([0, 30000])
     });
     return chips;
-  }, [locationFilter, typeFilter, areaFilter, levelFilter, salaryRange, setLocationFilter, setTypeFilter, setAreaFilter, setLevelFilter, setSalaryRange]);
+  }, [stateFilter, cityFilter, typeFilter, areaFilter, levelFilter, salaryRange, setStateFilter, setCityFilter, setTypeFilter, setAreaFilter, setLevelFilter, setSalaryRange]);
 
   const FilterContent = () => (
     <div className="space-y-6">
-      {/* Location */}
+      {/* Estado */}
       <div className="space-y-3">
-        <label className="text-sm font-medium text-foreground">Localização</label>
-        <Select value={locationFilter} onValueChange={setLocationFilter}>
+        <label className="text-sm font-medium text-foreground">Estado</label>
+        <Select value={stateFilter} onValueChange={setStateFilter}>
           <SelectTrigger>
-            <SelectValue placeholder="Todas as cidades" />
+            <SelectValue placeholder="Todos os estados" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os estados</SelectItem>
+            {SORTED_STATES.map(uf => (
+              <SelectItem key={uf} value={uf}>{STATE_NAMES[uf]} ({uf})</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Cidade (em cascata, depende do estado) */}
+      <div className="space-y-3">
+        <label className="text-sm font-medium text-foreground">Cidade</label>
+        <Select
+          value={cityFilter}
+          onValueChange={setCityFilter}
+          disabled={stateFilter === 'all'}
+        >
+          <SelectTrigger>
+            <SelectValue
+              placeholder={
+                stateFilter === 'all' ? 'Escolha o estado primeiro' : 'Todas as cidades'
+              }
+            />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as cidades</SelectItem>
-            {locations.map(loc => (
-              <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+            {cityOptions.map(city => (
+              <SelectItem key={city} value={city}>{city}</SelectItem>
             ))}
           </SelectContent>
         </Select>

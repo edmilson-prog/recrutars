@@ -77,6 +77,8 @@ function jobRowToJob(
     requirements: row.requirements ?? [],
     benefits: row.benefits ?? [],
     location: row.location ?? '',
+    city: ((row as Record<string, unknown>).city as string | null) ?? undefined,
+    state: ((row as Record<string, unknown>).state as string | null) ?? undefined,
     type: row.type as Job['type'],
     level: row.level ?? '',
     salary: { min: Number(row.salary_min) || 0, max: Number(row.salary_max) || 0 },
@@ -183,6 +185,8 @@ export class JobsServiceSupabase implements IJobsService {
         requirements: job.requirements ?? [],
         benefits: job.benefits ?? [],
         location: job.location ?? '',
+        city: job.city ?? null,
+        state: job.state ?? null,
         type: job.type ?? 'remote',
         level: job.level ?? '',
         salary_min: job.salary?.min ?? 0,
@@ -211,6 +215,8 @@ export class JobsServiceSupabase implements IJobsService {
     if (updates.requirements !== undefined) updatePayload.requirements = updates.requirements;
     if (updates.benefits !== undefined) updatePayload.benefits = updates.benefits;
     if (updates.location !== undefined) updatePayload.location = updates.location;
+    if (updates.city !== undefined) updatePayload.city = updates.city ?? null;
+    if (updates.state !== undefined) updatePayload.state = updates.state ?? null;
     if (updates.type !== undefined) updatePayload.type = updates.type;
     if (updates.level !== undefined) updatePayload.level = updates.level;
     if (updates.status !== undefined) updatePayload.status = updates.status;

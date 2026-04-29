@@ -135,7 +135,8 @@ export function createJobFormData(
   formState: {
     title: string;
     description: string;
-    location: string;
+    state: string;
+    city: string;
     type: '' | 'remote' | 'hybrid' | 'onsite';
     level: string;
     area: string;
@@ -149,10 +150,14 @@ export function createJobFormData(
   technicalSkillCount: number = 0,
   behavioralSkillCount: number = 0
 ): JobFormData {
+  // Derive a display string for the analyzer (it expects free-text location).
+  const derivedLocation = (formState.state && formState.city)
+    ? `${formState.city}, ${formState.state}`
+    : (formState.type === 'remote' ? 'Remoto' : '');
   return {
     title: formState.title,
     description: formState.description,
-    location: formState.location,
+    location: derivedLocation,
     type: formState.type,
     level: formState.level,
     area: formState.area,

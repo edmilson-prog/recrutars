@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,13 +11,29 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { EyeOff } from 'lucide-react';
+import { brazilianCitiesByState } from '@/data/brazilianCities';
+
+const STATE_NAMES: Record<string, string> = {
+  AC: 'Acre', AL: 'Alagoas', AP: 'Amapá', AM: 'Amazonas', BA: 'Bahia',
+  CE: 'Ceará', DF: 'Distrito Federal', ES: 'Espírito Santo', GO: 'Goiás',
+  MA: 'Maranhão', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', MG: 'Minas Gerais',
+  PA: 'Pará', PB: 'Paraíba', PR: 'Paraná', PE: 'Pernambuco', PI: 'Piauí',
+  RJ: 'Rio de Janeiro', RN: 'Rio Grande do Norte', RS: 'Rio Grande do Sul',
+  RO: 'Rondônia', RR: 'Roraima', SC: 'Santa Catarina', SP: 'São Paulo',
+  SE: 'Sergipe', TO: 'Tocantins',
+};
+
+const SORTED_STATES = Object.keys(brazilianCitiesByState).sort((a, b) =>
+  STATE_NAMES[a].localeCompare(STATE_NAMES[b], 'pt-BR'),
+);
 
 interface JobFormBasicInfoProps {
   formData: {
     title: string;
     area: string;
     type: '' | 'remote' | 'hybrid' | 'onsite';
-    location: string;
+    state: string;
+    city: string;
     level: string;
     positionsCount: string;
     isAnonymous: boolean;
@@ -25,6 +42,30 @@ interface JobFormBasicInfoProps {
 }
 
 export function JobFormBasicInfo({ formData, onUpdate }: JobFormBasicInfoProps) {
+  const isRemote = formData.type === 'remote';
+  const locationRequired = !isRemote;
+
+  // Cidades filtradas pela UF selecionada
+  const cities = useMemo(() => {
+    if (!formData.state) return [];
+    return brazilianCitiesByState[formData.state] ?? [];
+  }, [formData.state]);
+
+  const handleStateChange = (newState: string) => {
+    // Trocar estado limpa cidade — evita combinações inválidas
+    if (newState !== formData.state) {
+      onUpdate({ state: newState, city: '' });
+    } else {
+      onUpdate({ state: newState });
+    }
+  };
+
+  const handleTypeChange = (newType: 'remote' | 'hybrid' | 'onsite') => {
+    // Mudar para remoto não apaga cidade/estado (escritório matriz pode ser informado);
+    // mudar para presencial/híbrido também preserva.
+    onUpdate({ type: newType });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -58,7 +99,7 @@ export function JobFormBasicInfo({ formData, onUpdate }: JobFormBasicInfoProps) 
           </div>
           <div className="space-y-2">
             <Label>Modalidade *</Label>
-            <Select value={formData.type} onValueChange={(v: 'remote' | 'hybrid' | 'onsite') => onUpdate({ type: v })}>
+            <Select value={formData.type} onValueChange={handleTypeChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
@@ -69,14 +110,45 @@ export function JobFormBasicInfo({ formData, onUpdate }: JobFormBasicInfoProps) 
               </SelectContent>
             </Select>
           </div>
-          <div className="col-span-1 sm:col-span-2 space-y-2">
-            <Label htmlFor="location">Localização *</Label>
-            <Input
-              id="location"
-              placeholder="Ex: São Paulo, SP"
-              value={formData.location}
-              onChange={(e) => onUpdate({ location: e.target.value })}
-            />
+          <div className="space-y-2">
+            <Label htmlFor="state">
+              Estado {locationRequired ? '*' : <span className="text-muted-foreground font-normal">(opcional)</span>}
+            </Label>
+            <Select value={formData.state} onValueChange={handleStateChange}>
+              <SelectTrigger id="state">
+                <SelectValue placeholder="Selecione o estado" />
+              </SelectTrigger>
+              <SelectContent>
+                {SORTED_STATES.map((uf) => (
+                  <SelectItem key={uf} value={uf}>
+                    {STATE_NAMES[uf]} ({uf})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="city">
+              Cidade {locationRequired ? '*' : <span className="text-muted-foreground font-normal">(opcional)</span>}
+            </Label>
+            <Select
+              value={formData.city}
+              onValueChange={(v) => onUpdate({ city: v })}
+              disabled={!formData.state}
+            >
+              <SelectTrigger id="city">
+                <SelectValue
+                  placeholder={formData.state ? 'Selecione a cidade' : 'Escolha o estado primeiro'}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {cities.map((city) => (
+                  <SelectItem key={city} value={city}>
+                    {city}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>Nível</Label>
