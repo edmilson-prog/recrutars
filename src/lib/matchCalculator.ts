@@ -102,11 +102,15 @@ function extractTokens(text: string): string[] {
 }
 
 /**
- * Calcula o score de skills comparando as habilidades do candidato
- * com os requisitos da vaga.
+ * @deprecated Algoritmo legado tokenizado com viés tech (SKILL_ALIASES).
+ * Causa falsos negativos em vagas não-tech (auditoria empírica abril/2026:
+ * 0/20 candidatos com skills passaram de 20%, 4/20 ficaram abaixo).
+ * Use `computeSkillsScore` com `MatchSkillsInput` baseado em std_skills.
  *
- * Estrategia: tokeniza cada requisito em keywords tecnicas, compara com
- * skills do candidato usando match exato por token (evita falsos positivos).
+ * Mantido apenas como fallback quando std_skills não estão disponíveis em ambos os lados.
+ *
+ * Calcula o score de skills comparando as habilidades do candidato
+ * com os requisitos da vaga (path texto livre).
  */
 export function calculateSkillsScore(
   candidateSkills: string[],
