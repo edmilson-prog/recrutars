@@ -26,8 +26,15 @@ export interface MatchCategory {
   id: string;
   name: string;
   weight: number; // Peso no cálculo total (0-100, soma=100)
+  /** Peso após redistribuição quando outra categoria foi removida (Q4 caso 2). Quando ausente = weight. */
+  effectiveWeight?: number;
   score: number; // Score nesta categoria (0-100)
   description: string;
+  /** Sinaliza ausência de dado para tratamento na UI:
+   * - 'job-side': vaga não cadastrou (peso é redistribuído entre as outras categorias)
+   * - 'candidate-side': candidato não tem dado (score = 0, card mostra flag)
+   */
+  dataMissing?: 'job-side' | 'candidate-side' | null;
 }
 
 export interface MatchStrength {
@@ -43,6 +50,21 @@ export interface MatchOpportunity {
   category: string;
   potentialIncrease: number; // Aumento potencial no match %
   actionable: boolean;
+}
+
+/**
+ * Entrada de skills padronizadas para o cálculo de match.
+ * Quando passado, substitui completamente o caminho legado tokenizado.
+ */
+export interface MatchSkillsInput {
+  /** IDs de skills técnicas do candidato, ordenados por priority (1 = mais prioritária) */
+  candidateTechnical: string[];
+  /** IDs de skills comportamentais do candidato, ordenados por priority */
+  candidateBehavioral: string[];
+  /** IDs de skills técnicas requeridas pela vaga, ordenados por priority */
+  jobTechnical: string[];
+  /** IDs de skills comportamentais requeridas pela vaga, ordenados por priority */
+  jobBehavioral: string[];
 }
 
 export interface MatchResult {
