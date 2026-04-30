@@ -72,6 +72,10 @@ export interface CandidateRecommendationData {
   candidates: Candidate[];
   applications: Array<{ candidateId: string; jobId: string }>;
   idealProfiles: Record<string, BehavioralProfile>;
+  /** Optional: std_skills keyed by candidate id (opt-in to new algorithm). */
+  candidateStdSkillsMap?: Record<string, { technical: string[]; behavioral: string[] }>;
+  /** Optional: std_skills for the job being scored (opt-in to new algorithm). */
+  jobStdSkills?: { technical: string[]; behavioral: string[] };
 }
 
 // Score mínimo para aparecer nas recomendações
@@ -322,7 +326,15 @@ export function getSuggestedCandidates(
   for (const candidate of eligibleCandidates) {
     // Calcular match usando o motor existente
     const idealProfile = data.idealProfiles[jobId];
-    const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
+    const skillsInput = data.candidateStdSkillsMap?.[candidate.id] && data.jobStdSkills
+      ? {
+          candidateTechnical: data.candidateStdSkillsMap[candidate.id].technical,
+          candidateBehavioral: data.candidateStdSkillsMap[candidate.id].behavioral,
+          jobTechnical: data.jobStdSkills.technical,
+          jobBehavioral: data.jobStdSkills.behavioral,
+        }
+      : undefined;
+    const matchResult = calculateMatchBreakdown(candidate, job, idealProfile, undefined, skillsInput);
 
     // Calcular boost de histórico
     const historyBoost = calculateHistoryBoost(candidate.id, signals);
