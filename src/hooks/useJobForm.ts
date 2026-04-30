@@ -406,7 +406,9 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     toast.success(
       `Pesos atualizados. ${notified} candidato${notified === 1 ? '' : 's'} notificado${notified === 1 ? '' : 's'}.`
     );
-    setIsDirty(false);
+    // Não resetamos isDirty aqui: se houver outros campos editados (descrição, salário etc.),
+    // o usuário ainda precisa clicar Salvar para o caminho normal persistir esses diffs.
+    // Como originalWeightsRef já foi atualizado, o próximo Save não dispara o dialog de novo.
     setConfirmationOpen(false);
   }, [jobId, user?.id, formData.weightSkillsTechnical, formData.weightSkillsBehavioral, formData.weightExperience, formData.weightGaugePro, formData.weightLocation, queryClient]);
 
