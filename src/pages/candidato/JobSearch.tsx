@@ -4,7 +4,8 @@
  * PRD-007: Indicador visual de candidatura
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { usePaginationParams } from '@/hooks/usePaginationParams';
 import { useJobSearchFilters } from '@/hooks/useJobSearchFilters';
@@ -48,10 +49,15 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useApplications } from '@/hooks/useApplications';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
-import { useMemo } from 'react';
 import { getMatchScoreColor } from '@/types/disc';
+import type { MatchSkillsInput } from '@/types/disc';
 import { Loader2 } from 'lucide-react';
 import { brazilianCitiesByState } from '@/data/brazilianCities';
+import { getStandardizedSkillsService } from '@/services/standardizedSkills/standardizedSkillsService';
+import {
+  standardizedSkillKeys,
+  useCandidateStandardizedSkills,
+} from '@/hooks/useStandardizedSkillsQuery';
 
 const areas = ['Tecnologia', 'Produto', 'Design', 'Dados', 'Marketing', 'Comercial', 'RH', 'Financeiro'];
 const levels = ['Estágio', 'Junior', 'Pleno', 'Senior', 'Especialista', 'Gerente'];
@@ -194,17 +200,75 @@ export default function CandidateJobSearch() {
 
   const activeJobs = allJobs;
 
+  // Load candidate's standardized skills
+  const candidateSkillsQuery = useCandidateStandardizedSkills(currentCandidate?.id ?? '');
+
+  // Load each job's standardized skills in parallel (hooks cannot be called inside loops)
+  const jobSkillsQueries = useQueries({
+    queries: (activeJobs ?? []).map((job) => ({
+      queryKey: standardizedSkillKeys.jobSkills(job.id),
+      queryFn: async () => {
+        const service = await getStandardizedSkillsService();
+        return service.getJobSkills(job.id);
+      },
+      enabled: !!job.id,
+    })),
+  });
+
+  // Build MatchSkillsInput map by job id
+  const skillsInputByJobId = useMemo<Record<string, MatchSkillsInput | undefined>>(() => {
+    const candidateData = candidateSkillsQuery.data;
+    if (!candidateData) return {};
+
+    const candTech = candidateData
+      .filter((s) => s.skill?.type === 'technical')
+      .sort((a, b) => a.priority - b.priority)
+      .map((s) => s.skillId);
+    const candBeh = candidateData
+      .filter((s) => s.skill?.type === 'behavioral')
+      .sort((a, b) => a.priority - b.priority)
+      .map((s) => s.skillId);
+
+    const result: Record<string, MatchSkillsInput | undefined> = {};
+    (activeJobs ?? []).forEach((job, idx) => {
+      const jobSkills = jobSkillsQueries[idx]?.data;
+      if (!jobSkills) {
+        result[job.id] = undefined;
+        return;
+      }
+      result[job.id] = {
+        candidateTechnical: candTech,
+        candidateBehavioral: candBeh,
+        jobTechnical: jobSkills
+          .filter((s) => s.skill?.type === 'technical')
+          .sort((a, b) => a.priority - b.priority)
+          .map((s) => s.skillId),
+        jobBehavioral: jobSkills
+          .filter((s) => s.skill?.type === 'behavioral')
+          .sort((a, b) => a.priority - b.priority)
+          .map((s) => s.skillId),
+      };
+    });
+    return result;
+  }, [activeJobs, candidateSkillsQuery.data, jobSkillsQueries]);
+
   // PRD-035: Cache de match scores calculados dinamicamente
   const matchScores = useMemo(() => {
     if (!currentCandidate) return {};
     const scores: Record<string, number> = {};
     for (const job of activeJobs) {
       const idealProfile = getOrGenerateIdealProfile(job);
-      const result = calculateMatchBreakdown(currentCandidate, job, idealProfile);
+      const result = calculateMatchBreakdown(
+        currentCandidate,
+        job,
+        idealProfile,
+        undefined,
+        skillsInputByJobId[job.id],
+      );
       scores[job.id] = result.totalScore;
     }
     return scores;
-  }, [currentCandidate, activeJobs]);
+  }, [currentCandidate, activeJobs, skillsInputByJobId]);
 
   // Stats bar metrics
   const statsMetrics = useMemo(() => {
