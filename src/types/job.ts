@@ -36,14 +36,14 @@ export interface Job {
   positionsCount: number;
   createdAt: string;
   area: string;
-  /** Peso (0-100) das hard skills no cálculo de match. Default DB: 30. */
+  /** Peso (0-70) de Skills Técnicas no match. Default DB: 25. */
   weightSkillsTechnical?: number;
-  /** Peso (0-100) das soft skills no cálculo de match. Default DB: 20. */
+  /** Peso (0-70) de Skills Comportamentais no match. Default DB: 15. */
   weightSkillsBehavioral?: number;
-  /** Peso (0-100) da experiência no cálculo de match. Default DB: 20. */
+  /** Peso (0-70) de Experiência no match. Default DB: 30. */
   weightExperience?: number;
-  /** Peso (0-100) do Gauge-Pro no cálculo de match. Default DB: 20. */
+  /** Peso (0-70) de Perfil Comportamental (Gauge-Pro) no match. Default DB: 20. */
   weightGaugePro?: number;
-  /** Peso (0-100) da localização no cálculo de match. Default DB: 10. */
+  /** Peso (0-70) de Localização no match. Default DB: 10. */
   weightLocation?: number;
 }
