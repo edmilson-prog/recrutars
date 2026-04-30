@@ -652,6 +652,38 @@ function computeSkillsScore(
 }
 
 /**
+ * Aplica regras de Q4 sobre as 5 categorias de match:
+ *  - Caso 1 (weight = 0): categoria removida do array
+ *  - Caso 2 (weight > 0, dataMissing = 'job-side'): peso redistribuído entre as restantes; categoria removida do retorno
+ *  - Caso 3 (weight > 0, dataMissing = 'candidate-side'): score = 0, categoria fica visível com flag
+ *  - Caso 4: cálculo normal — categoria mantida com effectiveWeight = weight
+ *
+ * Retorna o array filtrado/ajustado pronto para renderização e cálculo do total.
+ */
+function applyDataAvailability(categories: MatchCategory[]): MatchCategory[] {
+  // 1. Remove peso=0 (Caso 1)
+  const visible = categories.filter((c) => c.weight > 0);
+
+  // 2. Identifica categorias job-side (Caso 2): redistribuir peso e remover do retorno
+  const jobSideMissing = visible.filter((c) => c.dataMissing === 'job-side');
+  const others = visible.filter((c) => c.dataMissing !== 'job-side');
+
+  // Sem job-side missing OU não há outras pra redistribuir → retorna como está
+  if (jobSideMissing.length === 0 || others.length === 0) {
+    return visible.map((c) => ({ ...c, effectiveWeight: c.weight }));
+  }
+
+  // Redistribui o peso das job-side proporcionalmente entre as outras
+  const totalRedistribute = jobSideMissing.reduce((s, c) => s + c.weight, 0);
+  const totalOthers = others.reduce((s, c) => s + c.weight, 0);
+
+  return others.map((c) => ({
+    ...c,
+    effectiveWeight: c.weight + (c.weight / totalOthers) * totalRedistribute,
+  }));
+}
+
+/**
  * Calcula o breakdown completo de match entre candidato e vaga
  */
 export function calculateMatchBreakdown(
@@ -735,18 +767,42 @@ export function calculateMatchBreakdown(
     },
   ];
 
-  // Calcula score total ponderado
-  const totalScore = Math.round(
-    categories.reduce((sum, cat) => sum + (cat.score * cat.weight) / 100, 0)
+  // Marca dataMissing para gauge_pro e ajusta score conforme regra Q4
+  const gaugeProCategory = categories.find((c) => c.id === 'gauge_pro');
+  if (gaugeProCategory) {
+    if (!idealProfile) {
+      gaugeProCategory.dataMissing = 'job-side';
+    } else if (!candidateProfile) {
+      gaugeProCategory.dataMissing = 'candidate-side';
+      gaugeProCategory.score = 0; // penalidade — Caso 3
+    }
+  }
+
+  // Aplica regras Q4 (filtra peso=0 e job-side missing; redistribui pesos)
+  const processedCategories = applyDataAvailability(categories);
+
+  // Soma ponderada usando effectiveWeight (que reflete redistribuição). Quando
+  // effectiveWeight está ausente (categoria sem ajuste), cai no weight original.
+  const totalEffectiveWeight = processedCategories.reduce(
+    (s, c) => s + (c.effectiveWeight ?? c.weight),
+    0,
   );
+  const totalScore = totalEffectiveWeight > 0
+    ? Math.round(
+        processedCategories.reduce(
+          (sum, cat) => sum + (cat.score * (cat.effectiveWeight ?? cat.weight)) / totalEffectiveWeight,
+          0,
+        ),
+      )
+    : 0;
 
   // Gera strengths e opportunities
-  const strengths = generateStrengths(categories, candidate, job);
-  const opportunities = generateOpportunities(categories, candidate, job);
+  const strengths = generateStrengths(processedCategories, candidate, job);
+  const opportunities = generateOpportunities(processedCategories, candidate, job);
 
   return {
     totalScore,
-    categories,
+    categories: processedCategories,
     strengths,
     opportunities,
     candidateProfile: candidateProfile || { d: 50, i: 50, s: 50, c: 50 },
