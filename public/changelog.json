@@ -1,12 +1,107 @@
 {
   "versions": [
     {
+      "version": "1.57.0",
+      "codename": "Tailor",
+      "type": "minor",
+      "releaseDate": "2026-04-30",
+      "description": "Pesos de match parametrizáveis por vaga. Empresa agora define pesos próprios para cada vaga em 5 categorias (Skills Técnicas, Skills Comportamentais, Experiência, Perfil Comportamental, Localização) com 6 templates pré-definidos (Operacional, Industrial, Administrativo, Técnico, Liderança, Comercial). Calculator passa a ler pesos da vaga em vez da constante global 40/30/20/10.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Aba 'Match' no formulário de vaga com sliders por categoria, cards de templates e indicador de soma com 3 estados (válido/faltam/excedeu)",
+            "6 templates pré-definidos de pesos por tipo de vaga (Operacional, Industrial, Administrativo, Técnico, Liderança, Comercial)",
+            "Migration adiciona 5 colunas weight_* em jobs com CHECK constraints (soma=100, range 0-70). Defaults preservam proporção atual: 25/15/30/20/10"
+          ],
+          "details": {
+            "0": {
+              "description": "Aba 'Match' usa shadcn Slider (Radix) com inputs numéricos sincronizados, cards horizontais de templates clicáveis com barras de cor proporcional, e footer sticky com Progress + ações 'Distribuir restante' / 'Normalizar' / 'Restaurar padrão'. Validação em tempo real: soma deve fechar em 100% antes de salvar.",
+              "files": [
+                "src/components/empresa/job-form/JobFormMatchWeights.tsx",
+                "src/components/empresa/job-form/MatchWeightsSliders.tsx",
+                "src/components/empresa/job-form/MatchWeightsTemplateCards.tsx",
+                "src/components/empresa/job-form/MatchWeightsSumIndicator.tsx",
+                "src/pages/empresa/JobForm.tsx",
+                "src/hooks/useJobForm.ts"
+              ],
+              "routes": [
+                "/empresa/vagas/nova",
+                "/empresa/vagas/:id/editar"
+              ]
+            },
+            "1": {
+              "description": "Templates hardcoded em src/lib/matchWeightTemplates.ts com helper matchTemplate() para destacar template ativo. PRD-092 documenta evolução futura para CRUD de templates por empresa.",
+              "files": [
+                "src/lib/matchWeightTemplates.ts",
+                "src/types/matchWeights.ts"
+              ],
+              "routes": []
+            },
+            "2": {
+              "description": "Migration 092_job_weights aplicada em 40 vagas existentes. CHECK constraints garantem integridade no banco (soma=100 e range 0-70 por categoria). DEFAULT_MATCH_WEIGHTS (25/15/30/20/10) usado como fallback quando vaga não tem pesos próprios.",
+              "files": [
+                "sql/migrations/092_job_weights.sql",
+                "src/types/database.ts",
+                "src/types/job.ts",
+                "src/services/jobs/jobsService.supabase.ts"
+              ],
+              "routes": []
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Tela de match exibe 5 categorias separadas (Skills Técnicas e Comportamentais agora distintas)",
+            "Calculator lê pesos da vaga em vez de constante global 40/30/20/10"
+          ],
+          "details": {
+            "0": {
+              "description": "DEFAULT_MATCH_CATEGORIES expandiu de 4 para 5 entradas. MatchBreakdown renderiza 5 barras de progresso ordenadas: skills_technical, skills_behavioral, experience, gauge_pro, location.",
+              "files": [
+                "src/components/match/MatchBreakdown.tsx",
+                "src/lib/matchCalculator.ts"
+              ],
+              "routes": [
+                "/candidato/vagas/:id",
+                "/empresa/candidatos",
+                "/empresa/candidatos/:id"
+              ]
+            },
+            "1": {
+              "description": "Função getJobWeights(job) substitui a constante CATEGORY_WEIGHTS. Pesos agora vêm de job.weightSkillsTechnical/Behavioral/Experience/GaugePro/Location, com fallback para DEFAULT_MATCH_WEIGHTS quando undefined. Variável local DISC renomeada de behavioralScore para behavioralProfileScore para evitar shadow com skillsBehavioralScore.",
+              "files": [
+                "src/lib/matchCalculator.ts"
+              ],
+              "routes": []
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Cache de applications invalidado quando empresa atualiza pesos da vaga (scores de match re-renderizam com pesos novos)"
+          ],
+          "details": {
+            "0": {
+              "description": "useUpdateJob agora invalida queryKey ['applications'] em onSuccess além de jobs.detail e jobs.lists. Garante que listas de candidaturas mostrem scores recalculados após mudança de pesos sem precisar reload manual.",
+              "files": [
+                "src/hooks/useJobsQuery.ts"
+              ],
+              "routes": []
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.56.0",
       "codename": "Compass",
       "type": "minor",
       "releaseDate": "2026-04-30",
       "description": "Match calculator agora usa skills padronizadas. Algoritmo de skills migrou do caminho tokenizado legado para IDs de skills padronizadas separadas em técnicas e comportamentais. Auditoria empírica confirmou: candidatos com skills cadastradas saem de scores próximos a 0% para a faixa real (Sul Santana: 6% → 44% em Skills).",
-      "isCurrent": true,
       "changes": [
         {
           "type": "fixed",
