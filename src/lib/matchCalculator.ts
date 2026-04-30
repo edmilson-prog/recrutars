@@ -11,7 +11,8 @@ import type {
   MatchResult,
   MatchCategory,
   MatchStrength,
-  MatchOpportunity
+  MatchOpportunity,
+  MatchSkillsInput,
 } from '@/types/disc';
 import type { Candidate, Job } from '@/types';
 import { DEFAULT_MATCH_CATEGORIES } from '@/components/match/MatchBreakdown';
@@ -620,9 +621,13 @@ export function calculateMatchBreakdown(
   job: Partial<Job>,
   idealProfile?: BehavioralProfile,
   candidateBehavioralProfile?: BehavioralProfile,
-  candidateStdSkillIds?: string[],
-  jobStdSkillIds?: string[],
+  skillsInput?: MatchSkillsInput,
 ): MatchResult {
+  // Temporary: extract legacy skill IDs from skillsInput for backward compatibility
+  // Task 3 will replace the entire skills calculation block
+  const candidateStdSkillIds = skillsInput?.candidateTechnical ?? [];
+  const jobStdSkillIds = skillsInput?.jobTechnical ?? [];
+
   // Usa perfil fornecido externamente, ou extrai de candidate.testResult (legacy)
   const candidateProfile: BehavioralProfile | undefined = candidateBehavioralProfile
     ?? (candidate.testResult?.result
