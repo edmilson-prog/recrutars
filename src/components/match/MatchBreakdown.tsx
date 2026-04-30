@@ -46,13 +46,17 @@ export function MatchBreakdown({
   const shouldAnimate = animated && !prefersReducedMotion;
 
   // Preparar dados para o stack de progresso
-  const progressData = categories.map((cat) => ({
-    id: cat.id,
-    label: cat.name,
-    score: cat.score,
-    weight: cat.weight,
-    description: cat.description,
-  }));
+  // Defensivo: filtra weight=0 (calculator já remove, mas garante consistência caso categorias cruas sejam passadas)
+  const progressData = categories
+    .filter((cat) => cat.weight > 0)
+    .map((cat) => ({
+      id: cat.id,
+      label: cat.name,
+      score: cat.score,
+      weight: cat.weight,
+      description: cat.description,
+      dataMissing: cat.dataMissing,
+    }));
 
   if (layout === "horizontal") {
     return (
