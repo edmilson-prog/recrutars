@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.update-job-weights]
+verify_jwt = false
