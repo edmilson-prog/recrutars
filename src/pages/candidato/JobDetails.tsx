@@ -21,6 +21,7 @@ import { useApplications } from '@/hooks/useApplications';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
 import { useProfile } from '@/hooks/useCurriculumsQuery';
 import { useSetApplicationHighlights } from '@/hooks/useHighlightsQuery';
+import { useMatchSkillIds } from '@/hooks/useMatchSkillIds';
 import { ApplicationModal } from '@/components/candidato/ApplicationModal';
 import { ApplicationSuccessModal } from '@/components/candidato/ApplicationSuccessModal';
 import type { ApplicationHighlights } from '@/types/applicationHighlight';
@@ -58,8 +59,9 @@ export default function JobDetails() {
 
   // PRD-035: Cálculo dinâmico de match
   const idealProfile = job ? getOrGenerateIdealProfile(job) : undefined;
+  const { skillsInput } = useMatchSkillIds(currentCandidate?.id, job?.id);
   const matchResult = job && currentCandidate
-    ? calculateMatchBreakdown(currentCandidate, job, idealProfile)
+    ? calculateMatchBreakdown(currentCandidate, job, idealProfile, undefined, skillsInput)
     : undefined;
 
   // Loading state
