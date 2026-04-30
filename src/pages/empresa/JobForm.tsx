@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Briefcase, DollarSign, FileText, ListChecks, Gift, Code, Pause, Play, XCircle } from 'lucide-react';
+import { ArrowLeft, Briefcase, DollarSign, FileText, ListChecks, Gift, Code, Settings, Pause, Play, XCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,7 @@ import {
   JobFormRequirements,
   JobFormBenefits,
   JobFormSkills,
+  JobFormMatchWeights,
 } from '@/components/empresa/job-form';
 import { JobStatus } from '@/types';
 
@@ -58,6 +59,8 @@ export default function CompanyJobForm() {
     handleUpdateStatus,
     setTechnicalSkillIds,
     setBehavioralSkillIds,
+    weights,
+    setWeights,
     analysis,
     isAnalyzing,
   } = useJobForm({ jobId: id });
@@ -177,6 +180,10 @@ export default function CompanyJobForm() {
                   <Code className="h-4 w-4" />
                   <span className="hidden sm:inline">Competências</span>
                 </TabsTrigger>
+                <TabsTrigger value="match" className="gap-2">
+                  <Settings className="h-4 w-4" />
+                  <span className="hidden sm:inline">Match</span>
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="basic" className="mt-6">
@@ -217,6 +224,10 @@ export default function CompanyJobForm() {
                   onTechnicalChange={setTechnicalSkillIds}
                   onBehavioralChange={setBehavioralSkillIds}
                 />
+              </TabsContent>
+
+              <TabsContent value="match" className="mt-6">
+                <JobFormMatchWeights weights={weights} onChange={setWeights} />
               </TabsContent>
             </Tabs>
 

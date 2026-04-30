@@ -5,6 +5,7 @@ import { useJob, useCreateJob, useUpdateJob } from '@/hooks/useJobsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { useJobAnalyzer, createJobFormData } from '@/hooks/useJobAnalyzer';
 import { useJobStandardizedSkills, useSetJobSkills } from '@/hooks/useStandardizedSkillsQuery';
+import { validateWeights, type MatchWeights } from '@/types/matchWeights';
 import { toast } from 'sonner';
 
 export const COMMON_BENEFITS = [
@@ -33,6 +34,11 @@ export const INITIAL_FORM_STATE = {
   requirements: '',
   positionsCount: '1',
   isAnonymous: false,
+  weightSkillsTechnical: 25,
+  weightSkillsBehavioral: 15,
+  weightExperience: 30,
+  weightGaugePro: 20,
+  weightLocation: 10,
 };
 
 const VALID_UFS = new Set([
@@ -128,6 +134,11 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       requirements: loadedJob.requirements.join('\n'),
       positionsCount: (loadedJob.positionsCount ?? 1).toString(),
       isAnonymous: loadedJob.isAnonymous ?? false,
+      weightSkillsTechnical: loadedJob.weightSkillsTechnical ?? 25,
+      weightSkillsBehavioral: loadedJob.weightSkillsBehavioral ?? 15,
+      weightExperience: loadedJob.weightExperience ?? 30,
+      weightGaugePro: loadedJob.weightGaugePro ?? 20,
+      weightLocation: loadedJob.weightLocation ?? 10,
     });
     const common = (job as Job).benefits.filter(b => COMMON_BENEFITS.includes(b));
     const other = (job as Job).benefits.filter(b => !COMMON_BENEFITS.includes(b));
@@ -321,6 +332,18 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       return;
     }
 
+    const weightsValidation = validateWeights({
+      skillsTechnical: formData.weightSkillsTechnical,
+      skillsBehavioral: formData.weightSkillsBehavioral,
+      experience: formData.weightExperience,
+      gaugePro: formData.weightGaugePro,
+      location: formData.weightLocation,
+    });
+    if (!weightsValidation.valid) {
+      toast.error(`Pesos inválidos: ${weightsValidation.error}`);
+      return;
+    }
+
     const allBenefits = [
       ...selectedBenefits,
       ...otherBenefits.split('\n').filter(b => b.trim()),
@@ -349,6 +372,11 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       benefits: allBenefits,
       positionsCount: Math.max(1, parseInt(formData.positionsCount) || 1),
       isAnonymous: formData.isAnonymous,
+      weightSkillsTechnical: formData.weightSkillsTechnical,
+      weightSkillsBehavioral: formData.weightSkillsBehavioral,
+      weightExperience: formData.weightExperience,
+      weightGaugePro: formData.weightGaugePro,
+      weightLocation: formData.weightLocation,
     };
 
     // Helper to save standardized skills after job create/update
@@ -418,6 +446,24 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     setSelectedBenefits,
     setOtherBenefits,
     setNewSkill,
+
+    // Match weights
+    weights: {
+      skillsTechnical: formData.weightSkillsTechnical,
+      skillsBehavioral: formData.weightSkillsBehavioral,
+      experience: formData.weightExperience,
+      gaugePro: formData.weightGaugePro,
+      location: formData.weightLocation,
+    } as MatchWeights,
+    setWeights: (w: MatchWeights) => {
+      updateFormData({
+        weightSkillsTechnical: w.skillsTechnical,
+        weightSkillsBehavioral: w.skillsBehavioral,
+        weightExperience: w.experience,
+        weightGaugePro: w.gaugePro,
+        weightLocation: w.location,
+      });
+    },
 
     // Handlers
     toggleBenefit,
