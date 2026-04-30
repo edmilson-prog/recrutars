@@ -16,31 +16,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Configuração padrão das categorias de match (pesos somam 100%)
 export const DEFAULT_MATCH_CATEGORIES = [
-  {
-    id: "skills",
-    name: "Skills Técnicas",
-    weight: 40,
-    description: "Correspondência entre suas habilidades técnicas e os requisitos da vaga",
-  },
-  {
-    id: "experience",
-    name: "Experiência",
-    weight: 30,
-    description: "Tempo de experiência e senioridade compatíveis com a posição",
-  },
-  {
-    id: "behavioral",
-    name: "Perfil Comportamental",
-    weight: 20,
-    description: "Alinhamento do seu perfil comportamental com o perfil ideal da posição",
-  },
-  {
-    id: "location",
-    name: "Localização",
-    weight: 10,
-    description: "Compatibilidade entre sua localização e o modelo de trabalho da vaga",
-  },
-];
+  { id: 'skills_technical', name: 'Skills Técnicas', weight: 25, description: 'Habilidades técnicas declaradas pelo candidato vs requisitadas pela vaga.' },
+  { id: 'skills_behavioral', name: 'Skills Comportamentais', weight: 15, description: 'Soft skills declaradas pelo candidato vs requisitadas pela vaga.' },
+  { id: 'experience', name: 'Experiência', weight: 30, description: 'Anos de experiência do candidato vs nível exigido pela vaga.' },
+  { id: 'gauge_pro', name: 'Perfil Comportamental', weight: 20, description: 'Distância do perfil Gauge-Pro do candidato ao perfil ideal cadastrado.' },
+  { id: 'location', name: 'Localização', weight: 10, description: 'Compatibilidade entre cidade do candidato e cidade da vaga (considera tipo presencial/híbrido/remoto).' },
+] as const;
 
 interface MatchBreakdownProps {
   totalScore: number;

@@ -717,21 +717,21 @@ export function calculateMatchBreakdown(
       name: 'Experiência',
       weight: weights.experience,
       score: experienceScore,
-      description: DEFAULT_MATCH_CATEGORIES[1].description,
+      description: DEFAULT_MATCH_CATEGORIES[2].description,
     },
     {
       id: 'gauge_pro',
       name: 'Perfil Comportamental',
       weight: weights.gaugePro,
       score: behavioralProfileScore,
-      description: DEFAULT_MATCH_CATEGORIES[2].description,
+      description: DEFAULT_MATCH_CATEGORIES[3].description,
     },
     {
       id: 'location',
       name: 'Localização',
       weight: weights.location,
       score: locationScore,
-      description: DEFAULT_MATCH_CATEGORIES[3].description,
+      description: DEFAULT_MATCH_CATEGORIES[4].description,
     },
   ];
 
