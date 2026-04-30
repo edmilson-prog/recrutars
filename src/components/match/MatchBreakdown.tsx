@@ -6,12 +6,15 @@
  * Inclui score total, categorias com pesos, e visualização detalhada
  */
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { MatchCategory } from "@/types/disc";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useMatchCombineSkills } from "@/hooks/useMatchCombineSkills";
 import { MatchScoreCircle } from "./MatchScoreCircle";
 import { MatchProgressStack } from "./MatchProgressBar";
+import { MatchCombineSkillsToggle } from "./MatchCombineSkillsToggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Configuração padrão das categorias de match (pesos somam 100%)
@@ -45,9 +48,35 @@ export function MatchBreakdown({
   const prefersReducedMotion = useReducedMotion();
   const shouldAnimate = animated && !prefersReducedMotion;
 
+  const [combined, setCombined] = useMatchCombineSkills();
+
+  const displayCategories = useMemo(() => {
+    if (!combined) return categories;
+    const tech = categories.find((c) => c.id === 'skills_technical');
+    const beh = categories.find((c) => c.id === 'skills_behavioral');
+    if (!tech || !beh) return categories;
+
+    const others = categories.filter((c) => c.id !== 'skills_technical' && c.id !== 'skills_behavioral');
+    const combinedWeight = tech.weight + beh.weight;
+    const combinedScore = combinedWeight > 0
+      ? Math.round((tech.score * tech.weight + beh.score * beh.weight) / combinedWeight)
+      : 0;
+
+    return [
+      {
+        id: 'skills_combined',
+        name: 'Skills',
+        weight: combinedWeight,
+        score: combinedScore,
+        description: 'Skills técnicas e comportamentais combinadas (média ponderada).',
+      },
+      ...others,
+    ];
+  }, [categories, combined]);
+
   // Preparar dados para o stack de progresso
   // Defensivo: filtra weight=0 (calculator já remove, mas garante consistência caso categorias cruas sejam passadas)
-  const progressData = categories
+  const progressData = displayCategories
     .filter((cat) => cat.weight > 0)
     .map((cat) => ({
       id: cat.id,
@@ -82,7 +111,10 @@ export function MatchBreakdown({
 
             {/* Breakdown por categorias */}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground mb-4">{title}</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-foreground">{title}</h3>
+                <MatchCombineSkillsToggle combined={combined} onChange={setCombined} />
+              </div>
               <MatchProgressStack
                 categories={progressData}
                 animated={animated}
@@ -121,9 +153,12 @@ export function MatchBreakdown({
 
         {/* Breakdown por categorias */}
         <div className="space-y-1">
-          <h4 className="text-sm font-medium text-muted-foreground mb-3">
-            Breakdown por Categoria
-          </h4>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-medium text-muted-foreground">
+              Breakdown por Categoria
+            </h4>
+            <MatchCombineSkillsToggle combined={combined} onChange={setCombined} />
+          </div>
           <MatchProgressStack
             categories={progressData}
             animated={animated}
