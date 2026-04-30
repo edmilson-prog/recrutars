@@ -16,14 +16,20 @@ import type {
 } from '@/types/disc';
 import type { Candidate, Job } from '@/types';
 import { DEFAULT_MATCH_CATEGORIES } from '@/components/match/MatchBreakdown';
+import { DEFAULT_MATCH_WEIGHTS, type MatchWeights } from '@/types/matchWeights';
 
-// Pesos padrão das categorias
-const CATEGORY_WEIGHTS = {
-  skills: 40,
-  experience: 30,
-  behavioral: 20,
-  location: 10,
-};
+/**
+ * Lê os pesos de match da vaga, com fallback para defaults globais.
+ */
+function getJobWeights(job: Partial<Job>): MatchWeights {
+  return {
+    skillsTechnical: job.weightSkillsTechnical ?? DEFAULT_MATCH_WEIGHTS.skillsTechnical,
+    skillsBehavioral: job.weightSkillsBehavioral ?? DEFAULT_MATCH_WEIGHTS.skillsBehavioral,
+    experience: job.weightExperience ?? DEFAULT_MATCH_WEIGHTS.experience,
+    gaugePro: job.weightGaugePro ?? DEFAULT_MATCH_WEIGHTS.gaugePro,
+    location: job.weightLocation ?? DEFAULT_MATCH_WEIGHTS.location,
+  };
+}
 
 // Mapeamento de níveis de experiência para anos
 const EXPERIENCE_LEVELS: Record<string, { min: number; max: number }> = {
@@ -673,16 +679,12 @@ export function calculateMatchBreakdown(
     job.requirements || [],
   );
 
-  // Score combinado para compatibilidade com a categoria única "Skills Técnicas" atual.
-  // Etapa B do roadmap divide isso em duas categorias separadas com pesos próprios.
-  const skillsScore = Math.round((technicalScore + skillsBehavioralScore) / 2);
-
   const experienceScore = calculateExperienceScore(
     candidate.experience || 0,
     job.level || 'Pleno'
   );
 
-  const behavioralScore = candidateProfile && idealProfile
+  const behavioralProfileScore = candidateProfile && idealProfile
     ? calculateBehavioralScore(candidateProfile, idealProfile)
     : (!candidateProfile ? 20 : 50); // Sem teste = baixo; sem perfil ideal = neutro
 
@@ -692,33 +694,42 @@ export function calculateMatchBreakdown(
     (job.type as 'remote' | 'hybrid' | 'onsite') || 'hybrid'
   );
 
+  const weights = getJobWeights(job);
+
   // Monta as categorias
   const categories: MatchCategory[] = [
     {
-      id: 'skills',
+      id: 'skills_technical',
       name: 'Skills Técnicas',
-      weight: CATEGORY_WEIGHTS.skills,
-      score: skillsScore,
-      description: DEFAULT_MATCH_CATEGORIES[0].description,
+      weight: weights.skillsTechnical,
+      score: technicalScore,
+      description: 'Habilidades técnicas declaradas pelo candidato vs requisitadas pela vaga.',
+    },
+    {
+      id: 'skills_behavioral',
+      name: 'Skills Comportamentais',
+      weight: weights.skillsBehavioral,
+      score: skillsBehavioralScore,
+      description: 'Soft skills declaradas pelo candidato vs requisitadas pela vaga.',
     },
     {
       id: 'experience',
       name: 'Experiência',
-      weight: CATEGORY_WEIGHTS.experience,
+      weight: weights.experience,
       score: experienceScore,
       description: DEFAULT_MATCH_CATEGORIES[1].description,
     },
     {
-      id: 'behavioral',
+      id: 'gauge_pro',
       name: 'Perfil Comportamental',
-      weight: CATEGORY_WEIGHTS.behavioral,
-      score: behavioralScore,
+      weight: weights.gaugePro,
+      score: behavioralProfileScore,
       description: DEFAULT_MATCH_CATEGORIES[2].description,
     },
     {
       id: 'location',
       name: 'Localização',
-      weight: CATEGORY_WEIGHTS.location,
+      weight: weights.location,
       score: locationScore,
       description: DEFAULT_MATCH_CATEGORIES[3].description,
     },
