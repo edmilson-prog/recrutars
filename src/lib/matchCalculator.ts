@@ -614,6 +614,34 @@ export function generateOpportunities(
 }
 
 /**
+ * Computa scores de skills técnicas e comportamentais separadamente.
+ * Substitui o caminho legado tokenizado quando `skillsInput` é fornecido.
+ *
+ * @returns objeto com { technicalScore, behavioralScore }
+ */
+function computeSkillsScore(
+  skillsInput: MatchSkillsInput | undefined,
+  fallbackCandidateSkills: string[],
+  fallbackJobRequirements: string[],
+): { technicalScore: number; behavioralScore: number } {
+  if (skillsInput) {
+    const technicalScore = calculateStandardizedSkillsScore(
+      skillsInput.candidateTechnical,
+      skillsInput.jobTechnical,
+    );
+    const behavioralScore = calculateStandardizedSkillsScore(
+      skillsInput.candidateBehavioral,
+      skillsInput.jobBehavioral,
+    );
+    return { technicalScore, behavioralScore };
+  }
+
+  // Fallback legado: usa string-based, distribui igualmente entre técnica e comportamental
+  const legacyScore = calculateSkillsScore(fallbackCandidateSkills, fallbackJobRequirements);
+  return { technicalScore: legacyScore, behavioralScore: legacyScore };
+}
+
+/**
  * Calcula o breakdown completo de match entre candidato e vaga
  */
 export function calculateMatchBreakdown(
@@ -623,11 +651,6 @@ export function calculateMatchBreakdown(
   candidateBehavioralProfile?: BehavioralProfile,
   skillsInput?: MatchSkillsInput,
 ): MatchResult {
-  // Temporary: extract legacy skill IDs from skillsInput for backward compatibility
-  // Task 3 will replace the entire skills calculation block
-  const candidateStdSkillIds = skillsInput?.candidateTechnical ?? [];
-  const jobStdSkillIds = skillsInput?.jobTechnical ?? [];
-
   // Usa perfil fornecido externamente, ou extrai de candidate.testResult (legacy)
   const candidateProfile: BehavioralProfile | undefined = candidateBehavioralProfile
     ?? (candidate.testResult?.result
@@ -640,10 +663,15 @@ export function calculateMatchBreakdown(
       : undefined);
 
   // Calcula scores individuais
-  // Prefer standardized skills when available for both sides
-  const skillsScore = (candidateStdSkillIds?.length && jobStdSkillIds?.length)
-    ? calculateStandardizedSkillsScore(candidateStdSkillIds, jobStdSkillIds)
-    : calculateSkillsScore(candidate.skills || [], job.requirements || []);
+  const { technicalScore, behavioralScore: skillsBehavioralScore } = computeSkillsScore(
+    skillsInput,
+    candidate.skills || [],
+    job.requirements || [],
+  );
+
+  // Score combinado para compatibilidade com a categoria única "Skills Técnicas" atual.
+  // Etapa B do roadmap divide isso em duas categorias separadas com pesos próprios.
+  const skillsScore = Math.round((technicalScore + skillsBehavioralScore) / 2);
 
   const experienceScore = calculateExperienceScore(
     candidate.experience || 0,
