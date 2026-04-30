@@ -1,12 +1,63 @@
 {
   "versions": [
     {
+      "version": "1.56.0",
+      "codename": "Compass",
+      "type": "minor",
+      "releaseDate": "2026-04-30",
+      "description": "Match calculator agora usa skills padronizadas. Algoritmo de skills migrou do caminho tokenizado legado para IDs de skills padronizadas separadas em técnicas e comportamentais. Auditoria empírica confirmou: candidatos com skills cadastradas saem de scores próximos a 0% para a faixa real (Sul Santana: 6% → 44% em Skills).",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Match calculator agora usa skills padronizadas em vez do algoritmo tokenizado legado",
+            "Sul Santana: score de Skills passou de 6% (legado) para 44% (novo) na vaga Analista Financeiro"
+          ],
+          "details": {
+            "0": {
+              "description": "calculateMatchBreakdown aceita MatchSkillsInput com IDs separados por tipo (technical/behavioral). Hook useMatchSkillIds combina os hooks de std_skills e separa por skill.type. Caminho legado calculateSkillsScore marcado como @deprecated, mantido apenas como fallback quando std_skills não estão disponíveis em ambos os lados.",
+              "files": [
+                "src/lib/matchCalculator.ts",
+                "src/hooks/useMatchSkillIds.ts",
+                "src/types/disc.ts",
+                "src/pages/candidato/JobDetails.tsx",
+                "src/pages/candidato/JobSearch.tsx",
+                "src/pages/empresa/Candidates.tsx",
+                "src/pages/empresa/CandidateProfile.tsx",
+                "src/pages/empresa/Applications.tsx",
+                "src/pages/empresa/SavedCandidates.tsx",
+                "src/pages/admin/Dashboard.tsx",
+                "src/lib/jobRecommendation.ts",
+                "src/lib/candidateRecommendation.ts"
+              ],
+              "routes": [
+                "/candidato/vagas",
+                "/candidato/vagas/:id",
+                "/empresa/candidatos",
+                "/empresa/candidatos/:id",
+                "/empresa/candidaturas",
+                "/empresa/candidatos-salvos"
+              ]
+            },
+            "1": {
+              "description": "Auditoria empírica em 4 candidaturas reais com std_skills cadastradas confirmou ganhos significativos: Sul Santana 6→44 (+38), Gabrielli 2→39 (+37), Wagner 0→25 (+25), Elisandra 12→16 (+4). Novo script scripts/match-audit-after-fix.ts permite re-validar quando o calculator for ajustado.",
+              "files": [
+                "scripts/match-audit-after-fix.ts"
+              ],
+              "routes": []
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.55.0",
       "codename": "Atlas",
       "type": "minor",
       "releaseDate": "2026-04-29",
       "description": "Localização estruturada nas vagas: cadastro e busca agora usam dropdowns Estado→Cidade em cascata, eliminando inconsistências de formato e corrigindo discrepâncias no cálculo de match.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
@@ -19,22 +70,35 @@
           "details": {
             "0": {
               "description": "A tabela de vagas agora possui dois campos estruturados — Estado (UF de 2 letras) e Cidade — alinhados ao padrão IBGE e ao mesmo modelo já usado para candidatos. Isso elimina a inconsistência que existia quando o mesmo município era escrito de formas diferentes (por exemplo, 'São Paulo, SP', 'São Paulo - SP' ou 'São Paulo/SP'), garantindo que comparações geográficas sejam sempre exatas.",
-              "files": ["sql/migrations/081_jobs_city_state.sql", "src/types/database.ts", "src/types/job.ts"],
+              "files": [
+                "sql/migrations/081_jobs_city_state.sql",
+                "src/types/database.ts",
+                "src/types/job.ts"
+              ],
               "routes": []
             },
             "1": {
               "description": "Na busca de vagas, o filtro único de localização foi substituído por dois dropdowns em cascata: primeiro o estado (com os 27 estados brasileiros ordenados alfabeticamente) e, em seguida, a cidade (filtrada automaticamente pelo estado escolhido). Trocar de estado limpa a cidade selecionada, evitando combinações inválidas.",
-              "files": ["src/hooks/useJobSearchFilters.ts", "src/pages/candidato/JobSearch.tsx"],
-              "routes": ["/candidato/vagas"]
+              "files": [
+                "src/hooks/useJobSearchFilters.ts",
+                "src/pages/candidato/JobSearch.tsx"
+              ],
+              "routes": [
+                "/candidato/vagas"
+              ]
             },
             "2": {
               "description": "Para manter compatibilidade com telas que ainda exibem a localização como texto único (como cards de vagas e listagens), o sistema atualiza automaticamente o campo legado no formato 'Cidade, UF' sempre que cidade e estado são preenchidos. Nenhum ponto de exibição precisou ser alterado.",
-              "files": ["sql/migrations/081_jobs_city_state.sql"],
+              "files": [
+                "sql/migrations/081_jobs_city_state.sql"
+              ],
               "routes": []
             },
             "3": {
               "description": "Todas as vagas existentes foram analisadas e, quando possível, tiveram o estado e a cidade extraídos automaticamente do texto livre original. As vagas em que o parser não conseguiu identificar uma UF válida permanecem com o texto original preservado e podem ser revisadas manualmente pelo administrador.",
-              "files": ["sql/migrations/081_jobs_city_state.sql"],
+              "files": [
+                "sql/migrations/081_jobs_city_state.sql"
+              ],
               "routes": []
             }
           }
@@ -49,17 +113,29 @@
           "details": {
             "0": {
               "description": "Ao criar ou editar uma vaga, o campo único 'Localização' foi substituído por dois selects: Estado e Cidade. A cidade é filtrada automaticamente pelo estado escolhido, e os campos só são obrigatórios para vagas presenciais ou híbridas — vagas remotas continuam podendo ser cadastradas sem informar localização. Isso reduz drasticamente o atrito do cadastro e elimina erros de digitação.",
-              "files": ["src/components/empresa/job-form/JobFormBasicInfo.tsx", "src/hooks/useJobForm.ts", "src/hooks/useJobAnalyzer.ts", "src/services/jobs/jobsService.supabase.ts"],
-              "routes": ["/empresa/vagas/criar", "/empresa/vagas/:id/editar"]
+              "files": [
+                "src/components/empresa/job-form/JobFormBasicInfo.tsx",
+                "src/hooks/useJobForm.ts",
+                "src/hooks/useJobAnalyzer.ts",
+                "src/services/jobs/jobsService.supabase.ts"
+              ],
+              "routes": [
+                "/empresa/vagas/criar",
+                "/empresa/vagas/:id/editar"
+              ]
             },
             "1": {
               "description": "O cálculo de compatibilidade de localização entre candidato e vaga agora usa diretamente os campos Estado e Cidade quando disponíveis, em vez de tentar interpretar a string de localização. Quando faltam dados estruturados, o sistema mantém o parser legado como fallback. O resultado é um score de localização mais preciso e estável.",
-              "files": ["src/lib/matchCalculator.ts"],
+              "files": [
+                "src/lib/matchCalculator.ts"
+              ],
               "routes": []
             },
             "2": {
               "description": "Os pesos do score de localização foram revisados: vagas híbridas toleram melhor distâncias dentro do mesmo estado (85 pontos vs 70 para presencial) e candidatos em estado diferente recebem 50 pontos em híbridas e 30 em presenciais. Quando há mesma cidade, o score é sempre 100 — independente da modalidade.",
-              "files": ["src/lib/matchCalculator.ts"],
+              "files": [
+                "src/lib/matchCalculator.ts"
+              ],
               "routes": []
             }
           }
@@ -72,7 +148,9 @@
           "details": {
             "0": {
               "description": "Antes, o algoritmo de match dependia de dividir a string de localização da vaga por vírgula para extrair cidade e estado. Como o campo era texto livre, qualquer variação de formato ('São Paulo - SP', 'São Paulo/SP', 'Sao Paulo' sem acento) fazia o match falhar e zerar o score de localização do candidato. Agora a comparação é feita diretamente sobre os campos estruturados (com UF padronizada em duas letras), eliminando esse tipo de falsa-negativa.",
-              "files": ["src/lib/matchCalculator.ts"],
+              "files": [
+                "src/lib/matchCalculator.ts"
+              ],
               "routes": []
             }
           }
@@ -96,13 +174,25 @@
           "details": {
             "0": {
               "description": "Ao tentar desvincular, desligar, promover, transferir de departamento, alterar cargo, iniciar licença ou qualquer outra ação na tela de gestão de equipes, o sistema mostrava um erro e a ação não era concluída. Isso acontecia porque a informação de quem estava realizando a ação não era enviada corretamente ao servidor. Agora todas as ações funcionam normalmente e são registradas na linha do tempo do colaborador.",
-              "files": ["src/pages/empresa/TeamMemberProfile.tsx", "src/pages/empresa/TeamManagement.tsx"],
-              "routes": ["/empresa/equipes/membro/:id", "/empresa/equipes"]
+              "files": [
+                "src/pages/empresa/TeamMemberProfile.tsx",
+                "src/pages/empresa/TeamManagement.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/membro/:id",
+                "/empresa/equipes"
+              ]
             },
             "1": {
               "description": "Quando um membro da equipe de RH (que não é o dono da conta da empresa) realizava uma ação sobre um colaborador, o sistema registrava incorretamente o dono da empresa como responsável pela ação. Agora o registro identifica corretamente qual usuário realizou cada ação, garantindo rastreabilidade precisa para fins de auditoria e conformidade.",
-              "files": ["src/pages/empresa/TeamMemberProfile.tsx", "src/pages/empresa/TeamManagement.tsx"],
-              "routes": ["/empresa/equipes/membro/:id", "/empresa/equipes"]
+              "files": [
+                "src/pages/empresa/TeamMemberProfile.tsx",
+                "src/pages/empresa/TeamManagement.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/membro/:id",
+                "/empresa/equipes"
+              ]
             }
           }
         },
@@ -114,7 +204,9 @@
           "details": {
             "0": {
               "description": "Adicionado um arquivo de configuração que garante que as funções internas do sistema sejam publicadas corretamente no servidor. Isso previne que erros de conexão (como os que bloqueavam a gestão de equipes) voltem a acontecer em atualizações futuras.",
-              "files": ["supabase/config.toml"],
+              "files": [
+                "supabase/config.toml"
+              ],
               "routes": []
             }
           }
@@ -140,23 +232,39 @@
           "details": {
             "0": {
               "description": "No Banco de Talentos, agora existe um novo filtro 'Estado' que permite selecionar qualquer um dos 27 estados brasileiros. O campo possui busca integrada: basta começar a digitar o nome do estado para encontrá-lo rapidamente, sem precisar rolar a lista inteira.",
-              "files": ["src/pages/empresa/Candidates.tsx"],
-              "routes": ["/empresa/candidatos"]
+              "files": [
+                "src/pages/empresa/Candidates.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
             },
             "1": {
               "description": "Os filtros de Estado e Localização agora aparecem agrupados sob uma seção chamada 'Região', com um separador visual. Isso organiza melhor a sidebar de filtros e deixa claro que esses dois campos trabalham juntos para refinar a busca geográfica.",
-              "files": ["src/pages/empresa/Candidates.tsx"],
-              "routes": ["/empresa/candidatos"]
+              "files": [
+                "src/pages/empresa/Candidates.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
             },
             "2": {
               "description": "Ao selecionar um estado, o filtro de cidades se ajusta automaticamente para mostrar apenas as cidades dos candidatos daquele estado. Se uma cidade já estava selecionada e não pertence ao novo estado, ela é automaticamente limpa. Isso evita combinações impossíveis e resultados vazios.",
-              "files": ["src/pages/empresa/Candidates.tsx"],
-              "routes": ["/empresa/candidatos"]
+              "files": [
+                "src/pages/empresa/Candidates.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
             },
             "3": {
               "description": "Quando um estado está selecionado, uma pequena etiqueta com a sigla do estado (como 'RS' ou 'SP') aparece ao lado do título 'Localização'. Isso indica visualmente que as cidades exibidas estão filtradas por aquele estado, evitando confusão sobre por que a lista de cidades ficou menor.",
-              "files": ["src/pages/empresa/Candidates.tsx"],
-              "routes": ["/empresa/candidatos"]
+              "files": [
+                "src/pages/empresa/Candidates.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
             }
           }
         },
@@ -168,8 +276,12 @@
           "details": {
             "0": {
               "description": "Algumas cidades apareciam duplicadas no filtro de localização — uma com a sigla do estado (ex: 'Frederico Westphalen, RS') e outra com o nome completo (ex: 'Frederico Westphalen, Rio Grande do Sul'). Isso acontecia porque o cadastro inicial salvava o nome do estado por extenso, enquanto edições posteriores usavam a sigla. Agora todos os registros seguem o mesmo formato com a sigla, e os dados existentes foram corrigidos.",
-              "files": ["src/pages/candidato/OnboardingPersonalProfile.tsx"],
-              "routes": ["/candidato/onboarding/perfil-pessoal"]
+              "files": [
+                "src/pages/candidato/OnboardingPersonalProfile.tsx"
+              ],
+              "routes": [
+                "/candidato/onboarding/perfil-pessoal"
+              ]
             }
           }
         }
@@ -193,18 +305,35 @@
           "details": {
             "0": {
               "description": "Ao navegar em uma lista com várias páginas (como Banco de Talentos, Busca de Vagas ou Candidatos no painel administrativo), clicar em um item para ver os detalhes e depois voltar agora mantém a mesma página em que você estava. Antes, o sistema voltava sempre para a primeira página, obrigando a navegar novamente até onde estava.",
-              "files": ["src/pages/empresa/Candidates.tsx", "src/pages/candidato/JobSearch.tsx", "src/pages/admin/Candidates.tsx", "src/pages/admin/JobsList.tsx"],
-              "routes": ["/empresa/candidatos", "/candidato/vagas", "/admin/candidatos", "/admin/vagas"]
+              "files": [
+                "src/pages/empresa/Candidates.tsx",
+                "src/pages/candidato/JobSearch.tsx",
+                "src/pages/admin/Candidates.tsx",
+                "src/pages/admin/JobsList.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos",
+                "/candidato/vagas",
+                "/admin/candidatos",
+                "/admin/vagas"
+              ]
             },
             "1": {
               "description": "Foi criado um mecanismo interno que salva automaticamente o número da página atual no endereço do navegador. Isso permite que o botão 'Voltar' do navegador e os botões de retorno dentro do sistema restaurem a posição exata na lista.",
-              "files": ["src/hooks/usePaginationParams.ts"],
+              "files": [
+                "src/hooks/usePaginationParams.ts"
+              ],
               "routes": []
             },
             "2": {
               "description": "Listagens do painel administrativo que usam numeração diferente de páginas (começando do zero) agora também são compatíveis com o novo sistema de persistência de paginação.",
-              "files": ["src/hooks/usePaginationParams.ts", "src/pages/admin/JobsList.tsx"],
-              "routes": ["/admin/vagas"]
+              "files": [
+                "src/hooks/usePaginationParams.ts",
+                "src/pages/admin/JobsList.tsx"
+              ],
+              "routes": [
+                "/admin/vagas"
+              ]
             }
           }
         },
@@ -216,8 +345,14 @@
           "details": {
             "0": {
               "description": "Os botões 'Voltar ao Banco de Talentos' e 'Voltar para candidatos' nas telas de detalhamento agora utilizam o histórico do navegador para retornar à página anterior, preservando filtros e a página em que o usuário estava. Antes, esses botões sempre direcionavam para o início da lista.",
-              "files": ["src/pages/empresa/CandidateProfile.tsx", "src/pages/admin/CandidateDetail.tsx"],
-              "routes": ["/empresa/candidatos/:id", "/admin/candidatos/:id"]
+              "files": [
+                "src/pages/empresa/CandidateProfile.tsx",
+                "src/pages/admin/CandidateDetail.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id",
+                "/admin/candidatos/:id"
+              ]
             }
           }
         }
@@ -242,23 +377,42 @@
           "details": {
             "0": {
               "description": "Na tela do Banco de Talentos, agora existe um seletor 'Comparar com' que permite escolher contra qual vaga calcular a compatibilidade dos candidatos. A opção padrão 'Melhor match (todas as vagas)' mostra automaticamente o maior score de cada candidato entre todas as vagas ativas da empresa.",
-              "files": ["src/components/match/JobMatchSelector.tsx", "src/pages/empresa/Candidates.tsx"],
-              "routes": ["/empresa/candidatos"]
+              "files": [
+                "src/components/match/JobMatchSelector.tsx",
+                "src/pages/empresa/Candidates.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
             },
             "1": {
               "description": "Cada card de candidato na lista agora exibe pequenas barras horizontais mostrando a compatibilidade com cada vaga da empresa. A vaga com melhor score fica destacada em verde, permitindo uma visão rápida de qual vaga combina mais com cada candidato.",
-              "files": ["src/pages/empresa/Candidates.tsx"],
-              "routes": ["/empresa/candidatos"]
+              "files": [
+                "src/pages/empresa/Candidates.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
             },
             "2": {
               "description": "Ao acessar o perfil detalhado de um candidato, agora é possível alternar entre as vagas da empresa para ver como o candidato se encaixa em cada uma. Com até 5 vagas, as opções aparecem como botões lado a lado com o percentual visível. Com mais de 5, aparece um menu de seleção.",
-              "files": ["src/components/match/JobMatchTabs.tsx", "src/pages/empresa/CandidateProfile.tsx"],
-              "routes": ["/empresa/candidatos/:id"]
+              "files": [
+                "src/components/match/JobMatchTabs.tsx",
+                "src/pages/empresa/CandidateProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
             },
             "3": {
               "description": "No detalhamento do candidato, um novo painel 'Comparativo entre vagas' mostra barras horizontais com o score de compatibilidade de todas as vagas da empresa, ordenadas da maior para a menor. Clicar em uma barra altera automaticamente a vaga selecionada acima.",
-              "files": ["src/components/match/MatchOverviewChart.tsx", "src/pages/empresa/CandidateProfile.tsx"],
-              "routes": ["/empresa/candidatos/:id"]
+              "files": [
+                "src/components/match/MatchOverviewChart.tsx",
+                "src/pages/empresa/CandidateProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
             }
           }
         },
@@ -270,8 +424,12 @@
           "details": {
             "0": {
               "description": "No perfil detalhado do candidato, o sistema buscava todas as vagas da plataforma e filtrava pela empresa, o que limitava o resultado e fazia com que apenas 2 vagas aparecessem mesmo com 5 ativas. Agora o sistema busca diretamente as vagas da empresa, exibindo todas corretamente.",
-              "files": ["src/pages/empresa/CandidateProfile.tsx"],
-              "routes": ["/empresa/candidatos/:id"]
+              "files": [
+                "src/pages/empresa/CandidateProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
             }
           }
         }
@@ -293,8 +451,14 @@
           "details": {
             "0": {
               "description": "Ao clicar em uma notificação como 'Nova candidatura recebida' ou 'Teste comportamental concluído', o sistema agora abre diretamente a página do candidato mencionado, em vez de redirecionar para a lista genérica. O mesmo vale para notificações de vagas, que agora abrem a vaga específica.",
-              "files": ["src/lib/notificationHelpers.ts", "src/components/notifications/CompanyNotificationItem.tsx"],
-              "routes": ["/empresa/candidatos/:id", "/empresa/vagas/:id"]
+              "files": [
+                "src/lib/notificationHelpers.ts",
+                "src/components/notifications/CompanyNotificationItem.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id",
+                "/empresa/vagas/:id"
+              ]
             }
           }
         },
@@ -307,13 +471,23 @@
           "details": {
             "0": {
               "description": "No painel de gestão de equipes, o card 'Arquétipo Predominante' e os gráficos de distribuição mostravam o nome do perfil comportamental em inglês (por exemplo, 'counselor' em vez de 'O Conselheiro'). Agora todos os nomes aparecem corretamente em português.",
-              "files": ["src/components/team-management/TeamDashboard.tsx", "src/components/team-management/ArchetypeDistributionChart.tsx", "src/components/team-management/DepartmentArchetypeChart.tsx"],
-              "routes": ["/empresa/equipe"]
+              "files": [
+                "src/components/team-management/TeamDashboard.tsx",
+                "src/components/team-management/ArchetypeDistributionChart.tsx",
+                "src/components/team-management/DepartmentArchetypeChart.tsx"
+              ],
+              "routes": [
+                "/empresa/equipe"
+              ]
             },
             "1": {
               "description": "Títulos e mensagens do gráfico de distribuição de arquétipos por departamento estavam sem acentuação correta (por exemplo, 'Distribuicao' em vez de 'Distribuição'). Os textos foram corrigidos.",
-              "files": ["src/components/team-management/DepartmentArchetypeChart.tsx"],
-              "routes": ["/empresa/equipe"]
+              "files": [
+                "src/components/team-management/DepartmentArchetypeChart.tsx"
+              ],
+              "routes": [
+                "/empresa/equipe"
+              ]
             }
           }
         }
@@ -337,17 +511,32 @@
           "details": {
             "0": {
               "description": "Ao clicar em uma notificação no painel do administrador (por exemplo, 'Novo candidato cadastrado' ou 'Teste Gauge-Pro concluído'), o sistema redirecionava para a lista geral de candidatos. Agora o clique abre diretamente a página de detalhes do candidato, empresa, vaga ou ticket mencionado na notificação.",
-              "files": ["src/lib/notificationHelpers.ts", "src/components/notifications/AdminNotificationItem.tsx"],
-              "routes": ["/admin/candidatos/:id", "/admin/empresas/:id", "/admin/vagas/:id", "/admin/helpdesk/tickets/:id"]
+              "files": [
+                "src/lib/notificationHelpers.ts",
+                "src/components/notifications/AdminNotificationItem.tsx"
+              ],
+              "routes": [
+                "/admin/candidatos/:id",
+                "/admin/empresas/:id",
+                "/admin/vagas/:id",
+                "/admin/helpdesk/tickets/:id"
+              ]
             },
             "1": {
               "description": "As notificações de novos cadastros estavam usando um identificador interno incorreto, fazendo com que o link levasse a uma página de 'Candidato não encontrado'. Os alertas automáticos agora usam o identificador correto, garantindo que o administrador veja o perfil certo ao clicar.",
-              "files": ["sql/migrations/080_fix_admin_notification_action_urls.sql"],
-              "routes": ["/admin/candidatos/:id", "/admin/empresas/:id"]
+              "files": [
+                "sql/migrations/080_fix_admin_notification_action_urls.sql"
+              ],
+              "routes": [
+                "/admin/candidatos/:id",
+                "/admin/empresas/:id"
+              ]
             },
             "2": {
               "description": "Todas as notificações já existentes no sistema foram corrigidas automaticamente para apontar para a página correta. Não é necessário nenhuma ação do administrador.",
-              "files": ["sql/migrations/080_fix_admin_notification_action_urls.sql"],
+              "files": [
+                "sql/migrations/080_fix_admin_notification_action_urls.sql"
+              ],
               "routes": []
             }
           }
@@ -373,23 +562,41 @@
           "details": {
             "0": {
               "description": "As configurações do Stripe foram reorganizadas em um painel dedicado com duas abas: 'Teste' e 'Produção'. Agora é fácil identificar qual ambiente está ativo e gerenciar as chaves de cada um separadamente, sem confusão.",
-              "files": ["src/components/settings/custom/StripePanel.tsx", "src/data/settingsConfig.ts", "src/components/settings/ConfigContent.tsx"],
-              "routes": ["/admin/configuracoes"]
+              "files": [
+                "src/components/settings/custom/StripePanel.tsx",
+                "src/data/settingsConfig.ts",
+                "src/components/settings/ConfigContent.tsx"
+              ],
+              "routes": [
+                "/admin/configuracoes"
+              ]
             },
             "1": {
               "description": "As chaves de API do Stripe agora mostram o início e o final do valor (por exemplo, 'pk_test...m4Kz'), permitindo ao administrador identificar qual chave está cadastrada sem expor o valor completo. Para editar, basta clicar no botão de edição ao lado.",
-              "files": ["src/components/settings/custom/StripePanel.tsx"],
-              "routes": ["/admin/configuracoes"]
+              "files": [
+                "src/components/settings/custom/StripePanel.tsx"
+              ],
+              "routes": [
+                "/admin/configuracoes"
+              ]
             },
             "2": {
               "description": "Um novo botão permite testar se a conexão com o Stripe está funcionando corretamente. O resultado aparece na tela com indicador colorido: verde para conectado, vermelho para erro, amarelo para não testado.",
-              "files": ["src/components/settings/custom/StripePanel.tsx"],
-              "routes": ["/admin/configuracoes"]
+              "files": [
+                "src/components/settings/custom/StripePanel.tsx"
+              ],
+              "routes": [
+                "/admin/configuracoes"
+              ]
             },
             "3": {
               "description": "Um aviso visual no topo do painel indica claramente se o sistema está usando o ambiente de teste (nenhuma cobrança real) ou de produção (cobranças reais habilitadas), evitando configurações acidentais.",
-              "files": ["src/components/settings/custom/StripePanel.tsx"],
-              "routes": ["/admin/configuracoes"]
+              "files": [
+                "src/components/settings/custom/StripePanel.tsx"
+              ],
+              "routes": [
+                "/admin/configuracoes"
+              ]
             }
           }
         },
@@ -402,13 +609,23 @@
           "details": {
             "0": {
               "description": "Ao clicar em 'Enviar Mensagem' no perfil de um candidato, o sistema apresentava um erro e não conseguia abrir a conversa. Agora a conversa é criada corretamente, inclusive quando o administrador está visualizando como outra empresa.",
-              "files": ["src/services/messages/messagesService.supabase.ts", "sql/migrations/079_get_or_create_conversation_rpc.sql"],
-              "routes": ["/empresa/mensagens", "/empresa/candidatos"]
+              "files": [
+                "src/services/messages/messagesService.supabase.ts",
+                "sql/migrations/079_get_or_create_conversation_rpc.sql"
+              ],
+              "routes": [
+                "/empresa/mensagens",
+                "/empresa/candidatos"
+              ]
             },
             "1": {
               "description": "Após concluir uma compra, a animação de confirmação, o redirecionamento para a página correta e a exibição da data de cobrança foram ajustados para funcionar corretamente em todos os cenários.",
-              "files": ["src/pages/empresa/Packages.tsx"],
-              "routes": ["/empresa/pacotes"]
+              "files": [
+                "src/pages/empresa/Packages.tsx"
+              ],
+              "routes": [
+                "/empresa/pacotes"
+              ]
             }
           }
         }
@@ -435,33 +652,58 @@
           "details": {
             "0": {
               "description": "Quando uma compra é concluída no Stripe (pacote de testes ou plano), o sistema agora credita automaticamente os testes ou ativa a assinatura sem intervenção manual. O evento de pagamento é registrado e pode ser monitorado na aba Webhooks do painel financeiro.",
-              "files": ["supabase/functions/stripe-webhook/index.ts"],
-              "routes": ["/admin/assinaturas/webhooks"]
+              "files": [
+                "supabase/functions/stripe-webhook/index.ts"
+              ],
+              "routes": [
+                "/admin/assinaturas/webhooks"
+              ]
             },
             "1": {
               "description": "O sistema agora envia e-mails transacionais (convites, notificações) através do serviço Resend. No painel de configurações do administrador, é possível cadastrar a chave da API e configurar o remetente padrão.",
-              "files": ["supabase/functions/send-email/index.ts", "src/pages/admin/Settings.tsx"],
-              "routes": ["/admin/configuracoes"]
+              "files": [
+                "supabase/functions/send-email/index.ts",
+                "src/pages/admin/Settings.tsx"
+              ],
+              "routes": [
+                "/admin/configuracoes"
+              ]
             },
             "2": {
               "description": "Testes comportamentais podem ser configurados para reaplicação automática após um período definido. O sistema agenda o reenvio de convites sem que o gestor precise lembrar de fazê-lo manualmente.",
-              "files": ["sql/migrations/"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "sql/migrations/"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "3": {
               "description": "A aba 'Meu Plano' na página de pacotes foi redesenhada com um seletor visual de ciclo de cobrança (mensal, trimestral, semestral, anual) e um card em destaque mostrando o plano atual com todos os benefícios.",
-              "files": ["src/pages/empresa/Packages.tsx"],
-              "routes": ["/empresa/pacotes"]
+              "files": [
+                "src/pages/empresa/Packages.tsx"
+              ],
+              "routes": [
+                "/empresa/pacotes"
+              ]
             },
             "4": {
               "description": "Na página 'Meus Testes', os testes arquivados agora aparecem em sub-abas separadas com indicação visual, facilitando a organização e o acesso ao histórico.",
-              "files": ["src/pages/empresa/MeusTestesPage.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/MeusTestesPage.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "5": {
               "description": "No painel administrativo, uma nova seção permite configurar a integração com o Resend para envio de e-mails: chave da API, domínio verificado e remetente padrão.",
-              "files": ["src/data/settingsConfig.ts"],
-              "routes": ["/admin/configuracoes"]
+              "files": [
+                "src/data/settingsConfig.ts"
+              ],
+              "routes": [
+                "/admin/configuracoes"
+              ]
             }
           }
         },
@@ -478,33 +720,51 @@
           "details": {
             "0": {
               "description": "Na compra de pacotes de testes, os métodos de pagamento aceitos agora vêm do cadastro do pacote no banco de dados (cartão, Pix, etc.), em vez de aceitar somente cartão de crédito.",
-              "files": ["supabase/functions/stripe-package-checkout/index.ts"],
-              "routes": ["/empresa/pacotes"]
+              "files": [
+                "supabase/functions/stripe-package-checkout/index.ts"
+              ],
+              "routes": [
+                "/empresa/pacotes"
+              ]
             },
             "1": {
               "description": "Na aba de resultados dos testes no painel administrativo, o gráfico de distribuição de perfis comportamentais não carregava os nomes dos arquétipos. A referência foi corrigida e os dados agora aparecem corretamente.",
-              "files": ["src/pages/admin/AdminTests.tsx"],
-              "routes": ["/admin/testes"]
+              "files": [
+                "src/pages/admin/AdminTests.tsx"
+              ],
+              "routes": [
+                "/admin/testes"
+              ]
             },
             "2": {
               "description": "O envio de e-mails falhava quando o nome da empresa não estava preenchido. Agora esse campo é opcional na validação, permitindo o envio mesmo sem essa informação.",
-              "files": ["supabase/functions/send-email/index.ts"],
+              "files": [
+                "supabase/functions/send-email/index.ts"
+              ],
               "routes": []
             },
             "3": {
               "description": "Os e-mails enviados pelo sistema agora incluem o nome da empresa no corpo da mensagem. Além disso, o envio em lote para múltiplos destinatários foi habilitado.",
-              "files": ["supabase/functions/send-email/index.ts"],
+              "files": [
+                "supabase/functions/send-email/index.ts"
+              ],
               "routes": []
             },
             "4": {
               "description": "Todas as entregas de e-mail do sistema agora passam pela função centralizada de envio, garantindo rastreabilidade e uso consistente do serviço Resend.",
-              "files": ["supabase/functions/send-email/index.ts"],
+              "files": [
+                "supabase/functions/send-email/index.ts"
+              ],
               "routes": []
             },
             "5": {
               "description": "Na tela de gerenciamento de equipe, os registros de eventos (entrada, saída, transferência) agora referenciam corretamente o perfil do colaborador. Tooltips explicativos foram adicionados aos botões de ação.",
-              "files": ["src/pages/empresa/TeamManagement.tsx"],
-              "routes": ["/empresa/equipe"]
+              "files": [
+                "src/pages/empresa/TeamManagement.tsx"
+              ],
+              "routes": [
+                "/empresa/equipe"
+              ]
             }
           }
         }
@@ -533,35 +793,45 @@
               "files": [
                 "src/components/corporate-tests/InternalCandidateInvite.tsx"
               ],
-              "routes": ["/empresa/testes"]
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "1": {
               "description": "Na tela de gerenciamento de equipe, os cargos disponíveis nos filtros e formulários agora são filtrados corretamente pela empresa do usuário. Antes, cargos de outras empresas podiam aparecer na lista.",
               "files": [
                 "src/hooks/useTeamManagementQuery.ts"
               ],
-              "routes": ["/empresa/equipe"]
+              "routes": [
+                "/empresa/equipe"
+              ]
             },
             "2": {
               "description": "O gráfico de distribuição de perfis comportamentais na aba de visão geral dos testes administrativos não estava carregando os nomes dos arquétipos. O campo de referência foi corrigido e os nomes agora aparecem corretamente no gráfico.",
               "files": [
                 "src/pages/admin/AdminTests.tsx"
               ],
-              "routes": ["/admin/testes"]
+              "routes": [
+                "/admin/testes"
+              ]
             },
             "3": {
               "description": "O filtro de planos na lista de empresas do painel administrativo mostrava o mesmo nome de plano repetido quando havia mais de uma empresa naquele plano. Agora cada nome aparece apenas uma vez na lista.",
               "files": [
                 "src/pages/admin/Companies.tsx"
               ],
-              "routes": ["/admin/empresas"]
+              "routes": [
+                "/admin/empresas"
+              ]
             },
             "4": {
               "description": "Ao clicar em 'Confirmar Envio' na tela de convites para testes comportamentais, o sistema retornava um erro e não enviava o convite. A causa era uma referência incorreta a campos internos do banco de dados na verificação de permissão. O problema foi corrigido e o envio de convites funciona normalmente.",
               "files": [
                 "supabase/functions/send-test-invitation/index.ts"
               ],
-              "routes": ["/empresa/testes"]
+              "routes": [
+                "/empresa/testes"
+              ]
             }
           }
         }
@@ -599,7 +869,9 @@
                 "supabase/functions/manage-team-lifecycle/index.ts",
                 "sql/migrations/075_team_lifecycle.sql"
               ],
-              "routes": ["/empresa/equipe/:id"]
+              "routes": [
+                "/empresa/equipe/:id"
+              ]
             },
             "1": {
               "description": "É possível desvincular um colaborador da empresa sem excluir sua conta na plataforma. O colaborador perde o acesso aos dados da empresa, mas sua conta permanece ativa. Útil para casos de prestadores de serviço, estagiários ou colaboradores que migram para outra empresa parceira.",
@@ -607,7 +879,9 @@
                 "src/components/team-management/UnlinkModal.tsx",
                 "supabase/functions/manage-team-lifecycle/index.ts"
               ],
-              "routes": ["/empresa/equipe/:id"]
+              "routes": [
+                "/empresa/equipe/:id"
+              ]
             },
             "2": {
               "description": "Colaboradores desligados ou desvinculados podem ser reativados (recontratados) pelo RH. O histórico completo de eventos anteriores é preservado na timeline, e o colaborador retorna ao status ativo com uma nova entrada de 'recontratação' registrada automaticamente.",
@@ -615,7 +889,9 @@
                 "src/components/team-management/ReactivateModal.tsx",
                 "supabase/functions/manage-team-lifecycle/index.ts"
               ],
-              "routes": ["/empresa/equipe/:id"]
+              "routes": [
+                "/empresa/equipe/:id"
+              ]
             },
             "3": {
               "description": "O RH pode registrar afastamentos temporários de colaboradores com cinco categorias: licença médica, licença-maternidade/paternidade, férias, licença não-remunerada e sabático. Ao registrar, é possível informar a data de início, o retorno previsto e se o colaborador deve ser incluído ou excluído das métricas de equipe durante o afastamento. Quando o colaborador retorna, o RH registra o retorno com notas.",
@@ -625,7 +901,9 @@
                 "src/components/team-management/LeaveBadge.tsx",
                 "supabase/functions/manage-team-movement/index.ts"
               ],
-              "routes": ["/empresa/equipe/:id"]
+              "routes": [
+                "/empresa/equipe/:id"
+              ]
             },
             "4": {
               "description": "É possível registrar três tipos de movimentação interna: promoção (novo cargo com possível aumento), transferência de departamento e mudança de cargo dentro do mesmo departamento. Todas as movimentações ficam registradas na timeline do colaborador, e um cartão de histórico de cargos exibe a trajetória completa dentro da empresa.",
@@ -636,7 +914,9 @@
                 "src/components/team-management/PositionHistoryCard.tsx",
                 "supabase/functions/manage-team-movement/index.ts"
               ],
-              "routes": ["/empresa/equipe/:id"]
+              "routes": [
+                "/empresa/equipe/:id"
+              ]
             },
             "5": {
               "description": "O perfil de cada colaborador agora possui uma timeline vertical com todo o histórico desde a contratação: admissão, desligamentos, afastamentos, retornos, promoções, transferências, testes realizados, convites enviados, notas do RH e anonimizações. Cada evento mostra data, responsável e detalhes. É possível filtrar por tipo de evento e intervalo de datas, além de adicionar notas manuais diretamente na linha do tempo.",
@@ -644,7 +924,9 @@
                 "src/components/team-management/TeamMemberTimeline.tsx",
                 "src/hooks/useTeamMemberEventsQuery.ts"
               ],
-              "routes": ["/empresa/equipe/:id"]
+              "routes": [
+                "/empresa/equipe/:id"
+              ]
             },
             "6": {
               "description": "Na lista de colaboradores é possível selecionar vários ao mesmo tempo e executar ações em lote: desligar todos os selecionados de uma vez ou transferi-los para outro departamento. Uma barra de progresso mostra em tempo real quantos foram processados com sucesso e quantos tiveram erro, sem travar a tela.",
@@ -655,7 +937,9 @@
                 "src/components/team-management/BulkActionProgressBar.tsx",
                 "src/pages/empresa/TeamManagement.tsx"
               ],
-              "routes": ["/empresa/equipe"]
+              "routes": [
+                "/empresa/equipe"
+              ]
             },
             "7": {
               "description": "Em conformidade com a LGPD, é possível anonimizar os dados pessoais de colaboradores desligados (nome, e-mail, telefone). O processo exige dupla confirmação e respeita a política de retenção configurada pelo administrador. Após a anonimização, os dados são substituídos por identificadores genéricos e um selo 'Anonimizado' aparece no perfil. O histórico de eventos é preservado, mas sem dados identificáveis.",
@@ -665,7 +949,9 @@
                 "supabase/functions/manage-team-anonymization/index.ts",
                 "sql/migrations/075_team_lifecycle.sql"
               ],
-              "routes": ["/empresa/equipe/:id"]
+              "routes": [
+                "/empresa/equipe/:id"
+              ]
             }
           }
         },
@@ -690,21 +976,28 @@
                 "src/pages/admin/ReportsGrowth.tsx",
                 "src/pages/admin/ReportsOperational.tsx"
               ],
-              "routes": ["/admin/relatorios", "/admin/atividades"]
+              "routes": [
+                "/admin/relatorios",
+                "/admin/atividades"
+              ]
             },
             "1": {
               "description": "A tela de candidatos em testes travava com erro ao tentar exibir um convite com status 'cancelado'. O sistema não reconhecia esse status e exibia uma tela em branco. Agora o status cancelado é exibido corretamente com o rótulo e a cor correspondentes.",
               "files": [
                 "src/components/team-management/TeamMemberList.tsx"
               ],
-              "routes": ["/empresa/testes"]
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "2": {
               "description": "A lista de colaboradores apresentava um erro silencioso ao inicializar os filtros antes que os dados estivessem disponíveis, causando comportamento inesperado na primeira carga da tela. O problema foi corrigido ajustando a ordem de inicialização das variáveis.",
               "files": [
                 "src/components/team-management/TeamMemberList.tsx"
               ],
-              "routes": ["/empresa/equipe"]
+              "routes": [
+                "/empresa/equipe"
+              ]
             }
           }
         }
@@ -730,28 +1023,56 @@
           "details": {
             "0": {
               "description": "O editor de planos agora possui um seletor no topo da seção de preços que permite escolher entre cobrança recorrente (mensal, trimestral, semestral, anual) ou pagamento único. Ao selecionar pagamento único, o formulário se adapta mostrando apenas um campo de preço. O campo de trial é automaticamente desabilitado para planos de pagamento único.",
-              "files": ["src/pages/admin/PlanDetail.tsx", "src/types/plans.ts", "src/services/plans/plansService.supabase.ts", "src/components/admin/plans/LaunchPriceEditor.tsx", "sql/migrations/045_billing_model.sql"],
-              "routes": ["/admin/planos/:id"]
+              "files": [
+                "src/pages/admin/PlanDetail.tsx",
+                "src/types/plans.ts",
+                "src/services/plans/plansService.supabase.ts",
+                "src/components/admin/plans/LaunchPriceEditor.tsx",
+                "sql/migrations/045_billing_model.sql"
+              ],
+              "routes": [
+                "/admin/planos/:id"
+              ]
             },
             "1": {
               "description": "Agora é possível sincronizar os planos diretamente com a Stripe pelo painel administrativo. A sincronização cria automaticamente o produto e os preços na Stripe, tanto para planos recorrentes (com os intervalos corretos) quanto para pagamento único.",
-              "files": ["supabase/functions/stripe-sync-plan/index.ts"],
-              "routes": ["/admin/planos/:id"]
+              "files": [
+                "supabase/functions/stripe-sync-plan/index.ts"
+              ],
+              "routes": [
+                "/admin/planos/:id"
+              ]
             },
             "2": {
               "description": "O botão 'Assinar' nos planos da loja agora abre diretamente a página de pagamento da Stripe em uma nova aba, ao invés de redirecionar para a página pública de planos. Funciona tanto para assinaturas recorrentes quanto para pagamentos únicos.",
-              "files": ["supabase/functions/stripe-create-checkout/index.ts", "src/pages/empresa/Packages.tsx", "src/components/billing/CheckoutButton.tsx"],
-              "routes": ["/empresa/pacotes"]
+              "files": [
+                "supabase/functions/stripe-create-checkout/index.ts",
+                "src/pages/empresa/Packages.tsx",
+                "src/components/billing/CheckoutButton.tsx"
+              ],
+              "routes": [
+                "/empresa/pacotes"
+              ]
             },
             "3": {
               "description": "O ambiente de pagamento (Teste ou Produção) agora é lido automaticamente das configurações do administrador. Quando o admin seleciona 'Produção (real)' nas configurações da Stripe, todos os checkouts passam a usar o modo real, sem necessidade de alteração em código.",
-              "files": ["src/hooks/useStripeEnvironment.ts", "src/components/billing/CheckoutButton.tsx", "src/pages/empresa/Packages.tsx", "sql/migrations/046_allow_integrations_read.sql"],
-              "routes": ["/empresa/pacotes", "/planos"]
+              "files": [
+                "src/hooks/useStripeEnvironment.ts",
+                "src/components/billing/CheckoutButton.tsx",
+                "src/pages/empresa/Packages.tsx",
+                "sql/migrations/046_allow_integrations_read.sql"
+              ],
+              "routes": [
+                "/empresa/pacotes",
+                "/planos"
+              ]
             },
             "4": {
               "description": "Novo plano disponível para empresas: 'Vaga Avulsa' no valor de R$ 1.621,00, com pagamento único (sem assinatura). Inclui 1 vaga ativa, até 15 candidatos por vaga e acesso por 30 dias.",
               "files": [],
-              "routes": ["/empresa/pacotes"]
+              "routes": [
+                "/empresa/pacotes"
+              ]
             }
           }
         },
@@ -765,18 +1086,32 @@
           "details": {
             "0": {
               "description": "Ao clicar em qualquer botão de assinatura ou compra (planos e pacotes de testes), a página de pagamento da Stripe agora abre em uma nova aba do navegador, permitindo que o usuário mantenha a plataforma aberta enquanto realiza o pagamento.",
-              "files": ["src/components/billing/CheckoutButton.tsx", "src/pages/empresa/Packages.tsx"],
-              "routes": ["/empresa/pacotes", "/planos"]
+              "files": [
+                "src/components/billing/CheckoutButton.tsx",
+                "src/pages/empresa/Packages.tsx"
+              ],
+              "routes": [
+                "/empresa/pacotes",
+                "/planos"
+              ]
             },
             "1": {
               "description": "Os campos de preço, desconto, bônus e ordem no editor de planos agora aparecem vazios quando não têm valor, mostrando '0,00' como texto de orientação. Antes, todos vinham preenchidos com '0', dificultando a visualização.",
-              "files": ["src/pages/admin/PlanDetail.tsx"],
-              "routes": ["/admin/planos/:id"]
+              "files": [
+                "src/pages/admin/PlanDetail.tsx"
+              ],
+              "routes": [
+                "/admin/planos/:id"
+              ]
             },
             "2": {
               "description": "A seção de preços de lançamento no editor de planos se adapta ao modelo de cobrança: para planos recorrentes mostra os 4 períodos, e para pagamento único mostra apenas um campo de preço promocional.",
-              "files": ["src/components/admin/plans/LaunchPriceEditor.tsx"],
-              "routes": ["/admin/planos/:id"]
+              "files": [
+                "src/components/admin/plans/LaunchPriceEditor.tsx"
+              ],
+              "routes": [
+                "/admin/planos/:id"
+              ]
             }
           }
         },
@@ -789,13 +1124,23 @@
           "details": {
             "0": {
               "description": "Ao desativar o toggle de preços de lançamento e salvar o plano, os preços promocionais voltavam a aparecer ao recarregar a página. Agora a desativação é salva corretamente no banco de dados.",
-              "files": ["src/pages/admin/PlanDetail.tsx"],
-              "routes": ["/admin/planos/:id"]
+              "files": [
+                "src/pages/admin/PlanDetail.tsx"
+              ],
+              "routes": [
+                "/admin/planos/:id"
+              ]
             },
             "1": {
               "description": "Planos de pagamento único (como 'Vaga Avulsa') mostravam 'R$ 0,00/mês' nos cards da loja e da página de planos. Agora exibem o preço correto sem o sufixo '/mês'.",
-              "files": ["src/pages/empresa/Packages.tsx", "src/pages/Plans.tsx"],
-              "routes": ["/empresa/pacotes", "/planos"]
+              "files": [
+                "src/pages/empresa/Packages.tsx",
+                "src/pages/Plans.tsx"
+              ],
+              "routes": [
+                "/empresa/pacotes",
+                "/planos"
+              ]
             }
           }
         }
@@ -819,17 +1164,31 @@
           "details": {
             "0": {
               "description": "Ao clicar em 'Reenviar' em um convite, agora abre um painel com três opções: gerar um novo link para copiar, reenviar por email ou reenviar por WhatsApp. O canal original do convite já vem pré-selecionado. Cada opção mostra uma confirmação específica com os dados do destinatário.",
-              "files": ["src/components/corporate-tests/ResendInvitationModal.tsx", "src/components/corporate-tests/InvitationManager.tsx", "src/hooks/useInvitationManagerQuery.ts", "supabase/functions/send-test-invitation/index.ts"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/components/corporate-tests/ResendInvitationModal.tsx",
+                "src/components/corporate-tests/InvitationManager.tsx",
+                "src/hooks/useInvitationManagerQuery.ts",
+                "supabase/functions/send-test-invitation/index.ts"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "1": {
               "description": "A página da Loja agora tem uma aba 'Meu Plano' que mostra o plano atual da empresa (nome, status, valor mensal e data de renovação) e todas as opções de planos disponíveis para upgrade ou mudança.",
-              "files": ["src/pages/empresa/Packages.tsx", "src/pages/empresa/Settings.tsx"],
-              "routes": ["/empresa/pacotes"]
+              "files": [
+                "src/pages/empresa/Packages.tsx",
+                "src/pages/empresa/Settings.tsx"
+              ],
+              "routes": [
+                "/empresa/pacotes"
+              ]
             },
             "2": {
               "description": "Quando um convite é reenviado, o link anterior é automaticamente invalidado e um novo é gerado com validade de 24 horas. Isso garante que apenas o link mais recente funcione, aumentando a segurança do processo.",
-              "files": ["supabase/functions/send-test-invitation/index.ts"],
+              "files": [
+                "supabase/functions/send-test-invitation/index.ts"
+              ],
               "routes": []
             }
           }
@@ -848,38 +1207,68 @@
           "details": {
             "0": {
               "description": "A página da Loja foi completamente redesenhada com visual moderno: cards de pacotes com preços em destaque, badges de 'Mais Popular', botões de compra mais chamativos com gradientes, e barra de créditos redesenhada com visual premium.",
-              "files": ["src/pages/empresa/Packages.tsx"],
-              "routes": ["/empresa/pacotes"]
+              "files": [
+                "src/pages/empresa/Packages.tsx"
+              ],
+              "routes": [
+                "/empresa/pacotes"
+              ]
             },
             "1": {
               "description": "Ao reenviar vários convites de uma vez, cada convite é automaticamente reenviado pelo mesmo canal usado no envio original (link, email ou WhatsApp). O resumo mostra quantos foram enviados por cada canal.",
-              "files": ["src/hooks/useInvitationManagerQuery.ts"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/hooks/useInvitationManagerQuery.ts"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "2": {
               "description": "Na tela do teste comportamental, as palavras (adjetivos) agora aparecem em 4 colunas por linha no desktop, facilitando a visualização de todas as opções disponíveis.",
-              "files": ["src/components/gaugePro/WordGrid.tsx"],
-              "routes": ["/convite/teste"]
+              "files": [
+                "src/components/gaugePro/WordGrid.tsx"
+              ],
+              "routes": [
+                "/convite/teste"
+              ]
             },
             "3": {
               "description": "Ao acessar a lista de testes na aba 'Meus Testes', o filtro de status já vem selecionado como 'Ativo', mostrando apenas os testes em andamento por padrão.",
-              "files": ["src/components/corporate-tests/TestList.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/components/corporate-tests/TestList.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "4": {
               "description": "O histórico de atividades de um convite (acessado ao clicar em 'Ver detalhes') agora mostra as ações mais recentes no topo, facilitando o acompanhamento das últimas atualizações.",
-              "files": ["src/services/companyTests/companyTestsService.supabase.ts"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/services/companyTests/companyTestsService.supabase.ts"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "5": {
               "description": "Ao concluir o teste comportamental, a tela de finalização agora exibe o CPF parcial e o telefone do colaborador (quando disponíveis), em vez do endereço de email.",
-              "files": ["src/components/gaugePro/TestCompletionSummary.tsx", "src/pages/CollaboratorTestSession.tsx", "supabase/functions/process-collaborator-invite/index.ts"],
-              "routes": ["/convite/teste"]
+              "files": [
+                "src/components/gaugePro/TestCompletionSummary.tsx",
+                "src/pages/CollaboratorTestSession.tsx",
+                "supabase/functions/process-collaborator-invite/index.ts"
+              ],
+              "routes": [
+                "/convite/teste"
+              ]
             },
             "6": {
               "description": "O item 'Loja' na navegação lateral foi movido do grupo 'Talentos' para o grupo 'Geral', junto com Configurações e Central de Ajuda, refletindo melhor sua função administrativa.",
-              "files": ["src/components/layout/DashboardLayout.tsx"],
-              "routes": ["/empresa/pacotes"]
+              "files": [
+                "src/components/layout/DashboardLayout.tsx"
+              ],
+              "routes": [
+                "/empresa/pacotes"
+              ]
             }
           }
         },
@@ -892,13 +1281,24 @@
           "details": {
             "0": {
               "description": "Correção de segurança: quando um convite era cancelado pela empresa, o colaborador ainda conseguia acessar o link e realizar o teste. Agora, ao acessar um link de convite cancelado, uma mensagem de aviso é exibida imediatamente informando que o convite foi revogado.",
-              "files": ["supabase/functions/process-collaborator-invite/index.ts", "src/pages/CollaboratorTestSession.tsx"],
-              "routes": ["/convite/teste"]
+              "files": [
+                "supabase/functions/process-collaborator-invite/index.ts",
+                "src/pages/CollaboratorTestSession.tsx"
+              ],
+              "routes": [
+                "/convite/teste"
+              ]
             },
             "1": {
               "description": "Os links do banner e badge de período de teste ('Ver planos') agora direcionam corretamente para a aba 'Meu Plano' dentro da Loja, em vez da antiga localização nas Configurações.",
-              "files": ["src/components/trial/TrialBanner.tsx", "src/components/trial/TrialBadge.tsx", "src/components/trial/TrialAlert.tsx"],
-              "routes": ["/empresa/pacotes"]
+              "files": [
+                "src/components/trial/TrialBanner.tsx",
+                "src/components/trial/TrialBadge.tsx",
+                "src/components/trial/TrialAlert.tsx"
+              ],
+              "routes": [
+                "/empresa/pacotes"
+              ]
             }
           }
         }
@@ -928,48 +1328,101 @@
           "details": {
             "0": {
               "description": "Nova seção no painel administrativo em /admin/gauge-pro com navegação por abas entre Adjetivos, Cenários e Arquétipos. Acessível pelo menu lateral na área Sistema.",
-              "files": ["src/pages/admin/GaugeProAdjectives.tsx", "src/pages/admin/GaugeProScenarios.tsx", "src/pages/admin/GaugeProArchetypes.tsx", "src/config/adminTabConfig.ts"],
-              "routes": ["/admin/gauge-pro/adjetivos", "/admin/gauge-pro/cenarios", "/admin/gauge-pro/arquetipos"]
+              "files": [
+                "src/pages/admin/GaugeProAdjectives.tsx",
+                "src/pages/admin/GaugeProScenarios.tsx",
+                "src/pages/admin/GaugeProArchetypes.tsx",
+                "src/config/adminTabConfig.ts"
+              ],
+              "routes": [
+                "/admin/gauge-pro/adjetivos",
+                "/admin/gauge-pro/cenarios",
+                "/admin/gauge-pro/arquetipos"
+              ]
             },
             "1": {
               "description": "Página de adjetivos com accordion por dimensão (D1-D5), exibindo 20 palavras por dimensão organizadas por polaridade alta e baixa. Permite editar texto e desativar adjetivos sem afetar resultados já calculados.",
-              "files": ["src/pages/admin/GaugeProAdjectives.tsx", "src/services/gaugePro/gaugeProService.supabase.ts"],
-              "routes": ["/admin/gauge-pro/adjetivos"]
+              "files": [
+                "src/pages/admin/GaugeProAdjectives.tsx",
+                "src/services/gaugePro/gaugeProService.supabase.ts"
+              ],
+              "routes": [
+                "/admin/gauge-pro/adjetivos"
+              ]
             },
             "2": {
               "description": "Página de cenários com cards expansíveis mostrando situação completa e 4 opções (A/B/C/D) com badges de mapeamento dimensional. Editor lateral permite alterar texto, opções e mapeamentos de dimensão.",
-              "files": ["src/pages/admin/GaugeProScenarios.tsx", "src/services/gaugePro/gaugeProService.supabase.ts"],
-              "routes": ["/admin/gauge-pro/cenarios"]
+              "files": [
+                "src/pages/admin/GaugeProScenarios.tsx",
+                "src/services/gaugePro/gaugeProService.supabase.ts"
+              ],
+              "routes": [
+                "/admin/gauge-pro/cenarios"
+              ]
             },
             "3": {
               "description": "Página de arquétipos com grid de cards mostrando nome, descrição e pontos fortes. Editor lateral com listas dinâmicas para pontos fortes, áreas de desenvolvimento e papéis ideais.",
-              "files": ["src/pages/admin/GaugeProArchetypes.tsx", "src/services/gaugePro/gaugeProService.supabase.ts"],
-              "routes": ["/admin/gauge-pro/arquetipos"]
+              "files": [
+                "src/pages/admin/GaugeProArchetypes.tsx",
+                "src/services/gaugePro/gaugeProService.supabase.ts"
+              ],
+              "routes": [
+                "/admin/gauge-pro/arquetipos"
+              ]
             },
             "4": {
               "description": "O administrador escolhe entre 5 modos de exibição para os adjetivos do teste: aleatória (recomendada), ordem fixa definida manualmente, polaridade alternada, agrupada por polaridade, ou alfabética. A configuração é global e afeta todos os testes futuros.",
-              "files": ["src/hooks/useGaugeProWordOrderMode.ts", "src/hooks/useGaugeProAssessment.ts", "src/pages/admin/GaugeProAdjectives.tsx"],
-              "routes": ["/admin/gauge-pro/adjetivos"]
+              "files": [
+                "src/hooks/useGaugeProWordOrderMode.ts",
+                "src/hooks/useGaugeProAssessment.ts",
+                "src/pages/admin/GaugeProAdjectives.tsx"
+              ],
+              "routes": [
+                "/admin/gauge-pro/adjetivos"
+              ]
             },
             "5": {
               "description": "O administrador escolhe entre 3 modos de exibição para os cenários: ordem fixa (padrão), aleatória, ou alfabética pelo título. A configuração é global e cada candidato verá os cenários na ordem configurada.",
-              "files": ["src/hooks/useGaugeProScenarioOrderMode.ts", "src/hooks/useGaugeProAssessment.ts", "src/pages/admin/GaugeProScenarios.tsx"],
-              "routes": ["/admin/gauge-pro/cenarios"]
+              "files": [
+                "src/hooks/useGaugeProScenarioOrderMode.ts",
+                "src/hooks/useGaugeProAssessment.ts",
+                "src/pages/admin/GaugeProScenarios.tsx"
+              ],
+              "routes": [
+                "/admin/gauge-pro/cenarios"
+              ]
             },
             "6": {
               "description": "Botão de pré-visualização nas páginas de adjetivos e cenários que abre um diálogo mostrando exatamente como os itens aparecerão para o candidato, incluindo a grade de 3 colunas dos adjetivos.",
-              "files": ["src/pages/admin/GaugeProAdjectives.tsx", "src/pages/admin/GaugeProScenarios.tsx"],
-              "routes": ["/admin/gauge-pro/adjetivos", "/admin/gauge-pro/cenarios"]
+              "files": [
+                "src/pages/admin/GaugeProAdjectives.tsx",
+                "src/pages/admin/GaugeProScenarios.tsx"
+              ],
+              "routes": [
+                "/admin/gauge-pro/adjetivos",
+                "/admin/gauge-pro/cenarios"
+              ]
             },
             "7": {
               "description": "Ao selecionar modos diferentes de aleatória, o sistema exibe alertas informando sobre possíveis impactos na validade psicométrica dos resultados, orientando o administrador a tomar decisões informadas.",
-              "files": ["src/pages/admin/GaugeProAdjectives.tsx", "src/pages/admin/GaugeProScenarios.tsx"],
-              "routes": ["/admin/gauge-pro/adjetivos", "/admin/gauge-pro/cenarios"]
+              "files": [
+                "src/pages/admin/GaugeProAdjectives.tsx",
+                "src/pages/admin/GaugeProScenarios.tsx"
+              ],
+              "routes": [
+                "/admin/gauge-pro/adjetivos",
+                "/admin/gauge-pro/cenarios"
+              ]
             },
             "8": {
               "description": "Convites de teste agora podem ter prazo de validade configurável. Após expirar, o convite é automaticamente marcado como expirado e o colaborador não consegue mais acessar o teste.",
-              "files": ["sql/migrations/069_invitation_expiration_config.sql", "sql/migrations/070_auto_expire_invitations.sql"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "sql/migrations/069_invitation_expiration_config.sql",
+                "sql/migrations/070_auto_expire_invitations.sql"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             }
           }
         },
@@ -982,12 +1435,18 @@
           "details": {
             "0": {
               "description": "Os 100 adjetivos, 15 cenários e 16 arquétipos que antes estavam em arquivos .ts fixos agora são armazenados em tabelas do Supabase, permitindo edição sem necessidade de redeploy da aplicação.",
-              "files": ["sql/migrations/071_gauge_pro_content_tables.sql", "src/services/gaugePro/gaugeProService.supabase.ts"],
+              "files": [
+                "sql/migrations/071_gauge_pro_content_tables.sql",
+                "src/services/gaugePro/gaugeProService.supabase.ts"
+              ],
               "routes": []
             },
             "1": {
               "description": "O service layer agora busca dados ativos do banco de dados, filtrando itens desativados pelo admin. Se as tabelas estiverem vazias, mantém fallback para os dados originais no código.",
-              "files": ["src/services/gaugePro/gaugeProService.supabase.ts", "src/hooks/useGaugeProAssessment.ts"],
+              "files": [
+                "src/services/gaugePro/gaugeProService.supabase.ts",
+                "src/hooks/useGaugeProAssessment.ts"
+              ],
               "routes": []
             }
           }
@@ -1000,8 +1459,12 @@
           "details": {
             "0": {
               "description": "Ajustes de contraste de cores e espaçamento no hub de testes da empresa para melhor legibilidade e conformidade com padrões de acessibilidade.",
-              "files": ["src/pages/empresa/AdminTests.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/AdminTests.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             }
           }
         }
@@ -1036,73 +1499,133 @@
           "details": {
             "0": {
               "description": "O colaborador agora pode alternar entre tema claro e escuro diretamente na tela do teste, usando o botão de sol/lua no topo da pagina.",
-              "files": ["src/pages/CollaboratorTestSession.tsx", "src/components/theme/ThemeToggle.tsx"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/pages/CollaboratorTestSession.tsx",
+                "src/components/theme/ThemeToggle.tsx"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "1": {
               "description": "O nome do colaborador aparece no topo da tela ao lado do logo durante todo o teste, fácilitando a identificação de quem esta respondendo.",
-              "files": ["src/pages/CollaboratorTestSession.tsx"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/pages/CollaboratorTestSession.tsx"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "2": {
               "description": "As cores da tela de avaliação (seleção de palavras, indicadores de progressó e conclusão) agora se adaptam automaticamente ao tema claro ou escuro.",
-              "files": ["src/index.css", "tailwind.config.ts"],
+              "files": [
+                "src/index.css",
+                "tailwind.config.ts"
+              ],
               "routes": []
             },
             "3": {
               "description": "Degradês, sombras e efeitos visuais da plataforma agora possuem versoes otimizadas para o modo escuro, com melhor contraste e legibilidade.",
-              "files": ["src/index.css"],
+              "files": [
+                "src/index.css"
+              ],
               "routes": []
             },
             "4": {
               "description": "A lista de convites enviados agora atualiza automaticamente em tempo real. Quando um colaborador acessa, inicia ou conclui o teste, o status muda na tela sem precisar recarregar.",
-              "files": ["src/hooks/useRealtimeInvitations.ts", "src/components/corporate-tests/InvitationManager.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/hooks/useRealtimeInvitations.ts",
+                "src/components/corporate-tests/InvitationManager.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "5": {
               "description": "Ao concluir o teste, o colaborador ve uma tela redesenhada com resumo visual: tempo gasto, total de palavras e cenários respondidos, dimensões avaliadas, e os próximos passos do processo.",
-              "files": ["src/components/gaugePro/TestCompletionSummary.tsx", "src/pages/CollaboratorTestSession.tsx"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/components/gaugePro/TestCompletionSummary.tsx",
+                "src/pages/CollaboratorTestSession.tsx"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "6": {
               "description": "Nova tela de gerenciamento de convites com lista completa, painel de detalhes ao clicar em um convite, ações em massa (reenviar ou cancelar vários de uma vez) e 4 indicadores: total enviados, taxa de conclusão, tempo medio e abandonos.",
-              "files": ["src/components/corporate-tests/InvitationManager.tsx", "src/components/corporate-tests/InvitationDetailSheet.tsx", "src/components/corporate-tests/InvitationTable.tsx", "src/components/corporate-tests/InvitationBulkActionBar.tsx", "src/components/corporate-tests/InvitationManagerKPIs.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/components/corporate-tests/InvitationManager.tsx",
+                "src/components/corporate-tests/InvitationDetailSheet.tsx",
+                "src/components/corporate-tests/InvitationTable.tsx",
+                "src/components/corporate-tests/InvitationBulkActionBar.tsx",
+                "src/components/corporate-tests/InvitationManagerKPIs.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "7": {
               "description": "Novo filtro na lista de convites que permite ver apenas os convites enviados por WhatsApp, fácilitando o acompanhamento por canal.",
-              "files": ["src/components/corporate-tests/InvitationManagerFilters.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/components/corporate-tests/InvitationManagerFilters.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "8": {
               "description": "Antes de enviar um convite por WhatsApp, uma tela de confirmacao permite revisar e editar o número de telefone e ver uma prévia da mensagem que sera enviada.",
-              "files": ["src/components/corporate-tests/WhatsAppConfirmModal.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/components/corporate-tests/WhatsAppConfirmModal.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "9": {
               "description": "O colaborador precisa aceitar os Termos de Uso, Politica de Privacidade e LGPD antes de iniciar a avaliação, garantindo conformidade com a lei de proteção de dados.",
-              "files": ["src/pages/CollaboratorTestSession.tsx"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/pages/CollaboratorTestSession.tsx"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "10": {
               "description": "O saldo de créditos da empresa aparece no topo do Hub de Testes, e ao lado dos botoes de envio voce ve quantos créditos serao consumidos antes de confirmar.",
-              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/CorporateTestsHub.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "11": {
               "description": "Na aba de Inteligencia Artificial do perfil do colaborador, um botão permite gerar a analise comportamental mesmo para colaboradores que fizeram o teste antes dessa funcionalidade existir.",
-              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/pages/empresa/TeamMemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             },
             "12": {
               "description": "Ao visualizar os detalhes de um convite, o nome do colaborador funciona como link direto para abrir o perfil completo dele na equipe.",
-              "files": ["src/components/corporate-tests/InvitationDetailSheet.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/components/corporate-tests/InvitationDetailSheet.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "13": {
               "description": "As informações de arquetipo comportamental (perfil primario, secundario, pontos fortes e areas de desenvolvimento) agora possuem sua própria aba no perfil do colaborador, mais organizada e fácil de consultar.",
-              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/pages/empresa/TeamMemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             }
           }
         },
@@ -1122,48 +1645,81 @@
           "details": {
             "0": {
               "description": "A cor principal (azul marinho) e a cor de destaque (ciano) agora sao consistentes entre o modo claro e o modo escuro, evitando confusao visual ao trocar de tema.",
-              "files": ["src/index.css"],
+              "files": [
+                "src/index.css"
+              ],
               "routes": []
             },
             "1": {
               "description": "Os destaques visuais ao passar o mouse agora usam um tom mais suave, diferente dos botoes e links que mantem a cor ciano vibrante para fácilitar a distinção.",
-              "files": ["src/index.css"],
+              "files": [
+                "src/index.css"
+              ],
               "routes": []
             },
             "2": {
               "description": "Textos sobre fundos coloridos (botoes, alertas de sucesso, avisos e erros) agora possuem contraste melhorado, fácilitando a leitura para todos os usuarios, incluindo pessoas com baixa visao.",
-              "files": ["src/index.css"],
+              "files": [
+                "src/index.css"
+              ],
               "routes": []
             },
             "3": {
               "description": "O menu lateral no modo escuro agora mantem a identidade visual azul marinho, distinguindo-se claramente da area de conteudo principal.",
-              "files": ["src/index.css"],
+              "files": [
+                "src/index.css"
+              ],
               "routes": []
             },
             "4": {
               "description": "No modo escuro, os diferentes niveis de conteudo (fundo, cartoes e areas secundarias) possuem tonalidades distintas, criando uma hierarquia visual mais clara e organizada.",
-              "files": ["src/index.css"],
+              "files": [
+                "src/index.css"
+              ],
               "routes": []
             },
             "5": {
               "description": "Todas as telas do teste comportamental (seleção de palavras, introducao, cenários, progressó e analise) agora se adaptam corretamente ao modo claro e escuro.",
-              "files": ["src/components/gaugePro/WordGrid.tsx", "src/components/gaugePro/GaugeProIntro.tsx", "src/components/gaugePro/Part1Complete.tsx", "src/components/gaugePro/ScenárioCard.tsx", "src/components/gaugePro/ScenárioIntro.tsx", "src/components/gaugePro/BlockCompleteDivider.tsx", "src/components/gaugePro/AnalyzingScreen.tsx"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/components/gaugePro/WordGrid.tsx",
+                "src/components/gaugePro/GaugeProIntro.tsx",
+                "src/components/gaugePro/Part1Complete.tsx",
+                "src/components/gaugePro/ScenárioCard.tsx",
+                "src/components/gaugePro/ScenárioIntro.tsx",
+                "src/components/gaugePro/BlockCompleteDivider.tsx",
+                "src/components/gaugePro/AnalyzingScreen.tsx"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "6": {
               "description": "A tela de conclusão do teste foi redesenhada com um resumo visual completo (estatisticas, próximos passos e informações do perfil), enquanto a ativação de conta ficou mais simples e focada.",
-              "files": ["src/components/invite/TestCompletionActivation.tsx", "src/components/gaugePro/TestCompletionSummary.tsx"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/components/invite/TestCompletionActivation.tsx",
+                "src/components/gaugePro/TestCompletionSummary.tsx"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "7": {
               "description": "O painel lateral de detalhes do convite ficou mais largo para acomodar melhor as informações da jornada, histórico de atividades e dados do colaborador.",
-              "files": ["src/components/corporate-tests/InvitationDetailSheet.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/components/corporate-tests/InvitationDetailSheet.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "8": {
               "description": "Na aba de competencias do perfil do colaborador, os fatores emocionais agora aparecem primeiro, e o gráfico radar e os indicadores de risco ficam lado a lado para comparação rápida.",
-              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/pages/empresa/TeamMemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             }
           }
         },
@@ -1188,73 +1744,125 @@
           "details": {
             "0": {
               "description": "A analise de inteligência artificial agora aparece corretamente na aba IA do perfil do colaborador, mesmo para aqueles cadastrados pelo fluxo de equipe.",
-              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/pages/empresa/TeamMemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             },
             "1": {
               "description": "As respostas do teste (palavras escolhidas e cenários) e o tempo de duração agora aparecem corretamente na aba Respostas do perfil do colaborador.",
-              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/pages/empresa/TeamMemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             },
             "2": {
               "description": "As respostas dos colaboradores durante o teste agora sao salvas corretamente no banco de dados, garantindo que nenhuma informacao seja perdida.",
-              "files": ["src/pages/CollaboratorTestSession.tsx"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/pages/CollaboratorTestSession.tsx"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "3": {
               "description": "Corrigido um problema que gerava erro ao salvar a analise de inteligência artificial para alguns colaboradores com identificadores temporários.",
-              "files": ["src/pages/CollaboratorTestSession.tsx"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/pages/CollaboratorTestSession.tsx"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "4": {
               "description": "Ao tentar enviar convites sem créditos suficientes, o avisó de créditos insuficientes aparece imediatamente, sem esperar a resposta do servidor.",
-              "files": ["src/components/corporate-tests/InvitePanelContainer.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/components/corporate-tests/InvitePanelContainer.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "5": {
               "description": "Melhorada a detecção de créditos insuficientes ao enviar convites, garantindo que a mensagem de avisó apareca em todos os cenários possíveis.",
-              "files": ["src/components/corporate-tests/InvitePanelContainer.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/components/corporate-tests/InvitePanelContainer.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "6": {
               "description": "Os campos de CPF e telefone agora exibem a formatação correta (com pontos, tracos e parenteses) ao abrir o formulario de edicao de um membro da equipe.",
-              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/pages/empresa/TeamMemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             },
             "7": {
               "description": "Removidas entradas duplicadas na aba de IA e corrigido o indicador 'Atual' para mostrar apenas o teste mais recente do colaborador.",
-              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/pages/empresa/TeamMemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             },
             "8": {
               "description": "O tempo de duração do teste agora e calculado corretamente, refletindo o período real entre o inicio e a conclusão da avaliação.",
-              "files": ["src/pages/CollaboratorTestSession.tsx"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/pages/CollaboratorTestSession.tsx"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "9": {
               "description": "Corrigido um problema visual nas notificações da empresa que poderia causar comportamento inesperado ao clicar em alguns itens.",
-              "files": ["src/components/notifications/CompanyNotificationItem.tsx"],
+              "files": [
+                "src/components/notifications/CompanyNotificationItem.tsx"
+              ],
               "routes": []
             },
             "10": {
               "description": "O card de analise de IA do colaborador agora exibe informações sobre quando e como a analise foi gerada, para maior transparência.",
-              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/pages/empresa/TeamMemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             },
             "11": {
               "description": "O envio de convites por WhatsApp agora funciona corretamente, e o som de notificação toca apenas uma vez por evento recebido.",
-              "files": ["src/hooks/useRealtimeNotifications.ts"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/hooks/useRealtimeNotifications.ts"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "12": {
               "description": "Corrigido um erro que podia ocorrer ao carregar configurações de inteligência artificial em empresas que ainda nao tinham definido suas preferências.",
-              "files": ["src/lib/aiAgent/settingsLoader.ts"],
+              "files": [
+                "src/lib/aiAgent/settingsLoader.ts"
+              ],
               "routes": []
             },
             "13": {
               "description": "Quando o envio de um convite por WhatsApp falhava, o sistema nao mostrava nenhum aviso. Agora uma mensagem de erro clara aparece com opção de tentar novamente.",
-              "files": ["src/components/corporate-tests/WhatsAppConfirmModal.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/components/corporate-tests/WhatsAppConfirmModal.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             }
           }
         }
@@ -1292,87 +1900,140 @@
           "details": {
             "0": {
               "description": "O sistema agora registra automaticamente quando um colaborador abre o link do teste pela primeira vez, permitindo acompanhar se o convite foi visualizado.",
-              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "supabase/functions/process-collaborator-invite/index.ts"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "1": {
               "description": "Cada etapa do processó (convite, avaliação, resultado e analise de IA) agora esta conectada, permitindo rastrear o caminho completo de cada colaborador.",
-              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "files": [
+                "sql/migrations/064_tracking_observability.sql"
+              ],
               "routes": []
             },
             "2": {
               "description": "Uma consulta unificada permite visualizar toda a cadeia de um teste: desde o convite enviado ate a analise final de inteligência artificial, em uma única tela.",
-              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "files": [
+                "sql/migrations/064_tracking_observability.sql"
+              ],
               "routes": []
             },
             "3": {
               "description": "O sistema calcula automaticamente 14 indicadores de desempenho (total enviados, taxa de conclusão, tempo medio, abandonos, entre outros) por empresa e período.",
-              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "files": [
+                "sql/migrations/064_tracking_observability.sql"
+              ],
               "routes": []
             },
             "4": {
               "description": "Testes iniciados ha mais de 24 horas sem conclusão sao detectados automaticamente e marcados como abandonados, fácilitando o acompanhamento pela empresa.",
-              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "files": [
+                "sql/migrations/064_tracking_observability.sql"
+              ],
               "routes": []
             },
             "5": {
               "description": "Ao enviar um convite de teste, 1 crédito e descontado automaticamente do saldo da empresa. A transação fica registrada no histórico para auditoria.",
-              "files": ["supabase/functions/send-test-invitation/index.ts", "sql/migrations/064_tracking_observability.sql"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "supabase/functions/send-test-invitation/index.ts",
+                "sql/migrations/064_tracking_observability.sql"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "6": {
               "description": "Ao cancelar um convite que ainda nao foi iniciado, o crédito utilizado e devolvido automaticamente ao saldo da empresa.",
-              "files": ["supabase/functions/send-test-invitation/index.ts"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "supabase/functions/send-test-invitation/index.ts"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "7": {
               "description": "Se a empresa nao possui créditos suficientes, o envio de convites e bloqueado e uma mensagem clara informa quantos créditos sao necessários.",
-              "files": ["supabase/functions/send-test-invitation/index.ts"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "supabase/functions/send-test-invitation/index.ts"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "8": {
               "description": "Todas as ações do sistema (envio de convite, visualização, inicio do teste, conclusão, consumo de crédito, etc.) sao registradas automaticamente em um histórico de atividades para auditoria.",
-              "files": ["supabase/functions/process-collaborator-invite/index.ts", "supabase/functions/send-test-invitation/index.ts"],
+              "files": [
+                "supabase/functions/process-collaborator-invite/index.ts",
+                "supabase/functions/send-test-invitation/index.ts"
+              ],
               "routes": []
             },
             "9": {
               "description": "Os administradores da empresa recebem uma notificação automatica dentro da plataforma quando um colaborador conclui o teste comportamental.",
-              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "files": [
+                "supabase/functions/process-collaborator-invite/index.ts"
+              ],
               "routes": []
             },
             "10": {
               "description": "Opcao para receber notificação por WhatsApp quando um colaborador conclui o teste. Pode ser ativada ou desativada nas configurações da empresa.",
-              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "files": [
+                "supabase/functions/process-collaborator-invite/index.ts"
+              ],
               "routes": []
             },
             "11": {
               "description": "O Hub de Testes agora exibe 9 indicadores em destaque: total de convites enviados, taxa de conclusão, tempo medio, taxa de abandono, colaboradores mapeados, créditos disponíveis, retestes pendentes, entre outros.",
-              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/CorporateTestsHub.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "12": {
               "description": "Novo funil visual de conversão com 5 etapas: Convidados, Visualizados, Iniciados, Concluidos e Analisados. Mostra o percentual de avanco entre cada etapa.",
-              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/CorporateTestsHub.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "13": {
               "description": "Card de resumo de créditos no Hub de Testes mostrando saldo disponível, créditos consumidos no período selecionado e acessó rapido ao histórico de transações.",
-              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/CorporateTestsHub.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "14": {
               "description": "Possibilidade de agendar retestes com frequência de 3, 6, 9 ou 12 meses. Um indicador visual aparece no perfil do colaborador quando a data de reteste esta próxima.",
-              "files": ["src/components/team-management/RetestScheduleModal.tsx", "src/pages/empresa/TeamMemberProfile.tsx"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/components/team-management/RetestScheduleModal.tsx",
+                "src/pages/empresa/TeamMemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             },
             "15": {
               "description": "O histórico de atividades e de transações de créditos é protegido contra alterações e exclusões, garantindo a integridade dos registros para fins de auditoria.",
-              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "files": [
+                "sql/migrations/064_tracking_observability.sql"
+              ],
               "routes": []
             },
             "16": {
               "description": "As tabelas de logs de auditoria e transações de crédito possuem políticas RLS que permitem apenas inserção e leitura, bloqueando atualização e exclusão para preservar a rastreabilidade completa.",
-              "files": ["sql/migrations/064_tracking_observability.sql"],
+              "files": [
+                "sql/migrations/064_tracking_observability.sql"
+              ],
               "routes": []
             }
           }
@@ -1389,28 +2050,46 @@
           "details": {
             "0": {
               "description": "Cada acao realizada no fluxo de convites (identificação, ativação, envio de email, inicio e conclusão do teste) agora e registrada automaticamente no histórico de atividades.",
-              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "files": [
+                "supabase/functions/process-collaborator-invite/index.ts"
+              ],
               "routes": []
             },
             "1": {
               "description": "O consumo e a devolução de créditos agora fazem parte do fluxo de envio e cancelamento de convites, com todas as transações registradas no histórico.",
-              "files": ["supabase/functions/send-test-invitation/index.ts"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "supabase/functions/send-test-invitation/index.ts"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "2": {
               "description": "Agora só e possivel cancelar convites que ainda nao foram iniciados pelo colaborador. Testes em andamento nao podem mais ser cancelados acidentalmente.",
-              "files": ["supabase/functions/send-test-invitation/index.ts"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "supabase/functions/send-test-invitation/index.ts"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "3": {
               "description": "O feed de atividades no Hub de Testes agora mostra novos tipos de eventos: convite visualizado, teste iniciado, teste concluido, crédito consumido e crédito devolvido, cada um com seu próprio icone.",
-              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/CorporateTestsHub.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "4": {
               "description": "Adicionada opção 'Todos' no filtro de período, permitindo visualizar o histórico completo de atividades e métricas desde o inicio da utilizacao.",
-              "files": ["src/pages/empresa/CorporateTestsHub.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/CorporateTestsHub.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             }
           }
         },
@@ -1423,12 +2102,16 @@
           "details": {
             "0": {
               "description": "Corrigido um erro que podia impedir o registro correto dos resultados ao finalizar o teste em alguns cenários específicos.",
-              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "files": [
+                "supabase/functions/process-collaborator-invite/index.ts"
+              ],
               "routes": []
             },
             "1": {
               "description": "Testes concluidos anteriormente que nao tinham vínculos com seus respectivos resultados e analises foram corrigidos e reconectados automaticamente.",
-              "files": ["sql/migrations/065_backfill_tracking.sql"],
+              "files": [
+                "sql/migrations/065_backfill_tracking.sql"
+              ],
               "routes": []
             }
           }
@@ -1458,42 +2141,70 @@
           "details": {
             "0": {
               "description": "Ao enviar convites para colaboradores, o administrador agora escolhe entre três canais de entrega: Link Único (gera URL copiável), Email (envia convite por e-mail) ou WhatsApp (envia via integração WhatsApp).",
-              "files": ["src/pages/empresa/AdminTests.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/AdminTests.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "1": {
               "description": "O sistema detecta quando um colaborador já possui convite ativo e impede o envio duplicado, mostrando badge visual, desabilitando o checkbox e exibindo toast explicativo.",
-              "files": ["src/pages/empresa/AdminTests.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/AdminTests.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "2": {
               "description": "Após envio por Link Único, uma lista com os links gerados é exibida com botão de cópia individual para cada colaborador e botão de copiar todos de uma vez.",
-              "files": ["src/pages/empresa/AdminTests.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/AdminTests.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "3": {
               "description": "A verificação de CPF no início do teste agora solicita os 4 últimos dígitos em vez de 3, aumentando a segurança da identificação do colaborador.",
-              "files": ["src/pages/CollaboratorTestSession.tsx"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/pages/CollaboratorTestSession.tsx"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "4": {
               "description": "A máscara de exibição do CPF foi ajustada para mostrar menos dígitos visíveis, protegendo melhor os dados pessoais do colaborador na tela de verificação.",
-              "files": ["src/pages/CollaboratorTestSession.tsx"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/pages/CollaboratorTestSession.tsx"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "5": {
               "description": "A tela de análise do perfil comportamental não ficava mais travada indefinidamente. O callback de conclusão agora é acionado antes da verificação de UUID, permitindo que o fluxo avance corretamente.",
-              "files": ["src/hooks/useGaugeProAssessment.ts"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/hooks/useGaugeProAssessment.ts"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "6": {
               "description": "Queries ao Supabase que recebiam IDs temporários (como 'temp' ou 'tm-xxx') não geram mais erros HTTP 400 no console do navegador, pois agora são filtradas antes do envio.",
-              "files": ["src/hooks/useGaugeProAssessment.ts"],
+              "files": [
+                "src/hooks/useGaugeProAssessment.ts"
+              ],
               "routes": []
             },
             "7": {
               "description": "O código da Edge Function de envio de convites foi salvo no repositório local em supabase/functions/ para controle de versão e rastreabilidade das alterações.",
-              "files": ["supabase/functions/send-test-invitation/index.ts"],
+              "files": [
+                "supabase/functions/send-test-invitation/index.ts"
+              ],
               "routes": []
             }
           }
@@ -1522,38 +2233,65 @@
           "details": {
             "0": {
               "description": "Ao criar um novo teste comportamental, o administrador escolhe entre 'Candidatos Externos' e 'Colaboradores', determinando o fluxo de convite e a experiência de teste adequada para cada público.",
-              "files": ["src/pages/empresa/AdminTests.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/AdminTests.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "1": {
               "description": "Nova aba 'Da Equipe' no painel de convites permite selecionar colaboradores da empresa, com filtro por departamento e badges indicando status atual (sem teste, teste pendente, teste concluído).",
-              "files": ["src/pages/empresa/AdminTests.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/AdminTests.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "2": {
               "description": "Avaliações e resultados de colaboradores agora são vinculados diretamente pelo team_member_id, eliminando a necessidade de criar um usuário candidato fictício para cada colaborador testado.",
-              "files": ["sql/migrations/063_unified_collaborator_test_flow.sql", "src/services/gaugePro/gaugeProService.supabase.ts"],
+              "files": [
+                "sql/migrations/063_unified_collaborator_test_flow.sql",
+                "src/services/gaugePro/gaugeProService.supabase.ts"
+              ],
               "routes": []
             },
             "3": {
               "description": "O colaborador acessa o teste por link de convite, confirma sua identidade via CPF sem precisar criar conta ou fazer login. Todo o fluxo acontece sem criação de usuário no sistema de autenticação.",
-              "files": ["src/pages/CollaboratorTestSession.tsx"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/pages/CollaboratorTestSession.tsx"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "4": {
               "description": "Após concluir o teste, colaboradores veem uma tela de conclusão simplificada sem o passo de ativação de conta, já que não precisam de acesso permanente à plataforma.",
-              "files": ["src/pages/CollaboratorTestSession.tsx"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "src/pages/CollaboratorTestSession.tsx"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "5": {
               "description": "É possível abrir o Hub de Testes diretamente na aba de convites usando parâmetros na URL, facilitando a navegação a partir de notificações e links internos.",
-              "files": ["src/pages/empresa/AdminTests.tsx"],
-              "routes": ["/empresa/testes?tab=convites"]
+              "files": [
+                "src/pages/empresa/AdminTests.tsx"
+              ],
+              "routes": [
+                "/empresa/testes?tab=convites"
+              ]
             },
             "6": {
               "description": "O perfil do colaborador na gestão de equipes agora exibe o histórico de testes comportamentais realizados, buscando resultados pelo team_member_id em vez de depender de um candidato vinculado.",
-              "files": ["src/pages/empresa/TeamMemberProfile.tsx"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/pages/empresa/TeamMemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             }
           }
         },
@@ -1567,17 +2305,25 @@
           "details": {
             "0": {
               "description": "O painel de convites exibe abas diferentes conforme o público-alvo do teste: para colaboradores mostra 'Da Equipe' e 'Por Email', enquanto para candidatos mantém as 3 abas originais.",
-              "files": ["src/pages/empresa/AdminTests.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/pages/empresa/AdminTests.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "1": {
               "description": "A Edge Function de verificação de CPF foi atualizada para não criar um candidato fantasma quando o teste é destinado a colaboradores, preservando a integridade da base de candidatos.",
-              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "files": [
+                "supabase/functions/process-collaborator-invite/index.ts"
+              ],
               "routes": []
             },
             "2": {
               "description": "A Edge Function de conclusão do teste agora aceita o team_member_id como identificador alternativo, permitindo registrar resultados de colaboradores que não possuem candidate_id.",
-              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
+              "files": [
+                "supabase/functions/process-collaborator-invite/index.ts"
+              ],
               "routes": []
             }
           }
@@ -1627,43 +2373,79 @@
           "details": {
             "0": {
               "description": "Modal unificado para envio de teste com 3 opções: link copiável, envio por email e envio por WhatsApp com expiração de 24h.",
-              "files": ["src/components/team-management/SendTestModal.tsx"],
-              "routes": ["/empresa/equipes"]
+              "files": [
+                "src/components/team-management/SendTestModal.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes"
+              ]
             },
             "1": {
               "description": "Edge Function process-collaborator-invite com ação verify_cpf para confirmar identidade do colaborador antes do teste.",
-              "files": ["supabase/functions/process-collaborator-invite/index.ts"],
-              "routes": ["/convite/teste/:token"]
+              "files": [
+                "supabase/functions/process-collaborator-invite/index.ts"
+              ],
+              "routes": [
+                "/convite/teste/:token"
+              ]
             },
             "2": {
               "description": "Badge visual 'Colaborador' exibido nos cards e detalhes de candidatos que possuem visibilityLocked.",
-              "files": ["src/pages/empresa/Candidates.tsx", "src/pages/admin/CandidateDetail.tsx"],
-              "routes": ["/admin/candidatos", "/empresa/candidatos"]
+              "files": [
+                "src/pages/empresa/Candidates.tsx",
+                "src/pages/admin/CandidateDetail.tsx"
+              ],
+              "routes": [
+                "/admin/candidatos",
+                "/empresa/candidatos"
+              ]
             },
             "3": {
               "description": "Perfil do colaborador redesenhado com 4 abas: Resumo, Evolução, IA e Dados. Header com foto, cargo, departamento e contato.",
-              "files": ["src/pages/empresa/TeamMemberProfile.tsx", "src/components/team-management/MemberProfile.tsx"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/pages/empresa/TeamMemberProfile.tsx",
+                "src/components/team-management/MemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             },
             "4": {
               "description": "Admin pode adicionar, debitar e transferir créditos de teste manualmente entre empresas.",
-              "files": ["src/pages/admin/CreditManagement.tsx"],
-              "routes": ["/admin/créditos"]
+              "files": [
+                "src/pages/admin/CreditManagement.tsx"
+              ],
+              "routes": [
+                "/admin/créditos"
+              ]
             },
             "5": {
               "description": "Timeline visual mostrando histórico de testes realizados pelo colaborador com datas e status.",
-              "files": ["src/components/team-management/MemberProfile.tsx"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/components/team-management/MemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             },
             "6": {
               "description": "Aba IA usa accordion para organizar análises (técnica, prática, geral). Análise é disparada automaticamente ao abrir a aba para colaboradores.",
-              "files": ["src/components/team-management/MemberProfile.tsx", "src/hooks/useAIAnalysis.ts"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/components/team-management/MemberProfile.tsx",
+                "src/hooks/useAIAnalysis.ts"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             },
             "7": {
               "description": "Banner azul informativo aparece quando o usuário está visualizando resultados de um teste anterior, não o mais recente.",
-              "files": ["src/components/team-management/MemberProfile.tsx"],
-              "routes": ["/empresa/equipes/:teamId/membro/:memberId"]
+              "files": [
+                "src/components/team-management/MemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes/:teamId/membro/:memberId"
+              ]
             }
           }
         },
@@ -1675,8 +2457,12 @@
           "details": {
             "0": {
               "description": "PublicLinkManager exibe avisó amber de depreciação. O fluxo recomendado agora é enviar convites individuais via SendTestModal.",
-              "files": ["src/components/team-management/PublicLinkManager.tsx"],
-              "routes": ["/empresa/equipes"]
+              "files": [
+                "src/components/team-management/PublicLinkManager.tsx"
+              ],
+              "routes": [
+                "/empresa/equipes"
+              ]
             }
           }
         },
@@ -1720,38 +2506,68 @@
           "details": {
             "0": {
               "description": "Cria ou atualiza o produto e preço do pacote no Stripe, salvando os IDs de volta no banco de dados para usó no checkout.",
-              "files": ["supabase/functions/stripe-sync-package/index.ts"],
-              "routes": ["/admin/pacotes-testes"]
+              "files": [
+                "supabase/functions/stripe-sync-package/index.ts"
+              ],
+              "routes": [
+                "/admin/pacotes-testes"
+              ]
             },
             "1": {
               "description": "Cria uma sessão de checkout no Stripe para compra avulsa de pacotes de testes. Suporta pagamento único com redirecionamento para a página do Stripe.",
-              "files": ["supabase/functions/stripe-package-checkout/index.ts"],
-              "routes": ["/empresa/pacotes"]
+              "files": [
+                "supabase/functions/stripe-package-checkout/index.ts"
+              ],
+              "routes": [
+                "/empresa/pacotes"
+              ]
             },
             "2": {
               "description": "Cada pacote pode ter seus próprios meios de pagamento: Cartão (obrigatório), PIX e Boleto. Configurável via checkboxes na edição do pacote.",
-              "files": ["src/pages/admin/PackageDetail.tsx", "sql/migrations/061_package_payment_methods.sql"],
-              "routes": ["/admin/pacotes-testes/:id"]
+              "files": [
+                "src/pages/admin/PackageDetail.tsx",
+                "sql/migrations/061_package_payment_methods.sql"
+              ],
+              "routes": [
+                "/admin/pacotes-testes/:id"
+              ]
             },
             "3": {
               "description": "Ícone de copiar ao lado de email, CPF e telefone no detalhe do candidato. Ao clicar, copia o valor e exibe confirmação visual.",
-              "files": ["src/pages/admin/CandidateDetail.tsx"],
-              "routes": ["/admin/candidatos/:id"]
+              "files": [
+                "src/pages/admin/CandidateDetail.tsx"
+              ],
+              "routes": [
+                "/admin/candidatos/:id"
+              ]
             },
             "4": {
               "description": "Ao passar o mouse sobre um item do changelog, um tooltip exibe a descrição simplificada, arquivos alterados e rotas afetadas.",
-              "files": ["src/components/about/VersionAccordion.tsx", "src/types/changelog.ts"],
-              "routes": ["/sobre"]
+              "files": [
+                "src/components/about/VersionAccordion.tsx",
+                "src/types/changelog.ts"
+              ],
+              "routes": [
+                "/sobre"
+              ]
             },
             "5": {
               "description": "Card hero na página Sobre agora mostra quantas atualizações foram feitas no dia atual.",
-              "files": ["src/pages/About.tsx"],
-              "routes": ["/sobre"]
+              "files": [
+                "src/pages/About.tsx"
+              ],
+              "routes": [
+                "/sobre"
+              ]
             },
             "6": {
               "description": "Quando o candidato tenta avançar no onboarding sem selecionar ao menos 2 competências técnicas e 2 comportamentais, um modal amigável informa o que falta.",
-              "files": ["src/pages/candidato/ProfessionalProfile.tsx"],
-              "routes": ["/candidato/onboarding/perfil-profissional"]
+              "files": [
+                "src/pages/candidato/ProfessionalProfile.tsx"
+              ],
+              "routes": [
+                "/candidato/onboarding/perfil-profissional"
+              ]
             }
           }
         },
@@ -1766,22 +2582,38 @@
           "details": {
             "0": {
               "description": "A validação checava skills legadas (sempre vazias) em vez das padronizadas. Agora exige 2 técnicas e 2 comportamentais para avançar.",
-              "files": ["src/pages/candidato/ProfessionalProfile.tsx"],
-              "routes": ["/candidato/onboarding/perfil-profissional"]
+              "files": [
+                "src/pages/candidato/ProfessionalProfile.tsx"
+              ],
+              "routes": [
+                "/candidato/onboarding/perfil-profissional"
+              ]
             },
             "1": {
               "description": "O primeiro grupo de cada seção (técnicas e comportamentais) vinha expandido automaticamente. Agora todos iniciam fechados.",
-              "files": ["src/components/skills/SkillCategoryAccordion.tsx"],
-              "routes": ["/candidato/perfil", "/candidato/onboarding/perfil-profissional"]
+              "files": [
+                "src/components/skills/SkillCategoryAccordion.tsx"
+              ],
+              "routes": [
+                "/candidato/perfil",
+                "/candidato/onboarding/perfil-profissional"
+              ]
             },
             "2": {
               "description": "A Edge Function buscava a chave Stripe diretamente em values.stripeTestSecretKey, mas a estrutura real é values.stripe.stripeTestSecretKey.",
-              "files": ["supabase/functions/stripe-sync-package/index.ts"]
+              "files": [
+                "supabase/functions/stripe-sync-package/index.ts"
+              ]
             },
             "3": {
               "description": "O campo de texto 'Sobre você' no perfil profissional agora tem limite de 2000 caracteres com contador visível.",
-              "files": ["src/pages/candidato/ProfessionalProfile.tsx"],
-              "routes": ["/candidato/perfil", "/candidato/onboarding/perfil-profissional"]
+              "files": [
+                "src/pages/candidato/ProfessionalProfile.tsx"
+              ],
+              "routes": [
+                "/candidato/perfil",
+                "/candidato/onboarding/perfil-profissional"
+              ]
             }
           }
         },
@@ -1793,8 +2625,12 @@
           "details": {
             "0": {
               "description": "Textos como Configuração, Descrição, Créditos, Preços e outros labels foram corrigidos com acentuação adequada.",
-              "files": ["src/pages/admin/PackageDetail.tsx"],
-              "routes": ["/admin/pacotes-testes/:id"]
+              "files": [
+                "src/pages/admin/PackageDetail.tsx"
+              ],
+              "routes": [
+                "/admin/pacotes-testes/:id"
+              ]
             }
           }
         }
@@ -1827,61 +2663,111 @@
           "details": {
             "0": {
               "description": "Perfil do colaborador agora tem 4 abas organizadas: Visão Geral, Competências, Análise IA e Respostas do teste, fácilitando a consulta completa do perfil.",
-              "files": ["src/components/team-management/MemberProfile.tsx"],
-              "routes": ["/empresa/equipe/:id"]
+              "files": [
+                "src/components/team-management/MemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipe/:id"
+              ]
             },
             "1": {
               "description": "Cabeçalho do perfil do colaborador redesenhado com foto, nome, cargo, CPF parcial, telefone, score de compatibilidade e tipo comportamental.",
-              "files": ["src/components/team-management/MemberProfile.tsx"],
-              "routes": ["/empresa/equipe/:id"]
+              "files": [
+                "src/components/team-management/MemberProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/equipe/:id"
+              ]
             },
             "2": {
               "description": "Administradores podem adicionar, remover e transferir créditos de teste entre empresas com confirmação em 2 etapas e registro de auditoria.",
-              "files": ["src/components/admin/companies/CreditOperationDialog.tsx", "src/components/admin/companies/CompanySubscriptionTab.tsx"],
-              "routes": ["/admin/empresas/:id"]
+              "files": [
+                "src/components/admin/companies/CreditOperationDialog.tsx",
+                "src/components/admin/companies/CompanySubscriptionTab.tsx"
+              ],
+              "routes": [
+                "/admin/empresas/:id"
+              ]
             },
             "3": {
               "description": "Operações de crédito no banco de dados garantem segurança e integridade nas ações de adicionar, debitar e transferir créditos entre empresas.",
-              "files": ["sql/migrations/060_admin_credit_management.sql"]
+              "files": [
+                "sql/migrations/060_admin_credit_management.sql"
+              ]
             },
             "4": {
               "description": "Painel de créditos na aba Assinatura da empresa com saldo atual, total comprado, total usado, compras ativas e histórico completo de transações.",
-              "files": ["src/components/admin/companies/CompanySubscriptionTab.tsx"],
-              "routes": ["/admin/empresas/:id"]
+              "files": [
+                "src/components/admin/companies/CompanySubscriptionTab.tsx"
+              ],
+              "routes": [
+                "/admin/empresas/:id"
+              ]
             },
             "5": {
               "description": "Novo indicador 'Colaboradores' no painel de Usuários do admin. Ao clicar, filtra a tabela para mostrar apenas colaboradores.",
-              "files": ["src/pages/admin/Users.tsx"],
-              "routes": ["/admin/usuarios"]
+              "files": [
+                "src/pages/admin/Users.tsx"
+              ],
+              "routes": [
+                "/admin/usuarios"
+              ]
             },
             "6": {
               "description": "Identificação visual 'Colaborador' em destaque nas listagens e detalhes de candidatos no painel administrativo.",
-              "files": ["src/pages/admin/Candidates.tsx", "src/pages/admin/CandidateDetail.tsx"],
-              "routes": ["/admin/candidatos", "/admin/candidatos/:id"]
+              "files": [
+                "src/pages/admin/Candidates.tsx",
+                "src/pages/admin/CandidateDetail.tsx"
+              ],
+              "routes": [
+                "/admin/candidatos",
+                "/admin/candidatos/:id"
+              ]
             },
             "7": {
               "description": "Novo filtro 'Origem' permite separar candidatos de colaboradores nas páginas de Candidatos e Usuários do admin.",
-              "files": ["src/pages/admin/Candidates.tsx", "src/components/admin/users/UserFilters.tsx", "src/pages/admin/Users.tsx"],
-              "routes": ["/admin/candidatos", "/admin/usuarios"]
+              "files": [
+                "src/pages/admin/Candidates.tsx",
+                "src/components/admin/users/UserFilters.tsx",
+                "src/pages/admin/Users.tsx"
+              ],
+              "routes": [
+                "/admin/candidatos",
+                "/admin/usuarios"
+              ]
             },
             "8": {
               "description": "Envio de teste por 3 canais: link copiável, email direto e WhatsApp. Convites expiram automaticamente em 24 horas.",
-              "files": ["src/components/empresa/SendTestModal.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/components/empresa/SendTestModal.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             },
             "9": {
               "description": "CPF passou a ser obrigatório no cadastro de membros da equipe, com validação automática. Telefone WhatsApp é opcional.",
-              "files": ["src/components/empresa/TeamMemberForm.tsx"],
-              "routes": ["/empresa/equipe"]
+              "files": [
+                "src/components/empresa/TeamMemberForm.tsx"
+              ],
+              "routes": [
+                "/empresa/equipe"
+              ]
             },
             "10": {
               "description": "Verificação automática de CPF antes de iniciar o teste do colaborador, garantindo que o teste seja vinculado à pessoa correta.",
-              "files": ["supabase/functions/process-collaborator-invite/index.ts"]
+              "files": [
+                "supabase/functions/process-collaborator-invite/index.ts"
+              ]
             },
             "11": {
               "description": "O link público de teste exibe avisó de descontinuação. Convites individuais oferecem melhor rastreamento e controle por colaborador.",
-              "files": ["src/components/empresa/PublicLinkManager.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/components/empresa/PublicLinkManager.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             }
           }
         },
@@ -1896,19 +2782,28 @@
           "details": {
             "0": {
               "description": "Links de navegação nas páginas de Desenvolvimento e Evolução do membro agora funcionam corretamente.",
-              "routes": ["/empresa/equipe/:id/desenvolvimento", "/empresa/equipe/:id/evolucao"]
+              "routes": [
+                "/empresa/equipe/:id/desenvolvimento",
+                "/empresa/equipe/:id/evolucao"
+              ]
             },
             "1": {
               "description": "Link de navegação 'Membro' corrigido para abrir o perfil do membro em um painel ampliado.",
-              "routes": ["/empresa/equipe/:id"]
+              "routes": [
+                "/empresa/equipe/:id"
+              ]
             },
             "2": {
               "description": "Correção no processamento de testes de colaboradores que impedia a conclusão correta em alguns cenários.",
-              "files": ["supabase/functions/process-collaborator-invite/index.ts"]
+              "files": [
+                "supabase/functions/process-collaborator-invite/index.ts"
+              ]
             },
             "3": {
               "description": "Todos os nomes no sistema foram padronizados para letras maiúsculas, garantindo consistência na exibição.",
-              "files": ["sql/migrations/058_uppercase_all_names.sql"]
+              "files": [
+                "sql/migrations/058_uppercase_all_names.sql"
+              ]
             }
           }
         },
@@ -1920,8 +2815,12 @@
           "details": {
             "0": {
               "description": "Painel de indicadores em Usuários expandido para 8 itens, com layout adaptável para celular, tablet e desktop.",
-              "files": ["src/pages/admin/Users.tsx"],
-              "routes": ["/admin/usuarios"]
+              "files": [
+                "src/pages/admin/Users.tsx"
+              ],
+              "routes": [
+                "/admin/usuarios"
+              ]
             }
           }
         },
@@ -1933,8 +2832,12 @@
           "details": {
             "0": {
               "description": "O link público de teste está sendo substituído por convites individuais, que oferecem melhor rastreamento e controle por colaborador.",
-              "files": ["src/components/empresa/PublicLinkManager.tsx"],
-              "routes": ["/empresa/testes"]
+              "files": [
+                "src/components/empresa/PublicLinkManager.tsx"
+              ],
+              "routes": [
+                "/empresa/testes"
+              ]
             }
           }
         }
@@ -1957,13 +2860,21 @@
           "details": {
             "0": {
               "description": "Nova página de Testes no admin com 4 abas: Visão Geral com indicadores e gráficos, Resultados com detalhes de cada teste, Convites enviados e Testes Corporativos.",
-              "files": ["src/pages/admin/AdminTests.tsx"],
-              "routes": ["/admin/testes"]
+              "files": [
+                "src/pages/admin/AdminTests.tsx"
+              ],
+              "routes": [
+                "/admin/testes"
+              ]
             },
             "1": {
               "description": "Acessó rápido à página de Testes pelo menu lateral do admin, no grupo Principal.",
-              "files": ["src/config/adminTabConfig.ts"],
-              "routes": ["/admin/testes"]
+              "files": [
+                "src/config/adminTabConfig.ts"
+              ],
+              "routes": [
+                "/admin/testes"
+              ]
             }
           }
         },
@@ -1976,13 +2887,21 @@
           "details": {
             "0": {
               "description": "Indicador 'Testes concluídos' no dashboard admin mostrava zero. Corrigido para contabilizar todos os testes finalizados.",
-              "files": ["src/pages/admin/Dashboard.tsx"],
-              "routes": ["/admin/dashboard"]
+              "files": [
+                "src/pages/admin/Dashboard.tsx"
+              ],
+              "routes": [
+                "/admin/dashboard"
+              ]
             },
             "1": {
               "description": "Textos com acentuação incorreta na página de Testes do admin foram corrigidos.",
-              "files": ["src/pages/admin/AdminTests.tsx"],
-              "routes": ["/admin/testes"]
+              "files": [
+                "src/pages/admin/AdminTests.tsx"
+              ],
+              "routes": [
+                "/admin/testes"
+              ]
             }
           }
         }
@@ -2012,46 +2931,84 @@
           "details": {
             "0": {
               "description": "Pacotes de testes avulsos disponíveis para compra com créditos. Pagamento via Stripe, gestão pelo admin e loja acessível pela empresa.",
-              "files": ["src/services/testPackages/testPackagesService.supabase.ts", "src/pages/empresa/Packages.tsx", "src/pages/admin/TestPackages.tsx"],
-              "routes": ["/empresa/pacotes", "/admin/pacotes-testes"]
+              "files": [
+                "src/services/testPackages/testPackagesService.supabase.ts",
+                "src/pages/empresa/Packages.tsx",
+                "src/pages/admin/TestPackages.tsx"
+              ],
+              "routes": [
+                "/empresa/pacotes",
+                "/admin/pacotes-testes"
+              ]
             },
             "1": {
               "description": "Envio de mensagens WhatsApp para candidatos. Painel admin para configurar conexão, QR code e status.",
-              "files": ["src/services/whatsapp/whatsappService.supabase.ts", "src/pages/admin/EvolutionPanel.tsx"],
-              "routes": ["/admin/whatsapp"]
+              "files": [
+                "src/services/whatsapp/whatsappService.supabase.ts",
+                "src/pages/admin/EvolutionPanel.tsx"
+              ],
+              "routes": [
+                "/admin/whatsapp"
+              ]
             },
             "2": {
               "description": "Som de alerta toca quando uma nova notificação é recebida em tempo real.",
-              "files": ["src/hooks/useNotificationSound.ts"]
+              "files": [
+                "src/hooks/useNotificationSound.ts"
+              ]
             },
             "3": {
               "description": "A empresa recebe notificação automática quando um candidato finaliza o teste Gauge-Pro.",
-              "files": ["src/hooks/useNotificationSendsQuery.ts"]
+              "files": [
+                "src/hooks/useNotificationSendsQuery.ts"
+              ]
             },
             "4": {
               "description": "Controle individual para cada tipo de notificação automática: novo candidato, teste concluído, nova mensagem e outros eventos.",
-              "files": ["src/pages/empresa/NotificationSettings.tsx"],
-              "routes": ["/empresa/configurações/notificações"]
+              "files": [
+                "src/pages/empresa/NotificationSettings.tsx"
+              ],
+              "routes": [
+                "/empresa/configurações/notificações"
+              ]
             },
             "5": {
               "description": "Foto do usuário visível na tabela de listagem e atalho rápido para permissões nos detalhes de candidato e empresa.",
-              "files": ["src/pages/admin/Users.tsx", "src/pages/admin/CandidateDetail.tsx", "src/pages/admin/CompanyDetail.tsx"],
-              "routes": ["/admin/usuarios"]
+              "files": [
+                "src/pages/admin/Users.tsx",
+                "src/pages/admin/CandidateDetail.tsx",
+                "src/pages/admin/CompanyDetail.tsx"
+              ],
+              "routes": [
+                "/admin/usuarios"
+              ]
             },
             "6": {
               "description": "Administradores podem definir quantos dias o candidato deve esperar para refazer o teste Gauge-Pro. Padrão: 30 dias.",
-              "files": ["src/pages/admin/Settings.tsx"],
-              "routes": ["/admin/configurações"]
+              "files": [
+                "src/pages/admin/Settings.tsx"
+              ],
+              "routes": [
+                "/admin/configurações"
+              ]
             },
             "7": {
               "description": "Contagem regressiva visível mostrando quanto tempo falta para o candidato poder refazer o teste comportamental.",
-              "files": ["src/pages/candidato/Tests.tsx"],
-              "routes": ["/candidato/testes"]
+              "files": [
+                "src/pages/candidato/Tests.tsx"
+              ],
+              "routes": [
+                "/candidato/testes"
+              ]
             },
             "8": {
               "description": "Competências antigas foram migradas para o novo padrão. Candidatos com competências desatualizadas veem um avisó para revisá-las.",
-              "files": ["src/services/standardizedSkills/standardizedSkillsService.supabase.ts"],
-              "routes": ["/candidato/perfil"]
+              "files": [
+                "src/services/standardizedSkills/standardizedSkillsService.supabase.ts"
+              ],
+              "routes": [
+                "/candidato/perfil"
+              ]
             }
           }
         },
@@ -2068,28 +3025,43 @@
           "details": {
             "0": {
               "description": "Planos inativos não aparecem mais para candidatos e empresas. Apenas planos ativos são exibidos.",
-              "files": ["src/services/plans/plansService.supabase.ts"],
-              "routes": ["/planos", "/empresa/plano"]
+              "files": [
+                "src/services/plans/plansService.supabase.ts"
+              ],
+              "routes": [
+                "/planos",
+                "/empresa/plano"
+              ]
             },
             "1": {
               "description": "Perfil do usuário no rodapé do menu lateral não ficava mais oculto atrás do rodapé da página.",
-              "files": ["src/components/layout/DashboardLayout.tsx"]
+              "files": [
+                "src/components/layout/DashboardLayout.tsx"
+              ]
             },
             "2": {
               "description": "Máscara de telefone não remove mais o DDD ao digitar o número.",
-              "files": ["src/lib/masks.ts"]
+              "files": [
+                "src/lib/masks.ts"
+              ]
             },
             "3": {
               "description": "Textos com acentuação incorreta nos componentes de WhatsApp foram corrigidos.",
-              "files": ["src/services/whatsapp/whatsappService.supabase.ts"]
+              "files": [
+                "src/services/whatsapp/whatsappService.supabase.ts"
+              ]
             },
             "4": {
               "description": "Botão 'Enviar Notificação' agora cria e envia a notificação corretamente.",
-              "files": ["src/hooks/useNotificationSendsQuery.ts"]
+              "files": [
+                "src/hooks/useNotificationSendsQuery.ts"
+              ]
             },
             "5": {
               "description": "Banner de impersonação ajustado para não sobrepor o menu lateral ao rolar a página.",
-              "files": ["src/components/layout/ImpersonationBanner.tsx"]
+              "files": [
+                "src/components/layout/ImpersonationBanner.tsx"
+              ]
             }
           }
         }
