@@ -169,6 +169,8 @@ export default function AdminDashboard() {
 
       if (candidate && job) {
         const idealProfile = getOrGenerateIdealProfile(job);
+        // Admin dashboard usa fallback legado para evitar N×M fetches de std_skills.
+        // Quando uma RPC otimizada estiver disponível, passar skillsInput aqui.
         const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
         matchResults.push(matchResult);
       }
@@ -191,6 +193,8 @@ export default function AdminDashboard() {
         }
 
         const idealProfile = getOrGenerateIdealProfile(job);
+        // Admin dashboard usa fallback legado para evitar N×M fetches de std_skills.
+        // Quando uma RPC otimizada estiver disponível, passar skillsInput aqui.
         const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
 
         jobMatchCounts[job.id].total++;
