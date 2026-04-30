@@ -87,6 +87,9 @@ export function useUpdateJob() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: jobKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: jobKeys.lists() });
+      // Match scores derive from job weights; invalidate applications so
+      // candidate lists re-render with fresh scores after weight changes.
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
     },
   });
 }
