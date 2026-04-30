@@ -1,12 +1,88 @@
 {
   "versions": [
     {
+      "version": "1.58.0",
+      "codename": "Mirror",
+      "type": "minor",
+      "releaseDate": "2026-04-30",
+      "description": "Polimento da experiência de match: candidato agora vê os critérios da vaga (distribuição + comparação com padrão + histórico), pode colapsar Skills Técnicas e Comportamentais via toggle persistido, e recebe notificação quando empresa altera os pesos de uma vaga com sua candidatura ativa. Edição de pesos em vagas publicadas exige dupla confirmação.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Modal 'Ver critérios da vaga' para o candidato com distribuição visual dos pesos, comparação com o padrão geral e histórico de alterações",
+            "Toggle 'Combinar skills' colapsa Skills Técnicas + Skills Comportamentais em uma categoria única (persiste em localStorage e sincroniza entre abas)",
+            "Edição de pesos em vaga publicada com candidaturas ativas exige dupla confirmação (atenção ao impacto + digitar título exato da vaga)",
+            "Notificação automática para candidatos quando empresa ajusta pesos de match (clicável, leva para a vaga atualizada)"
+          ],
+          "details": {
+            "0": {
+              "description": "MatchCriteriaModal usa Dialog do shadcn com 3 seções: barra empilhada de cores por categoria + legenda; tabela comparando pesos atuais vs DEFAULT_MATCH_WEIGHTS com delta colorido (amber para acima, cyan para abaixo); lista do histórico via useJobWeightHistory query.",
+              "files": [
+                "src/components/match/MatchCriteriaModal.tsx",
+                "src/hooks/useJobWeightHistoryQuery.ts",
+                "src/pages/candidato/JobDetails.tsx"
+              ],
+              "routes": ["/candidato/vagas/:id"]
+            },
+            "1": {
+              "description": "useMatchCombineSkills + MatchCombineSkillsToggle integrados no MatchBreakdown (layouts horizontal e vertical). Quando ON, skills_technical+skills_behavioral viram uma linha 'Skills' com peso somado e score por média ponderada. totalScore inalterado.",
+              "files": [
+                "src/hooks/useMatchCombineSkills.ts",
+                "src/components/match/MatchCombineSkillsToggle.tsx",
+                "src/components/match/MatchBreakdown.tsx"
+              ],
+              "routes": ["/candidato/vagas/:id", "/empresa/candidatos/:id"]
+            },
+            "2": {
+              "description": "EditWeightsConfirmDialog implementa fluxo de 2 etapas: (1) atenção ao impacto com contagem de candidaturas, (2) digitar título exato da vaga para liberar o botão. handleSaveJob bloqueia salvamento direto quando jobStatus='active' + isWeightsChanged + activeApplicationsCount>0; ao confirmar, chama Edge Function update-job-weights atomicamente.",
+              "files": [
+                "src/components/empresa/job-form/EditWeightsConfirmDialog.tsx",
+                "src/hooks/useJobForm.ts",
+                "src/pages/empresa/JobForm.tsx"
+              ],
+              "routes": ["/empresa/vagas/:id/editar"]
+            },
+            "3": {
+              "description": "Migration 093_jobs_weight_history cria tabela com RLS + trigger AFTER INSERT que gera notifications type='job_weights_changed' com action_url já apontando para /candidato/vagas/:id. NotificationItem renderiza com ícone SlidersHorizontal e cor violet. Edge Function update-job-weights (verify_jwt=false) faz update+history+notificação atomicamente.",
+              "files": [
+                "sql/migrations/093_jobs_weight_history.sql",
+                "supabase/functions/update-job-weights/index.ts",
+                "supabase/config.toml",
+                "src/types/notifications.ts",
+                "src/components/notifications/NotificationItem.tsx"
+              ],
+              "routes": ["/candidato/notificacoes"]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Match calculator aplica regras Q4 de disponibilidade de dado: peso=0 oculto, vaga sem perfil ideal redistribui peso, candidato sem teste mostra flag",
+            "Categorias com peso=0 deixam de aparecer no breakdown (empresa pode zerar Localização para vagas remotas, por exemplo)"
+          ],
+          "details": {
+            "0": {
+              "description": "applyDataAvailability filtra peso=0, redistribui job-side missing proporcionalmente, e mantém candidate-side missing visível com score=0 e flag. totalScore agora usa effectiveWeight com normalização defensiva quando soma diverge de 100. MatchProgressBar reage ao dataMissing: linha riscada/cinza para job-side, flag amber inline para candidate-side.",
+              "files": [
+                "src/lib/matchCalculator.ts",
+                "src/components/match/MatchProgressBar.tsx",
+                "src/components/match/MatchBreakdown.tsx"
+              ],
+              "routes": ["/candidato/vagas/:id", "/empresa/candidatos/:id"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.57.0",
       "codename": "Tailor",
       "type": "minor",
       "releaseDate": "2026-04-30",
       "description": "Pesos de match parametrizáveis por vaga. Empresa agora define pesos próprios para cada vaga em 5 categorias (Skills Técnicas, Skills Comportamentais, Experiência, Perfil Comportamental, Localização) com 6 templates pré-definidos (Operacional, Industrial, Administrativo, Técnico, Liderança, Comercial). Calculator passa a ler pesos da vaga em vez da constante global 40/30/20/10.",
-      "isCurrent": true,
       "changes": [
         {
           "type": "added",
