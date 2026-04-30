@@ -14,6 +14,7 @@ import {
   MapPin,
   Code2,
   GraduationCap,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MatchOpportunity } from "@/types/disc";
@@ -24,10 +25,14 @@ import { Button } from "@/components/ui/button";
 
 // Ícones por categoria
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
-  skills: Code2,
+  skills_technical: Code2,
+  skills_behavioral: Sparkles,
   experience: GraduationCap,
-  behavioral: BookOpen,
+  gauge_pro: BookOpen,
   location: MapPin,
+  // Aliases legados
+  skills: Code2,
+  behavioral: BookOpen,
   default: Lightbulb,
 };
 

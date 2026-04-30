@@ -463,17 +463,28 @@ export function generateStrengths(
   const sortedCategories = [...categories].sort((a, b) => b.score - a.score);
 
   // Skills técnicas - pontos fortes
-  const skillsCategory = categories.find(c => c.id === 'skills_technical');
-  if (skillsCategory && skillsCategory.score >= 70) {
+  const skillsTechnicalCategory = categories.find(c => c.id === 'skills_technical');
+  if (skillsTechnicalCategory && skillsTechnicalCategory.score >= 70) {
     const matched = getMatchedSkills(candidate.skills || [], job.requirements || [], 4);
-    const skillsText = matched.length > 0
-      ? `Suas habilidades em ${matched.join(', ')} atendem aos requisitos da vaga`
+    const technicalText = matched.length > 0
+      ? `Suas habilidades técnicas em ${matched.join(', ')} atendem aos requisitos da vaga`
       : 'Suas habilidades técnicas são altamente relevantes para esta posição';
     strengths.push({
-      id: 'str-skills-1',
-      text: skillsText,
+      id: 'str-skills-technical-1',
+      text: technicalText,
       category: 'skills_technical',
-      impact: skillsCategory.score >= 85 ? 'high' : 'medium',
+      impact: skillsTechnicalCategory.score >= 85 ? 'high' : 'medium',
+    });
+  }
+
+  // Skills comportamentais - pontos fortes
+  const skillsBehavioralCategory = categories.find(c => c.id === 'skills_behavioral');
+  if (skillsBehavioralCategory && skillsBehavioralCategory.score >= 70) {
+    strengths.push({
+      id: 'str-skills-behavioral-1',
+      text: `Suas soft skills declaradas estão alinhadas com o perfil esperado pela vaga`,
+      category: 'skills_behavioral',
+      impact: skillsBehavioralCategory.score >= 85 ? 'high' : 'medium',
     });
   }
 
@@ -488,15 +499,15 @@ export function generateStrengths(
     });
   }
 
-  // Gauge-Pro / comportamental - pontos fortes
-  const behavioralCategory = categories.find(c => c.id === 'gauge_pro');
-  if (behavioralCategory && behavioralCategory.score >= 70) {
+  // Gauge-Pro (perfil comportamental) - pontos fortes
+  const gaugeProCategory = categories.find(c => c.id === 'gauge_pro');
+  if (gaugeProCategory && gaugeProCategory.score >= 70) {
     const jobRef = job.title ? `para ${job.title}` : 'para esta posição';
     strengths.push({
-      id: 'str-behavioral-1',
-      text: `Perfil comportamental com ${behavioralCategory.score}% de compatibilidade com o perfil ideal ${jobRef}`,
+      id: 'str-gauge-pro-1',
+      text: `Perfil comportamental com ${gaugeProCategory.score}% de compatibilidade com o perfil ideal ${jobRef}`,
       category: 'gauge_pro',
-      impact: behavioralCategory.score >= 85 ? 'high' : 'medium',
+      impact: gaugeProCategory.score >= 85 ? 'high' : 'medium',
     });
   }
 
@@ -541,26 +552,42 @@ export function generateOpportunities(
   const sortedCategories = [...categories].sort((a, b) => a.score - b.score);
 
   // Skills técnicas - oportunidades
-  const skillsCategory = categories.find(c => c.id === 'skills_technical');
-  if (skillsCategory && skillsCategory.score < 70) {
+  const skillsTechnicalCategory = categories.find(c => c.id === 'skills_technical');
+  if (skillsTechnicalCategory && skillsTechnicalCategory.score < 70) {
     const missing = getMissingSkills(candidate.skills || [], job.requirements || [], 4);
     let missingSkillsText: string;
     if (missing.length > 0) {
       const skillsList = missing.join(', ');
-      missingSkillsText = skillsCategory.score < 50
-        ? `Desenvolver habilidades em ${skillsList} para atender aos requisitos da vaga`
-        : `Fortalecer conhecimento em ${skillsList} com certificações ou projetos`;
+      missingSkillsText = skillsTechnicalCategory.score < 50
+        ? `Desenvolver habilidades técnicas em ${skillsList} para atender aos requisitos da vaga`
+        : `Fortalecer conhecimento técnico em ${skillsList} com certificações ou projetos`;
     } else {
-      missingSkillsText = skillsCategory.score < 50
+      missingSkillsText = skillsTechnicalCategory.score < 50
         ? 'Desenvolver as habilidades técnicas exigidas pela vaga'
         : 'Adicionar certificações ou projetos nas tecnologias requisitadas';
     }
 
     opportunities.push({
-      id: 'opp-skills-1',
+      id: 'opp-skills-technical-1',
       text: missingSkillsText,
       category: 'skills_technical',
-      potentialIncrease: Math.min(15, Math.round((70 - skillsCategory.score) * 0.4)),
+      potentialIncrease: Math.min(15, Math.round((70 - skillsTechnicalCategory.score) * 0.4)),
+      actionable: true,
+    });
+  }
+
+  // Skills comportamentais - oportunidades
+  const skillsBehavioralCategory = categories.find(c => c.id === 'skills_behavioral');
+  if (skillsBehavioralCategory && skillsBehavioralCategory.score < 70) {
+    const softText = skillsBehavioralCategory.score < 50
+      ? 'Desenvolver soft skills alinhadas ao perfil comportamental requerido pela vaga'
+      : 'Fortalecer suas soft skills declaradas para melhor aderência ao perfil da vaga';
+
+    opportunities.push({
+      id: 'opp-skills-behavioral-1',
+      text: softText,
+      category: 'skills_behavioral',
+      potentialIncrease: Math.min(12, Math.round((70 - skillsBehavioralCategory.score) * 0.4)),
       actionable: true,
     });
   }
@@ -582,14 +609,14 @@ export function generateOpportunities(
     });
   }
 
-  // Gauge-Pro / comportamental - oportunidades
-  const behavioralCategory = categories.find(c => c.id === 'gauge_pro');
-  if (behavioralCategory && behavioralCategory.score < 65) {
+  // Gauge-Pro (perfil comportamental) - oportunidades
+  const gaugeProCategory = categories.find(c => c.id === 'gauge_pro');
+  if (gaugeProCategory && gaugeProCategory.score < 65) {
     opportunities.push({
-      id: 'opp-behavioral-1',
-      text: `Perfil comportamental com ${behavioralCategory.score}% de aderência — considere complementar a avaliação`,
+      id: 'opp-gauge-pro-1',
+      text: `Perfil comportamental com ${gaugeProCategory.score}% de aderência — considere complementar a avaliação`,
       category: 'gauge_pro',
-      potentialIncrease: Math.min(12, Math.round((65 - behavioralCategory.score) * 0.4)),
+      potentialIncrease: Math.min(12, Math.round((65 - gaugeProCategory.score) * 0.4)),
       actionable: true,
     });
   }
