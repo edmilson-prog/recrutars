@@ -8,7 +8,8 @@ export type NotificationType =
   | 'application_approved'   // Candidatura aprovada
   | 'application_rejected'   // Candidatura reprovada
   | 'application_hired'      // Candidato contratado (PRD-077)
-  | 'application_talent_pool'; // Movido para banco de talentos (PRD-077)
+  | 'application_talent_pool' // Movido para banco de talentos (PRD-077)
+  | 'job_weights_changed';   // Empresa alterou pesos do match (Plano C "Mirror")
 
 export interface NotificationMetadata {
   jobId?: string;
@@ -43,6 +44,7 @@ export const notificationTypeLabels: Record<NotificationType, string> = {
   application_rejected: 'Candidaturas',
   application_hired: 'Contratado',
   application_talent_pool: 'Banco de Talentos',
+  job_weights_changed: 'Critérios da vaga',
 };
 
 // Ícones para cada tipo (nome do ícone Lucide)
@@ -55,6 +57,7 @@ export const notificationTypeIcons: Record<NotificationType, string> = {
   application_rejected: 'XCircle',
   application_hired: 'Trophy',
   application_talent_pool: 'Users',
+  job_weights_changed: 'SlidersHorizontal',
 };
 
 // Cores para cada tipo
@@ -67,6 +70,7 @@ export const notificationTypeColors: Record<NotificationType, string> = {
   application_rejected: 'text-red-500',
   application_hired: 'text-emerald-600',
   application_talent_pool: 'text-indigo-500',
+  job_weights_changed: 'text-violet-500',
 };
 
 // Filtros disponíveis na página de notificações
@@ -92,7 +96,7 @@ export const filterLabels: Record<NotificationFilter, string> = {
 // Mapear filtros para tipos
 export const filterToTypes: Record<NotificationFilter, NotificationType[] | null> = {
   all: null,
-  jobs: ['job_match'],
+  jobs: ['job_match', 'job_weights_changed'],
   applications: ['application_update', 'application_approved', 'application_rejected', 'application_hired', 'application_talent_pool'],
   messages: ['message'],
   tests: ['test_request'],
