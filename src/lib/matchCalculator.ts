@@ -462,8 +462,8 @@ export function generateStrengths(
   // Ordena categorias por score
   const sortedCategories = [...categories].sort((a, b) => b.score - a.score);
 
-  // Skills - pontos fortes
-  const skillsCategory = categories.find(c => c.id === 'skills');
+  // Skills técnicas - pontos fortes
+  const skillsCategory = categories.find(c => c.id === 'skills_technical');
   if (skillsCategory && skillsCategory.score >= 70) {
     const matched = getMatchedSkills(candidate.skills || [], job.requirements || [], 4);
     const skillsText = matched.length > 0
@@ -472,7 +472,7 @@ export function generateStrengths(
     strengths.push({
       id: 'str-skills-1',
       text: skillsText,
-      category: 'skills',
+      category: 'skills_technical',
       impact: skillsCategory.score >= 85 ? 'high' : 'medium',
     });
   }
@@ -488,14 +488,14 @@ export function generateStrengths(
     });
   }
 
-  // Behavioral - pontos fortes
-  const behavioralCategory = categories.find(c => c.id === 'behavioral');
+  // Gauge-Pro / comportamental - pontos fortes
+  const behavioralCategory = categories.find(c => c.id === 'gauge_pro');
   if (behavioralCategory && behavioralCategory.score >= 70) {
     const jobRef = job.title ? `para ${job.title}` : 'para esta posição';
     strengths.push({
       id: 'str-behavioral-1',
       text: `Perfil comportamental com ${behavioralCategory.score}% de compatibilidade com o perfil ideal ${jobRef}`,
-      category: 'behavioral',
+      category: 'gauge_pro',
       impact: behavioralCategory.score >= 85 ? 'high' : 'medium',
     });
   }
@@ -540,8 +540,8 @@ export function generateOpportunities(
   // Ordena por score (menor primeiro - mais oportunidade)
   const sortedCategories = [...categories].sort((a, b) => a.score - b.score);
 
-  // Skills - oportunidades
-  const skillsCategory = categories.find(c => c.id === 'skills');
+  // Skills técnicas - oportunidades
+  const skillsCategory = categories.find(c => c.id === 'skills_technical');
   if (skillsCategory && skillsCategory.score < 70) {
     const missing = getMissingSkills(candidate.skills || [], job.requirements || [], 4);
     let missingSkillsText: string;
@@ -559,7 +559,7 @@ export function generateOpportunities(
     opportunities.push({
       id: 'opp-skills-1',
       text: missingSkillsText,
-      category: 'skills',
+      category: 'skills_technical',
       potentialIncrease: Math.min(15, Math.round((70 - skillsCategory.score) * 0.4)),
       actionable: true,
     });
@@ -582,13 +582,13 @@ export function generateOpportunities(
     });
   }
 
-  // Behavioral - oportunidades
-  const behavioralCategory = categories.find(c => c.id === 'behavioral');
+  // Gauge-Pro / comportamental - oportunidades
+  const behavioralCategory = categories.find(c => c.id === 'gauge_pro');
   if (behavioralCategory && behavioralCategory.score < 65) {
     opportunities.push({
       id: 'opp-behavioral-1',
       text: `Perfil comportamental com ${behavioralCategory.score}% de aderência — considere complementar a avaliação`,
-      category: 'behavioral',
+      category: 'gauge_pro',
       potentialIncrease: Math.min(12, Math.round((65 - behavioralCategory.score) * 0.4)),
       actionable: true,
     });
@@ -614,7 +614,7 @@ export function generateOpportunities(
     opportunities.push({
       id: 'opp-profile-1',
       text: 'Complete seu perfil adicionando mais detalhes sobre suas experiências e conquistas',
-      category: 'skills',
+      category: 'skills_technical',
       potentialIncrease: 5,
       actionable: true,
     });
