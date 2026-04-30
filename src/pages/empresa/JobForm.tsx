@@ -27,6 +27,7 @@ import {
   JobFormSkills,
   JobFormMatchWeights,
 } from '@/components/empresa/job-form';
+import { EditWeightsConfirmDialog } from '@/components/empresa/job-form/EditWeightsConfirmDialog';
 import { JobStatus } from '@/types';
 
 const STATUS_CONFIG: Record<JobStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
@@ -63,6 +64,10 @@ export default function CompanyJobForm() {
     setWeights,
     analysis,
     isAnalyzing,
+    confirmationOpen,
+    activeApplicationsCount,
+    confirmWeightsChange,
+    cancelWeightsChange,
   } = useJobForm({ jobId: id });
 
   // Status confirmation dialogs
@@ -302,6 +307,15 @@ export default function CompanyJobForm() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Double-confirmation dialog for weight edits on published jobs with active applications */}
+      <EditWeightsConfirmDialog
+        open={confirmationOpen}
+        onOpenChange={(o) => { if (!o) cancelWeightsChange(); }}
+        jobTitle={formData.title}
+        activeApplicationsCount={activeApplicationsCount}
+        onConfirm={confirmWeightsChange}
+      />
     </DashboardLayout>
   );
 }
