@@ -15,10 +15,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Ícones por categoria
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
-  skills: Target,
+  skills_technical: Target,
+  skills_behavioral: Sparkles,
   experience: Award,
-  behavioral: Brain,
+  gauge_pro: Brain,
   location: Users,
+  // Aliases legados
+  skills: Target,
+  behavioral: Brain,
   default: Sparkles,
 };
 
