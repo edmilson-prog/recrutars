@@ -1,12 +1,63 @@
 {
   "versions": [
     {
+      "version": "1.58.1",
+      "codename": "Mirror",
+      "type": "patch",
+      "releaseDate": "2026-05-01",
+      "description": "Correção dos helpers de pontos fortes e oportunidades do match: as novas categorias de skills (técnicas e comportamentais) e o perfil Gauge-Pro agora são corretamente reconhecidos e exibidos, corrigindo a ausência de texto nesses blocos desde o v1.57.0.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "IDs de categoria legados corrigidos nos helpers generateStrengths e generateOpportunities (skills→skills_technical, behavioral→gauge_pro)",
+            "Bloco de soft skills (skills_behavioral) adicionado nos pontos fortes e oportunidades do match",
+            "Ícones de MatchStrengths e MatchOpportunities atualizados para mapear as novas categorias skills_technical, skills_behavioral e gauge_pro"
+          ],
+          "details": {
+            "0": {
+              "description": "Desde a v1.57.0 Tailor, as categorias de skills foram renomeadas internamente, mas os helpers que geram os textos de Pontos Fortes e Oportunidades de Melhoria continuavam procurando pelos nomes antigos — e não encontravam nada. O resultado era que o candidato via a seção vazia, sem nenhum texto de habilidades técnicas nem perfil comportamental.",
+              "files": [
+                "src/lib/matchCalculator.ts"
+              ],
+              "routes": [
+                "/candidato/vagas/:id",
+                "/empresa/candidatos/:id"
+              ]
+            },
+            "1": {
+              "description": "O painel de pontos fortes e oportunidades agora também considera as soft skills (habilidades comportamentais declaradas pelo candidato). Se o candidato tem soft skills alinhadas ao perfil da vaga (pontuação maior ou igual a 70%), aparece um ponto forte. Se o alinhamento é baixo, aparece uma oportunidade de melhoria com sugestão de desenvolvimento.",
+              "files": [
+                "src/lib/matchCalculator.ts"
+              ],
+              "routes": [
+                "/candidato/vagas/:id",
+                "/empresa/candidatos/:id"
+              ]
+            },
+            "2": {
+              "description": "Os ícones exibidos ao lado de cada ponto forte ou oportunidade foram atualizados para refletir as novas categorias. Skills comportamentais agora aparecem com ícone de brilho (Sparkles), mantendo os nomes antigos como alternativas para compatibilidade com dados existentes.",
+              "files": [
+                "src/components/match/MatchStrengths.tsx",
+                "src/components/match/MatchOpportunities.tsx"
+              ],
+              "routes": [
+                "/candidato/vagas/:id",
+                "/empresa/candidatos/:id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.58.0",
       "codename": "Mirror",
       "type": "minor",
       "releaseDate": "2026-04-30",
       "description": "Polimento da experiência de match: candidato agora vê os critérios da vaga (distribuição + comparação com padrão + histórico), pode colapsar Skills Técnicas e Comportamentais via toggle persistido, e recebe notificação quando empresa altera os pesos de uma vaga com sua candidatura ativa. Edição de pesos em vagas publicadas exige dupla confirmação.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
@@ -24,7 +75,9 @@
                 "src/hooks/useJobWeightHistoryQuery.ts",
                 "src/pages/candidato/JobDetails.tsx"
               ],
-              "routes": ["/candidato/vagas/:id"]
+              "routes": [
+                "/candidato/vagas/:id"
+              ]
             },
             "1": {
               "description": "useMatchCombineSkills + MatchCombineSkillsToggle integrados no MatchBreakdown (layouts horizontal e vertical). Quando ON, skills_technical+skills_behavioral viram uma linha 'Skills' com peso somado e score por média ponderada. totalScore inalterado.",
@@ -33,7 +86,10 @@
                 "src/components/match/MatchCombineSkillsToggle.tsx",
                 "src/components/match/MatchBreakdown.tsx"
               ],
-              "routes": ["/candidato/vagas/:id", "/empresa/candidatos/:id"]
+              "routes": [
+                "/candidato/vagas/:id",
+                "/empresa/candidatos/:id"
+              ]
             },
             "2": {
               "description": "EditWeightsConfirmDialog implementa fluxo de 2 etapas: (1) atenção ao impacto com contagem de candidaturas, (2) digitar título exato da vaga para liberar o botão. handleSaveJob bloqueia salvamento direto quando jobStatus='active' + isWeightsChanged + activeApplicationsCount>0; ao confirmar, chama Edge Function update-job-weights atomicamente.",
@@ -42,7 +98,9 @@
                 "src/hooks/useJobForm.ts",
                 "src/pages/empresa/JobForm.tsx"
               ],
-              "routes": ["/empresa/vagas/:id/editar"]
+              "routes": [
+                "/empresa/vagas/:id/editar"
+              ]
             },
             "3": {
               "description": "Migration 093_jobs_weight_history cria tabela com RLS + trigger AFTER INSERT que gera notifications type='job_weights_changed' com action_url já apontando para /candidato/vagas/:id. NotificationItem renderiza com ícone SlidersHorizontal e cor violet. Edge Function update-job-weights (verify_jwt=false) faz update+history+notificação atomicamente.",
@@ -53,7 +111,9 @@
                 "src/types/notifications.ts",
                 "src/components/notifications/NotificationItem.tsx"
               ],
-              "routes": ["/candidato/notificacoes"]
+              "routes": [
+                "/candidato/notificacoes"
+              ]
             }
           }
         },
@@ -71,7 +131,10 @@
                 "src/components/match/MatchProgressBar.tsx",
                 "src/components/match/MatchBreakdown.tsx"
               ],
-              "routes": ["/candidato/vagas/:id", "/empresa/candidatos/:id"]
+              "routes": [
+                "/candidato/vagas/:id",
+                "/empresa/candidatos/:id"
+              ]
             }
           }
         }

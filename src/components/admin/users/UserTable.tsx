@@ -268,7 +268,7 @@ export function UserTable({
               <TableCell>
                 <Link
                   to={`/admin/usuarios/${user.id}`}
-                  className="flex items-center gap-3 hover:underline"
+                  className="flex items-center gap-3 group"
                 >
                   <Avatar className="h-8 w-8">
                     {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
@@ -277,7 +277,7 @@ export function UserTable({
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <div className="font-medium text-foreground truncate uppercase">{user.name}</div>
+                    <div className="font-medium text-foreground truncate uppercase group-hover:underline">{user.name}</div>
                     <div className="text-xs text-muted-foreground truncate">{user.email}</div>
                   </div>
                 </Link>
