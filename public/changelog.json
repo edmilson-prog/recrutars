@@ -1,12 +1,80 @@
 {
   "versions": [
     {
+      "version": "1.58.2",
+      "codename": "Mirror",
+      "type": "patch",
+      "releaseDate": "2026-05-01",
+      "description": "Correções de build, estabilidade de filtros no banco de talentos e ajuste visual na tabela de usuários.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Correção de erro de build no Vercel causado por importação dinâmica no módulo de equipes",
+            "Filtros e paginação do banco de talentos agora persistem ao navegar entre páginas usando os botões voltar/avançar do navegador",
+            "Sublinhado ao passar o mouse na tabela de usuários agora aparece apenas sobre o nome, não sobre a linha inteira"
+          ],
+          "details": {
+            "0": {
+              "description": "O deploy no Vercel estava falhando porque um dos arquivos de equipes usava uma forma de importação que o Vercel não conseguia processar. A importação foi substituída pela forma padrão, resolvendo o erro de publicação.",
+              "files": [
+                "src/hooks/useTeamsQuery.ts"
+              ],
+              "routes": [
+                "/empresa/equipes"
+              ]
+            },
+            "1": {
+              "description": "Ao aplicar filtros ou mudar de página no banco de talentos e depois navegar para outro local, ao clicar em 'voltar' no navegador os filtros e a página selecionada se perdiam. Agora eles são mantidos corretamente na barra de endereço, garantindo que a tela volte exatamente como estava.",
+              "files": [
+                "src/hooks/useCandidateFilters.ts",
+                "src/hooks/usePaginationParams.ts",
+                "src/pages/empresa/Candidates.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
+            },
+            "2": {
+              "description": "Na lista de usuários do painel administrativo, ao passar o mouse sobre uma linha da tabela, o sublinhado aparecia em toda a linha. Agora o efeito aparece apenas sobre o nome do usuário, ficando mais limpo e intuitivo.",
+              "files": [
+                "src/components/admin/UserTable.tsx"
+              ],
+              "routes": [
+                "/admin/usuarios"
+              ]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Simplificação do gerenciamento de estado do banco de talentos: removida camada de sessionStorage em favor de URL como fonte única de verdade"
+          ],
+          "details": {
+            "0": {
+              "description": "O sistema de filtros do banco de talentos foi simplificado internamente. Os filtros e a página são controlados exclusivamente pela barra de endereço do navegador, tornando o comportamento mais previsível e eliminando possíveis conflitos ao navegar entre telas.",
+              "files": [
+                "src/hooks/useCandidateFilters.ts",
+                "src/hooks/usePaginationParams.ts",
+                "src/pages/empresa/Candidates.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.58.1",
       "codename": "Mirror",
       "type": "patch",
       "releaseDate": "2026-05-01",
       "description": "Correção dos helpers de pontos fortes e oportunidades do match: as novas categorias de skills (técnicas e comportamentais) e o perfil Gauge-Pro agora são corretamente reconhecidos e exibidos, corrigindo a ausência de texto nesses blocos desde o v1.57.0.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
