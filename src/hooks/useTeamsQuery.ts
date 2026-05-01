@@ -7,6 +7,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import { getTeamsService } from '@/services/teams/teamsService';
 import type { TeamsFilters } from '@/services/teams/teamsService';
 import type {
@@ -230,7 +231,6 @@ export function useMemberRetestSchedule(memberId: string | undefined) {
   return useQuery<RetestSchedule | null>({
     queryKey: [...teamKeys.all, 'memberRetest', memberId],
     queryFn: async () => {
-      const { supabase } = await import('@/lib/supabase');
       const { data, error } = await supabase
         .from('retest_schedules')
         .select('*')
