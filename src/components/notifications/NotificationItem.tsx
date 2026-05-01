@@ -11,6 +11,7 @@ import {
   Star,
   Clock,
   Check,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +40,8 @@ function getNotificationIcon(type: NotificationType) {
       return <CheckCircle className="w-5 h-5" />;
     case 'application_rejected':
       return <XCircle className="w-5 h-5" />;
+    case 'job_weights_changed':
+      return <SlidersHorizontal className="w-5 h-5" />;
     default:
       return <Briefcase className="w-5 h-5" />;
   }
@@ -59,6 +62,8 @@ function getIconBgColor(type: NotificationType): string {
       return 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400';
     case 'application_rejected':
       return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+    case 'job_weights_changed':
+      return 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400';
     default:
       return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
   }

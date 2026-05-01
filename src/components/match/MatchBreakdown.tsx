@@ -6,41 +6,25 @@
  * Inclui score total, categorias com pesos, e visualização detalhada
  */
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { MatchCategory } from "@/types/disc";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useMatchCombineSkills } from "@/hooks/useMatchCombineSkills";
 import { MatchScoreCircle } from "./MatchScoreCircle";
 import { MatchProgressStack } from "./MatchProgressBar";
+import { MatchCombineSkillsToggle } from "./MatchCombineSkillsToggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Configuração padrão das categorias de match (pesos somam 100%)
 export const DEFAULT_MATCH_CATEGORIES = [
-  {
-    id: "skills",
-    name: "Skills Técnicas",
-    weight: 40,
-    description: "Correspondência entre suas habilidades técnicas e os requisitos da vaga",
-  },
-  {
-    id: "experience",
-    name: "Experiência",
-    weight: 30,
-    description: "Tempo de experiência e senioridade compatíveis com a posição",
-  },
-  {
-    id: "behavioral",
-    name: "Perfil Comportamental",
-    weight: 20,
-    description: "Alinhamento do seu perfil comportamental com o perfil ideal da posição",
-  },
-  {
-    id: "location",
-    name: "Localização",
-    weight: 10,
-    description: "Compatibilidade entre sua localização e o modelo de trabalho da vaga",
-  },
-];
+  { id: 'skills_technical', name: 'Skills Técnicas', weight: 25, description: 'Habilidades técnicas declaradas pelo candidato vs requisitadas pela vaga.' },
+  { id: 'skills_behavioral', name: 'Skills Comportamentais', weight: 15, description: 'Soft skills declaradas pelo candidato vs requisitadas pela vaga.' },
+  { id: 'experience', name: 'Experiência', weight: 30, description: 'Anos de experiência do candidato vs nível exigido pela vaga.' },
+  { id: 'gauge_pro', name: 'Perfil Comportamental', weight: 20, description: 'Distância do perfil Gauge-Pro do candidato ao perfil ideal cadastrado.' },
+  { id: 'location', name: 'Localização', weight: 10, description: 'Compatibilidade entre cidade do candidato e cidade da vaga (considera tipo presencial/híbrido/remoto).' },
+] as const;
 
 interface MatchBreakdownProps {
   totalScore: number;
@@ -64,14 +48,44 @@ export function MatchBreakdown({
   const prefersReducedMotion = useReducedMotion();
   const shouldAnimate = animated && !prefersReducedMotion;
 
+  const [combined, setCombined] = useMatchCombineSkills();
+
+  const displayCategories = useMemo(() => {
+    if (!combined) return categories;
+    const tech = categories.find((c) => c.id === 'skills_technical');
+    const beh = categories.find((c) => c.id === 'skills_behavioral');
+    if (!tech || !beh) return categories;
+
+    const others = categories.filter((c) => c.id !== 'skills_technical' && c.id !== 'skills_behavioral');
+    const combinedWeight = tech.weight + beh.weight;
+    const combinedScore = combinedWeight > 0
+      ? Math.round((tech.score * tech.weight + beh.score * beh.weight) / combinedWeight)
+      : 0;
+
+    return [
+      {
+        id: 'skills_combined',
+        name: 'Skills',
+        weight: combinedWeight,
+        score: combinedScore,
+        description: 'Skills técnicas e comportamentais combinadas (média ponderada).',
+      },
+      ...others,
+    ];
+  }, [categories, combined]);
+
   // Preparar dados para o stack de progresso
-  const progressData = categories.map((cat) => ({
-    id: cat.id,
-    label: cat.name,
-    score: cat.score,
-    weight: cat.weight,
-    description: cat.description,
-  }));
+  // Defensivo: filtra weight=0 (calculator já remove, mas garante consistência caso categorias cruas sejam passadas)
+  const progressData = displayCategories
+    .filter((cat) => cat.weight > 0)
+    .map((cat) => ({
+      id: cat.id,
+      label: cat.name,
+      score: cat.score,
+      weight: cat.weight,
+      description: cat.description,
+      dataMissing: cat.dataMissing,
+    }));
 
   if (layout === "horizontal") {
     return (
@@ -97,7 +111,10 @@ export function MatchBreakdown({
 
             {/* Breakdown por categorias */}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground mb-4">{title}</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-foreground">{title}</h3>
+                <MatchCombineSkillsToggle combined={combined} onChange={setCombined} />
+              </div>
               <MatchProgressStack
                 categories={progressData}
                 animated={animated}
@@ -136,9 +153,12 @@ export function MatchBreakdown({
 
         {/* Breakdown por categorias */}
         <div className="space-y-1">
-          <h4 className="text-sm font-medium text-muted-foreground mb-3">
-            Breakdown por Categoria
-          </h4>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-medium text-muted-foreground">
+              Breakdown por Categoria
+            </h4>
+            <MatchCombineSkillsToggle combined={combined} onChange={setCombined} />
+          </div>
           <MatchProgressStack
             categories={progressData}
             animated={animated}

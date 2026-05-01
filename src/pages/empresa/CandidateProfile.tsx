@@ -4,6 +4,10 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useQueries } from '@tanstack/react-query';
+import { getStandardizedSkillsService } from '@/services/standardizedSkills/standardizedSkillsService';
+import { standardizedSkillKeys, useCandidateStandardizedSkills } from '@/hooks/useStandardizedSkillsQuery';
+import type { MatchSkillsInput } from '@/types/disc';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -263,17 +267,61 @@ export default function CandidateProfile() {
     ? gaugeProToBehavioralProfile(gaugeProResult.finalScores)
     : undefined;
 
+  // Standardized skills for this candidate
+  const candidateSkillsQuery = useCandidateStandardizedSkills(candidate?.id ?? '');
+
+  // Standardized skills for all company jobs
+  const jobSkillsQueries = useQueries({
+    queries: companyJobs.map((j) => ({
+      queryKey: standardizedSkillKeys.jobSkills(j.id),
+      queryFn: async () => {
+        const service = await getStandardizedSkillsService();
+        return service.getJobSkills(j.id);
+      },
+      enabled: !!j.id,
+    })),
+  });
+
+  const candTech = useMemo(() => {
+    return (candidateSkillsQuery.data ?? [])
+      .filter((s) => s.skill?.type === 'technical')
+      .sort((a, b) => a.priority - b.priority)
+      .map((s) => s.skillId);
+  }, [candidateSkillsQuery.data]);
+
+  const candBeh = useMemo(() => {
+    return (candidateSkillsQuery.data ?? [])
+      .filter((s) => s.skill?.type === 'behavioral')
+      .sort((a, b) => a.priority - b.priority)
+      .map((s) => s.skillId);
+  }, [candidateSkillsQuery.data]);
+
+  const buildSkillsInput = (jobId: string): MatchSkillsInput | undefined => {
+    if (!candidateSkillsQuery.data) return undefined;
+    const idx = companyJobs.findIndex((j) => j.id === jobId);
+    const jobData = jobSkillsQueries[idx]?.data;
+    if (!jobData) return undefined;
+    return {
+      candidateTechnical: candTech,
+      candidateBehavioral: candBeh,
+      jobTechnical: jobData.filter((s) => s.skill?.type === 'technical').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+      jobBehavioral: jobData.filter((s) => s.skill?.type === 'behavioral').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+    };
+  };
+
   // Compute match results for ALL active jobs
   const allMatchResults = useMemo(() => {
     const results = new Map<string, MatchResult>();
     if (!candidate) return results;
     companyJobs.forEach((job) => {
       const ideal = getOrGenerateIdealProfile(job);
-      const result = calculateMatchBreakdown(candidate, job, ideal, candidateBehavioralProfile);
+      const skillsInput = buildSkillsInput(job.id);
+      const result = calculateMatchBreakdown(candidate, job, ideal, candidateBehavioralProfile, skillsInput);
       results.set(job.id, result);
     });
     return results;
-  }, [candidate, companyJobs, candidateBehavioralProfile]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [candidate, companyJobs, candidateBehavioralProfile, candTech, candBeh, jobSkillsQueries]);
 
   // Match scores map for JobMatchTabs
   const matchScoresMap = useMemo(() => {

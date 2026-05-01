@@ -21,6 +21,7 @@ import { useApplications } from '@/hooks/useApplications';
 import { useFavoriteJobs } from '@/hooks/useFavoriteJobs';
 import { useProfile } from '@/hooks/useCurriculumsQuery';
 import { useSetApplicationHighlights } from '@/hooks/useHighlightsQuery';
+import { useMatchSkillIds } from '@/hooks/useMatchSkillIds';
 import { ApplicationModal } from '@/components/candidato/ApplicationModal';
 import { ApplicationSuccessModal } from '@/components/candidato/ApplicationSuccessModal';
 import type { ApplicationHighlights } from '@/types/applicationHighlight';
@@ -31,6 +32,9 @@ import { MatchOpportunities } from '@/components/match/MatchOpportunities';
 import { MatchComparison } from '@/components/match/MatchComparison';
 // PRD-035: Modal de metodologia
 import { MatchMethodologyModal } from '@/components/match/MatchMethodologyModal';
+// Plano C (Mirror): Modal de critérios da vaga
+import { MatchCriteriaModal } from '@/components/match/MatchCriteriaModal';
+import { DEFAULT_MATCH_WEIGHTS } from '@/types/matchWeights';
 // PRD-035: Banner de incentivo ao teste comportamental
 import { DiscIncentiveBanner } from '@/components/candidato/DiscIncentiveBanner';
 import { getDisplayCompanyName } from '@/lib/anonymousJob';
@@ -51,6 +55,7 @@ export default function JobDetails() {
   const { hasApplied, createApplicationAsync } = useApplications(candidateId);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [criteriaOpen, setCriteriaOpen] = useState(false);
 
   // PRD-073: Profile + Highlights
   const { data: profile } = useProfile(candidateId);
@@ -58,8 +63,9 @@ export default function JobDetails() {
 
   // PRD-035: Cálculo dinâmico de match
   const idealProfile = job ? getOrGenerateIdealProfile(job) : undefined;
+  const { skillsInput } = useMatchSkillIds(currentCandidate?.id, job?.id);
   const matchResult = job && currentCandidate
-    ? calculateMatchBreakdown(currentCandidate, job, idealProfile)
+    ? calculateMatchBreakdown(currentCandidate, job, idealProfile, undefined, skillsInput)
     : undefined;
 
   // Loading state
@@ -297,10 +303,30 @@ export default function JobDetails() {
               title="Sua Compatibilidade"
               layout="horizontal"
             />
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setCriteriaOpen(true)}>
+                Ver critérios da vaga
+              </Button>
               <MatchMethodologyModal />
             </div>
           </motion.div>
+        )}
+
+        {/* Plano C (Mirror): Modal de critérios da vaga */}
+        {job && (
+          <MatchCriteriaModal
+            open={criteriaOpen}
+            onOpenChange={setCriteriaOpen}
+            jobId={job.id}
+            jobTitle={job.title}
+            weights={{
+              skillsTechnical: job.weightSkillsTechnical ?? DEFAULT_MATCH_WEIGHTS.skillsTechnical,
+              skillsBehavioral: job.weightSkillsBehavioral ?? DEFAULT_MATCH_WEIGHTS.skillsBehavioral,
+              experience: job.weightExperience ?? DEFAULT_MATCH_WEIGHTS.experience,
+              gaugePro: job.weightGaugePro ?? DEFAULT_MATCH_WEIGHTS.gaugePro,
+              location: job.weightLocation ?? DEFAULT_MATCH_WEIGHTS.location,
+            }}
+          />
         )}
 
         {/* PRD-002-dgn: Behavioral Comparison */}

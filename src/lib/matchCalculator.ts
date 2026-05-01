@@ -11,18 +11,25 @@ import type {
   MatchResult,
   MatchCategory,
   MatchStrength,
-  MatchOpportunity
+  MatchOpportunity,
+  MatchSkillsInput,
 } from '@/types/disc';
 import type { Candidate, Job } from '@/types';
 import { DEFAULT_MATCH_CATEGORIES } from '@/components/match/MatchBreakdown';
+import { DEFAULT_MATCH_WEIGHTS, type MatchWeights } from '@/types/matchWeights';
 
-// Pesos padrão das categorias
-const CATEGORY_WEIGHTS = {
-  skills: 40,
-  experience: 30,
-  behavioral: 20,
-  location: 10,
-};
+/**
+ * Lê os pesos de match da vaga, com fallback para defaults globais.
+ */
+function getJobWeights(job: Partial<Job>): MatchWeights {
+  return {
+    skillsTechnical: job.weightSkillsTechnical ?? DEFAULT_MATCH_WEIGHTS.skillsTechnical,
+    skillsBehavioral: job.weightSkillsBehavioral ?? DEFAULT_MATCH_WEIGHTS.skillsBehavioral,
+    experience: job.weightExperience ?? DEFAULT_MATCH_WEIGHTS.experience,
+    gaugePro: job.weightGaugePro ?? DEFAULT_MATCH_WEIGHTS.gaugePro,
+    location: job.weightLocation ?? DEFAULT_MATCH_WEIGHTS.location,
+  };
+}
 
 // Mapeamento de níveis de experiência para anos
 const EXPERIENCE_LEVELS: Record<string, { min: number; max: number }> = {
@@ -101,11 +108,15 @@ function extractTokens(text: string): string[] {
 }
 
 /**
- * Calcula o score de skills comparando as habilidades do candidato
- * com os requisitos da vaga.
+ * @deprecated Algoritmo legado tokenizado com viés tech (SKILL_ALIASES).
+ * Causa falsos negativos em vagas não-tech (auditoria empírica abril/2026:
+ * 0/20 candidatos com skills passaram de 20%, 4/20 ficaram abaixo).
+ * Use `computeSkillsScore` com `MatchSkillsInput` baseado em std_skills.
  *
- * Estrategia: tokeniza cada requisito em keywords tecnicas, compara com
- * skills do candidato usando match exato por token (evita falsos positivos).
+ * Mantido apenas como fallback quando std_skills não estão disponíveis em ambos os lados.
+ *
+ * Calcula o score de skills comparando as habilidades do candidato
+ * com os requisitos da vaga (path texto livre).
  */
 export function calculateSkillsScore(
   candidateSkills: string[],
@@ -451,8 +462,8 @@ export function generateStrengths(
   // Ordena categorias por score
   const sortedCategories = [...categories].sort((a, b) => b.score - a.score);
 
-  // Skills - pontos fortes
-  const skillsCategory = categories.find(c => c.id === 'skills');
+  // Skills técnicas - pontos fortes
+  const skillsCategory = categories.find(c => c.id === 'skills_technical');
   if (skillsCategory && skillsCategory.score >= 70) {
     const matched = getMatchedSkills(candidate.skills || [], job.requirements || [], 4);
     const skillsText = matched.length > 0
@@ -461,7 +472,7 @@ export function generateStrengths(
     strengths.push({
       id: 'str-skills-1',
       text: skillsText,
-      category: 'skills',
+      category: 'skills_technical',
       impact: skillsCategory.score >= 85 ? 'high' : 'medium',
     });
   }
@@ -477,14 +488,14 @@ export function generateStrengths(
     });
   }
 
-  // Behavioral - pontos fortes
-  const behavioralCategory = categories.find(c => c.id === 'behavioral');
+  // Gauge-Pro / comportamental - pontos fortes
+  const behavioralCategory = categories.find(c => c.id === 'gauge_pro');
   if (behavioralCategory && behavioralCategory.score >= 70) {
     const jobRef = job.title ? `para ${job.title}` : 'para esta posição';
     strengths.push({
       id: 'str-behavioral-1',
       text: `Perfil comportamental com ${behavioralCategory.score}% de compatibilidade com o perfil ideal ${jobRef}`,
-      category: 'behavioral',
+      category: 'gauge_pro',
       impact: behavioralCategory.score >= 85 ? 'high' : 'medium',
     });
   }
@@ -529,8 +540,8 @@ export function generateOpportunities(
   // Ordena por score (menor primeiro - mais oportunidade)
   const sortedCategories = [...categories].sort((a, b) => a.score - b.score);
 
-  // Skills - oportunidades
-  const skillsCategory = categories.find(c => c.id === 'skills');
+  // Skills técnicas - oportunidades
+  const skillsCategory = categories.find(c => c.id === 'skills_technical');
   if (skillsCategory && skillsCategory.score < 70) {
     const missing = getMissingSkills(candidate.skills || [], job.requirements || [], 4);
     let missingSkillsText: string;
@@ -548,7 +559,7 @@ export function generateOpportunities(
     opportunities.push({
       id: 'opp-skills-1',
       text: missingSkillsText,
-      category: 'skills',
+      category: 'skills_technical',
       potentialIncrease: Math.min(15, Math.round((70 - skillsCategory.score) * 0.4)),
       actionable: true,
     });
@@ -571,13 +582,13 @@ export function generateOpportunities(
     });
   }
 
-  // Behavioral - oportunidades
-  const behavioralCategory = categories.find(c => c.id === 'behavioral');
+  // Gauge-Pro / comportamental - oportunidades
+  const behavioralCategory = categories.find(c => c.id === 'gauge_pro');
   if (behavioralCategory && behavioralCategory.score < 65) {
     opportunities.push({
       id: 'opp-behavioral-1',
       text: `Perfil comportamental com ${behavioralCategory.score}% de aderência — considere complementar a avaliação`,
-      category: 'behavioral',
+      category: 'gauge_pro',
       potentialIncrease: Math.min(12, Math.round((65 - behavioralCategory.score) * 0.4)),
       actionable: true,
     });
@@ -603,13 +614,73 @@ export function generateOpportunities(
     opportunities.push({
       id: 'opp-profile-1',
       text: 'Complete seu perfil adicionando mais detalhes sobre suas experiências e conquistas',
-      category: 'skills',
+      category: 'skills_technical',
       potentialIncrease: 5,
       actionable: true,
     });
   }
 
   return opportunities.slice(0, 4); // Máximo 4 oportunidades
+}
+
+/**
+ * Computa scores de skills técnicas e comportamentais separadamente.
+ * Substitui o caminho legado tokenizado quando `skillsInput` é fornecido.
+ *
+ * @returns objeto com { technicalScore, behavioralScore }
+ */
+function computeSkillsScore(
+  skillsInput: MatchSkillsInput | undefined,
+  fallbackCandidateSkills: string[],
+  fallbackJobRequirements: string[],
+): { technicalScore: number; behavioralScore: number } {
+  if (skillsInput) {
+    const technicalScore = calculateStandardizedSkillsScore(
+      skillsInput.candidateTechnical,
+      skillsInput.jobTechnical,
+    );
+    const behavioralScore = calculateStandardizedSkillsScore(
+      skillsInput.candidateBehavioral,
+      skillsInput.jobBehavioral,
+    );
+    return { technicalScore, behavioralScore };
+  }
+
+  // Fallback legado: usa string-based, distribui igualmente entre técnica e comportamental
+  const legacyScore = calculateSkillsScore(fallbackCandidateSkills, fallbackJobRequirements);
+  return { technicalScore: legacyScore, behavioralScore: legacyScore };
+}
+
+/**
+ * Aplica regras de Q4 sobre as 5 categorias de match:
+ *  - Caso 1 (weight = 0): categoria removida do array
+ *  - Caso 2 (weight > 0, dataMissing = 'job-side'): peso redistribuído entre as restantes; categoria removida do retorno
+ *  - Caso 3 (weight > 0, dataMissing = 'candidate-side'): score = 0, categoria fica visível com flag
+ *  - Caso 4: cálculo normal — categoria mantida com effectiveWeight = weight
+ *
+ * Retorna o array filtrado/ajustado pronto para renderização e cálculo do total.
+ */
+function applyDataAvailability(categories: MatchCategory[]): MatchCategory[] {
+  // 1. Remove peso=0 (Caso 1)
+  const visible = categories.filter((c) => c.weight > 0);
+
+  // 2. Identifica categorias job-side (Caso 2): redistribuir peso e remover do retorno
+  const jobSideMissing = visible.filter((c) => c.dataMissing === 'job-side');
+  const others = visible.filter((c) => c.dataMissing !== 'job-side');
+
+  // Sem job-side missing OU não há outras pra redistribuir → retorna como está
+  if (jobSideMissing.length === 0 || others.length === 0) {
+    return visible.map((c) => ({ ...c, effectiveWeight: c.weight }));
+  }
+
+  // Redistribui o peso das job-side proporcionalmente entre as outras
+  const totalRedistribute = jobSideMissing.reduce((s, c) => s + c.weight, 0);
+  const totalOthers = others.reduce((s, c) => s + c.weight, 0);
+
+  return others.map((c) => ({
+    ...c,
+    effectiveWeight: c.weight + (c.weight / totalOthers) * totalRedistribute,
+  }));
 }
 
 /**
@@ -620,8 +691,7 @@ export function calculateMatchBreakdown(
   job: Partial<Job>,
   idealProfile?: BehavioralProfile,
   candidateBehavioralProfile?: BehavioralProfile,
-  candidateStdSkillIds?: string[],
-  jobStdSkillIds?: string[],
+  skillsInput?: MatchSkillsInput,
 ): MatchResult {
   // Usa perfil fornecido externamente, ou extrai de candidate.testResult (legacy)
   const candidateProfile: BehavioralProfile | undefined = candidateBehavioralProfile
@@ -635,17 +705,18 @@ export function calculateMatchBreakdown(
       : undefined);
 
   // Calcula scores individuais
-  // Prefer standardized skills when available for both sides
-  const skillsScore = (candidateStdSkillIds?.length && jobStdSkillIds?.length)
-    ? calculateStandardizedSkillsScore(candidateStdSkillIds, jobStdSkillIds)
-    : calculateSkillsScore(candidate.skills || [], job.requirements || []);
+  const { technicalScore, behavioralScore: skillsBehavioralScore } = computeSkillsScore(
+    skillsInput,
+    candidate.skills || [],
+    job.requirements || [],
+  );
 
   const experienceScore = calculateExperienceScore(
     candidate.experience || 0,
     job.level || 'Pleno'
   );
 
-  const behavioralScore = candidateProfile && idealProfile
+  const behavioralProfileScore = candidateProfile && idealProfile
     ? calculateBehavioralScore(candidateProfile, idealProfile)
     : (!candidateProfile ? 20 : 50); // Sem teste = baixo; sem perfil ideal = neutro
 
@@ -655,50 +726,83 @@ export function calculateMatchBreakdown(
     (job.type as 'remote' | 'hybrid' | 'onsite') || 'hybrid'
   );
 
+  const weights = getJobWeights(job);
+
   // Monta as categorias
   const categories: MatchCategory[] = [
     {
-      id: 'skills',
+      id: 'skills_technical',
       name: 'Skills Técnicas',
-      weight: CATEGORY_WEIGHTS.skills,
-      score: skillsScore,
-      description: DEFAULT_MATCH_CATEGORIES[0].description,
+      weight: weights.skillsTechnical,
+      score: technicalScore,
+      description: 'Habilidades técnicas declaradas pelo candidato vs requisitadas pela vaga.',
+    },
+    {
+      id: 'skills_behavioral',
+      name: 'Skills Comportamentais',
+      weight: weights.skillsBehavioral,
+      score: skillsBehavioralScore,
+      description: 'Soft skills declaradas pelo candidato vs requisitadas pela vaga.',
     },
     {
       id: 'experience',
       name: 'Experiência',
-      weight: CATEGORY_WEIGHTS.experience,
+      weight: weights.experience,
       score: experienceScore,
-      description: DEFAULT_MATCH_CATEGORIES[1].description,
+      description: DEFAULT_MATCH_CATEGORIES[2].description,
     },
     {
-      id: 'behavioral',
+      id: 'gauge_pro',
       name: 'Perfil Comportamental',
-      weight: CATEGORY_WEIGHTS.behavioral,
-      score: behavioralScore,
-      description: DEFAULT_MATCH_CATEGORIES[2].description,
+      weight: weights.gaugePro,
+      score: behavioralProfileScore,
+      description: DEFAULT_MATCH_CATEGORIES[3].description,
     },
     {
       id: 'location',
       name: 'Localização',
-      weight: CATEGORY_WEIGHTS.location,
+      weight: weights.location,
       score: locationScore,
-      description: DEFAULT_MATCH_CATEGORIES[3].description,
+      description: DEFAULT_MATCH_CATEGORIES[4].description,
     },
   ];
 
-  // Calcula score total ponderado
-  const totalScore = Math.round(
-    categories.reduce((sum, cat) => sum + (cat.score * cat.weight) / 100, 0)
+  // Marca dataMissing para gauge_pro e ajusta score conforme regra Q4
+  const gaugeProCategory = categories.find((c) => c.id === 'gauge_pro');
+  if (gaugeProCategory) {
+    if (!idealProfile) {
+      gaugeProCategory.dataMissing = 'job-side';
+    } else if (!candidateProfile) {
+      gaugeProCategory.dataMissing = 'candidate-side';
+      gaugeProCategory.score = 0; // penalidade — Caso 3
+    }
+  }
+
+  // Aplica regras Q4 (filtra peso=0 e job-side missing; redistribui pesos)
+  const processedCategories = applyDataAvailability(categories);
+
+  // Soma ponderada usando effectiveWeight (que reflete redistribuição). Quando
+  // effectiveWeight está ausente (categoria sem ajuste), cai no weight original.
+  const totalEffectiveWeight = processedCategories.reduce(
+    (s, c) => s + (c.effectiveWeight ?? c.weight),
+    0,
   );
+  const totalScore = totalEffectiveWeight > 0
+    ? Math.round(
+        processedCategories.reduce(
+          (sum, cat) => sum + (cat.score * (cat.effectiveWeight ?? cat.weight)) / totalEffectiveWeight,
+          0,
+        ),
+      )
+    : 0;
 
   // Gera strengths e opportunities
-  const strengths = generateStrengths(categories, candidate, job);
-  const opportunities = generateOpportunities(categories, candidate, job);
+  const strengths = generateStrengths(processedCategories, candidate, job);
+  const opportunities = generateOpportunities(processedCategories, candidate, job);
 
   return {
     totalScore,
-    categories,
+    categories: processedCategories,
     strengths,
     opportunities,
     candidateProfile: candidateProfile || { d: 50, i: 50, s: 50, c: 50 },

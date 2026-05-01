@@ -5,6 +5,10 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { useQueries } from '@tanstack/react-query';
+import { getStandardizedSkillsService } from '@/services/standardizedSkills/standardizedSkillsService';
+import { standardizedSkillKeys } from '@/hooks/useStandardizedSkillsQuery';
+import type { MatchSkillsInput } from '@/types/disc';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -188,6 +192,7 @@ let _candidatesMap: Record<string, import('@/types').Candidate> = {};
 let _companyJobs: import('@/types').Job[] = [];
 let _behavioralTests: Array<{ candidateId: string; status: string; result?: { dominance: number; influence: number; steadiness: number; compliance: number } | null }> = [];
 let _gaugeResultsByCandidate: Map<string, GaugeProResult> = new Map();
+let _skillsInputBuilder: ((candidateId: string, jobId: string) => MatchSkillsInput | undefined) | undefined;
 let currentSelectedJobId = '';
 const calculateMatch = (candidateId: string): number => {
   const candidate = _candidatesMap[candidateId];
@@ -200,7 +205,8 @@ const calculateMatch = (candidateId: string): number => {
 
   const idealProfile = getOrGenerateIdealProfile(job);
   const candidateProfile = getCompositeBehavioralProfile(candidateId, _behavioralTests, _gaugeResultsByCandidate);
-  const matchResult = calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile);
+  const skillsInput = _skillsInputBuilder ? _skillsInputBuilder(candidateId, job.id) : undefined;
+  const matchResult = calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile, skillsInput);
   return matchResult.totalScore;
 };
 
@@ -252,12 +258,13 @@ export default function CompanyApplications() {
   const { data: behavioralTests = [] } = useBehavioralTests();
   const { data: allGaugeResults = [] } = useAllGaugeProResults();
 
+  const allCandidates = candidatesResult?.data ?? [];
+
   const candidatesMap = useMemo(() => {
-    const candidates = candidatesResult?.data ?? [];
     const map: Record<string, import('@/types').Candidate> = {};
-    candidates.forEach(c => { map[c.id] = c; });
+    allCandidates.forEach(c => { map[c.id] = c; });
     return map;
-  }, [candidatesResult]);
+  }, [allCandidates]);
 
   const gaugeResultsByCandidate = useMemo(() => {
     const map = new Map<string, GaugeProResult>();
@@ -267,11 +274,76 @@ export default function CompanyApplications() {
     return map;
   }, [allGaugeResults]);
 
+  // Standardized skills queries for all candidates and jobs
+  const candidateSkillsQueries = useQueries({
+    queries: allCandidates.map((c) => ({
+      queryKey: standardizedSkillKeys.candidateSkills(c.id),
+      queryFn: async () => {
+        const service = await getStandardizedSkillsService();
+        return service.getCandidateSkills(c.id);
+      },
+      enabled: !!c.id,
+    })),
+  });
+
+  const jobSkillsQueries = useQueries({
+    queries: fetchedCompanyJobs.map((j) => ({
+      queryKey: standardizedSkillKeys.jobSkills(j.id),
+      queryFn: async () => {
+        const service = await getStandardizedSkillsService();
+        return service.getJobSkills(j.id);
+      },
+      enabled: !!j.id,
+    })),
+  });
+
+  const candidateSkillsMap = useMemo(() => {
+    const m = new Map<string, { tech: string[]; beh: string[] }>();
+    allCandidates.forEach((c, i) => {
+      const data = candidateSkillsQueries[i]?.data;
+      if (data) {
+        m.set(c.id, {
+          tech: data.filter((s) => s.skill?.type === 'technical').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+          beh: data.filter((s) => s.skill?.type === 'behavioral').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+        });
+      }
+    });
+    return m;
+  }, [allCandidates, candidateSkillsQueries]);
+
+  const jobSkillsMap = useMemo(() => {
+    const m = new Map<string, { tech: string[]; beh: string[] }>();
+    fetchedCompanyJobs.forEach((j, i) => {
+      const data = jobSkillsQueries[i]?.data;
+      if (data) {
+        m.set(j.id, {
+          tech: data.filter((s) => s.skill?.type === 'technical').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+          beh: data.filter((s) => s.skill?.type === 'behavioral').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+        });
+      }
+    });
+    return m;
+  }, [fetchedCompanyJobs, jobSkillsQueries]);
+
+  // Build skills input for a candidate+job pair
+  const buildSkillsInputFn = (candidateId: string, jobId: string): MatchSkillsInput | undefined => {
+    const c = candidateSkillsMap.get(candidateId);
+    const j = jobSkillsMap.get(jobId);
+    if (!c || !j) return undefined;
+    return {
+      candidateTechnical: c.tech,
+      candidateBehavioral: c.beh,
+      jobTechnical: j.tech,
+      jobBehavioral: j.beh,
+    };
+  };
+
   // Update module-level refs for calculateMatch (synchronous during render)
   _candidatesMap = candidatesMap;
   _companyJobs = fetchedCompanyJobs;
   _behavioralTests = behavioralTests;
   _gaugeResultsByCandidate = gaugeResultsByCandidate;
+  _skillsInputBuilder = buildSkillsInputFn;
 
   const applications_ = useMemo(() => applicationsResult?.data ?? [], [applicationsResult]);
   const isLoading = isLoadingJobs || isLoadingApps || isLoadingCandidates;

@@ -1988,6 +1988,11 @@ export type Database = {
           title: string
           type: string
           updated_at: string
+          weight_skills_technical: number
+          weight_skills_behavioral: number
+          weight_experience: number
+          weight_gauge_pro: number
+          weight_location: number
         }
         Insert: {
           admin_notes?: string | null
@@ -2020,6 +2025,11 @@ export type Database = {
           title: string
           type?: string
           updated_at?: string
+          weight_skills_technical?: number
+          weight_skills_behavioral?: number
+          weight_experience?: number
+          weight_gauge_pro?: number
+          weight_location?: number
         }
         Update: {
           admin_notes?: string | null
@@ -2052,6 +2062,11 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string
+          weight_skills_technical?: number
+          weight_skills_behavioral?: number
+          weight_experience?: number
+          weight_gauge_pro?: number
+          weight_location?: number
         }
         Relationships: [
           {

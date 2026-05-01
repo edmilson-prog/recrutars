@@ -88,6 +88,12 @@ function jobRowToJob(
     positionsCount: (row as Record<string, unknown>).positions_count as number ?? 1,
     createdAt: row.created_at,
     area: row.area ?? '',
+    // Pesos do match (Plano B — Tailor). DB defaults: 25/15/30/20/10 (soma 100).
+    weightSkillsTechnical: row.weight_skills_technical ?? undefined,
+    weightSkillsBehavioral: row.weight_skills_behavioral ?? undefined,
+    weightExperience: row.weight_experience ?? undefined,
+    weightGaugePro: row.weight_gauge_pro ?? undefined,
+    weightLocation: row.weight_location ?? undefined,
   };
 }
 
@@ -176,27 +182,37 @@ export class JobsServiceSupabase implements IJobsService {
   }
 
   async createJob(job: Partial<Job>): Promise<Job> {
+    // Pesos do match (Plano B — Tailor): omitidos do payload quando undefined
+    // para que o DB aplique os defaults (25/15/30/20/10).
+    const insertPayload: Record<string, unknown> = {
+      company_id: job.companyId ?? '',
+      title: job.title ?? '',
+      description: job.description ?? '',
+      requirements: job.requirements ?? [],
+      benefits: job.benefits ?? [],
+      location: job.location ?? '',
+      city: job.city ?? null,
+      state: job.state ?? null,
+      type: job.type ?? 'remote',
+      level: job.level ?? '',
+      salary_min: job.salary?.min ?? 0,
+      salary_max: job.salary?.max ?? 0,
+      status: job.status ?? 'active',
+      moderation_status: 'approved',
+      area: job.area ?? '',
+      positions_count: job.positionsCount ?? 1,
+      is_anonymous: job.isAnonymous ?? false,
+    };
+
+    if (job.weightSkillsTechnical !== undefined) insertPayload.weight_skills_technical = job.weightSkillsTechnical;
+    if (job.weightSkillsBehavioral !== undefined) insertPayload.weight_skills_behavioral = job.weightSkillsBehavioral;
+    if (job.weightExperience !== undefined) insertPayload.weight_experience = job.weightExperience;
+    if (job.weightGaugePro !== undefined) insertPayload.weight_gauge_pro = job.weightGaugePro;
+    if (job.weightLocation !== undefined) insertPayload.weight_location = job.weightLocation;
+
     const { data, error } = await supabase
       .from('jobs')
-      .insert({
-        company_id: job.companyId ?? '',
-        title: job.title ?? '',
-        description: job.description ?? '',
-        requirements: job.requirements ?? [],
-        benefits: job.benefits ?? [],
-        location: job.location ?? '',
-        city: job.city ?? null,
-        state: job.state ?? null,
-        type: job.type ?? 'remote',
-        level: job.level ?? '',
-        salary_min: job.salary?.min ?? 0,
-        salary_max: job.salary?.max ?? 0,
-        status: job.status ?? 'active',
-        moderation_status: 'approved',
-        area: job.area ?? '',
-        positions_count: job.positionsCount ?? 1,
-        is_anonymous: job.isAnonymous ?? false,
-      })
+      .insert(insertPayload)
       .select('*, companies!jobs_company_id_fkey(name, logo_url)')
       .single();
 
@@ -227,6 +243,12 @@ export class JobsServiceSupabase implements IJobsService {
     }
     if (updates.positionsCount !== undefined) updatePayload.positions_count = updates.positionsCount;
     if (updates.isAnonymous !== undefined) updatePayload.is_anonymous = updates.isAnonymous;
+    // Pesos do match (Plano B — Tailor)
+    if (updates.weightSkillsTechnical !== undefined) updatePayload.weight_skills_technical = updates.weightSkillsTechnical;
+    if (updates.weightSkillsBehavioral !== undefined) updatePayload.weight_skills_behavioral = updates.weightSkillsBehavioral;
+    if (updates.weightExperience !== undefined) updatePayload.weight_experience = updates.weightExperience;
+    if (updates.weightGaugePro !== undefined) updatePayload.weight_gauge_pro = updates.weightGaugePro;
+    if (updates.weightLocation !== undefined) updatePayload.weight_location = updates.weightLocation;
 
     const { data, error } = await supabase
       .from('jobs')

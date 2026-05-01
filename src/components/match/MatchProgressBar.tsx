@@ -28,6 +28,7 @@ interface MatchProgressBarProps {
   animated?: boolean;
   size?: "sm" | "md" | "lg";
   className?: string;
+  dataMissing?: 'job-side' | 'candidate-side' | null;
 }
 
 export function MatchProgressBar({
@@ -40,10 +41,13 @@ export function MatchProgressBar({
   animated = true,
   size = "md",
   className,
+  dataMissing,
 }: MatchProgressBarProps) {
   const prefersReducedMotion = useReducedMotion();
   const shouldAnimate = animated && !prefersReducedMotion;
   const colors = getMatchScoreColor(score);
+  const isJobMissing = dataMissing === 'job-side';
+  const isCandidateMissing = dataMissing === 'candidate-side';
 
   // Configurações de tamanho
   const sizeConfig = {
@@ -65,11 +69,17 @@ export function MatchProgressBar({
 
   return (
     <TooltipProvider>
-      <div className={cn("w-full", config.gap, className)}>
+      <div className={cn("w-full", config.gap, isJobMissing && "opacity-60", className)}>
         {/* Label e valor */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <span className={cn("font-medium text-foreground", config.text)}>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span
+              className={cn(
+                "font-medium text-foreground",
+                config.text,
+                isJobMissing && "line-through text-muted-foreground"
+              )}
+            >
               {label}
             </span>
             {showWeight && (
@@ -88,33 +98,51 @@ export function MatchProgressBar({
                 </TooltipContent>
               </Tooltip>
             )}
+            {isCandidateMissing && (
+              <span className="ml-1 inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                Candidato não realizou Gauge-Pro
+              </span>
+            )}
+            {isJobMissing && (
+              <span className="ml-1 text-xs text-muted-foreground">
+                Empresa não definiu perfil ideal — não avaliado
+              </span>
+            )}
           </div>
           {showValue && (
-            <span className={cn("font-semibold", config.text, colors.text)}>
-              {score}%
+            <span
+              className={cn(
+                "font-semibold",
+                config.text,
+                isJobMissing ? "text-muted-foreground" : colors.text
+              )}
+            >
+              {isJobMissing ? "—" : `${score}%`}
             </span>
           )}
         </div>
 
         {/* Barra de progresso */}
-        <div
-          className={cn(
-            "w-full bg-muted rounded-full overflow-hidden",
-            config.height
-          )}
-          role="progressbar"
-          aria-valuenow={score}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label={`${label}: ${score}%`}
-        >
-          <motion.div
-            className={cn("h-full rounded-full", fillColors[level])}
-            initial={shouldAnimate ? { width: 0 } : { width: `${score}%` }}
-            animate={{ width: `${score}%` }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          />
-        </div>
+        {!isJobMissing && (
+          <div
+            className={cn(
+              "w-full bg-muted rounded-full overflow-hidden",
+              config.height
+            )}
+            role="progressbar"
+            aria-valuenow={score}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${label}: ${score}%`}
+          >
+            <motion.div
+              className={cn("h-full rounded-full", fillColors[level])}
+              initial={shouldAnimate ? { width: 0 } : { width: `${score}%` }}
+              animate={{ width: `${score}%` }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            />
+          </div>
+        )}
       </div>
     </TooltipProvider>
   );
@@ -175,6 +203,7 @@ interface MatchProgressStackProps {
     score: number;
     weight: number;
     description?: string;
+    dataMissing?: 'job-side' | 'candidate-side' | null;
   }>;
   animated?: boolean;
   showWeights?: boolean;
@@ -209,6 +238,7 @@ export function MatchProgressStack({
             description={category.description}
             showWeight={showWeights}
             animated={animated}
+            dataMissing={category.dataMissing}
           />
         </motion.div>
       ))}

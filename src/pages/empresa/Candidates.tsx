@@ -5,6 +5,10 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useQueries } from '@tanstack/react-query';
+import { getStandardizedSkillsService } from '@/services/standardizedSkills/standardizedSkillsService';
+import { standardizedSkillKeys } from '@/hooks/useStandardizedSkillsQuery';
+import type { MatchSkillsInput } from '@/types/disc';
 import { Link } from 'react-router-dom';
 import { usePaginationParams } from '@/hooks/usePaginationParams';
 import { motion } from 'framer-motion';
@@ -161,7 +165,8 @@ const calculateAllJobScores = (
   candidate: Candidate,
   jobs: Job[],
   behavioralTests: Array<{ candidateId: string; status: string; result?: { dominance: number; influence: number; steadiness: number; compliance: number } | null }> = [],
-  gaugeResultsByCandidate: Map<string, GaugeProResult> = new Map()
+  gaugeResultsByCandidate: Map<string, GaugeProResult> = new Map(),
+  buildSkillsInput?: (candidateId: string, jobId: string) => MatchSkillsInput | undefined
 ): CandidateJobScores => {
   if (jobs.length === 0) return { bestScore: 0, bestJobId: '', allScores: [] };
 
@@ -169,7 +174,8 @@ const calculateAllJobScores = (
 
   const allScores = jobs.map((job) => {
     const idealProfile = getOrGenerateIdealProfile(job);
-    const result = calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile);
+    const skillsInput = buildSkillsInput ? buildSkillsInput(candidate.id, job.id) : undefined;
+    const result = calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile, skillsInput);
     return { jobId: job.id, title: job.title, score: result.totalScore };
   });
 
@@ -188,13 +194,15 @@ const calculateMatch = (
   candidate: Candidate,
   jobs: Job[],
   behavioralTests: Array<{ candidateId: string; status: string; result?: { dominance: number; influence: number; steadiness: number; compliance: number } | null }> = [],
-  gaugeResultsByCandidate: Map<string, GaugeProResult> = new Map()
+  gaugeResultsByCandidate: Map<string, GaugeProResult> = new Map(),
+  buildSkillsInput?: (candidateId: string, jobId: string) => MatchSkillsInput | undefined
 ): number => {
   if (jobs.length === 0) return 0;
   const job = jobs[0];
   const idealProfile = getOrGenerateIdealProfile(job);
   const candidateProfile = getCompositeBehavioralProfile(candidate.id, behavioralTests, gaugeResultsByCandidate);
-  return calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile).totalScore;
+  const skillsInput = buildSkillsInput ? buildSkillsInput(candidate.id, job.id) : undefined;
+  return calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile, skillsInput).totalScore;
 };
 
 // Match score ring indicator
@@ -463,17 +471,81 @@ export default function CompanyCandidates() {
     );
   }, [companyJobs, allSkills, matchJobId]);
 
+  // Standardized skills queries for all candidates and jobs
+  const candidateSkillsQueries = useQueries({
+    queries: allCandidates.map((c) => ({
+      queryKey: standardizedSkillKeys.candidateSkills(c.id),
+      queryFn: async () => {
+        const service = await getStandardizedSkillsService();
+        return service.getCandidateSkills(c.id);
+      },
+      enabled: !!c.id,
+    })),
+  });
+
+  const jobSkillsQueries = useQueries({
+    queries: companyJobs.map((j) => ({
+      queryKey: standardizedSkillKeys.jobSkills(j.id),
+      queryFn: async () => {
+        const service = await getStandardizedSkillsService();
+        return service.getJobSkills(j.id);
+      },
+      enabled: !!j.id,
+    })),
+  });
+
+  const candidateSkillsMap = useMemo(() => {
+    const m = new Map<string, { tech: string[]; beh: string[] }>();
+    allCandidates.forEach((c, i) => {
+      const data = candidateSkillsQueries[i]?.data;
+      if (data) {
+        m.set(c.id, {
+          tech: data.filter((s) => s.skill?.type === 'technical').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+          beh: data.filter((s) => s.skill?.type === 'behavioral').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+        });
+      }
+    });
+    return m;
+  }, [allCandidates, candidateSkillsQueries]);
+
+  const jobSkillsMap = useMemo(() => {
+    const m = new Map<string, { tech: string[]; beh: string[] }>();
+    companyJobs.forEach((j, i) => {
+      const data = jobSkillsQueries[i]?.data;
+      if (data) {
+        m.set(j.id, {
+          tech: data.filter((s) => s.skill?.type === 'technical').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+          beh: data.filter((s) => s.skill?.type === 'behavioral').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+        });
+      }
+    });
+    return m;
+  }, [companyJobs, jobSkillsQueries]);
+
+  const buildSkillsInput = (candidateId: string, jobId: string): MatchSkillsInput | undefined => {
+    const c = candidateSkillsMap.get(candidateId);
+    const j = jobSkillsMap.get(jobId);
+    if (!c || !j) return undefined;
+    return {
+      candidateTechnical: c.tech,
+      candidateBehavioral: c.beh,
+      jobTechnical: j.tech,
+      jobBehavioral: j.beh,
+    };
+  };
+
   // Pre-compute all job scores for all candidates
   const candidateScoresMap = useMemo(() => {
     const map = new Map<string, CandidateJobScores>();
     allCandidates.forEach((candidate) => {
       map.set(
         candidate.id,
-        calculateAllJobScores(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate)
+        calculateAllJobScores(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate, buildSkillsInput)
       );
     });
     return map;
-  }, [allCandidates, companyJobs, behavioralTests, gaugeResultsByCandidate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allCandidates, companyJobs, behavioralTests, gaugeResultsByCandidate, candidateSkillsMap, jobSkillsMap]);
 
   // Helper to get display score for a candidate based on matchJobId
   const getDisplayScore = (candidateId: string): number => {
@@ -702,7 +774,7 @@ export default function CompanyCandidates() {
     const behavioralProfile = getCompositeBehavioralProfile(candidate.id, behavioralTests, gaugeResultsByCandidate);
 
     // PRD-035: Usa cálculo dinâmico de match
-    const matchScore = calculateMatch(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate);
+    const matchScore = calculateMatch(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate, buildSkillsInput);
 
     return {
       id: candidate.id,
@@ -1653,7 +1725,7 @@ export default function CompanyCandidates() {
           candidateCount: filteredCandidates.length,
           companyName: 'TechCorp Soluções',
         }}
-        calculateMatch={(candidate) => calculateMatch(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate)}
+        calculateMatch={(candidate) => calculateMatch(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate, buildSkillsInput)}
       />
     </DashboardLayout>
   );

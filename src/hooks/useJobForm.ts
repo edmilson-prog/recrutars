@@ -1,10 +1,15 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Job, JobStatus } from '@/types';
-import { useJob, useCreateJob, useUpdateJob } from '@/hooks/useJobsQuery';
+import { useJob, useCreateJob, useUpdateJob, jobKeys } from '@/hooks/useJobsQuery';
+import { useApplicationsByJob } from '@/hooks/useApplicationsQuery';
+import { jobWeightHistoryKeys } from '@/hooks/useJobWeightHistoryQuery';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 import { useJobAnalyzer, createJobFormData } from '@/hooks/useJobAnalyzer';
 import { useJobStandardizedSkills, useSetJobSkills } from '@/hooks/useStandardizedSkillsQuery';
+import { validateWeights, type MatchWeights } from '@/types/matchWeights';
 import { toast } from 'sonner';
 
 export const COMMON_BENEFITS = [
@@ -33,6 +38,11 @@ export const INITIAL_FORM_STATE = {
   requirements: '',
   positionsCount: '1',
   isAnonymous: false,
+  weightSkillsTechnical: 25,
+  weightSkillsBehavioral: 15,
+  weightExperience: 30,
+  weightGaugePro: 20,
+  weightLocation: 10,
 };
 
 const VALID_UFS = new Set([
@@ -73,13 +83,15 @@ interface UseJobFormOptions {
 
 export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
   const navigate = useNavigate();
-  const { currentCompany } = useAuth();
+  const { currentCompany, user } = useAuth();
   const isEditing = !!jobId;
 
   // React Query hooks for CRUD
+  const queryClient = useQueryClient();
   const { data: jobResult } = useJob(jobId ?? '');
   const createJobMutation = useCreateJob();
   const updateJobMutation = useUpdateJob();
+  const { data: applicationsForJob } = useApplicationsByJob(jobId ?? '');
 
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [selectedBenefits, setSelectedBenefits] = useState<string[]>([]);
@@ -94,6 +106,15 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
   const [technicalSkillIds, setTechnicalSkillIds] = useState<string[]>([]);
   const [behavioralSkillIds, setBehavioralSkillIds] = useState<string[]>([]);
   const setJobSkillsMutation = useSetJobSkills();
+
+  // Confirmation flow for weight edits on published jobs with active applications
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const originalWeightsRef = useRef<MatchWeights | null>(null);
+
+  // Active applications: not rejected, not hired, not withdrawn
+  const activeApplicationsCount = (applicationsForJob ?? [])
+    .filter((a) => a.status !== 'rejected' && a.status !== 'hired' && a.status !== 'withdrawn')
+    .length;
 
   // Load existing standardized skills when editing
   const { data: existingJobSkills } = useJobStandardizedSkills(jobId ?? '');
@@ -128,7 +149,20 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       requirements: loadedJob.requirements.join('\n'),
       positionsCount: (loadedJob.positionsCount ?? 1).toString(),
       isAnonymous: loadedJob.isAnonymous ?? false,
+      weightSkillsTechnical: loadedJob.weightSkillsTechnical ?? 25,
+      weightSkillsBehavioral: loadedJob.weightSkillsBehavioral ?? 15,
+      weightExperience: loadedJob.weightExperience ?? 30,
+      weightGaugePro: loadedJob.weightGaugePro ?? 20,
+      weightLocation: loadedJob.weightLocation ?? 10,
     });
+    // Snapshot original weights for change detection (used by confirmation gate)
+    originalWeightsRef.current = {
+      skillsTechnical: loadedJob.weightSkillsTechnical ?? 25,
+      skillsBehavioral: loadedJob.weightSkillsBehavioral ?? 15,
+      experience: loadedJob.weightExperience ?? 30,
+      gaugePro: loadedJob.weightGaugePro ?? 20,
+      location: loadedJob.weightLocation ?? 10,
+    };
     const common = (job as Job).benefits.filter(b => COMMON_BENEFITS.includes(b));
     const other = (job as Job).benefits.filter(b => !COMMON_BENEFITS.includes(b));
     setSelectedBenefits(common);
@@ -313,11 +347,101 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     );
   }, [jobId, updateJobMutation]);
 
+  // Detect whether the weights changed from the originally loaded snapshot
+  const isWeightsChanged = useMemo(() => {
+    const orig = originalWeightsRef.current;
+    if (!orig) return false;
+    return (
+      orig.skillsTechnical !== formData.weightSkillsTechnical ||
+      orig.skillsBehavioral !== formData.weightSkillsBehavioral ||
+      orig.experience !== formData.weightExperience ||
+      orig.gaugePro !== formData.weightGaugePro ||
+      orig.location !== formData.weightLocation
+    );
+  }, [
+    formData.weightSkillsTechnical,
+    formData.weightSkillsBehavioral,
+    formData.weightExperience,
+    formData.weightGaugePro,
+    formData.weightLocation,
+  ]);
+
+  // Whether the save flow needs to go through the double-confirmation dialog.
+  // Only when editing an active job, weights actually changed, and there are
+  // 1+ active applications (which would be retroactively re-scored).
+  const needsWeightsConfirmation =
+    isEditing
+    && jobStatus === 'active'
+    && isWeightsChanged
+    && activeApplicationsCount > 0;
+
+  // Confirm weight change: invokes Edge Function update-job-weights which
+  // atomically updates the row, inserts a history entry and triggers
+  // notifications to active candidates.
+  const confirmWeightsChange = useCallback(async () => {
+    if (!jobId || !user?.id) return;
+    const newWeights: MatchWeights = {
+      skillsTechnical: formData.weightSkillsTechnical,
+      skillsBehavioral: formData.weightSkillsBehavioral,
+      experience: formData.weightExperience,
+      gaugePro: formData.weightGaugePro,
+      location: formData.weightLocation,
+    };
+    const { data, error } = await supabase.functions.invoke('update-job-weights', {
+      body: { jobId, performedBy: user.id, newWeights },
+    });
+    if (error) {
+      toast.error(`Falha ao atualizar pesos: ${error.message}`);
+      throw error;
+    }
+    // Update snapshot so a follow-up save without further weight changes
+    // does not re-trigger the confirmation flow.
+    originalWeightsRef.current = newWeights;
+    // Invalidate caches: job detail/list, applications list, weight history.
+    queryClient.invalidateQueries({ queryKey: jobKeys.detail(jobId) });
+    queryClient.invalidateQueries({ queryKey: jobKeys.lists() });
+    queryClient.invalidateQueries({ queryKey: ['applications'] });
+    queryClient.invalidateQueries({ queryKey: jobWeightHistoryKeys.byJob(jobId) });
+    const notified = (data as { activeApplicationsNotified?: number } | null)?.activeApplicationsNotified ?? 0;
+    toast.success(
+      `Pesos atualizados. ${notified} candidato${notified === 1 ? '' : 's'} notificado${notified === 1 ? '' : 's'}.`
+    );
+    // Não resetamos isDirty aqui: se houver outros campos editados (descrição, salário etc.),
+    // o usuário ainda precisa clicar Salvar para o caminho normal persistir esses diffs.
+    // Como originalWeightsRef já foi atualizado, o próximo Save não dispara o dialog de novo.
+    setConfirmationOpen(false);
+  }, [jobId, user?.id, formData.weightSkillsTechnical, formData.weightSkillsBehavioral, formData.weightExperience, formData.weightGaugePro, formData.weightLocation, queryClient]);
+
+  const cancelWeightsChange = useCallback(() => {
+    setConfirmationOpen(false);
+  }, []);
+
   // Save job
   const handleSaveJob = useCallback(() => {
     const { valid } = validate();
     if (!valid) {
       toast.error('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    const weightsValidation = validateWeights({
+      skillsTechnical: formData.weightSkillsTechnical,
+      skillsBehavioral: formData.weightSkillsBehavioral,
+      experience: formData.weightExperience,
+      gaugePro: formData.weightGaugePro,
+      location: formData.weightLocation,
+    });
+    if (!weightsValidation.valid) {
+      toast.error(`Pesos inválidos: ${weightsValidation.error}`);
+      return;
+    }
+
+    // Gate: published job + weights changed + active applications → require
+    // double confirmation via dialog. The dialog's onConfirm handles the
+    // weights save (Edge Function); non-weight changes will need a follow-up
+    // save click after the dialog completes.
+    if (needsWeightsConfirmation) {
+      setConfirmationOpen(true);
       return;
     }
 
@@ -349,6 +473,11 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
       benefits: allBenefits,
       positionsCount: Math.max(1, parseInt(formData.positionsCount) || 1),
       isAnonymous: formData.isAnonymous,
+      weightSkillsTechnical: formData.weightSkillsTechnical,
+      weightSkillsBehavioral: formData.weightSkillsBehavioral,
+      weightExperience: formData.weightExperience,
+      weightGaugePro: formData.weightGaugePro,
+      weightLocation: formData.weightLocation,
     };
 
     // Helper to save standardized skills after job create/update
@@ -394,7 +523,7 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
         },
       });
     }
-  }, [formData, selectedBenefits, otherBenefits, skills, technicalSkillIds, behavioralSkillIds, isEditing, jobId, validate, navigate, onSuccess, createJobMutation, updateJobMutation, setJobSkillsMutation]);
+  }, [formData, selectedBenefits, otherBenefits, skills, technicalSkillIds, behavioralSkillIds, isEditing, jobId, validate, navigate, onSuccess, createJobMutation, updateJobMutation, setJobSkillsMutation, currentCompany?.id, needsWeightsConfirmation]);
 
   return {
     // State
@@ -419,6 +548,24 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     setOtherBenefits,
     setNewSkill,
 
+    // Match weights
+    weights: {
+      skillsTechnical: formData.weightSkillsTechnical,
+      skillsBehavioral: formData.weightSkillsBehavioral,
+      experience: formData.weightExperience,
+      gaugePro: formData.weightGaugePro,
+      location: formData.weightLocation,
+    } as MatchWeights,
+    setWeights: (w: MatchWeights) => {
+      updateFormData({
+        weightSkillsTechnical: w.skillsTechnical,
+        weightSkillsBehavioral: w.skillsBehavioral,
+        weightExperience: w.experience,
+        weightGaugePro: w.gaugePro,
+        weightLocation: w.location,
+      });
+    },
+
     // Handlers
     toggleBenefit,
     addSkill,
@@ -436,5 +583,12 @@ export function useJobForm({ jobId, onSuccess }: UseJobFormOptions = {}) {
     // AI Analysis
     analysis,
     isAnalyzing,
+
+    // Weight-change confirmation flow
+    needsWeightsConfirmation,
+    confirmationOpen,
+    activeApplicationsCount,
+    confirmWeightsChange,
+    cancelWeightsChange,
   };
 }
