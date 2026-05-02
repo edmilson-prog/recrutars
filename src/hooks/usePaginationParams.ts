@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 interface UsePaginationParamsOptions {
@@ -6,6 +6,9 @@ interface UsePaginationParamsOptions {
   defaultPageSize?: number;
   /** When true, page param is 0-indexed internally but stored as 1-indexed in URL */
   zeroIndexed?: boolean;
+  /** When set, pagination state is mirrored to sessionStorage under this key
+   *  so the page component can restore it atomically on mount. */
+  storageKey?: string;
 }
 
 interface UsePaginationParamsReturn {
@@ -16,17 +19,47 @@ interface UsePaginationParamsReturn {
   resetPage: () => void;
 }
 
+function savePaginationToStorage(key: string, params: URLSearchParams): void {
+  try {
+    const data: Record<string, string> = {};
+    const page = params.get('page');
+    const pageSize = params.get('pageSize');
+    if (page) data.page = page;
+    if (pageSize) data.pageSize = pageSize;
+    if (Object.keys(data).length > 0) {
+      sessionStorage.setItem(key, JSON.stringify(data));
+    } else {
+      sessionStorage.removeItem(key);
+    }
+  } catch { /* sessionStorage unavailable */ }
+}
+
+/**
+ * Reads persisted pagination state from sessionStorage under the given key.
+ * Used by page components for atomic restoration alongside other URL state.
+ */
+export function loadStoredPagination(key: string): Record<string, string> | null {
+  try {
+    const stored = sessionStorage.getItem(key);
+    return stored ? JSON.parse(stored) : null;
+  } catch { return null; }
+}
+
 /**
  * Syncs pagination state with URL search params so that
  * navigating away and pressing "back" restores the same page.
  *
  * Uses `replace: true` for page changes to avoid polluting browser history
  * with every page click. Preserves all other existing search params.
+ *
+ * Optionally mirrors state to sessionStorage (opt-in via `storageKey`) so
+ * non-URL-preserving navigations (e.g., sidebar links) can restore state
+ * via the page component's atomic restoration logic.
  */
 export function usePaginationParams(
   options: UsePaginationParamsOptions = {}
 ): UsePaginationParamsReturn {
-  const { defaultPage = 1, defaultPageSize, zeroIndexed = false } = options;
+  const { defaultPage = 1, defaultPageSize, zeroIndexed = false, storageKey } = options;
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Store setSearchParams in a ref to guarantee stable callback references
@@ -35,6 +68,19 @@ export function usePaginationParams(
 
   const optionsRef = useRef({ defaultPage, defaultPageSize, zeroIndexed });
   optionsRef.current = { defaultPage, defaultPageSize, zeroIndexed };
+
+  const storageKeyRef = useRef(storageKey);
+  storageKeyRef.current = storageKey;
+
+  // Mirror to sessionStorage on every URL change (opt-in via storageKey).
+  // Restoration is owned by the page so filters + pagination can be restored
+  // atomically in a single setSearchParams call (avoids race condition where
+  // separate updaters' `prev` doesn't include each other's writes).
+  useEffect(() => {
+    if (storageKeyRef.current) {
+      savePaginationToStorage(storageKeyRef.current, searchParams);
+    }
+  }, [searchParams]);
 
   // Read from URL (always stored as 1-indexed)
   const urlPage = searchParams.get('page');
