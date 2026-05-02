@@ -5,6 +5,15 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.58.3] - 2026-05-02 "Mirror"
+
+### Fixed
+- **Build Vercel corrigido** — chunk único ~6MB excedia o limite do parser do Vite 7.3.1 (`build-import-analysis`); `manualChunks` divide vendor deps em 8 chunks nomeados (`vite.config.ts`)
+- **Filtros do banco de talentos restaurados ao navegar pelo menu** — sidebar links abrem `/empresa/candidatos` sem query params, perdendo estado; restaurado sessionStorage como write-through cache com URL como fonte autoritativa (`useCandidateFilters`, `usePaginationParams`, `Candidates.tsx`)
+
+### Changed
+- **Toggles de planos admin reordenados** — ambiente Stripe mostra Produção antes de Teste; tipo de plano mostra Empresa antes de Candidato (`PlansManagement.tsx`)
+
 ## [1.24.1] - 2026-02-19 "Prism"
 
 ### Fixed

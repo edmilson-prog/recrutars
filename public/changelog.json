@@ -1,12 +1,66 @@
 {
   "versions": [
     {
+      "version": "1.58.3",
+      "codename": "Mirror",
+      "type": "patch",
+      "releaseDate": "2026-05-02",
+      "description": "Correção de erro de build no Vercel com Vite 7, restauração dos filtros do banco de talentos ao navegar pelo menu e reordenação dos controles de planos no painel administrativo.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Publicação no Vercel corrigida: o arquivo único gerado pelo build excedia o limite do processador interno, causando falha na publicação",
+            "Filtros e página do banco de talentos agora são mantidos ao clicar no menu lateral, sem perder a seleção feita anteriormente"
+          ],
+          "details": {
+            "0": {
+              "description": "O build de produção gerava um único arquivo muito grande (~6MB) que excedia o limite interno de processamento do Vite 7.3.1. A solução foi dividir esse arquivo em 8 partes menores e nomeadas, eliminando o erro de publicação no Vercel.",
+              "files": [
+                "vite.config.ts"
+              ],
+              "routes": []
+            },
+            "1": {
+              "description": "Ao clicar no link 'Banco de Talentos' no menu lateral, a tela abria sem nenhum parâmetro na barra de endereço, fazendo com que todos os filtros aplicados e a página selecionada fossem perdidos. Agora os filtros são preservados em memória temporária do navegador e restaurados automaticamente ao retornar à tela.",
+              "files": [
+                "src/hooks/useCandidateFilters.ts",
+                "src/hooks/usePaginationParams.ts",
+                "src/pages/empresa/Candidates.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Painel de planos do administrador agora exibe 'Produção' antes de 'Teste' e 'Empresa' antes de 'Candidato' como padrão"
+          ],
+          "details": {
+            "0": {
+              "description": "No painel de gerenciamento de planos, o seletor de ambiente Stripe agora mostra 'Produção' como primeira opção em vez de 'Teste', e o filtro por tipo de plano mostra 'Empresa' antes de 'Candidato'. Isso reflete melhor o fluxo de trabalho diário do administrador.",
+              "files": [
+                "src/pages/admin/PlansManagement.tsx"
+              ],
+              "routes": [
+                "/admin/planos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.58.2",
       "codename": "Mirror",
       "type": "patch",
       "releaseDate": "2026-05-01",
       "description": "Correções de build, estabilidade de filtros no banco de talentos e ajuste visual na tabela de usuários.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
