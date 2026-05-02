@@ -109,7 +109,7 @@ export default function PackageDetail() {
         id: '',
         createdAt: '',
         updatedAt: '',
-        name: `Copia de ${clonePkg.name}`,
+        name: `Cópia de ${clonePkg.name}`,
         slug: `${clonePkg.slug}-copia`,
         features: [...(clonePkg.features ?? [])],
         stripeProductIdTest: null,
@@ -257,7 +257,7 @@ export default function PackageDetail() {
     return (
       <DashboardLayout userType="admin">
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <p className="text-lg text-muted-foreground">Pacote nao encontrado.</p>
+          <p className="text-lg text-muted-foreground">Pacote não encontrado.</p>
           <Button variant="outline" onClick={() => navigate('/admin/pacotes')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar para Pacotes
@@ -313,7 +313,7 @@ export default function PackageDetail() {
                             <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
-                            <p>Nome do pacote exibido para os usuarios na pagina de pacotes</p>
+                            <p>Nome do pacote exibido para os usuários na página de pacotes</p>
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -354,7 +354,7 @@ export default function PackageDetail() {
                           <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p>Resumo exibido no card do pacote na pagina de pacotes</p>
+                          <p>Resumo exibido no card do pacote na página de pacotes</p>
                         </TooltipContent>
                       </Tooltip>
                     </div>
@@ -374,7 +374,7 @@ export default function PackageDetail() {
                           <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p>Texto detalhado exibido na pagina de detalhes do pacote</p>
+                          <p>Texto detalhado exibido na página de detalhes do pacote</p>
                         </TooltipContent>
                       </Tooltip>
                     </div>
@@ -408,7 +408,7 @@ export default function PackageDetail() {
                             <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
-                            <p>Tipo de teste incluido neste pacote</p>
+                            <p>Tipo de teste incluído neste pacote</p>
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -430,7 +430,7 @@ export default function PackageDetail() {
                             <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
-                            <p>Quantidade de testes incluidos neste pacote</p>
+                            <p>Quantidade de testes incluídos neste pacote</p>
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -449,7 +449,7 @@ export default function PackageDetail() {
                             <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
-                            <p>Texto destacado no card do pacote, como 'Mais Popular' ou 'Melhor Custo-Beneficio'</p>
+                            <p>Texto destacado no card do pacote, como 'Mais Popular' ou 'Melhor Custo-Benefício'</p>
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -575,7 +575,7 @@ export default function PackageDetail() {
                         <HelpCircle className="w-4 h-4 text-muted-foreground/50 cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent side="top" className="max-w-xs">
-                        <p>Lista de funcionalidades incluidas neste pacote, exibidas como bullets no card</p>
+                        <p>Lista de funcionalidades incluídas neste pacote, exibidas como bullets no card</p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
@@ -632,7 +632,7 @@ export default function PackageDetail() {
                       <div className="space-y-0.5">
                         <Label className="text-sm font-medium">Pacote ativo</Label>
                         <p className="text-xs text-muted-foreground">
-                          Pacotes inativos nao aparecem para empresas
+                          Pacotes inativos não aparecem para empresas
                         </p>
                       </div>
                       <Switch
@@ -900,7 +900,7 @@ export default function PackageDetail() {
                           )}
                           {stripeSyncedAt && (
                             <div>
-                              <span className="text-muted-foreground">Ultima sync: </span>
+                              <span className="text-muted-foreground">Última sync: </span>
                               <span className="text-xs">{new Date(stripeSyncedAt).toLocaleString('pt-BR')}</span>
                             </div>
                           )}

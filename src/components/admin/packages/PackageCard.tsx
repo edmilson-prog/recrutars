@@ -98,7 +98,7 @@ export function PackageCard({
                 {TYPE_LABELS[pkgType] ?? pkgType}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                {credits} {credits === 1 ? 'credito' : 'creditos'}
+                {credits} {credits === 1 ? 'crédito' : 'créditos'}
               </span>
             </div>
           </div>
@@ -151,7 +151,7 @@ export function PackageCard({
               ? (syncedAt
                   ? `Sync ${new Date(syncedAt).toLocaleDateString('pt-BR')}`
                   : 'Stripe sincronizado')
-              : 'Nao sincronizado'}
+              : 'Não sincronizado'}
           </Badge>
         </div>
 

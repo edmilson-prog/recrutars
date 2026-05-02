@@ -139,7 +139,7 @@ export default function PackagesManagement() {
       <div className="space-y-6">
         <PageHeader
           title="Pacotes de Testes"
-          description="Gerencie pacotes de creditos de testes avulsos. Configure precos, recursos e sincronizacao com Stripe."
+          description="Gerencie pacotes de créditos de testes avulsos. Configure preços, recursos e sincronização com Stripe."
           actions={
             <Button onClick={handleNewPackage} className="bg-cyan-600 hover:bg-cyan-700 shrink-0">
               <Plus className="w-4 h-4 mr-2" />
@@ -147,8 +147,8 @@ export default function PackagesManagement() {
             </Button>
           }
           howItWorks={[
-            'Crie e gerencie pacotes de creditos de testes',
-            'Configure precos, quantidades e recursos incluidos',
+            'Crie e gerencie pacotes de créditos de testes',
+            'Configure preços, quantidades e recursos incluídos',
             'Use "Novo Pacote" para adicionar um pacote',
           ]}
         />
@@ -174,11 +174,11 @@ export default function PackagesManagement() {
               )}
               onClick={() => setStripeEnv('live')}
             >
-              Producao
+              Produção
             </button>
           </div>
           <Badge variant="outline" className={cn('text-xs', stripeEnv === 'live' ? 'text-red-600 border-red-300' : 'text-blue-600 border-blue-300')}>
-            Stripe: {stripeEnv === 'test' ? 'Teste' : 'Producao'}
+            Stripe: {stripeEnv === 'test' ? 'Teste' : 'Produção'}
           </Badge>
           <Badge variant="outline" className="text-xs text-muted-foreground">
             {packageCount} {packageCount === 1 ? 'pacote' : 'pacotes'}
@@ -254,7 +254,7 @@ export default function PackagesManagement() {
               <AlertDialogDescription>
                 Tem certeza que deseja excluir o pacote{' '}
                 <strong>&quot;{deletingPackage?.name}&quot;</strong> ({deletingPackage?.slug})?
-                Esta acao nao pode ser desfeita. Pacotes com compras ativas nao podem ser excluidos.
+                Esta ação não pode ser desfeita. Pacotes com compras ativas não podem ser excluídos.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
