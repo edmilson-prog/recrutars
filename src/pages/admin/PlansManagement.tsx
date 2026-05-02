@@ -36,7 +36,7 @@ export default function PlansManagement() {
   const updatePlanMutation = useUpdatePlan();
   const deletePlanMutation = useDeletePlan();
 
-  const [stripeEnv, setStripeEnv] = useState<StripeEnvironment>('test');
+  const [stripeEnv, setStripeEnv] = useState<StripeEnvironment>('live');
   const syncAll = useSyncAllPlans();
 
   // Delete confirmation
@@ -107,20 +107,20 @@ export default function PlansManagement() {
             <button
               className={cn(
                 'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                stripeEnv === 'test' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-              )}
-              onClick={() => setStripeEnv('test')}
-            >
-              Teste
-            </button>
-            <button
-              className={cn(
-                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
                 stripeEnv === 'live' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
               )}
               onClick={() => setStripeEnv('live')}
             >
               Produção
+            </button>
+            <button
+              className={cn(
+                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                stripeEnv === 'test' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+              onClick={() => setStripeEnv('test')}
+            >
+              Teste
             </button>
           </div>
           <Badge variant="outline" className={cn('text-xs', stripeEnv === 'live' ? 'text-red-600 border-red-300' : 'text-blue-600 border-blue-300')}>
@@ -144,15 +144,15 @@ export default function PlansManagement() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="candidato" className="w-full">
+        <Tabs defaultValue="empresa" className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="candidato">Candidato</TabsTrigger>
             <TabsTrigger value="empresa">Empresa</TabsTrigger>
+            <TabsTrigger value="candidato">Candidato</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="candidato" className="mt-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {candidatePlans.map((plan, index) => (
+          <TabsContent value="empresa" className="mt-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {companyPlans.map((plan, index) => (
                 <PlanCard
                   key={plan.id}
                   plan={plan}
@@ -167,9 +167,9 @@ export default function PlansManagement() {
             </div>
           </TabsContent>
 
-          <TabsContent value="empresa" className="mt-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {companyPlans.map((plan, index) => (
+          <TabsContent value="candidato" className="mt-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {candidatePlans.map((plan, index) => (
                 <PlanCard
                   key={plan.id}
                   plan={plan}
