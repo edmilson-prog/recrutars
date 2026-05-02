@@ -9,8 +9,8 @@ import { useQueries } from '@tanstack/react-query';
 import { getStandardizedSkillsService } from '@/services/standardizedSkills/standardizedSkillsService';
 import { standardizedSkillKeys } from '@/hooks/useStandardizedSkillsQuery';
 import type { MatchSkillsInput } from '@/types/disc';
-import { Link } from 'react-router-dom';
-import { usePaginationParams } from '@/hooks/usePaginationParams';
+import { Link, useSearchParams } from 'react-router-dom';
+import { usePaginationParams, loadStoredPagination } from '@/hooks/usePaginationParams';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -104,7 +104,11 @@ import { calculateMatchBreakdown } from '@/lib/matchCalculator';
 import { getMatchScoreColor } from '@/types/disc';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useCandidateFilters } from '@/hooks/useCandidateFilters';
+import {
+  useCandidateFilters,
+  loadStoredTalentPoolFilters,
+  TALENT_POOL_FILTER_KEYS,
+} from '@/hooks/useCandidateFilters';
 import { useFavoriteCandidates } from '@/hooks/useFavoriteCandidates';
 import {
   Tooltip,
@@ -311,9 +315,53 @@ const MiniJobBars = ({
   );
 };
 
+// Restore filters + pagination atomically in a single setSearchParams call.
+// This avoids the race condition that would happen if `useCandidateFilters`
+// and `usePaginationParams` each restored independently — React Router's
+// setSearchParams updater receives the rendered `prev`, not the latest
+// queued state, so the second call would overwrite the first.
+const PAGINATION_STORAGE_KEY = 'talentPool:pagination';
+const PAGINATION_KEYS = ['page', 'pageSize'] as const;
+
 export default function CompanyCandidates() {
   const { user, currentCompany } = useAuth();
   const companyId = currentCompany?.id ?? '';
+
+  // Atomic restoration of Talent Pool state from sessionStorage. Runs once
+  // on mount; only applies if the URL has no relevant params (deep links and
+  // browser back/forward already carry params and must take precedence).
+  const [, setSearchParamsForRestore] = useSearchParams();
+  const hasRestoredRef = useRef(false);
+  useEffect(() => {
+    if (hasRestoredRef.current) return;
+    hasRestoredRef.current = true;
+
+    const currentParams = new URLSearchParams(window.location.search);
+    const hasFilterParam = TALENT_POOL_FILTER_KEYS.some((k) => currentParams.has(k));
+    const hasPaginationParam = PAGINATION_KEYS.some((k) => currentParams.has(k));
+    if (hasFilterParam || hasPaginationParam) return;
+
+    const storedFilters = loadStoredTalentPoolFilters();
+    const storedPagination = loadStoredPagination(PAGINATION_STORAGE_KEY);
+    const hasFilters = storedFilters && Object.keys(storedFilters).length > 0;
+    const hasPagination = storedPagination && Object.keys(storedPagination).length > 0;
+    if (!hasFilters && !hasPagination) return;
+
+    setSearchParamsForRestore(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (hasFilters) {
+          for (const [k, v] of Object.entries(storedFilters!)) next.set(k, v);
+        }
+        if (hasPagination) {
+          for (const [k, v] of Object.entries(storedPagination!)) next.set(k, v);
+        }
+        return next;
+      },
+      { replace: true }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch data from service layer
   const { data: jobs = [] } = useJobsByCompany(companyId);
@@ -418,10 +466,11 @@ export default function CompanyCandidates() {
     }
   }, [stateFilter, allLocations, locationFilter, setLocationFilter]);
 
-  // Pagination (synced with URL search params)
-  const { page: currentPage, pageSize, setPage: setCurrentPage, setPageSize, resetPage } = usePaginationParams({
+  // Pagination (synced with URL search params + sessionStorage backup)
+  const { page: currentPage, pageSize, setPage: setCurrentPage, setPageSize } = usePaginationParams({
     defaultPage: 1,
     defaultPageSize: DEFAULT_PAGE_SIZE,
+    storageKey: PAGINATION_STORAGE_KEY,
   });
 
   // UI state
@@ -644,15 +693,11 @@ export default function CompanyCandidates() {
     currentPage * pageSize
   );
 
-  // Reset page when sort or page size change (filter changes already reset page via useCandidateFilters)
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    resetPage();
-  }, [sortBy, pageSize, matchJobId, resetPage]);
+  // Page-reset on filter/sort/matchJob changes is handled at the setter
+  // level (useCandidateFilters' setParam clears `page` for PAGE_RESET_KEYS).
+  // pageSize changes already reset page inside usePaginationParams' setPageSize.
+  // Doing it in setters avoids destroying the restored page during the
+  // post-restoration re-render (which a useEffect-based approach would cause).
 
   // Stats bar metrics
   const statsMetrics = useMemo(() => {
