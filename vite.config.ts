@@ -31,14 +31,14 @@ export default defineConfig(() => ({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('@radix-ui')) return 'vendor-radix';
-            if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) return 'vendor-react';
-            if (id.includes('framer-motion')) return 'vendor-framer';
-            if (id.includes('@tanstack')) return 'vendor-query';
-            if (id.includes('recharts') || id.includes('d3')) return 'vendor-charts';
+            // Only split heavy & truly independent libs (no shared React helpers).
+            // Everything else (React + all React-coupled libs) stays in a single
+            // 'vendor' chunk to prevent circular cross-chunk dependencies.
+            if (id.includes('@react-pdf') || id.includes('pdfjs-dist')) return 'vendor-pdf';
+            if (id.includes('recharts') || id.match(/[/\\]d3-/)) return 'vendor-charts';
             if (id.includes('@supabase')) return 'vendor-supabase';
-            if (id.includes('lucide')) return 'vendor-icons';
-            if (id.includes('@react-pdf')) return 'vendor-pdf';
+            if (id.includes('xlsx')) return 'vendor-xlsx';
+            if (id.includes('mammoth')) return 'vendor-mammoth';
             return 'vendor';
           }
         }
