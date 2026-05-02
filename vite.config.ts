@@ -26,4 +26,23 @@ export default defineConfig(() => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('@radix-ui')) return 'vendor-radix';
+            if (id.includes('react-dom')) return 'vendor-react';
+            if (id.includes('framer-motion')) return 'vendor-framer';
+            if (id.includes('@tanstack')) return 'vendor-query';
+            if (id.includes('recharts') || id.includes('d3')) return 'vendor-charts';
+            if (id.includes('@supabase')) return 'vendor-supabase';
+            if (id.includes('lucide')) return 'vendor-icons';
+            if (id.includes('@react-pdf')) return 'vendor-pdf';
+            return 'vendor';
+          }
+        }
+      }
+    }
+  },
 }));
