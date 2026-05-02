@@ -1,12 +1,37 @@
 {
   "versions": [
     {
+      "version": "1.58.4",
+      "codename": "Mirror",
+      "type": "patch",
+      "releaseDate": "2026-05-02",
+      "description": "Correção da tela em branco que ocorria ao acessar o site publicado no Vercel e Cloudflare Pages.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Site publicado abria com tela em branco devido a erro interno de carregamento dos módulos do sistema"
+          ],
+          "details": {
+            "0": {
+              "description": "A divisão dos arquivos do build de produção criava referências circulares entre os módulos, fazendo com que partes essenciais do sistema tentassem carregar antes de estarem prontas. O site ficava completamente em branco com um erro no console. A solução foi reorganizar a divisão para que todas as partes interdependentes fiquem juntas, eliminando o conflito de carregamento.",
+              "files": [
+                "vite.config.ts"
+              ],
+              "routes": []
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.58.3",
       "codename": "Mirror",
       "type": "patch",
       "releaseDate": "2026-05-02",
       "description": "Correção de erro de build no Vercel com Vite 7, restauração dos filtros do banco de talentos ao navegar pelo menu e reordenação dos controles de planos no painel administrativo.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
