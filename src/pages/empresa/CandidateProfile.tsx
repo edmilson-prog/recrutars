@@ -8,6 +8,7 @@ import { useQueries } from '@tanstack/react-query';
 import { getStandardizedSkillsService } from '@/services/standardizedSkills/standardizedSkillsService';
 import { standardizedSkillKeys, useCandidateStandardizedSkills } from '@/hooks/useStandardizedSkillsQuery';
 import type { MatchSkillsInput } from '@/types/disc';
+import type { ExperienceWithCurrent } from '@/types/curriculum';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -178,6 +179,44 @@ function formatPhone(value: string): string {
     .replace(/(\d{5})(\d)/, '$1-$2');
 }
 
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  if (!domain) return '***';
+  if (local.length <= 4) return `${local[0]}***@${domain}`;
+  return `${local.slice(0, 3)}***${local.slice(-3)}@${domain}`;
+}
+
+function maskPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 6) return '(**) *****-****';
+  const ddd = digits.slice(0, 2);
+  const last2 = digits.slice(-2);
+  return `(${ddd}) *****-**${last2}`;
+}
+
+function calculateTotalExperienceYears(experiences: ExperienceWithCurrent[]): number {
+  let totalMonths = 0;
+  const now = new Date();
+  for (const exp of experiences) {
+    const [startYear, startMonth] = exp.startDate.split('-').map(Number);
+    if (isNaN(startYear) || isNaN(startMonth)) continue;
+    let endYear: number;
+    let endMonth: number;
+    if (exp.current || !exp.endDate) {
+      endYear = now.getFullYear();
+      endMonth = now.getMonth() + 1;
+    } else {
+      const parts = exp.endDate.split('-').map(Number);
+      if (isNaN(parts[0]) || isNaN(parts[1])) continue;
+      endYear = parts[0];
+      endMonth = parts[1];
+    }
+    const months = (endYear - startYear) * 12 + (endMonth - startMonth);
+    if (months > 0) totalMonths += months;
+  }
+  return Math.round(totalMonths / 12);
+}
+
 export default function CandidateProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -243,6 +282,15 @@ export default function CandidateProfile() {
     () => candidateApplications.some((a) => activeStatuses.includes(a.status)),
     [candidateApplications]
   );
+
+  const experienceYears = useMemo(() => {
+    const fromDb = candidate?.experience ?? 0;
+    if (fromDb > 0) return fromDb;
+    if (profile && profile.experiences.length > 0) {
+      return calculateTotalExperienceYears(profile.experiences);
+    }
+    return 0;
+  }, [profile, candidate?.experience]);
 
   const activeApplicationId = selectedApplicationId || candidateApplications[0]?.id || '';
   const { data: highlights } = useApplicationHighlights(activeApplicationId);
@@ -525,30 +573,45 @@ export default function CandidateProfile() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Briefcase className="w-4 h-4" />
-                      {candidate.experience} ano{candidate.experience !== 1 ? 's' : ''}{' '}
-                      de experiência
+                      {experienceYears > 0
+                        ? `${experienceYears} ano${experienceYears !== 1 ? 's' : ''} de experiência`
+                        : 'Sem experiência informada'}
                     </span>
                     <span className="flex items-center gap-1">
                       <Mail className="w-4 h-4" />
-                      {candidate.email}
+                      {hasActiveApplication ? candidate.email : maskEmail(candidate.email)}
                     </span>
-                    {hasActiveApplication && candidate.phone && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <a
-                            href={`https://wa.me/55${candidate.phone.replace(/\D/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 hover:text-foreground hover:underline transition-colors"
-                          >
-                            <Phone className="w-4 h-4" />
-                            {formatPhone(candidate.phone)}
-                          </a>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Abrir WhatsApp — visível porque o candidato possui candidatura ativa</p>
-                        </TooltipContent>
-                      </Tooltip>
+                    {candidate.phone && (
+                      hasActiveApplication ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <a
+                              href={`https://wa.me/55${candidate.phone.replace(/\D/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 hover:text-foreground hover:underline transition-colors"
+                            >
+                              <Phone className="w-4 h-4" />
+                              {formatPhone(candidate.phone)}
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Abrir WhatsApp — visível porque o candidato possui candidatura ativa</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="flex items-center gap-1 cursor-default">
+                              <Phone className="w-4 h-4" />
+                              {maskPhone(candidate.phone)}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Contato visível apenas para candidatos em processo seletivo</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )
                     )}
                   </div>
                 </div>
@@ -837,7 +900,9 @@ export default function CandidateProfile() {
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      {candidate.experience} ano{candidate.experience !== 1 ? 's' : ''} de experiência como {candidate.title}
+                      {experienceYears > 0
+                        ? `${experienceYears} ano${experienceYears !== 1 ? 's' : ''} de experiência como ${candidate.title}`
+                        : 'Nenhuma experiência profissional cadastrada'}
                     </p>
                   )}
                 </CardContent>
