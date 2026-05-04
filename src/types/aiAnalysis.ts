@@ -43,11 +43,18 @@ export interface ClaudeMessage {
   content: string;
 }
 
+export interface ClaudeCacheBlock {
+  type: 'text';
+  text: string;
+  cache_control?: { type: 'ephemeral' };
+}
+
 export interface ClaudeApiRequest {
   model: string;
   max_tokens: number;
   temperature: number;
-  system: string;
+  /** Either a plain string (legacy) OR an array of text blocks with optional cache_control (prompt caching). */
+  system: string | ClaudeCacheBlock[];
   messages: ClaudeMessage[];
 }
 
