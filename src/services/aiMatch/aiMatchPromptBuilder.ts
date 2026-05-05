@@ -12,6 +12,8 @@ import type { ClaudeApiRequest } from '@/types/aiAnalysis';
 import type { Candidate } from '@/types/candidate';
 import type { Job } from '@/types/job';
 import type { MatchResult } from '@/types/disc';
+import type { GaugeProResult } from '@/types/gaugePro';
+import { DIMENSION_NAMES, DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 
 const AI_MATCH_SYSTEM_PROMPT = `Você é um especialista em recrutamento e psicologia organizacional brasileiro,
 analisando a compatibilidade entre um candidato e uma vaga específica para um recrutador profissional.
@@ -19,15 +21,27 @@ analisando a compatibilidade entre um candidato e uma vaga específica para um r
 Sua análise deve ser profunda, contextual e prática — complementando (não substituindo) o score
 numérico do match algorítmico. Use linguagem clara, objetiva, em português brasileiro.
 
+CONTEXTO DO TESTE COMPORTAMENTAL DA PLATAFORMA:
+O teste Gauge-Pro é uma adaptação do framework Predictive Index (PI) com 5 dimensões:
+- **Dominância/Assertividade**: assertividade, iniciativa, busca por resultado direto.
+- **Sociabilidade/Extroversão**: comunicação, persuasão, energia social.
+- **Ritmo/Paciência**: constância, tolerância a rotinas, persistência.
+- **Conformidade/Estrutura**: aderência a regras, atenção a detalhes, processos.
+- **Orientação Relacional**: empatia, harmonia, sensibilidade interpessoal.
+
+Cada dimensão tem pontuação 0-100 e classificação Baixo/Médio/Alto. Não use a terminologia DISC
+(D/I/S/C) — é incorreta para este teste.
+
 ESTRUTURA OBRIGATÓRIA DA SAÍDA (markdown, exatamente nesta ordem):
 
 ## 📖 Leitura do candidato
 3-4 parágrafos contextualizando quem é essa pessoa profissionalmente: trajetória, padrão de movimentação,
-posicionamento atual no mercado, traços de personalidade que emergem do teste comportamental.
+posicionamento atual no mercado, traços de personalidade que emergem do Gauge-Pro (cite as dimensões
+predominantes e o arquétipo nominalmente).
 
 ## ✅ Por que combina
 Lista de 4-6 pontos com evidências concretas (cite cargos, anos, perfil) de por que o candidato faz sentido
-para essa vaga. Conecte explicitamente skills, experiência e comportamento.
+para essa vaga. Conecte explicitamente skills, experiência e o perfil Gauge-Pro.
 
 ## ⚠️ Pontos de atenção
 3-5 pontos genuínos de risco ou gap. Seja franco, sem suavizar. Indique como investigar cada um na entrevista.
@@ -44,12 +58,16 @@ REGRAS:
 - Não devolva score numérico — o algoritmo já entrega isso.
 - Não repita o conteúdo do score algorítmico — agregue contexto qualitativo.
 - Foque em insights que o algoritmo determinístico NÃO captura.
-- Use citações diretas do CV ou do teste quando reforçarem um ponto.`;
+- Use citações diretas do CV ou do teste quando reforçarem um ponto.
+- Quando referenciar o teste comportamental, use "Gauge-Pro" e os nomes das dimensões em português,
+  nunca "DISC".`;
 
 export interface BuildAIMatchPromptInput {
   candidate: Candidate;
   job: Job;
   matchResult: MatchResult;
+  /** Resultado completo do teste Gauge-Pro do candidato (se realizado). */
+  gaugeProResult?: GaugeProResult | null;
   /** Análise comportamental existente (prática), se houver — vai como contexto */
   behavioralAnalysisExisting?: string | null;
 }
@@ -90,13 +108,43 @@ ${benefits.length ? benefits.map((b) => `- ${b}`).join('\n') : '(não informado)
 }
 
 function buildCandidateBlock(input: BuildAIMatchPromptInput): string {
-  const { candidate, matchResult, behavioralAnalysisExisting } = input;
+  const { candidate, matchResult, gaugeProResult, behavioralAnalysisExisting } = input;
 
   const skills = candidate.skills ?? [];
-  const testResult = candidate.testResult;
-  const profileStr = testResult?.result
-    ? `Dominância=${testResult.result.dominance ?? '?'}, Influência=${testResult.result.influence ?? '?'}, Estabilidade=${testResult.result.steadiness ?? '?'}, Conformidade=${testResult.result.compliance ?? '?'} — Perfil: ${testResult.result.profile ?? '?'}`
-    : '(teste não realizado)';
+
+  const gauge = gaugeProResult;
+  const gaugeProBlock = gauge
+    ? (() => {
+        const scores = gauge.finalScores;
+        const cls = gauge.classifications;
+        const lines = (Object.keys(scores) as Array<keyof typeof scores>).map((d) => {
+          const name = DIMENSION_SHORT_NAMES[d];
+          const full = DIMENSION_NAMES[d];
+          const score = scores[d];
+          const classification = cls[d];
+          const label = classification === 'high' ? 'Alto' : classification === 'medium' ? 'Médio' : 'Baixo';
+          return `- ${name} (${full}): ${score}% — ${label}`;
+        }).join('\n');
+        const archetypeName = (gauge.archetype as { name?: string })?.name ?? '?';
+        const archetypeDesc = (gauge.archetype as { description?: string })?.description ?? '';
+        const primary = DIMENSION_SHORT_NAMES[gauge.primaryDimension];
+        const secondary = DIMENSION_SHORT_NAMES[gauge.secondaryDimension];
+        const strengths = gauge.strengths?.length ? gauge.strengths.map((s) => `- ${s}`).join('\n') : '(não informado)';
+        const dev = gauge.developmentAreas?.length ? gauge.developmentAreas.map((s) => `- ${s}`).join('\n') : '(não informado)';
+        return `## Perfil Comportamental (Gauge-Pro — adaptação do Predictive Index)
+**Arquétipo:** ${archetypeName}${archetypeDesc ? ` — ${archetypeDesc}` : ''}
+**Dimensão primária:** ${primary} · **Dimensão secundária:** ${secondary}
+
+### Pontuações por dimensão (escala 0-100)
+${lines}
+
+### Pontos fortes identificados pelo teste
+${strengths}
+
+### Áreas de desenvolvimento
+${dev}`;
+      })()
+    : '## Perfil Comportamental (Gauge-Pro)\n(teste não realizado)';
 
   return `# CONTEXTO DO CANDIDATO
 
@@ -116,8 +164,7 @@ ${candidate.education || '(não informado)'}
 ## Skills declaradas
 ${skills.length ? skills.map((s) => `- ${s}`).join('\n') : '(não informado)'}
 
-## Perfil Comportamental (DISC)
-${profileStr}
+${gaugeProBlock}
 
 ${behavioralAnalysisExisting ? `## Análise comportamental existente (referência)\n${behavioralAnalysisExisting}` : ''}
 
