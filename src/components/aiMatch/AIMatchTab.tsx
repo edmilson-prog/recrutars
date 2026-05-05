@@ -1,0 +1,92 @@
+/**
+ * AIMatchTab — Orquestrador da experiência:
+ *  - loading inicial (busca cache + cota em paralelo)
+ *  - empty state (sem análise + cota disponível)
+ *  - exhausted state (sem análise + cota=0)
+ *  - content (análise existe → header + content)
+ *  - regenerar abre RegenerateConfirmDialog
+ */
+
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { useAIMatchAnalysis, useAIMatchQuotaStatus, useGenerateAIMatch } from '@/hooks/useAIMatchQuery';
+import type { Candidate, Job } from '@/types/database';
+import type { MatchResult } from '@/types/disc';
+import { AIMatchEmptyState } from './AIMatchEmptyState';
+import { AIMatchExhaustedState } from './AIMatchExhaustedState';
+import { AIMatchHeader } from './AIMatchHeader';
+import { AIMatchContent } from './AIMatchContent';
+import { RegenerateConfirmDialog } from './RegenerateConfirmDialog';
+import { Loader2 } from 'lucide-react';
+
+interface AIMatchTabProps {
+  candidate: Candidate;
+  job: Job;
+  matchResult: MatchResult;
+  behavioralAnalysisExisting?: string | null;
+}
+
+export function AIMatchTab({ candidate, job, matchResult, behavioralAnalysisExisting }: AIMatchTabProps) {
+  const analysisQ = useAIMatchAnalysis(candidate.id, job.id);
+  const quotaQ = useAIMatchQuotaStatus();
+  const generate = useGenerateAIMatch();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const runGeneration = async () => {
+    try {
+      await generate.mutateAsync({ candidate, job, matchResult, behavioralAnalysisExisting });
+      toast.success('Análise IA gerada com sucesso');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao gerar análise';
+      if (msg === 'quota_exhausted') {
+        toast.error('Cota de análises IA esgotada este mês');
+      } else {
+        toast.error(`Erro ao gerar análise: ${msg}`);
+      }
+    }
+  };
+
+  if (analysisQ.isLoading || quotaQ.isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-muted-foreground">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+        Carregando…
+      </div>
+    );
+  }
+
+  const analysis = analysisQ.data;
+  const quota = quotaQ.data;
+
+  if (analysis) {
+    return (
+      <>
+        <AIMatchHeader
+          analysis={analysis}
+          quota={quota}
+          isRegenerating={generate.isPending}
+          onRegenerate={() => setConfirmOpen(true)}
+        />
+        <AIMatchContent analysis={analysis} />
+        <RegenerateConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          quota={quota}
+          onConfirm={runGeneration}
+        />
+      </>
+    );
+  }
+
+  if (quota && !quota.unlimited && quota.remaining === 0) {
+    return <AIMatchExhaustedState quota={quota} />;
+  }
+
+  return (
+    <AIMatchEmptyState
+      quota={quota}
+      isGenerating={generate.isPending}
+      onGenerate={runGeneration}
+    />
+  );
+}
