@@ -16,6 +16,7 @@ import type { Candidate } from '@/types/candidate';
 import type { Job } from '@/types/job';
 import type { MatchResult } from '@/types/disc';
 import type { AIMatchAnalysis, AIMatchQuotaStatus } from '@/types/aiMatch';
+import type { GaugeProResult } from '@/types/gaugePro';
 
 export const AI_MATCH_KEYS = {
   analysis: (candidateId: string, jobId: string) => ['aiMatch', 'analysis', candidateId, jobId] as const,
@@ -46,6 +47,7 @@ export interface GenerateAIMatchParams {
   candidate: Candidate;
   job: Job;
   matchResult: MatchResult;
+  gaugeProResult?: GaugeProResult | null;
   behavioralAnalysisExisting?: string | null;
 }
 
@@ -64,7 +66,7 @@ function useAIMatchMutation() {
 
   return useMutation({
     mutationFn: async (params: GenerateAIMatchParams): Promise<AIMatchAnalysis> => {
-      const { candidate, job, matchResult, behavioralAnalysisExisting } = params;
+      const { candidate, job, matchResult, gaugeProResult, behavioralAnalysisExisting } = params;
 
       // Step 1: reserve
       const reservation = await service.reserveCredit(candidate.id, job.id);
@@ -81,7 +83,7 @@ function useAIMatchMutation() {
 
         // Step 3 + 4: build + call
         const request = buildAIMatchRequest(
-          { candidate, job, matchResult, behavioralAnalysisExisting },
+          { candidate, job, matchResult, gaugeProResult, behavioralAnalysisExisting },
           settings.model,
           Math.max(settings.maxTokens, 3000), // dossier needs headroom
           settings.temperature,

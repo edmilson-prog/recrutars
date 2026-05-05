@@ -12,11 +12,13 @@ import { AIMatchTab } from './AIMatchTab';
 import type { Candidate } from '@/types/candidate';
 import type { Job } from '@/types/job';
 import type { MatchResult } from '@/types/disc';
+import type { GaugeProResult } from '@/types/gaugePro';
 
 interface MatchTabsProps {
   candidate: Candidate;
   job: Job;
   matchResult: MatchResult;
+  gaugeProResult?: GaugeProResult | null;
   behavioralAnalysisExisting?: string | null;
   /** O bloco completo do match algorítmico atual (MatchBreakdown + componentes adjacentes) */
   algorithmicChildren: React.ReactNode;
@@ -26,6 +28,7 @@ export function MatchTabs({
   candidate,
   job,
   matchResult,
+  gaugeProResult,
   behavioralAnalysisExisting,
   algorithmicChildren,
 }: MatchTabsProps) {
@@ -51,6 +54,7 @@ export function MatchTabs({
           candidate={candidate}
           job={job}
           matchResult={matchResult}
+          gaugeProResult={gaugeProResult}
           behavioralAnalysisExisting={behavioralAnalysisExisting}
         />
       </TabsContent>

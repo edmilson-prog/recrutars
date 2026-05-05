@@ -1173,6 +1173,7 @@ export default function CandidateProfile() {
                       candidate={candidate}
                       job={activeMatchJob}
                       matchResult={matchResult}
+                      gaugeProResult={gaugeProResult}
                       behavioralAnalysisExisting={null}
                       algorithmicChildren={
                         <MatchBreakdown

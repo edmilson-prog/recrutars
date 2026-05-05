@@ -13,6 +13,7 @@ import { useAIMatchAnalysis, useAIMatchQuotaStatus, useGenerateAIMatch } from '@
 import type { Candidate } from '@/types/candidate';
 import type { Job } from '@/types/job';
 import type { MatchResult } from '@/types/disc';
+import type { GaugeProResult } from '@/types/gaugePro';
 import { AIMatchEmptyState } from './AIMatchEmptyState';
 import { AIMatchExhaustedState } from './AIMatchExhaustedState';
 import { AIMatchHeader } from './AIMatchHeader';
@@ -24,10 +25,11 @@ interface AIMatchTabProps {
   candidate: Candidate;
   job: Job;
   matchResult: MatchResult;
+  gaugeProResult?: GaugeProResult | null;
   behavioralAnalysisExisting?: string | null;
 }
 
-export function AIMatchTab({ candidate, job, matchResult, behavioralAnalysisExisting }: AIMatchTabProps) {
+export function AIMatchTab({ candidate, job, matchResult, gaugeProResult, behavioralAnalysisExisting }: AIMatchTabProps) {
   const analysisQ = useAIMatchAnalysis(candidate.id, job.id);
   const quotaQ = useAIMatchQuotaStatus();
   const generate = useGenerateAIMatch();
@@ -35,7 +37,7 @@ export function AIMatchTab({ candidate, job, matchResult, behavioralAnalysisExis
 
   const runGeneration = async () => {
     try {
-      await generate.mutateAsync({ candidate, job, matchResult, behavioralAnalysisExisting });
+      await generate.mutateAsync({ candidate, job, matchResult, gaugeProResult, behavioralAnalysisExisting });
       toast.success('Análise IA gerada com sucesso');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro ao gerar análise';
