@@ -40,6 +40,18 @@ interface UseSettingsReturn {
     value: unknown
   ) => void;
   saveSection: (categoryKey: string, subcategoryKey: string) => void;
+  /**
+   * Atomic single-field save: updates local state AND persists immediately,
+   * bypassing any pending unsaved changes in other fields of the same section.
+   * Used by reinforced flows (e.g. prompt editor) that need a self-contained
+   * save commit per field.
+   */
+  saveField: (
+    categoryKey: string,
+    subcategoryKey: string,
+    fieldKey: string,
+    value: unknown,
+  ) => Promise<void>;
   restoreDefaults: (categoryKey: string, subcategoryKey: string) => void;
   isLoading: boolean;
 }
@@ -199,6 +211,40 @@ export function useSettings({
     [panel, localValues, categories, userId, userName, entityId],
   );
 
+  // Salvar um único field atomicamente (usado por fluxos reforçados, ex. prompts)
+  const saveField = useCallback(
+    async (
+      categoryKey: string,
+      subcategoryKey: string,
+      fieldKey: string,
+      value: unknown,
+    ) => {
+      const nextValues: ConfigState = {
+        ...localValues,
+        [categoryKey]: {
+          ...(localValues[categoryKey] ?? {}),
+          [subcategoryKey]: {
+            ...(localValues[categoryKey]?.[subcategoryKey] ?? {}),
+            [fieldKey]: value,
+          },
+        },
+      };
+      setLocalValues(nextValues);
+
+      await saveMutationRef.current.mutateAsync({
+        panel,
+        categoryKey,
+        subcategoryKey,
+        values: nextValues,
+        categories,
+        userId,
+        userName,
+        entityId,
+      });
+    },
+    [panel, localValues, categories, userId, userName, entityId],
+  );
+
   // Restaurar padrões de uma seção
   const restoreDefaults = useCallback(
     (categoryKey: string, subcategoryKey: string) => {
@@ -232,6 +278,7 @@ export function useSettings({
     history: remoteHistory,
     updateValue,
     saveSection,
+    saveField,
     restoreDefaults,
     isLoading: isLoadingRemote && !isReady,
   };

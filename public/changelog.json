@@ -1,12 +1,67 @@
 {
   "versions": [
     {
+      "version": "1.60.0",
+      "codename": "Curator",
+      "type": "minor",
+      "releaseDate": "2026-05-05",
+      "description": "Parametrização dos prompts de IA via configurações + UI reforçada de edição (advertência, dupla confirmação com diff e digitação obrigatória, histórico completo por prompt).",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Prompt do AI Match agora é parametrizável em /admin/configuracoes → IA → Prompts de Análise (4º campo). Mudanças entram em vigor imediatamente para as próximas análises geradas, sem deploy.",
+            "UI reforçada para edição de qualquer prompt de IA: advertência ao iniciar a edição, dupla confirmação ao salvar (com diff completo e digitação obrigatória da palavra CONFIRMAR) e histórico cronológico de alterações por prompt com diff e botão de restauração.",
+            "Botão \"Restaurar padrão\" em cada editor de prompt carrega o texto-fábrica original definido no sistema."
+          ],
+          "details": {
+            "0": {
+              "description": "Adicionado o field aiMatchSystemPrompt à subcategoria admin-ai-prompts em settingsConfig.ts. O builder do AI Match passa a ler o prompt de system_settings via loadAgentSettingsAsync; mantém o texto-fábrica DEFAULT_AI_MATCH_SYSTEM_PROMPT como fallback caso a configuração esteja vazia. O conteúdo inicial é cópia byte-a-byte do prompt anterior hardcoded — comportamento idêntico ao da v1.59.0 até que um admin edite.",
+              "files": [
+                "src/data/settingsConfig.ts",
+                "src/lib/aiAgent/settingsLoader.ts",
+                "src/types/aiAnalysis.ts",
+                "src/services/aiMatch/aiMatchPromptBuilder.ts",
+                "src/hooks/useAIMatchQuery.ts"
+              ],
+              "routes": ["/admin/configuracoes", "/empresa/candidatos/:id"]
+            },
+            "1": {
+              "description": "Quatro componentes novos em src/components/admin/prompts: PromptEditor (wrapper com modos visualização/edição), PromptEditConfirmDialog (dupla confirmação + caixa CONFIRMAR), PromptHistorySheet (timeline de revisões) e PromptDiffView (diff inline linha-a-linha via LCS sem libs externas). ConfigContent passa a renderizar PromptEditor para os 4 prompts de IA (system, prática, técnica, AI Match) com salvamento atômico por campo via saveField em useSettings.",
+              "files": [
+                "src/components/admin/prompts/PromptEditor.tsx",
+                "src/components/admin/prompts/PromptEditConfirmDialog.tsx",
+                "src/components/admin/prompts/PromptHistorySheet.tsx",
+                "src/components/admin/prompts/PromptDiffView.tsx",
+                "src/components/settings/ConfigContent.tsx",
+                "src/components/settings/ConfigLayout.tsx",
+                "src/hooks/useSettings.ts",
+                "src/hooks/useSettingsHistoryByField.ts",
+                "src/pages/admin/Settings.tsx",
+                "src/pages/candidato/Settings.tsx"
+              ],
+              "routes": ["/admin/configuracoes"]
+            },
+            "2": {
+              "description": "useSettingsHistoryByField filtra a tabela existente settings_history por (panel, category_key, subcategory_key, field_key). PromptHistorySheet lista cronologicamente cada edição com diff colapsável e botão \"Restaurar versão anterior\" — a restauração apenas pré-popula o editor; o salvamento ainda exige novo fluxo de dupla confirmação.",
+              "files": [
+                "src/hooks/useSettingsHistoryByField.ts",
+                "src/components/admin/prompts/PromptHistorySheet.tsx"
+              ],
+              "routes": ["/admin/configuracoes"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.59.0",
       "codename": "Insight",
       "type": "minor",
       "releaseDate": "2026-05-03",
       "description": "AI Match: análise inteligente de compatibilidade candidato↔vaga via Claude, com cota mensal por empresa configurável por plano. Complementa o match algorítmico com dossiê textual em 5 seções.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

@@ -35,11 +35,12 @@ export function useAIMatchAnalysis(
   });
 }
 
-export function useAIMatchQuotaStatus() {
+export function useAIMatchQuotaStatus(options?: { enabled?: boolean }) {
   return useQuery<AIMatchQuotaStatus>({
     queryKey: AI_MATCH_KEYS.quota(),
     queryFn: () => getAIMatchService().getQuotaStatus(),
     staleTime: 30_000,
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -83,7 +84,14 @@ function useAIMatchMutation() {
 
         // Step 3 + 4: build + call
         const request = buildAIMatchRequest(
-          { candidate, job, matchResult, gaugeProResult, behavioralAnalysisExisting },
+          {
+            candidate,
+            job,
+            matchResult,
+            gaugeProResult,
+            behavioralAnalysisExisting,
+            customSystemPrompt: settings.aiMatchSystemPrompt,
+          },
           settings.model,
           Math.max(settings.maxTokens, 3000), // dossier needs headroom
           settings.temperature,

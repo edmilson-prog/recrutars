@@ -97,6 +97,7 @@ export interface AIAgentSettings {
   systemPrompt?: string;
   practicalPromptTemplate?: string;
   technicalPromptTemplate?: string;
+  aiMatchSystemPrompt?: string;
 }
 
 // --- LLM Provider Config (PRD-080) ---

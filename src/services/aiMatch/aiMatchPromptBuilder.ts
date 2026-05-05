@@ -15,7 +15,7 @@ import type { MatchResult } from '@/types/disc';
 import type { GaugeProResult } from '@/types/gaugePro';
 import { DIMENSION_NAMES, DIMENSION_SHORT_NAMES } from '@/types/gaugePro';
 
-const AI_MATCH_SYSTEM_PROMPT = `Você é um especialista em recrutamento e psicologia organizacional brasileiro,
+export const DEFAULT_AI_MATCH_SYSTEM_PROMPT = `Você é um especialista em recrutamento e psicologia organizacional brasileiro,
 analisando a compatibilidade entre um candidato e uma vaga específica para um recrutador profissional.
 
 Sua análise deve ser profunda, contextual e prática — complementando (não substituindo) o score
@@ -70,6 +70,8 @@ export interface BuildAIMatchPromptInput {
   gaugeProResult?: GaugeProResult | null;
   /** Análise comportamental existente (prática), se houver — vai como contexto */
   behavioralAnalysisExisting?: string | null;
+  /** Prompt do sistema customizado (parametrizado em system_settings). Default: DEFAULT_AI_MATCH_SYSTEM_PROMPT. */
+  customSystemPrompt?: string;
 }
 
 /**
@@ -191,13 +193,14 @@ export function buildAIMatchRequest(
 ): ClaudeApiRequest {
   const jobBlock = buildJobBlock(input.job);
   const candidateBlock = buildCandidateBlock(input);
+  const systemPrompt = input.customSystemPrompt?.trim() || DEFAULT_AI_MATCH_SYSTEM_PROMPT;
 
   return {
     model,
     max_tokens: maxTokens,
     temperature,
     system: [
-      { type: 'text', text: AI_MATCH_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } },
       { type: 'text', text: jobBlock, cache_control: { type: 'ephemeral' } },
     ],
     messages: [

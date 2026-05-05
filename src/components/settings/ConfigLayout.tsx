@@ -18,7 +18,7 @@ import { ConfigSidebar } from './ConfigSidebar';
 import { ConfigContent } from './ConfigContent';
 import { ConfigSearch } from './ConfigSearch';
 import { ConfigHistoryModal } from './ConfigHistoryModal';
-import type { ConfigCategory, ConfigActiveState, ConfigState, ConfigHistoryEntry } from '@/types/settings';
+import type { ConfigCategory, ConfigActiveState, ConfigState, ConfigHistoryEntry, ConfigPanel } from '@/types/settings';
 import { searchSettings } from '@/data/settingsConfig';
 
 interface ConfigLayoutProps {
@@ -27,6 +27,7 @@ interface ConfigLayoutProps {
   categories: ConfigCategory[];
   values: ConfigState;
   history: ConfigHistoryEntry[];
+  panel: ConfigPanel;
   onValueChange: (
     categoryKey: string,
     subcategoryKey: string,
@@ -34,6 +35,12 @@ interface ConfigLayoutProps {
     value: unknown
   ) => void;
   onSave: (categoryKey: string, subcategoryKey: string) => void;
+  onSaveField?: (
+    categoryKey: string,
+    subcategoryKey: string,
+    fieldKey: string,
+    value: unknown,
+  ) => Promise<void>;
   onRestoreDefaults: (categoryKey: string, subcategoryKey: string) => void;
 }
 
@@ -43,8 +50,10 @@ export function ConfigLayout({
   categories,
   values,
   history,
+  panel,
   onValueChange,
   onSave,
+  onSaveField,
   onRestoreDefaults,
 }: ConfigLayoutProps) {
   const isMobile = useIsMobile();
@@ -166,10 +175,17 @@ export function ConfigLayout({
               category={activeCategory}
               subcategory={activeSubcategory}
               values={activeValues}
+              panel={panel}
               onValueChange={handleValueChange}
               onSave={handleSave}
               onRestoreDefaults={handleRestoreDefaults}
               onNavigate={handleNavigate}
+              onSaveField={
+                onSaveField
+                  ? (fieldKey, value) =>
+                      onSaveField(active.categoryKey, active.subcategoryKey, fieldKey, value)
+                  : undefined
+              }
             />
           )}
         </main>

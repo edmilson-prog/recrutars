@@ -18,6 +18,7 @@ export default function AdminSettings() {
     history,
     updateValue,
     saveSection,
+    saveField,
     restoreDefaults,
     isLoading,
   } = useSettings({
@@ -49,8 +50,10 @@ export default function AdminSettings() {
           categories={adminSettingsCategories}
           values={values}
           history={history}
+          panel="admin"
           onValueChange={updateValue}
           onSave={saveSection}
+          onSaveField={saveField}
           onRestoreDefaults={restoreDefaults}
         />
       </div>

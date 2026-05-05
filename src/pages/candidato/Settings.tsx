@@ -65,6 +65,7 @@ export default function CandidateSettings() {
           categories={filteredCategories}
           values={values}
           history={history}
+          panel="candidate"
           onValueChange={updateValue}
           onSave={saveSection}
           onRestoreDefaults={restoreDefaults}

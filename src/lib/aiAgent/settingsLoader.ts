@@ -105,6 +105,7 @@ export async function loadAgentSettingsAsync(): Promise<AIAgentSettings> {
         systemPrompt: (promptSettings?.systemPrompt as string) || undefined,
         practicalPromptTemplate: (promptSettings?.practicalPromptTemplate as string) || undefined,
         technicalPromptTemplate: (promptSettings?.technicalPromptTemplate as string) || undefined,
+        aiMatchSystemPrompt: (promptSettings?.aiMatchSystemPrompt as string) || undefined,
       };
     }
 
