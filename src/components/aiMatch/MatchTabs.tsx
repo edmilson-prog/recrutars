@@ -9,7 +9,8 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { BarChart3, Sparkles } from 'lucide-react';
 import { AIMatchTab } from './AIMatchTab';
-import type { Candidate, Job } from '@/types/database';
+import type { Candidate } from '@/types/candidate';
+import type { Job } from '@/types/job';
 import type { MatchResult } from '@/types/disc';
 
 interface MatchTabsProps {

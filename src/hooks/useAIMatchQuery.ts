@@ -12,7 +12,8 @@ import { getAIMatchService } from '@/services/aiMatch/aiMatchService';
 import { buildAIMatchRequest } from '@/services/aiMatch/aiMatchPromptBuilder';
 import { callLLMApi } from '@/lib/aiAgent/llmApiService';
 import { loadAgentSettingsAsync } from '@/lib/aiAgent/settingsLoader';
-import type { Candidate, Job } from '@/types/database';
+import type { Candidate } from '@/types/candidate';
+import type { Job } from '@/types/job';
 import type { MatchResult } from '@/types/disc';
 import type { AIMatchAnalysis, AIMatchQuotaStatus } from '@/types/aiMatch';
 

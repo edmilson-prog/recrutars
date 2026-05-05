@@ -1170,8 +1170,8 @@ export default function CandidateProfile() {
                 {matchResult && activeMatchJob && candidate && (
                   <div key={selectedMatchJobId} aria-live="polite">
                     <MatchTabs
-                      candidate={candidate as unknown as import('@/types/database').Tables<'candidates'>['Row']}
-                      job={activeMatchJob as unknown as import('@/types/database').Tables<'jobs'>['Row']}
+                      candidate={candidate}
+                      job={activeMatchJob}
                       matchResult={matchResult}
                       behavioralAnalysisExisting={null}
                       algorithmicChildren={

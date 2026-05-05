@@ -10,7 +10,8 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useAIMatchAnalysis, useAIMatchQuotaStatus, useGenerateAIMatch } from '@/hooks/useAIMatchQuery';
-import type { Candidate, Job } from '@/types/database';
+import type { Candidate } from '@/types/candidate';
+import type { Job } from '@/types/job';
 import type { MatchResult } from '@/types/disc';
 import { AIMatchEmptyState } from './AIMatchEmptyState';
 import { AIMatchExhaustedState } from './AIMatchExhaustedState';
