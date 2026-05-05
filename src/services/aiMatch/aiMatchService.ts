@@ -6,6 +6,7 @@
  */
 
 import type { AIMatchAnalysis, AIMatchQuotaStatus, AIMatchReservation } from '@/types/aiMatch';
+import { AIMatchServiceSupabase } from './aiMatchService.supabase';
 
 export interface IAIMatchService {
   /** Busca análise cacheada para o par (candidato, vaga). Retorna null se não existir. */
@@ -36,10 +37,7 @@ let _instance: IAIMatchService | null = null;
 
 export function getAIMatchService(): IAIMatchService {
   if (!_instance) {
-    // Lazy import to avoid circular deps
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { AIMatchServiceSupabase } = require('./aiMatchService.supabase');
     _instance = new AIMatchServiceSupabase();
   }
-  return _instance!;
+  return _instance;
 }
