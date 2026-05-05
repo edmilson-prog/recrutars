@@ -2,10 +2,12 @@
 
 **Data:** 2026-05-05
 **Branch:** `feat/ai-match`
-**Versão atual da branch:** `v1.59.0` "Insight" (já em commit `1f085b6`)
-**Último commit:** `e0acfa1` (`fix(ai-match): collapsible sections default to closed`)
+**Versão atual da branch:** `v1.60.0` "Curator" (commit `d3f361b`)
+**Último commit:** `7ea6811` (`docs(checkpoint): document pending uncommitted changes`)
 **Solicitado por:** Edmilson Souza
-**Continua em:** próxima sessão (auto mode estava ativo, sessão pausada para retomada)
+
+> **🟢 STATUS — 2026-05-05 (auditoria de pendências):**
+> R1 (mover AI Match prompt) e R2 (PromptEditor reforçado) **JÁ FORAM IMPLEMENTADAS** no commit `d3f361b` (v1.60.0 "Curator") — parte foi feita em sessão paralela depois deste checkpoint inicial. Conferir a seção "Status pós-implementação" abaixo. As únicas pendências reais agora são: (a) commit do arquivo `097_fix_ai_match_quota_subscription_lookup.sql` (já aplicado no banco) e (b) decidir/commitar mudanças de wording em `AIMatchQuotaBadge`/`RegenerateConfirmDialog`.
 
 ---
 
@@ -270,20 +272,58 @@ Modificações pertencentes a outras features em curso, alheias ao AI Match. Nã
 
 ---
 
-## Como retomar
+## Status pós-implementação (auditoria 2026-05-05)
 
-Na próxima sessão, comando recomendado:
+### ✅ R1 — Migração do AI Match prompt para system_settings — **CONCLUÍDO** em commit `d3f361b`
 
-```
-/superpowers:writing-plans
+Implementado:
+- Adicionado 4º field `aiMatchSystemPrompt` na subcategoria `admin-ai-prompts` em `src/data/settingsConfig.ts`
+- `settingsLoader.ts` lê `aiMatchSystemPrompt` junto com os 3 prompts existentes
+- `aiMatchPromptBuilder.ts` aceita `customSystemPrompt` (fallback para `DEFAULT_AI_MATCH_SYSTEM_PROMPT`)
+- `useAIMatchQuery` passa `settings.aiMatchSystemPrompt` para o builder
 
-Spec aprovada em D:\claude\recrutars-maike\docs\superpowers\checkpoints\2026-05-05-prompts-parametrizaveis.md — Parametrizar prompts de IA via system_settings com UI reforçada (advertência, dupla confirmação, histórico). Aplicar a 4 prompts (3 existentes + AI Match novo).
-```
+### ✅ R2 — UI reforçada para edição de prompts — **CONCLUÍDO** em commit `d3f361b`
 
-Ou simplesmente:
+Implementado para os 4 prompts (`systemPrompt`, `practicalPromptTemplate`, `technicalPromptTemplate`, `aiMatchSystemPrompt`):
+- `PromptEditor.tsx` — wrapper com warning dialog ao iniciar edição, botão "Restaurar padrão", discard guard
+- `PromptEditConfirmDialog.tsx` — diff view + caixa obrigatória digitando "CONFIRMAR" para habilitar Salvar
+- `PromptHistorySheet.tsx` — timeline cronológica de `settings_history` com diff e botão restaurar
+- `PromptDiffView.tsx` — diff inline LCS sem dependência externa
+- `useSettingsHistoryByField.ts` — hook React Query filtrando settings_history por field
+- `useSettings.saveField()` — persistência atômica per-field
+- `ConfigContent` detecta `admin/ai/prompts` e usa `PromptEditor` em vez de textarea simples
 
-> "Continue do checkpoint `2026-05-05-prompts-parametrizaveis.md`."
+### 🎁 Extras feitos no mesmo commit
+
+- `viewOnly` prop em `AIMatchHeader` (esconde badge de cota em fluxo de impersonação)
+- `AIMatchImpersonationNotice` componente novo
+- `AIMatchTab` detecta impersonação e propaga `viewOnly`
+
+### 📦 Versão
+
+- Bumped: **v1.59.0 "Insight" → v1.60.0 "Curator"**
+- Changelog atualizado em `public/changelog.json`
 
 ---
 
-**Fim do checkpoint.** Esta sessão pausa aqui.
+## Pendências REAIS para próxima sessão (curtas)
+
+1. **Commitar migration 097** (já aplicada no banco):
+   ```
+   git add sql/migrations/097_fix_ai_match_quota_subscription_lookup.sql
+   git commit -m "fix(ai-match): correct subscription lookup join (use companies.profile_id)"
+   ```
+
+2. **Decidir + commitar mudanças de wording** em `AIMatchQuotaBadge.tsx` e `RegenerateConfirmDialog.tsx` ("restantes" → "utilizadas"). Verificar consistência com `AIMatchHeader`/`AIMatchEmptyState`/`AIMatchExhaustedState`.
+
+3. **Push final** para o remote.
+
+---
+
+## Como retomar
+
+> "Limpar pendências do checkpoint `2026-05-05-prompts-parametrizaveis.md` (097 migration + wording)."
+
+---
+
+**Fim do checkpoint.**
