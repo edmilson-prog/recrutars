@@ -56,8 +56,8 @@ export function RegenerateConfirmDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Regenerar análise IA?</AlertDialogTitle>
           <AlertDialogDescription>
-            Isso irá consumir 1 de {quota?.unlimited ? '∞' : quota?.remaining ?? '?'} análises restantes este mês.
-            Após regeneração, sua cota disponível será {remainingAfter}.
+            Isso irá consumir 1 análise. Você já utilizou {quota?.used ?? '?'} de {quota?.unlimited ? '∞' : quota?.total ?? '?'} este mês.
+            Após regeneração, ainda restarão {remainingAfter} análises.
             <br /><br />
             A análise atual será substituída pela nova.
           </AlertDialogDescription>

@@ -1,5 +1,5 @@
 /**
- * AIMatchQuotaBadge — "X de N restantes" (ou "Ilimitado")
+ * AIMatchQuotaBadge — "X de N utilizadas" (ou "Ilimitado")
  */
 
 import { cn } from '@/lib/utils';
@@ -39,9 +39,9 @@ export function AIMatchQuotaBadge({ status, className }: AIMatchQuotaBadgeProps)
         !isExhausted && !isLow && 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300',
         className,
       )}
-      aria-label={`${status.remaining} de ${status.total} análises IA restantes este mês`}
+      aria-label={`${status.used} de ${status.total} análises IA utilizadas este mês`}
     >
-      {status.remaining} de {status.total} restantes
+      {status.used} de {status.total} utilizadas
     </span>
   );
 }
