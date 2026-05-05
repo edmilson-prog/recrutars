@@ -1,6 +1,6 @@
 /**
  * AIMatchContent — Renderiza o markdown estruturado do dossiê em seções colapsáveis.
- * Cada bloco "## " vira um Collapsible (default expandido), com o restante do conteúdo
+ * Cada bloco "## " vira um Collapsible (default fechado), com o restante do conteúdo
  * de cada seção renderizado via renderAnalysisContent existente.
  */
 
@@ -62,7 +62,7 @@ export function AIMatchContent({ analysis }: AIMatchContentProps) {
 }
 
 function SectionCollapsible({ title, body }: ParsedSection) {
-  const [open, setOpen] = useState(true); // expanded by default
+  const [open, setOpen] = useState(false); // collapsed by default
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="rounded-lg border bg-card">
       <CollapsibleTrigger
