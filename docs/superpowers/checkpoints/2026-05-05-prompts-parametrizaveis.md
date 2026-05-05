@@ -2,10 +2,12 @@
 
 **Data:** 2026-05-05
 **Branch:** `feat/ai-match`
-**Versão atual da branch:** `v1.59.0` "Insight" (já em commit `1f085b6`)
-**Último commit:** `e0acfa1` (`fix(ai-match): collapsible sections default to closed`)
+**Versão atual da branch:** `v1.60.0` "Curator" (commit `d3f361b`)
+**Último commit:** `7ea6811` (`docs(checkpoint): document pending uncommitted changes`)
 **Solicitado por:** Edmilson Souza
-**Continua em:** próxima sessão (auto mode estava ativo, sessão pausada para retomada)
+
+> **🟢 STATUS — 2026-05-05 (auditoria de pendências):**
+> R1 (mover AI Match prompt) e R2 (PromptEditor reforçado) **JÁ FORAM IMPLEMENTADAS** no commit `d3f361b` (v1.60.0 "Curator") — parte foi feita em sessão paralela depois deste checkpoint inicial. Conferir a seção "Status pós-implementação" abaixo. As únicas pendências reais agora são: (a) commit do arquivo `097_fix_ai_match_quota_subscription_lookup.sql` (já aplicado no banco) e (b) decidir/commitar mudanças de wording em `AIMatchQuotaBadge`/`RegenerateConfirmDialog`.
 
 ---
 
@@ -165,6 +167,11 @@ Aplicar para os 4 fields: `systemPrompt`, `practicalPromptTemplate`, `technicalP
 
 Recomendo dispatch via `superpowers:writing-plans` (este checkpoint é o spec). Ordem de tasks:
 
+0. **PRIMEIRO — limpar pendências detectadas no estado git**:
+   - **0a.** Commitar a migration `097_fix_ai_match_quota_subscription_lookup.sql` (já aplicada no banco, só falta versionar): `git add sql/migrations/097_fix_ai_match_quota_subscription_lookup.sql && git commit -m "fix(ai-match): correct subscription lookup join (use companies.profile_id)"`
+   - **0b.** Confirmar com o usuário a mudança de "restantes" → "utilizadas" em `AIMatchQuotaBadge.tsx` e `RegenerateConfirmDialog.tsx`. Se confirmado, varrer os outros componentes (`AIMatchHeader`, `AIMatchEmptyState`, `AIMatchExhaustedState`) para checar consistência e commitar tudo junto: `feat(ai-match): rephrase quota copy from "restantes" to "utilizadas"`.
+   - **0c.** Push de tudo para o remote: `git push`.
+
 1. **Schema/data:** estender `settingsConfig.ts` com o 4º field
 2. **Service/loader:** atualizar `settingsLoader.ts` + `aiAgent/types`
 3. **Migrar AI Match builder:** aceitar custom prompt + manter default
@@ -186,37 +193,137 @@ Recomendo dispatch via `superpowers:writing-plans` (este checkpoint é o spec). 
 
 ## Estado git relevante (para retomar)
 
+### Branch e push
+
+- **Branch:** `feat/ai-match`
+- **Tracking:** `origin/feat/ai-match`
+- **Commits ahead of origin:** **0** (todos os commits abaixo já foram pushed)
+
+### Histórico de commits da feature (já no remote)
+
 ```
-Branch: feat/ai-match
-HEAD : e0acfa1 fix(ai-match): collapsible sections default to closed
-       f04af37 feat(ai-match): collapsible sections in dossier
-       ae5a65c feat(ai-match): thread Gauge-Pro result through MatchTabs
-       c065ea9 fix(ai-match): use Gauge-Pro test data in prompt + correct system prompt
-       059415e fix(ai-match): replace require() with ESM static import
-       1f085b6 chore: bump version to 1.59.0 'Insight' (AI Match)
-       ... (mais 14 commits da feature AI Match)
+4cc3329 docs(checkpoint): parametrização de prompts de IA + UI admin reforçada
+e0acfa1 fix(ai-match): collapsible sections default to closed (was expanded)
+f04af37 feat(ai-match): collapsible sections in dossier (default expanded)
+ae5a65c feat(ai-match): thread Gauge-Pro result through MatchTabs to prompt builder
+c065ea9 fix(ai-match): use Gauge-Pro test data in prompt + correct system prompt
+059415e fix(ai-match): replace require() with ESM static import in service factory
+1f085b6 chore: bump version to 1.59.0 'Insight' (AI Match)
+9cae6a5 fix(ai-match): use camelCase Candidate/Job types and update prompt builder
+aacf9ad feat(ai-match): integrate MatchTabs into candidate profile page
+9cdd33d feat(ai-match): add MatchTabs wrapper (algorithmic + AI tabs)
+7199f5c feat(ai-match): add tab orchestrator with all states
+9c4271a feat(ai-match): add content renderer
+9bb1814 feat(ai-match): add regenerate dialog and analysis header
+62696ee feat(ai-match): add quota visualization components (badge, empty, exhausted)
+3283a4e feat(ai-match): add React Query hooks (analysis, quota, generate, regenerate)
+fc7a2df feat(ai-match): add prompt builder with prompt caching on system+job
+63087ad feat(ai-match): add Supabase service implementation
+7b0fa35 feat(ai-match): add service interface and factory
+35193f7 feat(ai-match): add domain types
+0cded53 chore(types): regenerate database.ts to match current schema (incl. ai_match)
+426d64b feat(ai-match): add RPCs (consume, save, refund, get_status)
+81db934 feat(ai-match): add migration skeleton (tables, indexes, RLS, capability)
 ```
 
-WIP em outras features (NÃO mexer):
-- `.claude/settings.local.json`, `CancelSubscriptionModal.tsx`, `useStripeQuery.ts`, `formatters.ts`, `MyPlan.tsx`, `Packages.tsx`, `plansService.supabase.ts`, `supabase/config.toml`, `supabase/functions/stripe-webhook/index.ts`
-- Untracked: migration `095_count_candidate_external_applications.sql`, `useExternalApplicationsCount.ts`, `supabase/functions/stripe-cancel-subscription/`
+### ⚠️ ATENÇÃO — ALTERAÇÕES PENDENTES DE COMMIT/PUSH
+
+Detectadas após o checkpoint inicial. **TRATAR PRIMEIRO**, antes de iniciar o trabalho de parametrização (R1/R2/R3 acima):
+
+#### 1. Bugfix CRÍTICO já aplicado no banco mas migration UNTRACKED
+
+`sql/migrations/097_fix_ai_match_quota_subscription_lookup.sql` (untracked) — corrige bug grave nas 4 RPCs do AI Match: o lookup de subscription usava `s.user_id = v_company_id`, mas `subscriptions.user_id` armazena `companies.profile_id`, não `companies.id`. Sem a fix, **todas as empresas caíam no fallback (3 análises)** e a configuração `ai_match_monthly_quota` por plano era ignorada silenciosamente.
+
+A fix muda o JOIN para:
+```sql
+INNER JOIN public.companies c
+  ON c.profile_id = s.user_id AND c.id = v_company_id
+```
+
+**Status:** já aplicada via MCP Supabase (`pg_proc.prosrc` confirma o INNER JOIN está em produção). O arquivo `.sql` precisa só ser commitado e pushed para o remote.
+
+**Ação na próxima sessão:** `git add sql/migrations/097_fix_ai_match_quota_subscription_lookup.sql && git commit -m "fix(ai-match): correct subscription lookup join (use companies.profile_id)"` + `git push`.
+
+#### 2. Modificações WIP em arquivos do próprio AI Match
+
+Mudanças de **wording** ainda não commitadas (provavelmente ajuste de UX feito pelo usuário entre sessões):
+
+- `src/components/aiMatch/AIMatchQuotaBadge.tsx` — texto e `aria-label` mudados de **"X de N restantes"** para **"X de N utilizadas"** (e usa `status.used` em vez de `status.remaining`).
+- `src/components/aiMatch/RegenerateConfirmDialog.tsx` — descrição mudada de _"Isso irá consumir 1 de N análises restantes este mês. Após regeneração, sua cota disponível será X."_ para _"Isso irá consumir 1 análise. Você já utilizou N de M este mês. Após regeneração, ainda restarão X análises."_
+
+**Ação na próxima sessão:** confirmar com o usuário se as mudanças são definitivas e commitar como `feat(ai-match): rephrase quota copy from "restantes" to "utilizadas"`. Verificar se há outros lugares que ainda dizem "restantes" para manter consistência (`AIMatchHeader.tsx`, `AIMatchEmptyState.tsx`, `AIMatchExhaustedState.tsx` — todos usam `AIMatchQuotaBadge` com a nova frase, mas podem ter texto adjacente que ainda fale em "restantes").
+
+### WIP em outras features (NÃO MEXER)
+
+Modificações pertencentes a outras features em curso, alheias ao AI Match. Não comitar junto com o trabalho de parametrização:
+
+- `.claude/settings.local.json`
+- `src/components/billing/CancelSubscriptionModal.tsx`
+- `src/hooks/useStripeQuery.ts`
+- `src/lib/formatters.ts`
+- `src/pages/empresa/MyPlan.tsx`
+- `src/pages/empresa/Packages.tsx`
+- `src/services/plans/plansService.supabase.ts`
+- `supabase/config.toml`
+- `supabase/functions/stripe-webhook/index.ts`
+- Untracked: `supabase/functions/stripe-cancel-subscription/`
+
+> **Nota:** A migration `095_count_candidate_external_applications.sql` e o hook `useExternalApplicationsCount.ts` que apareciam como untracked no início desta sessão **foram commitados em algum momento** entre as sessões — não estão mais na working tree.
+
+---
+
+## Status pós-implementação (auditoria 2026-05-05)
+
+### ✅ R1 — Migração do AI Match prompt para system_settings — **CONCLUÍDO** em commit `d3f361b`
+
+Implementado:
+- Adicionado 4º field `aiMatchSystemPrompt` na subcategoria `admin-ai-prompts` em `src/data/settingsConfig.ts`
+- `settingsLoader.ts` lê `aiMatchSystemPrompt` junto com os 3 prompts existentes
+- `aiMatchPromptBuilder.ts` aceita `customSystemPrompt` (fallback para `DEFAULT_AI_MATCH_SYSTEM_PROMPT`)
+- `useAIMatchQuery` passa `settings.aiMatchSystemPrompt` para o builder
+
+### ✅ R2 — UI reforçada para edição de prompts — **CONCLUÍDO** em commit `d3f361b`
+
+Implementado para os 4 prompts (`systemPrompt`, `practicalPromptTemplate`, `technicalPromptTemplate`, `aiMatchSystemPrompt`):
+- `PromptEditor.tsx` — wrapper com warning dialog ao iniciar edição, botão "Restaurar padrão", discard guard
+- `PromptEditConfirmDialog.tsx` — diff view + caixa obrigatória digitando "CONFIRMAR" para habilitar Salvar
+- `PromptHistorySheet.tsx` — timeline cronológica de `settings_history` com diff e botão restaurar
+- `PromptDiffView.tsx` — diff inline LCS sem dependência externa
+- `useSettingsHistoryByField.ts` — hook React Query filtrando settings_history por field
+- `useSettings.saveField()` — persistência atômica per-field
+- `ConfigContent` detecta `admin/ai/prompts` e usa `PromptEditor` em vez de textarea simples
+
+### 🎁 Extras feitos no mesmo commit
+
+- `viewOnly` prop em `AIMatchHeader` (esconde badge de cota em fluxo de impersonação)
+- `AIMatchImpersonationNotice` componente novo
+- `AIMatchTab` detecta impersonação e propaga `viewOnly`
+
+### 📦 Versão
+
+- Bumped: **v1.59.0 "Insight" → v1.60.0 "Curator"**
+- Changelog atualizado em `public/changelog.json`
+
+---
+
+## Pendências REAIS para próxima sessão (curtas)
+
+1. **Commitar migration 097** (já aplicada no banco):
+   ```
+   git add sql/migrations/097_fix_ai_match_quota_subscription_lookup.sql
+   git commit -m "fix(ai-match): correct subscription lookup join (use companies.profile_id)"
+   ```
+
+2. **Decidir + commitar mudanças de wording** em `AIMatchQuotaBadge.tsx` e `RegenerateConfirmDialog.tsx` ("restantes" → "utilizadas"). Verificar consistência com `AIMatchHeader`/`AIMatchEmptyState`/`AIMatchExhaustedState`.
+
+3. **Push final** para o remote.
 
 ---
 
 ## Como retomar
 
-Na próxima sessão, comando recomendado:
-
-```
-/superpowers:writing-plans
-
-Spec aprovada em D:\claude\recrutars-maike\docs\superpowers\checkpoints\2026-05-05-prompts-parametrizaveis.md — Parametrizar prompts de IA via system_settings com UI reforçada (advertência, dupla confirmação, histórico). Aplicar a 4 prompts (3 existentes + AI Match novo).
-```
-
-Ou simplesmente:
-
-> "Continue do checkpoint `2026-05-05-prompts-parametrizaveis.md`."
+> "Limpar pendências do checkpoint `2026-05-05-prompts-parametrizaveis.md` (097 migration + wording)."
 
 ---
 
-**Fim do checkpoint.** Esta sessão pausa aqui.
+**Fim do checkpoint.**
