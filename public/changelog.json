@@ -1,12 +1,63 @@
 {
   "versions": [
     {
+      "version": "1.59.0",
+      "codename": "Insight",
+      "type": "minor",
+      "releaseDate": "2026-05-03",
+      "description": "AI Match: análise inteligente de compatibilidade candidato↔vaga via Claude, com cota mensal por empresa configurável por plano. Complementa o match algorítmico com dossiê textual em 5 seções.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Nova aba \"Análise IA\" no perfil do candidato gera dossiê textual em 5 seções (leitura, por que combina, atenção, potencial, perguntas para entrevista) usando Claude — complementa o score algorítmico sem competir com ele",
+            "Cota mensal de análises IA por empresa (3 gratuitas inicialmente, configurável por plano via plan_capabilities), com reset automático no dia 1º de cada mês e enforcement server-side via RPCs Postgres atômicas",
+            "Cache automático: reabrir a mesma análise (par candidato+vaga) não consome nova cota; apenas o botão \"Regenerar\" (com modal de confirmação) consome 1 cota nova e substitui a análise existente"
+          ],
+          "details": {
+            "0": {
+              "description": "Tabs Match Algorítmico/Análise IA na página de perfil do candidato. Dossiê em markdown renderizado via renderAnalysisContent existente. Reutiliza chamada Claude client-side e settings de aiAgent (mesma API key e modelo configurados em /admin/configuracoes). Prompt caching da Anthropic ativo no system prompt e bloco da vaga (~90% economia em múltiplas análises da mesma vaga).",
+              "files": [
+                "src/components/aiMatch/MatchTabs.tsx",
+                "src/components/aiMatch/AIMatchTab.tsx",
+                "src/components/aiMatch/AIMatchContent.tsx",
+                "src/components/aiMatch/AIMatchHeader.tsx",
+                "src/services/aiMatch/aiMatchPromptBuilder.ts",
+                "src/pages/empresa/CandidateProfile.tsx"
+              ],
+              "routes": ["/empresa/candidatos/:id"]
+            },
+            "1": {
+              "description": "Tabela ai_match_usage com 4 RPCs SECURITY DEFINER (consume_ai_match_credit, save_ai_match_analysis, refund_ai_match_credit, get_ai_match_quota_status). Quota lida de plan_capability_assignments com chave ai_match_monthly_quota (fallback 3 quando empresa não tem subscription ativa). Advisory lock por empresa previne overshoot em chamadas concorrentes. -1 indica ilimitado.",
+              "files": [
+                "sql/migrations/096_ai_match.sql",
+                "src/components/aiMatch/AIMatchExhaustedState.tsx",
+                "src/components/aiMatch/AIMatchQuotaBadge.tsx",
+                "src/services/aiMatch/aiMatchService.supabase.ts"
+              ],
+              "routes": ["/empresa/candidatos/:id", "/empresa/meu-plano"]
+            },
+            "2": {
+              "description": "Tabela ai_match_analyses com unique index por (company_id, candidate_id, job_id) garante 1 análise ativa por par. SELECT direto via RLS (empresa só vê suas próprias). Regeneração faz DELETE+INSERT atômico via RPC save_ai_match_analysis. Em caso de falha na chamada Claude, refund_ai_match_credit devolve a cota automaticamente.",
+              "files": [
+                "sql/migrations/096_ai_match.sql",
+                "src/components/aiMatch/RegenerateConfirmDialog.tsx",
+                "src/hooks/useAIMatchQuery.ts"
+              ],
+              "routes": ["/empresa/candidatos/:id"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.58.4",
       "codename": "Mirror",
       "type": "patch",
       "releaseDate": "2026-05-02",
       "description": "Correção da tela em branco que ocorria ao acessar o site publicado no Vercel e Cloudflare Pages.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
