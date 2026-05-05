@@ -35,6 +35,7 @@ import {
   User2,
   Award,
   Phone,
+  Search,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,7 @@ import { useGaugeProResultByCandidate, useGaugeProSessionByCandidate } from '@/h
 import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
 import { useProfile } from '@/hooks/useCurriculumsQuery';
 import { useApplicationHighlights } from '@/hooks/useHighlightsQuery';
+import { useExternalApplicationsCount } from '@/hooks/useExternalApplicationsCount';
 import { HighlightBadge } from '@/components/match/HighlightBadge';
 import { DIMENSION_NAMES, DIMENSION_SHORT_NAMES, DIMENSION_DESCRIPTIONS } from '@/types/gaugePro';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -84,6 +86,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { calculateMatchBreakdown } from '@/lib/matchCalculator';
 import { getMatchScoreColor } from '@/types/disc';
 import { MatchBreakdown } from '@/components/match/MatchBreakdown';
+import { MatchTabs } from '@/components/aiMatch/MatchTabs';
 import { MatchStrengths } from '@/components/match/MatchStrengths';
 import { MatchOpportunities } from '@/components/match/MatchOpportunities';
 import { MatchMethodologyModal } from '@/components/match/MatchMethodologyModal';
@@ -121,6 +124,16 @@ const STATUS_LABELS: Record<string, string> = {
   rejected: 'Reprovado',
   hired: 'Contratado',
   withdrawn: 'Desistência',
+};
+
+const STATUS_BADGE_COLORS: Record<string, string> = {
+  pending: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+  reviewing: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  interview: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  offer: 'bg-green-500/20 text-green-400 border-green-500/30',
+  hired: 'bg-green-500/20 text-green-400 border-green-500/30',
+  rejected: 'bg-muted text-muted-foreground border-border',
+  withdrawn: 'bg-muted text-muted-foreground border-border',
 };
 
 const DEFAULT_TEST_MESSAGE = `Olá! Para darmos continuidade ao processo seletivo, gostaríamos que você realizasse nosso teste comportamental Gauge-Pro. O teste leva cerca de 15-20 minutos e nos ajuda a entender melhor seu perfil.`;
@@ -275,6 +288,19 @@ export default function CandidateProfile() {
   const candidateApplications = useMemo(
     () => allApplications.filter((a) => a.candidateId === id),
     [allApplications, id]
+  );
+
+  // External applications count (other companies)
+  const { data: externalCount = 0 } = useExternalApplicationsCount(id || '');
+
+  // Jobs available for invite (exclude already-applied)
+  const appliedJobIds = useMemo(
+    () => new Set(candidateApplications.map((a) => a.jobId)),
+    [candidateApplications]
+  );
+  const availableJobs = useMemo(
+    () => companyJobs.filter((job) => !appliedJobIds.has(job.id)),
+    [companyJobs, appliedJobIds]
   );
 
   const activeStatuses = ['pending', 'reviewing', 'interview', 'offer'];
@@ -614,6 +640,39 @@ export default function CandidateProfile() {
                       )
                     )}
                   </div>
+
+                  {/* Application badges */}
+                  {(candidateApplications.length > 0 || externalCount > 0) && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {candidateApplications.map((app) => (
+                        <button
+                          key={app.id}
+                          onClick={() => setSelectedApplicationId(app.id)}
+                          className={cn(
+                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-opacity hover:opacity-80',
+                            STATUS_BADGE_COLORS[app.status] || 'bg-muted text-muted-foreground border-border',
+                            selectedApplicationId === app.id && 'ring-1 ring-primary'
+                          )}
+                        >
+                          <FileText className="w-3 h-3" />
+                          {app.jobTitle} · {STATUS_LABELS[app.status] || app.status}
+                        </button>
+                      ))}
+                      {externalCount > 0 && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-muted/50 text-muted-foreground border-border cursor-default">
+                              <Search className="w-3 h-3" />
+                              Ativo em +{externalCount} {externalCount === 1 ? 'outro processo' : 'outros processos'}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Este candidato está participando de processos seletivos em outras empresas</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -650,7 +709,7 @@ export default function CandidateProfile() {
                     </Button>
                   </div>
 
-                  {companyJobs.length > 0 ? (
+                  {availableJobs.length > 0 ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button>
@@ -659,7 +718,7 @@ export default function CandidateProfile() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
-                        {companyJobs.map((job) => (
+                        {availableJobs.map((job) => (
                           <DropdownMenuItem
                             key={job.id}
                             onClick={() => handleOpenInviteModal(job)}
@@ -672,7 +731,7 @@ export default function CandidateProfile() {
                   ) : (
                     <Button disabled>
                       <Send className="w-4 h-4 mr-2" />
-                      Sem vagas ativas
+                      {companyJobs.length > 0 ? 'Candidato em todas as vagas' : 'Sem vagas ativas'}
                     </Button>
                   )}
                 </div>
@@ -1108,12 +1167,20 @@ export default function CandidateProfile() {
                   />
                 )}
 
-                {matchResult && (
+                {matchResult && activeMatchJob && candidate && (
                   <div key={selectedMatchJobId} aria-live="polite">
-                    <MatchBreakdown
-                      totalScore={matchResult.totalScore}
-                      categories={matchResult.categories}
-                      title={`Match com ${activeMatchJob?.title || 'vaga'}`}
+                    <MatchTabs
+                      candidate={candidate as unknown as import('@/types/database').Tables<'candidates'>['Row']}
+                      job={activeMatchJob as unknown as import('@/types/database').Tables<'jobs'>['Row']}
+                      matchResult={matchResult}
+                      behavioralAnalysisExisting={null}
+                      algorithmicChildren={
+                        <MatchBreakdown
+                          totalScore={matchResult.totalScore}
+                          categories={matchResult.categories}
+                          title={`Match com ${activeMatchJob?.title || 'vaga'}`}
+                        />
+                      }
                     />
                   </div>
                 )}
@@ -1240,7 +1307,7 @@ export default function CandidateProfile() {
                   </Button>
 
                   {/* Invite to Job */}
-                  {companyJobs.length > 0 ? (
+                  {availableJobs.length > 0 ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm" className="w-full justify-start">
@@ -1250,7 +1317,7 @@ export default function CandidateProfile() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-56">
-                        {companyJobs.map((job) => (
+                        {availableJobs.map((job) => (
                           <DropdownMenuItem
                             key={job.id}
                             onClick={() => handleOpenInviteModal(job)}
@@ -1263,7 +1330,7 @@ export default function CandidateProfile() {
                   ) : (
                     <Button variant="outline" size="sm" className="w-full justify-start" disabled>
                       <Send className="w-4 h-4 mr-2" />
-                      Sem vagas ativas
+                      {companyJobs.length > 0 ? 'Candidato em todas as vagas' : 'Sem vagas ativas'}
                     </Button>
                   )}
 
