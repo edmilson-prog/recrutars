@@ -113,11 +113,21 @@ export function useCancelDowngrade() {
 }
 
 export function useCancelSubscription() {
+  const qc = useQueryClient();
   return useMutation({
     mutationKey: [STRIPE_KEY, 'cancel-subscription'],
     mutationFn: async (params: CancelSubscriptionParams) => {
       const svc = await getStripeService();
-      return svc.cancelSubscription(params);
+      const result = await svc.cancelSubscription(params);
+      if (!result.success) {
+        throw new Error(result.error ?? 'Falha ao cancelar assinatura');
+      }
+      return result;
+    },
+    onSuccess: () => {
+      // Invalidate all subscription queries so the UI reflects the cancelled state
+      qc.invalidateQueries({ queryKey: ['subscriptions'] });
+      qc.invalidateQueries({ queryKey: [PLANS_KEY] });
     },
   });
 }

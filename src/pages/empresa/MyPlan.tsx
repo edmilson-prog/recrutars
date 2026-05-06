@@ -21,7 +21,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { formatBRL } from '@/lib/formatters';
+import { formatBRL, formatDateBR } from '@/lib/formatters';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlans } from '@/hooks/usePlans';
 import { useSubscription } from '@/hooks/usePlansQuery';
@@ -97,15 +97,17 @@ export default function MyPlan() {
                 <p className="text-[11px] text-muted-foreground capitalize">{period}</p>
               </div>
               <div className="bg-muted/50 rounded-lg p-3">
-                <p className="text-xs text-muted-foreground mb-1">Inicio</p>
+                <p className="text-xs text-muted-foreground mb-1">Início</p>
                 <p className="text-sm font-medium text-foreground">
-                  {startDate ? new Date(startDate).toLocaleDateString('pt-BR') : '—'}
+                  {startDate ? formatDateBR(startDate) : '—'}
                 </p>
               </div>
               <div className="bg-muted/50 rounded-lg p-3">
-                <p className="text-xs text-muted-foreground mb-1">Proxima cobranca</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  {status === 'cancelled' ? 'Acesso até' : status === 'trial' ? 'Expira em' : 'Próxima cobrança'}
+                </p>
                 <p className="text-sm font-medium text-foreground">
-                  {endDate ? new Date(endDate).toLocaleDateString('pt-BR') : '—'}
+                  {endDate ? formatDateBR(endDate) : '—'}
                 </p>
               </div>
               <div className="bg-muted/50 rounded-lg p-3">
@@ -123,8 +125,30 @@ export default function MyPlan() {
                     Downgrade programado para {scheduledChange.toPlanName}
                   </p>
                   <p className="text-xs text-yellow-600">
-                    Efetivo em {new Date(scheduledChange.effectiveDate).toLocaleDateString('pt-BR')}
+                    Efetivo em {formatDateBR(scheduledChange.effectiveDate)}
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* Cancelled warning */}
+            {status === 'cancelled' && (
+              <div className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
+                <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                    Assinatura cancelada
+                  </p>
+                  <p className="text-xs text-red-600">
+                    {endDate
+                      ? `Você ainda tem acesso até ${formatDateBR(endDate)}. Após essa data, seu plano voltará ao gratuito.`
+                      : 'Seu plano será revertido para o gratuito em breve.'}
+                  </p>
+                  {(sub?.cancellation_reason ?? sub?.cancellationReason) && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Motivo: {(sub.cancellation_reason ?? sub.cancellationReason) as string}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -138,7 +162,7 @@ export default function MyPlan() {
                     Problema com seu pagamento
                   </p>
                   <p className="text-xs text-red-600">
-                    Atualize seu metodo de pagamento para manter o acesso.
+                    Atualize seu método de pagamento para manter o acesso.
                   </p>
                 </div>
               </div>

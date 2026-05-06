@@ -287,17 +287,41 @@ export class SupabasePlansService implements IPlansService {
   }
 
   async getSubscription(userId: string): Promise<Subscription | null> {
+    // Fetch all subscriptions for the user (active, cancelled, trial)
+    // Priority: active > cancelled (still in period) > trial
     const { data, error } = await supabase
       .from('subscriptions')
       .select('*')
       .eq('user_id', userId)
-      .in('status', ['active', 'trial'])
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .in('status', ['active', 'cancelled', 'past_due', 'trial'])
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return (data as unknown as Subscription) ?? null;
+    if (!data || data.length === 0) return null;
+
+    // Pick the best subscription by priority
+    const active = data.find((s) => s.status === 'active' && !s.is_trial);
+    if (active) return active as unknown as Subscription;
+
+    const pastDue = data.find((s) => s.status === 'past_due');
+    if (pastDue) return pastDue as unknown as Subscription;
+
+    // Return cancelled if still within the paid period (user should see their plan as "Cancelada")
+    const cancelled = data.find((s) => s.status === 'cancelled' && !s.is_trial);
+    if (cancelled) {
+      const endDate = cancelled.end_date ? new Date(cancelled.end_date) : null;
+      const now = new Date();
+      if (endDate && endDate > now) {
+        return cancelled as unknown as Subscription;
+      }
+    }
+
+    // Fall back to trial
+    const trial = data.find((s) => s.status === 'trial' || s.is_trial);
+    if (trial) return trial as unknown as Subscription;
+
+    // Last resort: most recent
+    return data[0] as unknown as Subscription;
   }
 
   async createSubscription(input: CreateSubscriptionData): Promise<Subscription> {
@@ -344,6 +368,20 @@ export class SupabasePlansService implements IPlansService {
       .single();
 
     if (error) throw error;
+
+    // Insert audit trail in subscription_history
+    const sub = data as Record<string, unknown>;
+    await supabase
+      .from('subscription_history')
+      .insert({
+        subscription_id: id,
+        action: 'cancelled',
+        from_plan_id: sub.plan_id,
+        notes: reason
+          ? `Cancelamento via painel. Motivo: ${reason}`
+          : 'Cancelamento via painel.',
+      });
+
     return data as unknown as Subscription;
   }
 

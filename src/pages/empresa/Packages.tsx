@@ -42,7 +42,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { formatBRL, formatDateTimeBR } from '@/lib/formatters';
+import { formatBRL, formatDateBR, formatDateTimeBR } from '@/lib/formatters';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   useTestPackages,
@@ -603,10 +603,20 @@ export default function Packages() {
                         <span className="text-xs text-muted-foreground">
                           {periodLabel[subPeriod] ?? subPeriod}
                           {subRenewalDate && (
-                            <> · Renova em {new Date(subRenewalDate).toLocaleDateString('pt-BR')}</>
+                            <> · {subStatus === 'cancelled'
+                              ? `Acesso até ${formatDateBR(subRenewalDate)}`
+                              : subStatus === 'trial'
+                                ? `Expira em ${formatDateBR(subRenewalDate)}`
+                                : `Renova em ${formatDateBR(subRenewalDate)}`
+                            }</>
                           )}
                         </span>
                       </div>
+                      {subStatus === 'cancelled' && (
+                        <p className="text-xs text-red-400 mt-2">
+                          Assinatura cancelada. Escolha um novo plano abaixo para continuar.
+                        </p>
+                      )}
                     </div>
                     <div className="text-left md:text-right">
                       <p className="text-3xl font-extrabold text-foreground">
@@ -893,7 +903,7 @@ export default function Packages() {
                       .filter(d => d && new Date(d) > new Date())
                       .sort();
                     if (dates.length > 0) {
-                      return ` Válido até ${new Date(dates[0]!).toLocaleDateString('pt-BR')}.`;
+                      return ` Válido até ${formatDateBR(dates[0]!)}.`;
                     }
                     return '';
                   })()}
