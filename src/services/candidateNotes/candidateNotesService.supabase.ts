@@ -18,7 +18,7 @@ interface RawCandidateNote {
   is_deleted: boolean;
   deleted_at: string | null;
   deleted_by: string | null;
-  author?: { full_name: string | null; avatar_url: string | null } | null;
+  author?: { name: string | null; avatar_url: string | null } | null;
 }
 
 interface RawNoteHistory {
@@ -29,7 +29,7 @@ interface RawNoteHistory {
   previous_content: string | null;
   new_content: string | null;
   created_at: string;
-  actor?: { full_name: string | null } | null;
+  actor?: { name: string | null } | null;
 }
 
 function mapNote(row: RawCandidateNote): CandidateNote {
@@ -38,7 +38,7 @@ function mapNote(row: RawCandidateNote): CandidateNote {
     candidateId: row.candidate_id,
     companyId: row.company_id,
     authorId: row.author_id,
-    authorName: row.author?.full_name ?? undefined,
+    authorName: row.author?.name ?? undefined,
     authorAvatar: row.author?.avatar_url ?? null,
     content: row.content,
     createdAt: row.created_at,
@@ -55,7 +55,7 @@ function mapHistory(row: RawNoteHistory): NoteHistoryEntry {
     noteId: row.note_id,
     action: row.action,
     actorId: row.actor_id,
-    actorName: row.actor?.full_name ?? undefined,
+    actorName: row.actor?.name ?? undefined,
     previousContent: row.previous_content,
     newContent: row.new_content,
     createdAt: row.created_at,
@@ -69,7 +69,7 @@ export function createCandidateNotesService(): CandidateNotesService {
         .from('candidate_notes')
         .select(`
           *,
-          author:profiles!candidate_notes_author_id_fkey(full_name, avatar_url)
+          author:profiles!candidate_notes_author_id_fkey(name, avatar_url)
         `)
         .eq('candidate_id', candidateId)
         .eq('company_id', companyId)
@@ -89,7 +89,7 @@ export function createCandidateNotesService(): CandidateNotesService {
         .from('candidate_notes_history')
         .select(`
           *,
-          actor:profiles!candidate_notes_history_actor_id_fkey(full_name)
+          actor:profiles!candidate_notes_history_actor_id_fkey(name)
         `)
         .eq('note_id', noteId)
         .order('created_at', { ascending: false });
@@ -112,7 +112,7 @@ export function createCandidateNotesService(): CandidateNotesService {
         })
         .select(`
           *,
-          author:profiles!candidate_notes_author_id_fkey(full_name, avatar_url)
+          author:profiles!candidate_notes_author_id_fkey(name, avatar_url)
         `)
         .single();
       if (error) throw error;
@@ -126,7 +126,7 @@ export function createCandidateNotesService(): CandidateNotesService {
         .eq('id', input.noteId)
         .select(`
           *,
-          author:profiles!candidate_notes_author_id_fkey(full_name, avatar_url)
+          author:profiles!candidate_notes_author_id_fkey(name, avatar_url)
         `)
         .single();
       if (error) throw error;
@@ -163,7 +163,7 @@ export function createCandidateNotesService(): CandidateNotesService {
         .eq('id', noteId)
         .select(`
           *,
-          author:profiles!candidate_notes_author_id_fkey(full_name, avatar_url)
+          author:profiles!candidate_notes_author_id_fkey(name, avatar_url)
         `)
         .single();
       if (error) throw error;
