@@ -3,7 +3,7 @@
  * PRD-014: Banco de Talentos - Perfil completo com avaliação comportamental
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { getStandardizedSkillsService } from '@/services/standardizedSkills/standardizedSkillsService';
 import { standardizedSkillKeys, useCandidateStandardizedSkills } from '@/hooks/useStandardizedSkillsQuery';
@@ -95,6 +95,8 @@ import { MatchOverviewChart } from '@/components/match/MatchOverviewChart';
 import type { MatchResult } from '@/types/disc';
 import { cn } from '@/lib/utils';
 import { getCandidateDisplayName, getCandidateInitials } from '@/lib/candidateDisplayName';
+import { CandidateNotesCard, type CandidateNotesCardHandle } from '@/components/empresa/notes/CandidateNotesCard';
+import { ApplicationNotesCard, type ApplicationNotesCardHandle } from '@/components/empresa/notes/ApplicationNotesCard';
 
 // Skill level colors for profile skills
 const skillLevelColors: Record<string, { bg: string; text: string }> = {
@@ -251,6 +253,10 @@ export default function CandidateProfile() {
   const [noteText, setNoteText] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [localNotes, setLocalNotes] = useState<ApplicationNote[]>([]);
+
+  // Notes cards refs
+  const candidateNotesRef = useRef<CandidateNotesCardHandle>(null);
+  const applicationNotesRef = useRef<ApplicationNotesCardHandle>(null);
 
   // PRD-030: Hook de candidatos favoritos
   const { isFavorite, toggleFavorite } = useFavoriteCandidates();
@@ -1011,6 +1017,23 @@ export default function CandidateProfile() {
               </Card>
             </motion.div>
 
+            {/* Notas Internas */}
+            {currentCompany?.id && candidate?.id && (
+              <CandidateNotesCard
+                ref={candidateNotesRef}
+                candidateId={candidate.id}
+                companyId={currentCompany.id}
+              />
+            )}
+
+            {selectedApplication?.id && (
+              <ApplicationNotesCard
+                ref={applicationNotesRef}
+                applicationId={selectedApplication.id}
+                jobTitle={selectedApplication.jobTitle}
+              />
+            )}
+
             {/* Courses — PRD-073: new section */}
             {profile && profile.courses.length > 0 && (
               <motion.div
@@ -1363,15 +1386,32 @@ export default function CandidateProfile() {
                       </Button>
 
                       {/* Add Note */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-start"
-                        onClick={() => setShowNoteInput(!showNoteInput)}
-                      >
-                        <StickyNote className="w-4 h-4 mr-2" />
-                        Adicionar Anotação
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start text-muted-foreground"
+                          >
+                            <StickyNote className="w-4 h-4 mr-2" />
+                            Adicionar Anotação
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuItem
+                            onSelect={() => applicationNotesRef.current?.startCreating()}
+                            disabled={!selectedApplication}
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Sobre esta candidatura
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => candidateNotesRef.current?.startCreating()}
+                          >
+                            <StickyNote className="w-4 h-4 mr-2" />
+                            Sobre o candidato
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
 
                       {/* Inline note input */}
                       {showNoteInput && (
