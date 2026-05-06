@@ -3,7 +3,7 @@
  * PRD-014: Banco de Talentos - Perfil completo com avaliação comportamental
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { getStandardizedSkillsService } from '@/services/standardizedSkills/standardizedSkillsService';
 import { standardizedSkillKeys, useCandidateStandardizedSkills } from '@/hooks/useStandardizedSkillsQuery';
@@ -95,6 +95,11 @@ import { MatchOverviewChart } from '@/components/match/MatchOverviewChart';
 import type { MatchResult } from '@/types/disc';
 import { cn } from '@/lib/utils';
 import { getCandidateDisplayName, getCandidateInitials } from '@/lib/candidateDisplayName';
+import { CandidateNotesCard, type CandidateNotesCardHandle } from '@/components/empresa/notes/CandidateNotesCard';
+import { ApplicationNotesCard, type ApplicationNotesCardHandle } from '@/components/empresa/notes/ApplicationNotesCard';
+import { ExportCandidateProfileModal } from '@/components/empresa/pdf/ExportCandidateProfileModal';
+import type { PDFEmpresaData } from '@/components/empresa/pdf/types';
+import { useCandidateNotes } from '@/hooks/useCandidateNotesQuery';
 
 // Skill level colors for profile skills
 const skillLevelColors: Record<string, { bg: string; text: string }> = {
@@ -251,6 +256,11 @@ export default function CandidateProfile() {
   const [noteText, setNoteText] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [localNotes, setLocalNotes] = useState<ApplicationNote[]>([]);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+
+  // Notes cards refs
+  const candidateNotesRef = useRef<CandidateNotesCardHandle>(null);
+  const applicationNotesRef = useRef<ApplicationNotesCardHandle>(null);
 
   // PRD-030: Hook de candidatos favoritos
   const { isFavorite, toggleFavorite } = useFavoriteCandidates();
@@ -277,6 +287,9 @@ export default function CandidateProfile() {
 
   // PRD-073: Professional profile + highlights
   const { data: profile } = useProfile(candidate?.id || '');
+
+  // Candidate-level notes (cross-application) for PDF export
+  const { data: candidateNotesList } = useCandidateNotes(candidate?.id, currentCompany?.id);
 
   // Get company active jobs
   const companyJobs = useMemo(
@@ -440,6 +453,60 @@ export default function CandidateProfile() {
   const matchResult = activeMatchJob ? (allMatchResults.get(selectedMatchJobId) ?? null) : null;
   const matchScore = matchResult?.totalScore || 0;
 
+  const exportData = useMemo<PDFEmpresaData | null>(() => {
+    if (!candidate || !currentCompany) return null;
+    return {
+      curriculum: profile,
+      candidate: {
+        id: candidate.id,
+        name: getCandidateDisplayName(candidate),
+        email: candidate.email,
+        phone: candidate.phone,
+        avatar: candidate.avatar,
+        city: candidate.city,
+        state: candidate.state,
+      },
+      company: {
+        id: currentCompany.id,
+        name: currentCompany.name ?? 'Empresa',
+        logoUrl: currentCompany.logo ?? null,
+      },
+      application: selectedApplication ? {
+        id: selectedApplication.id,
+        jobTitle: selectedApplication.jobTitle,
+        status: selectedApplication.status,
+        createdAt: selectedApplication.createdAt,
+      } : null,
+      matchResult: matchResult ? {
+        overallScore: typeof matchResult.totalScore === 'number' ? matchResult.totalScore : 0,
+        technicalScore: undefined,
+        experienceScore: undefined,
+        behavioralScore: undefined,
+        strengths: matchResult.strengths?.map((s) => s.text),
+        opportunities: matchResult.opportunities?.map((o) => o.text),
+      } : null,
+      gaugeProResult: gaugeProResult ? {
+        archetype: gaugeProResult.archetype?.name,
+        archetypeDescription: gaugeProResult.archetype?.description,
+        dimensions: gaugeProResult.finalScores
+          ? (Object.entries(gaugeProResult.finalScores) as [string, number][]).map(
+              ([name, score]) => ({ name, score }),
+            )
+          : undefined,
+      } : null,
+      applicationNotes: undefined,
+      candidateNotes: candidateNotesList,
+      applicationHistory: undefined,
+      practicalAnalysis: undefined,
+      interviews: undefined,
+      highlights: undefined,
+      favoriteEvaluation: { isFavorite: candidate ? isFavorite(candidate.id) : false, tags: [] },
+      languages: undefined,
+      availability: undefined,
+      activityLog: undefined,
+    };
+  }, [candidate, currentCompany, profile, selectedApplication, matchResult, gaugeProResult, candidateNotesList, isFavorite]);
+
   if (!candidate) {
     return (
       <DashboardLayout userType="company">
@@ -554,7 +621,11 @@ export default function CandidateProfile() {
   };
 
   const handleExportProfile = () => {
-    toast.success('Exportação do perfil iniciada. O arquivo será enviado por email.');
+    if (!candidate || !currentCompany) {
+      toast.error('Dados incompletos para exportar perfil');
+      return;
+    }
+    setExportModalOpen(true);
   };
 
   return (
@@ -1011,6 +1082,23 @@ export default function CandidateProfile() {
               </Card>
             </motion.div>
 
+            {/* Notas Internas */}
+            {currentCompany?.id && candidate?.id && (
+              <CandidateNotesCard
+                ref={candidateNotesRef}
+                candidateId={candidate.id}
+                companyId={currentCompany.id}
+              />
+            )}
+
+            {selectedApplication?.id && (
+              <ApplicationNotesCard
+                ref={applicationNotesRef}
+                applicationId={selectedApplication.id}
+                jobTitle={selectedApplication.jobTitle}
+              />
+            )}
+
             {/* Courses — PRD-073: new section */}
             {profile && profile.courses.length > 0 && (
               <motion.div
@@ -1363,15 +1451,32 @@ export default function CandidateProfile() {
                       </Button>
 
                       {/* Add Note */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-start"
-                        onClick={() => setShowNoteInput(!showNoteInput)}
-                      >
-                        <StickyNote className="w-4 h-4 mr-2" />
-                        Adicionar Anotação
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start text-muted-foreground"
+                          >
+                            <StickyNote className="w-4 h-4 mr-2" />
+                            Adicionar Anotação
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuItem
+                            onSelect={() => applicationNotesRef.current?.startCreating()}
+                            disabled={!selectedApplication}
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Sobre esta candidatura
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => candidateNotesRef.current?.startCreating()}
+                          >
+                            <StickyNote className="w-4 h-4 mr-2" />
+                            Sobre o candidato
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
 
                       {/* Inline note input */}
                       {showNoteInput && (
@@ -1666,6 +1771,15 @@ export default function CandidateProfile() {
           jobTitle={selectedApplication.jobTitle}
           applicationId={selectedApplication.id}
           onSchedule={handleScheduleInterview}
+        />
+      )}
+
+      {/* Export Candidate Profile (Dossiê) Modal */}
+      {exportData && (
+        <ExportCandidateProfileModal
+          open={exportModalOpen}
+          onOpenChange={setExportModalOpen}
+          data={exportData}
         />
       )}
     </DashboardLayout>

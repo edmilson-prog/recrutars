@@ -16,6 +16,7 @@ import type {
   ApplicationStatus,
   TestRequestStatus,
 } from '@/types';
+import type { NoteHistoryEntry, UpdateNoteInput } from '@/types/notes';
 import type { PaginatedResult, SortConfig, PaginationConfig } from '../types';
 import type {
   IApplicationsService,
@@ -310,6 +311,7 @@ export class ApplicationsServiceSupabase implements IApplicationsService {
       .from('application_notes')
       .select('*, profiles!application_notes_author_id_fkey(name)')
       .eq('application_id', applicationId)
+      .eq('is_deleted', false)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -338,6 +340,91 @@ export class ApplicationsServiceSupabase implements IApplicationsService {
     }
 
     return noteRowToNote(data);
+  }
+
+  async updateNote(input: UpdateNoteInput): Promise<ApplicationNote> {
+    const { data, error } = await supabase
+      .from('application_notes')
+      .update({ content: input.content })
+      .eq('id', input.noteId)
+      .select('*, profiles!application_notes_author_id_fkey(name)')
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update application note: ${error.message}`);
+    }
+
+    return noteRowToNote(data);
+  }
+
+  async softDeleteNote(noteId: string): Promise<void> {
+    const { data: userData } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .from('application_notes')
+      .update({
+        is_deleted: true,
+        deleted_at: new Date().toISOString(),
+        deleted_by: userData.user?.id,
+      })
+      .eq('id', noteId)
+      .select('id');
+
+    if (error) {
+      throw new Error(`Failed to delete application note: ${error.message}`);
+    }
+    if (!data || data.length === 0) {
+      throw new Error('Nota não encontrada ou sem permissão');
+    }
+  }
+
+  async restoreNote(noteId: string): Promise<ApplicationNote> {
+    const { data, error } = await supabase
+      .from('application_notes')
+      .update({ is_deleted: false, deleted_at: null, deleted_by: null })
+      .eq('id', noteId)
+      .select('*, profiles!application_notes_author_id_fkey(name)')
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to restore application note: ${error.message}`);
+    }
+
+    return noteRowToNote(data);
+  }
+
+  async listNoteHistory(noteId: string): Promise<NoteHistoryEntry[]> {
+    const { data, error } = await supabase
+      .from('application_notes_history')
+      .select(`
+        *,
+        actor:profiles!application_notes_history_actor_id_fkey(name)
+      `)
+      .eq('note_id', noteId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch note history: ${error.message}`);
+    }
+
+    return (data as unknown as Array<{
+      id: string;
+      note_id: string;
+      action: 'created' | 'updated' | 'deleted' | 'restored';
+      actor_id: string;
+      previous_content: string | null;
+      new_content: string | null;
+      created_at: string;
+      actor?: { name: string | null } | null;
+    }>).map((row) => ({
+      id: row.id,
+      noteId: row.note_id,
+      action: row.action,
+      actorId: row.actor_id,
+      actorName: row.actor?.name ?? undefined,
+      previousContent: row.previous_content,
+      newContent: row.new_content,
+      createdAt: row.created_at,
+    }));
   }
 
   async getHistory(applicationId: string): Promise<ApplicationHistory[]> {

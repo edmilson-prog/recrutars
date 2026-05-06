@@ -1,12 +1,96 @@
 {
   "versions": [
     {
+      "version": "1.61.0",
+      "codename": "Dossier",
+      "type": "minor",
+      "releaseDate": "2026-05-06",
+      "description": "Dossiê do candidato em PDF (4 templates, 19 seções configuráveis) + notas internas perenes por candidato + audit trail completo em todas as notas internas (criação, edição, exclusão, restauração).",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Notas internas perenes sobre o candidato (independem de vaga) — visíveis por toda a equipe da empresa, invisíveis ao candidato. Card dedicado no detalhamento do candidato.",
+            "Audit trail completo em todas as notas internas (candidato e candidatura): criação, edição, exclusão e restauração ficam registradas com autor e diff visual no modal de histórico.",
+            "Exportação de Dossiê do Candidato em PDF com 4 templates (Clássico, Moderno, Minimalista, Dossiê) e 19 seções configuráveis: currículo + Match Score, análise Gauge-Pro, notas internas, histórico de candidaturas, entrevistas, destaques, idiomas, disponibilidade e activity log. Rodapé 'Documento Interno - Uso Restrito' em todas as páginas."
+          ],
+          "details": {
+            "0": {
+              "description": "Nova tabela candidate_notes (perene por candidato + empresa) com RLS bloqueando candidatos. Soft delete via flag is_deleted; DELETE físico bloqueado por policy. Trigger AFTER INSERT/UPDATE popula candidate_notes_history. Service + hooks React Query para CRUD + history.",
+              "files": [
+                "sql/migrations/098_candidate_notes.sql",
+                "src/types/notes.ts",
+                "src/services/candidateNotes/candidateNotesService.supabase.ts",
+                "src/services/candidateNotes/candidateNotesService.ts",
+                "src/hooks/useCandidateNotesQuery.ts",
+                "src/components/empresa/notes/CandidateNotesCard.tsx",
+                "src/components/empresa/notes/NoteEditor.tsx",
+                "src/components/empresa/notes/NoteListItem.tsx"
+              ],
+              "routes": ["/empresa/candidatos/:id"]
+            },
+            "1": {
+              "description": "Migration 099 estende application_notes com colunas updated_at, is_deleted, deleted_at, deleted_by + tabela application_notes_history espelhada + triggers BEFORE UPDATE (touch updated_at) e AFTER INSERT/UPDATE (audit log) + policy UPDATE liberal por empresa. Modal NoteHistoryModal exibe timeline com badges por ação e diff lado-a-lado em edições.",
+              "files": [
+                "sql/migrations/099_application_notes_audit.sql",
+                "src/services/applications/applicationsService.ts",
+                "src/services/applications/applicationsService.supabase.ts",
+                "src/hooks/useApplicationsQuery.ts",
+                "src/components/empresa/notes/NoteHistoryModal.tsx",
+                "src/components/empresa/notes/ApplicationNotesCard.tsx"
+              ],
+              "routes": ["/empresa/candidatos/:id"]
+            },
+            "2": {
+              "description": "Módulo PDF empresa com tipos (PDFEmpresaData/PDFEmpresaSectionConfig), estilos compartilhados e 13 sections (Header, Footer, CoverPage, ExecutiveSummary, MatchScore, GaugeProAnalysis, InternalNotes, ApplicationHistory, PracticalAnalysis, Interviews, Highlights, FavoriteEvaluation, Languages, Availability, ActivityLog) + 8 sections de currículo. Modal ExportCandidateProfileModal: 4 templates × 19 checkboxes; seções sem dados ficam desabilitadas com tooltip explicativo. Filename Dossie_NomeCandidato_DDMMAAAA.pdf.",
+              "files": [
+                "src/components/empresa/pdf/types.ts",
+                "src/components/empresa/pdf/styles.ts",
+                "src/components/empresa/pdf/PDFEmpresaDocument.tsx",
+                "src/components/empresa/pdf/ExportCandidateProfileModal.tsx",
+                "src/components/empresa/pdf/templates/PDFTemplateDossie.tsx",
+                "src/components/empresa/pdf/templates/PDFTemplateBaseEmpresa.tsx"
+              ],
+              "routes": ["/empresa/candidatos/:id"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Botão 'Exportar Perfil' no detalhamento do candidato agora funciona — antes apenas exibia um toast falso sem produzir nenhum arquivo."
+          ],
+          "details": {
+            "0": {
+              "description": "Handler substituído por integração com o modal de Dossiê funcional. Suporta exportação com ou sem candidatura selecionada (seções dependentes ficam desabilitadas com tooltip explicativo). Todos os hooks de dados são pré-carregados via React Query e passados ao modal montado por useMemo.",
+              "files": ["src/pages/empresa/CandidateProfile.tsx"],
+              "routes": ["/empresa/candidatos/:id"]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Botão 'Adicionar Anotação' (sidebar do detalhamento) vira menu de escopo: oferece 'Sobre esta candidatura' (contextual da vaga) ou 'Sobre o candidato' (perene)."
+          ],
+          "details": {
+            "0": {
+              "description": "Cada opção rola programaticamente até o card respectivo (via useImperativeHandle nos cards) e abre o editor inline. Item 'Sobre esta candidatura' fica desabilitado quando não há candidatura selecionada no contexto.",
+              "files": ["src/pages/empresa/CandidateProfile.tsx"],
+              "routes": ["/empresa/candidatos/:id"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.60.0",
       "codename": "Curator",
       "type": "minor",
       "releaseDate": "2026-05-05",
       "description": "Parametrização dos prompts de IA via configurações + UI reforçada de edição (advertência, dupla confirmação com diff e digitação obrigatória, histórico completo por prompt).",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

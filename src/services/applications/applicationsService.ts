@@ -6,6 +6,7 @@
  */
 
 import type { Application, ApplicationNote, ApplicationHistory, ApplicationStatus, TestRequestStatus } from '@/types';
+import type { NoteHistoryEntry, UpdateNoteInput } from '@/types/notes';
 import type { PaginatedResult, SortConfig, PaginationConfig } from '../types';
 
 export interface ApplicationFilters {
@@ -49,6 +50,14 @@ export interface IApplicationsService {
   getNotes(applicationId: string): Promise<ApplicationNote[]>;
 
   addNote(applicationId: string, content: string): Promise<ApplicationNote>;
+
+  updateNote(input: UpdateNoteInput): Promise<ApplicationNote>;
+
+  softDeleteNote(noteId: string): Promise<void>;
+
+  restoreNote(noteId: string): Promise<ApplicationNote>;
+
+  listNoteHistory(noteId: string): Promise<NoteHistoryEntry[]>;
 
   getHistory(applicationId: string): Promise<ApplicationHistory[]>;
 }

@@ -1,7 +1,7 @@
 {
   "name": "recrutars",
   "private": true,
-  "version": "1.59.0",
+  "version": "1.61.0",
   "author": "AILA Automacao Inteligente",
   "type": "module",
   "scripts": {
