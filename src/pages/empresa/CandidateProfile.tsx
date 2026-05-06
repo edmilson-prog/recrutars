@@ -97,6 +97,9 @@ import { cn } from '@/lib/utils';
 import { getCandidateDisplayName, getCandidateInitials } from '@/lib/candidateDisplayName';
 import { CandidateNotesCard, type CandidateNotesCardHandle } from '@/components/empresa/notes/CandidateNotesCard';
 import { ApplicationNotesCard, type ApplicationNotesCardHandle } from '@/components/empresa/notes/ApplicationNotesCard';
+import { ExportCandidateProfileModal } from '@/components/empresa/pdf/ExportCandidateProfileModal';
+import type { PDFEmpresaData } from '@/components/empresa/pdf/types';
+import { useCandidateNotes } from '@/hooks/useCandidateNotesQuery';
 
 // Skill level colors for profile skills
 const skillLevelColors: Record<string, { bg: string; text: string }> = {
@@ -253,6 +256,7 @@ export default function CandidateProfile() {
   const [noteText, setNoteText] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [localNotes, setLocalNotes] = useState<ApplicationNote[]>([]);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
 
   // Notes cards refs
   const candidateNotesRef = useRef<CandidateNotesCardHandle>(null);
@@ -283,6 +287,9 @@ export default function CandidateProfile() {
 
   // PRD-073: Professional profile + highlights
   const { data: profile } = useProfile(candidate?.id || '');
+
+  // Candidate-level notes (cross-application) for PDF export
+  const { data: candidateNotesList } = useCandidateNotes(candidate?.id, currentCompany?.id);
 
   // Get company active jobs
   const companyJobs = useMemo(
@@ -446,6 +453,60 @@ export default function CandidateProfile() {
   const matchResult = activeMatchJob ? (allMatchResults.get(selectedMatchJobId) ?? null) : null;
   const matchScore = matchResult?.totalScore || 0;
 
+  const exportData = useMemo<PDFEmpresaData | null>(() => {
+    if (!candidate || !currentCompany) return null;
+    return {
+      curriculum: profile,
+      candidate: {
+        id: candidate.id,
+        name: getCandidateDisplayName(candidate),
+        email: candidate.email,
+        phone: candidate.phone,
+        avatar: candidate.avatar,
+        city: candidate.city,
+        state: candidate.state,
+      },
+      company: {
+        id: currentCompany.id,
+        name: currentCompany.name ?? 'Empresa',
+        logoUrl: currentCompany.logo ?? null,
+      },
+      application: selectedApplication ? {
+        id: selectedApplication.id,
+        jobTitle: selectedApplication.jobTitle,
+        status: selectedApplication.status,
+        createdAt: selectedApplication.createdAt,
+      } : null,
+      matchResult: matchResult ? {
+        overallScore: typeof matchResult.totalScore === 'number' ? matchResult.totalScore : 0,
+        technicalScore: undefined,
+        experienceScore: undefined,
+        behavioralScore: undefined,
+        strengths: matchResult.strengths?.map((s) => s.text),
+        opportunities: matchResult.opportunities?.map((o) => o.text),
+      } : null,
+      gaugeProResult: gaugeProResult ? {
+        archetype: gaugeProResult.archetype?.name,
+        archetypeDescription: gaugeProResult.archetype?.description,
+        dimensions: gaugeProResult.finalScores
+          ? (Object.entries(gaugeProResult.finalScores) as [string, number][]).map(
+              ([name, score]) => ({ name, score }),
+            )
+          : undefined,
+      } : null,
+      applicationNotes: undefined,
+      candidateNotes: candidateNotesList,
+      applicationHistory: undefined,
+      practicalAnalysis: undefined,
+      interviews: undefined,
+      highlights: undefined,
+      favoriteEvaluation: { isFavorite: candidate ? isFavorite(candidate.id) : false, tags: [] },
+      languages: undefined,
+      availability: undefined,
+      activityLog: undefined,
+    };
+  }, [candidate, currentCompany, profile, selectedApplication, matchResult, gaugeProResult, candidateNotesList, isFavorite]);
+
   if (!candidate) {
     return (
       <DashboardLayout userType="company">
@@ -560,7 +621,11 @@ export default function CandidateProfile() {
   };
 
   const handleExportProfile = () => {
-    toast.success('Exportação do perfil iniciada. O arquivo será enviado por email.');
+    if (!candidate || !currentCompany) {
+      toast.error('Dados incompletos para exportar perfil');
+      return;
+    }
+    setExportModalOpen(true);
   };
 
   return (
@@ -1706,6 +1771,15 @@ export default function CandidateProfile() {
           jobTitle={selectedApplication.jobTitle}
           applicationId={selectedApplication.id}
           onSchedule={handleScheduleInterview}
+        />
+      )}
+
+      {/* Export Candidate Profile (Dossiê) Modal */}
+      {exportData && (
+        <ExportCandidateProfileModal
+          open={exportModalOpen}
+          onOpenChange={setExportModalOpen}
+          data={exportData}
         />
       )}
     </DashboardLayout>
