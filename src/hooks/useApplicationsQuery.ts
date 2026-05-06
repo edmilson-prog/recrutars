@@ -11,6 +11,8 @@ import { getApplicationsService } from '@/services/applications/applicationsServ
 import type { ApplicationFilters } from '@/services/applications/applicationsService';
 import type { PaginationConfig, SortConfig } from '@/services/types';
 import type { ApplicationStatus } from '@/types';
+import type { NoteHistoryEntry, UpdateNoteInput } from '@/types/notes';
+import { toast } from 'sonner';
 
 // --- Query Key Factory ---
 
@@ -26,6 +28,8 @@ export const applicationKeys = {
   byJob: (jobId: string) => [...applicationKeys.all, 'job', jobId] as const,
   notes: (applicationId: string) =>
     [...applicationKeys.all, 'notes', applicationId] as const,
+  noteHistory: (noteId: string) =>
+    [...applicationKeys.all, 'noteHistory', noteId] as const,
   history: (applicationId: string) =>
     [...applicationKeys.all, 'history', applicationId] as const,
 };
@@ -171,5 +175,79 @@ export function useAddApplicationNote() {
         queryKey: applicationKeys.notes(applicationId),
       });
     },
+  });
+}
+
+export function useApplicationNoteHistory(noteId: string | undefined) {
+  return useQuery<NoteHistoryEntry[]>({
+    queryKey: applicationKeys.noteHistory(noteId ?? ''),
+    queryFn: async () => {
+      const service = await getApplicationsService();
+      return service.listNoteHistory(noteId!);
+    },
+    enabled: !!noteId,
+  });
+}
+
+export function useUpdateApplicationNote(applicationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: UpdateNoteInput) => {
+      const service = await getApplicationsService();
+      return service.updateNote(input);
+    },
+    onSuccess: (note) => {
+      queryClient.invalidateQueries({
+        queryKey: applicationKeys.notes(applicationId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: applicationKeys.noteHistory(note.id),
+      });
+      toast.success('Nota atualizada');
+    },
+    onError: (e: Error) =>
+      toast.error('Erro ao atualizar', { description: e.message }),
+  });
+}
+
+export function useDeleteApplicationNote(applicationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (noteId: string) => {
+      const service = await getApplicationsService();
+      return service.softDeleteNote(noteId);
+    },
+    onSuccess: (_, noteId) => {
+      queryClient.invalidateQueries({
+        queryKey: applicationKeys.notes(applicationId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: applicationKeys.noteHistory(noteId),
+      });
+      toast.success('Nota excluída');
+    },
+    onError: (e: Error) =>
+      toast.error('Erro ao excluir', { description: e.message }),
+  });
+}
+
+export function useRestoreApplicationNote(applicationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (noteId: string) => {
+      const service = await getApplicationsService();
+      return service.restoreNote(noteId);
+    },
+    onSuccess: (note) => {
+      queryClient.invalidateQueries({
+        queryKey: applicationKeys.notes(applicationId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: applicationKeys.noteHistory(note.id),
+      });
+      toast.success('Nota restaurada');
+    },
+    onError: (e: Error) =>
+      toast.error('Erro ao restaurar', { description: e.message }),
   });
 }
