@@ -53,10 +53,24 @@ export function formatNumber(value: number): string {
 }
 
 /**
+ * Parses a date string safely, treating date-only strings (YYYY-MM-DD) as local
+ * dates instead of UTC midnight (which causes off-by-one day in negative timezones).
+ */
+function parseDate(date: string | Date): Date {
+  if (date instanceof Date) return date;
+  // Date-only format: "2026-05-19" → parse as local to avoid UTC shift
+  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    const [y, m, d] = date.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  return new Date(date);
+}
+
+/**
  * Formata data no padrão brasileiro DD/MM/YYYY
  */
 export function formatDateBR(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  const d = parseDate(date);
   return d.toLocaleDateString('pt-BR');
 }
 
@@ -64,6 +78,6 @@ export function formatDateBR(date: string | Date): string {
  * Formata data e hora no padrão brasileiro DD/MM/YYYY às HH:MM
  */
 export function formatDateTimeBR(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  const d = parseDate(date);
   return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
