@@ -18,15 +18,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useCancelSubscription } from '@/hooks/useStripeQuery';
+import { formatDateBR } from '@/lib/formatters';
 import { toast } from 'sonner';
 import type { StripeEnvironment } from '@/types/plans';
 
 const CANCEL_REASONS = [
   { value: 'too_expensive', label: 'Muito caro para o momento' },
-  { value: 'not_using', label: 'Nao estou usando o suficiente' },
+  { value: 'not_using', label: 'Não estou usando o suficiente' },
   { value: 'missing_features', label: 'Faltam recursos que preciso' },
   { value: 'found_alternative', label: 'Encontrei uma alternativa melhor' },
-  { value: 'temporary', label: 'Pausa temporaria — pretendo voltar' },
+  { value: 'temporary', label: 'Pausa temporária — pretendo voltar' },
   { value: 'other', label: 'Outro motivo' },
 ];
 
@@ -63,12 +64,13 @@ export function CancelSubscriptionModal({
       { subscriptionId, reason: finalReason, environment },
       {
         onSuccess: () => {
-          toast.success('Cancelamento programado. Voce mantera acesso ate o fim do periodo.');
+          toast.success('Cancelamento realizado. Você manterá acesso até o fim do período.');
           onSuccess?.();
           onClose();
         },
-        onError: () => {
-          toast.error('Erro ao processar cancelamento.');
+        onError: (err) => {
+          const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+          toast.error(`Erro ao processar cancelamento: ${msg}`);
         },
       },
     );
@@ -90,8 +92,8 @@ export function CancelSubscriptionModal({
             Cancelar Assinatura
           </DialogTitle>
           <DialogDescription>
-            Ao cancelar o plano <strong>{planName}</strong>, voce mantera acesso ate{' '}
-            <strong>{new Date(endDate).toLocaleDateString('pt-BR')}</strong>.
+            Ao cancelar o plano <strong>{planName}</strong>, você manterá acesso até{' '}
+            <strong>{formatDateBR(endDate)}</strong>.
           </DialogDescription>
         </DialogHeader>
 
@@ -99,7 +101,7 @@ export function CancelSubscriptionModal({
           {lostFeatures.length > 0 && (
             <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3">
               <p className="text-xs font-medium text-destructive mb-2">
-                Voce perdera acesso a:
+                Você perderá acesso a:
               </p>
               <ul className="space-y-1">
                 {lostFeatures.map((f, i) => (
@@ -113,7 +115,7 @@ export function CancelSubscriptionModal({
           )}
 
           <div className="space-y-2">
-            <Label className="text-sm">Por que voce esta cancelando?</Label>
+            <Label className="text-sm">Por que você está cancelando?</Label>
             <RadioGroup value={reason} onValueChange={setReason}>
               {CANCEL_REASONS.map((r) => (
                 <div key={r.value} className="flex items-center gap-2">
@@ -138,9 +140,9 @@ export function CancelSubscriptionModal({
 
           {reason && !confirmed && (
             <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground">
-              <p className="font-medium text-foreground mb-1">Ja considerou?</p>
+              <p className="font-medium text-foreground mb-1">Já considerou?</p>
               <p>
-                Voce pode fazer <strong>downgrade</strong> para um plano mais acessivel em vez de cancelar completamente.
+                Você pode fazer <strong>downgrade</strong> para um plano mais acessível em vez de cancelar completamente.
               </p>
             </div>
           )}

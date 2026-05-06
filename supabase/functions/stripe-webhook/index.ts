@@ -4,6 +4,9 @@
  *
  * Handles:
  *   - checkout.session.completed (test_package → credit fulfillment, plan → subscription activation)
+ *   - customer.subscription.updated (cancel_at_period_end → mark cancelled)
+ *   - customer.subscription.deleted (subscription terminated → mark cancelled)
+ *   - invoice.payment_failed (payment failed → mark past_due)
  *   - Other events are saved with status='skipped'
  *
  * Deploy with: supabase functions deploy stripe-webhook --no-verify-jwt
@@ -88,6 +91,161 @@ interface HandlerResult {
   action: string;
   reason?: string;
   details?: Record<string, unknown>;
+}
+
+// ---------------------------------------------------------------------------
+// Subscription lifecycle handlers
+// ---------------------------------------------------------------------------
+
+/**
+ * Handles `customer.subscription.updated` — detects cancel_at_period_end changes.
+ */
+async function handleSubscriptionUpdated(
+  stripeSub: Stripe.Subscription,
+  admin: ReturnType<typeof getAdminClient>,
+): Promise<HandlerResult> {
+  const stripeSubId = stripeSub.id;
+
+  // Find our subscription by stripe_subscription_id
+  const { data: subscription, error } = await admin
+    .from('subscriptions')
+    .select('id, status, plan_id')
+    .eq('stripe_subscription_id', stripeSubId)
+    .maybeSingle();
+
+  if (error || !subscription) {
+    return { action: 'skipped', reason: `No local subscription found for Stripe sub ${stripeSubId}` };
+  }
+
+  // If Stripe flagged cancel_at_period_end and our sub is still active, mark it
+  if (stripeSub.cancel_at_period_end && subscription.status === 'active') {
+    const cancelAt = stripeSub.cancel_at
+      ? new Date(stripeSub.cancel_at * 1000).toISOString()
+      : null;
+
+    await admin
+      .from('subscriptions')
+      .update({
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancellation_reason: 'Cancelamento via Stripe (cancel_at_period_end)',
+      })
+      .eq('id', subscription.id);
+
+    // Audit trail
+    await admin
+      .from('subscription_history')
+      .insert({
+        subscription_id: subscription.id,
+        action: 'cancelled',
+        from_plan_id: subscription.plan_id,
+        notes: `Cancelamento detectado via webhook Stripe. Acesso ate ${cancelAt ?? 'fim do periodo'}.`,
+      });
+
+    return {
+      action: 'subscription_cancelled',
+      details: { subscription_id: subscription.id, cancel_at: cancelAt },
+    };
+  }
+
+  return { action: 'skipped', reason: 'No actionable change in subscription update' };
+}
+
+/**
+ * Handles `customer.subscription.deleted` — subscription fully terminated in Stripe.
+ */
+async function handleSubscriptionDeleted(
+  stripeSub: Stripe.Subscription,
+  admin: ReturnType<typeof getAdminClient>,
+): Promise<HandlerResult> {
+  const stripeSubId = stripeSub.id;
+
+  const { data: subscription, error } = await admin
+    .from('subscriptions')
+    .select('id, status, plan_id')
+    .eq('stripe_subscription_id', stripeSubId)
+    .maybeSingle();
+
+  if (error || !subscription) {
+    return { action: 'skipped', reason: `No local subscription found for Stripe sub ${stripeSubId}` };
+  }
+
+  // Only update if not already cancelled/expired
+  if (subscription.status !== 'cancelled' && subscription.status !== 'expired') {
+    await admin
+      .from('subscriptions')
+      .update({
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancellation_reason: 'Assinatura encerrada no Stripe (subscription.deleted)',
+      })
+      .eq('id', subscription.id);
+
+    await admin
+      .from('subscription_history')
+      .insert({
+        subscription_id: subscription.id,
+        action: 'cancelled',
+        from_plan_id: subscription.plan_id,
+        notes: 'Assinatura encerrada automaticamente pelo Stripe (evento subscription.deleted).',
+      });
+
+    return {
+      action: 'subscription_terminated',
+      details: { subscription_id: subscription.id },
+    };
+  }
+
+  return { action: 'skipped', reason: 'Subscription already cancelled/expired locally' };
+}
+
+/**
+ * Handles `invoice.payment_failed` — marks subscription as past_due.
+ */
+async function handleInvoicePaymentFailed(
+  invoice: Stripe.Invoice,
+  admin: ReturnType<typeof getAdminClient>,
+): Promise<HandlerResult> {
+  const stripeSubId = typeof invoice.subscription === 'string'
+    ? invoice.subscription
+    : invoice.subscription?.id ?? null;
+
+  if (!stripeSubId) {
+    return { action: 'skipped', reason: 'Invoice has no subscription' };
+  }
+
+  const { data: subscription, error } = await admin
+    .from('subscriptions')
+    .select('id, status, plan_id')
+    .eq('stripe_subscription_id', stripeSubId)
+    .maybeSingle();
+
+  if (error || !subscription) {
+    return { action: 'skipped', reason: `No local subscription found for Stripe sub ${stripeSubId}` };
+  }
+
+  if (subscription.status === 'active') {
+    await admin
+      .from('subscriptions')
+      .update({ status: 'past_due' })
+      .eq('id', subscription.id);
+
+    await admin
+      .from('subscription_history')
+      .insert({
+        subscription_id: subscription.id,
+        action: 'payment_failed',
+        from_plan_id: subscription.plan_id,
+        notes: `Falha no pagamento da fatura ${invoice.id ?? 'desconhecida'}.`,
+      });
+
+    return {
+      action: 'subscription_past_due',
+      details: { subscription_id: subscription.id, invoice_id: invoice.id },
+    };
+  }
+
+  return { action: 'skipped', reason: 'Subscription not active, skipping payment_failed' };
 }
 
 async function handleCheckoutCompleted(
@@ -388,6 +546,24 @@ Deno.serve(async (req: Request) => {
         result = await handleCheckoutCompleted(session, admin);
         status = result.action === 'failed' ? 'failed' : result.action === 'skipped' ? 'skipped' : 'processed';
         if (result.action === 'failed') errorMessage = result.reason ?? 'Handler returned failed';
+        break;
+      }
+      case 'customer.subscription.updated': {
+        const stripeSub = event!.data.object as Stripe.Subscription;
+        result = await handleSubscriptionUpdated(stripeSub, admin);
+        status = result.action === 'skipped' ? 'skipped' : 'processed';
+        break;
+      }
+      case 'customer.subscription.deleted': {
+        const stripeSub = event!.data.object as Stripe.Subscription;
+        result = await handleSubscriptionDeleted(stripeSub, admin);
+        status = result.action === 'skipped' ? 'skipped' : 'processed';
+        break;
+      }
+      case 'invoice.payment_failed': {
+        const invoice = event!.data.object as Stripe.Invoice;
+        result = await handleInvoicePaymentFailed(invoice, admin);
+        status = result.action === 'skipped' ? 'skipped' : 'processed';
         break;
       }
       default: {

@@ -27,6 +27,9 @@ verify_jwt = false
 [functions.send-whatsapp]
 verify_jwt = false
 
+[functions.stripe-cancel-subscription]
+verify_jwt = false
+
 [functions.stripe-create-checkout]
 verify_jwt = false
 
