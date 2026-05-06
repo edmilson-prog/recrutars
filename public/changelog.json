@@ -2,11 +2,92 @@
   "versions": [
     {
       "version": "1.60.0",
+      "codename": "Dossier",
+      "date": "2026-05-06",
+      "isCurrent": true,
+      "items": [
+        {
+          "type": "added",
+          "title": "Notas internas perenes sobre candidatos",
+          "description": "Recrutadores podem registrar observações que persistem entre vagas, invisíveis ao candidato.",
+          "details": {
+            "0": {
+              "description": "Nova tabela candidate_notes com RLS bloqueando candidatos. Card 'Notas sobre o Candidato' no detalhamento. Audit trail completo via candidate_notes_history (criação, edição, exclusão e restauração rastreadas).",
+              "files": [
+                "sql/migrations/098_candidate_notes.sql",
+                "src/services/candidateNotes/candidateNotesService.supabase.ts",
+                "src/hooks/useCandidateNotesQuery.ts",
+                "src/components/empresa/notes/CandidateNotesCard.tsx"
+              ],
+              "routes": ["/empresa/candidatos/:id"]
+            }
+          }
+        },
+        {
+          "type": "added",
+          "title": "Audit trail em notas de candidatura",
+          "description": "Edições e exclusões em application_notes agora geram histórico rastreável.",
+          "details": {
+            "0": {
+              "description": "Soft delete + tabela application_notes_history + triggers de log. Modal de histórico com diff visual entre versões.",
+              "files": [
+                "sql/migrations/099_application_notes_audit.sql",
+                "src/services/applications/applicationsService.supabase.ts",
+                "src/components/empresa/notes/NoteHistoryModal.tsx"
+              ],
+              "routes": ["/empresa/candidatos/:id"]
+            }
+          }
+        },
+        {
+          "type": "added",
+          "title": "Exportação de Dossiê do Candidato em PDF",
+          "description": "Novo modal de exportação com 4 templates e até 19 seções configuráveis para visão da empresa.",
+          "details": {
+            "0": {
+              "description": "Templates Clássico, Moderno, Minimalista e Dossiê (com capa + sumário executivo). Seções incluem Match Score, análise Gauge-Pro, notas internas, histórico de candidaturas, entrevistas, destaques, idiomas, disponibilidade e activity log. Rodapé 'Documento Interno - Uso Restrito' em todas as páginas.",
+              "files": [
+                "src/components/empresa/pdf/PDFEmpresaDocument.tsx",
+                "src/components/empresa/pdf/ExportCandidateProfileModal.tsx",
+                "src/components/empresa/pdf/templates/PDFTemplateDossie.tsx"
+              ],
+              "routes": ["/empresa/candidatos/:id"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "title": "Botão 'Exportar Perfil' agora funciona",
+          "description": "Anteriormente o botão apenas exibia um toast falso sem produzir nenhum arquivo.",
+          "details": {
+            "0": {
+              "description": "Handler substituído por integração com o modal de Dossiê funcional. Suporta exportação com ou sem candidatura selecionada (seções dependentes ficam desabilitadas com tooltip explicativo).",
+              "files": ["src/pages/empresa/CandidateProfile.tsx"],
+              "routes": ["/empresa/candidatos/:id"]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "title": "Botão 'Adicionar Anotação' vira menu de escopo",
+          "description": "Agora oferece duas opções: 'Sobre esta candidatura' (contextual) e 'Sobre o candidato' (perene).",
+          "details": {
+            "0": {
+              "description": "Cada opção rola até o card respectivo e foca o editor de nota. Item 'Sobre esta candidatura' fica desabilitado quando não há candidatura selecionada.",
+              "files": ["src/pages/empresa/CandidateProfile.tsx"],
+              "routes": ["/empresa/candidatos/:id"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "version": "1.60.0",
       "codename": "Curator",
       "type": "minor",
       "releaseDate": "2026-05-05",
       "description": "Parametrização dos prompts de IA via configurações + UI reforçada de edição (advertência, dupla confirmação com diff e digitação obrigatória, histórico completo por prompt).",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

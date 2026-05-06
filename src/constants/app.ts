@@ -5,7 +5,7 @@
  */
 
 export const APP_VERSION = "1.60.0";
-export const APP_CODENAME = "Curator";
+export const APP_CODENAME = "Dossier";
 export const APP_NAME = "RecrutaRS";
 export const APP_COMPANY = "AILA - Sistemas Inteligentes";
 export const APP_COMPANY_URL = "https://ailainteligente.com";
