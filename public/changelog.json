@@ -3,53 +3,54 @@
     {
       "version": "1.61.0",
       "codename": "Dossier",
-      "date": "2026-05-06",
+      "type": "minor",
+      "releaseDate": "2026-05-06",
+      "description": "Dossiê do candidato em PDF (4 templates, 19 seções configuráveis) + notas internas perenes por candidato + audit trail completo em todas as notas internas (criação, edição, exclusão, restauração).",
       "isCurrent": true,
-      "items": [
+      "changes": [
         {
           "type": "added",
-          "title": "Notas internas perenes sobre candidatos",
-          "description": "Recrutadores podem registrar observações que persistem entre vagas, invisíveis ao candidato.",
+          "items": [
+            "Notas internas perenes sobre o candidato (independem de vaga) — visíveis por toda a equipe da empresa, invisíveis ao candidato. Card dedicado no detalhamento do candidato.",
+            "Audit trail completo em todas as notas internas (candidato e candidatura): criação, edição, exclusão e restauração ficam registradas com autor e diff visual no modal de histórico.",
+            "Exportação de Dossiê do Candidato em PDF com 4 templates (Clássico, Moderno, Minimalista, Dossiê) e 19 seções configuráveis: currículo + Match Score, análise Gauge-Pro, notas internas, histórico de candidaturas, entrevistas, destaques, idiomas, disponibilidade e activity log. Rodapé 'Documento Interno - Uso Restrito' em todas as páginas."
+          ],
           "details": {
             "0": {
-              "description": "Nova tabela candidate_notes com RLS bloqueando candidatos. Card 'Notas sobre o Candidato' no detalhamento. Audit trail completo via candidate_notes_history (criação, edição, exclusão e restauração rastreadas).",
+              "description": "Nova tabela candidate_notes (perene por candidato + empresa) com RLS bloqueando candidatos. Soft delete via flag is_deleted; DELETE físico bloqueado por policy. Trigger AFTER INSERT/UPDATE popula candidate_notes_history. Service + hooks React Query para CRUD + history.",
               "files": [
                 "sql/migrations/098_candidate_notes.sql",
+                "src/types/notes.ts",
                 "src/services/candidateNotes/candidateNotesService.supabase.ts",
+                "src/services/candidateNotes/candidateNotesService.ts",
                 "src/hooks/useCandidateNotesQuery.ts",
-                "src/components/empresa/notes/CandidateNotesCard.tsx"
+                "src/components/empresa/notes/CandidateNotesCard.tsx",
+                "src/components/empresa/notes/NoteEditor.tsx",
+                "src/components/empresa/notes/NoteListItem.tsx"
               ],
               "routes": ["/empresa/candidatos/:id"]
-            }
-          }
-        },
-        {
-          "type": "added",
-          "title": "Audit trail em notas de candidatura",
-          "description": "Edições e exclusões em application_notes agora geram histórico rastreável.",
-          "details": {
-            "0": {
-              "description": "Soft delete + tabela application_notes_history + triggers de log. Modal de histórico com diff visual entre versões.",
+            },
+            "1": {
+              "description": "Migration 099 estende application_notes com colunas updated_at, is_deleted, deleted_at, deleted_by + tabela application_notes_history espelhada + triggers BEFORE UPDATE (touch updated_at) e AFTER INSERT/UPDATE (audit log) + policy UPDATE liberal por empresa. Modal NoteHistoryModal exibe timeline com badges por ação e diff lado-a-lado em edições.",
               "files": [
                 "sql/migrations/099_application_notes_audit.sql",
+                "src/services/applications/applicationsService.ts",
                 "src/services/applications/applicationsService.supabase.ts",
-                "src/components/empresa/notes/NoteHistoryModal.tsx"
+                "src/hooks/useApplicationsQuery.ts",
+                "src/components/empresa/notes/NoteHistoryModal.tsx",
+                "src/components/empresa/notes/ApplicationNotesCard.tsx"
               ],
               "routes": ["/empresa/candidatos/:id"]
-            }
-          }
-        },
-        {
-          "type": "added",
-          "title": "Exportação de Dossiê do Candidato em PDF",
-          "description": "Novo modal de exportação com 4 templates e até 19 seções configuráveis para visão da empresa.",
-          "details": {
-            "0": {
-              "description": "Templates Clássico, Moderno, Minimalista e Dossiê (com capa + sumário executivo). Seções incluem Match Score, análise Gauge-Pro, notas internas, histórico de candidaturas, entrevistas, destaques, idiomas, disponibilidade e activity log. Rodapé 'Documento Interno - Uso Restrito' em todas as páginas.",
+            },
+            "2": {
+              "description": "Módulo PDF empresa com tipos (PDFEmpresaData/PDFEmpresaSectionConfig), estilos compartilhados e 13 sections (Header, Footer, CoverPage, ExecutiveSummary, MatchScore, GaugeProAnalysis, InternalNotes, ApplicationHistory, PracticalAnalysis, Interviews, Highlights, FavoriteEvaluation, Languages, Availability, ActivityLog) + 8 sections de currículo. Modal ExportCandidateProfileModal: 4 templates × 19 checkboxes; seções sem dados ficam desabilitadas com tooltip explicativo. Filename Dossie_NomeCandidato_DDMMAAAA.pdf.",
               "files": [
+                "src/components/empresa/pdf/types.ts",
+                "src/components/empresa/pdf/styles.ts",
                 "src/components/empresa/pdf/PDFEmpresaDocument.tsx",
                 "src/components/empresa/pdf/ExportCandidateProfileModal.tsx",
-                "src/components/empresa/pdf/templates/PDFTemplateDossie.tsx"
+                "src/components/empresa/pdf/templates/PDFTemplateDossie.tsx",
+                "src/components/empresa/pdf/templates/PDFTemplateBaseEmpresa.tsx"
               ],
               "routes": ["/empresa/candidatos/:id"]
             }
@@ -57,11 +58,12 @@
         },
         {
           "type": "fixed",
-          "title": "Botão 'Exportar Perfil' agora funciona",
-          "description": "Anteriormente o botão apenas exibia um toast falso sem produzir nenhum arquivo.",
+          "items": [
+            "Botão 'Exportar Perfil' no detalhamento do candidato agora funciona — antes apenas exibia um toast falso sem produzir nenhum arquivo."
+          ],
           "details": {
             "0": {
-              "description": "Handler substituído por integração com o modal de Dossiê funcional. Suporta exportação com ou sem candidatura selecionada (seções dependentes ficam desabilitadas com tooltip explicativo).",
+              "description": "Handler substituído por integração com o modal de Dossiê funcional. Suporta exportação com ou sem candidatura selecionada (seções dependentes ficam desabilitadas com tooltip explicativo). Todos os hooks de dados são pré-carregados via React Query e passados ao modal montado por useMemo.",
               "files": ["src/pages/empresa/CandidateProfile.tsx"],
               "routes": ["/empresa/candidatos/:id"]
             }
@@ -69,11 +71,12 @@
         },
         {
           "type": "changed",
-          "title": "Botão 'Adicionar Anotação' vira menu de escopo",
-          "description": "Agora oferece duas opções: 'Sobre esta candidatura' (contextual) e 'Sobre o candidato' (perene).",
+          "items": [
+            "Botão 'Adicionar Anotação' (sidebar do detalhamento) vira menu de escopo: oferece 'Sobre esta candidatura' (contextual da vaga) ou 'Sobre o candidato' (perene)."
+          ],
           "details": {
             "0": {
-              "description": "Cada opção rola até o card respectivo e foca o editor de nota. Item 'Sobre esta candidatura' fica desabilitado quando não há candidatura selecionada.",
+              "description": "Cada opção rola programaticamente até o card respectivo (via useImperativeHandle nos cards) e abre o editor inline. Item 'Sobre esta candidatura' fica desabilitado quando não há candidatura selecionada no contexto.",
               "files": ["src/pages/empresa/CandidateProfile.tsx"],
               "routes": ["/empresa/candidatos/:id"]
             }
