@@ -1,12 +1,47 @@
 {
   "versions": [
     {
+      "version": "1.61.1",
+      "codename": "Dossier",
+      "type": "patch",
+      "releaseDate": "2026-05-07",
+      "description": "Refinamentos no Dossiê do Candidato: notas internas separadas em duas opções independentes na exportação e nomes das dimensões comportamentais por extenso no PDF.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Notas internas no Dossiê agora aparecem como duas opções separadas: 'Notas sobre o Candidato' e 'Notas desta Candidatura' — escolha cada uma de forma independente na hora de exportar.",
+            "Nomes das dimensões comportamentais no PDF aparecem por extenso (Dominância, Sociabilidade, Ritmo, Conformidade, Relacional) em vez das siglas D1, D2, D3, D4, D5."
+          ],
+          "details": {
+            "0": {
+              "description": "Antes, uma única caixa 'Notas internas' incluía os dois tipos juntos. Agora cada tipo é uma opção independente: a primeira só fica disponível se houver notas perenes sobre o candidato; a segunda só fica disponível se houver notas registradas na candidatura selecionada. As duas seções continuam saindo no PDF na mesma ordem (perenes primeiro, da candidatura logo depois).",
+              "files": [
+                "src/components/empresa/pdf/types.ts",
+                "src/components/empresa/pdf/sections/InternalNotesSection.tsx",
+                "src/components/empresa/pdf/ExportCandidateProfileModal.tsx",
+                "src/components/empresa/pdf/templates/PDFTemplateBaseEmpresa.tsx",
+                "src/components/empresa/pdf/templates/PDFTemplateDossie.tsx"
+              ],
+              "routes": ["/empresa/candidatos/:id"]
+            },
+            "1": {
+              "description": "A seção Análise Comportamental (Gauge-Pro) do PDF passa a exibir os nomes amigáveis das cinco dimensões em vez das siglas internas, deixando o documento mais legível para leitores externos ao time técnico.",
+              "files": ["src/pages/empresa/CandidateProfile.tsx"],
+              "routes": ["/empresa/candidatos/:id"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.61.0",
       "codename": "Dossier",
       "type": "minor",
       "releaseDate": "2026-05-06",
       "description": "Dossiê do candidato em PDF (4 templates, 19 seções configuráveis) + notas internas perenes por candidato + audit trail completo em todas as notas internas (criação, edição, exclusão, restauração).",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

@@ -490,7 +490,10 @@ export default function CandidateProfile() {
         archetypeDescription: gaugeProResult.archetype?.description,
         dimensions: gaugeProResult.finalScores
           ? (Object.entries(gaugeProResult.finalScores) as [string, number][]).map(
-              ([name, score]) => ({ name, score }),
+              ([key, score]) => ({
+                name: DIMENSION_SHORT_NAMES[key as GaugeProDimension] ?? key,
+                score,
+              }),
             )
           : undefined,
       } : null,
