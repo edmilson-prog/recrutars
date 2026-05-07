@@ -82,7 +82,8 @@ export function PDFTemplateBaseEmpresa({
       {sections.practicalAnalysis && <PracticalAnalysisSection data={data} />}
       {sections.interviews && <InterviewsSection data={data} />}
       {sections.applicationHistory && <ApplicationHistorySection data={data} />}
-      {sections.internalNotes && <InternalNotesSection data={data} />}
+      {sections.notesCandidate && <InternalNotesSection data={data} kind="candidate" />}
+      {sections.notesApplication && <InternalNotesSection data={data} kind="application" />}
       {sections.activityLog && <ActivityLogSection data={data} />}
       <Footer companyName={data.company.name} generatedAt={generatedAt} />
     </Page>

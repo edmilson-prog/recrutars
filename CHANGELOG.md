@@ -5,6 +5,12 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.61.1] - 2026-05-07 "Dossier"
+
+### Changed
+- **Notas internas separadas no Dossiê** — flag única `internalNotes` substituída por `notesCandidate` + `notesApplication` em `PDFEmpresaSectionConfig`; `InternalNotesSection` aceita prop `kind` (`'candidate' | 'application'`) e renderiza apenas o bloco correspondente; cada checkbox tem `isAvailable` próprio (perenes vs. da candidatura) com tooltip dedicado (`types.ts`, `InternalNotesSection.tsx`, `ExportCandidateProfileModal.tsx`, `PDFTemplateBaseEmpresa.tsx`, `PDFTemplateDossie.tsx`)
+- **Dimensões Gauge-Pro por extenso no PDF** — `CandidateProfile.tsx` mapeia chaves `D1-D5` em `gaugeProResult.finalScores` via `DIMENSION_SHORT_NAMES` (Dominância, Sociabilidade, Ritmo, Conformidade, Relacional) ao montar `PDFEmpresaData.gaugeProResult.dimensions`; renderer continua agnóstico
+
 ## [1.58.3] - 2026-05-02 "Mirror"
 
 ### Fixed

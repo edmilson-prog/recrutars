@@ -171,7 +171,10 @@
       "mcp__plugin_stripe_stripe__get_stripe_account_info",
       "mcp__plugin_stripe_stripe__list_products",
       "mcp__plugin_stripe_stripe__list_prices",
-      "mcp__plugin_stripe_stripe__search_stripe_documentation"
+      "mcp__plugin_stripe_stripe__search_stripe_documentation",
+      "Bash(awk '{print $NF}')",
+      "PowerShell($p = Get-CimInstance Win32_Process -Filter \"ProcessId = 13908\"; $p.ParentProcessId)",
+      "PowerShell(wmic process where \"ProcessId=13908\" get ParentProcessId /value 2>$null)"
     ]
   },
   "enableAllProjectMcpServers": true,

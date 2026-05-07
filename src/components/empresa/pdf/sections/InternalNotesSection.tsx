@@ -4,39 +4,41 @@ import type { PDFEmpresaData } from '../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-export function InternalNotesSection({ data }: { data: PDFEmpresaData }) {
-  const candidateNotes = (data.candidateNotes ?? []).filter(n => !n.isDeleted);
-  const appNotes = (data.applicationNotes ?? []).filter(n => !n.isDeleted);
-  if (candidateNotes.length === 0 && appNotes.length === 0) return null;
+interface Props {
+  data: PDFEmpresaData;
+  kind: 'candidate' | 'application';
+}
 
-  const renderNote = (n: { id: string; authorName?: string; content: string; createdAt: string }) => (
-    <View key={n.id} style={{ marginBottom: 6, paddingLeft: 8, borderLeftWidth: 2, borderLeftColor: empresaColors.accent }}>
-      <Text style={[empresaStyles.paragraph, { fontWeight: 'bold', fontSize: 9 }]}>
-        {n.authorName ?? 'Recrutador'} · {format(new Date(n.createdAt), 'dd/MM/yyyy', { locale: ptBR })}
-      </Text>
-      <Text style={empresaStyles.paragraph}>{n.content}</Text>
-    </View>
-  );
+const TITLES: Record<Props['kind'], string> = {
+  candidate: 'Notas sobre o Candidato',
+  application: 'Notas desta Candidatura',
+};
+
+export function InternalNotesSection({ data, kind }: Props) {
+  const source = kind === 'candidate' ? data.candidateNotes : data.applicationNotes;
+  const notes = (source ?? []).filter(n => !n.isDeleted);
+  if (notes.length === 0) return null;
 
   return (
     <View style={empresaStyles.sectionContainer}>
-      <Text style={empresaStyles.sectionTitle}>Notas Internas</Text>
-      {candidateNotes.length > 0 && (
-        <>
-          <Text style={[empresaStyles.paragraph, { fontWeight: 'bold', marginTop: 4, color: empresaColors.muted }]}>
-            Sobre o Candidato (perenes)
+      <Text style={empresaStyles.sectionTitle}>{TITLES[kind]}</Text>
+      {notes.map(n => (
+        <View
+          key={n.id}
+          style={{
+            marginBottom: 6,
+            paddingLeft: 8,
+            borderLeftWidth: 2,
+            borderLeftColor: empresaColors.accent,
+          }}
+        >
+          <Text style={[empresaStyles.paragraph, { fontWeight: 'bold', fontSize: 9 }]}>
+            {n.authorName ?? 'Recrutador'} ·{' '}
+            {format(new Date(n.createdAt), 'dd/MM/yyyy', { locale: ptBR })}
           </Text>
-          {candidateNotes.map(renderNote)}
-        </>
-      )}
-      {appNotes.length > 0 && (
-        <>
-          <Text style={[empresaStyles.paragraph, { fontWeight: 'bold', marginTop: 8, color: empresaColors.muted }]}>
-            Sobre esta Candidatura
-          </Text>
-          {appNotes.map(renderNote)}
-        </>
-      )}
+          <Text style={empresaStyles.paragraph}>{n.content}</Text>
+        </View>
+      ))}
     </View>
   );
 }

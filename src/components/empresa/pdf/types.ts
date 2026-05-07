@@ -17,7 +17,8 @@ export interface PDFEmpresaSectionConfig {
   // Empresa
   matchScore: boolean;
   gaugeProAnalysis: boolean;
-  internalNotes: boolean;
+  notesCandidate: boolean;
+  notesApplication: boolean;
   applicationHistory: boolean;
   practicalAnalysis: boolean;
   interviews: boolean;
