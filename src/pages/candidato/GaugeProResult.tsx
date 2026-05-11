@@ -29,7 +29,12 @@ import type { GaugeProResult as GaugeProResultType, GaugeProDimension } from '@/
 import { useEffect, useState } from 'react';
 import { useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
 import { useAIAnalysis } from '@/hooks/useAIAnalysis';
-import { PracticalAnalysisCard, TechnicalAnalysisCard } from '@/components/aiAnalysis';
+import { useSubscription } from '@/hooks/usePlansQuery';
+import {
+  PracticalAnalysisCard,
+  TechnicalAnalysisCard,
+  AIAnalysisPaywallCard,
+} from '@/components/aiAnalysis';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const DIMENSION_COLORS: Record<GaugeProDimension, string> = {
@@ -71,6 +76,14 @@ export default function GaugeProResult() {
   });
 
   const hasAnalysis = !!(aiAnalysis.practicalAnalysis || aiAnalysis.technicalAnalysis);
+
+  // Paywall: AI analyses are gated to paid plans (PRD-093).
+  // Free/Essencial candidates see a teaser card with upgrade CTA instead.
+  const { data: subscription, isLoading: subscriptionLoading } = useSubscription(user?.id);
+  const hasPaidPlan =
+    !!subscription &&
+    subscription.pricePaid > 0 &&
+    (subscription.status === 'active' || subscription.status === 'trial');
 
   useEffect(() => {
     // Supabase result takes priority
@@ -284,8 +297,14 @@ export default function GaugeProResult() {
           </CardContent>
         </Card>
 
-        {/* AI Analysis Cards - PRD-051 (rendered only when analysis exists so hooks load fresh data) */}
-        {hasAnalysis && (
+        {/* AI Analysis section — gated by paid plan (PRD-093).
+            While subscription is loading we render nothing to avoid flashing
+            the paywall to paid users on first paint. */}
+        {!subscriptionLoading && !hasPaidPlan && (
+          <AIAnalysisPaywallCard archetypeName={result.archetype.name} />
+        )}
+
+        {hasPaidPlan && hasAnalysis && (
           <>
             <PracticalAnalysisCard
               candidateId={candidateId}
@@ -298,8 +317,7 @@ export default function GaugeProResult() {
           </>
         )}
 
-        {/* AI Analysis Indicator */}
-        {!hasAnalysis && (
+        {hasPaidPlan && !hasAnalysis && (
           <div className="flex flex-col items-center gap-2 py-2">
             {(aiAnalysis.isGenerating || analysisGenerating) ? (
               <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
