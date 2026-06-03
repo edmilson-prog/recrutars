@@ -1,12 +1,40 @@
 {
   "versions": [
     {
+      "version": "1.62.1",
+      "codename": "Gatekeeper",
+      "type": "patch",
+      "releaseDate": "2026-06-03",
+      "description": "Correção na exportação do dossiê: as opções de Visão da Empresa agora ficam disponíveis para seleção sempre que o dado correspondente existe na tela.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "No painel de exportação do dossiê de um candidato, várias opções da seção 'Visão da Empresa' ficavam acinzentadas mesmo quando o dado existia — agora ficam selecionáveis: Análise prática (IA), Histórico de candidaturas, Histórico de atividade, Disponibilidade, Notas desta candidatura, Destaques da candidatura, Entrevistas e Match Score."
+          ],
+          "details": {
+            "0": {
+              "description": "Ao abrir o painel 'Exportar Dossiê do Candidato', as caixas de Análise prática (IA), Histórico de candidaturas, Histórico de atividade, Disponibilidade, Notas desta candidatura, Destaques da candidatura, Entrevistas e Match Score apareciam travadas e não podiam ser marcadas — mesmo quando o candidato possuía esses dados na tela. Agora, sempre que o dado existe, a opção fica disponível para inclusão no PDF. O Match Score também passou a aparecer mesmo sem candidatura ativa, usando o melhor resultado de compatibilidade calculado com as vagas da empresa.",
+              "files": [
+                "src/pages/empresa/CandidateProfile.tsx",
+                "src/components/empresa/pdf/ExportCandidateProfileModal.tsx",
+                "src/components/empresa/pdf/sections/MatchScoreSection.tsx",
+                "src/components/empresa/pdf/types.ts"
+              ],
+              "routes": ["/empresa/candidatos/:id"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.62.0",
       "codename": "Gatekeeper",
       "type": "minor",
       "releaseDate": "2026-06-03",
       "description": "Análise de IA do resultado comportamental agora é exclusiva dos planos pagos (prévia desfocada com convite ao upgrade nos planos gratuito e Essencial) e a troca manual de plano pelo administrador passou a funcionar de fato, liberando o acesso na hora.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
