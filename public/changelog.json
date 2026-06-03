@@ -1,12 +1,65 @@
 {
   "versions": [
     {
+      "version": "1.62.0",
+      "codename": "Gatekeeper",
+      "type": "minor",
+      "releaseDate": "2026-06-03",
+      "description": "Análise de IA do resultado comportamental agora é exclusiva dos planos pagos (prévia desfocada com convite ao upgrade nos planos gratuito e Essencial) e a troca manual de plano pelo administrador passou a funcionar de fato, liberando o acesso na hora.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "A análise de inteligência artificial do seu resultado comportamental passou a fazer parte dos planos pagos. Nos planos gratuito e Essencial aparece uma prévia desfocada com um convite para fazer upgrade; nos planos pagos a análise completa continua disponível normalmente."
+          ],
+          "details": {
+            "0": {
+              "description": "Na tela de resultado do teste comportamental, candidatos sem plano pago veem um único cartão com algumas linhas de prévia desfocadas e um botão que leva à página de planos. Candidatos com plano pago (ativo ou em período de teste) continuam vendo os cartões de análise prática e técnica como antes.",
+              "files": [
+                "src/components/aiAnalysis/AIAnalysisPaywallCard.tsx",
+                "src/components/aiAnalysis/index.ts",
+                "src/pages/candidato/GaugeProResult.tsx"
+              ],
+              "routes": ["/candidato/gauge-pro/resultado", "/candidato/meu-plano"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "A troca manual de plano de uma empresa pelo administrador agora funciona de verdade: a alteração é salva, o acesso é liberado imediatamente (inclusive para empresas com período de teste já expirado) e fica registrada no histórico da assinatura.",
+            "Corrigidas permissões internas que impediam o administrador de salvar a mudança de plano e de registrar o histórico de assinatura."
+          ],
+          "details": {
+            "0": {
+              "description": "Antes, ao alterar o plano de uma empresa no painel administrativo, a tela mostrava sucesso mas nada era salvo — ao recarregar, o plano voltava ao anterior. Agora a mudança é gravada na assinatura da empresa; se a empresa estava em período de teste (mesmo expirado), a assinatura passa a ativa e o acesso é liberado na hora, sem encurtar períodos já pagos.",
+              "files": [
+                "src/pages/admin/CompanyDetail.tsx",
+                "src/services/plans/plansService.ts",
+                "src/services/plans/plansService.supabase.ts",
+                "src/hooks/usePlansQuery.ts"
+              ],
+              "routes": ["/admin/empresas/:id"]
+            },
+            "1": {
+              "description": "Foram adicionadas as permissões de banco que faltavam para o administrador atualizar os dados da empresa e registrar a troca no histórico de assinatura — antes essas ações eram bloqueadas silenciosamente.",
+              "files": [
+                "sql/migrations/100_admin_company_update_and_subscription_history_insert.sql"
+              ],
+              "routes": ["/admin/empresas/:id"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.61.1",
       "codename": "Dossier",
       "type": "patch",
       "releaseDate": "2026-05-07",
       "description": "Refinamentos no Dossiê do Candidato: notas internas separadas em duas opções independentes na exportação e nomes das dimensões comportamentais por extenso no PDF.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "changed",

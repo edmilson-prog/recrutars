@@ -3,11 +3,12 @@ import { empresaStyles, empresaColors, getScoreColor } from '../styles';
 import type { PDFEmpresaData } from '../types';
 
 export function MatchScoreSection({ data }: { data: PDFEmpresaData }) {
-  if (!data.matchResult || !data.application) return null;
+  if (!data.matchResult) return null;
   const m = data.matchResult;
+  const jobTitle = data.application?.jobTitle ?? m.jobTitle;
   return (
     <View style={empresaStyles.sectionContainer}>
-      <Text style={empresaStyles.sectionTitle}>Match Score — {data.application.jobTitle}</Text>
+      <Text style={empresaStyles.sectionTitle}>Match Score{jobTitle ? ` — ${jobTitle}` : ''}</Text>
       <View style={{ flexDirection: 'row', gap: 16, marginBottom: 8 }}>
         <View style={{
           backgroundColor: getScoreColor(m.overallScore),

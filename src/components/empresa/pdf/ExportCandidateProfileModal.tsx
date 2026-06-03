@@ -47,7 +47,7 @@ const SECTIONS: SectionDef[] = [
   { key: 'education',          label: 'Formação acadêmica',           group: 'base',    isAvailable: () => true,                                       unavailableHint: '' },
   { key: 'courses',            label: 'Cursos e certificações',       group: 'base',    isAvailable: () => true,                                       unavailableHint: '' },
   { key: 'salary',             label: 'Pretensão salarial',           group: 'base',    isAvailable: () => true,                                       unavailableHint: '' },
-  { key: 'matchScore',         label: 'Match Score (vaga atual)',     group: 'empresa', isAvailable: d => !!d.matchResult && !!d.application,         unavailableHint: 'Requer candidatura ativa' },
+  { key: 'matchScore',         label: 'Match Score',                  group: 'empresa', isAvailable: d => !!d.matchResult,                           unavailableHint: 'Sem match calculado' },
   { key: 'gaugeProAnalysis',   label: 'Análise comportamental Gauge-Pro', group: 'empresa', isAvailable: d => !!d.gaugeProResult,                     unavailableHint: 'Sem teste Gauge-Pro' },
   { key: 'notesCandidate',     label: 'Notas sobre o Candidato',      group: 'empresa', isAvailable: d => (d.candidateNotes?.filter(n => !n.isDeleted).length ?? 0) > 0, unavailableHint: 'Sem notas sobre o candidato' },
   { key: 'notesApplication',   label: 'Notas desta Candidatura',      group: 'empresa', isAvailable: d => !!d.application && (d.applicationNotes?.filter(n => !n.isDeleted).length ?? 0) > 0, unavailableHint: 'Sem notas nesta candidatura' },
