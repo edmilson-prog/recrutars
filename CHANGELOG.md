@@ -5,6 +5,11 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.62.1] - 2026-06-03 "Gatekeeper"
+
+### Fixed
+- **Exportação de dossiê: seções de "Visão da Empresa" habilitadas quando dado existe** — oito campos em `exportData` eram hard-coded como `undefined` (análise IA, histórico de candidaturas, atividade, disponibilidade, notas da candidatura, destaques, entrevistas, match score); todos agora alimentados com dados já presentes na página; match score liberado sem candidatura ativa usando título da vaga de melhor match; markdown da análise IA convertido para texto limpo no PDF (`CandidateProfile.tsx`, `ExportCandidateProfileModal.tsx`, `MatchScoreSection.tsx`, `pdf/types.ts`)
+
 ## [1.62.0] - 2026-06-03 "Gatekeeper"
 
 ### Added
