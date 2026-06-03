@@ -100,6 +100,9 @@ import { ApplicationNotesCard, type ApplicationNotesCardHandle } from '@/compone
 import { ExportCandidateProfileModal } from '@/components/empresa/pdf/ExportCandidateProfileModal';
 import type { PDFEmpresaData } from '@/components/empresa/pdf/types';
 import { useCandidateNotes } from '@/hooks/useCandidateNotesQuery';
+import { useAIAnalysis } from '@/hooks/useAIAnalysis';
+import { interviewStatusLabels } from '@/types/interview';
+import type { CandidateNote } from '@/types/notes';
 
 // Skill level colors for profile skills
 const skillLevelColors: Record<string, { bg: string; text: string }> = {
@@ -212,6 +215,20 @@ function maskPhone(phone: string): string {
   return `(${ddd}) *****-**${last2}`;
 }
 
+// Converts the AI analysis markdown into plain text suitable for the PDF
+// (react-pdf does not parse markdown, so raw #/**/- markers would leak through).
+function plainTextFromMarkdown(md: string): string {
+  return md
+    .replace(/^#{1,6}\s+/gm, '')          // headers
+    .replace(/\*\*(.+?)\*\*/g, '$1')      // bold
+    .replace(/\*(.+?)\*/g, '$1')          // italic
+    .replace(/`(.+?)`/g, '$1')            // inline code
+    .replace(/^\s*[-—_]{3,}\s*$/gm, '')   // horizontal rules
+    .replace(/^[-*]\s+/gm, '• ')          // bullets
+    .replace(/\n{3,}/g, '\n\n')           // collapse blank lines
+    .trim();
+}
+
 function calculateTotalExperienceYears(experiences: ExperienceWithCurrent[]): number {
   let totalMonths = 0;
   const now = new Date();
@@ -267,7 +284,9 @@ export default function CandidateProfile() {
 
   // Hooks
   const { activities, hasMore, remaining, showMore, totalCount } = useCandidateActivity(id || '');
-  const { createInterview } = useCompanyInterviews(companyId);
+  // Full activity list (unpaginated) for the PDF dossiê export
+  const { activities: activityLogForExport } = useCandidateActivity(id || '', 1000);
+  const { createInterview, interviews: companyInterviews } = useCompanyInterviews(companyId);
   const createApplicationMutation = useCreateApplication();
   const createConversationMutation = useCreateConversation();
   const sendMessageMutation = useSendMessage();
@@ -284,6 +303,12 @@ export default function CandidateProfile() {
   // Fetch Gauge-Pro result + assessment (respostas reais) for this candidate
   const { data: gaugeProResult } = useGaugeProResultByCandidate(candidate?.id || '');
   const { data: gaugeProAssessment } = useGaugeProSessionByCandidate(candidate?.id || '');
+
+  // AI practical analysis (same queryKey as PracticalAnalysisCard — deduped) for PDF export
+  const { practicalAnalysis: aiPracticalAnalysis } = useAIAnalysis({
+    candidateId: candidate?.id || '',
+    candidateName: candidate ? getCandidateDisplayName(candidate) : undefined,
+  });
 
   // PRD-073: Professional profile + highlights
   const { data: profile } = useProfile(candidate?.id || '');
@@ -453,8 +478,86 @@ export default function CandidateProfile() {
   const matchResult = activeMatchJob ? (allMatchResults.get(selectedMatchJobId) ?? null) : null;
   const matchScore = matchResult?.totalScore || 0;
 
+  // Transform application highlights (stored as IDs) into labeled entries for the PDF
+  const highlightsForExport = useMemo(() => {
+    if (!highlights || !profile) return undefined;
+    const out: { id: string; section: string; label: string }[] = [];
+    for (const hid of highlights.experienceIds) {
+      const e = profile.experiences.find((x) => x.id === hid);
+      if (e) out.push({ id: `exp-${hid}`, section: 'Experiência', label: `${e.role} — ${e.company}` });
+    }
+    for (const hid of highlights.educationIds) {
+      const ed = profile.education.find((x) => x.id === hid);
+      if (ed) out.push({ id: `edu-${hid}`, section: 'Formação', label: `${ed.degree} em ${ed.field}` });
+    }
+    for (const hid of highlights.skillIds) {
+      const sk = profile.skills.find((x) => x.id === hid);
+      if (sk) out.push({ id: `skill-${hid}`, section: 'Habilidade', label: sk.name });
+    }
+    for (const hid of highlights.courseIds) {
+      const c = profile.courses.find((x) => x.id === hid);
+      if (c) out.push({ id: `course-${hid}`, section: 'Curso', label: c.name });
+    }
+    return out.length > 0 ? out : undefined;
+  }, [highlights, profile]);
+
   const exportData = useMemo<PDFEmpresaData | null>(() => {
     if (!candidate || !currentCompany) return null;
+
+    // Application notes (ApplicationNote shape) adapted to the PDF's CandidateNote shape
+    const applicationNotesMapped = existingNotes.map((n) => ({
+      id: n.id,
+      candidateId: candidate.id,
+      companyId: currentCompany.id,
+      authorId: '',
+      authorName: n.author,
+      content: n.content,
+      createdAt: n.createdAt,
+      updatedAt: n.createdAt,
+      isDeleted: false,
+    })) as CandidateNote[];
+
+    const applicationHistoryMapped = candidateApplications
+      .filter((a) => !!a.appliedAt)
+      .map((a) => ({
+        id: a.id,
+        jobTitle: a.jobTitle,
+        status: STATUS_LABELS[a.status] ?? a.status,
+        appliedAt: a.appliedAt,
+      }));
+
+    const interviewsMapped = companyInterviews
+      .filter((iv) => iv.candidateId === candidate.id)
+      .map((iv) => ({
+        id: iv.id,
+        scheduledAt: iv.confirmedDatetime ?? iv.proposedSlots?.[0]?.datetime ?? iv.createdAt,
+        status: interviewStatusLabels[iv.status] ?? iv.status,
+        feedback: iv.notes,
+      }))
+      .filter((iv) => !!iv.scheduledAt);
+
+    const activityLogMapped = (activityLogForExport ?? [])
+      .filter((ev) => !!ev.timestamp)
+      .map((ev) => ({
+        id: ev.id,
+        action: ev.title,
+        createdAt: ev.timestamp,
+        description: ev.description,
+      }));
+
+    const practicalAnalysisMapped =
+      aiPracticalAnalysis && aiPracticalAnalysis.status === 'completed' && aiPracticalAnalysis.content
+        ? { summary: plainTextFromMarkdown(aiPracticalAnalysis.content) }
+        : null;
+
+    const availabilityMapped =
+      candidate.workModel?.length || candidate.availability
+        ? {
+            workModel: candidate.workModel?.length ? candidate.workModel.join(', ') : undefined,
+            immediateStart: /imediat/i.test(candidate.availability ?? ''),
+          }
+        : undefined;
+
     return {
       curriculum: profile,
       candidate: {
@@ -479,6 +582,7 @@ export default function CandidateProfile() {
       } : null,
       matchResult: matchResult ? {
         overallScore: typeof matchResult.totalScore === 'number' ? matchResult.totalScore : 0,
+        jobTitle: activeMatchJob?.title,
         technicalScore: undefined,
         experienceScore: undefined,
         behavioralScore: undefined,
@@ -497,18 +601,34 @@ export default function CandidateProfile() {
             )
           : undefined,
       } : null,
-      applicationNotes: undefined,
+      applicationNotes: applicationNotesMapped.length > 0 ? applicationNotesMapped : undefined,
       candidateNotes: candidateNotesList,
-      applicationHistory: undefined,
-      practicalAnalysis: undefined,
-      interviews: undefined,
-      highlights: undefined,
+      applicationHistory: applicationHistoryMapped.length > 0 ? applicationHistoryMapped : undefined,
+      practicalAnalysis: practicalAnalysisMapped,
+      interviews: interviewsMapped.length > 0 ? interviewsMapped : undefined,
+      highlights: highlightsForExport,
       favoriteEvaluation: { isFavorite: candidate ? isFavorite(candidate.id) : false, tags: [] },
       languages: undefined,
-      availability: undefined,
-      activityLog: undefined,
+      availability: availabilityMapped,
+      activityLog: activityLogMapped.length > 0 ? activityLogMapped : undefined,
     };
-  }, [candidate, currentCompany, profile, selectedApplication, matchResult, gaugeProResult, candidateNotesList, isFavorite]);
+  }, [
+    candidate,
+    currentCompany,
+    profile,
+    selectedApplication,
+    matchResult,
+    activeMatchJob,
+    gaugeProResult,
+    candidateNotesList,
+    isFavorite,
+    existingNotes,
+    candidateApplications,
+    companyInterviews,
+    activityLogForExport,
+    aiPracticalAnalysis,
+    highlightsForExport,
+  ]);
 
   if (!candidate) {
     return (

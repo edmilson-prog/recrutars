@@ -55,6 +55,7 @@ export interface PDFEmpresaData {
   } | null;
   matchResult?: {
     overallScore: number;
+    jobTitle?: string;
     technicalScore?: number;
     experienceScore?: number;
     behavioralScore?: number;
