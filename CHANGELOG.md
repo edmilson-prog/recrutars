@@ -5,6 +5,15 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.62.0] - 2026-06-03 "Gatekeeper"
+
+### Added
+- **Análise de IA atrás de paywall por plano** — candidatos sem plano pago (`pricePaid > 0`, `active`/`trial`) deixam de ver `PracticalAnalysisCard`/`TechnicalAnalysisCard` na tela de resultado e passam a ver `AIAnalysisPaywallCard` (prévia desfocada + CTA para `/candidato/meu-plano`); planos pagos mantêm o fluxo de análise intacto (`AIAnalysisPaywallCard.tsx`, `aiAnalysis/index.ts`, `GaugeProResult.tsx`)
+
+### Fixed
+- **Troca manual de plano pelo admin agora persiste e libera acesso** — o handler `handleChangePlan` em `CompanyDetail` era um stub que só mexia em estado local (toast falso, nada gravado). Novo `changeSubscriptionPlan(userId, planId)` no `plansService` grava `plan_id/slug/name` na `subscriptions`, converte trial/expirado/cancelado para `status=active`+`is_trial=false` (libera o `TrialGuard` na hora) preservando datas de assinaturas já pagas, e registra trilha em `subscription_history`. Handler refeito (async, subscription primeiro, sync de `companies.plan` best-effort), `Select` por id de plano, hook `useChangeSubscriptionPlan` (`CompanyDetail.tsx`, `plansService.ts`, `plansService.supabase.ts`, `usePlansQuery.ts`)
+- **Policies RLS faltantes (migration 100)** — `companies` não tinha policy de UPDATE para admin (406 "Cannot coerce") e `subscription_history` não tinha policy de INSERT (403, bloqueava silenciosamente toda auditoria, inclusive cancelamentos); adicionadas `companies_update_admin` e `subscription_history_insert` (`sql/migrations/100_admin_company_update_and_subscription_history_insert.sql`)
+
 ## [1.61.1] - 2026-05-07 "Dossier"
 
 ### Changed
