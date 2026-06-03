@@ -35,12 +35,13 @@ import {
   FileEdit,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useCompany } from '@/hooks/useCompaniesQuery';
+import { useCompany, useUpdateCompany } from '@/hooks/useCompaniesQuery';
 import { useAdminJobs } from '@/hooks/useAdminJobs';
 import { useModeration } from '@/hooks/useModeration';
 import { useCompanyUsers, useCompanyInvites } from '@/hooks/useCompanyInvitesQuery';
 import { ModerationActions } from '@/components/admin/jobs/ModerationActions';
 import { usePlans } from '@/hooks/usePlans';
+import { useChangeSubscriptionPlan } from '@/hooks/usePlansQuery';
 import { formatRelativeDate, formatDateBR } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -185,8 +186,14 @@ export default function AdminCompanyDetail() {
   const { data: companyUsers, isLoading: isLoadingUsers } = useCompanyUsers(id);
   const { data: companyInvites, isLoading: isLoadingInvites } = useCompanyInvites(id);
   const { companyPlans } = usePlans();
+  const changePlanMutation = useChangeSubscriptionPlan();
+  const updateCompanyMutation = useUpdateCompany();
 
-  const PLANS = companyPlans.filter((p) => p.isActive).map((p) => p.name);
+  // Active company plans (objects) — the Select uses plan IDs as values
+  const activeCompanyPlans = useMemo(
+    () => companyPlans.filter((p) => p.isActive),
+    [companyPlans],
+  );
 
   // Local state for company overrides (status/plan changes)
   const [localCompanyOverrides, setLocalCompanyOverrides] = useState<Partial<Company>>({});
@@ -277,14 +284,52 @@ export default function AdminCompanyDetail() {
     setReactivateDialogOpen(false);
   };
 
-  const handleChangePlan = () => {
-    if (!mergedCompany || newPlan === mergedCompany.plan) return;
+  const handleChangePlan = async () => {
+    if (!mergedCompany || !newPlan) return;
+
+    // `newPlan` holds the target plan ID
+    const targetPlan = activeCompanyPlans.find((p) => p.id === newPlan);
+    if (!targetPlan) return;
 
     const oldPlan = mergedCompany.plan;
+    if (targetPlan.name === oldPlan) {
+      setChangePlanModalOpen(false);
+      return;
+    }
+
+    if (!mergedCompany.userId) {
+      toast.error('Empresa sem usuário vinculado — não é possível alterar o plano.');
+      return;
+    }
+
+    // 1. Update the real subscription (source of truth for entitlements/capabilities).
+    //    This is the hard requirement — abort on failure.
+    try {
+      await changePlanMutation.mutateAsync({
+        userId: mergedCompany.userId,
+        planId: targetPlan.id,
+      });
+    } catch (err) {
+      console.error('[CompanyDetail] changePlan failed:', err);
+      toast.error('Erro ao alterar o plano. Tente novamente.');
+      return;
+    }
+
+    // 2. Sync the denormalized companies.plan column used by admin lists/cards.
+    //    Best-effort: the subscription already changed, so a sync failure must
+    //    not present the whole operation as failed.
+    try {
+      await updateCompanyMutation.mutateAsync({
+        id: mergedCompany.id,
+        updates: { plan: targetPlan.name },
+      });
+    } catch (err) {
+      console.warn('[CompanyDetail] companies.plan sync failed (non-fatal):', err);
+    }
 
     setLocalCompanyOverrides((prev) => ({
       ...prev,
-      plan: newPlan,
+      plan: targetPlan.name,
     }));
 
     const newAction: AdminAction = {
@@ -294,13 +339,13 @@ export default function AdminCompanyDetail() {
       action: 'plan_changed',
       performedBy: 'Voce',
       performedAt: new Date().toISOString(),
-      details: `Plano alterado de ${oldPlan} para ${newPlan}`,
+      details: `Plano alterado de ${oldPlan} para ${targetPlan.name}`,
       previousValue: oldPlan,
-      newValue: newPlan,
+      newValue: targetPlan.name,
     };
     setAdminActions((prev) => [newAction, ...prev]);
 
-    toast.success(`Plano alterado para ${newPlan}`);
+    toast.success(`Plano alterado para ${targetPlan.name}`);
     setChangePlanModalOpen(false);
     setNewPlan('');
   };
@@ -834,7 +879,9 @@ export default function AdminCompanyDetail() {
                     <Button
                       variant="outline"
                       onClick={() => {
-                        setNewPlan(mergedCompany.plan || '');
+                        const currentPlanId =
+                          activeCompanyPlans.find((p) => p.name === mergedCompany.plan)?.id ?? '';
+                        setNewPlan(currentPlanId);
                         setChangePlanModalOpen(true);
                       }}
                     >
@@ -1244,9 +1291,9 @@ export default function AdminCompanyDetail() {
                   <SelectValue placeholder="Selecione o novo plano" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PLANS.map((plan) => (
-                    <SelectItem key={plan} value={plan}>
-                      {plan}
+                  {activeCompanyPlans.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1257,9 +1304,19 @@ export default function AdminCompanyDetail() {
             <Button variant="outline" onClick={() => setChangePlanModalOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleChangePlan} disabled={!newPlan || newPlan === mergedCompany.plan}>
+            <Button
+              onClick={handleChangePlan}
+              disabled={
+                !newPlan ||
+                activeCompanyPlans.find((p) => p.id === newPlan)?.name === mergedCompany.plan ||
+                changePlanMutation.isPending ||
+                updateCompanyMutation.isPending
+              }
+            >
               <CreditCard className="w-4 h-4 mr-2" />
-              Confirmar Alteracao
+              {changePlanMutation.isPending || updateCompanyMutation.isPending
+                ? 'Alterando...'
+                : 'Confirmar Alteração'}
             </Button>
           </DialogFooter>
         </DialogContent>
