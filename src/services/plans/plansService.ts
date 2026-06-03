@@ -74,6 +74,9 @@ export interface IPlansService {
   /** Cancel a subscription. */
   cancelSubscription(id: string, reason?: string): Promise<Subscription>;
 
+  /** Manually switch a user's current subscription to a different plan (admin action). */
+  changeSubscriptionPlan(userId: string, newPlanId: string): Promise<Subscription>;
+
   /** Update a plan's fields (snake_case keys). */
   updatePlan(id: string, updates: Record<string, unknown>): Promise<Plan>;
 

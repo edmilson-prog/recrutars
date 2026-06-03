@@ -290,6 +290,24 @@ export function useCancelSubscription() {
   });
 }
 
+/** Admin: manually switch a company's current subscription to another plan. */
+export function useChangeSubscriptionPlan() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, planId }: { userId: string; planId: string }) => {
+      const svc = await getPlansService();
+      return svc.changeSubscriptionPlan(userId, planId);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [SUBSCRIPTIONS_KEY] });
+    },
+    onError: (err) => {
+      console.error('[Plans] changeSubscriptionPlan failed:', err);
+    },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // PRD-074: Trial Subscriptions
 // ---------------------------------------------------------------------------

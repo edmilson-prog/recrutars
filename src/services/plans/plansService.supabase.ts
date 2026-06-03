@@ -385,6 +385,86 @@ export class SupabasePlansService implements IPlansService {
     return data as unknown as Subscription;
   }
 
+  async changeSubscriptionPlan(userId: string, newPlanId: string): Promise<Subscription> {
+    // Load the target plan to copy its denormalized fields onto the subscription
+    const targetPlan = await this.getPlan(newPlanId);
+    if (!targetPlan) throw new Error('Plano de destino não encontrado.');
+
+    // Resolve the user's current subscription (active > cancelled-in-period > trial)
+    const current = await this.getSubscription(userId);
+    if (!current) {
+      throw new Error('Esta empresa não possui assinatura para alterar.');
+    }
+
+    const currentRaw = current as unknown as Record<string, unknown>;
+    const subscriptionId = currentRaw.id as string;
+    const fromPlanId = (currentRaw.plan_id ?? currentRaw.planId) as string | undefined;
+    const fromPlanName = (currentRaw.plan_name ?? currentRaw.planName ?? '') as string;
+    const currentStatus = currentRaw.status as string | undefined;
+    const currentIsTrial = Boolean(currentRaw.is_trial ?? currentRaw.isTrial);
+
+    // No-op when already on the target plan
+    if (fromPlanId === newPlanId) {
+      return current;
+    }
+
+    // Build the update. Always swap the denormalized plan fields.
+    const updates: Record<string, unknown> = {
+      plan_id: targetPlan.id,
+      plan_slug: targetPlan.slug,
+      plan_name: targetPlan.name,
+    };
+
+    // A manual admin plan assignment is meant to GRANT access. If the
+    // subscription is not already an active paid one (e.g. an expired/ongoing
+    // trial, cancelled, past_due), convert it to active so the TrialGuard and
+    // entitlement checks unlock immediately. We only refresh the billing period
+    // in that case — an already-active paid subscription keeps its dates so we
+    // never shorten a period the company actually paid for.
+    const isActivePaid = currentStatus === 'active' && !currentIsTrial;
+    if (!isActivePaid) {
+      const now = new Date();
+      const periodEnd = new Date(now);
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+      updates.status = 'active';
+      updates.is_trial = false;
+      updates.start_date = now.toISOString().split('T')[0];
+      updates.end_date = periodEnd.toISOString().split('T')[0];
+      updates.renewal_date = periodEnd.toISOString().split('T')[0];
+    }
+
+    // Persist. .select() is required: RLS-blocked updates return no error but 0 rows.
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .update(updates)
+      .eq('id', subscriptionId)
+      .select();
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error(
+        'Não foi possível atualizar a assinatura (sem permissão ou assinatura inexistente).',
+      );
+    }
+
+    // Audit trail (best-effort) — classify direction by plan order
+    let action: 'upgraded' | 'downgraded' = 'upgraded';
+    if (fromPlanId) {
+      const fromPlan = await this.getPlan(fromPlanId);
+      if (fromPlan && targetPlan.order < fromPlan.order) action = 'downgraded';
+    }
+
+    await supabase.from('subscription_history').insert({
+      subscription_id: subscriptionId,
+      action,
+      from_plan_id: fromPlanId ?? null,
+      to_plan_id: targetPlan.id,
+      notes: `Plano alterado manualmente pelo admin: ${fromPlanName || '—'} → ${targetPlan.name}.`,
+    });
+
+    return data[0] as unknown as Subscription;
+  }
+
   /** PRD-074: Get the trial subscription for a company user. */
   async getTrialSubscription(companyUserId: string): Promise<Subscription | null> {
     const { data, error } = await supabase
