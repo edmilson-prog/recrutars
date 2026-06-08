@@ -1,12 +1,47 @@
 {
   "versions": [
     {
+      "version": "1.62.2",
+      "codename": "Gatekeeper",
+      "type": "patch",
+      "releaseDate": "2026-06-08",
+      "description": "Correção no Plano de Desenvolvimento: criar e editar objetivos voltou a salvar normalmente, sem a mensagem de erro.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "No Plano de Desenvolvimento de um colaborador, ao criar ou editar um objetivo aparecia a mensagem 'Erro ao salvar objetivo' e a alteração não era gravada — agora os objetivos são salvos normalmente.",
+            "Pequeno ajuste de acessibilidade na janela de cadastro de objetivo do Plano de Desenvolvimento."
+          ],
+          "details": {
+            "0": {
+              "description": "Na tela de Plano de Desenvolvimento (em Gestão de Equipes), salvar um novo objetivo, editar um existente, mudar o status ou gerar o PDI automático falhava com a mensagem 'Erro ao salvar objetivo' e nada era gravado. A causa era uma permissão de banco ausente que impedia o sistema de atualizar a lista de objetivos do plano. A permissão foi restaurada e essas ações voltaram a funcionar normalmente.",
+              "files": [
+                "src/services/teams/teamsService.supabase.ts",
+                "sql/migrations/101_fix_team_dev_delete_policies.sql",
+                "sql/migrations/102_evolution_annotations_update_policy.sql"
+              ],
+              "routes": ["/empresa/equipes/desenvolvimento/:id"]
+            },
+            "1": {
+              "description": "A janela de cadastro de objetivo passou a ter uma descrição acessível para leitores de tela, eliminando um aviso de acessibilidade que aparecia ao abri-la.",
+              "files": [
+                "src/components/team-management/ObjectiveForm.tsx"
+              ],
+              "routes": ["/empresa/equipes/desenvolvimento/:id"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.62.1",
       "codename": "Gatekeeper",
       "type": "patch",
       "releaseDate": "2026-06-03",
       "description": "Correção na exportação do dossiê: as opções de Visão da Empresa agora ficam disponíveis para seleção sempre que o dado correspondente existe na tela.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
