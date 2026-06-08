@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -87,6 +88,9 @@ export default function ObjectiveForm({
           <DialogTitle>
             {objective ? 'Editar Objetivo' : 'Novo Objetivo'}
           </DialogTitle>
+          <DialogDescription>
+            Defina os detalhes do objetivo do plano de desenvolvimento.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">

@@ -287,11 +287,14 @@ export class TeamsServiceSupabase implements ITeamsService {
 
     if (planError) throw new Error(`Failed to save development plan: ${planError.message}`);
 
-    // Delete existing objectives and re-insert
-    await supabase
+    // Delete existing objectives and re-insert.
+    // Surface RLS/permission failures instead of silently removing 0 rows.
+    const { error: deleteError } = await supabase
       .from('development_objectives')
       .delete()
       .eq('plan_id', planData.id);
+
+    if (deleteError) throw new Error(`Failed to clear objectives: ${deleteError.message}`);
 
     if (plan.objectives.length > 0) {
       const objectiveRows = plan.objectives.map((obj) => ({
@@ -307,9 +310,11 @@ export class TeamsServiceSupabase implements ITeamsService {
         created_at: obj.createdAt,
       }));
 
+      // Upsert (not plain insert) so a re-save is idempotent and never
+      // collides on the primary key if a row survives the delete.
       const { error: objError } = await supabase
         .from('development_objectives')
-        .insert(objectiveRows);
+        .upsert(objectiveRows, { onConflict: 'id' });
 
       if (objError) throw new Error(`Failed to save objectives: ${objError.message}`);
     }

@@ -5,6 +5,13 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.62.2] - 2026-06-08 "Gatekeeper"
+
+### Fixed
+- **Erro 409 ao salvar objetivo do PDI (Plano de Desenvolvimento)** — drift de RLS: o banco consolidou as policies das tabelas filhas do PRD-064 (`development_objectives`, `development_plans`, `retest_schedules`, `evolution_annotations`) e perdeu as policies de `DELETE` (e o `UPDATE` em `evolution_annotations`). Com RLS ativo e sem policy, todo `DELETE`/`UPDATE` era bloqueado silenciosamente (0 linhas, sem erro). `saveDevelopmentPlan` fazia `delete` por `plan_id` (0 linhas) e reinseria os objetivos com o mesmo `id` → violação de PK → 409. Restauradas as policies faltantes (empresa dona OU admin) e validado sob RLS real — dono deleta, outra empresa segue bloqueada (`sql/migrations/101_fix_team_dev_delete_policies.sql`, `sql/migrations/102_evolution_annotations_update_policy.sql`)
+- **`saveDevelopmentPlan` mais resiliente** — passa a verificar o erro do `.delete()` (antes engolido) e usa `.upsert(onConflict: 'id')` no lugar de `.insert()`, tornando o re-save idempotente e à prova de colisão de PK (`src/services/teams/teamsService.supabase.ts`)
+- **Aviso de acessibilidade no diálogo de objetivo** — `DialogContent` sem `Description`/`aria-describedby`; adicionado `DialogDescription` no `ObjectiveForm` (`src/components/team-management/ObjectiveForm.tsx`)
+
 ## [1.62.1] - 2026-06-03 "Gatekeeper"
 
 ### Fixed
