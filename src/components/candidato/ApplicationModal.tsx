@@ -19,6 +19,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { HighlightsSelector } from '@/components/candidato/HighlightsSelector';
+import { cn } from '@/lib/utils';
 import type { Job } from '@/types';
 import type { Curriculum } from '@/types/curriculum';
 import type { ApplicationHighlights } from '@/types/applicationHighlight';
@@ -79,20 +80,22 @@ export function ApplicationModal({ job, isOpen, onClose, onConfirm, curriculum }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            {step === 'message' ? 'Confirmar Candidatura' : 'Destacar Itens do Perfil'}
-          </DialogTitle>
-          <DialogDescription>
-            {step === 'message'
-              ? 'Seu perfil será enviado para análise pela empresa.'
-              : 'Escolha os itens mais relevantes para esta vaga.'}
-          </DialogDescription>
-        </DialogHeader>
-
+      <DialogContent
+        className={cn(
+          step === 'message' && 'sm:max-w-md',
+          step === 'highlights' &&
+            'flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl',
+        )}
+      >
         {step === 'message' && (
           <>
+            <DialogHeader>
+              <DialogTitle>Confirmar Candidatura</DialogTitle>
+              <DialogDescription>
+                Seu perfil será enviado para análise pela empresa.
+              </DialogDescription>
+            </DialogHeader>
+
             <div className="space-y-4 py-4">
               {/* Job Summary */}
               <div className="flex items-center gap-4 p-4 bg-muted rounded-xl">
@@ -146,22 +149,30 @@ export function ApplicationModal({ job, isOpen, onClose, onConfirm, curriculum }
         )}
 
         {step === 'highlights' && curriculum && (
-          <div className="py-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mb-2 -ml-2"
-              onClick={() => setStep('message')}
-            >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              Voltar
-            </Button>
+          <>
+            {/* Fixed header */}
+            <DialogHeader className="shrink-0 space-y-2 border-b border-border px-6 pb-4 pr-12 pt-6 text-left">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="-ml-2 h-8 w-fit px-2 text-muted-foreground"
+                onClick={() => setStep('message')}
+              >
+                <ArrowLeft className="mr-1 h-4 w-4" />
+                Voltar
+              </Button>
+              <DialogTitle>Destacar Itens do Perfil</DialogTitle>
+              <DialogDescription>
+                Etapa 2 de 2 · Escolha os itens mais relevantes para esta vaga.
+              </DialogDescription>
+            </DialogHeader>
+
             <HighlightsSelector
               curriculum={curriculum}
               onConfirm={handleFinalConfirm}
               onSkip={handleSkipHighlights}
             />
-          </div>
+          </>
         )}
       </DialogContent>
     </Dialog>
