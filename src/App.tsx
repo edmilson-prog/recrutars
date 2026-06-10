@@ -73,6 +73,8 @@ import CompanyCheckoutCancel from "./pages/empresa/CheckoutCancel";
 import CompanyMyPlan from "./pages/empresa/MyPlan";
 import CompanyPackages from "./pages/empresa/Packages";
 import CandidateMyPlan from "./pages/candidato/MyPlan";
+import CandidateCheckoutSuccess from "./pages/candidato/CheckoutSuccess";
+import CandidateCheckoutCancel from "./pages/candidato/CheckoutCancel";
 
 // PRD-058: Admin Jobs & Moderation "Sentinel"
 import AdminJobsDashboard from "./pages/admin/JobsDashboard";
@@ -854,6 +856,16 @@ const App = () => (
                 <OnboardingGuard>
                   <CandidateMyPlan />
                 </OnboardingGuard>
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/checkout/sucesso" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateCheckoutSuccess />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidato/checkout/cancelado" element={
+              <ProtectedRoute allowedTypes={['candidate']}>
+                <CandidateCheckoutCancel />
               </ProtectedRoute>
             } />
             <Route path="/candidato/curriculos" element={<Navigate to="/candidato/perfil" replace />} />
