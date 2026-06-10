@@ -175,6 +175,7 @@ const candidateNavGroups: NavGroup[] = [
   {
     label: 'Geral',
     items: [
+      { href: '/candidato/meu-plano', label: 'Meu Plano', icon: CreditCard },
       { href: '/candidato/mensagens', label: 'Mensagens', icon: MessageSquare },
       { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
       { href: '/candidato/configuracoes', label: 'Configurações', icon: Settings },

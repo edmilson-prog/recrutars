@@ -8,6 +8,7 @@ import {
   CreditCard,
   ArrowUp,
   CheckCircle,
+  CircleDot,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -70,7 +71,8 @@ export default function CandidateMyPlan() {
                   {currentPlan?.descriptionShort ?? (isFree ? 'Plano gratuito' : 'Plano atual')}
                 </p>
               </div>
-              <Badge variant="outline" className={cn('text-xs', statusCfg.color)}>
+              <Badge variant="outline" className={cn('text-xs gap-1', statusCfg.color)}>
+                <CircleDot className="w-3 h-3" />
                 {statusCfg.label}
               </Badge>
             </div>
@@ -112,13 +114,16 @@ export default function CandidateMyPlan() {
           </div>
         </motion.div>
 
-        <div className="flex gap-3">
-          <Button asChild variant="default" size="sm" className="gap-2">
-            <Link to="/planos">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button asChild variant="default" size="sm" className="gap-2 gradient-primary">
+            <Link to="/candidato/conta?tab=plano">
               <ArrowUp className="w-4 h-4" />
               {isFree ? 'Fazer Upgrade' : 'Mudar Plano'}
             </Link>
           </Button>
+          <p className="text-xs text-muted-foreground">
+            Compare todos os planos e gerencie sua assinatura.
+          </p>
         </div>
       </div>
     </DashboardLayout>
