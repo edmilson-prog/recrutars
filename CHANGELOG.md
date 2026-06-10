@@ -5,6 +5,21 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.63.0] - 2026-06-10 "Checkout"
+
+### Added
+- **Assinatura de planos do candidato via Stripe Checkout** — a aba "Plano" (`/candidato/conta?tab=plano`) troca o placeholder "Em breve" pelo `CheckoutButton` real (mesma infra da empresa: `useCreateCheckoutSession` → Edge Function `stripe-create-checkout`). Apenas planos ativos de produção são exibidos (`getPlans` filtra `is_active`). Criadas as páginas/rotas de retorno `/candidato/checkout/sucesso` e `/candidato/checkout/cancelado` (`Profile.tsx`, `CheckoutSuccess.tsx`, `CheckoutCancel.tsx`, `App.tsx`)
+- **Item "Meu Plano" na sidebar do candidato** — adicionado ao grupo "Geral" do `candidateNavGroups` (ícone `CreditCard`), tornando a área de assinatura descoberta de forma redundante (espelha o padrão da empresa) (`DashboardLayout.tsx`)
+- **Abas de Minha Conta com deep-link via `?tab=`** — `Tabs` controladas por `useSearchParams` (valores válidos `perfil|privacidade|conta|aparencia|plano`, default `perfil`, `replace: true`) (`Profile.tsx`)
+- **Modal "Destacar Itens do Perfil" com 3 modos de visualização** — Abas, Lista (accordion) e Híbrido, com header/footer fixos e corpo scrollável (`max-h-[85vh]`); preferência persistida em `localStorage`; modal alargado para `sm:max-w-2xl` apenas neste passo, responsivo no mobile (`HighlightsSelector.tsx`, `ApplicationModal.tsx`)
+
+### Changed
+- **`stripe-webhook` sincroniza o plano após o fulfillment** — `handlePlanSubscription` agora persiste `user_type` na `subscriptions` e atualiza `candidates.plan`/`companies.plan` (por `profile_id`) com o nome do plano após criar/atualizar a assinatura. Não-fatal em erro (a linha de `subscriptions` segue como fonte de verdade). Redeploy v8, `verify_jwt: false` preservado (`supabase/functions/stripe-webhook/index.ts`)
+
+### Fixed
+- **CTA "Fazer Upgrade" do candidato apontava para a landing pública `/planos`** — corrigido para a área interna `/candidato/conta?tab=plano` (`MyPlan.tsx`)
+- **Labels cruas no modal de destaques** — nível de habilidade exibido em inglês (`intermediate`) passou a usar `skillLevelLabels` ("Intermediário"); datas de experiência formatadas (`2023-06` → `06/2023`) (`HighlightsSelector.tsx`)
+
 ## [1.62.2] - 2026-06-08 "Gatekeeper"
 
 ### Fixed

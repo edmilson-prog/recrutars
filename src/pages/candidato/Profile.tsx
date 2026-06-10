@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   User, Save, Camera, FileText, ArrowRight, Download,
@@ -28,7 +28,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ThemeSettings } from '@/components/settings/ThemeSettings';
 import { toast } from 'sonner';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { calculateProfileCompletion } from '@/utils/profileCompleteness';
 import { useCandidateByProfile, useUpdateCandidate } from '@/hooks/useCandidatesQuery';
@@ -44,8 +43,13 @@ import type { Area, Point } from 'react-easy-crop';
 import type { CandidatePlanType, VisibilityMode } from '@/types/candidate';
 import { usePlans, useSubscription } from '@/hooks/usePlansQuery';
 import { formatBRL } from '@/lib/formatters';
+import { CheckoutButton } from '@/components/billing/CheckoutButton';
 
 // Plan data is now fetched dynamically via usePlans hook (PRD-075 fix)
+
+// Tabs válidas para deep-link via ?tab= (ex.: /candidato/conta?tab=plano)
+const VALID_TABS = ['perfil', 'privacidade', 'conta', 'aparencia', 'plano'] as const;
+type AccountTab = (typeof VALID_TABS)[number];
 
 const faq = [
   {
@@ -133,7 +137,24 @@ export default function CandidateProfile() {
   const { data: candidate, isLoading } = useCandidateByProfile(user?.id || '');
   const updateCandidateMutation = useUpdateCandidate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast: toastShadcn } = useToast();
+
+  // Deep-link de abas via ?tab= (permite abrir direto a aba "Plano" pela sidebar/CTA)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const activeTab: AccountTab = VALID_TABS.includes(tabParam as AccountTab)
+    ? (tabParam as AccountTab)
+    : 'perfil';
+
+  const handleTabChange = (value: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('tab', value);
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -472,7 +493,7 @@ export default function CandidateProfile() {
           </div>
         </div>
 
-        <Tabs defaultValue="perfil" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="perfil" className="flex items-center gap-2">
               <User className="w-4 h-4" />
@@ -1119,6 +1140,7 @@ export default function CandidateProfile() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {candidatePlans.map((p) => {
                   const plan = p as Record<string, unknown>;
+                  const planId = (plan.id as string) ?? '';
                   const planName = (plan.name as string) ?? '';
                   const planSlug = (plan.slug as string) ?? '';
                   const prices = (plan.prices as Record<string, number>) ?? {};
@@ -1167,17 +1189,18 @@ export default function CandidateProfile() {
                             <Button variant="outline" className="w-full" disabled>
                               Plano Atual
                             </Button>
-                          ) : (
-                            <Button
-                              className="w-full"
-                              variant={badge ? 'default' : 'outline'}
-                              onClick={() => toastShadcn({
-                                title: 'Em breve',
-                                description: `A assinatura do plano ${planName} estara disponivel em breve.`,
-                              })}
-                            >
-                              {isFree ? 'Plano Gratuito' : `Assinar ${planName}`}
+                          ) : isFree ? (
+                            <Button variant="outline" className="w-full" disabled>
+                              Plano Gratuito
                             </Button>
+                          ) : (
+                            <CheckoutButton
+                              planId={planId}
+                              planName={planName}
+                              period="monthly"
+                              variant={badge ? 'default' : 'outline'}
+                              className="w-full"
+                            />
                           )}
                         </div>
                       </CardContent>

@@ -339,7 +339,7 @@ async function handlePlanSubscription(
   metadata: Record<string, string>,
   admin: ReturnType<typeof getAdminClient>,
 ): Promise<HandlerResult> {
-  const { plan_id, user_id, period, billing_model } = metadata;
+  const { plan_id, user_id, period, billing_model, user_type } = metadata;
 
   if (!plan_id || !user_id) {
     return { action: 'failed', reason: 'Missing metadata for plan subscription' };
@@ -381,6 +381,7 @@ async function handlePlanSubscription(
 
   const subscriptionData = {
     user_id,
+    user_type: user_type ?? null,
     plan_id,
     status: 'active',
     period: effectivePeriod,
@@ -394,6 +395,9 @@ async function handlePlanSubscription(
     payment_method: 'stripe',
   };
 
+  let subscriptionId: string | undefined;
+  let action: string;
+
   if (existingSub) {
     // Update existing subscription
     const { error } = await admin
@@ -403,10 +407,8 @@ async function handlePlanSubscription(
 
     if (error) throw new Error(`Failed to update subscription: ${error.message}`);
 
-    return {
-      action: 'subscription_updated',
-      details: { subscription_id: existingSub.id, plan_id, plan_name: plan?.name },
-    };
+    subscriptionId = existingSub.id;
+    action = 'subscription_updated';
   } else {
     // Create new subscription
     const { data: newSub, error } = await admin
@@ -417,11 +419,29 @@ async function handlePlanSubscription(
 
     if (error) throw new Error(`Failed to create subscription: ${error.message}`);
 
-    return {
-      action: 'subscription_activated',
-      details: { subscription_id: newSub?.id, plan_id, plan_name: plan?.name },
-    };
+    subscriptionId = newSub?.id;
+    action = 'subscription_activated';
   }
+
+  // Sync the user's plan column so the header badge and plan cards reflect the
+  // newly activated plan immediately. Non-fatal: the subscriptions row remains
+  // the source of truth, so a sync failure should not fail the webhook.
+  if (plan?.name && (user_type === 'candidate' || user_type === 'company')) {
+    const profileTable = user_type === 'company' ? 'companies' : 'candidates';
+    const { error: planSyncError } = await admin
+      .from(profileTable)
+      .update({ plan: plan.name })
+      .eq('profile_id', user_id);
+
+    if (planSyncError) {
+      console.error(`Failed to sync ${profileTable}.plan for user ${user_id}:`, planSyncError.message);
+    }
+  }
+
+  return {
+    action,
+    details: { subscription_id: subscriptionId, plan_id, plan_name: plan?.name },
+  };
 }
 
 // ---------------------------------------------------------------------------

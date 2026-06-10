@@ -1,12 +1,73 @@
 {
   "versions": [
     {
+      "version": "1.63.0",
+      "codename": "Checkout",
+      "type": "minor",
+      "releaseDate": "2026-06-10",
+      "description": "Candidatos agora podem assinar planos pagos direto pelo app, com o atalho 'Meu Plano' na barra lateral. A janela de destaque de itens ao se candidatar ganhou três modos de visualização com rolagem e botões sempre visíveis.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Assinatura de planos para candidatos: o botão de assinar um plano pago agora abre o pagamento seguro e ativa o plano automaticamente após a confirmação.",
+            "Atalho 'Meu Plano' na barra lateral do candidato, para ver e gerenciar a assinatura a qualquer momento.",
+            "A janela 'Destacar Itens do Perfil' (ao se candidatar a uma vaga) ganhou três modos de visualização — Abas, Lista e Híbrido — com rolagem e botões sempre visíveis."
+          ],
+          "details": {
+            "0": {
+              "description": "Na aba 'Plano' (em Minha Conta), o botão de assinar um plano pago abre a página de pagamento. Após a confirmação, o plano é ativado automaticamente e passa a aparecer em 'Meu Plano', no selo ao lado do seu nome e no cartão 'Seu Plano'. São exibidos apenas os planos realmente disponíveis.",
+              "files": [
+                "src/pages/candidato/Profile.tsx",
+                "src/pages/candidato/CheckoutSuccess.tsx",
+                "src/pages/candidato/CheckoutCancel.tsx"
+              ],
+              "routes": ["/candidato/conta", "/candidato/checkout/sucesso", "/candidato/checkout/cancelado"]
+            },
+            "1": {
+              "description": "Foi adicionado o item 'Meu Plano' na barra lateral do candidato, no grupo 'Geral'. Antes, os detalhes da assinatura ficavam escondidos dentro de Minha Conta e eram difíceis de encontrar.",
+              "files": ["src/components/layout/DashboardLayout.tsx"],
+              "routes": ["/candidato/meu-plano"]
+            },
+            "2": {
+              "description": "Ao se candidatar a uma vaga, a janela para destacar experiências, formação, habilidades e cursos podia ultrapassar o tamanho da tela quando havia muitos itens. Agora você escolhe entre três modos de visualização (Abas, Lista ou Híbrido), o conteúdo rola dentro da janela e os botões 'Pular' e 'Confirmar' ficam sempre visíveis. A preferência de visualização é lembrada.",
+              "files": [
+                "src/components/candidato/HighlightsSelector.tsx",
+                "src/components/candidato/ApplicationModal.tsx"
+              ],
+              "routes": ["/candidato/vagas/:id"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "O botão 'Fazer Upgrade' do candidato levava para a página pública de planos do site; agora abre a área de planos dentro da sua conta.",
+            "Na janela de destaque de itens, o nível das habilidades e as datas das experiências apareciam em formato técnico; agora aparecem em português e no formato correto."
+          ],
+          "details": {
+            "0": {
+              "description": "Na tela 'Meu Plano', o botão 'Fazer Upgrade' redirecionava para a página de planos pública do site, fora da sua conta. Agora ele abre diretamente a comparação de planos dentro de Minha Conta, onde a assinatura é feita.",
+              "files": ["src/pages/candidato/MyPlan.tsx"],
+              "routes": ["/candidato/meu-plano", "/candidato/conta"]
+            },
+            "1": {
+              "description": "Na janela de destaque de itens do perfil, o nível das habilidades aparecia em inglês (ex.: 'intermediate') e as datas em formato técnico (ex.: '2023-06'). Agora o nível aparece em português (ex.: 'Intermediário') e a data no formato mês/ano (ex.: '06/2023').",
+              "files": ["src/components/candidato/HighlightsSelector.tsx"],
+              "routes": ["/candidato/vagas/:id"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.62.2",
       "codename": "Gatekeeper",
       "type": "patch",
       "releaseDate": "2026-06-08",
       "description": "Correção no Plano de Desenvolvimento: criar e editar objetivos voltou a salvar normalmente, sem a mensagem de erro.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
