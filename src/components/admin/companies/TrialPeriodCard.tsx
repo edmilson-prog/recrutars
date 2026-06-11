@@ -168,6 +168,7 @@ export function TrialPeriodCard({
 
   const handleConfirmSet = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault(); // AlertDialogAction auto-closes; close manually in finally
+    if (isPending) return;
     if (!userId || !daysValid) return;
     try {
       await setTrialMutation.mutateAsync({ userId, days });
@@ -187,6 +188,7 @@ export function TrialPeriodCard({
 
   const handleConfirmEnd = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    if (isPending) return;
     if (!userId) return;
     try {
       await endTrialMutation.mutateAsync({ userId });
@@ -369,9 +371,9 @@ export function TrialPeriodCard({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmSet} disabled={isPending}>
-              {isPending ? 'Confirmando...' : 'Confirmar liberação'}
+              {isPending ? 'Confirmando...' : isTrialRunning ? 'Confirmar extensão' : 'Confirmar liberação'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -388,7 +390,7 @@ export function TrialPeriodCard({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Manter avaliação</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>Manter avaliação</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmEnd}
               disabled={isPending}

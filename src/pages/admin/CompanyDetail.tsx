@@ -429,6 +429,16 @@ export default function AdminCompanyDetail() {
   const PaymentIcon = paymentConfig.icon;
 
   const daysOnPlatform = calculateDaysOnPlatform(mergedCompany.createdAt);
+
+  // Default trial days suggestion: from the basic plan config (Plan type already
+  // declares trialDurationDays; dual access for unconverted Supabase rows).
+  const basicPlan = activeCompanyPlans.find((p) => p.slug === 'basico-empresas');
+  const defaultTrialDays =
+    Number(
+      basicPlan?.trialDurationDays ??
+        (basicPlan as unknown as Record<string, unknown>)?.trial_duration_days,
+    ) || 90;
+
   const pendingInvites = (companyInvites ?? []).filter((inv) => {
     const status = dualGet<string>(inv as unknown as Record<string, unknown>, 'status', 'status');
     return status === 'pending';
@@ -896,15 +906,7 @@ export default function AdminCompanyDetail() {
                 <TrialPeriodCard
                   userId={mergedCompany.userId}
                   companyName={mergedCompany.name}
-                  defaultDays={
-                    Number(
-                      (activeCompanyPlans.find((p) => p.slug === 'basico-empresas') as unknown as Record<string, unknown>)
-                        ?.trialDurationDays ??
-                        (activeCompanyPlans.find((p) => p.slug === 'basico-empresas') as unknown as Record<string, unknown>)
-                          ?.trial_duration_days ??
-                        90,
-                    )
-                  }
+                  defaultDays={defaultTrialDays}
                   onActionRegistered={(details) => {
                     setAdminActions((prev) => [
                       {
