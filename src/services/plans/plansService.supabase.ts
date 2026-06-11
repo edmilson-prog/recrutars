@@ -526,4 +526,223 @@ export class SupabasePlansService implements IPlansService {
     if (error) throw error;
     return data as unknown as Subscription;
   }
+
+  // ---------------------------------------------------------------------------
+  // Trial release control (admin) — spec 2026-06-10
+  // ---------------------------------------------------------------------------
+
+  /** Formats YYYY-MM-DD as DD/MM/YYYY for user-facing messages. */
+  private formatDateBRString(isoDate: string): string {
+    const [y, m, d] = isoDate.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  async adminSetTrialPeriod(userId: string, days: number): Promise<Subscription> {
+    if (!Number.isInteger(days) || days < 1 || days > 365) {
+      throw new Error('Informe um período entre 1 e 365 dias.');
+    }
+
+    const fmt = (d: Date) => d.toISOString().split('T')[0];
+    const today = new Date();
+
+    const existing = await this.getTrialSubscription(userId);
+
+    let updatedSub: Subscription;
+    let endIso: string;
+    let action: 'released' | 'extended';
+
+    if (!existing) {
+      // Defense-in-depth: never create a parallel trial next to an active paid
+      // subscription (the UI hides the controls, but guard the service too).
+      const current = await this.getSubscription(userId);
+      const currentRaw = current as unknown as Record<string, unknown> | null;
+      if (currentRaw && currentRaw.status === 'active' && !(currentRaw.is_trial ?? currentRaw.isTrial)) {
+        throw new Error('Esta empresa possui assinatura paga ativa — o período de avaliação não se aplica.');
+      }
+
+      // Legacy company without a trial row: create one, already released.
+      const { data: planRow, error: planErr } = await supabase
+        .from('plans')
+        .select('id, slug, name')
+        .eq('slug', 'basico-empresas')
+        .eq('type', 'company')
+        .single();
+      if (planErr || !planRow) {
+        throw new Error(
+          `Plano Básico Empresas não encontrado.${planErr ? ` (${planErr.message})` : ''}`,
+        );
+      }
+
+      const { data: companyRow } = await supabase
+        .from('companies')
+        .select('name')
+        .eq('profile_id', userId)
+        .maybeSingle();
+
+      const end = new Date(today);
+      end.setDate(end.getDate() + days);
+      endIso = fmt(end);
+
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .insert({
+          user_id: userId,
+          user_type: 'company',
+          user_name: companyRow?.name ?? '',
+          plan_id: planRow.id,
+          plan_slug: planRow.slug,
+          plan_name: planRow.name,
+          period: 'monthly',
+          price_paid: 0,
+          start_date: fmt(today),
+          end_date: endIso,
+          renewal_date: endIso,
+          status: 'trial',
+          is_trial: true,
+          trial_start_date: fmt(today),
+          trial_end_date: endIso,
+          is_early_adopter: false,
+          trial_released_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      updatedSub = data as unknown as Subscription;
+      action = 'released';
+    } else {
+      const raw = existing as unknown as Record<string, unknown>;
+      const subscriptionId = raw.id as string;
+      const releasedAt = (raw.trial_released_at ?? raw.trialReleasedAt) as string | null | undefined;
+      const currentEnd = (raw.trial_end_date ?? raw.trialEndDate) as string | undefined;
+
+      // Active trial (released + end date today or later) extends from the
+      // current end; awaiting/expired trials restart from today.
+      const isActiveTrial =
+        Boolean(releasedAt) && !!currentEnd && currentEnd.split('T')[0] >= fmt(today);
+      const base = isActiveTrial ? new Date(currentEnd as string) : today;
+      const end = new Date(base);
+      end.setDate(end.getDate() + days);
+      endIso = fmt(end);
+
+      const updates: Record<string, unknown> = {
+        status: 'trial',
+        is_trial: true,
+        trial_end_date: endIso,
+        end_date: endIso,
+        renewal_date: endIso,
+      };
+      if (!isActiveTrial) updates.trial_start_date = fmt(today);
+      if (!releasedAt) updates.trial_released_at = new Date().toISOString();
+
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .update(updates)
+        .eq('id', subscriptionId)
+        .select();
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error('Não foi possível atualizar a assinatura (sem permissão ou assinatura inexistente).');
+      }
+      updatedSub = data[0] as unknown as Subscription;
+      action = isActiveTrial ? 'extended' : 'released';
+    }
+
+    const endBR = this.formatDateBRString(endIso);
+    const subRaw = updatedSub as unknown as Record<string, unknown>;
+
+    // Best-effort audit trail — must not undo the release on failure.
+    try {
+      const { error: histErr } = await supabase.from('subscription_history').insert({
+        subscription_id: subRaw.id as string,
+        action: action === 'extended' ? 'renewed' : 'reactivated',
+        to_plan_id: (subRaw.plan_id ?? null) as string | null,
+        notes:
+          action === 'extended'
+            ? `Avaliação estendida pelo admin em ${days} dias (até ${endBR}).`
+            : `Avaliação liberada pelo admin por ${days} dias (até ${endBR}).`,
+      });
+      if (histErr) {
+        console.warn('[Plans] adminSetTrialPeriod: history insert failed (non-fatal):', histErr);
+      }
+    } catch (err) {
+      console.warn('[Plans] adminSetTrialPeriod: history insert failed (non-fatal):', err);
+    }
+
+    // Best-effort in-app notification to the company user.
+    try {
+      const { error: notifErr } = await supabase.rpc('send_manual_notification', {
+        p_title:
+          action === 'extended'
+            ? 'Período de avaliação estendido'
+            : 'Período de avaliação liberado',
+        p_description:
+          action === 'extended'
+            ? `Sua avaliação foi estendida até ${endBR}. Bom recrutamento!`
+            : `Sua avaliação foi liberada até ${endBR}. Bom recrutamento!`,
+        p_action_url: null,
+        p_category: 'informativo',
+        p_priority: 'media',
+        p_target_type: 'specific_user',
+        p_target_user_id: userId,
+        p_scheduled_at: null,
+        p_template_id: null,
+      });
+      if (notifErr) {
+        console.warn('[Plans] adminSetTrialPeriod: notification failed (non-fatal):', notifErr);
+      }
+    } catch (err) {
+      console.warn('[Plans] adminSetTrialPeriod: notification failed (non-fatal):', err);
+    }
+
+    return updatedSub;
+  }
+
+  async adminEndTrial(userId: string): Promise<Subscription> {
+    const existing = await this.getTrialSubscription(userId);
+    if (!existing) throw new Error('Esta empresa não possui assinatura de avaliação.');
+
+    const raw = existing as unknown as Record<string, unknown>;
+    const subscriptionId = raw.id as string;
+
+    const releasedAt = (raw.trial_released_at ?? raw.trialReleasedAt) as string | null | undefined;
+    if (!releasedAt) {
+      throw new Error('Esta avaliação ainda não foi liberada — não há o que encerrar.');
+    }
+
+    // Yesterday: trialRules treats daysRemaining < 0 as expired, so today's
+    // date would still grant access ("último dia").
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const endIso = yesterday.toISOString().split('T')[0];
+
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .update({
+        trial_end_date: endIso,
+        end_date: endIso,
+        renewal_date: endIso,
+      })
+      .eq('id', subscriptionId)
+      .select();
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error('Não foi possível atualizar a assinatura (sem permissão ou assinatura inexistente).');
+    }
+
+    try {
+      const { error: histErr } = await supabase.from('subscription_history').insert({
+        subscription_id: subscriptionId,
+        action: 'expired',
+        from_plan_id: (raw.plan_id ?? null) as string | null,
+        notes: 'Avaliação encerrada manualmente pelo admin.',
+      });
+      if (histErr) {
+        console.warn('[Plans] adminEndTrial: history insert failed (non-fatal):', histErr);
+      }
+    } catch (err) {
+      console.warn('[Plans] adminEndTrial: history insert failed (non-fatal):', err);
+    }
+
+    return data[0] as unknown as Subscription;
+  }
 }

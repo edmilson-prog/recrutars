@@ -81,6 +81,7 @@ import {
 } from '@/components/ui/dialog';
 import type { AdminAction, Company } from '@/types';
 import { CompanySubscriptionTab } from '@/components/admin/companies/CompanySubscriptionTab';
+import { TrialPeriodCard } from '@/components/admin/companies/TrialPeriodCard';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -428,6 +429,16 @@ export default function AdminCompanyDetail() {
   const PaymentIcon = paymentConfig.icon;
 
   const daysOnPlatform = calculateDaysOnPlatform(mergedCompany.createdAt);
+
+  // Default trial days suggestion: from the basic plan config (Plan type already
+  // declares trialDurationDays; dual access for unconverted Supabase rows).
+  const basicPlan = activeCompanyPlans.find((p) => p.slug === 'basico-empresas');
+  const defaultTrialDays =
+    Number(
+      basicPlan?.trialDurationDays ??
+        (basicPlan as unknown as Record<string, unknown>)?.trial_duration_days,
+    ) || 90;
+
   const pendingInvites = (companyInvites ?? []).filter((inv) => {
     const status = dualGet<string>(inv as unknown as Record<string, unknown>, 'status', 'status');
     return status === 'pending';
@@ -890,6 +901,27 @@ export default function AdminCompanyDetail() {
                     </Button>
                   </div>
                 </div>
+
+                {/* Trial period control (spec 2026-06-10) */}
+                <TrialPeriodCard
+                  userId={mergedCompany.userId}
+                  companyName={mergedCompany.name}
+                  defaultDays={defaultTrialDays}
+                  onActionRegistered={(details) => {
+                    setAdminActions((prev) => [
+                      {
+                        id: `action-${Date.now()}`,
+                        companyId: mergedCompany.id,
+                        companyName: mergedCompany.name,
+                        action: 'plan_changed',
+                        performedBy: 'Voce',
+                        performedAt: new Date().toISOString(),
+                        details,
+                      },
+                      ...prev,
+                    ]);
+                  }}
+                />
 
                 {/* Credit Management Section */}
                 <CompanySubscriptionTab

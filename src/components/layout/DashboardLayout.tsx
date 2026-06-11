@@ -237,7 +237,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   );
 
   // PRD-074: Trial status for company users
-  const { isTrial, isExpired, daysRemaining, warningLevel } = useTrialStatus();
+  const { isTrial, isExpired, daysRemaining, warningLevel, awaitingRelease } = useTrialStatus();
 
   // PRD-061: Impersonation banner support
   const { isImpersonating, impersonationSession, stopImpersonation, impersonationRemainingTime } = useRBAC();
@@ -619,7 +619,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
             </div>
             <div className="flex items-center gap-2">
               {/* PRD-074: Trial badge for company users */}
-              {userType === 'company' && isTrial && !isExpired && (
+              {userType === 'company' && isTrial && !isExpired && !awaitingRelease && (
                 <TrialBadge daysRemaining={daysRemaining} />
               )}
               {/* PRD-003-dgn: Painel de acessibilidade */}
@@ -713,7 +713,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
             {(userType === 'company' || userType === 'candidate') && <PaymentFailedBanner />}
 
             {/* PRD-074: Trial warning indicator (banner/alert) */}
-            {userType === 'company' && isTrial && !isExpired && warningLevel !== 'low' && (
+            {userType === 'company' && isTrial && !isExpired && !awaitingRelease && warningLevel !== 'low' && (
               <TrialIndicator
                 warningLevel={warningLevel}
                 daysRemaining={daysRemaining}

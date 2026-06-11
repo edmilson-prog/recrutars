@@ -22,6 +22,8 @@ interface UseTrialStatusReturn {
   isLoading: boolean;
   isTrial: boolean;
   isExpired: boolean;
+  /** True when the trial was never released by the admin (blocked, awaiting). */
+  awaitingRelease: boolean;
   daysRemaining: number;
   warningLevel: TrialWarningLevel;
 }
@@ -45,11 +47,16 @@ export function useTrialStatus(): UseTrialStatusReturn {
     );
   }, [subscription]);
 
+  const awaitingRelease = Boolean(
+    subscription?.isTrial && !subscription?.trialReleasedAt,
+  );
+
   return {
     trialStatus,
     isLoading,
     isTrial: trialStatus.isTrial,
     isExpired: trialStatus.isExpired,
+    awaitingRelease,
     daysRemaining: trialStatus.daysRemaining,
     warningLevel: trialStatus.warningLevel,
   };

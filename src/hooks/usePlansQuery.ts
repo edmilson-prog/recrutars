@@ -223,6 +223,7 @@ function normalizeSubscription(raw: Record<string, unknown>): Subscription {
     isTrial: Boolean(raw.isTrial ?? raw.is_trial ?? false),
     trialStartDate: (raw.trialStartDate ?? raw.trial_start_date) as string | undefined,
     trialEndDate: (raw.trialEndDate ?? raw.trial_end_date) as string | undefined,
+    trialReleasedAt: (raw.trialReleasedAt ?? raw.trial_released_at ?? null) as string | null,
     createdAt: (raw.createdAt ?? raw.created_at ?? '') as string,
     cancelledAt: (raw.cancelledAt ?? raw.cancelled_at) as string | undefined,
     cancellationReason: (raw.cancellationReason ?? raw.cancellation_reason) as string | undefined,
@@ -347,6 +348,42 @@ export function useCreateTrialSubscription() {
     },
     onError: (err) => {
       console.error('[Plans] createTrialSubscription failed:', err);
+    },
+  });
+}
+
+/** Admin: release or extend a company's trial period by N days. */
+export function useAdminSetTrialPeriod() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, days }: { userId: string; days: number }) => {
+      const svc = await getPlansService();
+      return svc.adminSetTrialPeriod(userId, days);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [SUBSCRIPTIONS_KEY] });
+    },
+    onError: (err) => {
+      console.error('[Plans] adminSetTrialPeriod failed:', err);
+    },
+  });
+}
+
+/** Admin: end a company's trial immediately. */
+export function useAdminEndTrial() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      const svc = await getPlansService();
+      return svc.adminEndTrial(userId);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [SUBSCRIPTIONS_KEY] });
+    },
+    onError: (err) => {
+      console.error('[Plans] adminEndTrial failed:', err);
     },
   });
 }

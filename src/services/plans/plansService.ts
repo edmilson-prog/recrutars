@@ -95,6 +95,12 @@ export interface IPlansService {
     userName: string,
     planId: string,
   ): Promise<Subscription>;
+
+  /** Admin: release (or extend) a company's trial by N days. Creates the trial row if missing. */
+  adminSetTrialPeriod(userId: string, days: number): Promise<Subscription>;
+
+  /** Admin: end a company's trial immediately (sets trial_end_date to yesterday). */
+  adminEndTrial(userId: string): Promise<Subscription>;
 }
 
 // ---------------------------------------------------------------------------
