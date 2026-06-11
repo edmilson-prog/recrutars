@@ -81,6 +81,7 @@ import {
 } from '@/components/ui/dialog';
 import type { AdminAction, Company } from '@/types';
 import { CompanySubscriptionTab } from '@/components/admin/companies/CompanySubscriptionTab';
+import { TrialPeriodCard } from '@/components/admin/companies/TrialPeriodCard';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -890,6 +891,35 @@ export default function AdminCompanyDetail() {
                     </Button>
                   </div>
                 </div>
+
+                {/* Trial period control (spec 2026-06-10) */}
+                <TrialPeriodCard
+                  userId={mergedCompany.userId}
+                  companyName={mergedCompany.name}
+                  defaultDays={
+                    Number(
+                      (activeCompanyPlans.find((p) => p.slug === 'basico-empresas') as unknown as Record<string, unknown>)
+                        ?.trialDurationDays ??
+                        (activeCompanyPlans.find((p) => p.slug === 'basico-empresas') as unknown as Record<string, unknown>)
+                          ?.trial_duration_days ??
+                        90,
+                    )
+                  }
+                  onActionRegistered={(details) => {
+                    setAdminActions((prev) => [
+                      {
+                        id: `action-${Date.now()}`,
+                        companyId: mergedCompany.id,
+                        companyName: mergedCompany.name,
+                        action: 'plan_changed',
+                        performedBy: 'Voce',
+                        performedAt: new Date().toISOString(),
+                        details,
+                      },
+                      ...prev,
+                    ]);
+                  }}
+                />
 
                 {/* Credit Management Section */}
                 <CompanySubscriptionTab
