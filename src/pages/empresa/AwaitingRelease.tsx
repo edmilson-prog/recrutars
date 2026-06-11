@@ -174,7 +174,7 @@ export default function AwaitingRelease() {
                     <span className="text-3xl font-bold text-foreground">
                       {formatBRL(periodPrice)}
                     </span>
-                    <span className="text-muted-foreground">/mes</span>
+                    <span className="text-muted-foreground">/mês</span>
                   </div>
 
                   {hasDiscount && (
@@ -185,7 +185,7 @@ export default function AwaitingRelease() {
 
                   {plan.bonusTests && isDiscountPeriod && (
                     <p className="text-xs text-cyan-600 dark:text-cyan-400 mt-2 font-medium">
-                      + {plan.bonusTests[selectedPeriod] ?? 0} testes comportamentais de bonus
+                      + {plan.bonusTests[selectedPeriod] ?? 0} testes comportamentais de bônus
                     </p>
                   )}
                 </div>
