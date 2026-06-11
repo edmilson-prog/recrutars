@@ -559,7 +559,11 @@ export class SupabasePlansService implements IPlansService {
         .eq('slug', 'basico-empresas')
         .eq('type', 'company')
         .single();
-      if (planErr || !planRow) throw new Error('Plano Básico Empresas não encontrado.');
+      if (planErr || !planRow) {
+        throw new Error(
+          `Plano Básico Empresas não encontrado.${planErr ? ` (${planErr.message})` : ''}`,
+        );
+      }
 
       const { data: companyRow } = await supabase
         .from('companies')
@@ -629,7 +633,7 @@ export class SupabasePlansService implements IPlansService {
         .select();
       if (error) throw error;
       if (!data || data.length === 0) {
-        throw new Error('Nenhuma linha atualizada — verifique as permissões (RLS).');
+        throw new Error('Não foi possível atualizar a assinatura (sem permissão ou assinatura inexistente).');
       }
       updatedSub = data[0] as unknown as Subscription;
       action = isActiveTrial ? 'extended' : 'released';
@@ -640,7 +644,7 @@ export class SupabasePlansService implements IPlansService {
 
     // Best-effort audit trail — must not undo the release on failure.
     try {
-      await supabase.from('subscription_history').insert({
+      const { error: histErr } = await supabase.from('subscription_history').insert({
         subscription_id: subRaw.id as string,
         action: action === 'extended' ? 'renewed' : 'reactivated',
         to_plan_id: (subRaw.plan_id ?? null) as string | null,
@@ -649,13 +653,16 @@ export class SupabasePlansService implements IPlansService {
             ? `Avaliação estendida pelo admin em ${days} dias (até ${endBR}).`
             : `Avaliação liberada pelo admin por ${days} dias (até ${endBR}).`,
       });
+      if (histErr) {
+        console.warn('[Plans] adminSetTrialPeriod: history insert failed (non-fatal):', histErr);
+      }
     } catch (err) {
       console.warn('[Plans] adminSetTrialPeriod: history insert failed (non-fatal):', err);
     }
 
     // Best-effort in-app notification to the company user.
     try {
-      await supabase.rpc('send_manual_notification', {
+      const { error: notifErr } = await supabase.rpc('send_manual_notification', {
         p_title:
           action === 'extended'
             ? 'Período de avaliação estendido'
@@ -672,6 +679,9 @@ export class SupabasePlansService implements IPlansService {
         p_scheduled_at: null,
         p_template_id: null,
       });
+      if (notifErr) {
+        console.warn('[Plans] adminSetTrialPeriod: notification failed (non-fatal):', notifErr);
+      }
     } catch (err) {
       console.warn('[Plans] adminSetTrialPeriod: notification failed (non-fatal):', err);
     }
@@ -685,6 +695,11 @@ export class SupabasePlansService implements IPlansService {
 
     const raw = existing as unknown as Record<string, unknown>;
     const subscriptionId = raw.id as string;
+
+    const releasedAt = (raw.trial_released_at ?? raw.trialReleasedAt) as string | null | undefined;
+    if (!releasedAt) {
+      throw new Error('Esta avaliação ainda não foi liberada — não há o que encerrar.');
+    }
 
     // Yesterday: trialRules treats daysRemaining < 0 as expired, so today's
     // date would still grant access ("último dia").
@@ -703,16 +718,19 @@ export class SupabasePlansService implements IPlansService {
       .select();
     if (error) throw error;
     if (!data || data.length === 0) {
-      throw new Error('Nenhuma linha atualizada — verifique as permissões (RLS).');
+      throw new Error('Não foi possível atualizar a assinatura (sem permissão ou assinatura inexistente).');
     }
 
     try {
-      await supabase.from('subscription_history').insert({
+      const { error: histErr } = await supabase.from('subscription_history').insert({
         subscription_id: subscriptionId,
         action: 'expired',
         from_plan_id: (raw.plan_id ?? null) as string | null,
         notes: 'Avaliação encerrada manualmente pelo admin.',
       });
+      if (histErr) {
+        console.warn('[Plans] adminEndTrial: history insert failed (non-fatal):', histErr);
+      }
     } catch (err) {
       console.warn('[Plans] adminEndTrial: history insert failed (non-fatal):', err);
     }
