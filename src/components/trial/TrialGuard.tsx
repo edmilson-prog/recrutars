@@ -1,6 +1,9 @@
 /**
  * TrialGuard Component
  * PRD-074: Route wrapper that blocks access for expired trial companies.
+ * Tasks 5+6: also handles the awaiting-release branch (trial never released
+ * by admin), showing a welcoming AwaitingRelease page instead of the punitive
+ * TrialExpired page.
  *
  * If the company's trial has expired, renders the TrialExpired page
  * instead of the children. Allows access to /empresa/configuracoes
@@ -13,12 +16,13 @@ import { useTrialStatus } from '@/hooks/useTrialStatus';
 import { useAuth } from '@/contexts/AuthContext';
 
 const LazyTrialExpired = lazy(() => import('@/pages/empresa/TrialExpired'));
+const LazyAwaitingRelease = lazy(() => import('@/pages/empresa/AwaitingRelease'));
 
 interface TrialGuardProps {
   children: ReactNode;
 }
 
-/** Routes accessible even when trial is expired */
+/** Routes accessible even when trial is expired or awaiting release */
 const ALLOWED_EXPIRED_PATHS = [
   '/empresa/configuracoes',
   '/empresa/meu-plano',
@@ -26,10 +30,16 @@ const ALLOWED_EXPIRED_PATHS = [
   '/empresa/checkout/cancelado',
 ];
 
+const guardFallback = (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+  </div>
+);
+
 export function TrialGuard({ children }: TrialGuardProps) {
   const { user } = useAuth();
   const location = useLocation();
-  const { isTrial, isExpired, isLoading } = useTrialStatus();
+  const { isTrial, isExpired, isLoading, awaitingRelease } = useTrialStatus();
 
   // Only applies to company users
   if (!user || user.type !== 'company') {
@@ -41,15 +51,26 @@ export function TrialGuard({ children }: TrialGuardProps) {
     return <>{children}</>;
   }
 
+  const isAllowedPath = ALLOWED_EXPIRED_PATHS.some(
+    (path) => location.pathname.startsWith(path),
+  );
+
+  // Trial never released by the admin — welcoming "awaiting release" page.
+  // Checked BEFORE isExpired: a just-created locked trial has end date = today,
+  // which does not count as expired yet (daysRemaining = 0).
+  if (isTrial && awaitingRelease) {
+    if (isAllowedPath) return <>{children}</>;
+    return (
+      <Suspense fallback={guardFallback}>
+        <LazyAwaitingRelease />
+      </Suspense>
+    );
+  }
+
   // If not on trial or trial is active, allow through
   if (!isTrial || !isExpired) {
     return <>{children}</>;
   }
-
-  // Trial is expired — check if current path is allowed
-  const isAllowedPath = ALLOWED_EXPIRED_PATHS.some(
-    (path) => location.pathname.startsWith(path),
-  );
 
   if (isAllowedPath) {
     return <>{children}</>;
@@ -57,13 +78,7 @@ export function TrialGuard({ children }: TrialGuardProps) {
 
   // Render the conversion page
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-        </div>
-      }
-    >
+    <Suspense fallback={guardFallback}>
       <LazyTrialExpired />
     </Suspense>
   );
