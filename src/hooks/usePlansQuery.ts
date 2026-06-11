@@ -351,3 +351,39 @@ export function useCreateTrialSubscription() {
     },
   });
 }
+
+/** Admin: release or extend a company's trial period by N days. */
+export function useAdminSetTrialPeriod() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, days }: { userId: string; days: number }) => {
+      const svc = await getPlansService();
+      return svc.adminSetTrialPeriod(userId, days);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [SUBSCRIPTIONS_KEY] });
+    },
+    onError: (err) => {
+      console.error('[Plans] adminSetTrialPeriod failed:', err);
+    },
+  });
+}
+
+/** Admin: end a company's trial immediately. */
+export function useAdminEndTrial() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      const svc = await getPlansService();
+      return svc.adminEndTrial(userId);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [SUBSCRIPTIONS_KEY] });
+    },
+    onError: (err) => {
+      console.error('[Plans] adminEndTrial failed:', err);
+    },
+  });
+}
