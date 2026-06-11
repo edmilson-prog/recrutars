@@ -552,6 +552,14 @@ export class SupabasePlansService implements IPlansService {
     let action: 'released' | 'extended';
 
     if (!existing) {
+      // Defense-in-depth: never create a parallel trial next to an active paid
+      // subscription (the UI hides the controls, but guard the service too).
+      const current = await this.getSubscription(userId);
+      const currentRaw = current as unknown as Record<string, unknown> | null;
+      if (currentRaw && currentRaw.status === 'active' && !(currentRaw.is_trial ?? currentRaw.isTrial)) {
+        throw new Error('Esta empresa possui assinatura paga ativa — o período de avaliação não se aplica.');
+      }
+
       // Legacy company without a trial row: create one, already released.
       const { data: planRow, error: planErr } = await supabase
         .from('plans')
