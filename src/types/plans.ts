@@ -90,6 +90,8 @@ export interface Subscription {
   trialStartDate?: string;
   /** PRD-074: Trial end date — after this, access is blocked */
   trialEndDate?: string;
+  /** Trial release control: when the admin released the trial. NULL = awaiting release (blocked). */
+  trialReleasedAt?: string | null;
   /** PRD-074: Remaining bonus behavioral test credits */
   bonusTestsRemaining?: number;
   /** PRD-074: Total bonus behavioral tests credited */
