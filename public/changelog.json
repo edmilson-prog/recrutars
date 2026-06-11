@@ -1,12 +1,72 @@
 {
   "versions": [
     {
+      "version": "1.64.0",
+      "codename": "Greenlight",
+      "type": "minor",
+      "releaseDate": "2026-06-11",
+      "description": "O admin agora controla os dias de avaliação de cada empresa individualmente, podendo liberar, estender ou encerrar o período de teste. Empresas recém-cadastradas passam a aguardar a liberação manual da equipe, com uma tela de boas-vindas explicando os próximos passos.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Controle do período de avaliação por empresa no painel administrativo: liberar, estender ou encerrar os dias de teste de cada empresa individualmente.",
+            "Tela de boas-vindas 'Aguardando liberação' para empresas recém-cadastradas, com os próximos passos e a opção de assinar um plano sem esperar.",
+            "Notificação no app para a empresa quando o período de avaliação é liberado ou estendido."
+          ],
+          "details": {
+            "0": {
+              "description": "No detalhe de uma empresa (aba Assinatura), o admin agora vê o cartão 'Período de avaliação' com a situação atual (aguardando liberação, em avaliação com dias restantes e barra de progresso, terminando, expirada ou assinante pago). É possível liberar ou estender a avaliação informando a quantidade de dias — com atalhos de +7, +15, +30 e +90 dias e a data de término exibida antes de confirmar — e encerrar o acesso imediatamente. Cada ação pede confirmação e fica registrada no histórico da empresa.",
+              "files": [
+                "src/components/admin/companies/TrialPeriodCard.tsx",
+                "src/pages/admin/CompanyDetail.tsx",
+                "src/services/plans/plansService.supabase.ts",
+                "src/hooks/usePlansQuery.ts"
+              ],
+              "routes": ["/admin/empresas/:id"]
+            },
+            "1": {
+              "description": "Empresas que acabaram de se cadastrar veem uma tela acolhedora confirmando que a conta foi criada com sucesso, mostrando os três passos (conta criada, aguardando liberação, acesso completo) e oferecendo a opção de assinar um plano pago para começar imediatamente, sem esperar a liberação. As configurações da conta continuam acessíveis.",
+              "files": [
+                "src/pages/empresa/AwaitingRelease.tsx",
+                "src/components/trial/TrialGuard.tsx",
+                "src/hooks/useTrialStatus.ts"
+              ],
+              "routes": ["/empresa"]
+            },
+            "2": {
+              "description": "Quando o admin libera ou estende o período de avaliação, a empresa recebe automaticamente uma notificação no sino do app informando a nova data de término (ex.: 'Sua avaliação foi liberada até 11/07/2026').",
+              "files": ["src/services/plans/plansService.supabase.ts"],
+              "routes": ["/empresa"]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Novos cadastros de empresa agora aguardam a liberação manual da equipe — o período de avaliação não é mais concedido automaticamente. Empresas que já estavam em avaliação não foram afetadas."
+          ],
+          "details": {
+            "0": {
+              "description": "Antes, toda empresa nova recebia automaticamente os dias de avaliação configurados no plano básico. Agora a conta é criada normalmente, mas o acesso completo só é liberado quando a equipe define os dias de avaliação no painel administrativo (ou quando a empresa assina um plano pago). Quem já estava em período de avaliação mantém suas datas normalmente. Os avisos de 'últimos dias de teste' não aparecem mais para contas que estão aguardando liberação.",
+              "files": [
+                "sql/migrations/103_trial_release_control.sql",
+                "src/components/layout/DashboardLayout.tsx"
+              ],
+              "routes": ["/cadastro", "/empresa"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.63.0",
       "codename": "Checkout",
       "type": "minor",
       "releaseDate": "2026-06-10",
       "description": "Candidatos agora podem assinar planos pagos direto pelo app, com o atalho 'Meu Plano' na barra lateral. A janela de destaque de itens ao se candidatar ganhou três modos de visualização com rolagem e botões sempre visíveis.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

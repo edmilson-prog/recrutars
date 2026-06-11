@@ -5,7 +5,18 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.63.0] - 2026-06-10 "Checkout"
+## [1.64.0] - 2026-06-11 "Greenlight"
+
+### Added
+- **Controle de trial por empresa no admin** — novo card "Período de avaliação" em `/admin/empresas/:id` (aba Assinatura): faixa de estado em 5 variantes (aguardando/em avaliação com barra de progresso/terminando/expirada/assinante pago, cores espelhando `trialRules`), input de dias (1–365) + chips +7/+15/+30/+90 + preview da data com `aria-live`, "Encerrar agora" destrutivo com `AlertDialog` (padrão `preventDefault` + close no `finally`), guards de double-submit e `Cancel` desabilitado durante mutação (`TrialPeriodCard.tsx`, `CompanyDetail.tsx`)
+- **Service `adminSetTrialPeriod`/`adminEndTrial`** — libera (restart de hoje) ou estende (soma ao término atual) o trial; cria a linha de subscription para empresas legadas sem registro; encerrar = `trial_end_date` ontem (`isExpired` exige `daysRemaining < 0`); `.select()` pós-update com throw em 0 linhas (guard RLS); auditoria em `subscription_history` (`reactivated`/`renewed`/`expired`) e notificação in-app via RPC `send_manual_notification`, ambas best-effort com `error` PostgREST observado; guards contra trial nunca liberado (encerrar) e assinante pago ativo (liberar) (`plansService.supabase.ts`, `plansService.ts`)
+- **Hooks `useAdminSetTrialPeriod`/`useAdminEndTrial`** — mutations React Query com invalidação de `[SUBSCRIPTIONS_KEY]` (`usePlansQuery.ts`)
+- **Página `AwaitingRelease`** — paywall acolhedor para empresa nunca liberada: hero emerald/cyan com `CircleCheckBig`, foco programático no `h1`, timeline `<ol>` de 3 passos com dot pulsante (`animate-ping` + `motion-reduce:hidden`), grid de planos pagos reaproveitado do `TrialExpired` com `CheckoutButton` (`AwaitingRelease.tsx`)
+- **Campo `Subscription.trialReleasedAt: string | null`** (obrigatório, NULL = nunca liberado) + coluna em `database.ts` + mapeamento no `normalizeSubscription` (`plans.ts`, `database.ts`, `usePlansQuery.ts`)
+
+### Changed
+- **Empresa nova nasce travada** — migração 103: coluna `subscriptions.trial_released_at` (timestamptz), backfill marcando trials existentes como liberados (não afetados), e `handle_new_user()` atualizado cirurgicamente: subscription trial criada com 0 dias (`end_date`/`renewal_date`/`trial_end_date = NOW()`), `trial_released_at` NULL; `plans.trial_duration_days` vira apenas default sugerido no input do admin. RLS: nenhuma policy nova (`subscriptions_update`/`insert` já permitem admin) (`sql/migrations/103_trial_release_control.sql`)
+- **`TrialGuard` com ramificação de aguardando** — `useTrialStatus` expõe `awaitingRelease` (derivado da subscription, fail-closed); guard renderiza `AwaitingRelease` ANTES da checagem de expirado (trial de 0 dias não conta como expirado no dia do cadastro); `TrialBadge`/`TrialIndicator` suprimidos para contas aguardando (evita "Último dia!" sobre a tela de boas-vindas no dia 0) (`useTrialStatus.ts`, `TrialGuard.tsx`, `DashboardLayout.tsx`)
 
 ### Added
 - **Assinatura de planos do candidato via Stripe Checkout** — a aba "Plano" (`/candidato/conta?tab=plano`) troca o placeholder "Em breve" pelo `CheckoutButton` real (mesma infra da empresa: `useCreateCheckoutSession` → Edge Function `stripe-create-checkout`). Apenas planos ativos de produção são exibidos (`getPlans` filtra `is_active`). Criadas as páginas/rotas de retorno `/candidato/checkout/sucesso` e `/candidato/checkout/cancelado` (`Profile.tsx`, `CheckoutSuccess.tsx`, `CheckoutCancel.tsx`, `App.tsx`)
