@@ -58,7 +58,11 @@ export function TrialGuard({ children }: TrialGuardProps) {
   // Trial never released by the admin — welcoming "awaiting release" page.
   // Checked BEFORE isExpired: a just-created locked trial has end date = today,
   // which does not count as expired yet (daysRemaining = 0).
-  if (isTrial && awaitingRelease) {
+  // Uses awaitingRelease alone (fail-closed): it already implies the
+  // subscription is a trial, while trialStatus.isTrial falls back to false
+  // when trial dates are missing — which would let an anomalous never-released
+  // row bypass the gate with full access.
+  if (awaitingRelease) {
     if (isAllowedPath) return <>{children}</>;
     return (
       <Suspense fallback={guardFallback}>
