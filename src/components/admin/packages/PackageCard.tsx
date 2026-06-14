@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Check, Copy, Edit, Power, PowerOff, Trash2,
-  RefreshCw, Cloud, CloudOff, MoreHorizontal, Package,
+  RefreshCw, MoreHorizontal, Package,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { formatBRL } from '@/lib/formatters';
 import type { TestPackage } from '@/types/testPackages';
-import type { StripeEnvironment } from '@/types/plans';
+import { StripeSyncStatus } from '@/components/admin/stripe/StripeSyncStatus';
 
 const TYPE_LABELS: Record<string, string> = {
   gauge_pro: 'Gauge-Pro',
@@ -31,7 +31,6 @@ const TYPE_LABELS: Record<string, string> = {
 
 interface PackageCardProps {
   pkg: TestPackage;
-  stripeEnv: StripeEnvironment;
   onEdit: () => void;
   onClone: () => void;
   onToggleActive: () => void;
@@ -43,7 +42,6 @@ interface PackageCardProps {
 
 export function PackageCard({
   pkg,
-  stripeEnv,
   onEdit,
   onClone,
   onToggleActive,
@@ -59,10 +57,6 @@ export function PackageCard({
   const features = pkg.features ?? [];
   const badge = pkg.badge ?? null;
   const pkgType = pkg.type ?? 'gauge_pro';
-
-  const productId = stripeEnv === 'test' ? pkg.stripeProductIdTest : pkg.stripeProductIdLive;
-  const syncedAt = stripeEnv === 'test' ? pkg.stripeSyncedAtTest : pkg.stripeSyncedAtLive;
-  const isSynced = !!productId;
 
   const discountPercentage = originalPrice && originalPrice > price
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
@@ -135,25 +129,13 @@ export function PackageCard({
           </div>
         </div>
 
-        {/* Stripe sync badge */}
-        <div className="flex items-center gap-2">
-          <Badge
-            variant="outline"
-            className={cn(
-              'gap-1 text-xs',
-              isSynced
-                ? 'text-blue-600 border-blue-300 dark:text-blue-400 dark:border-blue-700'
-                : 'text-muted-foreground border-border'
-            )}
-          >
-            {isSynced ? <Cloud className="w-3 h-3" /> : <CloudOff className="w-3 h-3" />}
-            {isSynced
-              ? (syncedAt
-                  ? `Sync ${new Date(syncedAt).toLocaleDateString('pt-BR')}`
-                  : 'Stripe sincronizado')
-              : 'Não sincronizado'}
-          </Badge>
-        </div>
+        {/* Stripe sync status — both environments */}
+        <StripeSyncStatus
+          liveProductId={pkg.stripeProductIdLive}
+          liveSyncedAt={pkg.stripeSyncedAtLive}
+          testProductId={pkg.stripeProductIdTest}
+          testSyncedAt={pkg.stripeSyncedAtTest}
+        />
 
         {/* Features (first 3) */}
         {features.length > 0 && (
