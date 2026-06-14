@@ -4,7 +4,9 @@
  */
 
 import { motion } from 'framer-motion';
-import { Check, Copy, Edit, Power, PowerOff, Clock, Percent, RefreshCw, Cloud, CloudOff, Trash2 } from 'lucide-react';
+import { Check, Copy, Edit, Power, PowerOff, Clock, Percent, RefreshCw, Trash2 } from 'lucide-react';
+import { StripeSyncStatus } from '@/components/admin/stripe/StripeSyncStatus';
+import { STRIPE_ENV_LABELS } from '@/components/admin/stripe/stripeEnvironmentLabels';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -31,15 +33,12 @@ interface PlanCardProps {
   stripeEnvironment?: StripeEnvironment;
 }
 
-export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, onClone, index = 0, stripeEnvironment = 'test' }: PlanCardProps) {
+export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, onClone, index = 0, stripeEnvironment = 'live' }: PlanCardProps) {
   const hasLaunchPrices = plan.launchPrices && Object.values(plan.launchPrices).some(v => v > 0);
   const isTrial = !!plan.trialDurationDays;
   const syncPlan = useSyncPlan();
 
   const isActive = plan.isActive ?? true;
-  const syncedAt = stripeEnvironment === 'test' ? plan.stripeSyncedAtTest : plan.stripeSyncedAtLive;
-  const productId = stripeEnvironment === 'test' ? plan.stripeProductIdTest : plan.stripeProductIdLive;
-  const isSynced = !!productId;
 
   return (
     <motion.div
@@ -106,30 +105,24 @@ export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, onClone, inde
           </div>
         )}
 
-        {/* PRD-075: Stripe sync badge */}
+        {/* Stripe sync status — both environments + sync action (active env) */}
         {!plan.isFree && (
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className={cn(
-                'gap-1 text-xs',
-                isSynced
-                  ? 'text-blue-600 border-blue-300 dark:text-blue-400 dark:border-blue-700'
-                  : 'text-muted-foreground border-border'
-              )}
-            >
-              {isSynced ? <Cloud className="w-3 h-3" /> : <CloudOff className="w-3 h-3" />}
-              {isSynced ? 'Stripe sincronizado' : 'Não sincronizado'}
-            </Badge>
+          <div className="space-y-2">
+            <StripeSyncStatus
+              liveProductId={plan.stripeProductIdLive}
+              liveSyncedAt={plan.stripeSyncedAtLive}
+              testProductId={plan.stripeProductIdTest}
+              testSyncedAt={plan.stripeSyncedAtTest}
+            />
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 px-2 text-xs"
+              className="h-7 px-2 text-xs"
               disabled={syncPlan.isPending}
               onClick={() => syncPlan.mutate({ planId: plan.id, environment: stripeEnvironment })}
             >
-              <RefreshCw className={cn('w-3 h-3 mr-1', syncPlan.isPending && 'animate-spin')} />
-              Sync
+              <RefreshCw className={cn('mr-1 h-3 w-3', syncPlan.isPending && 'animate-spin')} />
+              Sincronizar {STRIPE_ENV_LABELS[stripeEnvironment]}
             </Button>
           </div>
         )}
