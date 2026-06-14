@@ -85,7 +85,7 @@ const adminNavGroups: NavGroup[] = [
     label: 'Financeiro',
     items: [
       { href: '/admin/planos', label: 'Planos & Assinaturas', icon: CreditCard },
-      { href: '/admin/pacotes', label: 'Pacotes de Testes', icon: Package },
+      { href: '/admin/pacotes', label: 'Pacotes de Créditos', icon: Package },
       { href: '/admin/assinaturas/billing', label: 'Financeiro', icon: DollarSign },
     ],
   },
