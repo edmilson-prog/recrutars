@@ -18,7 +18,7 @@ export function StripeEnvironmentBanner({
 
   return (
     <div
-      role="status"
+      role="alert"
       className={cn(
         'flex items-center gap-3 rounded-lg border border-l-4 border-amber-500/45 border-l-amber-500',
         'bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300',

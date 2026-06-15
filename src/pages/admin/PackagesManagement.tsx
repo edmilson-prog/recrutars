@@ -78,7 +78,7 @@ export default function PackagesManagement() {
     if (!deletingPackage) return;
     try {
       await deletePackageMutation.mutateAsync(deletingPackage.id);
-      toast.success(`Pacote "${deletingPackage.name}" excluido.`);
+      toast.success(`Pacote "${deletingPackage.name}" excluído.`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao excluir pacote.');
     } finally {
@@ -257,7 +257,7 @@ export default function PackagesManagement() {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 disabled={deletePackageMutation.isPending}
               >
-                {deletePackageMutation.isPending ? 'Excluindo...' : 'Confirmar Exclusao'}
+                {deletePackageMutation.isPending ? 'Excluindo...' : 'Confirmar Exclusão'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -35,7 +35,7 @@ export function StripeEnvironmentSelector({
         <DropdownMenuTrigger
           aria-label={`Ambiente Stripe: ${isTest ? 'Teste (sandbox)' : 'Produção'}. Clique para alterar.`}
           className={cn(
-            'inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
+            'inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             isTest
               ? 'border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-300'
