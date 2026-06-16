@@ -40,6 +40,15 @@ export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, onClone, inde
 
   const isActive = plan.isActive ?? true;
 
+  // Hide periods priced at zero (e.g. recurring periods on a one_time plan).
+  // Free plans keep every period so they can still show "Grátis".
+  const visiblePeriods = (Object.keys(PERIOD_LABELS) as PlanPeriod[]).filter((period) => {
+    if (plan.isFree) return true;
+    const regular = plan.prices[period] ?? 0;
+    const launch = plan.launchPrices?.[period] ?? 0;
+    return regular > 0 || launch > 0;
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -131,7 +140,7 @@ export function PlanCard({ plan, onEdit, onToggleStatus, onDelete, onClone, inde
         <div className="space-y-2">
           <h4 className="text-sm font-semibold text-foreground">Preços</h4>
           <div className="grid grid-cols-2 gap-2">
-            {(Object.keys(PERIOD_LABELS) as PlanPeriod[]).map((period) => {
+            {visiblePeriods.map((period) => {
               const regularPrice = plan.prices[period] ?? 0;
               const launchPrice = plan.launchPrices?.[period];
               const showLaunchPrice = hasLaunchPrices && launchPrice !== undefined && launchPrice > 0 && launchPrice < regularPrice;
