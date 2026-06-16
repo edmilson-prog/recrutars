@@ -1710,6 +1710,7 @@ export type Database = {
       }
       curriculum_courses: {
         Row: {
+          certificate_file_name: string | null
           certificate_type: string | null
           certificate_url: string | null
           curriculum_id: string
@@ -1720,6 +1721,7 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          certificate_file_name?: string | null
           certificate_type?: string | null
           certificate_url?: string | null
           curriculum_id: string
@@ -1730,6 +1732,7 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          certificate_file_name?: string | null
           certificate_type?: string | null
           certificate_url?: string | null
           curriculum_id?: string
@@ -6042,6 +6045,16 @@ export type Database = {
           p_invitation_id: string
         }
         Returns: boolean
+      }
+      replace_curriculum_children: {
+        Args: {
+          p_curriculum_id: string
+          p_experiences?: Json
+          p_education?: Json
+          p_skills?: Json
+          p_courses?: Json
+        }
+        Returns: undefined
       }
       save_ai_analysis: {
         Args: {
