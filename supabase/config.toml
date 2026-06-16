@@ -47,3 +47,8 @@ verify_jwt = false
 
 [functions.update-job-weights]
 verify_jwt = false
+
+# One-off/idempotent data migration (base64 certificates -> Storage).
+# Auth: static x-migration-key header validated inside the function.
+[functions.migrate-certificates-to-storage]
+verify_jwt = false

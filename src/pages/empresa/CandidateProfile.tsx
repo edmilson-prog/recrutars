@@ -38,6 +38,7 @@ import {
   Search,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { CertificateViewer } from '@/components/profile/CertificateViewer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -1249,11 +1250,14 @@ export default function CandidateProfile() {
                               </div>
                               <p className="text-xs text-muted-foreground">{course.institution} ({course.year})</p>
                             </div>
-                            {course.hours && (
-                              <Badge variant="outline" className="text-xs flex-shrink-0">
-                                {course.hours}h
-                              </Badge>
-                            )}
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {course.hours && (
+                                <Badge variant="outline" className="text-xs">
+                                  {course.hours}h
+                                </Badge>
+                              )}
+                              <CertificateViewer course={course} />
+                            </div>
                           </div>
                         );
                       })}

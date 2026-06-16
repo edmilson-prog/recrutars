@@ -92,6 +92,7 @@ import {
 import { calculateCompleteness, getProgressColor } from '@/utils/curriculumCompleteness';
 import { Progress } from '@/components/ui/progress';
 import DocumentsTab from '@/components/profile/DocumentsTab';
+import { CertificateViewer } from '@/components/profile/CertificateViewer';
 import { OnboardingStepIndicator } from '@/components/onboarding/OnboardingStepIndicator';
 import { StandardizedSkillSelector } from '@/components/skills/StandardizedSkillSelector';
 import { formatBrazilianPhone, stripToDigits } from '@/hooks/usePhoneMask';
@@ -115,8 +116,22 @@ interface ProfessionalProfileProps {
 
 export default function ProfessionalProfile({ onboardingMode = false, onOnboardingComplete }: ProfessionalProfileProps = {}) {
   const navigate = useNavigate();
-  const { currentCandidate } = useAuth();
+  const { currentCandidate, isImpersonationActive } = useAuth();
   const candidateId = currentCandidate?.id ?? '';
+
+  // PRD-061 impersonation is a frontend-only overlay: auth.uid() is still the
+  // admin, so RLS rejects every write on curriculum tables (403). Treat the
+  // whole page as read-only while impersonating.
+  const isReadOnly = isImpersonationActive;
+
+  const guardReadOnly = useCallback(() => {
+    if (!isReadOnly) return false;
+    toast.info('Modo visualização: alterações não são salvas durante a impersonação.');
+    return true;
+  }, [isReadOnly]);
+
+  const errorDescription = (err: unknown) =>
+    err instanceof Error ? err.message : undefined;
 
   // Service layer hooks
   const { data: fetchedProfile, isLoading: fetchLoading } = useProfile(candidateId);
@@ -255,7 +270,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
 
   // Save standardized skills
   const handleSaveStdSkills = useCallback(() => {
-    if (!candidateId) return;
+    if (!candidateId || guardReadOnly()) return;
     const allSkills = [
       ...stdTechnicalIds.map((id, i) => ({ skillId: id, priority: i + 1 })),
       ...stdBehavioralIds.map((id, i) => ({ skillId: id, priority: i + 1 })),
@@ -267,7 +282,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
         onError: () => toast.error('Erro ao salvar habilidades padronizadas'),
       }
     );
-  }, [candidateId, stdTechnicalIds, stdBehavioralIds, setStdSkillsMutation]);
+  }, [candidateId, stdTechnicalIds, stdBehavioralIds, setStdSkillsMutation, guardReadOnly]);
 
   // Detectar mudancas nao salvas nos campos de texto (sub-entidades sao auto-saved)
   const hasUnsavedChanges = useMemo(() => {
@@ -330,7 +345,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
 
   // Handlers para experiência (auto-save: persiste no banco imediatamente)
   const handleSaveExperience = async (experience: ExperienceWithCurrent) => {
-    if (!curriculum) return;
+    if (!curriculum || guardReadOnly()) return;
 
     const existingIndex = curriculum.experiences.findIndex((e) => e.id === experience.id);
     let updatedExperiences: ExperienceWithCurrent[];
@@ -354,14 +369,14 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
       });
       setCurriculum((prev) => prev ? { ...prev, experiences: saved.experiences } : null);
       toast.success(existingIndex >= 0 ? 'Experiência atualizada!' : 'Experiência adicionada!');
-    } catch {
+    } catch (err) {
       updateField('experiences', previousExperiences);
-      toast.error('Erro ao salvar experiência.');
+      toast.error('Erro ao salvar experiência.', { description: errorDescription(err) });
     }
   };
 
   const handleDeleteExperience = async (experienceId: string) => {
-    if (!curriculum) return;
+    if (!curriculum || guardReadOnly()) return;
     const previousExperiences = curriculum.experiences;
     const updatedExperiences = curriculum.experiences.filter((e) => e.id !== experienceId);
     updateField('experiences', updatedExperiences);
@@ -373,15 +388,15 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
       });
       setCurriculum((prev) => prev ? { ...prev, experiences: saved.experiences } : null);
       toast.success('Experiência removida.');
-    } catch {
+    } catch (err) {
       updateField('experiences', previousExperiences);
-      toast.error('Erro ao remover experiência.');
+      toast.error('Erro ao remover experiência.', { description: errorDescription(err) });
     }
   };
 
   // Handlers para formação (auto-save)
   const handleSaveEducation = async (education: EducationWithStatus) => {
-    if (!curriculum) return;
+    if (!curriculum || guardReadOnly()) return;
 
     const existingIndex = curriculum.education.findIndex((e) => e.id === education.id);
     let updatedEducation: EducationWithStatus[];
@@ -405,14 +420,14 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
       });
       setCurriculum((prev) => prev ? { ...prev, education: saved.education } : null);
       toast.success(existingIndex >= 0 ? 'Formação atualizada!' : 'Formação adicionada!');
-    } catch {
+    } catch (err) {
       updateField('education', previousEducation);
-      toast.error('Erro ao salvar formação.');
+      toast.error('Erro ao salvar formação.', { description: errorDescription(err) });
     }
   };
 
   const handleDeleteEducation = async (educationId: string) => {
-    if (!curriculum) return;
+    if (!curriculum || guardReadOnly()) return;
     const previousEducation = curriculum.education;
     const updatedEducation = curriculum.education.filter((e) => e.id !== educationId);
     updateField('education', updatedEducation);
@@ -424,15 +439,15 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
       });
       setCurriculum((prev) => prev ? { ...prev, education: saved.education } : null);
       toast.success('Formação removida.');
-    } catch {
+    } catch (err) {
       updateField('education', previousEducation);
-      toast.error('Erro ao remover formação.');
+      toast.error('Erro ao remover formação.', { description: errorDescription(err) });
     }
   };
 
   // Handlers para cursos (auto-save)
   const handleSaveCourse = async (course: Course) => {
-    if (!curriculum) return;
+    if (!curriculum || guardReadOnly()) return;
 
     const existingIndex = curriculum.courses.findIndex((c) => c.id === course.id);
     let updatedCourses: Course[];
@@ -456,14 +471,14 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
       });
       setCurriculum((prev) => prev ? { ...prev, courses: saved.courses } : null);
       toast.success(existingIndex >= 0 ? 'Curso atualizado!' : 'Curso adicionado!');
-    } catch {
+    } catch (err) {
       updateField('courses', previousCourses);
-      toast.error('Erro ao salvar curso.');
+      toast.error('Erro ao salvar curso.', { description: errorDescription(err) });
     }
   };
 
   const handleDeleteCourse = async (courseId: string) => {
-    if (!curriculum) return;
+    if (!curriculum || guardReadOnly()) return;
     const previousCourses = curriculum.courses;
     const updatedCourses = curriculum.courses.filter((c) => c.id !== courseId);
     updateField('courses', updatedCourses);
@@ -475,28 +490,52 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
       });
       setCurriculum((prev) => prev ? { ...prev, courses: saved.courses } : null);
       toast.success('Curso removido.');
-    } catch {
+    } catch (err) {
       updateField('courses', previousCourses);
-      toast.error('Erro ao remover curso.');
+      toast.error('Erro ao remover curso.', { description: errorDescription(err) });
     }
   };
 
   // Salvar perfil
   const handleSave = async () => {
-    if (!curriculum) return;
+    if (!curriculum || guardReadOnly()) return;
 
     // Compor location a partir de city+state para backward compat
     const composedLocation = [curriculum.city, curriculum.state].filter(Boolean).join(', ');
-    const updatedCurriculum = { ...curriculum, location: composedLocation || curriculum.location };
+
+    // Only form-level fields here. Sub-entities (experiences/education/skills/
+    // courses) are auto-saved by their own handlers; including them would
+    // re-replace all child rows from possibly stale local state.
+    const updates: Partial<Curriculum> = {
+      title: curriculum.title,
+      email: curriculum.email,
+      phone: curriculum.phone,
+      linkedin: curriculum.linkedin,
+      about: curriculum.about,
+      availability: curriculum.availability,
+      city: curriculum.city,
+      state: curriculum.state,
+      location: composedLocation || curriculum.location,
+      salary: curriculum.salary,
+      openToRelocation: curriculum.openToRelocation,
+      salaryNegotiable: curriculum.salaryNegotiable,
+      preferredSectors: curriculum.preferredSectors,
+      preferredRoles: curriculum.preferredRoles,
+      workModel: curriculum.workModel,
+      contractType: curriculum.contractType,
+      isFirstJob: curriculum.isFirstJob,
+      educationLevel: curriculum.educationLevel,
+      educationLevelStatus: curriculum.educationLevelStatus,
+    };
 
     setSaving(true);
     try {
-      const saved = await updateMutation.mutateAsync({ id: curriculum.id, updates: updatedCurriculum });
+      const saved = await updateMutation.mutateAsync({ id: curriculum.id, updates });
       setCurriculum({ ...saved });
       savedSnapshotRef.current = saved;
       toast.success('Perfil salvo com sucesso!');
-    } catch {
-      toast.error('Erro ao salvar perfil.');
+    } catch (err) {
+      toast.error('Erro ao salvar perfil.', { description: errorDescription(err) });
     } finally {
       setSaving(false);
     }
@@ -599,12 +638,26 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
               <Progress value={completeness.percentage} className="w-24 h-2" />
               <span className="text-sm font-medium">{completeness.percentage}%</span>
             </div>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button onClick={handleSave} disabled={saving || isReadOnly}>
               <Save className="h-4 w-4 mr-2" />
               {saving ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
         </div>
+
+        {/* Aviso: impersonação é somente leitura */}
+        {isReadOnly && (
+          <Alert className="border-amber-500/40 bg-amber-500/10">
+            <Info className="h-4 w-4 text-amber-500" />
+            <AlertTitle className="text-amber-700 dark:text-amber-400">
+              Modo visualização
+            </AlertTitle>
+            <AlertDescription>
+              Você está visualizando este perfil como administrador. Alterações
+              não são salvas durante a impersonação.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -1085,6 +1138,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                       </CardDescription>
                     </div>
                     <Button
+                      disabled={isReadOnly}
                       onClick={() => {
                         setEditingExperience(null);
                         setExperienceDialogOpen(true);
@@ -1255,6 +1309,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                     </CardDescription>
                   </div>
                   <Button
+                    disabled={isReadOnly}
                     onClick={() => {
                       setEditingEducation(null);
                       setEducationDialogOpen(true);
@@ -1381,7 +1436,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                   </div>
                   <Button
                     onClick={handleSaveStdSkills}
-                    disabled={setStdSkillsMutation.isPending}
+                    disabled={setStdSkillsMutation.isPending || isReadOnly}
                     size="sm"
                   >
                     <Save className="h-4 w-4 mr-2" />
@@ -1421,6 +1476,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                   </CardDescription>
                 </div>
                 <Button
+                  disabled={isReadOnly}
                   onClick={() => {
                     setEditingCourse(null);
                     setCourseDialogOpen(true);
@@ -1458,16 +1514,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
                             )}
                           </div>
                           <div className="flex items-center gap-2">
-                            {course.certificateType && (
-                              <Badge variant="outline" className="flex items-center gap-1">
-                                {course.certificateType === 'link' ? (
-                                  <ExternalLink className="h-3 w-3" />
-                                ) : (
-                                  <FileText className="h-3 w-3" />
-                                )}
-                                Certificado
-                              </Badge>
-                            )}
+                            <CertificateViewer course={course} />
                             <Button
                               variant="ghost"
                               size="icon"
@@ -1501,6 +1548,7 @@ export default function ProfessionalProfile({ onboardingMode = false, onOnboardi
               curriculum={curriculum}
               candidateId={candidateId}
               onUpdate={async (updates) => {
+                if (guardReadOnly()) return;
                 await updateMutation.mutateAsync({ id: curriculum.id, updates });
               }}
             />
@@ -1956,6 +2004,9 @@ function CourseDialog({
   course: Course | null;
   onSave: (course: Course) => void;
 }) {
+  const { user } = useAuth();
+  const userId = user?.id ?? '';
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState<Course>({
     id: '',
     name: '',
@@ -1984,22 +2035,47 @@ function CourseDialog({
     }
   }, [course, open]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Arquivo muito grande. Máximo 5MB.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => {
-        setForm({
-          ...form,
-          certificateUrl: reader.result as string,
-          certificateFileName: file.name,
-        });
-      };
-      reader.readAsDataURL(file);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const allowed = ['application/pdf', 'image/png', 'image/jpeg'];
+    if (!allowed.includes(file.type)) {
+      toast.error('Formatos aceitos: PDF, PNG ou JPG.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo 5MB.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Upload to Storage instead of embedding base64 in the database row —
+      // multi-MB data URLs in curriculum_courses made the profile fetch time out.
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `${userId}/certificates/${Date.now()}-${safeName}`;
+      const { data, error } = await supabase.storage
+        .from('candidate-documents')
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('candidate-documents')
+        .getPublicUrl(data.path);
+
+      setForm((prev) => ({
+        ...prev,
+        certificateUrl: publicUrl,
+        certificateFileName: file.name,
+      }));
+    } catch (err) {
+      console.error('Certificate upload error:', err);
+      toast.error('Erro ao enviar o certificado. Tente novamente.');
+    } finally {
+      setUploading(false);
+      input.value = '';
     }
   };
 
@@ -2134,10 +2210,11 @@ function CourseDialog({
                     onChange={handleFileChange}
                     className="hidden"
                     id="cert-upload"
+                    disabled={uploading}
                   />
                   <Label htmlFor="cert-upload" className="cursor-pointer">
-                    <Button variant="outline" size="sm" asChild>
-                      <span>Selecionar arquivo</span>
+                    <Button variant="outline" size="sm" asChild disabled={uploading}>
+                      <span>{uploading ? 'Enviando...' : 'Selecionar arquivo'}</span>
                     </Button>
                   </Label>
                 </div>
@@ -2149,7 +2226,9 @@ function CourseDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit}>Salvar</Button>
+          <Button onClick={handleSubmit} disabled={uploading}>
+            {uploading ? 'Enviando arquivo...' : 'Salvar'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

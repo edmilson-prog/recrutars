@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { CertificateViewer } from '@/components/profile/CertificateViewer';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useCandidate } from '@/hooks/useCandidatesQuery';
@@ -1265,17 +1266,7 @@ export default function AdminCandidateDetail() {
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 <span className="text-xs text-muted-foreground">{course.year}</span>
-                                {course.certificateUrl && (
-                                  <a
-                                    href={course.certificateUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-secondary hover:underline inline-flex items-center gap-1 text-xs"
-                                  >
-                                    Certificado
-                                    <ExternalLink className="w-3 h-3" />
-                                  </a>
-                                )}
+                                <CertificateViewer course={course} />
                               </div>
                             </div>
                           </div>

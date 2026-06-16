@@ -133,6 +133,54 @@ function rowToCurriculum(row: Record<string, unknown>): Curriculum {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Domain -> Row mappers for the replace_curriculum_children RPC payload
+// ---------------------------------------------------------------------------
+
+function experienceToRow(exp: ExperienceWithCurrent, index: number) {
+  return {
+    company: exp.company,
+    role: exp.role,
+    start_date: exp.startDate,
+    end_date: exp.endDate ?? null,
+    is_current: exp.current,
+    description: exp.description,
+    sort_order: index,
+  };
+}
+
+function educationToRow(edu: EducationWithStatus, index: number) {
+  return {
+    institution: edu.institution,
+    degree: edu.degree,
+    field: edu.field,
+    start_year: edu.startYear,
+    end_year: edu.endYear ?? null,
+    status: edu.status,
+    sort_order: index,
+  };
+}
+
+function skillToRow(skill: SkillWithLevel) {
+  return {
+    name: skill.name,
+    level: skill.level,
+    type: skill.type,
+  };
+}
+
+function courseToRow(course: Course) {
+  return {
+    name: course.name,
+    institution: course.institution,
+    year: course.year,
+    hours: course.hours ?? null,
+    certificate_type: course.certificateType ?? null,
+    certificate_url: course.certificateUrl ?? null,
+    certificate_file_name: course.certificateFileName ?? null,
+  };
+}
+
 /** The select expression that joins all sub-entity tables. */
 const CURRICULUM_SELECT = `
   *,
@@ -270,24 +318,29 @@ export class SupabaseCurriculumsService implements ICurriculumsService {
       }
     }
 
-    // 2. Replace sub-entities if provided (delete + re-insert)
-    const subOps: Promise<void>[] = [];
+    // 2. Replace sub-entities atomically via RPC (single transaction).
+    //    Client-side DELETE + INSERT pairs could wipe data when the INSERT
+    //    failed after the DELETE had already committed.
+    const childPayload = {
+      p_curriculum_id: id,
+      p_experiences:
+        updates.experiences !== undefined ? updates.experiences.map(experienceToRow) : null,
+      p_education:
+        updates.education !== undefined ? updates.education.map(educationToRow) : null,
+      p_skills: updates.skills !== undefined ? updates.skills.map(skillToRow) : null,
+      p_courses: updates.courses !== undefined ? updates.courses.map(courseToRow) : null,
+    };
 
-    if (updates.experiences !== undefined) {
-      subOps.push(this.replaceExperiences(id, updates.experiences));
-    }
-    if (updates.education !== undefined) {
-      subOps.push(this.replaceEducation(id, updates.education));
-    }
-    if (updates.skills !== undefined) {
-      subOps.push(this.replaceSkills(id, updates.skills));
-    }
-    if (updates.courses !== undefined) {
-      subOps.push(this.replaceCourses(id, updates.courses));
-    }
-
-    if (subOps.length > 0) {
-      await Promise.all(subOps);
+    if (
+      childPayload.p_experiences !== null ||
+      childPayload.p_education !== null ||
+      childPayload.p_skills !== null ||
+      childPayload.p_courses !== null
+    ) {
+      const { error } = await supabase.rpc('replace_curriculum_children', childPayload);
+      if (error) {
+        throw new Error(`Failed to update profile sections: ${error.message}`);
+      }
     }
 
     // 3. Sync key fields to candidates table for search/matching
@@ -323,160 +376,5 @@ export class SupabaseCurriculumsService implements ICurriculumsService {
 
     // 4. Return updated profile
     return result;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Private helpers — sub-entity management
-  // ---------------------------------------------------------------------------
-
-  // ---- Experiences ----
-
-  private async insertExperiences(
-    curriculumId: string,
-    experiences: ExperienceWithCurrent[],
-  ): Promise<void> {
-    if (experiences.length === 0) return;
-
-    const rows = experiences.map((exp, index) => ({
-      curriculum_id: curriculumId,
-      company: exp.company,
-      role: exp.role,
-      start_date: exp.startDate,
-      end_date: exp.endDate ?? null,
-      is_current: exp.current,
-      description: exp.description,
-      sort_order: index,
-    }));
-
-    const { error } = await supabase.from('curriculum_experiences').insert(rows);
-    if (error) {
-      throw new Error(`Failed to insert experiences: ${error.message}`);
-    }
-  }
-
-  private async replaceExperiences(
-    curriculumId: string,
-    experiences: ExperienceWithCurrent[],
-  ): Promise<void> {
-    const { error: delError } = await supabase
-      .from('curriculum_experiences')
-      .delete()
-      .eq('curriculum_id', curriculumId);
-    if (delError) {
-      throw new Error(`Failed to delete experiences: ${delError.message}`);
-    }
-    await this.insertExperiences(curriculumId, experiences);
-  }
-
-  // ---- Education ----
-
-  private async insertEducation(
-    curriculumId: string,
-    education: EducationWithStatus[],
-  ): Promise<void> {
-    if (education.length === 0) return;
-
-    const rows = education.map((edu, index) => ({
-      curriculum_id: curriculumId,
-      institution: edu.institution,
-      degree: edu.degree,
-      field: edu.field,
-      start_year: edu.startYear,
-      end_year: edu.endYear ?? null,
-      status: edu.status,
-      sort_order: index,
-    }));
-
-    const { error } = await supabase.from('curriculum_education').insert(rows);
-    if (error) {
-      throw new Error(`Failed to insert education: ${error.message}`);
-    }
-  }
-
-  private async replaceEducation(
-    curriculumId: string,
-    education: EducationWithStatus[],
-  ): Promise<void> {
-    const { error: delError } = await supabase
-      .from('curriculum_education')
-      .delete()
-      .eq('curriculum_id', curriculumId);
-    if (delError) {
-      throw new Error(`Failed to delete education: ${delError.message}`);
-    }
-    await this.insertEducation(curriculumId, education);
-  }
-
-  // ---- Skills ----
-
-  private async insertSkills(
-    curriculumId: string,
-    skills: SkillWithLevel[],
-  ): Promise<void> {
-    if (skills.length === 0) return;
-
-    const rows = skills.map((skill) => ({
-      curriculum_id: curriculumId,
-      name: skill.name,
-      level: skill.level,
-      type: skill.type,
-    }));
-
-    const { error } = await supabase.from('curriculum_skills').insert(rows);
-    if (error) {
-      throw new Error(`Failed to insert skills: ${error.message}`);
-    }
-  }
-
-  private async replaceSkills(
-    curriculumId: string,
-    skills: SkillWithLevel[],
-  ): Promise<void> {
-    const { error: delError } = await supabase
-      .from('curriculum_skills')
-      .delete()
-      .eq('curriculum_id', curriculumId);
-    if (delError) {
-      throw new Error(`Failed to delete skills: ${delError.message}`);
-    }
-    await this.insertSkills(curriculumId, skills);
-  }
-
-  // ---- Courses ----
-
-  private async insertCourses(
-    curriculumId: string,
-    courses: Course[],
-  ): Promise<void> {
-    if (courses.length === 0) return;
-
-    const rows = courses.map((course) => ({
-      curriculum_id: curriculumId,
-      name: course.name,
-      institution: course.institution,
-      year: course.year,
-      hours: course.hours ?? null,
-      certificate_type: course.certificateType ?? null,
-      certificate_url: course.certificateUrl ?? null,
-    }));
-
-    const { error } = await supabase.from('curriculum_courses').insert(rows);
-    if (error) {
-      throw new Error(`Failed to insert courses: ${error.message}`);
-    }
-  }
-
-  private async replaceCourses(
-    curriculumId: string,
-    courses: Course[],
-  ): Promise<void> {
-    const { error: delError } = await supabase
-      .from('curriculum_courses')
-      .delete()
-      .eq('curriculum_id', curriculumId);
-    if (delError) {
-      throw new Error(`Failed to delete courses: ${delError.message}`);
-    }
-    await this.insertCourses(curriculumId, courses);
   }
 }

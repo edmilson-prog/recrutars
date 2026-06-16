@@ -12,7 +12,6 @@ import {
   Heart,
   Clock,
   DollarSign,
-  ExternalLink,
   FileText,
   AlertTriangle,
 } from 'lucide-react';
@@ -27,6 +26,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CertificateViewer } from '@/components/profile/CertificateViewer';
 
 
 import type { Curriculum } from '@/types';
@@ -397,19 +397,7 @@ export function CurriculumPreview({
                             </p>
                           )}
                         </div>
-                        {course.certificateType && (
-                          <Badge
-                            variant="outline"
-                            className="flex items-center gap-1"
-                          >
-                            {course.certificateType === 'link' ? (
-                              <ExternalLink className="h-3 w-3" />
-                            ) : (
-                              <FileText className="h-3 w-3" />
-                            )}
-                            Certificado
-                          </Badge>
-                        )}
+                        <CertificateViewer course={course} />
                       </div>
                     </div>
                   ))}
