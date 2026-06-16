@@ -9,8 +9,10 @@ import { Plus, RefreshCw } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { StripeEnvironmentSelector } from '@/components/admin/stripe/StripeEnvironmentSelector';
+import { StripeEnvironmentBanner } from '@/components/admin/stripe/StripeEnvironmentBanner';
+import { STRIPE_ENV_LABELS } from '@/components/admin/stripe/stripeEnvironmentLabels';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,46 +103,34 @@ export default function PlansManagement() {
 
         <AdminTabNav />
 
-        {/* PRD-075: Stripe environment toggle + sync all */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-            <button
-              className={cn(
-                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                stripeEnv === 'live' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-              )}
-              onClick={() => setStripeEnv('live')}
-            >
-              Produção
-            </button>
-            <button
-              className={cn(
-                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                stripeEnv === 'test' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-              )}
-              onClick={() => setStripeEnv('test')}
-            >
-              Teste
-            </button>
+        {/* Stripe environment controls */}
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="ml-auto flex items-end gap-3">
+              <StripeEnvironmentSelector value={stripeEnv} onChange={setStripeEnv} />
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                disabled={syncAll.isPending}
+                onClick={() => {
+                  syncAll.mutate(stripeEnv, {
+                    onSuccess: () => toast.success('Todos os planos sincronizados com Stripe!'),
+                    onError: () => toast.error('Erro ao sincronizar planos com Stripe'),
+                  });
+                }}
+              >
+                <RefreshCw className={cn('mr-1.5 h-3 w-3', syncAll.isPending && 'animate-spin')} />
+                {syncAll.isPending
+                  ? 'Sincronizando...'
+                  : `Sincronizar todos · ${STRIPE_ENV_LABELS[stripeEnv]}`}
+              </Button>
+            </div>
           </div>
-          <Badge variant="outline" className={cn('text-xs', stripeEnv === 'live' ? 'text-red-600 border-red-300' : 'text-blue-600 border-blue-300')}>
-            Stripe: {stripeEnv === 'test' ? 'Teste' : 'Produção'}
-          </Badge>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs ml-auto"
-            disabled={syncAll.isPending}
-            onClick={() => {
-              syncAll.mutate(stripeEnv, {
-                onSuccess: () => toast.success('Todos os planos sincronizados com Stripe!'),
-                onError: () => toast.error('Erro ao sincronizar planos com Stripe'),
-              });
-            }}
-          >
-            <RefreshCw className={cn('w-3 h-3 mr-1.5', syncAll.isPending && 'animate-spin')} />
-            {syncAll.isPending ? 'Sincronizando...' : 'Sincronizar Todos'}
-          </Button>
+          <StripeEnvironmentBanner
+            environment={stripeEnv}
+            onSwitchToProduction={() => setStripeEnv('live')}
+          />
         </div>
 
         {/* Tabs */}

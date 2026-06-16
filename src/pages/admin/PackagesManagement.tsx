@@ -34,6 +34,9 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { TestPackage } from '@/types/testPackages';
 import type { StripeEnvironment } from '@/types/plans';
+import { StripeEnvironmentSelector } from '@/components/admin/stripe/StripeEnvironmentSelector';
+import { StripeEnvironmentBanner } from '@/components/admin/stripe/StripeEnvironmentBanner';
+import { STRIPE_ENV_LABELS } from '@/components/admin/stripe/stripeEnvironmentLabels';
 
 export default function PackagesManagement() {
   const navigate = useNavigate();
@@ -41,7 +44,7 @@ export default function PackagesManagement() {
   const updatePackageMutation = useUpdateTestPackage();
   const deletePackageMutation = useDeleteTestPackage();
 
-  const [stripeEnv, setStripeEnv] = useState<StripeEnvironment>('test');
+  const [stripeEnv, setStripeEnv] = useState<StripeEnvironment>('live');
   const [isSyncingAll, setIsSyncingAll] = useState(false);
   const [syncingPackageId, setSyncingPackageId] = useState<string | null>(null);
 
@@ -75,7 +78,7 @@ export default function PackagesManagement() {
     if (!deletingPackage) return;
     try {
       await deletePackageMutation.mutateAsync(deletingPackage.id);
-      toast.success(`Pacote "${deletingPackage.name}" excluido.`);
+      toast.success(`Pacote "${deletingPackage.name}" excluído.`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao excluir pacote.');
     } finally {
@@ -138,8 +141,8 @@ export default function PackagesManagement() {
     <DashboardLayout userType="admin">
       <div className="space-y-6">
         <PageHeader
-          title="Pacotes de Testes"
-          description="Gerencie pacotes de créditos de testes avulsos. Configure preços, recursos e sincronização com Stripe."
+          title="Pacotes de Créditos · Gauge-Pro"
+          description="Créditos avulsos de testes Gauge-Pro. Configure preços, recursos e sincronização com o Stripe."
           actions={
             <Button onClick={handleNewPackage} className="bg-cyan-600 hover:bg-cyan-700 shrink-0">
               <Plus className="w-4 h-4 mr-2" />
@@ -155,44 +158,32 @@ export default function PackagesManagement() {
 
         <AdminTabNav />
 
-        {/* Stripe environment toggle + sync all */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-            <button
-              className={cn(
-                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                stripeEnv === 'test' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-              )}
-              onClick={() => setStripeEnv('test')}
-            >
-              Teste
-            </button>
-            <button
-              className={cn(
-                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                stripeEnv === 'live' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-              )}
-              onClick={() => setStripeEnv('live')}
-            >
-              Produção
-            </button>
+        {/* Stripe environment controls */}
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-end gap-3">
+            <Badge variant="outline" className="text-xs text-muted-foreground">
+              {packageCount} {packageCount === 1 ? 'pacote' : 'pacotes'}
+            </Badge>
+            <div className="ml-auto flex items-end gap-3">
+              <StripeEnvironmentSelector value={stripeEnv} onChange={setStripeEnv} />
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                disabled={isSyncingAll}
+                onClick={handleSyncAll}
+              >
+                <RefreshCw className={cn('mr-1.5 h-3 w-3', isSyncingAll && 'animate-spin')} />
+                {isSyncingAll
+                  ? 'Sincronizando...'
+                  : `Sincronizar todos · ${STRIPE_ENV_LABELS[stripeEnv]}`}
+              </Button>
+            </div>
           </div>
-          <Badge variant="outline" className={cn('text-xs', stripeEnv === 'live' ? 'text-red-600 border-red-300' : 'text-blue-600 border-blue-300')}>
-            Stripe: {stripeEnv === 'test' ? 'Teste' : 'Produção'}
-          </Badge>
-          <Badge variant="outline" className="text-xs text-muted-foreground">
-            {packageCount} {packageCount === 1 ? 'pacote' : 'pacotes'}
-          </Badge>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs ml-auto"
-            disabled={isSyncingAll}
-            onClick={handleSyncAll}
-          >
-            <RefreshCw className={cn('w-3 h-3 mr-1.5', isSyncingAll && 'animate-spin')} />
-            {isSyncingAll ? 'Sincronizando...' : 'Sincronizar Todos'}
-          </Button>
+          <StripeEnvironmentBanner
+            environment={stripeEnv}
+            onSwitchToProduction={() => setStripeEnv('live')}
+          />
         </div>
 
         {/* Loading state */}
@@ -233,7 +224,6 @@ export default function PackagesManagement() {
               <PackageCard
                 key={pkg.id}
                 pkg={pkg}
-                stripeEnv={stripeEnv}
                 onEdit={() => handleEdit(pkg)}
                 onClone={() => handleClone(pkg)}
                 onToggleActive={() => handleToggleActive(pkg)}
@@ -267,7 +257,7 @@ export default function PackagesManagement() {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 disabled={deletePackageMutation.isPending}
               >
-                {deletePackageMutation.isPending ? 'Excluindo...' : 'Confirmar Exclusao'}
+                {deletePackageMutation.isPending ? 'Excluindo...' : 'Confirmar Exclusão'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
