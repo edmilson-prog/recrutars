@@ -1,12 +1,84 @@
 {
   "versions": [
     {
+      "version": "1.65.1",
+      "codename": "Switchboard",
+      "type": "patch",
+      "releaseDate": "2026-06-16",
+      "description": "Correções no perfil profissional do candidato: os itens do currículo (cursos, experiências, formação e habilidades) não se perdem mais ao salvar, e o perfil volta a carregar com rapidez mesmo com certificados anexados. Os cursos ganharam um botão para ver e baixar o certificado, disponível para candidato, empresa e admin.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Os itens do currículo (cursos, experiências, formação e habilidades) não se perdem mais ao salvar o perfil profissional.",
+            "O perfil profissional voltou a abrir com rapidez, sem travar, mesmo quando há vários certificados anexados."
+          ],
+          "details": {
+            "0": {
+              "description": "Em situações raras de falha ao salvar, parte dos itens do currículo podia ser apagada sem aviso. Agora o salvamento é feito de uma vez só: ou tudo é gravado, ou nada muda — acabando com a perda silenciosa de cursos e outros itens. As datas de criação e alteração de cada item passaram a ser registradas, permitindo auditoria.",
+              "files": [
+                "sql/migrations/104_replace_curriculum_children_rpc.sql",
+                "sql/migrations/105_curriculum_children_timestamps.sql",
+                "src/services/curriculums/curriculumsService.supabase.ts"
+              ],
+              "routes": ["/candidato/perfil"]
+            },
+            "1": {
+              "description": "Certificados anexados deixavam a abertura do perfil lenta e, às vezes, resultavam em erro de carregamento. Com o novo armazenamento otimizado dos certificados, a tela volta a carregar rapidamente para o candidato, a empresa e o admin.",
+              "files": [
+                "sql/migrations/107_candidate_documents_image_mimes.sql",
+                "supabase/functions/migrate-certificates-to-storage/index.ts"
+              ],
+              "routes": ["/candidato/perfil", "/empresa/candidatos", "/admin/candidatos"]
+            }
+          }
+        },
+        {
+          "type": "added",
+          "items": [
+            "Novo botão 'Ver certificado' nos cursos do currículo, para visualizar e baixar o certificado — disponível para o candidato, a empresa e o admin."
+          ],
+          "details": {
+            "0": {
+              "description": "Cada curso com certificado passa a exibir um botão 'Ver certificado'. Arquivos em PDF ou imagem abrem numa janela de visualização, com opção de baixar ou abrir em nova aba. O mesmo recurso aparece no perfil do candidato, na visão da empresa e na visão do admin.",
+              "files": [
+                "src/components/profile/CertificateViewer.tsx",
+                "src/pages/candidato/ProfessionalProfile.tsx",
+                "src/pages/empresa/CandidateProfile.tsx",
+                "src/pages/admin/CandidateDetail.tsx",
+                "src/components/candidato/CurriculumPreview.tsx"
+              ],
+              "routes": ["/candidato/perfil", "/empresa/candidatos", "/admin/candidatos"]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Os certificados de cursos passaram a ser guardados como arquivo, deixando o perfil mais leve e rápido; os certificados antigos foram convertidos automaticamente."
+          ],
+          "details": {
+            "0": {
+              "description": "Antes, o certificado ficava embutido diretamente no cadastro do curso, o que pesava no carregamento do perfil. Agora cada certificado é guardado como um arquivo separado e o nome original do arquivo é preservado. Os certificados já existentes foram convertidos automaticamente para o novo formato, sem nenhuma ação do usuário.",
+              "files": [
+                "sql/migrations/106_curriculum_courses_certificate_file_name.sql",
+                "src/services/curriculums/curriculumsService.supabase.ts",
+                "src/types/database.ts"
+              ],
+              "routes": ["/candidato/perfil"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.65.0",
       "codename": "Switchboard",
       "type": "minor",
       "releaseDate": "2026-06-16",
       "description": "O seletor de ambiente do Stripe nas telas administrativas de Pacotes e Planos ficou inequívoco: deixa claro que controla o ambiente de cobrança (Produção ou Teste/sandbox), com Produção como padrão e um aviso destacado quando o sandbox está ativo. A antiga página 'Pacotes de Testes' passou a se chamar 'Pacotes de Créditos'.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "changed",
