@@ -5,6 +5,30 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.65.1] - 2026-06-16 "Switchboard"
+
+### Fixed
+- **Perda silenciosa de itens do currículo ao salvar** — o salvamento das sub-entidades (experiências, formação, habilidades, cursos) fazia `DELETE`+`INSERT` em statements separados; se o `INSERT` falhasse após o `DELETE` já commitado, os dados sumiam sem erro. Nova RPC `replace_curriculum_children` faz o replace atômico numa única transação (`SECURITY INVOKER` + checagem de ownership que lança `42501` quando a RLS filtra tudo, ex.: impersonação admin). Tabelas `curriculum_*` ganharam `created_at`/`updated_at` + triggers para auditoria (`sql/migrations/104_replace_curriculum_children_rpc.sql`, `sql/migrations/105_curriculum_children_timestamps.sql`, `curriculumsService.supabase.ts`)
+- **Timeout de 8s ao abrir o perfil profissional** — certificados gravados como data URLs base64 (~1,5 MB cada) na coluna `certificate_url` faziam o fetch do perfil (currículo + embeds) estourar o statement timeout do Postgres. Migrados para o Storage via Edge Function idempotente `migrate-certificates-to-storage` em lotes (19 certificados convertidos, 0 base64 restantes) (`sql/migrations/107_candidate_documents_image_mimes.sql`, `supabase/functions/migrate-certificates-to-storage/index.ts`)
+
+### Added
+- **Visualizador de certificados compartilhado** — componente `CertificateViewer` reutilizado nas visões de candidato, empresa e admin: URLs http abrem em nova aba; data URLs legados são exibidos num dialog com preview (imagem/PDF) + download. Botão "Ver certificado" nos cursos do currículo (`CertificateViewer.tsx`, `ProfessionalProfile.tsx`, `CandidateProfile.tsx`, `CandidateDetail.tsx`, `CurriculumPreview.tsx`)
+
+### Changed
+- **Certificados de cursos migrados para o Storage** — coluna `certificate_file_name` adicionada (o nome do arquivo era capturado no front mas descartado no save); bucket `candidate-documents` passou a aceitar `image/png`/`image/jpeg`; `curriculumsService` usa a RPC atômica e remove os 8 helpers de insert/replace (−260 linhas) (`sql/migrations/106_curriculum_courses_certificate_file_name.sql`, `curriculumsService.supabase.ts`, `database.ts`)
+
+## [1.65.0] - 2026-06-16 "Switchboard"
+
+### Changed
+- **Seletor de ambiente do Stripe inequívoco** — em Pacotes e Planos, o seletor deixa claro que controla o ambiente de cobrança (Produção x Teste/sandbox), e não o tipo de produto, com Produção como padrão e aviso âmbar destacado quando o sandbox está ativo. Componentes reutilizados entre as duas telas (`StripeEnvironmentSelector.tsx`, `StripeEnvironmentBanner.tsx`, `stripeEnvironmentLabels.ts`, `PackagesManagement.tsx`, `PlansManagement.tsx`)
+- **"Pacotes de Testes" renomeado para "Pacotes de Créditos"** — evita a confusão com os testes comportamentais Gauge-Pro (`DashboardLayout.tsx`, `PackagesManagement.tsx`)
+
+### Added
+- **Status de sincronização Stripe nos dois ambientes** — cartões de plano e de pacote exibem o status de sync em Produção e Sandbox simultaneamente, com a data da última sincronização (`StripeSyncStatus.tsx`, `PlanCard.tsx`, `PackageCard.tsx`)
+
+### Fixed
+- **Períodos sem preço ocultos no cartão de plano** — planos de cobrança única (avulsos) não exibem mais "R$ 0,00" nos períodos recorrentes; planos gratuitos seguem mostrando "Grátis" (`PlanCard.tsx`)
+
 ## [1.64.0] - 2026-06-11 "Greenlight"
 
 ### Added
