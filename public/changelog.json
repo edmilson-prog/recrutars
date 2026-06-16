@@ -1,12 +1,82 @@
 {
   "versions": [
     {
+      "version": "1.65.0",
+      "codename": "Switchboard",
+      "type": "minor",
+      "releaseDate": "2026-06-16",
+      "description": "O seletor de ambiente do Stripe nas telas administrativas de Pacotes e Planos ficou inequívoco: deixa claro que controla o ambiente de cobrança (Produção ou Teste/sandbox), com Produção como padrão e um aviso destacado quando o sandbox está ativo. A antiga página 'Pacotes de Testes' passou a se chamar 'Pacotes de Créditos'.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "O seletor de ambiente do Stripe em Pacotes e Planos foi redesenhado para deixar inequívoco que ele controla o ambiente de cobrança (Produção x Teste/sandbox), e não o tipo de produto. O padrão passou a ser Produção, com um aviso âmbar destacado quando o ambiente de teste está ativo.",
+            "A página 'Pacotes de Testes' foi renomeada para 'Pacotes de Créditos', evitando a confusão com os testes comportamentais Gauge-Pro."
+          ],
+          "details": {
+            "0": {
+              "description": "Antes, um botão 'Teste / Produção' se confundia com um filtro de tipo de pacote. Agora há um seletor recolhido rotulado 'Ambiente Stripe', com Produção selecionado por padrão. Ao ativar o ambiente de teste (sandbox), um banner âmbar avisa que as ações não afetam cobranças reais. Os mesmos componentes são reutilizados em Pacotes e Planos para manter a consistência.",
+              "files": [
+                "src/components/admin/stripe/StripeEnvironmentSelector.tsx",
+                "src/components/admin/stripe/StripeEnvironmentBanner.tsx",
+                "src/components/admin/stripe/stripeEnvironmentLabels.ts",
+                "src/pages/admin/PackagesManagement.tsx",
+                "src/pages/admin/PlansManagement.tsx"
+              ],
+              "routes": ["/admin/pacotes", "/admin/planos"]
+            },
+            "1": {
+              "description": "O item de menu e o título 'Pacotes de Testes' passaram a 'Pacotes de Créditos · Gauge-Pro', deixando claro que se trata de créditos avulsos de testes comportamentais, e não do ambiente de teste do Stripe.",
+              "files": [
+                "src/components/layout/DashboardLayout.tsx",
+                "src/pages/admin/PackagesManagement.tsx"
+              ],
+              "routes": ["/admin/pacotes"]
+            }
+          }
+        },
+        {
+          "type": "added",
+          "items": [
+            "Os cartões de plano e de pacote no admin passam a exibir o status de sincronização com o Stripe nos dois ambientes (Produção e Sandbox) ao mesmo tempo."
+          ],
+          "details": {
+            "0": {
+              "description": "Cada cartão mostra, lado a lado, se o produto está sincronizado em Produção e em Sandbox, com a data da última sincronização — assim o admin enxerga de relance o estado de cada ambiente sem alternar o seletor.",
+              "files": [
+                "src/components/admin/stripe/StripeSyncStatus.tsx",
+                "src/components/admin/plans/PlanCard.tsx",
+                "src/components/admin/packages/PackageCard.tsx"
+              ],
+              "routes": ["/admin/planos", "/admin/pacotes"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "No cartão de plano do admin, períodos sem preço (R$ 0,00) deixaram de ser exibidos — por exemplo, um plano avulso não mostra mais valores zerados nos períodos mensal, trimestral, semestral e anual."
+          ],
+          "details": {
+            "0": {
+              "description": "Planos de cobrança única (avulsos) exibiam 'R$ 0,00' nos períodos recorrentes, poluindo o cartão. Agora os períodos sem preço são ocultados; planos gratuitos continuam mostrando 'Grátis' normalmente.",
+              "files": [
+                "src/components/admin/plans/PlanCard.tsx"
+              ],
+              "routes": ["/admin/planos"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.64.0",
       "codename": "Greenlight",
       "type": "minor",
       "releaseDate": "2026-06-11",
       "description": "O admin agora controla os dias de avaliação de cada empresa individualmente, podendo liberar, estender ou encerrar o período de teste. Empresas recém-cadastradas passam a aguardar a liberação manual da equipe, com uma tela de boas-vindas explicando os próximos passos.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
