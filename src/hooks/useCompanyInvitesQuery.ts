@@ -65,6 +65,9 @@ export function useResendInvite(companyId: string | undefined) {
     onSuccess: () => {
       if (companyId) {
         queryClient.invalidateQueries({ queryKey: companyInviteKeys.invites(companyId) });
+        // Reenviar pode vincular um convidado pré-existente direto à equipe
+        // (Edge Function v3), então a lista de membros também precisa atualizar.
+        queryClient.invalidateQueries({ queryKey: companyInviteKeys.users(companyId) });
       }
     },
   });
