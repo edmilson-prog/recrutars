@@ -24,6 +24,7 @@ import {
   FileText,
   Lock,
   Phone,
+  UserCircle,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThemeSettings } from '@/components/settings/ThemeSettings';
+import { MyProfileTab } from '@/components/settings/MyProfileTab';
 import {
   Card,
   CardContent,
@@ -525,7 +527,11 @@ export default function CompanySettings() {
 
         {/* Tabs */}
         <Tabs defaultValue={initialTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="meu-perfil" className="flex items-center gap-2">
+              <UserCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">Meu Perfil</span>
+            </TabsTrigger>
             <TabsTrigger value="perfil" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
               <span className="hidden sm:inline">Perfil</span>
@@ -547,6 +553,11 @@ export default function CompanySettings() {
               <span className="hidden sm:inline">Aparência</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Tab: Meu Perfil (colaborador) */}
+          <TabsContent value="meu-perfil" className="space-y-6">
+            <MyProfileTab />
+          </TabsContent>
 
           {/* Tab: Perfil da Empresa */}
           <TabsContent value="perfil" className="space-y-6">
