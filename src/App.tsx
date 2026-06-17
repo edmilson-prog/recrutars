@@ -10,6 +10,7 @@ import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RedirectIfAuthenticated } from "@/components/auth/RedirectIfAuthenticated";
 import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
+import { CompanyOnboardingGuard } from "@/components/auth/CompanyOnboardingGuard";
 
 // Public pages
 import Landing from "./pages/Landing";
@@ -107,6 +108,7 @@ import AdminFlagAuditLog from "./pages/admin/FlagAuditLog";
 import { SimulationProvider } from "./contexts/SimulationContext";
 
 // Company pages
+import CompanyOnboardingProfile from "./pages/empresa/OnboardingProfile";
 import CompanyDashboard from "./pages/empresa/Dashboard";
 import CompanyJobs from "./pages/empresa/Jobs";
 import CompanyJobForm from "./pages/empresa/JobForm";
@@ -558,205 +560,288 @@ const App = () => (
               </ProtectedRoute>
             } />
 
+            {/* Company Onboarding Route (outside CompanyOnboardingGuard to avoid redirect loop) */}
+            <Route path="/empresa/onboarding/perfil" element={
+              <ProtectedRoute allowedTypes={['company']}>
+                <CompanyOnboardingProfile />
+              </ProtectedRoute>
+            } />
+
             {/* Company Routes */}
             <Route path="/empresa" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyDashboard />
+                <CompanyOnboardingGuard>
+                  <CompanyDashboard />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/vagas" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyJobs />
+                <CompanyOnboardingGuard>
+                  <CompanyJobs />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/vagas/nova" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyJobForm />
+                <CompanyOnboardingGuard>
+                  <CompanyJobForm />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/vagas/:id/editar" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyJobForm />
+                <CompanyOnboardingGuard>
+                  <CompanyJobForm />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/candidaturas" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyApplications />
+                <CompanyOnboardingGuard>
+                  <CompanyApplications />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/candidatos" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyCandidates />
+                <CompanyOnboardingGuard>
+                  <CompanyCandidates />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/candidatos/:id" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyCandidateProfile />
+                <CompanyOnboardingGuard>
+                  <CompanyCandidateProfile />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/candidatos-salvos" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanySavedCandidates />
+                <CompanyOnboardingGuard>
+                  <CompanySavedCandidates />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             {/* PRD-052, 053, 054: Corporate Tests Hub */}
             <Route path="/empresa/testes" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CorporateTestsHub />
+                <CompanyOnboardingGuard>
+                  <CorporateTestsHub />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/testes/metricas" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CorporateTestMetrics />
+                <CompanyOnboardingGuard>
+                  <CorporateTestMetrics />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/testes/auditoria" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CorporateTestAudit />
+                <CompanyOnboardingGuard>
+                  <CorporateTestAudit />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/testes/:testId" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CorporateTestDetail />
+                <CompanyOnboardingGuard>
+                  <CorporateTestDetail />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/testes/:testId/resultado/:candidateId" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CorporateTestResult />
+                <CompanyOnboardingGuard>
+                  <CorporateTestResult />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/testes/:testId/resultado" element={<RedirectToTestDetail />} />
             <Route path="/empresa/testes/:testId/comparar" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CorporateTestCompare />
+                <CompanyOnboardingGuard>
+                  <CorporateTestCompare />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/testes/:testId/relatorios" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CorporateTestReports />
+                <CompanyOnboardingGuard>
+                  <CorporateTestReports />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             {/* Test Packages */}
             <Route path="/empresa/pacotes" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyPackages />
+                <CompanyOnboardingGuard>
+                  <CompanyPackages />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
 
             {/* PRD-055, 056, 057: Team Management Routes */}
             <Route path="/empresa/equipes" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <TeamManagement />
+                <CompanyOnboardingGuard>
+                  <TeamManagement />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/equipes/membro" element={<Navigate to="/empresa/equipes?tab=members" replace />} />
             <Route path="/empresa/equipes/membro/:id" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <TeamMemberProfile />
+                <CompanyOnboardingGuard>
+                  <TeamMemberProfile />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/equipes/compatibilidade" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <TeamCompatibility />
+                <CompanyOnboardingGuard>
+                  <TeamCompatibility />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/equipes/gap-analysis" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <TeamGapAnalysis />
+                <CompanyOnboardingGuard>
+                  <TeamGapAnalysis />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/equipes/team-builder" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <TeamBuilder />
+                <CompanyOnboardingGuard>
+                  <TeamBuilder />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/equipes/desenvolvimento" element={<Navigate to="/empresa/equipes?tab=members" replace />} />
             <Route path="/empresa/equipes/desenvolvimento/:id" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <TeamDevelopment />
+                <CompanyOnboardingGuard>
+                  <TeamDevelopment />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/equipes/talentos" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <TeamTalents />
+                <CompanyOnboardingGuard>
+                  <TeamTalents />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/equipes/cultura" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <TeamCulture />
+                <CompanyOnboardingGuard>
+                  <TeamCulture />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/equipes/evolucao" element={<Navigate to="/empresa/equipes?tab=members" replace />} />
             <Route path="/empresa/equipes/evolucao/:id" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <TeamEvolution />
+                <CompanyOnboardingGuard>
+                  <TeamEvolution />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/equipes/relatorios" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <TeamReports />
+                <CompanyOnboardingGuard>
+                  <TeamReports />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/mensagens" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyMessages />
+                <CompanyOnboardingGuard>
+                  <CompanyMessages />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/configuracoes" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanySettings />
+                <CompanyOnboardingGuard>
+                  <CompanySettings />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/checkout/sucesso" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyCheckoutSuccess />
+                <CompanyOnboardingGuard>
+                  <CompanyCheckoutSuccess />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/checkout/cancelado" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyCheckoutCancel />
+                <CompanyOnboardingGuard>
+                  <CompanyCheckoutCancel />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/meu-plano" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyMyPlan />
+                <CompanyOnboardingGuard>
+                  <CompanyMyPlan />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/notificacoes" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyNotifications />
+                <CompanyOnboardingGuard>
+                  <CompanyNotifications />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/entrevistas" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanyInterviews />
+                <CompanyOnboardingGuard>
+                  <CompanyInterviews />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/vagas/:id/candidatos-sugeridos" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompanySuggestedCandidates />
+                <CompanyOnboardingGuard>
+                  <CompanySuggestedCandidates />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
 
             {/* PRD-048: Job Assessment Routes */}
             <Route path="/empresa/vagas/:jobId/criar-teste" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CreateJobTest />
+                <CompanyOnboardingGuard>
+                  <CreateJobTest />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/vagas/:jobId/teste" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <JobTestManager />
+                <CompanyOnboardingGuard>
+                  <JobTestManager />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/vagas/:jobId/teste/comparar" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CompareCandidates />
+                <CompanyOnboardingGuard>
+                  <CompareCandidates />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/empresa/vagas/:jobId/teste/:candidateId" element={
               <ProtectedRoute allowedTypes={['company']}>
-                <CandidateTestReport />
+                <CompanyOnboardingGuard>
+                  <CandidateTestReport />
+                </CompanyOnboardingGuard>
               </ProtectedRoute>
             } />
 
