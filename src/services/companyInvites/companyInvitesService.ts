@@ -64,6 +64,37 @@ function rowToCompanyInvite(row: CompanyInviteRow): CompanyInvite {
   };
 }
 
+// ── Helpers ──
+
+/**
+ * Invoca a Edge Function invite-team-member e propaga a mensagem de erro REAL.
+ *
+ * Quando a function responde com status != 2xx, o supabase-js retorna um
+ * FunctionsHttpError cujo `.message` é genérico ("...non-2xx status code"). O corpo
+ * com a mensagem amigável ({ error }) fica em `.context` (a Response). Aqui extraímos
+ * essa mensagem para que o toast exiba o motivo real (ex.: conta de candidato).
+ */
+async function invokeInviteFn(body: Record<string, unknown>): Promise<{ message?: string; note?: string }> {
+  const { data, error } = await supabase.functions.invoke('invite-team-member', { body });
+
+  if (error) {
+    let message = error.message;
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === 'function') {
+      try {
+        const parsed = await ctx.json();
+        if (parsed?.error) message = parsed.error;
+      } catch {
+        // corpo não-JSON: mantém a mensagem genérica
+      }
+    }
+    throw new Error(message);
+  }
+
+  if (data?.error) throw new Error(data.error);
+  return data ?? {};
+}
+
 // ── Service Functions ──
 
 export async function getCompanyUsers(companyId: string): Promise<CompanyUser[]> {
@@ -90,57 +121,32 @@ export async function getCompanyInvites(companyId: string): Promise<CompanyInvit
 }
 
 export async function inviteMember(email: string, role: TeamMemberRole = 'member'): Promise<{ message: string }> {
-  const { data, error } = await supabase.functions.invoke('invite-team-member', {
-    body: {
-      action: 'invite',
-      email,
-      role,
-      redirect_url: `${window.location.origin}/aceitar-convite`,
-    },
+  const data = await invokeInviteFn({
+    action: 'invite',
+    email,
+    role,
+    redirect_url: `${window.location.origin}/aceitar-convite`,
   });
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
   return { message: data?.message || 'Convite enviado' };
 }
 
 export async function resendInvite(inviteId: string): Promise<{ message: string }> {
-  const { data, error } = await supabase.functions.invoke('invite-team-member', {
-    body: {
-      action: 'resend',
-      invite_id: inviteId,
-      redirect_url: `${window.location.origin}/aceitar-convite`,
-    },
+  const data = await invokeInviteFn({
+    action: 'resend',
+    invite_id: inviteId,
+    redirect_url: `${window.location.origin}/aceitar-convite`,
   });
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
   return { message: data?.message || 'Convite reenviado' };
 }
 
 export async function cancelInvite(inviteId: string): Promise<void> {
-  const { data, error } = await supabase.functions.invoke('invite-team-member', {
-    body: { action: 'cancel', invite_id: inviteId },
-  });
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
+  await invokeInviteFn({ action: 'cancel', invite_id: inviteId });
 }
 
 export async function removeMember(profileId: string): Promise<void> {
-  const { data, error } = await supabase.functions.invoke('invite-team-member', {
-    body: { action: 'remove_member', profile_id: profileId },
-  });
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
+  await invokeInviteFn({ action: 'remove_member', profile_id: profileId });
 }
 
 export async function updateMemberRole(profileId: string, role: TeamMemberRole): Promise<void> {
-  const { data, error } = await supabase.functions.invoke('invite-team-member', {
-    body: { action: 'update_role', profile_id: profileId, role },
-  });
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
+  await invokeInviteFn({ action: 'update_role', profile_id: profileId, role });
 }

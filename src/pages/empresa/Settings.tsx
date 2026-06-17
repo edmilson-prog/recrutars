@@ -178,7 +178,11 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
 }
 
 export default function CompanySettings() {
-  const { user, logout, currentCompany, companyRole, refreshCurrentCompany } = useAuth();
+  const { user, logout, currentCompany, companyRole, refreshCurrentCompany, isImpersonationActive } = useAuth();
+  // Ações de escrita na equipe exigem ser admin E não estar impersonando.
+  // Durante impersonação o JWT é do admin real (não da empresa), então a Edge
+  // Function invite-team-member rejeita escritas com 403 — desabilitamos a UI.
+  const canManageTeam = companyRole === 'admin' && !isImpersonationActive;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'perfil';
@@ -853,7 +857,7 @@ export default function CompanySettings() {
                   <CardTitle>Equipe</CardTitle>
                   <CardDescription>Gerencie quem tem acesso à conta da empresa</CardDescription>
                 </div>
-                {companyRole === 'admin' && (
+                {canManageTeam && (
                   <Button onClick={() => setShowInviteModal(true)}>
                     <UserPlus className="w-4 h-4 mr-2" />
                     Convidar membro
@@ -861,6 +865,17 @@ export default function CompanySettings() {
                 )}
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Aviso de impersonação: ações de equipe são somente leitura */}
+                {isImpersonationActive && companyRole === 'admin' && (
+                  <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
+                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>
+                      Você está visualizando como esta empresa (impersonação). As ações de
+                      equipe (convidar, reenviar, remover e alterar cargos) ficam desabilitadas
+                      neste modo.
+                    </span>
+                  </div>
+                )}
                 {/* Team Members */}
                 {isLoadingUsers ? (
                   <div className="flex items-center justify-center py-8">
@@ -906,12 +921,20 @@ export default function CompanySettings() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          {!member.lastAccessAt && (
+                            <Badge
+                              variant="outline"
+                              className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                            >
+                              Aguardando ativação
+                            </Badge>
+                          )}
                           <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
                             {member.role === 'admin' ? 'Admin' : 'Membro'}
                           </Badge>
                           {isCurrentUser ? (
                             <Badge variant="outline">Você</Badge>
-                          ) : companyRole === 'admin' ? (
+                          ) : canManageTeam ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
@@ -974,7 +997,7 @@ export default function CompanySettings() {
                             </Badge>
                           </div>
                         </div>
-                        {companyRole === 'admin' && (
+                        {canManageTeam && (
                           <div className="flex gap-2">
                             <Button
                               variant="outline"

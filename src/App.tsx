@@ -26,6 +26,7 @@ import ForCompanies from "./pages/ForCompanies";
 import ForCandidates from "./pages/ForCandidates";
 import CorporateTests from "./pages/CorporateTests";
 import AceitarConvite from "./pages/AceitarConvite";
+import RedefinirSenha from "./pages/RedefinirSenha";
 import CollaboratorTestSession from "./pages/CollaboratorTestSession";
 import AtivarConta from "./pages/AtivarConta";
 import NotFound from "./pages/NotFound";
@@ -254,6 +255,7 @@ const App = () => (
 
             {/* Team invite acceptance (public — no wrappers) */}
             <Route path="/aceitar-convite" element={<AceitarConvite />} />
+            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
 
             {/* PRD-048: Magic Link Route (public) */}
             <Route path="/t/:token" element={<MagicLinkLanding />} />
