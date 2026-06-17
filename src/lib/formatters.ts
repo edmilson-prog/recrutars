@@ -81,3 +81,21 @@ export function formatDateTimeBR(date: string | Date): string {
   const d = parseDate(date);
   return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
+
+/**
+ * Formata telefone brasileiro: (XX) XXXXX-XXXX (celular) ou (XX) XXXX-XXXX (fixo).
+ * Aceita entrada com ou sem máscara; ignora não-dígitos e limita a 11 dígitos.
+ */
+export function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 10) {
+    // Fixo: (XX) XXXX-XXXX
+    return digits
+      .replace(/(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{4})(\d)/, '$1-$2');
+  }
+  // Celular: (XX) XXXXX-XXXX
+  return digits
+    .replace(/(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2');
+}
