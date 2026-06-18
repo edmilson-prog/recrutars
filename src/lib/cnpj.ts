@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 
 // ── Types ──
 
@@ -126,19 +127,31 @@ export async function lookupCNPJ(cnpj: string): Promise<CnpjLookupResult> {
     });
 
     if (error) {
+      // The Edge Function signals business errors (not_found, cnpj_in_use,
+      // invalid_format, api_unavailable) via non-2xx HTTP status. supabase-js
+      // surfaces those as FunctionsHttpError carrying the original Response in
+      // `context`, leaving `data` null — so the specific code/message must be
+      // recovered from the response body here, otherwise every error collapses
+      // into a generic "tente novamente" message.
+      if (error instanceof FunctionsHttpError) {
+        try {
+          const body = await error.context.json();
+          if (body?.error) {
+            return {
+              success: false,
+              error: body.error as CnpjLookupError['error'],
+              message: body.message || 'Erro ao consultar o CNPJ. Tente novamente.',
+            };
+          }
+        } catch {
+          // Body was not JSON — fall through to the generic message below
+        }
+      }
+
       return {
         success: false,
         error: 'api_unavailable',
         message: 'Erro ao consultar o CNPJ. Tente novamente.',
-      };
-    }
-
-    // Edge Function returns error in body
-    if (data?.error) {
-      return {
-        success: false,
-        error: data.error,
-        message: data.message || 'Erro ao consultar o CNPJ.',
       };
     }
 
