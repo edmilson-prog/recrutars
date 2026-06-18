@@ -63,6 +63,7 @@ interface AuthContextType {
   currentCandidate: Candidate | null;
   companyRole: TeamMemberRole | null;
   companyOnboardingStep: 'profile' | 'completed' | null;
+  companyTourCompleted: boolean | null;
   loading: boolean;
   signUp: (params: SignUpParams) => Promise<{ needsEmailConfirmation: boolean }>;
   resetPassword: (email: string) => Promise<void>;
@@ -87,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentCandidate, setCurrentCandidate] = useState<Candidate | null>(null);
   const [companyRole, setCompanyRole] = useState<TeamMemberRole | null>(null);
   const [companyOnboardingStep, setCompanyOnboardingStep] = useState<'profile' | 'completed' | null>(null);
+  const [companyTourCompleted, setCompanyTourCompleted] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
   // PRD-061: Impersonation overlay state
@@ -104,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCurrentCandidate(null);
       setCompanyRole(null);
       setCompanyOnboardingStep(null);
+      setCompanyTourCompleted(null);
       setLoading(false);
       return;
     }
@@ -123,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCurrentCandidate(null);
         setCompanyRole(null);
         setCompanyOnboardingStep(null);
+        setCompanyTourCompleted(null);
         setLoading(false);
         return;
       }
@@ -148,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCurrentCandidate(candidateData ? candidateRowToCandidate(candidateData) : null);
         setCurrentCompany(null);
         setCompanyOnboardingStep(null);
+        setCompanyTourCompleted(null);
       } else if (userProfile.type === 'company') {
         // Try as owner first
         let { data: companyData } = await supabase
@@ -158,18 +163,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         let role: TeamMemberRole = 'admin';
         let step: 'profile' | 'completed' | null = null;
+        let tourCompleted: boolean | null = null;
 
         if (!companyData) {
           // Not an owner — check company_users (invited member)
           const { data: memberData } = await supabase
             .from('company_users')
-            .select('company_id, role, onboarding_step')
+            .select('company_id, role, onboarding_step, tour_completed_at')
             .eq('profile_id', session.user.id)
             .single();
 
           if (memberData) {
             role = memberData.role as TeamMemberRole;
             step = (memberData.onboarding_step as 'profile' | 'completed') ?? 'completed';
+            tourCompleted = memberData.tour_completed_at != null;
             const { data: memberCompanyData } = await supabase
               .from('companies')
               .select('*')
@@ -181,18 +188,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Owner — get role from company_users
           const { data: ownerRole } = await supabase
             .from('company_users')
-            .select('role, onboarding_step')
+            .select('role, onboarding_step, tour_completed_at')
             .eq('profile_id', session.user.id)
             .single();
           if (ownerRole) {
             role = ownerRole.role as TeamMemberRole;
             step = (ownerRole.onboarding_step as 'profile' | 'completed') ?? 'completed';
+            tourCompleted = ownerRole.tour_completed_at != null;
           }
         }
 
         setCurrentCompany(companyData ? companyRowToCompany(companyData) : null);
         setCompanyRole(companyData ? role : null);
         setCompanyOnboardingStep(companyData ? step : null);
+        setCompanyTourCompleted(companyData ? tourCompleted : null);
         setCurrentCandidate(null);
       } else {
         // Admin: no additional data
@@ -200,6 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCurrentCandidate(null);
         setCompanyRole(null);
         setCompanyOnboardingStep(null);
+        setCompanyTourCompleted(null);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -208,6 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCurrentCandidate(null);
       setCompanyRole(null);
       setCompanyOnboardingStep(null);
+      setCompanyTourCompleted(null);
     } finally {
       setLoading(false);
     }
@@ -239,17 +250,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let role: TeamMemberRole = 'admin';
     let step: 'profile' | 'completed' | null = null;
+    let tourCompleted: boolean | null = null;
 
     if (!companyData) {
       const { data: memberData } = await supabase
         .from('company_users')
-        .select('company_id, role, onboarding_step')
+        .select('company_id, role, onboarding_step, tour_completed_at')
         .eq('profile_id', user.id)
         .single();
 
       if (memberData) {
         role = memberData.role as TeamMemberRole;
         step = (memberData.onboarding_step as 'profile' | 'completed') ?? 'completed';
+        tourCompleted = memberData.tour_completed_at != null;
         const { data: memberCompanyData } = await supabase
           .from('companies')
           .select('*')
@@ -260,18 +273,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       const { data: ownerRole } = await supabase
         .from('company_users')
-        .select('role, onboarding_step')
+        .select('role, onboarding_step, tour_completed_at')
         .eq('profile_id', user.id)
         .single();
       if (ownerRole) {
         role = ownerRole.role as TeamMemberRole;
         step = (ownerRole.onboarding_step as 'profile' | 'completed') ?? 'completed';
+        tourCompleted = ownerRole.tour_completed_at != null;
       }
     }
 
     setCurrentCompany(companyData ? companyRowToCompany(companyData) : null);
     setCompanyRole(companyData ? role : null);
     setCompanyOnboardingStep(companyData ? step : null);
+    setCompanyTourCompleted(companyData ? tourCompleted : null);
   }, [user]);
 
   // ── PRD-061: Impersonation Overlay ──
@@ -481,6 +496,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         currentCandidate: isImpersonationActive ? impersonatingCandidate : currentCandidate,
         companyRole: isImpersonationActive ? impersonatingCompanyRole : companyRole,
         companyOnboardingStep: isImpersonationActive ? null : companyOnboardingStep,
+        companyTourCompleted: isImpersonationActive ? null : companyTourCompleted,
         loading,
         signUp,
         resetPassword,
