@@ -62,6 +62,7 @@ interface AuthContextType {
   currentCompany: Company | null;
   currentCandidate: Candidate | null;
   companyRole: TeamMemberRole | null;
+  companyOnboardingStep: 'profile' | 'completed' | null;
   loading: boolean;
   signUp: (params: SignUpParams) => Promise<{ needsEmailConfirmation: boolean }>;
   resetPassword: (email: string) => Promise<void>;
@@ -85,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
   const [currentCandidate, setCurrentCandidate] = useState<Candidate | null>(null);
   const [companyRole, setCompanyRole] = useState<TeamMemberRole | null>(null);
+  const [companyOnboardingStep, setCompanyOnboardingStep] = useState<'profile' | 'completed' | null>(null);
   const [loading, setLoading] = useState(true);
 
   // PRD-061: Impersonation overlay state
@@ -101,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCurrentCompany(null);
       setCurrentCandidate(null);
       setCompanyRole(null);
+      setCompanyOnboardingStep(null);
       setLoading(false);
       return;
     }
@@ -119,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCurrentCompany(null);
         setCurrentCandidate(null);
         setCompanyRole(null);
+        setCompanyOnboardingStep(null);
         setLoading(false);
         return;
       }
@@ -143,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setCurrentCandidate(candidateData ? candidateRowToCandidate(candidateData) : null);
         setCurrentCompany(null);
+        setCompanyOnboardingStep(null);
       } else if (userProfile.type === 'company') {
         // Try as owner first
         let { data: companyData } = await supabase
@@ -152,17 +157,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .single();
 
         let role: TeamMemberRole = 'admin';
+        let step: 'profile' | 'completed' | null = null;
 
         if (!companyData) {
           // Not an owner — check company_users (invited member)
           const { data: memberData } = await supabase
             .from('company_users')
-            .select('company_id, role')
+            .select('company_id, role, onboarding_step')
             .eq('profile_id', session.user.id)
             .single();
 
           if (memberData) {
             role = memberData.role as TeamMemberRole;
+            step = (memberData.onboarding_step as 'profile' | 'completed') ?? 'completed';
             const { data: memberCompanyData } = await supabase
               .from('companies')
               .select('*')
@@ -174,20 +181,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Owner — get role from company_users
           const { data: ownerRole } = await supabase
             .from('company_users')
-            .select('role')
+            .select('role, onboarding_step')
             .eq('profile_id', session.user.id)
             .single();
-          if (ownerRole) role = ownerRole.role as TeamMemberRole;
+          if (ownerRole) {
+            role = ownerRole.role as TeamMemberRole;
+            step = (ownerRole.onboarding_step as 'profile' | 'completed') ?? 'completed';
+          }
         }
 
         setCurrentCompany(companyData ? companyRowToCompany(companyData) : null);
         setCompanyRole(companyData ? role : null);
+        setCompanyOnboardingStep(companyData ? step : null);
         setCurrentCandidate(null);
       } else {
         // Admin: no additional data
         setCurrentCompany(null);
         setCurrentCandidate(null);
         setCompanyRole(null);
+        setCompanyOnboardingStep(null);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -195,6 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCurrentCompany(null);
       setCurrentCandidate(null);
       setCompanyRole(null);
+      setCompanyOnboardingStep(null);
     } finally {
       setLoading(false);
     }
@@ -225,16 +238,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single();
 
     let role: TeamMemberRole = 'admin';
+    let step: 'profile' | 'completed' | null = null;
 
     if (!companyData) {
       const { data: memberData } = await supabase
         .from('company_users')
-        .select('company_id, role')
+        .select('company_id, role, onboarding_step')
         .eq('profile_id', user.id)
         .single();
 
       if (memberData) {
         role = memberData.role as TeamMemberRole;
+        step = (memberData.onboarding_step as 'profile' | 'completed') ?? 'completed';
         const { data: memberCompanyData } = await supabase
           .from('companies')
           .select('*')
@@ -245,14 +260,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       const { data: ownerRole } = await supabase
         .from('company_users')
-        .select('role')
+        .select('role, onboarding_step')
         .eq('profile_id', user.id)
         .single();
-      if (ownerRole) role = ownerRole.role as TeamMemberRole;
+      if (ownerRole) {
+        role = ownerRole.role as TeamMemberRole;
+        step = (ownerRole.onboarding_step as 'profile' | 'completed') ?? 'completed';
+      }
     }
 
     setCurrentCompany(companyData ? companyRowToCompany(companyData) : null);
     setCompanyRole(companyData ? role : null);
+    setCompanyOnboardingStep(companyData ? step : null);
   }, [user]);
 
   // ── PRD-061: Impersonation Overlay ──
@@ -461,6 +480,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         currentCompany: isImpersonationActive ? impersonatingCompany : currentCompany,
         currentCandidate: isImpersonationActive ? impersonatingCandidate : currentCandidate,
         companyRole: isImpersonationActive ? impersonatingCompanyRole : companyRole,
+        companyOnboardingStep: isImpersonationActive ? null : companyOnboardingStep,
         loading,
         signUp,
         resetPassword,

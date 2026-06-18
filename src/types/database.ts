@@ -1589,6 +1589,8 @@ export type Database = {
           created_at: string
           id: string
           invited_by: string | null
+          job_title: string | null
+          onboarding_step: string
           profile_id: string
           role: string
         }
@@ -1597,6 +1599,8 @@ export type Database = {
           created_at?: string
           id?: string
           invited_by?: string | null
+          job_title?: string | null
+          onboarding_step?: string
           profile_id: string
           role?: string
         }
@@ -1605,6 +1609,8 @@ export type Database = {
           created_at?: string
           id?: string
           invited_by?: string | null
+          job_title?: string | null
+          onboarding_step?: string
           profile_id?: string
           role?: string
         }
@@ -4158,6 +4164,7 @@ export type Database = {
           id: string
           last_access_at: string | null
           name: string
+          phone: string | null
           role_id: string | null
           status: string
           type: string
@@ -4171,6 +4178,7 @@ export type Database = {
           id: string
           last_access_at?: string | null
           name: string
+          phone?: string | null
           role_id?: string | null
           status?: string
           type: string
@@ -4184,6 +4192,7 @@ export type Database = {
           id?: string
           last_access_at?: string | null
           name?: string
+          phone?: string | null
           role_id?: string | null
           status?: string
           type?: string

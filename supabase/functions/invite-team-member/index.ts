@@ -85,7 +85,7 @@ async function linkExistingMember(
   const { error: linkError } = await supabase
     .from("company_users")
     .upsert(
-      { company_id: companyId, profile_id: profile.id, role },
+      { company_id: companyId, profile_id: profile.id, role, onboarding_step: "profile" },
       { onConflict: "company_id,profile_id", ignoreDuplicates: true },
     );
 

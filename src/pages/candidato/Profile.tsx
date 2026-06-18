@@ -35,6 +35,7 @@ import { useApplicationsByCandidate } from '@/hooks/useApplicationsQuery';
 import { useProfile as useCurriculumProfile } from '@/hooks/useCurriculumsQuery';
 import { supabase } from '@/lib/supabase';
 import { maskCPFInput, stripCPF, isValidCPF, checkCPFExists } from '@/lib/cpf';
+import { formatPhone } from '@/lib/formatters';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { profileVisibilityOptions, resumeVisibilityOptions } from '@/data/settingsConfig';
@@ -115,21 +116,6 @@ function formatCPF(value: string): string {
     .replace(/(\d{3})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-}
-
-// Formata telefone: (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  if (digits.length <= 10) {
-    // Fixo: (XX) XXXX-XXXX
-    return digits
-      .replace(/(\d{2})(\d)/, '($1) $2')
-      .replace(/(\d{4})(\d)/, '$1-$2');
-  }
-  // Celular: (XX) XXXXX-XXXX
-  return digits
-    .replace(/(\d{2})(\d)/, '($1) $2')
-    .replace(/(\d{5})(\d)/, '$1-$2');
 }
 
 export default function CandidateProfile() {
