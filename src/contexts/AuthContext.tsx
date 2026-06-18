@@ -80,6 +80,71 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const IMPERSONATION_STORAGE_KEY = 'recrutars-impersonation-target';
 
+// ── Company context resolver ──
+// Resolves the company row plus the membership-derived role, onboarding step and
+// tour flag for a profile. Owners match on companies.profile_id; invited members
+// match on company_users. Shared by loadUserData and refreshCurrentCompany so the
+// company_users select lives in a single place.
+interface CompanyContext {
+  company: Company | null;
+  role: TeamMemberRole;
+  step: 'profile' | 'completed' | null;
+  tourCompleted: boolean | null;
+}
+
+async function loadCompanyContext(profileId: string): Promise<CompanyContext> {
+  // Try as owner first
+  let { data: companyData } = await supabase
+    .from('companies')
+    .select('*')
+    .eq('profile_id', profileId)
+    .single();
+
+  let role: TeamMemberRole = 'admin';
+  let step: 'profile' | 'completed' | null = null;
+  let tourCompleted: boolean | null = null;
+
+  if (!companyData) {
+    // Not an owner — check company_users (invited member)
+    const { data: memberData } = await supabase
+      .from('company_users')
+      .select('company_id, role, onboarding_step, tour_completed_at')
+      .eq('profile_id', profileId)
+      .single();
+
+    if (memberData) {
+      role = memberData.role as TeamMemberRole;
+      step = (memberData.onboarding_step as 'profile' | 'completed') ?? 'completed';
+      tourCompleted = memberData.tour_completed_at != null;
+      const { data: memberCompanyData } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', memberData.company_id)
+        .single();
+      companyData = memberCompanyData;
+    }
+  } else {
+    // Owner — get role from company_users
+    const { data: ownerRole } = await supabase
+      .from('company_users')
+      .select('role, onboarding_step, tour_completed_at')
+      .eq('profile_id', profileId)
+      .single();
+    if (ownerRole) {
+      role = ownerRole.role as TeamMemberRole;
+      step = (ownerRole.onboarding_step as 'profile' | 'completed') ?? 'completed';
+      tourCompleted = ownerRole.tour_completed_at != null;
+    }
+  }
+
+  return {
+    company: companyData ? companyRowToCompany(companyData) : null,
+    role,
+    step,
+    tourCompleted,
+  };
+}
+
 // ── Provider ──
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -151,57 +216,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setCurrentCandidate(candidateData ? candidateRowToCandidate(candidateData) : null);
         setCurrentCompany(null);
+        setCompanyRole(null);
         setCompanyOnboardingStep(null);
         setCompanyTourCompleted(null);
       } else if (userProfile.type === 'company') {
-        // Try as owner first
-        let { data: companyData } = await supabase
-          .from('companies')
-          .select('*')
-          .eq('profile_id', session.user.id)
-          .single();
-
-        let role: TeamMemberRole = 'admin';
-        let step: 'profile' | 'completed' | null = null;
-        let tourCompleted: boolean | null = null;
-
-        if (!companyData) {
-          // Not an owner — check company_users (invited member)
-          const { data: memberData } = await supabase
-            .from('company_users')
-            .select('company_id, role, onboarding_step, tour_completed_at')
-            .eq('profile_id', session.user.id)
-            .single();
-
-          if (memberData) {
-            role = memberData.role as TeamMemberRole;
-            step = (memberData.onboarding_step as 'profile' | 'completed') ?? 'completed';
-            tourCompleted = memberData.tour_completed_at != null;
-            const { data: memberCompanyData } = await supabase
-              .from('companies')
-              .select('*')
-              .eq('id', memberData.company_id)
-              .single();
-            companyData = memberCompanyData;
-          }
-        } else {
-          // Owner — get role from company_users
-          const { data: ownerRole } = await supabase
-            .from('company_users')
-            .select('role, onboarding_step, tour_completed_at')
-            .eq('profile_id', session.user.id)
-            .single();
-          if (ownerRole) {
-            role = ownerRole.role as TeamMemberRole;
-            step = (ownerRole.onboarding_step as 'profile' | 'completed') ?? 'completed';
-            tourCompleted = ownerRole.tour_completed_at != null;
-          }
-        }
-
-        setCurrentCompany(companyData ? companyRowToCompany(companyData) : null);
-        setCompanyRole(companyData ? role : null);
-        setCompanyOnboardingStep(companyData ? step : null);
-        setCompanyTourCompleted(companyData ? tourCompleted : null);
+        const { company, role, step, tourCompleted } = await loadCompanyContext(session.user.id);
+        setCurrentCompany(company);
+        setCompanyRole(company ? role : null);
+        setCompanyOnboardingStep(company ? step : null);
+        setCompanyTourCompleted(company ? tourCompleted : null);
         setCurrentCandidate(null);
       } else {
         // Admin: no additional data
@@ -241,52 +264,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshCurrentCompany = useCallback(async () => {
     if (!user || user.type !== 'company') return;
 
-    // Try as owner first
-    let { data: companyData } = await supabase
-      .from('companies')
-      .select('*')
-      .eq('profile_id', user.id)
-      .single();
-
-    let role: TeamMemberRole = 'admin';
-    let step: 'profile' | 'completed' | null = null;
-    let tourCompleted: boolean | null = null;
-
-    if (!companyData) {
-      const { data: memberData } = await supabase
-        .from('company_users')
-        .select('company_id, role, onboarding_step, tour_completed_at')
-        .eq('profile_id', user.id)
-        .single();
-
-      if (memberData) {
-        role = memberData.role as TeamMemberRole;
-        step = (memberData.onboarding_step as 'profile' | 'completed') ?? 'completed';
-        tourCompleted = memberData.tour_completed_at != null;
-        const { data: memberCompanyData } = await supabase
-          .from('companies')
-          .select('*')
-          .eq('id', memberData.company_id)
-          .single();
-        companyData = memberCompanyData;
-      }
-    } else {
-      const { data: ownerRole } = await supabase
-        .from('company_users')
-        .select('role, onboarding_step, tour_completed_at')
-        .eq('profile_id', user.id)
-        .single();
-      if (ownerRole) {
-        role = ownerRole.role as TeamMemberRole;
-        step = (ownerRole.onboarding_step as 'profile' | 'completed') ?? 'completed';
-        tourCompleted = ownerRole.tour_completed_at != null;
-      }
-    }
-
-    setCurrentCompany(companyData ? companyRowToCompany(companyData) : null);
-    setCompanyRole(companyData ? role : null);
-    setCompanyOnboardingStep(companyData ? step : null);
-    setCompanyTourCompleted(companyData ? tourCompleted : null);
+    const { company, role, step, tourCompleted } = await loadCompanyContext(user.id);
+    setCurrentCompany(company);
+    setCompanyRole(company ? role : null);
+    setCompanyOnboardingStep(company ? step : null);
+    setCompanyTourCompleted(company ? tourCompleted : null);
   }, [user]);
 
   // ── PRD-061: Impersonation Overlay ──
