@@ -4,8 +4,8 @@
  * PRD-044: Pagina "Sobre" e Tooltip de Versao
  */
 
-export const APP_VERSION = "1.66.0";
-export const APP_CODENAME = "Badge";
+export const APP_VERSION = "1.67.0";
+export const APP_CODENAME = "Consent";
 export const APP_NAME = "RecrutaRS";
 export const APP_COMPANY = "AILA - Sistemas Inteligentes";
 export const APP_COMPANY_URL = "https://ailainteligente.com";
