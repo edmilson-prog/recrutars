@@ -101,13 +101,6 @@ export interface CompanyPlan {
   features: string[];
 }
 
-export interface CompanyNotificationPreferences {
-  newApplications: boolean;
-  messages: boolean;
-  testsCompleted: boolean;
-  weeklyDigest: boolean;
-}
-
 // PRD-020: Histórico de ações administrativas
 export interface AdminAction {
   id: string;

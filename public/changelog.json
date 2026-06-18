@@ -1,12 +1,38 @@
 {
   "versions": [
     {
+      "version": "1.67.0",
+      "codename": "Consent",
+      "type": "minor",
+      "releaseDate": "2026-06-17",
+      "description": "Agora cada colaborador decide por quais canais quer ser avisado: em Configurações → Conta dá para ligar ou desligar as notificações por e-mail e por WhatsApp, e a escolha fica salva.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Preferências de notificação por canal: ligue ou desligue avisos por e-mail e por WhatsApp em Configurações → Conta."
+          ],
+          "details": {
+            "0": {
+              "description": "Na aba 'Conta' das Configurações, a seção 'Notificações' passou a ter dois controles que ficam salvos na sua conta: receber avisos por e-mail e receber avisos por WhatsApp (este desligado por padrão, ativado só com o seu consentimento). Antes esses controles não guardavam a escolha. Comunicações essenciais, como convites e segurança da conta, continuam sendo sempre enviadas.",
+              "files": [
+                "src/components/settings/NotificationPreferencesSection.tsx",
+                "src/pages/empresa/Settings.tsx"
+              ],
+              "routes": ["/empresa/configuracoes"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.66.0",
       "codename": "Badge",
       "type": "minor",
       "releaseDate": "2026-06-17",
       "description": "Colaboradores agora completam um perfil (cargo, telefone e foto) ao entrar pela primeira vez e podem editá-lo a qualquer momento na nova aba 'Meu Perfil'. A redefinição de senha por e-mail voltou a funcionar, abrindo uma tela para criar a nova senha.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",

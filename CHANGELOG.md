@@ -5,6 +5,14 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.67.0] - 2026-06-17 "Consent"
+
+### Added
+- **Preferências de notificação do colaborador (opt-in por canal)** — nova tabela `collaborator_preferences` (chaveada por `company_id + profile_id`, UNIQUE) com `email_opt_in` (default `true`) e `whatsapp_opt_in` (default `false`, consentimento explícito LGPD); migração 110 additiva e idempotente, RLS com as 4 policies usando `get_company_id(auth.uid())` (escrita só na própria linha; leitura na própria empresa para uso futuro do helper), trigger `update_updated_at` reusado, sem backfill nem alteração do `handle_new_user`. Camada de serviço espelhando o módulo `notifications` (interface + factory lazy + mapper inline; `getPreferences` retorna defaults sem criar linha via `maybeSingle`; `savePreferences` faz upsert `onConflict(company_id,profile_id)` e lança em bloqueio silencioso de RLS), hook React Query (`useCollaboratorPreferences` + `useSaveCollaboratorPreferences`), e o componente `NotificationPreferencesSection` na aba "Conta" (toggles com persistência otimista + revert, read-only em impersonação). Helper `getChannelConsent` pronto para remetentes futuros (sem consumidor hoje) (`sql/migrations/110_collaborator_preferences.sql`, `src/types/collaboratorPreferences.ts`, `src/services/collaboratorPreferences/*`, `src/hooks/useCollaboratorPreferencesQuery.ts`, `src/components/settings/NotificationPreferencesSection.tsx`, `src/pages/empresa/Settings.tsx`, `src/types/database.ts`)
+
+### Changed
+- **Aba "Conta" das Configurações** — os toggles de notificação que eram apenas estado local (nunca persistiam: `newApplications`/`messages`/`testsCompleted`/`weeklyDigest`) foram substituídos pela seção real e persistida de preferências por canal; removidos o estado morto, o handler, as opções e o tipo órfão `CompanyNotificationPreferences` (`src/pages/empresa/Settings.tsx`, `src/types/company.ts`)
+
 ## [1.66.0] - 2026-06-17 "Badge"
 
 ### Added

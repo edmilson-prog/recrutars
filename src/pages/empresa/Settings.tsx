@@ -31,13 +31,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThemeSettings } from '@/components/settings/ThemeSettings';
 import { MyProfileTab } from '@/components/settings/MyProfileTab';
+import NotificationPreferencesSection from '@/components/settings/NotificationPreferencesSection';
 import {
   Card,
   CardContent,
@@ -79,7 +79,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import type { CompanyNotificationPreferences, CompanyUser, TeamMemberRole } from '@/types/company';
+import type { CompanyUser, TeamMemberRole } from '@/types/company';
 import { usePlans, useSubscription } from '@/hooks/usePlansQuery';
 import { formatBRL } from '@/lib/formatters';
 import {
@@ -227,14 +227,6 @@ export default function CompanySettings() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<TeamMemberRole>('member');
-
-  // Account state
-  const [notifications, setNotifications] = useState<CompanyNotificationPreferences>({
-    newApplications: true,
-    messages: true,
-    testsCompleted: true,
-    weeklyDigest: false,
-  });
 
   // Modal states
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -427,12 +419,6 @@ export default function CompanySettings() {
     }
   };
 
-  // Handle notification change
-  const handleNotificationChange = (key: keyof CompanyNotificationPreferences, checked: boolean) => {
-    setNotifications(prev => ({ ...prev, [key]: checked }));
-    toast.success('Preferências salvas');
-  };
-
   // Handle change email
   const handleChangeEmail = async () => {
     if (!newEmail || !newEmail.includes('@')) {
@@ -507,14 +493,6 @@ export default function CompanySettings() {
       toast.error('Erro ao salvar perfil cultural. Tente novamente.');
     }
   };
-
-  // Notification options
-  const notificationOptions = [
-    { key: 'newApplications' as const, label: 'Novas candidaturas' },
-    { key: 'messages' as const, label: 'Mensagens de candidatos' },
-    { key: 'testsCompleted' as const, label: 'Testes realizados' },
-    { key: 'weeklyDigest' as const, label: 'Resumo semanal' },
-  ];
 
   return (
     <DashboardLayout userType="company">
@@ -1128,29 +1106,7 @@ export default function CompanySettings() {
             </Card>
 
             {/* Notificações */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="w-5 h-5" />
-                  Notificações por email
-                </CardTitle>
-                <CardDescription>Escolha quais notificações você deseja receber</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {notificationOptions.map(item => (
-                  <div key={item.key} className="flex items-center justify-between">
-                    <Label htmlFor={item.key} className="text-foreground cursor-pointer">
-                      {item.label}
-                    </Label>
-                    <Switch
-                      id={item.key}
-                      checked={notifications[item.key]}
-                      onCheckedChange={checked => handleNotificationChange(item.key, checked)}
-                    />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            <NotificationPreferencesSection />
 
             {/* Zona de Perigo */}
             <Card className="border-destructive/50">
