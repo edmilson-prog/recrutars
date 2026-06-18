@@ -57,6 +57,11 @@ export function rowToFinancialAttachment(row: Record<string, unknown>): Financia
 // ---------------------------------------------------------------------------
 
 export function rowToFinancialEntry(row: Record<string, unknown>): FinancialEntry {
+  const rawAttachments = row.attachments;
+  const attachments = Array.isArray(rawAttachments)
+    ? rawAttachments.map((a) => rowToFinancialAttachment(a as Record<string, unknown>))
+    : undefined;
+
   return {
     id: row.id as string,
     type: row.type as FinancialEntry['type'],
@@ -67,7 +72,7 @@ export function rowToFinancialEntry(row: Record<string, unknown>): FinancialEntr
     description: row.description as string,
     counterpartyName: orUndef(row.counterparty_name as string | null),
     counterpartyCompanyId: orUndef(row.counterparty_company_id as string | null),
-    amount: row.amount as number,
+    amount: Number(row.amount ?? 0),
     currency: row.currency as string,
     paymentMethod: orUndef(row.payment_method as FinancialEntry['paymentMethod'] | null),
     competenceDate: row.competence_date as string,
@@ -78,6 +83,7 @@ export function rowToFinancialEntry(row: Record<string, unknown>): FinancialEntr
     installmentNumber: orUndef(row.installment_number as number | null),
     installmentTotal: orUndef(row.installment_total as number | null),
     recurrenceId: orUndef(row.recurrence_id as string | null),
+    attachments,
     createdBy: orUndef(row.created_by as string | null),
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,

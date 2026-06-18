@@ -172,6 +172,64 @@ describe('rowToFinancialEntry', () => {
     expect(result.recurrenceId).toBeUndefined();
     expect(result.createdBy).toBeUndefined();
   });
+
+  it('maps core fields, coerces string amount and maps category_name join', () => {
+    const entry = rowToFinancialEntry({
+      id: 'e1',
+      type: 'expense',
+      status: 'pending',
+      category_id: 'c1',
+      category_name: 'Marketing',
+      description: 'Anúncios',
+      counterparty_name: 'Google',
+      counterparty_company_id: null,
+      amount: '1500.50',
+      currency: 'BRL',
+      payment_method: 'pix',
+      competence_date: '2026-06-01',
+      due_date: '2026-06-10',
+      paid_date: null,
+      notes: null,
+      installment_group_id: null,
+      installment_number: null,
+      installment_total: null,
+      recurrence_id: null,
+      created_by: 'u1',
+      created_at: '2026-06-01T00:00:00Z',
+      updated_at: '2026-06-01T00:00:00Z',
+    });
+    expect(entry.amount).toBe(1500.5);
+    expect(entry.categoryName).toBe('Marketing');
+    expect(entry.counterpartyCompanyId).toBeUndefined();
+    expect(entry.attachments).toBeUndefined();
+  });
+
+  it('maps nested attachments array when present', () => {
+    const entry = rowToFinancialEntry({
+      id: 'e2',
+      type: 'income',
+      status: 'paid',
+      description: 'Consultoria',
+      amount: 1000,
+      currency: 'BRL',
+      competence_date: '2026-06-01',
+      due_date: '2026-06-01',
+      created_at: '2026-06-01T00:00:00Z',
+      updated_at: '2026-06-01T00:00:00Z',
+      attachments: [
+        {
+          id: 'a1',
+          entry_id: 'e2',
+          storage_path: 'financial/e2/1-recibo.pdf',
+          file_name: 'recibo.pdf',
+          file_type: 'application/pdf',
+          created_at: '2026-06-01T00:00:00Z',
+        },
+      ],
+    });
+    expect(entry.attachments).toHaveLength(1);
+    expect(entry.attachments?.[0].id).toBe('a1');
+  });
 });
 
 // ---------------------------------------------------------------------------
