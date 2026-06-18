@@ -17,6 +17,11 @@ function orUndef<T>(value: T | null | undefined): T | undefined {
   return value == null ? undefined : value;
 }
 
+// Utility: coerce to number only when the value is present; return undefined otherwise.
+function numOrUndef(value: unknown): number | undefined {
+  return value == null ? undefined : Number(value);
+}
+
 // ---------------------------------------------------------------------------
 // rowToFinancialCategory
 // ---------------------------------------------------------------------------
@@ -28,7 +33,7 @@ export function rowToFinancialCategory(row: Record<string, unknown>): FinancialC
     type: row.type as FinancialCategory['type'],
     color: orUndef(row.color as string | null),
     isActive: row.is_active as boolean,
-    sortOrder: row.sort_order as number,
+    sortOrder: Number(row.sort_order ?? 0),
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -45,7 +50,7 @@ export function rowToFinancialAttachment(row: Record<string, unknown>): Financia
     storagePath: row.storage_path as string,
     fileName: row.file_name as string,
     fileType: row.file_type as string,
-    fileSize: orUndef(row.file_size as number | null),
+    fileSize: numOrUndef(row.file_size),
     kind: orUndef(row.kind as FinancialAttachment['kind'] | null),
     uploadedBy: orUndef(row.uploaded_by as string | null),
     createdAt: row.created_at as string,
@@ -102,11 +107,11 @@ export function rowToFinancialRecurrence(row: Record<string, unknown>): Financia
     categoryId: orUndef(row.category_id as string | null),
     counterpartyName: orUndef(row.counterparty_name as string | null),
     counterpartyCompanyId: orUndef(row.counterparty_company_id as string | null),
-    amount: row.amount as number,
+    amount: Number(row.amount ?? 0),
     paymentMethod: orUndef(row.payment_method as FinancialRecurrence['paymentMethod'] | null),
     frequency: row.frequency as FinancialRecurrence['frequency'],
-    interval: row.interval as number,
-    dayOfMonth: orUndef(row.day_of_month as number | null),
+    interval: Number(row.interval ?? 0),
+    dayOfMonth: numOrUndef(row.day_of_month),
     startDate: row.start_date as string,
     endDate: orUndef(row.end_date as string | null),
     nextRunDate: orUndef(row.next_run_date as string | null),
