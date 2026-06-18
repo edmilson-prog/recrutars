@@ -5,6 +5,13 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.68.0] - 2026-06-18 "Beacon"
+
+### Added
+- **Tour guiado do colaborador (spotlight no menu)** — ao acessar `/empresa` pela primeira vez, um tour auto-inicia (uma vez) e destaca cada item do menu lateral com um card explicativo (Avançar/Anterior/Pular + progresso). Persistência device-agnostic via nova coluna `company_users.tour_completed_at` (migração 111 additiva + backfill dos existentes para `now()`); `AuthContext` expõe `companyTourCompleted` (espelha `companyOnboardingStep`, `null` em impersonação). Overlay custom (sem dependência nova): spotlight via `box-shadow`, card via `createPortal`, degradação para card centralizado quando o alvo não é mensurável (sidebar recolhida/telas pequenas), listeners de `resize`/`scroll` com cleanup, `Esc` fecha. Âncoras `data-tour` nos itens de nav; provider montado só na árvore de empresa do `DashboardLayout`. Botão "Refazer tour guiado" no `Dashboard`. Concluir/pular grava o flag (idempotente). Donos isentos do gate não se aplicam — o tour vale para qualquer colaborador novo (`src/components/tour/*`, `src/data/companyTourSteps.ts`, `src/hooks/useCompanyTourQuery.ts`, `src/contexts/AuthContext.tsx`, `src/components/layout/DashboardLayout.tsx`, `src/pages/empresa/Dashboard.tsx`, `sql/migrations/111_collaborator_tour.sql`, `src/types/database.ts`)
+
+> Nota: a v1.67.0 "Consent" (preferências de notificação, Fase 3) tramita em PR paralelo; ao mesclar ambos, resolver os conflitos dos arquivos de versão mantendo apenas a maior como `isCurrent`.
+
 ## [1.66.0] - 2026-06-17 "Badge"
 
 ### Added

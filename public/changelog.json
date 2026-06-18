@@ -1,12 +1,41 @@
 {
   "versions": [
     {
+      "version": "1.68.0",
+      "codename": "Beacon",
+      "type": "minor",
+      "releaseDate": "2026-06-18",
+      "description": "Quando o colaborador entra pela primeira vez no painel da empresa, um tour guiado destaca cada área do menu para ele se localizar rapidamente. Dá para refazer o tour a qualquer momento.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Tour guiado do painel: na primeira vez, um passo a passo destaca as áreas do menu (Vagas, Banco de Talentos, Testes, Equipes, Mensagens e Configurações)."
+          ],
+          "details": {
+            "0": {
+              "description": "Ao acessar o painel da empresa pela primeira vez, um tour guiado inicia sozinho e destaca, uma de cada vez, as principais áreas do menu lateral, com uma explicação curta de cada uma. É possível avançar, voltar ou pular a qualquer momento, e o tour não aparece de novo depois de concluído. Para revê-lo quando quiser, use o botão 'Refazer tour guiado' no painel.",
+              "files": [
+                "src/components/tour/CompanyTourProvider.tsx",
+                "src/components/tour/CompanyTourOverlay.tsx",
+                "src/components/tour/TourReplayButton.tsx",
+                "src/components/layout/DashboardLayout.tsx",
+                "src/pages/empresa/Dashboard.tsx"
+              ],
+              "routes": ["/empresa"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.66.0",
       "codename": "Badge",
       "type": "minor",
       "releaseDate": "2026-06-17",
       "description": "Colaboradores agora completam um perfil (cargo, telefone e foto) ao entrar pela primeira vez e podem editá-lo a qualquer momento na nova aba 'Meu Perfil'. A redefinição de senha por e-mail voltou a funcionar, abrindo uma tela para criar a nova senha.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
