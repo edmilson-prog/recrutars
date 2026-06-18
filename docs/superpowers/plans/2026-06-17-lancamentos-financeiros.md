@@ -20,7 +20,7 @@
 - **Anexos:** bucket privado `financial-documents` + **signed URLs** (nunca `getPublicUrl`).
 - **Tokens** HSL `--fin-income`/`--fin-expense` (light+dark) no padrão `--test-*`. Cyan só para interação; status em badge (success/warning/destructive/muted). **Paleta de charts:** `#06b6d4` / `#3b82f6` / `#10b981` / `#f59e0b` / `#1e3a8a`. Roboto Mono, `tabular-nums`, `prefers-reduced-motion`.
 - **UI em PT-BR** com acentuação correta (UTF-8).
-- **Migrations a partir de 108**, salvas em `sql/migrations/` e aplicadas via MCP Supabase `apply_migration`.
+- **Migrations a partir de 112** (a `main` já tem até `111_collaborator_tour`), salvas em `sql/migrations/` e aplicadas via MCP Supabase `apply_migration`.
 - `public/changelog.json`: cada item com `details` (description/files/routes); tipos válidos (added/changed/deprecated/removed/fixed/security); `isCurrent` em exatamente uma versão.
 - **Verificação:** Vitest (TDD) para lógica pura; `npm run lint` + `npx tsc --noEmit` para TS; verificação visual no dev server (porta 3000) para UI.
 
@@ -29,6 +29,8 @@
 ## Notas de consistência (ler antes de executar)
 
 > Correções que reconciliam divergências entre fases geradas em paralelo. **Em caso de conflito, estas notas prevalecem sobre o texto das tasks.**
+
+0. **⚠️ NUMERAÇÃO DE MIGRATIONS (crítico — o plano foi escrito quando a última era 107):** a `main` já contém migrations até `111_collaborator_tour`. TODAS as migrations desta feature sobem **+4** em relação ao texto das tasks: `108→112_financial_categories`, `109→113_financial_entries`, `110→114_financial_attachments`, `111→115_financial_recurrences`, `112→116_financial_rpcs`, `113→117_financial_storage_bucket`. Use **112–117** nos nomes de arquivo e em todas as referências.
 
 1. **O helper de status efetivo (`overdue`) é ÚNICO.** Canônico: `effectiveStatus(status: EntryStatus, dueDateISO: string, todayISO?: string): EffectiveStatus` em `src/lib/finance/status.ts` (Fase 2, Task 2.2), ao lado de `todayISO()` e `daysUntil()`.
    - **Fase 1 / Task 1.3:** NÃO criar `deriveEffectiveStatus` em `financeConverters.ts`. Crie-o já como `effectiveStatus` em `src/lib/finance/status.ts` (mesma lógica e testes). Os `rowToX` de `financeConverters.ts` permanecem puros sobre a row (não computam overdue).
