@@ -5,6 +5,16 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.68.1] - 2026-06-18 "Beacon"
+
+### Fixed
+- **Tour guiado restrito ao desktop** — auto-start passou a exigir `matchMedia('(min-width: 768px)')` e o botão "Refazer tour guiado" é `hidden md:inline-flex`. A sidebar é `hidden md:flex`, então no mobile os alvos `data-tour` medem 0×0 e o tour descreveria um menu lateral inexistente (`src/components/tour/CompanyTourProvider.tsx`, `src/components/tour/TourReplayButton.tsx`, `src/components/layout/DashboardLayout.tsx`)
+- **Tour não aparece mais sobre o paywall** — `<TrialGuard>` passou a envolver `<CompanyTourProvider>`; com o trial bloqueado, o guard renderiza a página de conversão e o provider nem monta, evitando o tour por cima do bloqueio (`src/components/layout/DashboardLayout.tsx`)
+- **Overlay do tour endurecido** — spotlight re-medido em mudanças de layout via `ResizeObserver` na âncora (acompanha o recolher/expandir da sidebar, não só `resize`/`scroll`); focus trap no diálogo `aria-modal` (foco entra na abertura, `Tab`/`Shift+Tab` presos, foco restaurado ao fechar), com `aria-labelledby` no título e região `aria-live` para anunciar a troca de passo sem tirar o foco do botão; `scrollIntoView` instantâneo (não `smooth`) para medir a posição final, mantendo a transição CSS do destaque; card posicionado direita→esquerda→abaixo sem sobrepor o spotlight, com clamp pela altura **medida** do card para nunca cortar fora da tela; toast quando a conclusão não pode ser salva (`src/components/tour/CompanyTourOverlay.tsx`, `src/hooks/useCompanyTourQuery.ts`)
+
+### Changed
+- **`loadCompanyContext` extraído no AuthContext** — a resolução de empresa (busca owner-first + fallback de membro convidado + derivação de `role`/`onboarding_step`/`tour_completed_at`) virou um único helper de módulo, eliminando 4 sites de query duplicados entre `loadUserData` e `refreshCurrentCompany`; `companyRole` agora também é resetado no branch de candidato do `loadUserData`, por paridade com o branch de admin (`src/contexts/AuthContext.tsx`)
+
 ## [1.68.0] - 2026-06-18 "Beacon"
 
 ### Added

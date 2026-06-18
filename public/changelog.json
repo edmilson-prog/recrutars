@@ -1,12 +1,48 @@
 {
   "versions": [
     {
+      "version": "1.68.1",
+      "codename": "Beacon",
+      "type": "patch",
+      "releaseDate": "2026-06-18",
+      "description": "Ajustes no tour guiado: ele passa a aparecer só no computador, não atrapalha quem está com o teste encerrado, e ficou mais preciso e acessível.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Tour guiado agora aparece apenas no computador (onde fica o menu lateral que ele destaca) e não interrompe mais quem está com o período de teste encerrado.",
+            "Tour mais polido: o destaque acompanha melhor cada área ao percorrer o menu, a navegação por teclado fica contida no tour, e há um aviso caso não seja possível salvar a conclusão."
+          ],
+          "details": {
+            "0": {
+              "description": "O tour guiado se apoia no menu lateral, então passa a iniciar somente em telas de computador — no celular esse menu não aparece e o tour ficaria confuso. Ele também não surge mais por cima do aviso de período de teste encerrado: quem precisa renovar vê primeiro essa tela.",
+              "files": [
+                "src/components/tour/CompanyTourProvider.tsx",
+                "src/components/tour/TourReplayButton.tsx",
+                "src/components/layout/DashboardLayout.tsx"
+              ],
+              "routes": ["/empresa"]
+            },
+            "1": {
+              "description": "O destaque do tour acompanha melhor cada item ao avançar pelas áreas do menu, inclusive rolando até os itens mais abaixo; a navegação por teclado fica contida dentro do tour (sem escapar para a página atrás); e, caso a conclusão não consiga ser salva, um aviso explica que o tour pode reaparecer no próximo acesso.",
+              "files": [
+                "src/components/tour/CompanyTourOverlay.tsx",
+                "src/hooks/useCompanyTourQuery.ts"
+              ],
+              "routes": ["/empresa"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.68.0",
       "codename": "Beacon",
       "type": "minor",
       "releaseDate": "2026-06-18",
       "description": "Quando o colaborador entra pela primeira vez no painel da empresa, um tour guiado destaca cada área do menu para ele se localizar rapidamente. Dá para refazer o tour a qualquer momento.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
