@@ -1583,6 +1583,51 @@ export type Database = {
           },
         ]
       }
+      collaborator_preferences: {
+        Row: {
+          company_id: string
+          created_at: string
+          email_opt_in: boolean
+          id: string
+          profile_id: string
+          updated_at: string
+          whatsapp_opt_in: boolean
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          email_opt_in?: boolean
+          id?: string
+          profile_id: string
+          updated_at?: string
+          whatsapp_opt_in?: boolean
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          email_opt_in?: boolean
+          id?: string
+          profile_id?: string
+          updated_at?: string
+          whatsapp_opt_in?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborator_preferences_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_users: {
         Row: {
           company_id: string
