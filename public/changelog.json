@@ -1,12 +1,75 @@
 {
   "versions": [
     {
+      "version": "1.66.0",
+      "codename": "Badge",
+      "type": "minor",
+      "releaseDate": "2026-06-17",
+      "description": "Colaboradores agora completam um perfil (cargo, telefone e foto) ao entrar pela primeira vez e podem editá-lo a qualquer momento na nova aba 'Meu Perfil'. A redefinição de senha por e-mail voltou a funcionar, abrindo uma tela para criar a nova senha.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Perfil do colaborador: ao entrar, o colaborador informa cargo, telefone e foto antes de acessar o painel.",
+            "Nova aba 'Meu Perfil' nas Configurações para o colaborador e o dono editarem cargo, telefone e foto quando quiserem."
+          ],
+          "details": {
+            "0": {
+              "description": "Colaboradores convidados passam a preencher cargo, telefone e foto (a foto é opcional) assim que entram, deixando o perfil completo para a empresa e para a montagem de equipes. Quem já estava na plataforma sem essas informações é levado a completá-las no próximo acesso. Os donos da empresa não precisam passar por essa etapa.",
+              "files": [
+                "src/pages/empresa/OnboardingProfile.tsx",
+                "src/components/auth/CompanyOnboardingGuard.tsx",
+                "src/components/profile/AvatarCropUpload.tsx",
+                "src/contexts/AuthContext.tsx"
+              ],
+              "routes": ["/empresa/onboarding/perfil"]
+            },
+            "1": {
+              "description": "Nas Configurações, a aba 'Meu Perfil' permite atualizar cargo, telefone e foto a qualquer momento, tanto para o colaborador quanto para o dono da empresa. A foto pode ser recortada antes de enviar.",
+              "files": [
+                "src/components/settings/MyProfileTab.tsx",
+                "src/pages/empresa/Settings.tsx"
+              ],
+              "routes": ["/empresa/configuracoes"]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "A redefinição de senha por e-mail voltou a funcionar: o link agora abre uma tela para criar a nova senha.",
+            "Convidar para a equipe quem já tem conta agora vincula a pessoa corretamente, e a lista mostra quem está 'Aguardando ativação'."
+          ],
+          "details": {
+            "0": {
+              "description": "O link de 'Esqueci minha senha' enviado por e-mail levava à página inicial e não permitia trocar a senha. Agora o link abre uma tela dedicada onde a pessoa cria a nova senha e entra na plataforma. O mesmo caminho de definição de senha vale para o convite de novos colaboradores.",
+              "files": [
+                "src/pages/RedefinirSenha.tsx",
+                "src/contexts/AuthContext.tsx"
+              ],
+              "routes": ["/redefinir-senha", "/aceitar-convite"]
+            },
+            "1": {
+              "description": "Ao convidar para a equipe alguém que já possuía cadastro, o vínculo nem sempre era criado. Agora a pessoa é ligada corretamente à empresa e a lista de equipe indica quando um convite está 'Aguardando ativação', com mensagens de erro mais claras.",
+              "files": [
+                "supabase/functions/invite-team-member/index.ts",
+                "src/pages/empresa/Settings.tsx",
+                "src/hooks/useCompanyInvitesQuery.ts"
+              ],
+              "routes": ["/empresa/configuracoes"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.65.1",
       "codename": "Switchboard",
       "type": "patch",
       "releaseDate": "2026-06-16",
       "description": "Correções no perfil profissional do candidato: os itens do currículo (cursos, experiências, formação e habilidades) não se perdem mais ao salvar, e o perfil volta a carregar com rapidez mesmo com certificados anexados. Os cursos ganharam um botão para ver e baixar o certificado, disponível para candidato, empresa e admin.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

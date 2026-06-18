@@ -5,6 +5,19 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.66.0] - 2026-06-17 "Badge"
+
+### Added
+- **Onboarding de perfil do colaborador (gate)** — colaboradores de empresa preenchem cargo + telefone (obrigatórios) e foto (opcional) num passo único antes de acessar o painel. Novo `CompanyOnboardingGuard` (espelha o `OnboardingGuard` de candidatos) aninhado em todas as rotas `/empresa/*`, com a rota de onboarding fora do guard para evitar loop; `AuthContext` expõe `companyOnboardingStep` (lido de `company_users.onboarding_step`, `null` em impersonação). Migração 109 adiciona `company_users.job_title`, `company_users.onboarding_step` (default `completed`, CHECK `profile`/`completed`) e `profiles.phone`; backfill marca não-donos como `profile`; trigger `handle_new_user()` seta `profile` para o membro convidado novo (toda a lógica de CPF/candidato/CNPJ/trial preservada). Edge Function `invite-team-member` v5 faz o vínculo pré-existente nascer em `profile`. Donos isentos (`src/pages/empresa/OnboardingProfile.tsx`, `src/components/auth/CompanyOnboardingGuard.tsx`, `src/components/profile/AvatarCropUpload.tsx`, `sql/migrations/109_collaborator_profile_onboarding.sql`, `supabase/functions/invite-team-member/index.ts`)
+- **Aba "Meu Perfil" nas Configurações da empresa** — colaborador e dono editam cargo, telefone e foto a qualquer momento (sem alterar `onboarding_step`); reusa `AvatarCropUpload` e `formatPhone` (`src/components/settings/MyProfileTab.tsx`, `src/pages/empresa/Settings.tsx`)
+
+### Changed
+- **`formatPhone` extraído para módulo compartilhado** — máscara de telefone BR centralizada em `src/lib/formatters.ts`, removida a cópia local de `candidato/Profile.tsx` (DRY); novo componente reutilizável `AvatarCropUpload` (avatar + crop redondo + upload ao bucket `avatars`) consumido pelo onboarding e pela aba "Meu Perfil" (`src/lib/formatters.ts`, `src/components/profile/AvatarCropUpload.tsx`, `src/pages/candidato/Profile.tsx`)
+
+### Fixed
+- **Redefinição de senha por e-mail (Fase 1)** — o link de recovery caía na home (rota sem formulário + destino fora da allowlist do Supabase). Nova rota pública `/redefinir-senha` (`src/pages/RedefinirSenha.tsx`) captura a sessão de recuperação (flow implícito, `detectSessionInUrl`) e mostra o formulário de nova senha; `AuthContext.resetPassword` aponta para `/redefinir-senha` (`src/contexts/AuthContext.tsx`)
+- **Vínculo de colaborador pré-existente no convite (Fase 1)** — convidar quem já tinha conta nem sempre criava o registro em `company_users`. Edge Function `invite-team-member` v4 vincula o perfil pré-existente, bloqueia candidato/dono e trata 403 em impersonação; migração 108 (RLS `profiles` same-company), badge "Aguardando ativação" e tratamento de erro real na UI (`supabase/functions/invite-team-member/index.ts`, `sql/migrations/108_profiles_select_company_team.sql`, `src/pages/empresa/Settings.tsx`, `src/hooks/useCompanyInvitesQuery.ts`)
+
 ## [1.65.1] - 2026-06-16 "Switchboard"
 
 ### Fixed
