@@ -23,6 +23,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { SuggestedCandidatesWidget } from '@/components/empresa/SuggestedCandidatesWidget';
 import { formatRelativeDate } from '@/lib/formatters';
+import TourReplayButton from '@/components/tour/TourReplayButton';
 
 /**
  * Returns greeting based on current hour
@@ -200,6 +201,7 @@ export default function CompanyDashboard() {
             </h1>
             <p className="text-muted-foreground">Acompanhe seus processos seletivos</p>
           </div>
+          <TourReplayButton />
         </div>
 
         {/* Loading State */}

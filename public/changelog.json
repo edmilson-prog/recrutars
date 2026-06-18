@@ -1,12 +1,83 @@
 {
   "versions": [
     {
+      "version": "1.68.1",
+      "codename": "Beacon",
+      "type": "patch",
+      "releaseDate": "2026-06-18",
+      "description": "Ajustes no tour guiado: ele passa a aparecer só no computador, não atrapalha quem está com o teste encerrado, e ficou mais preciso e acessível.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Tour guiado agora aparece apenas no computador (onde fica o menu lateral que ele destaca) e não interrompe mais quem está com o período de teste encerrado.",
+            "Tour mais polido: o destaque acompanha melhor cada área ao percorrer o menu, a navegação por teclado fica contida no tour, e há um aviso caso não seja possível salvar a conclusão."
+          ],
+          "details": {
+            "0": {
+              "description": "O tour guiado se apoia no menu lateral, então passa a iniciar somente em telas de computador — no celular esse menu não aparece e o tour ficaria confuso. Ele também não surge mais por cima do aviso de período de teste encerrado: quem precisa renovar vê primeiro essa tela.",
+              "files": [
+                "src/components/tour/CompanyTourProvider.tsx",
+                "src/components/tour/TourReplayButton.tsx",
+                "src/components/layout/DashboardLayout.tsx"
+              ],
+              "routes": [
+                "/empresa"
+              ]
+            },
+            "1": {
+              "description": "O destaque do tour acompanha melhor cada item ao avançar pelas áreas do menu, inclusive rolando até os itens mais abaixo; a navegação por teclado fica contida dentro do tour (sem escapar para a página atrás); e, caso a conclusão não consiga ser salva, um aviso explica que o tour pode reaparecer no próximo acesso.",
+              "files": [
+                "src/components/tour/CompanyTourOverlay.tsx",
+                "src/hooks/useCompanyTourQuery.ts"
+              ],
+              "routes": [
+                "/empresa"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "version": "1.68.0",
+      "codename": "Beacon",
+      "type": "minor",
+      "releaseDate": "2026-06-18",
+      "description": "Quando o colaborador entra pela primeira vez no painel da empresa, um tour guiado destaca cada área do menu para ele se localizar rapidamente. Dá para refazer o tour a qualquer momento.",
+      "isCurrent": false,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Tour guiado do painel: na primeira vez, um passo a passo destaca as áreas do menu (Vagas, Banco de Talentos, Testes, Equipes, Mensagens e Configurações)."
+          ],
+          "details": {
+            "0": {
+              "description": "Ao acessar o painel da empresa pela primeira vez, um tour guiado inicia sozinho e destaca, uma de cada vez, as principais áreas do menu lateral, com uma explicação curta de cada uma. É possível avançar, voltar ou pular a qualquer momento, e o tour não aparece de novo depois de concluído. Para revê-lo quando quiser, use o botão 'Refazer tour guiado' no painel.",
+              "files": [
+                "src/components/tour/CompanyTourProvider.tsx",
+                "src/components/tour/CompanyTourOverlay.tsx",
+                "src/components/tour/TourReplayButton.tsx",
+                "src/components/layout/DashboardLayout.tsx",
+                "src/pages/empresa/Dashboard.tsx"
+              ],
+              "routes": [
+                "/empresa"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.67.0",
       "codename": "Consent",
       "type": "minor",
       "releaseDate": "2026-06-17",
       "description": "Agora cada colaborador decide por quais canais quer ser avisado: em Configurações → Conta dá para ligar ou desligar as notificações por e-mail e por WhatsApp, e a escolha fica salva.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
@@ -20,7 +91,9 @@
                 "src/components/settings/NotificationPreferencesSection.tsx",
                 "src/pages/empresa/Settings.tsx"
               ],
-              "routes": ["/empresa/configuracoes"]
+              "routes": [
+                "/empresa/configuracoes"
+              ]
             }
           }
         }
@@ -49,7 +122,9 @@
                 "src/components/profile/AvatarCropUpload.tsx",
                 "src/contexts/AuthContext.tsx"
               ],
-              "routes": ["/empresa/onboarding/perfil"]
+              "routes": [
+                "/empresa/onboarding/perfil"
+              ]
             },
             "1": {
               "description": "Nas Configurações, a aba 'Meu Perfil' permite atualizar cargo, telefone e foto a qualquer momento, tanto para o colaborador quanto para o dono da empresa. A foto pode ser recortada antes de enviar.",
@@ -57,7 +132,9 @@
                 "src/components/settings/MyProfileTab.tsx",
                 "src/pages/empresa/Settings.tsx"
               ],
-              "routes": ["/empresa/configuracoes"]
+              "routes": [
+                "/empresa/configuracoes"
+              ]
             }
           }
         },
@@ -74,7 +151,10 @@
                 "src/pages/RedefinirSenha.tsx",
                 "src/contexts/AuthContext.tsx"
               ],
-              "routes": ["/redefinir-senha", "/aceitar-convite"]
+              "routes": [
+                "/redefinir-senha",
+                "/aceitar-convite"
+              ]
             },
             "1": {
               "description": "Ao convidar para a equipe alguém que já possuía cadastro, o vínculo nem sempre era criado. Agora a pessoa é ligada corretamente à empresa e a lista de equipe indica quando um convite está 'Aguardando ativação', com mensagens de erro mais claras.",
@@ -83,7 +163,9 @@
                 "src/pages/empresa/Settings.tsx",
                 "src/hooks/useCompanyInvitesQuery.ts"
               ],
-              "routes": ["/empresa/configuracoes"]
+              "routes": [
+                "/empresa/configuracoes"
+              ]
             }
           }
         }
@@ -111,7 +193,9 @@
                 "sql/migrations/105_curriculum_children_timestamps.sql",
                 "src/services/curriculums/curriculumsService.supabase.ts"
               ],
-              "routes": ["/candidato/perfil"]
+              "routes": [
+                "/candidato/perfil"
+              ]
             },
             "1": {
               "description": "Certificados anexados deixavam a abertura do perfil lenta e, às vezes, resultavam em erro de carregamento. Com o novo armazenamento otimizado dos certificados, a tela volta a carregar rapidamente para o candidato, a empresa e o admin.",
@@ -119,7 +203,11 @@
                 "sql/migrations/107_candidate_documents_image_mimes.sql",
                 "supabase/functions/migrate-certificates-to-storage/index.ts"
               ],
-              "routes": ["/candidato/perfil", "/empresa/candidatos", "/admin/candidatos"]
+              "routes": [
+                "/candidato/perfil",
+                "/empresa/candidatos",
+                "/admin/candidatos"
+              ]
             }
           }
         },
@@ -138,7 +226,11 @@
                 "src/pages/admin/CandidateDetail.tsx",
                 "src/components/candidato/CurriculumPreview.tsx"
               ],
-              "routes": ["/candidato/perfil", "/empresa/candidatos", "/admin/candidatos"]
+              "routes": [
+                "/candidato/perfil",
+                "/empresa/candidatos",
+                "/admin/candidatos"
+              ]
             }
           }
         },
@@ -155,7 +247,9 @@
                 "src/services/curriculums/curriculumsService.supabase.ts",
                 "src/types/database.ts"
               ],
-              "routes": ["/candidato/perfil"]
+              "routes": [
+                "/candidato/perfil"
+              ]
             }
           }
         }
@@ -185,7 +279,10 @@
                 "src/pages/admin/PackagesManagement.tsx",
                 "src/pages/admin/PlansManagement.tsx"
               ],
-              "routes": ["/admin/pacotes", "/admin/planos"]
+              "routes": [
+                "/admin/pacotes",
+                "/admin/planos"
+              ]
             },
             "1": {
               "description": "O item de menu e o título 'Pacotes de Testes' passaram a 'Pacotes de Créditos · Gauge-Pro', deixando claro que se trata de créditos avulsos de testes comportamentais, e não do ambiente de teste do Stripe.",
@@ -193,7 +290,9 @@
                 "src/components/layout/DashboardLayout.tsx",
                 "src/pages/admin/PackagesManagement.tsx"
               ],
-              "routes": ["/admin/pacotes"]
+              "routes": [
+                "/admin/pacotes"
+              ]
             }
           }
         },
@@ -210,7 +309,10 @@
                 "src/components/admin/plans/PlanCard.tsx",
                 "src/components/admin/packages/PackageCard.tsx"
               ],
-              "routes": ["/admin/planos", "/admin/pacotes"]
+              "routes": [
+                "/admin/planos",
+                "/admin/pacotes"
+              ]
             }
           }
         },
@@ -225,7 +327,9 @@
               "files": [
                 "src/components/admin/plans/PlanCard.tsx"
               ],
-              "routes": ["/admin/planos"]
+              "routes": [
+                "/admin/planos"
+              ]
             }
           }
         }
@@ -255,7 +359,9 @@
                 "src/services/plans/plansService.supabase.ts",
                 "src/hooks/usePlansQuery.ts"
               ],
-              "routes": ["/admin/empresas/:id"]
+              "routes": [
+                "/admin/empresas/:id"
+              ]
             },
             "1": {
               "description": "Empresas que acabaram de se cadastrar veem uma tela acolhedora confirmando que a conta foi criada com sucesso, mostrando os três passos (conta criada, aguardando liberação, acesso completo) e oferecendo a opção de assinar um plano pago para começar imediatamente, sem esperar a liberação. As configurações da conta continuam acessíveis.",
@@ -264,12 +370,18 @@
                 "src/components/trial/TrialGuard.tsx",
                 "src/hooks/useTrialStatus.ts"
               ],
-              "routes": ["/empresa"]
+              "routes": [
+                "/empresa"
+              ]
             },
             "2": {
               "description": "Quando o admin libera ou estende o período de avaliação, a empresa recebe automaticamente uma notificação no sino do app informando a nova data de término (ex.: 'Sua avaliação foi liberada até 11/07/2026').",
-              "files": ["src/services/plans/plansService.supabase.ts"],
-              "routes": ["/empresa"]
+              "files": [
+                "src/services/plans/plansService.supabase.ts"
+              ],
+              "routes": [
+                "/empresa"
+              ]
             }
           }
         },
@@ -285,7 +397,10 @@
                 "sql/migrations/103_trial_release_control.sql",
                 "src/components/layout/DashboardLayout.tsx"
               ],
-              "routes": ["/cadastro", "/empresa"]
+              "routes": [
+                "/cadastro",
+                "/empresa"
+              ]
             }
           }
         }
@@ -314,12 +429,20 @@
                 "src/pages/candidato/CheckoutSuccess.tsx",
                 "src/pages/candidato/CheckoutCancel.tsx"
               ],
-              "routes": ["/candidato/conta", "/candidato/checkout/sucesso", "/candidato/checkout/cancelado"]
+              "routes": [
+                "/candidato/conta",
+                "/candidato/checkout/sucesso",
+                "/candidato/checkout/cancelado"
+              ]
             },
             "1": {
               "description": "Foi adicionado o item 'Meu Plano' na barra lateral do candidato, no grupo 'Geral'. Antes, os detalhes da assinatura ficavam escondidos dentro de Minha Conta e eram difíceis de encontrar.",
-              "files": ["src/components/layout/DashboardLayout.tsx"],
-              "routes": ["/candidato/meu-plano"]
+              "files": [
+                "src/components/layout/DashboardLayout.tsx"
+              ],
+              "routes": [
+                "/candidato/meu-plano"
+              ]
             },
             "2": {
               "description": "Ao se candidatar a uma vaga, a janela para destacar experiências, formação, habilidades e cursos podia ultrapassar o tamanho da tela quando havia muitos itens. Agora você escolhe entre três modos de visualização (Abas, Lista ou Híbrido), o conteúdo rola dentro da janela e os botões 'Pular' e 'Confirmar' ficam sempre visíveis. A preferência de visualização é lembrada.",
@@ -327,7 +450,9 @@
                 "src/components/candidato/HighlightsSelector.tsx",
                 "src/components/candidato/ApplicationModal.tsx"
               ],
-              "routes": ["/candidato/vagas/:id"]
+              "routes": [
+                "/candidato/vagas/:id"
+              ]
             }
           }
         },
@@ -340,13 +465,22 @@
           "details": {
             "0": {
               "description": "Na tela 'Meu Plano', o botão 'Fazer Upgrade' redirecionava para a página de planos pública do site, fora da sua conta. Agora ele abre diretamente a comparação de planos dentro de Minha Conta, onde a assinatura é feita.",
-              "files": ["src/pages/candidato/MyPlan.tsx"],
-              "routes": ["/candidato/meu-plano", "/candidato/conta"]
+              "files": [
+                "src/pages/candidato/MyPlan.tsx"
+              ],
+              "routes": [
+                "/candidato/meu-plano",
+                "/candidato/conta"
+              ]
             },
             "1": {
               "description": "Na janela de destaque de itens do perfil, o nível das habilidades aparecia em inglês (ex.: 'intermediate') e as datas em formato técnico (ex.: '2023-06'). Agora o nível aparece em português (ex.: 'Intermediário') e a data no formato mês/ano (ex.: '06/2023').",
-              "files": ["src/components/candidato/HighlightsSelector.tsx"],
-              "routes": ["/candidato/vagas/:id"]
+              "files": [
+                "src/components/candidato/HighlightsSelector.tsx"
+              ],
+              "routes": [
+                "/candidato/vagas/:id"
+              ]
             }
           }
         }
@@ -374,14 +508,18 @@
                 "sql/migrations/101_fix_team_dev_delete_policies.sql",
                 "sql/migrations/102_evolution_annotations_update_policy.sql"
               ],
-              "routes": ["/empresa/equipes/desenvolvimento/:id"]
+              "routes": [
+                "/empresa/equipes/desenvolvimento/:id"
+              ]
             },
             "1": {
               "description": "A janela de cadastro de objetivo passou a ter uma descrição acessível para leitores de tela, eliminando um aviso de acessibilidade que aparecia ao abri-la.",
               "files": [
                 "src/components/team-management/ObjectiveForm.tsx"
               ],
-              "routes": ["/empresa/equipes/desenvolvimento/:id"]
+              "routes": [
+                "/empresa/equipes/desenvolvimento/:id"
+              ]
             }
           }
         }
@@ -409,7 +547,9 @@
                 "src/components/empresa/pdf/sections/MatchScoreSection.tsx",
                 "src/components/empresa/pdf/types.ts"
               ],
-              "routes": ["/empresa/candidatos/:id"]
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
             }
           }
         }
@@ -436,7 +576,10 @@
                 "src/components/aiAnalysis/index.ts",
                 "src/pages/candidato/GaugeProResult.tsx"
               ],
-              "routes": ["/candidato/gauge-pro/resultado", "/candidato/meu-plano"]
+              "routes": [
+                "/candidato/gauge-pro/resultado",
+                "/candidato/meu-plano"
+              ]
             }
           }
         },
@@ -455,14 +598,18 @@
                 "src/services/plans/plansService.supabase.ts",
                 "src/hooks/usePlansQuery.ts"
               ],
-              "routes": ["/admin/empresas/:id"]
+              "routes": [
+                "/admin/empresas/:id"
+              ]
             },
             "1": {
               "description": "Foram adicionadas as permissões de banco que faltavam para o administrador atualizar os dados da empresa e registrar a troca no histórico de assinatura — antes essas ações eram bloqueadas silenciosamente.",
               "files": [
                 "sql/migrations/100_admin_company_update_and_subscription_history_insert.sql"
               ],
-              "routes": ["/admin/empresas/:id"]
+              "routes": [
+                "/admin/empresas/:id"
+              ]
             }
           }
         }
@@ -492,12 +639,18 @@
                 "src/components/empresa/pdf/templates/PDFTemplateBaseEmpresa.tsx",
                 "src/components/empresa/pdf/templates/PDFTemplateDossie.tsx"
               ],
-              "routes": ["/empresa/candidatos/:id"]
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
             },
             "1": {
               "description": "A seção Análise Comportamental (Gauge-Pro) do PDF passa a exibir os nomes amigáveis das cinco dimensões em vez das siglas internas, deixando o documento mais legível para leitores externos ao time técnico.",
-              "files": ["src/pages/empresa/CandidateProfile.tsx"],
-              "routes": ["/empresa/candidatos/:id"]
+              "files": [
+                "src/pages/empresa/CandidateProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
             }
           }
         }
@@ -531,7 +684,9 @@
                 "src/components/empresa/notes/NoteEditor.tsx",
                 "src/components/empresa/notes/NoteListItem.tsx"
               ],
-              "routes": ["/empresa/candidatos/:id"]
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
             },
             "1": {
               "description": "Migration 099 estende application_notes com colunas updated_at, is_deleted, deleted_at, deleted_by + tabela application_notes_history espelhada + triggers BEFORE UPDATE (touch updated_at) e AFTER INSERT/UPDATE (audit log) + policy UPDATE liberal por empresa. Modal NoteHistoryModal exibe timeline com badges por ação e diff lado-a-lado em edições.",
@@ -543,7 +698,9 @@
                 "src/components/empresa/notes/NoteHistoryModal.tsx",
                 "src/components/empresa/notes/ApplicationNotesCard.tsx"
               ],
-              "routes": ["/empresa/candidatos/:id"]
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
             },
             "2": {
               "description": "Módulo PDF empresa com tipos (PDFEmpresaData/PDFEmpresaSectionConfig), estilos compartilhados e 13 sections (Header, Footer, CoverPage, ExecutiveSummary, MatchScore, GaugeProAnalysis, InternalNotes, ApplicationHistory, PracticalAnalysis, Interviews, Highlights, FavoriteEvaluation, Languages, Availability, ActivityLog) + 8 sections de currículo. Modal ExportCandidateProfileModal: 4 templates × 19 checkboxes; seções sem dados ficam desabilitadas com tooltip explicativo. Filename Dossie_NomeCandidato_DDMMAAAA.pdf.",
@@ -555,7 +712,9 @@
                 "src/components/empresa/pdf/templates/PDFTemplateDossie.tsx",
                 "src/components/empresa/pdf/templates/PDFTemplateBaseEmpresa.tsx"
               ],
-              "routes": ["/empresa/candidatos/:id"]
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
             }
           }
         },
@@ -567,8 +726,12 @@
           "details": {
             "0": {
               "description": "Handler substituído por integração com o modal de Dossiê funcional. Suporta exportação com ou sem candidatura selecionada (seções dependentes ficam desabilitadas com tooltip explicativo). Todos os hooks de dados são pré-carregados via React Query e passados ao modal montado por useMemo.",
-              "files": ["src/pages/empresa/CandidateProfile.tsx"],
-              "routes": ["/empresa/candidatos/:id"]
+              "files": [
+                "src/pages/empresa/CandidateProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
             }
           }
         },
@@ -580,8 +743,12 @@
           "details": {
             "0": {
               "description": "Cada opção rola programaticamente até o card respectivo (via useImperativeHandle nos cards) e abre o editor inline. Item 'Sobre esta candidatura' fica desabilitado quando não há candidatura selecionada no contexto.",
-              "files": ["src/pages/empresa/CandidateProfile.tsx"],
-              "routes": ["/empresa/candidatos/:id"]
+              "files": [
+                "src/pages/empresa/CandidateProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
             }
           }
         }
@@ -612,7 +779,10 @@
                 "src/services/aiMatch/aiMatchPromptBuilder.ts",
                 "src/hooks/useAIMatchQuery.ts"
               ],
-              "routes": ["/admin/configuracoes", "/empresa/candidatos/:id"]
+              "routes": [
+                "/admin/configuracoes",
+                "/empresa/candidatos/:id"
+              ]
             },
             "1": {
               "description": "Quatro componentes novos em src/components/admin/prompts: PromptEditor (wrapper com modos visualização/edição), PromptEditConfirmDialog (dupla confirmação + caixa CONFIRMAR), PromptHistorySheet (timeline de revisões) e PromptDiffView (diff inline linha-a-linha via LCS sem libs externas). ConfigContent passa a renderizar PromptEditor para os 4 prompts de IA (system, prática, técnica, AI Match) com salvamento atômico por campo via saveField em useSettings.",
@@ -628,7 +798,9 @@
                 "src/pages/admin/Settings.tsx",
                 "src/pages/candidato/Settings.tsx"
               ],
-              "routes": ["/admin/configuracoes"]
+              "routes": [
+                "/admin/configuracoes"
+              ]
             },
             "2": {
               "description": "useSettingsHistoryByField filtra a tabela existente settings_history por (panel, category_key, subcategory_key, field_key). PromptHistorySheet lista cronologicamente cada edição com diff colapsável e botão \"Restaurar versão anterior\" — a restauração apenas pré-popula o editor; o salvamento ainda exige novo fluxo de dupla confirmação.",
@@ -636,7 +808,9 @@
                 "src/hooks/useSettingsHistoryByField.ts",
                 "src/components/admin/prompts/PromptHistorySheet.tsx"
               ],
-              "routes": ["/admin/configuracoes"]
+              "routes": [
+                "/admin/configuracoes"
+              ]
             }
           }
         }
@@ -668,7 +842,9 @@
                 "src/services/aiMatch/aiMatchPromptBuilder.ts",
                 "src/pages/empresa/CandidateProfile.tsx"
               ],
-              "routes": ["/empresa/candidatos/:id"]
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
             },
             "1": {
               "description": "Tabela ai_match_usage com 4 RPCs SECURITY DEFINER (consume_ai_match_credit, save_ai_match_analysis, refund_ai_match_credit, get_ai_match_quota_status). Quota lida de plan_capability_assignments com chave ai_match_monthly_quota (fallback 3 quando empresa não tem subscription ativa). Advisory lock por empresa previne overshoot em chamadas concorrentes. -1 indica ilimitado.",
@@ -678,7 +854,10 @@
                 "src/components/aiMatch/AIMatchQuotaBadge.tsx",
                 "src/services/aiMatch/aiMatchService.supabase.ts"
               ],
-              "routes": ["/empresa/candidatos/:id", "/empresa/meu-plano"]
+              "routes": [
+                "/empresa/candidatos/:id",
+                "/empresa/meu-plano"
+              ]
             },
             "2": {
               "description": "Tabela ai_match_analyses com unique index por (company_id, candidate_id, job_id) garante 1 análise ativa por par. SELECT direto via RLS (empresa só vê suas próprias). Regeneração faz DELETE+INSERT atômico via RPC save_ai_match_analysis. Em caso de falha na chamada Claude, refund_ai_match_credit devolve a cota automaticamente.",
@@ -687,7 +866,9 @@
                 "src/components/aiMatch/RegenerateConfirmDialog.tsx",
                 "src/hooks/useAIMatchQuery.ts"
               ],
-              "routes": ["/empresa/candidatos/:id"]
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
             }
           }
         }

@@ -57,12 +57,14 @@ import { CSATPrompt } from '@/components/helpdesk/CSATPrompt';
 import { useRBAC } from '@/contexts/RBACContext';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import { useUser } from '@/hooks/useUsersQuery';
+import { CompanyTourProvider } from '@/components/tour/CompanyTourProvider';
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   countKey?: 'savedJobs' | 'interviews' | 'savedCandidates' | 'companyInterviews' | 'recommendations';
+  tourId?: string;
 }
 
 interface NavGroup {
@@ -115,7 +117,7 @@ const companyNavGroups: NavGroup[] = [
     label: 'Principal',
     items: [
       { href: '/empresa', label: 'Dashboard', icon: LayoutDashboard },
-      { href: '/empresa/vagas', label: 'Minhas Vagas', icon: Briefcase },
+      { href: '/empresa/vagas', label: 'Minhas Vagas', icon: Briefcase, tourId: 'vagas' },
       { href: '/empresa/candidaturas', label: 'Candidaturas', icon: ClipboardList },
       { href: '/empresa/entrevistas', label: 'Entrevistas', icon: Calendar, countKey: 'companyInterviews' },
     ],
@@ -123,16 +125,16 @@ const companyNavGroups: NavGroup[] = [
   {
     label: 'Talentos',
     items: [
-      { href: '/empresa/candidatos', label: 'Banco de Talentos', icon: Users },
+      { href: '/empresa/candidatos', label: 'Banco de Talentos', icon: Users, tourId: 'candidatos' },
       { href: '/empresa/candidatos-salvos', label: 'Candidatos Salvos', icon: Heart, countKey: 'savedCandidates' },
-      { href: '/empresa/testes', label: 'Testes', icon: Brain },
-      { href: '/empresa/equipes', label: 'Gestão de Equipes', icon: UserCog },
+      { href: '/empresa/testes', label: 'Testes', icon: Brain, tourId: 'testes' },
+      { href: '/empresa/equipes', label: 'Gestão de Equipes', icon: UserCog, tourId: 'equipes' },
     ],
   },
   {
     label: 'Comunicação',
     items: [
-      { href: '/empresa/mensagens', label: 'Mensagens', icon: MessageSquare },
+      { href: '/empresa/mensagens', label: 'Mensagens', icon: MessageSquare, tourId: 'mensagens' },
       { href: '/empresa/notificacoes', label: 'Notificações', icon: Bell },
     ],
   },
@@ -141,7 +143,7 @@ const companyNavGroups: NavGroup[] = [
     items: [
       { href: '/empresa/pacotes', label: 'Loja', icon: Store },
       { href: '/ajuda', label: 'Central de Ajuda', icon: HelpCircle },
-      { href: '/empresa/configuracoes', label: 'Configurações', icon: Settings },
+      { href: '/empresa/configuracoes', label: 'Configurações', icon: Settings, tourId: 'configuracoes' },
       { href: '/sobre', label: 'Sobre', icon: Info },
     ],
   },
@@ -351,6 +353,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
       <Link
         key={item.href}
         to={item.href}
+        data-tour={item.tourId}
         aria-current={isActive ? 'page' : undefined}
         className={cn(
           "relative flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors duration-150",
@@ -724,9 +727,13 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
             {/* Breadcrumbs — automatic navigation derived from URL */}
             <DashboardBreadcrumbs userType={userType} navItems={navItems} />
 
-            {/* PRD-074: Block expired trials from accessing company features */}
+            {/* PRD-074: Block expired trials from accessing company features.
+                TrialGuard wraps the tour provider so a blocked trial renders the
+                TrialExpired page instead of mounting the tour (no tour over the paywall). */}
             {userType === 'company' ? (
-              <TrialGuard>{children}</TrialGuard>
+              <TrialGuard>
+                <CompanyTourProvider>{children}</CompanyTourProvider>
+              </TrialGuard>
             ) : (
               children
             )}
