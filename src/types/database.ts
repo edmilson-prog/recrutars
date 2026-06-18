@@ -1593,6 +1593,7 @@ export type Database = {
           onboarding_step: string
           profile_id: string
           role: string
+          tour_completed_at: string | null
         }
         Insert: {
           company_id: string
@@ -1603,6 +1604,7 @@ export type Database = {
           onboarding_step?: string
           profile_id: string
           role?: string
+          tour_completed_at?: string | null
         }
         Update: {
           company_id?: string
@@ -1613,6 +1615,7 @@ export type Database = {
           onboarding_step?: string
           profile_id?: string
           role?: string
+          tour_completed_at?: string | null
         }
         Relationships: [
           {
