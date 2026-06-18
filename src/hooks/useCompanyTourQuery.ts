@@ -4,6 +4,7 @@
  */
 
 import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -31,6 +32,14 @@ export function useCompleteCompanyTour() {
     },
     onSuccess: () => {
       void refreshCurrentCompany();
+    },
+    onError: (error: Error) => {
+      // Don't block the user — the tour already closed. Surface the failure so
+      // they know it may reappear next session, and log for diagnosis.
+      console.error('Failed to persist company tour completion:', error.message);
+      toast.error('Não foi possível salvar o tour', {
+        description: 'Ele pode aparecer novamente no próximo acesso.',
+      });
     },
   });
 }

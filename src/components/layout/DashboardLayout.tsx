@@ -727,11 +727,13 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
             {/* Breadcrumbs — automatic navigation derived from URL */}
             <DashboardBreadcrumbs userType={userType} navItems={navItems} />
 
-            {/* PRD-074: Block expired trials from accessing company features */}
+            {/* PRD-074: Block expired trials from accessing company features.
+                TrialGuard wraps the tour provider so a blocked trial renders the
+                TrialExpired page instead of mounting the tour (no tour over the paywall). */}
             {userType === 'company' ? (
-              <CompanyTourProvider>
-                <TrialGuard>{children}</TrialGuard>
-              </CompanyTourProvider>
+              <TrialGuard>
+                <CompanyTourProvider>{children}</CompanyTourProvider>
+              </TrialGuard>
             ) : (
               children
             )}

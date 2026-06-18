@@ -68,6 +68,10 @@ export function CompanyTourProvider({ children }: { children: ReactNode }) {
     if (location.pathname !== '/empresa') return;
     if (companyOnboardingStep !== 'completed') return;
     if (companyTourCompleted !== false) return;
+    // The tour anchors to the desktop sidebar (hidden below md). On mobile the
+    // nav targets are display:none, so skip auto-start to avoid a tour that
+    // describes a side menu the user can't see.
+    if (!window.matchMedia('(min-width: 768px)').matches) return;
     autoStartedRef.current = true;
     startTour();
   }, [location.pathname, companyOnboardingStep, companyTourCompleted, isImpersonationActive, startTour]);
