@@ -51,7 +51,7 @@ A RPC é **necessária mas não suficiente**: enquanto a RLS de tabela liberar a
 2. **Fechar o 2º caminho.** Endurecer `curriculums_select_company` (hoje totalmente aberta).
 3. **Porta única de leitura.**
    - **Listas (lote):** view `candidates_for_company` que devolve o **mesmo shape** de `candidates` com colunas sensíveis mascaradas — resolve o problema dos call sites que carregam 1000 candidatos.
-   - **Ficha (revelação):** RPC `get_candidate_for_company(p_candidate_id uuid)` `SECURITY DEFINER` que reaplica o predicado de visibilidade atual e **revela** os campos sensíveis apenas quando há disclosure `accepted` daquela empresa+candidatura.
+   - **Ficha (revelação):** a **mesma view** `candidates_for_company` (`SECURITY DEFINER`) já revela os campos sensíveis automaticamente quando há disclosure `accepted` daquela empresa+candidatura — não é necessária uma RPC separada. O currículo é servido por `curriculums_for_company` (pai) + queries dos filhos por `curriculum_id`.
    - **Currículo:** RPC/uso equivalente para `curriculums` (consumido pela ficha e como fallback do PDF).
 4. **Exportações.** PDF (Dossiê) e Excel passam a receber dados **já mascarados**; a seção "dados pessoais" do PDF só inclui contato quando há aceite (`isAvailable` condicional, não `true` fixo). Fechar o fallback `candidate.email ?? curriculum?.email`. Cada geração com PII revelada vira evento de auditoria.
 5. **Trigger `BEFORE UPDATE` em `applications`.** Bloqueia a transição para `hired` sem disclosure `accepted` (a UI sozinha é cosmética — `updateApplicationStatus` é JS puro e não valida transições). Opcionalmente, `AFTER UPDATE → offer` cria o disclosure `pending`.
@@ -131,7 +131,7 @@ Botão só renderiza em `offer` ([Applications.tsx](src/pages/empresa/Applicatio
 
 | Severidade | Superfície | Arquivo(s) | Ação |
 |---|---|---|---|
-| crítico | `select('*')` em candidates | [candidatesService.supabase.ts](src/services/candidates/candidatesService.supabase.ts) L39,114,132 | Trocar pelos `candidates_for_company` (lista) / `get_candidate_for_company` (ficha) |
+| crítico | `select('*')` em candidates | [candidatesService.supabase.ts](src/services/candidates/candidatesService.supabase.ts) L39,114,132 | Trocar pela view `candidates_for_company` (serve lista e ficha) |
 | crítico | RLS curriculums aberta | [009_curriculums.sql](sql/migrations/009_curriculums.sql) L147-149 + [curriculumsService.supabase.ts](src/services/curriculums/curriculumsService.supabase.ts) L198-210 | Endurecer policy; servir currículo da empresa via RPC mascarada |
 | crítico | Mascaramento de coluna ausente | policies de `candidates` (mig 001/039) | Reescrita/REVOKE de coluna p/ papel company sem disclosure ativo |
 | alto | PDF Dossiê com PII crua | [CurriculumSections.tsx](src/components/empresa/pdf/sections/CurriculumSections.tsx) L22-36 + [ExportCandidateProfileModal.tsx](src/components/empresa/pdf/ExportCandidateProfileModal.tsx) L42,64-70 + [CandidateProfile.tsx](src/pages/empresa/CandidateProfile.tsx) L562-572 | Receber dados mascarados; gate da seção; fechar fallback `curriculum?.email/phone`; auditar revelação |
@@ -164,7 +164,7 @@ Validadas em mockup no companheiro visual:
 
 1. **Migration 1** — tabela `candidate_data_disclosures` + RLS + índices.
 2. **Migration 2** — endurecer `curriculums_select_company`; mascaramento de coluna real em `candidates` para o papel `company` sem disclosure ativo (preservar candidato `own` e admin).
-3. **Migration 3** — view `candidates_for_company` (lista) + RPC `get_candidate_for_company` (ficha) + RPC equivalente para currículo; log append-only de revelação.
+3. **Migration 3** — views `candidates_for_company` e `curriculums_for_company` (`SECURITY DEFINER`, mascaram por consentimento; servem lista e ficha; currículo expõe o pai, filhos vêm por `curriculum_id`); log append-only de revelação.
 4. **Migration 4** — trigger `BEFORE UPDATE` em `applications` (bloqueia `→ hired` sem aceite); opcional `AFTER UPDATE → offer` cria disclosure `pending`.
 5. **Serviços** — `candidatesService`/`curriculumsService` (uso empresa) passam a consumir view/RPC; novo `consentService` (create/getStatus/accept/revoke); `applicationsService.updateApplicationStatus` dispara comunicação no `offer`.
 6. **Converter/tipos** — `candidateRowToCandidate` tolera máscara; `Application` + `applicationRowToApplication` ganham status do disclosure.
@@ -188,7 +188,7 @@ Validadas em mockup no companheiro visual:
 Testes adversariais de RLS (uma empresa autenticada):
 - `from('candidates').select('*')` de candidato **sem** disclosure ativo → `cpf/email/phone/date_of_birth` vêm `null`/omitidos.
 - `from('curriculums').select(...)` direto → email/phone **não** retornam sem disclosure ativo.
-- `get_candidate_for_company(id)` com disclosure `accepted` → revela; sem → mascarado.
+- `candidates_for_company` com disclosure `accepted` → revela; sem → mascarado.
 - **Cross-vaga:** empresa B **não** vê dados liberados para a empresa A.
 - Tentar `update applications set status='hired'` sem disclosure `accepted` → **rejeitado** pelo trigger.
 - Realtime/embeds (`applications`/`conversations` JOIN candidates) → **nunca** trazem colunas sensíveis.
