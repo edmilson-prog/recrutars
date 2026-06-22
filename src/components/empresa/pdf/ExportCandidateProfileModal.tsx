@@ -19,6 +19,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   data: PDFEmpresaData;
+  onPiiExported?: () => void;
 }
 
 const TEMPLATES: Array<{
@@ -39,7 +40,7 @@ interface SectionDef {
 }
 
 const SECTIONS: SectionDef[] = [
-  { key: 'personalInfo',       label: 'Informações pessoais',         group: 'base',    isAvailable: () => true,                                       unavailableHint: '' },
+  { key: 'personalInfo',       label: 'Informações pessoais',         group: 'base',    isAvailable: d => !!(d.candidate.email || d.candidate.phone),  unavailableHint: 'Liberado apenas após consentimento do candidato (LGPD)' },
   { key: 'summary',            label: 'Resumo profissional',          group: 'base',    isAvailable: d => !!(d.curriculum as { about?: string } | null | undefined)?.about, unavailableHint: 'Sem resumo no perfil' },
   { key: 'technicalSkills',    label: 'Habilidades técnicas',         group: 'base',    isAvailable: () => true,                                       unavailableHint: '' },
   { key: 'behavioralSkills',   label: 'Habilidades comportamentais',  group: 'base',    isAvailable: () => true,                                       unavailableHint: '' },
@@ -69,7 +70,7 @@ function buildDefaultSections(data: PDFEmpresaData): PDFEmpresaSectionConfig {
   return result;
 }
 
-export function ExportCandidateProfileModal({ open, onOpenChange, data }: Props) {
+export function ExportCandidateProfileModal({ open, onOpenChange, data, onPiiExported }: Props) {
   const [template, setTemplate] = useState<PDFEmpresaTemplateType>('dossie');
   const [sections, setSections] = useState<PDFEmpresaSectionConfig>(() => buildDefaultSections(data));
   const [includeLinks, setIncludeLinks] = useState(false);
@@ -115,6 +116,11 @@ export function ExportCandidateProfileModal({ open, onOpenChange, data }: Props)
       URL.revokeObjectURL(url);
 
       toast.success('PDF gerado', { description: `Arquivo ${filename} baixado.` });
+      const exportedPii =
+        sections.personalInfo && !!(data.candidate.email || data.candidate.phone);
+      if (exportedPii) {
+        onPiiExported?.();
+      }
       onOpenChange(false);
     } catch (e) {
       console.error('Erro PDF Dossiê:', e);
