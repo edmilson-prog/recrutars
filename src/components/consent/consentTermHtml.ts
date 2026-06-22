@@ -1,6 +1,6 @@
 // src/components/consent/consentTermHtml.ts
 import { maskCpfPartial, maskIpPartial } from '@/lib/piiMask';
-import { CONSENT_TERM_VERSION } from '@/lib/consentTerm';
+import { CONSENT_TERM_VERSION, SHARED_DATA_LABELS } from '@/lib/consentTerm';
 import type { DataDisclosure } from '@/types/consent';
 
 export interface ConsentTermParties {
@@ -16,8 +16,6 @@ export interface ConsentTermData {
   disclosure: DataDisclosure;
   parties: ConsentTermParties;
 }
-
-const SHARED_DATA = ['CPF', 'E-mail', 'Telefone', 'Data de nascimento', 'Endereço'];
 
 function formatDateBR(iso?: string): string {
   if (!iso) return '—';
@@ -58,7 +56,7 @@ export function buildConsentTermHtml(data: ConsentTermData): string {
     `
     : `<p><strong>Status:</strong> Aguardando aceite do titular.</p>`;
 
-  const dataItems = SHARED_DATA.map((d) => `<li>${escapeHtml(d)}</li>`).join('');
+  const dataItems = SHARED_DATA_LABELS.map((d) => `<li>${escapeHtml(d)}</li>`).join('');
 
   return `<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8" />

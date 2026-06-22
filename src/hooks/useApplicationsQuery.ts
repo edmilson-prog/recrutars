@@ -149,10 +149,12 @@ export function useUpdateApplicationStatus() {
       const service = await getApplicationsService();
       return service.updateApplicationStatus(id, status, reason);
     },
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: applicationKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: applicationKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: applicationKeys.history(id) });
+    onSuccess: () => {
+      // A status change can affect any application view — lists, the candidate's
+      // byCandidate list (which drives the consent gate and the candidate
+      // Applications page), the job's byJob list, detail, and history — so
+      // invalidate the whole applications cache.
+      queryClient.invalidateQueries({ queryKey: applicationKeys.all });
     },
   });
 }

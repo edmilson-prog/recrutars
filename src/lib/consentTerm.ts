@@ -26,6 +26,20 @@ VALIDADE
 Este consentimento é específico para esta candidatura e empresa, sendo registrado de forma auditável (data, hora, versão do termo e identificação técnica da sessão).`;
 
 /**
+ * The sensitive fields disclosed to the company once consent is accepted.
+ * Single source for the bulleted lists in the UI modal, the printable HTML term,
+ * and the PDF. Must stay consistent with the prose in CONSENT_TERM_TEXT — changing
+ * the disclosed set is a term change and requires bumping CONSENT_TERM_VERSION.
+ */
+export const SHARED_DATA_LABELS = [
+  'CPF',
+  'E-mail',
+  'Telefone',
+  'Data de nascimento',
+  'Endereço',
+] as const;
+
+/**
  * Compute the SHA-256 hex digest of a string using Web Crypto (crypto.subtle).
  * Returns a 64-char lowercase hex string. Works in browser and Node 20+.
  */

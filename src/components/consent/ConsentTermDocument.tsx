@@ -4,10 +4,8 @@ import { empresaStyles, empresaColors } from '@/components/empresa/pdf/styles';
 import { Header } from '@/components/empresa/pdf/sections/Header';
 import { Footer } from '@/components/empresa/pdf/sections/Footer';
 import { maskCpfPartial, maskIpPartial } from '@/lib/piiMask';
-import { CONSENT_TERM_VERSION } from '@/lib/consentTerm';
+import { CONSENT_TERM_VERSION, SHARED_DATA_LABELS } from '@/lib/consentTerm';
 import type { ConsentTermData } from './consentTermHtml';
-
-const SHARED_DATA = ['CPF', 'E-mail', 'Telefone', 'Data de nascimento', 'Endereço'];
 
 function formatDateBR(iso?: string): string {
   if (!iso) return '—';
@@ -72,7 +70,7 @@ export function ConsentTermDocument({ disclosure, parties }: ConsentTermData) {
 
         <View style={empresaStyles.sectionContainer}>
           <Text style={empresaStyles.sectionTitle}>3. Dados compartilhados</Text>
-          {SHARED_DATA.map((d) => (
+          {SHARED_DATA_LABELS.map((d) => (
             <Text key={d} style={empresaStyles.bullet}>• {d}</Text>
           ))}
         </View>
