@@ -17,6 +17,8 @@ import { getActionLabel } from '@/utils/auditLog';
 import { useTestAuditLogs, useAddTestAuditLog } from '@/hooks/useCompanyTestsQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import type { AuditLog } from '@/types/companyTest';
+import { pdf } from '@react-pdf/renderer';
+import { LGPDReportPdf } from './LGPDReportPdf';
 
 export function LGPDReport() {
   const { toast } = useToast();
@@ -26,6 +28,47 @@ export function LGPDReport() {
   const [candidateName, setCandidateName] = useState('');
   const [results, setResults] = useState<AuditLog[]>([]);
   const [searched, setSearched] = useState(false);
+
+  const handleExport = async () => {
+    try {
+      const blob = await pdf(
+        <LGPDReportPdf
+          companyName={currentCompany?.name ?? 'Empresa'}
+          companyLogo={currentCompany?.logo ?? null}
+          candidateName={candidateName}
+          logs={results}
+          generatedAt={new Date().toLocaleString('pt-BR')}
+        />
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `relatorio-lgpd-${candidateName.trim().replace(/\s+/g, '-').toLowerCase()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      addAuditLogMutation.mutate({
+        action: 'lgpd_report_generated',
+        userId: user?.id ?? '',
+        userName: user?.user_metadata?.full_name ?? '',
+        resourceType: 'result',
+        resourceId: candidateName,
+        resourceName: candidateName,
+        details: 'Exportação PDF do relatório LGPD',
+        companyId: currentCompany?.id ?? '',
+      });
+
+      toast({ title: 'Relatório exportado', description: 'O PDF foi baixado com sucesso.' });
+    } catch {
+      toast({
+        title: 'Erro ao exportar',
+        description: 'Não foi possível gerar o PDF. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleSearch = () => {
     if (!candidateName.trim()) return;
@@ -85,9 +128,7 @@ export function LGPDReport() {
                 {results.length} registro{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''} para "{candidateName}"
               </p>
               {results.length > 0 && (
-                <Button variant="outline" size="sm" onClick={() => {
-                  toast({ title: 'Em desenvolvimento', description: 'Exportação LGPD será implementada.' });
-                }}>
+                <Button variant="outline" size="sm" onClick={handleExport} disabled={addAuditLogMutation.isPending}>
                   <FileDown className="h-3.5 w-3.5 mr-1" />
                   Exportar
                 </Button>
