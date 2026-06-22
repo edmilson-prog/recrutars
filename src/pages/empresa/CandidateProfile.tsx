@@ -3,7 +3,7 @@
  * PRD-014: Banco de Talentos - Perfil completo com avaliação comportamental
  */
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { getStandardizedSkillsService } from '@/services/standardizedSkills/standardizedSkillsService';
 import { standardizedSkillKeys, useCandidateStandardizedSkills } from '@/hooks/useStandardizedSkillsQuery';
@@ -74,7 +74,7 @@ import { useCreateConversation, useSendMessage } from '@/hooks/useMessagesQuery'
 import { useGaugeProResultByCandidate, useGaugeProSessionByCandidate } from '@/hooks/useGaugeProQuery';
 import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
 import { useProfileForCompany } from '@/hooks/useCurriculumsQuery';
-import { useConsentStatus } from '@/hooks/useConsentStatus';
+import { useConsentStatus, consentKeys } from '@/hooks/useConsentStatus';
 import { getConsentService } from '@/services/consent/consentService';
 import { ConsentTermDialog } from '@/components/consent/ConsentTermDialog';
 import { Lock, ScrollText } from 'lucide-react';
@@ -360,9 +360,12 @@ export default function CandidateProfile() {
   const { data: consentStatus } = useConsentStatus(consentApplicationId);
   const isPiiRevealed = consentStatus === 'accepted';
 
+  // Fix 3: reset term dialog when selected application changes
+  useEffect(() => { setConsentTermOpen(false); }, [consentApplicationId]);
+
   // Disclosure completo (faixa "Liberado em" + termo) — só busca quando aceito
   const { data: consentDisclosure } = useQuery<DataDisclosure | null>({
-    queryKey: ['consent', 'disclosure', consentApplicationId],
+    queryKey: consentKeys.disclosure(consentApplicationId),
     queryFn: () => getConsentService().then(svc => svc.getDisclosure(consentApplicationId)),
     enabled: isPiiRevealed && !!consentApplicationId,
   });
@@ -805,11 +808,18 @@ export default function CandidateProfile() {
                         ? `${experienceYears} ano${experienceYears !== 1 ? 's' : ''} de experiência`
                         : 'Sem experiência informada'}
                     </span>
-                    {isPiiRevealed && candidate.email ? (
-                      <span className="flex items-center gap-1">
-                        <Mail className="w-4 h-4" />
-                        {candidate.email}
-                      </span>
+                    {isPiiRevealed ? (
+                      candidate.email ? (
+                        <span className="flex items-center gap-1">
+                          <Mail className="w-4 h-4" />
+                          {candidate.email}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-muted-foreground/70">
+                          <Mail className="w-4 h-4" />
+                          E-mail não informado
+                        </span>
+                      )
                     ) : (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -823,23 +833,30 @@ export default function CandidateProfile() {
                         </TooltipContent>
                       </Tooltip>
                     )}
-                    {isPiiRevealed && candidate.phone ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <a
-                            href={`https://wa.me/55${candidate.phone.replace(/\D/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 hover:text-foreground hover:underline transition-colors"
-                          >
-                            <Phone className="w-4 h-4" />
-                            {formatPhone(candidate.phone)}
-                          </a>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Abrir WhatsApp — liberado pelo consentimento do candidato</p>
-                        </TooltipContent>
-                      </Tooltip>
+                    {isPiiRevealed ? (
+                      candidate.phone ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <a
+                              href={`https://wa.me/55${candidate.phone.replace(/\D/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 hover:text-foreground hover:underline transition-colors"
+                            >
+                              <Phone className="w-4 h-4" />
+                              {formatPhone(candidate.phone)}
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Abrir WhatsApp — liberado pelo consentimento do candidato</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <span className="flex items-center gap-1 text-muted-foreground/70">
+                          <Phone className="w-4 h-4" />
+                          Telefone não informado
+                        </span>
+                      )
                     ) : (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -853,11 +870,18 @@ export default function CandidateProfile() {
                         </TooltipContent>
                       </Tooltip>
                     )}
-                    {isPiiRevealed && candidate.cpf ? (
-                      <span className="flex items-center gap-1">
-                        <FileText className="w-4 h-4" />
-                        CPF: {candidate.cpf}
-                      </span>
+                    {isPiiRevealed ? (
+                      candidate.cpf ? (
+                        <span className="flex items-center gap-1">
+                          <FileText className="w-4 h-4" />
+                          CPF: {candidate.cpf}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-muted-foreground/70">
+                          <FileText className="w-4 h-4" />
+                          CPF não informado
+                        </span>
+                      )
                     ) : (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -871,11 +895,18 @@ export default function CandidateProfile() {
                         </TooltipContent>
                       </Tooltip>
                     )}
-                    {isPiiRevealed && candidate.dateOfBirth ? (
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(candidate.dateOfBirth).toLocaleDateString('pt-BR')}
-                      </span>
+                    {isPiiRevealed ? (
+                      candidate.dateOfBirth ? (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          {new Date(candidate.dateOfBirth).toLocaleDateString('pt-BR')}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-muted-foreground/70">
+                          <Calendar className="w-4 h-4" />
+                          Data de nascimento não informada
+                        </span>
+                      )
                     ) : (
                       <Tooltip>
                         <TooltipTrigger asChild>
