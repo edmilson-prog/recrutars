@@ -43,12 +43,21 @@ interface SendActivationBody {
   activationLink: string;
 }
 
+interface SendConsentRequestBody {
+  action: 'send_consent_request_email';
+  to: string;
+  candidateName: string;
+  companyName: string;
+  jobTitle: string;
+  actionLink: string;
+}
+
 interface TestConnectionBody {
   action: 'test_connection';
   to?: string;
 }
 
-type RequestBody = SendInvitationBody | SendActivationBody | TestConnectionBody;
+type RequestBody = SendInvitationBody | SendActivationBody | SendConsentRequestBody | TestConnectionBody;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -347,6 +356,87 @@ function buildActivationEmailHtml(params: {
 </html>`;
 }
 
+function buildConsentRequestEmailHtml(params: {
+  candidateName: string;
+  companyName: string;
+  jobTitle: string;
+  actionLink: string;
+}): string {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autorize o compartilhamento dos seus dados — RecrutaRS</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f1f5f9;">
+    <tr>
+      <td align="center" style="padding: 40px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #0f172a; padding: 32px 40px; text-align: center;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #06b6d4; letter-spacing: 1px;">RecrutaRS</h1>
+              <p style="margin: 8px 0 0; font-size: 13px; color: #94a3b8; letter-spacing: 0.5px;">Recrutamento Inteligente</p>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 8px; font-size: 22px; color: #0f172a;">Parabéns, ${escapeHtml(params.candidateName)}!</h2>
+              <p style="margin: 0 0 24px; font-size: 16px; color: #475569; line-height: 1.6;">
+                Você foi aprovado(a)${params.companyName ? ` pela <strong style="color: #0f172a;">${escapeHtml(params.companyName)}</strong>` : ''} na vaga <strong style="color: #0f172a;">${escapeHtml(params.jobTitle)}</strong>.
+              </p>
+              <p style="margin: 0 0 32px; font-size: 16px; color: #475569; line-height: 1.6;">
+                Para avançar, a empresa precisa da sua autorização para acessar seus dados de contato (CPF, e-mail, telefone, data de nascimento e endereço). Você decide: pode autorizar ou recusar, e pode revogar a qualquer momento.
+              </p>
+              <!-- CTA Button -->
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td align="center">
+                    <a href="${escapeHtml(params.actionLink)}" target="_blank" style="display: inline-block; background-color: #06b6d4; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 40px; border-radius: 8px; letter-spacing: 0.3px;">
+                      Revisar e autorizar
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <!-- LGPD note -->
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 32px;">
+                <tr>
+                  <td style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 12px 16px; border-radius: 0 6px 6px 0;">
+                    <p style="margin: 0; font-size: 14px; color: #065f46; line-height: 1.5;">
+                      <strong>Seus direitos:</strong> o compartilhamento é opcional e reversível. Um termo de consentimento registrado (data, hora e versão) fica disponível para você imprimir.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              <!-- Fallback link -->
+              <p style="margin: 32px 0 0; font-size: 13px; color: #94a3b8; line-height: 1.5;">
+                Se o botão não funcionar, copie e cole este link no seu navegador:<br>
+                <a href="${escapeHtml(params.actionLink)}" style="color: #06b6d4; word-break: break-all;">${escapeHtml(params.actionLink)}</a>
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0; font-size: 13px; color: #94a3b8;">
+                <strong style="color: #64748b;">RecrutaRS</strong> — Recrutamento Inteligente
+              </p>
+              <p style="margin: 8px 0 0; font-size: 12px; color: #cbd5e1;">
+                Este é um email automático. Por favor, não responda.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 function buildTestEmailHtml(): string {
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -497,6 +587,48 @@ async function handleSendActivationEmail(
   return jsonResponse({ success: true, messageId: result.messageId });
 }
 
+async function handleSendConsentRequestEmail(
+  config: ResendConfig,
+  body: SendConsentRequestBody,
+): Promise<Response> {
+  const { to, candidateName, companyName, jobTitle, actionLink } = body;
+
+  if (!to || typeof to !== 'string' || !to.trim()) {
+    return errorResponse('Campo obrigatório ausente: to (email do destinatário)');
+  }
+  if (!candidateName) {
+    return errorResponse('Campo obrigatório ausente: candidateName');
+  }
+  if (!actionLink) {
+    return errorResponse('Campo obrigatório ausente: actionLink');
+  }
+
+  console.log(`[send-email] === send_consent_request_email START === to=${to}, job=${jobTitle}`);
+
+  const html = buildConsentRequestEmailHtml({
+    candidateName,
+    companyName: companyName || '',
+    jobTitle: jobTitle || 'vaga',
+    actionLink,
+  });
+
+  const result = await sendEmail(config, {
+    to,
+    subject: companyName
+      ? `Autorize o compartilhamento dos seus dados — ${companyName}`
+      : 'Autorize o compartilhamento dos seus dados — RecrutaRS',
+    html,
+  });
+
+  if (!result.success) {
+    console.log('[send-email] === send_consent_request_email END (FAILED) ===');
+    return jsonResponse({ success: false, error: result.error }, 200);
+  }
+
+  console.log('[send-email] === send_consent_request_email END (OK) ===');
+  return jsonResponse({ success: true, messageId: result.messageId });
+}
+
 async function handleTestConnection(
   config: ResendConfig,
   body: TestConnectionBody,
@@ -603,13 +735,17 @@ Deno.serve(async (req: Request) => {
           result = await handleSendActivationEmail(config, body as SendActivationBody);
           break;
 
+        case 'send_consent_request_email':
+          result = await handleSendConsentRequestEmail(config, body as SendConsentRequestBody);
+          break;
+
         case 'test_connection':
           result = await handleTestConnection(config, body as TestConnectionBody);
           break;
 
         default:
           result = errorResponse(
-            `Ação desconhecida: ${(body as Record<string, unknown>).action}. Ações válidas: send_invitation_email, send_activation_email, test_connection`,
+            `Ação desconhecida: ${(body as Record<string, unknown>).action}. Ações válidas: send_invitation_email, send_activation_email, send_consent_request_email, test_connection`,
           );
       }
     } catch (handlerErr) {
