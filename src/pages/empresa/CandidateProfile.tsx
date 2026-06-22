@@ -800,7 +800,7 @@ export default function CandidateProfile() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Mail className="w-4 h-4" />
-                      {hasActiveApplication ? candidate.email : maskEmail(candidate.email)}
+                      {hasActiveApplication ? candidate.email : maskEmail(candidate.email ?? '')}
                     </span>
                     {candidate.phone && (
                       hasActiveApplication ? (
