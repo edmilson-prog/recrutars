@@ -57,10 +57,10 @@ export interface Candidate {
   id: string;
   userId: string;
   name: string;
-  email: string;
+  email?: string;
   avatar?: string;
   title: string;
-  location: string;
+  location?: string;
   experience: number;
   education: string;
   skills: string[];
