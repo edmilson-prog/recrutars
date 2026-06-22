@@ -15,6 +15,7 @@ export const profileKeys = {
   all: ['profile'] as const,
   byCandidate: (candidateId: string) => [...profileKeys.all, candidateId] as const,
   detail: (id: string) => [...profileKeys.all, 'detail', id] as const,
+  forCompany: (candidateId: string) => [...profileKeys.all, 'forCompany', candidateId] as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -28,6 +29,18 @@ export function useProfile(candidateId: string) {
     queryFn: async () => {
       const service = await getCurriculumsService();
       return service.getProfile(candidateId);
+    },
+    enabled: !!candidateId,
+  });
+}
+
+/** Company-facing profile: served from curriculums_for_company (masked) + children. */
+export function useProfileForCompany(candidateId: string) {
+  return useQuery({
+    queryKey: profileKeys.forCompany(candidateId),
+    queryFn: async () => {
+      const service = await getCurriculumsService();
+      return service.getProfileForCompany(candidateId);
     },
     enabled: !!candidateId,
   });

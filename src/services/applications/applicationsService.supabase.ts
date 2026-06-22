@@ -8,6 +8,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 import type {
   Application,
@@ -35,10 +36,6 @@ type ApplicationWithJoins = ApplicationRow & {
     company_id: string;
     companies?: { name: string } | null;
   } | null;
-  candidates?: {
-    name: string;
-    avatar_url: string | null;
-  } | null;
 };
 
 // Shape of a note row with joined author profile
@@ -57,8 +54,8 @@ function applicationRowToApplication(row: ApplicationWithJoins): Application {
     id: row.id,
     jobId: row.job_id,
     candidateId: row.candidate_id,
-    candidateName: row.candidates?.name ?? '',
-    candidateAvatar: row.candidates?.avatar_url ?? undefined,
+    candidateName: '', // populated client-side from useCandidates map
+    candidateAvatar: undefined, // populated client-side from useCandidates map
     jobTitle: row.jobs?.title ?? '',
     companyName: row.jobs?.companies?.name ?? '',
     status: row.status as ApplicationStatus,
@@ -99,7 +96,6 @@ function historyRowToHistory(row: HistoryWithActor): ApplicationHistory {
 const APPLICATION_SELECT = [
   '*',
   'jobs!applications_job_id_fkey(title, company_id, companies!jobs_company_id_fkey(name))',
-  'candidates!applications_candidate_id_fkey(name, avatar_url)',
 ].join(', ');
 
 /** Column name mapping from camelCase sort fields to snake_case DB columns. */
@@ -302,6 +298,33 @@ export class ApplicationsServiceSupabase implements IApplicationsService {
       changed_by: userData?.user?.id ?? '',
       reason: reason ?? null,
     });
+
+    // On approval (→ offer), request data-disclosure consent: ensures a pending
+    // disclosure exists and notifies/e-mails the candidate. Best-effort: a failure
+    // here must not roll back the status change (the trigger guarantees the
+    // disclosure row; this invoke only drives notification + e-mail).
+    if (status === 'offer' && previousStatus !== 'offer') {
+      try {
+        const { error: consentError } = await supabase.functions.invoke(
+          'manage-data-consent',
+          { body: { action: 'notify_request', applicationId: id } },
+        );
+        if (consentError) {
+          let detail = consentError.message;
+          if (consentError instanceof FunctionsHttpError) {
+            try {
+              const body = await consentError.context.json();
+              if (body?.message) detail = body.message as string;
+            } catch {
+              // Body was not JSON — keep the original message.
+            }
+          }
+          console.error('[consent] notify_request failed:', detail);
+        }
+      } catch (err) {
+        console.error('[consent] notify_request threw:', err);
+      }
+    }
 
     return applicationRowToApplication(data);
   }

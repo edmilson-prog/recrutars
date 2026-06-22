@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx';
 import type { Candidate } from '@/types';
 import type { ExportConfig, ExportContext, ExportSection, ExportOrder } from '@/types/export';
 import { generateFileName } from '@/types/export';
-import { isAnonymous, getDisplayName } from '@/utils/visibility';
+import { getDisplayName } from '@/utils/visibility';
 
 interface ExcelColumn {
   header: string;
@@ -105,15 +105,14 @@ function candidateToRow(
   calculateMatch?: (c: Candidate) => number
 ): Record<string, string | number> {
   const row: Record<string, string | number> = {};
-  const candidateIsAnonymous = isAnonymous(candidate);
-
   row['index'] = index + 1;
 
   if (sections.includes('basicInfo')) {
     row['name'] = getDisplayName(candidate);
-    row['location'] = candidate.location;
-    row['email'] = candidateIsAnonymous ? '-' : candidate.email;
-    row['phone'] = candidateIsAnonymous ? '-' : candidate.phone || '-';
+    row['location'] = candidate.location ?? '-';
+    // LGPD: a fonte (candidates_for_company) já mascara PII sem consentimento.
+    row['email'] = candidate.email ?? '-';
+    row['phone'] = candidate.phone ?? '-';
   }
 
   if (sections.includes('experience')) {

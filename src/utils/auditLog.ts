@@ -37,6 +37,9 @@ export function getActionLabel(action: AuditAction): string {
     pdf_downloaded: 'PDF baixado',
     excel_downloaded: 'Excel baixado',
     lgpd_report_generated: 'Relatorio LGPD gerado',
+    consent_granted: 'Consentimento concedido',
+    consent_revoked: 'Consentimento revogado',
+    sensitive_data_revealed: 'Dados sensíveis revelados',
   };
   return labels[action] ?? action;
 }
@@ -73,6 +76,9 @@ export function getActionIcon(action: AuditAction): string {
     pdf_downloaded: 'FileDown',
     excel_downloaded: 'FileSpreadsheet',
     lgpd_report_generated: 'Shield',
+    consent_granted: 'ShieldCheck',
+    consent_revoked: 'ShieldOff',
+    sensitive_data_revealed: 'Eye',
   };
   return icons[action] ?? 'Activity';
 }
@@ -92,6 +98,9 @@ export function getActionColor(action: AuditAction): string {
     credit_refunded: 'text-emerald-600',
     retest_scheduled: 'text-indigo-600',
     retest_triggered: 'text-indigo-500',
+    consent_granted: 'text-green-600',
+    consent_revoked: 'text-red-600',
+    sensitive_data_revealed: 'text-amber-600',
   };
   return colors[action] ?? 'text-gray-600';
 }

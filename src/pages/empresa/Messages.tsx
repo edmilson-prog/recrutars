@@ -46,6 +46,7 @@ import { useMessages } from '@/hooks/useMessages';
 import { useCreateConversation } from '@/hooks/useMessagesQuery';
 import { useMessageTemplates } from '@/hooks/useMessageTemplates';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCandidates } from '@/hooks/useCandidatesQuery';
 import {
   TemplateSelector,
   ToneSelector,
@@ -119,27 +120,47 @@ export default function CompanyMessages() {
     deleteCustomTemplate,
   } = useMessageTemplates({ companyId: currentCompany?.id ?? '' });
 
+  // Fetch candidates to populate candidateName client-side (C7: embed removed from service)
+  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
+  const candidatesById = useMemo(() => {
+    const map = new Map<string, { name: string }>();
+    for (const c of candidatesResult?.data ?? []) {
+      map.set(c.id, { name: c.name });
+    }
+    return map;
+  }, [candidatesResult]);
+
+  // Enrich conversations with candidateName from the candidates map
+  const conversationsWithCandidate = useMemo(
+    () =>
+      conversations.map((conv) => ({
+        ...conv,
+        candidateName: candidatesById.get(conv.candidateId)?.name ?? conv.candidateName ?? '',
+      })),
+    [conversations, candidatesById],
+  );
+
   // Get unique jobs from conversations for filter (skip empty jobId to avoid Radix Select error)
   const jobOptions = useMemo(() => {
-    const jobs = conversations
+    const jobs = conversationsWithCandidate
       .filter(c => c.jobId && c.jobId !== '')
       .map(c => ({ id: c.jobId, title: c.jobTitle }));
     return [...new Map(jobs.map(j => [j.id, j])).values()];
-  }, [conversations]);
+  }, [conversationsWithCandidate]);
 
   // Filter conversations by search and job filter
   const filteredConversations = useMemo(() => {
-    return conversations.filter(conv => {
+    return conversationsWithCandidate.filter(conv => {
       const matchesSearch =
         searchTerm === '' ||
         conv.candidateName.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesJob = selectedJobFilter === 'all' || conv.jobId === selectedJobFilter;
       return matchesSearch && matchesJob;
     });
-  }, [conversations, searchTerm, selectedJobFilter]);
+  }, [conversationsWithCandidate, searchTerm, selectedJobFilter]);
 
-  // Get selected conversation
-  const selectedConversation = conversations.find(c => c.id === selectedConversationId);
+  // Get selected conversation (from enriched array so candidateName is populated)
+  const selectedConversation = conversationsWithCandidate.find(c => c.id === selectedConversationId);
 
   // PRD-041: Variable data for template substitution
   const templateVariableData: Partial<TemplateVariableData> = useMemo(() => {

@@ -19,8 +19,9 @@ export function PersonalInfoSection({
   curriculum?: Curriculum | null;
   candidate: { name?: string; email?: string; phone?: string; city?: string; state?: string };
 }) {
-  const email = candidate.email ?? curriculum?.email;
-  const phone = candidate.phone ?? curriculum?.phone;
+  // LGPD: nunca derivar do currículo cru — a fonte (candidate) já vem mascarada.
+  const email = candidate.email;
+  const phone = candidate.phone;
   const city = candidate.city ?? curriculum?.city;
   const state = candidate.state ?? curriculum?.state;
   return (

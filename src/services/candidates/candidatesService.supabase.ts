@@ -36,7 +36,11 @@ export class CandidatesServiceSupabase implements ICandidatesService {
     pagination?: PaginationConfig,
     sort?: SortConfig,
   ): Promise<PaginatedResult<Candidate>> {
-    let query = supabase.from('candidates').select('*', { count: 'exact' });
+    // Company-facing view: same shape as `candidates`, with cpf/email/phone/
+    // date_of_birth masked to NULL unless an accepted disclosure exists.
+    let query = supabase
+      .from('candidates_for_company' as never)
+      .select('*', { count: 'exact' });
 
     // --- Filters -----------------------------------------------------------
 
@@ -92,7 +96,7 @@ export class CandidatesServiceSupabase implements ICandidatesService {
     }
 
     const total = count ?? 0;
-    const candidates = (data ?? []).map(candidateRowToCandidate);
+    const candidates = ((data ?? []) as unknown as Parameters<typeof candidateRowToCandidate>[0][]).map(candidateRowToCandidate);
 
     return {
       data: candidates,
@@ -109,7 +113,7 @@ export class CandidatesServiceSupabase implements ICandidatesService {
 
   async getCandidate(id: string): Promise<Candidate | null> {
     const { data, error } = await supabase
-      .from('candidates')
+      .from('candidates_for_company' as never)
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -118,7 +122,7 @@ export class CandidatesServiceSupabase implements ICandidatesService {
       throw new Error(`Failed to fetch candidate: ${error.message}`);
     }
 
-    return data ? candidateRowToCandidate(data) : null;
+    return data ? candidateRowToCandidate(data as unknown as Parameters<typeof candidateRowToCandidate>[0]) : null;
   }
 
   // -----------------------------------------------------------------------

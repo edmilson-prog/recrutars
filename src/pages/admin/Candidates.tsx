@@ -364,7 +364,7 @@ export default function AdminCandidates() {
     const searchLower = debouncedSearch.toLowerCase();
     const matchesSearch =
       candidate.name.toLowerCase().includes(searchLower) ||
-      candidate.email.toLowerCase().includes(searchLower);
+      (candidate.email ?? '').toLowerCase().includes(searchLower);
 
     const matchesStatus = statusFilter === 'all' || candidate.status === statusFilter;
 

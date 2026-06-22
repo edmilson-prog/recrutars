@@ -167,9 +167,12 @@ export type AuditAction =
   | 'excel_downloaded'
   | 'lgpd_report_generated'
   | 'invite_extended'
-  | 'invite_updated';
+  | 'invite_updated'
+  | 'consent_granted'
+  | 'consent_revoked'
+  | 'sensitive_data_revealed';
 
-export type AuditResourceType = 'test' | 'invitation' | 'result' | 'report' | 'assessment' | 'ai_analysis' | 'credit_transaction' | 'team_member' | 'retest_schedule';
+export type AuditResourceType = 'test' | 'invitation' | 'result' | 'report' | 'assessment' | 'ai_analysis' | 'credit_transaction' | 'team_member' | 'retest_schedule' | 'consent';
 
 export interface AuditLog {
   id: string;

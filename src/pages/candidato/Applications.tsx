@@ -3,7 +3,7 @@
  * PRD-009: Minhas Candidaturas
  */
 
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -18,6 +18,9 @@ import {
   Ban,
   ExternalLink,
   Loader2,
+  ShieldCheck,
+  ShieldOff,
+  FileText,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -32,8 +35,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { useApplications } from '@/hooks/useApplications';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConsentDecision } from '@/hooks/useConsentDecision';
+import { useCandidateDisclosures } from '@/hooks/useCandidateDisclosures';
+import { ConsentTermDialog } from '@/components/consent/ConsentTermDialog';
+import { computeTermHash, CONSENT_TERM_VERSION, CONSENT_TERM_TEXT } from '@/lib/consentTerm';
+import type { ConsentTermParties } from '@/components/consent/consentTermHtml';
 import { toast } from 'sonner';
 import type { ApplicationStatus } from '@/types';
 
@@ -65,6 +83,74 @@ export default function CandidateApplications() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
+
+  // Consent state and hooks
+  const { data: disclosures = {} } = useCandidateDisclosures(candidateId);
+  const { accept, refuse, revoke } = useConsentDecision();
+
+  const [consentAppId, setConsentAppId] = useState<string | null>(null);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [revokeAppId, setRevokeAppId] = useState<string | null>(null);
+  const [termAppId, setTermAppId] = useState<string | null>(null);
+
+  const selectedApp = applications.find(a => a.id === consentAppId) ?? null;
+  const revokeApp = applications.find(a => a.id === revokeAppId) ?? null;
+  const termApp = applications.find(a => a.id === termAppId) ?? null;
+  const termDisclosure = termAppId ? disclosures[termAppId] : undefined;
+
+  const buildParties = (appId: string): ConsentTermParties => {
+    const app = applications.find(a => a.id === appId);
+    return {
+      candidateName: currentCandidate?.name ?? app?.candidateName ?? 'Candidato',
+      candidateCpf: currentCandidate?.cpf ?? undefined,
+      companyName: app?.companyName ?? '',
+      companyLogo: null,
+      jobTitle: app?.jobTitle ?? '',
+      operatorName: 'RecrutaRS',
+    };
+  };
+
+  const openConsentModal = (appId: string) => {
+    setConsentAppId(appId);
+    setConsentChecked(false);
+  };
+
+  const handleAccept = async () => {
+    if (!consentAppId || !consentChecked) return;
+    try {
+      const termHash = await computeTermHash(CONSENT_TERM_TEXT);
+      await accept.mutateAsync({
+        applicationId: consentAppId,
+        termVersion: CONSENT_TERM_VERSION,
+        termHash,
+      });
+      setConsentAppId(null);
+    } catch {
+      // toast is fired by useConsentDecision onError
+    }
+  };
+
+  const handleRefuse = async () => {
+    if (!consentAppId) return;
+    try {
+      await refuse.mutateAsync(consentAppId);
+      setConsentAppId(null);
+    } catch {
+      // error toast handled by the useConsentDecision hook
+    }
+  };
+
+  const handleRevoke = async (e: MouseEvent) => {
+    e.preventDefault(); // prevent AlertDialogAction from auto-closing before async completes
+    if (!revokeAppId) return;
+    try {
+      await revoke.mutateAsync(revokeAppId);
+    } catch {
+      // toast is fired by useConsentDecision onError
+    } finally {
+      setRevokeAppId(null);
+    }
+  };
 
   // Filter and sort applications
   const filteredApplications = applications
@@ -226,6 +312,47 @@ export default function CandidateApplications() {
                       Cancelar candidatura
                     </Button>
                   )}
+                  {disclosures[app.id]?.status === 'pending' && app.status === 'offer' && (
+                    <Button
+                      size="sm"
+                      className="gradient-primary"
+                      onClick={() => openConsentModal(app.id)}
+                    >
+                      <ShieldCheck className="w-4 h-4 mr-2" />
+                      Revisar compartilhamento
+                    </Button>
+                  )}
+                  {disclosures[app.id]?.status === 'accepted' && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTermAppId(app.id)}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Ver termo
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => setRevokeAppId(app.id)}
+                      >
+                        <ShieldOff className="w-4 h-4 mr-2" />
+                        Revogar autorização
+                      </Button>
+                    </>
+                  )}
+                  {disclosures[app.id]?.status === 'refused' && app.status === 'offer' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openConsentModal(app.id)}
+                    >
+                      <ShieldCheck className="w-4 h-4 mr-2" />
+                      Autorizar compartilhamento
+                    </Button>
+                  )}
                 </div>
               </motion.div>
             );
@@ -278,6 +405,127 @@ export default function CandidateApplications() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de decisão de consentimento (aceitar/recusar) */}
+      <Dialog open={!!consentAppId} onOpenChange={(o) => !o && setConsentAppId(null)}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Você foi aprovado!
+            </DialogTitle>
+            <DialogDescription>
+              {selectedApp
+                ? `${selectedApp.companyName} aprovou sua candidatura para "${selectedApp.jobTitle}". Para prosseguir, autorize o compartilhamento dos seus dados de contato.`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-sm">
+            <div className="space-y-2">
+              <p className="font-medium text-foreground">Dados que serão compartilhados</p>
+              <ul className="space-y-1 text-muted-foreground">
+                {['CPF', 'E-mail', 'Telefone', 'Data de nascimento', 'Endereço'].map((d) => (
+                  <li key={d} className="flex items-center gap-2">
+                    <ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+                    {d}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">Finalidade</p>
+              <p className="text-muted-foreground">
+                Permitir que a empresa entre em contato e formalize sua contratação. Base legal:
+                consentimento (Art. 7º, I, da LGPD).
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">Seus direitos</p>
+              <p className="text-muted-foreground">
+                Você pode revogar esta autorização a qualquer momento — os dados voltam a ficar
+                ocultos. O termo fica disponível para impressão e download.
+              </p>
+            </div>
+
+            <div className="flex items-start gap-3 pt-1">
+              <Checkbox
+                id="consent-acknowledge"
+                checked={consentChecked}
+                onCheckedChange={(c) => setConsentChecked(c === true)}
+              />
+              <Label htmlFor="consent-acknowledge" className="text-sm leading-snug cursor-pointer">
+                Li e autorizo o compartilhamento dos meus dados pessoais com a empresa para fins de
+                contratação.
+              </Label>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              O aceite é registrado com data, hora, IP e versão do termo para auditoria.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="ghost"
+              onClick={handleRefuse}
+              disabled={refuse.isPending || accept.isPending}
+            >
+              Agora não
+            </Button>
+            <Button
+              onClick={handleAccept}
+              disabled={!consentChecked || accept.isPending || refuse.isPending}
+            >
+              {accept.isPending ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Registrando…</>
+              ) : (
+                'Autorizar e compartilhar'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmação de revogação */}
+      <AlertDialog open={!!revokeAppId} onOpenChange={(o) => !o && setRevokeAppId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revogar autorização?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {revokeApp
+                ? `Seus dados de contato voltarão a ficar ocultos para ${revokeApp.companyName}. A empresa será notificada. Artefatos já baixados podem não ser recolhíveis.`
+                : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRevoke}
+              disabled={revoke.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {revoke.isPending ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Revogando…</>
+              ) : (
+                'Confirmar revogação'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Termo de consentimento */}
+      {termApp && termDisclosure && (
+        <ConsentTermDialog
+          open={!!termAppId}
+          onOpenChange={(o) => !o && setTermAppId(null)}
+          disclosure={termDisclosure}
+          parties={buildParties(termApp.id)}
+        />
+      )}
     </DashboardLayout>
   );
 }
