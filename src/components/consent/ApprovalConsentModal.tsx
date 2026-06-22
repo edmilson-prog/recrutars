@@ -303,7 +303,7 @@ export function ApprovalConsentModal({
                 <Button
                   onClick={handleAccept}
                   disabled={!consentChecked || busy}
-                  className="w-full bg-success text-success-foreground hover:bg-success/90"
+                  className="w-full gradient-primary"
                 >
                   {accept.isPending ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Registrando…</>
