@@ -340,47 +340,54 @@ export class CompanyTestsServiceSupabase implements ICompanyTestsService {
   // ----------------------------------------------------------
 
   async getCompanyCandidates(companyId: string, search?: string): Promise<CompanyCandidate[]> {
-    // Get candidates who applied to this company's jobs
-    let query = supabase
-      .from('candidates')
-      .select(`
-        id,
-        current_title,
-        profiles!candidates_profile_id_fkey (
-          full_name,
-          email,
-          avatar_url
-        )
-      `)
-      .in('id', supabase
-        .from('applications')
-        .select('candidate_id')
-        .in('job_id', supabase
-          .from('jobs')
-          .select('id')
-          .eq('company_id', companyId)
-        )
-      );
+    // Candidates who applied to this company's jobs (the "Da Base" tab).
+    // PII is read from candidates_for_company: the company lost direct SELECT on
+    // `candidates` with the LGPD consent migration, so the masked view is the only
+    // path that returns rows (name/title/avatar visible; email masked until consent).
+    const { data: jobRows, error: jobError } = await supabase
+      .from('jobs')
+      .select('id')
+      .eq('company_id', companyId);
+    if (jobError) throw jobError;
 
-    const { data, error } = await query;
+    const jobIds = (jobRows ?? []).map(row => (row as { id: string }).id);
+    if (jobIds.length === 0) return [];
+
+    const { data: appRows, error: appError } = await supabase
+      .from('applications')
+      .select('candidate_id')
+      .in('job_id', jobIds);
+    if (appError) throw appError;
+
+    const candidateIds = [
+      ...new Set(
+        (appRows ?? [])
+          .map(row => (row as { candidate_id: string | null }).candidate_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    if (candidateIds.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from('candidates_for_company' as never)
+      .select('id, name, email, title, avatar_url')
+      .in('id', candidateIds);
     if (error) throw error;
 
-    let candidates = (data ?? []).map((row: Record<string, unknown>) => {
-      const profile = row.profiles as Record<string, unknown> | null;
-      return {
-        id: row.id as string,
-        name: (profile?.full_name as string) ?? '',
-        email: (profile?.email as string) ?? '',
-        title: row.current_title as string | undefined,
-        avatarUrl: (profile?.avatar_url as string) ?? undefined,
-      };
-    });
+    const rows = (data ?? []) as unknown as Array<Record<string, unknown>>;
+    let candidates = rows.map(row => ({
+      id: row.id as string,
+      name: (row.name as string) ?? '',
+      email: (row.email as string) ?? '',
+      title: (row.title as string | null) ?? undefined,
+      avatarUrl: (row.avatar_url as string | null) ?? undefined,
+    }));
 
-    // Client-side search filter (for simplicity with nested joins)
+    // Client-side search (email may be masked to null without an accepted disclosure)
     if (search) {
       const term = search.toLowerCase();
       candidates = candidates.filter(
-        c => c.name.toLowerCase().includes(term) || c.email.toLowerCase().includes(term)
+        c => c.name.toLowerCase().includes(term) || c.email.toLowerCase().includes(term),
       );
     }
 
