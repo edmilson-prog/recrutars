@@ -147,6 +147,11 @@ WHERE public.get_user_type(auth.uid()) = 'company'
 
 GRANT SELECT ON public.curriculums_for_company TO authenticated;
 
+-- NOTE: these views return 0 rows for non-company callers (admin/candidate) by
+-- design (WHERE get_user_type(auth.uid())='company'). Admin/candidate reads use
+-- the base tables directly; service-layer code must query these views ONLY in
+-- company context (e.g. getCandidates/getProfileForCompany), never for admin.
+
 COMMENT ON VIEW public.candidates_for_company IS
   'Masked talent-pool view for company role: sensitive cols (cpf,email,phone,date_of_birth) NULL unless accepted disclosure exists';
 COMMENT ON VIEW public.curriculums_for_company IS

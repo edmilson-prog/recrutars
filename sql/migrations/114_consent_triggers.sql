@@ -22,6 +22,11 @@ BEGIN
     FROM public.jobs j
     WHERE j.id = NEW.job_id;
 
+    -- Orphaned application (no associated company) — nothing to gate; allow.
+    IF v_company_id IS NULL THEN
+      RETURN NEW;
+    END IF;
+
     IF NOT EXISTS (
       SELECT 1 FROM public.candidate_data_disclosures d
       WHERE d.application_id = NEW.id

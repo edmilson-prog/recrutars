@@ -107,6 +107,13 @@ ALTER TABLE public.test_audit_logs
   ADD CONSTRAINT test_audit_logs_resource_type_check
   CHECK (resource_type IN ('test', 'invitation', 'result', 'report', 'consent'));
 
+-- NOTE (audit integrity): the canonical write path for disclosures is the Edge
+-- Function `manage-data-consent` (service role), which captures ip/user_agent/
+-- term_hash/term_version server-side. The candidate UPDATE policy above is a
+-- fallback only; a direct client update would bypass that audit capture. Admin
+-- writes go via service role only (there is intentionally no admin INSERT/UPDATE/
+-- DELETE policy here).
+
 COMMENT ON TABLE public.candidate_data_disclosures IS
   'Per (application,company) LGPD consent for revealing candidate sensitive data (cpf,email,phone,date_of_birth)';
 COMMENT ON FUNCTION public.company_has_data_consent(UUID, UUID) IS
