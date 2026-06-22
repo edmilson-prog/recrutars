@@ -111,8 +111,8 @@ function candidateToRow(
 
   if (sections.includes('basicInfo')) {
     row['name'] = getDisplayName(candidate);
-    row['location'] = candidate.location;
-    row['email'] = candidateIsAnonymous ? '-' : candidate.email;
+    row['location'] = candidate.location ?? '-';
+    row['email'] = candidateIsAnonymous ? '-' : (candidate.email ?? '-');
     row['phone'] = candidateIsAnonymous ? '-' : candidate.phone || '-';
   }
 

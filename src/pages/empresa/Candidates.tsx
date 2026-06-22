@@ -635,7 +635,7 @@ export default function CompanyCandidates() {
       stateFilter === 'all' || candidate.state === stateFilter;
 
     const matchesLocation =
-      locationFilter === 'all' || candidate.location.includes(locationFilter);
+      locationFilter === 'all' || (candidate.location ?? '').includes(locationFilter);
 
     const gaugeResult = gaugeResultsByCandidate.get(candidate.id);
     const candidateProfile = gaugeResult?.archetype?.name
