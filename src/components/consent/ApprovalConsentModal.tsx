@@ -29,6 +29,7 @@ import {
   FileText,
   Ban,
   AlertTriangle,
+  type LucideIcon,
 } from 'lucide-react';
 import {
   Dialog,
@@ -42,24 +43,29 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQueryClient } from '@tanstack/react-query';
 import { useConsentDecision } from '@/hooks/useConsentDecision';
-import { useUpdateApplicationStatus, applicationKeys } from '@/hooks/useApplicationsQuery';
-import { consentKeys } from '@/hooks/useConsentStatus';
-import { computeTermHash, CONSENT_TERM_VERSION, CONSENT_TERM_TEXT } from '@/lib/consentTerm';
+import { useUpdateApplicationStatus } from '@/hooks/useApplicationsQuery';
+import {
+  computeTermHash,
+  CONSENT_TERM_VERSION,
+  CONSENT_TERM_TEXT,
+  SHARED_DATA_LABELS,
+} from '@/lib/consentTerm';
 import { ConsentTermDialog } from '@/components/consent/ConsentTermDialog';
 import type { ConsentTermParties } from '@/components/consent/consentTermHtml';
 import { toast } from 'sonner';
 import type { Application } from '@/types';
 import type { DataDisclosure } from '@/types/consent';
 
-const SHARED_DATA = [
-  { icon: Fingerprint, label: 'CPF' },
-  { icon: Mail, label: 'E-mail' },
-  { icon: Phone, label: 'Telefone' },
-  { icon: Cake, label: 'Data de nascimento' },
-  { icon: MapPin, label: 'Endereço' },
-] as const;
+// Labels come from the single source in @/lib/consentTerm so the modal can never
+// advertise a different set than the signed term; icons are presentation-only.
+const DATA_ICONS: Record<string, LucideIcon> = {
+  CPF: Fingerprint,
+  'E-mail': Mail,
+  Telefone: Phone,
+  'Data de nascimento': Cake,
+  Endereço: MapPin,
+};
 
 export interface ApprovalConsentModalProps {
   open: boolean;
@@ -86,7 +92,6 @@ export function ApprovalConsentModal({
   const { currentCandidate } = useAuth();
   const { accept, refuse } = useConsentDecision();
   const updateStatus = useUpdateApplicationStatus();
-  const queryClient = useQueryClient();
   const prefersReducedMotion = useReducedMotion();
   const titleRef = useRef<HTMLHeadingElement>(null);
 
@@ -146,13 +151,6 @@ export function ApprovalConsentModal({
         id: application.id,
         status: 'withdrawn',
         reason: 'Candidato recusou a proposta',
-      });
-      // useUpdateApplicationStatus only invalidates applicationKeys.lists(); the
-      // gate reads the candidate's applications via byCandidate, so invalidate the
-      // candidate-scoped caches explicitly to unlock the platform immediately.
-      queryClient.invalidateQueries({ queryKey: applicationKeys.all });
-      queryClient.invalidateQueries({
-        queryKey: consentKeys.byCandidate(application.candidateId),
       });
       toast.success('Candidatura recusada', {
         description: 'Você desistiu desta proposta. Seus dados seguem ocultos.',
@@ -235,15 +233,18 @@ export function ApprovalConsentModal({
                   Hoje ocultos. Ao autorizar, a empresa poderá vê-los para formalizar a contratação.
                 </p>
                 <ul className="mb-2 flex flex-wrap gap-1.5">
-                  {SHARED_DATA.map(({ icon: Icon, label }) => (
-                    <li
-                      key={label}
-                      className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-foreground"
-                    >
-                      <Icon className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
-                      {label}
-                    </li>
-                  ))}
+                  {SHARED_DATA_LABELS.map((label) => {
+                    const Icon = DATA_ICONS[label] ?? ShieldCheck;
+                    return (
+                      <li
+                        key={label}
+                        className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-foreground"
+                      >
+                        <Icon className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
+                        {label}
+                      </li>
+                    );
+                  })}
                 </ul>
                 <span className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-xs text-primary">
                   <ShieldCheck className="h-3 w-3" aria-hidden="true" />
