@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useRef } from 'react';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { getStandardizedSkillsService } from '@/services/standardizedSkills/standardizedSkillsService';
 import { standardizedSkillKeys, useCandidateStandardizedSkills } from '@/hooks/useStandardizedSkillsQuery';
 import type { MatchSkillsInput } from '@/types/disc';
@@ -74,6 +74,11 @@ import { useCreateConversation, useSendMessage } from '@/hooks/useMessagesQuery'
 import { useGaugeProResultByCandidate, useGaugeProSessionByCandidate } from '@/hooks/useGaugeProQuery';
 import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
 import { useProfileForCompany } from '@/hooks/useCurriculumsQuery';
+import { useConsentStatus } from '@/hooks/useConsentStatus';
+import { getConsentService } from '@/services/consent/consentService';
+import { ConsentTermDialog } from '@/components/consent/ConsentTermDialog';
+import { Lock, ScrollText } from 'lucide-react';
+import type { DataDisclosure } from '@/types/consent';
 import { useApplicationHighlights } from '@/hooks/useHighlightsQuery';
 import { useExternalApplicationsCount } from '@/hooks/useExternalApplicationsCount';
 import { HighlightBadge } from '@/components/match/HighlightBadge';
@@ -104,6 +109,7 @@ import { useCandidateNotes } from '@/hooks/useCandidateNotesQuery';
 import { useAIAnalysis } from '@/hooks/useAIAnalysis';
 import { interviewStatusLabels } from '@/types/interview';
 import type { CandidateNote } from '@/types/notes';
+import { useAddTestAuditLog } from '@/hooks/useCompanyTestsQuery';
 
 // Skill level colors for profile skills
 const skillLevelColors: Record<string, { bg: string; text: string }> = {
@@ -201,20 +207,6 @@ function formatPhone(value: string): string {
     .replace(/(\d{5})(\d)/, '$1-$2');
 }
 
-function maskEmail(email: string): string {
-  const [local, domain] = email.split('@');
-  if (!domain) return '***';
-  if (local.length <= 4) return `${local[0]}***@${domain}`;
-  return `${local.slice(0, 3)}***${local.slice(-3)}@${domain}`;
-}
-
-function maskPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length < 6) return '(**) *****-****';
-  const ddd = digits.slice(0, 2);
-  const last2 = digits.slice(-2);
-  return `(${ddd}) *****-**${last2}`;
-}
 
 // Converts the AI analysis markdown into plain text suitable for the PDF
 // (react-pdf does not parse markdown, so raw #/**/- markers would leak through).
@@ -342,12 +334,6 @@ export default function CandidateProfile() {
     [companyJobs, appliedJobIds]
   );
 
-  const activeStatuses = ['pending', 'reviewing', 'interview', 'offer'];
-  const hasActiveApplication = useMemo(
-    () => candidateApplications.some((a) => activeStatuses.includes(a.status)),
-    [candidateApplications]
-  );
-
   const experienceYears = useMemo(() => {
     const fromDb = candidate?.experience ?? 0;
     if (fromDb > 0) return fromDb;
@@ -361,11 +347,31 @@ export default function CandidateProfile() {
   const { data: highlights } = useApplicationHighlights(activeApplicationId);
   const { data: serverNotes = [] } = useApplicationNotes(activeApplicationId);
   const addNoteMutation = useAddApplicationNote();
+  const addAuditLog = useAddTestAuditLog();
 
   const selectedApplication = useMemo(
     () => candidateApplications.find((a) => a.id === selectedApplicationId) || candidateApplications[0] || null,
     [candidateApplications, selectedApplicationId]
   );
+
+  // LGPD: estado de consentimento da candidatura selecionada
+  const [consentTermOpen, setConsentTermOpen] = useState(false);
+  const consentApplicationId = selectedApplication?.id ?? '';
+  const { data: consentStatus } = useConsentStatus(consentApplicationId);
+  const isPiiRevealed = consentStatus === 'accepted';
+
+  // Disclosure completo (faixa "Liberado em" + termo) — só busca quando aceito
+  const { data: consentDisclosure } = useQuery<DataDisclosure | null>({
+    queryKey: ['consent', 'disclosure', consentApplicationId],
+    queryFn: () => getConsentService().then(svc => svc.getDisclosure(consentApplicationId)),
+    enabled: isPiiRevealed && !!consentApplicationId,
+  });
+
+  const consentReleasedLabel = consentDisclosure?.acceptedAt
+    ? new Date(consentDisclosure.acceptedAt).toLocaleString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+      })
+    : null;
 
   // Existing notes: server (persisted) + local (optimistic, deduped)
   const existingNotes = useMemo(() => {
@@ -564,8 +570,8 @@ export default function CandidateProfile() {
       candidate: {
         id: candidate.id,
         name: getCandidateDisplayName(candidate),
-        email: candidate.email,
-        phone: candidate.phone,
+        email: isPiiRevealed ? candidate.email : undefined,
+        phone: isPiiRevealed ? candidate.phone : undefined,
         avatar: candidate.avatar,
         city: candidate.city,
         state: candidate.state,
@@ -629,6 +635,7 @@ export default function CandidateProfile() {
     activityLogForExport,
     aiPracticalAnalysis,
     highlightsForExport,
+    isPiiRevealed,
   ]);
 
   if (!candidate) {
@@ -798,43 +805,113 @@ export default function CandidateProfile() {
                         ? `${experienceYears} ano${experienceYears !== 1 ? 's' : ''} de experiência`
                         : 'Sem experiência informada'}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Mail className="w-4 h-4" />
-                      {hasActiveApplication ? candidate.email : maskEmail(candidate.email ?? '')}
-                    </span>
-                    {candidate.phone && (
-                      hasActiveApplication ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <a
-                              href={`https://wa.me/55${candidate.phone.replace(/\D/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1 hover:text-foreground hover:underline transition-colors"
-                            >
-                              <Phone className="w-4 h-4" />
-                              {formatPhone(candidate.phone)}
-                            </a>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Abrir WhatsApp — visível porque o candidato possui candidatura ativa</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="flex items-center gap-1 cursor-default">
-                              <Phone className="w-4 h-4" />
-                              {maskPhone(candidate.phone)}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Contato visível apenas para candidatos em processo seletivo</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      )
+                    {isPiiRevealed && candidate.email ? (
+                      <span className="flex items-center gap-1">
+                        <Mail className="w-4 h-4" />
+                        {candidate.email}
+                      </span>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1 cursor-default text-muted-foreground/70">
+                            <Lock className="w-3.5 h-3.5" />
+                            E-mail oculto
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Liberado apenas após o candidato autorizar o compartilhamento (LGPD)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {isPiiRevealed && candidate.phone ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a
+                            href={`https://wa.me/55${candidate.phone.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 hover:text-foreground hover:underline transition-colors"
+                          >
+                            <Phone className="w-4 h-4" />
+                            {formatPhone(candidate.phone)}
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Abrir WhatsApp — liberado pelo consentimento do candidato</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1 cursor-default text-muted-foreground/70">
+                            <Lock className="w-3.5 h-3.5" />
+                            Telefone oculto
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Liberado apenas após o candidato autorizar o compartilhamento (LGPD)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {isPiiRevealed && candidate.cpf ? (
+                      <span className="flex items-center gap-1">
+                        <FileText className="w-4 h-4" />
+                        CPF: {candidate.cpf}
+                      </span>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1 cursor-default text-muted-foreground/70">
+                            <Lock className="w-3.5 h-3.5" />
+                            CPF oculto
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Liberado apenas após o candidato autorizar o compartilhamento (LGPD)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {isPiiRevealed && candidate.dateOfBirth ? (
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        {new Date(candidate.dateOfBirth).toLocaleDateString('pt-BR')}
+                      </span>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1 cursor-default text-muted-foreground/70">
+                            <Lock className="w-3.5 h-3.5" />
+                            Nascimento oculto
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Liberado apenas após o candidato autorizar o compartilhamento (LGPD)</p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                   </div>
+
+                  {/* LGPD: Faixa "Dados liberados" + botão "Ver termo" */}
+                  {isPiiRevealed && (
+                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-700 dark:text-emerald-400">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      <span>
+                        Dados liberados pelo candidato
+                        {consentReleasedLabel ? ` em ${consentReleasedLabel}` : ''}
+                      </span>
+                      {consentDisclosure && (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-xs text-emerald-700 dark:text-emerald-400 underline"
+                          onClick={() => setConsentTermOpen(true)}
+                        >
+                          <ScrollText className="w-3.5 h-3.5 mr-1" />
+                          Ver termo
+                        </Button>
+                      )}
+                    </div>
+                  )}
 
                   {/* Application badges */}
                   {(candidateApplications.length > 0 || externalCount > 0) && (
@@ -1907,6 +1984,36 @@ export default function CandidateProfile() {
           open={exportModalOpen}
           onOpenChange={setExportModalOpen}
           data={exportData}
+          onPiiExported={() => {
+            if (!currentCompany || !user) return;
+            addAuditLog.mutate({
+              action: 'sensitive_data_revealed',
+              userId: user.id,
+              userName: currentCompany.name ?? 'Empresa',
+              resourceType: 'consent',
+              resourceId: candidate.id,
+              resourceName: getCandidateDisplayName(candidate),
+              details: `PDF do dossiê exportado com dados pessoais (candidatura ${selectedApplication?.id ?? '—'})`,
+              companyId: currentCompany.id,
+            });
+          }}
+        />
+      )}
+
+      {/* LGPD: Termo de consentimento (inline, reutilizável) */}
+      {consentDisclosure && (
+        <ConsentTermDialog
+          open={consentTermOpen}
+          onOpenChange={setConsentTermOpen}
+          disclosure={consentDisclosure}
+          parties={{
+            candidateName: getCandidateDisplayName(candidate),
+            candidateCpf: candidate.cpf,
+            companyName: currentCompany?.name ?? '',
+            companyLogo: currentCompany?.logo ?? null,
+            jobTitle: selectedApplication?.jobTitle ?? '',
+            operatorName: 'RecrutaRS',
+          }}
         />
       )}
     </DashboardLayout>
