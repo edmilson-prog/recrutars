@@ -398,6 +398,30 @@ export default function CompanyApplications() {
     [applications_, localStatusOverrides]
   );
 
+  // Build candidatesById map for client-side name/avatar enrichment (C7: embed removed)
+  const candidatesById = useMemo(() => {
+    const map = new Map<string, { name: string; avatar?: string }>();
+    for (const c of allCandidates) {
+      map.set(c.id, { name: c.name, avatar: c.avatar });
+    }
+    return map;
+  }, [allCandidates]);
+
+  // Enrich applications with candidateName/candidateAvatar from the candidates map
+  // (candidateName is no longer embedded by the service after the LGPD embed migration)
+  const applicationsWithCandidate = useMemo(
+    () =>
+      applications.map((app) => {
+        const c = candidatesById.get(app.candidateId);
+        return {
+          ...app,
+          candidateName: c?.name ?? app.candidateName ?? '',
+          candidateAvatar: c?.avatar ?? app.candidateAvatar,
+        };
+      }),
+    [applications, candidatesById],
+  );
+
   // Statuses that count as active in the pipeline
   const activeStatuses = ['pending', 'reviewing', 'interview', 'offer'];
 
@@ -456,8 +480,8 @@ export default function CompanyApplications() {
     }
   }, [companyJobs, selectedJobId]);
 
-  // Filter applications for selected job
-  const jobApplications = applications.filter(
+  // Filter applications for selected job (use enriched array so candidateName is populated)
+  const jobApplications = applicationsWithCandidate.filter(
     (app) => app.jobId === selectedJobId
   );
 
@@ -564,7 +588,7 @@ export default function CompanyApplications() {
   // --- Fim Drag-and-Drop ---
 
   const handleMove = (applicationId: string, newStatus: ApplicationStatus) => {
-    const app = applications.find((a) => a.id === applicationId);
+    const app = applicationsWithCandidate.find((a) => a.id === applicationId);
     if (!app) return;
 
     const oldStatus = app.status;
@@ -1731,7 +1755,7 @@ export default function CompanyApplications() {
           if (candidate) {
             toast.success(`Candidato ${getCandidateDisplayName(candidate)} movido para Entrevista`);
             // Encontrar a candidatura e mover para entrevista
-            const app = applications.find((a) => a.candidateId === candidateId);
+            const app = applicationsWithCandidate.find((a) => a.candidateId === candidateId);
             if (app) {
               handleMove(app.id, 'interview');
             }

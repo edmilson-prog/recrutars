@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabase';
 import type { IMessagesService } from './messagesService';
 
 // PostgREST JOIN select — pulls names from FK relationships
-const CONVERSATION_SELECT = '*, candidates(name), companies(name), jobs(title)';
+const CONVERSATION_SELECT = '*, companies(name), jobs(title)';
 
 export class MessagesServiceSupabase implements IMessagesService {
   async getConversations(userId: string, userType: string): Promise<Conversation[]> {
@@ -190,7 +190,7 @@ export class MessagesServiceSupabase implements IMessagesService {
     return {
       id: row.id,
       candidateId: row.candidate_id,
-      candidateName: row.candidates?.name ?? '',
+      candidateName: '', // populated client-side from useCandidates map
       companyId: row.company_id,
       companyName: row.companies?.name ?? '',
       jobId: row.job_id ?? '',

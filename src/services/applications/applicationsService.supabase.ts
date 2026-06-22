@@ -35,10 +35,6 @@ type ApplicationWithJoins = ApplicationRow & {
     company_id: string;
     companies?: { name: string } | null;
   } | null;
-  candidates?: {
-    name: string;
-    avatar_url: string | null;
-  } | null;
 };
 
 // Shape of a note row with joined author profile
@@ -57,8 +53,8 @@ function applicationRowToApplication(row: ApplicationWithJoins): Application {
     id: row.id,
     jobId: row.job_id,
     candidateId: row.candidate_id,
-    candidateName: row.candidates?.name ?? '',
-    candidateAvatar: row.candidates?.avatar_url ?? undefined,
+    candidateName: '', // populated client-side from useCandidates map
+    candidateAvatar: undefined, // populated client-side from useCandidates map
     jobTitle: row.jobs?.title ?? '',
     companyName: row.jobs?.companies?.name ?? '',
     status: row.status as ApplicationStatus,
@@ -99,7 +95,6 @@ function historyRowToHistory(row: HistoryWithActor): ApplicationHistory {
 const APPLICATION_SELECT = [
   '*',
   'jobs!applications_job_id_fkey(title, company_id, companies!jobs_company_id_fkey(name))',
-  'candidates!applications_candidate_id_fkey(name, avatar_url)',
 ].join(', ');
 
 /** Column name mapping from camelCase sort fields to snake_case DB columns. */
