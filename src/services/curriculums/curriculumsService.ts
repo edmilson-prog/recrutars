@@ -16,6 +16,9 @@ export interface ICurriculumsService {
   /** Get the single professional profile for a candidate */
   getProfile(candidateId: string): Promise<Curriculum | null>;
 
+  /** Company-facing read: pai via view mascarada + filhos por curriculum_id. */
+  getProfileForCompany(candidateId: string): Promise<Curriculum | null>;
+
   /** Get or create the professional profile for a candidate */
   ensureProfile(candidateId: string, initialData?: Partial<Curriculum>): Promise<Curriculum>;
 

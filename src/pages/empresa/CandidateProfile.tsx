@@ -73,7 +73,7 @@ import { useApplications, useApplicationNotes, useAddApplicationNote, useCreateA
 import { useCreateConversation, useSendMessage } from '@/hooks/useMessagesQuery';
 import { useGaugeProResultByCandidate, useGaugeProSessionByCandidate } from '@/hooks/useGaugeProQuery';
 import { GaugeProResponsesCard } from '@/components/gaugePro/GaugeProResponsesCard';
-import { useProfile } from '@/hooks/useCurriculumsQuery';
+import { useProfileForCompany } from '@/hooks/useCurriculumsQuery';
 import { useApplicationHighlights } from '@/hooks/useHighlightsQuery';
 import { useExternalApplicationsCount } from '@/hooks/useExternalApplicationsCount';
 import { HighlightBadge } from '@/components/match/HighlightBadge';
@@ -312,7 +312,7 @@ export default function CandidateProfile() {
   });
 
   // PRD-073: Professional profile + highlights
-  const { data: profile } = useProfile(candidate?.id || '');
+  const { data: profile } = useProfileForCompany(candidate?.id || '');
 
   // Candidate-level notes (cross-application) for PDF export
   const { data: candidateNotesList } = useCandidateNotes(candidate?.id, currentCompany?.id);

@@ -209,6 +209,48 @@ export class SupabaseCurriculumsService implements ICurriculumsService {
     return data ? rowToCurriculum(data as Record<string, unknown>) : null;
   }
 
+  async getProfileForCompany(candidateId: string): Promise<Curriculum | null> {
+    // 1) Parent row from the masked view — NO embeds (embedding children
+    //    through a view is unsupported by PostgREST).
+    const { data: parent, error: parentError } = await supabase
+      .from('curriculums_for_company' as never)
+      .select('*')
+      .eq('candidate_id', candidateId)
+      .maybeSingle();
+
+    if (parentError) {
+      throw new Error(`Failed to fetch company profile: ${parentError.message}`);
+    }
+    if (!parent) return null;
+
+    const parentRow = parent as Record<string, unknown>;
+    const curriculumId = parentRow.id as string;
+
+    // 2) Children in separate queries by curriculum_id (their *_select_company
+    //    policies remain in place and govern visibility).
+    const [expRes, eduRes, skillRes, courseRes] = await Promise.all([
+      supabase.from('curriculum_experiences').select('*').eq('curriculum_id', curriculumId).order('sort_order', { ascending: true }),
+      supabase.from('curriculum_education').select('*').eq('curriculum_id', curriculumId).order('sort_order', { ascending: true }),
+      supabase.from('curriculum_skills').select('*').eq('curriculum_id', curriculumId),
+      supabase.from('curriculum_courses').select('*').eq('curriculum_id', curriculumId),
+    ]);
+
+    if (expRes.error) throw new Error(`Failed to fetch experiences: ${expRes.error.message}`);
+    if (eduRes.error) throw new Error(`Failed to fetch education: ${eduRes.error.message}`);
+    if (skillRes.error) throw new Error(`Failed to fetch skills: ${skillRes.error.message}`);
+    if (courseRes.error) throw new Error(`Failed to fetch courses: ${courseRes.error.message}`);
+
+    // 3) Assemble manually: reuse rowToCurriculum by injecting children under
+    //    the keys it expects (curriculum_experiences, etc.).
+    return rowToCurriculum({
+      ...parentRow,
+      curriculum_experiences: expRes.data ?? [],
+      curriculum_education: eduRes.data ?? [],
+      curriculum_skills: skillRes.data ?? [],
+      curriculum_courses: courseRes.data ?? [],
+    });
+  }
+
   async ensureProfile(candidateId: string, initialData?: Partial<Curriculum>): Promise<Curriculum> {
     // Try to fetch existing profile
     const existing = await this.getProfile(candidateId);
