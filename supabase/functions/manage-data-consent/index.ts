@@ -36,7 +36,7 @@ function json(data: Record<string, unknown>, status = 200): Response {
 
 function errorResponse(message: string, status = 400): Response {
   console.error(`[manage-data-consent] Error (${status}): ${message}`);
-  return json({ success: false, error: message }, status);
+  return json({ success: false, message }, status);
 }
 
 /** Extract the first client IP from x-forwarded-for. */
@@ -201,12 +201,40 @@ Deno.serve(async (req: Request) => {
   const userAgent = req.headers.get('user-agent');
   const nowIso = new Date().toISOString();
 
+  // Authorization pre-check for candidate-owned actions (Critical #1).
+  // Must happen after resolveContext so we have the candidate's profile_id.
+  if (action === 'accept' || action === 'refuse' || action === 'revoke') {
+    if (caller.id !== ctx.candidate.profile_id) {
+      return errorResponse(
+        'Acesso negado: apenas o candidato pode aceitar, recusar ou revogar o consentimento.',
+        403,
+      );
+    }
+  }
+
   try {
     switch (action) {
       // ------------------------------------------------------------------
       // notify_request (company side): ensure a pending disclosure + notify
       // ------------------------------------------------------------------
       case 'notify_request': {
+        // Authorization: caller must be the company's profile OR a member of the company.
+        const isCompanyOwner = caller.id === ctx.company.profile_id;
+        if (!isCompanyOwner) {
+          const { data: companyMember } = await supabase
+            .from('company_users')
+            .select('profile_id')
+            .eq('company_id', ctx.company.id)
+            .eq('profile_id', caller.id)
+            .maybeSingle();
+          if (!companyMember) {
+            return errorResponse(
+              'Acesso negado: apenas a empresa responsável pela vaga pode solicitar consentimento.',
+              403,
+            );
+          }
+        }
+
         // Idempotent upsert on the unique (application_id, company_id) pair.
         const { data: existing } = await supabase
           .from('candidate_data_disclosures')
@@ -216,6 +244,12 @@ Deno.serve(async (req: Request) => {
           .maybeSingle();
 
         let disclosure = existing;
+
+        // Idempotency guard: if already pending or accepted, return existing row without
+        // sending another notification/email (avoids duplicate spam to the candidate).
+        if (existing && (existing.status === 'pending' || existing.status === 'accepted')) {
+          return json({ success: true, disclosure: existing });
+        }
 
         if (!existing) {
           const { data: inserted, error: insertErr } = await supabase
