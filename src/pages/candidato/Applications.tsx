@@ -134,10 +134,9 @@ export default function CandidateApplications() {
     if (!consentAppId) return;
     try {
       await refuse.mutateAsync(consentAppId);
-      toast.success('Você optou por não compartilhar agora');
       setConsentAppId(null);
     } catch {
-      toast.error('Não foi possível registrar a recusa. Tente novamente.');
+      // error toast handled by the useConsentDecision hook
     }
   };
 
