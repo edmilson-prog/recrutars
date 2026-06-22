@@ -12,7 +12,7 @@
  * of the three actions. LGPD Art. 7º, I requires consent to be free, so the two
  * refusal paths carry the same visual weight as the accept path.
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
   PartyPopper,
@@ -42,8 +42,10 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { useConsentDecision } from '@/hooks/useConsentDecision';
-import { useUpdateApplicationStatus } from '@/hooks/useApplicationsQuery';
+import { useUpdateApplicationStatus, applicationKeys } from '@/hooks/useApplicationsQuery';
+import { consentKeys } from '@/hooks/useConsentStatus';
 import { computeTermHash, CONSENT_TERM_VERSION, CONSENT_TERM_TEXT } from '@/lib/consentTerm';
 import { ConsentTermDialog } from '@/components/consent/ConsentTermDialog';
 import type { ConsentTermParties } from '@/components/consent/consentTermHtml';
@@ -86,7 +88,9 @@ export function ApprovalConsentModal({
   const { currentCandidate } = useAuth();
   const { accept, refuse } = useConsentDecision();
   const updateStatus = useUpdateApplicationStatus();
+  const queryClient = useQueryClient();
   const prefersReducedMotion = useReducedMotion();
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
   const [consentChecked, setConsentChecked] = useState(false);
   const [declineConfirm, setDeclineConfirm] = useState(false);
@@ -139,6 +143,13 @@ export function ApprovalConsentModal({
         status: 'withdrawn',
         reason: 'Candidato recusou a proposta',
       });
+      // useUpdateApplicationStatus only invalidates applicationKeys.lists(); the
+      // gate reads the candidate's applications via byCandidate, so invalidate the
+      // candidate-scoped caches explicitly to unlock the platform immediately.
+      queryClient.invalidateQueries({ queryKey: applicationKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: consentKeys.byCandidate(application.candidateId),
+      });
       toast.success('Candidatura recusada', {
         description: 'Você desistiu desta proposta. Seus dados seguem ocultos.',
       });
@@ -166,6 +177,12 @@ export function ApprovalConsentModal({
           onEscapeKeyDown={blocking ? (e) => e.preventDefault() : undefined}
           onPointerDownOutside={blocking ? (e) => e.preventDefault() : undefined}
           onInteractOutside={blocking ? (e) => e.preventDefault() : undefined}
+          onOpenAutoFocus={(e) => {
+            // Land initial focus on the (non-interactive) title rather than on
+            // the first control, so the consent decision is never pre-focused.
+            e.preventDefault();
+            titleRef.current?.focus();
+          }}
         >
           <DialogHeader className="items-center text-center">
             {showQueue && (
@@ -181,7 +198,9 @@ export function ApprovalConsentModal({
             >
               <PartyPopper className="h-8 w-8 text-primary" aria-hidden="true" />
             </motion.div>
-            <DialogTitle className="text-xl">Parabéns! Você foi aprovado</DialogTitle>
+            <DialogTitle ref={titleRef} tabIndex={-1} className="text-xl outline-none">
+              Parabéns! Você foi aprovado
+            </DialogTitle>
             <DialogDescription>
               <span className="font-medium text-foreground">{application.companyName}</span> aprovou
               sua candidatura para{' '}
