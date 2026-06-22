@@ -359,6 +359,12 @@ export default function CandidateProfile() {
   const consentApplicationId = selectedApplication?.id ?? '';
   const { data: consentStatus } = useConsentStatus(consentApplicationId);
   const isPiiRevealed = consentStatus === 'accepted';
+  // LGPD: o telefone é liberado ao recrutador assim que o candidato entra em um
+  // processo seletivo da empresa (tem ao menos 1 candidatura a uma vaga dela),
+  // independentemente do consentimento. Os demais dados sensíveis (e-mail, CPF,
+  // nascimento) só são revelados com o aceite do termo (isPiiRevealed).
+  const isInCompanyProcess = candidateApplications.length > 0;
+  const isPhoneRevealed = isPiiRevealed || isInCompanyProcess;
 
   // Fix 3: reset term dialog when selected application changes
   useEffect(() => { setConsentTermOpen(false); }, [consentApplicationId]);
@@ -574,7 +580,7 @@ export default function CandidateProfile() {
         id: candidate.id,
         name: getCandidateDisplayName(candidate),
         email: isPiiRevealed ? candidate.email : undefined,
-        phone: isPiiRevealed ? candidate.phone : undefined,
+        phone: isPhoneRevealed ? candidate.phone : undefined,
         avatar: candidate.avatar,
         city: candidate.city,
         state: candidate.state,
@@ -639,6 +645,7 @@ export default function CandidateProfile() {
     aiPracticalAnalysis,
     highlightsForExport,
     isPiiRevealed,
+    isPhoneRevealed,
   ]);
 
   if (!candidate) {
@@ -833,7 +840,7 @@ export default function CandidateProfile() {
                         </TooltipContent>
                       </Tooltip>
                     )}
-                    {isPiiRevealed ? (
+                    {isPhoneRevealed ? (
                       candidate.phone ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -848,7 +855,7 @@ export default function CandidateProfile() {
                             </a>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Abrir WhatsApp — liberado pelo consentimento do candidato</p>
+                            <p>Abrir conversa no WhatsApp</p>
                           </TooltipContent>
                         </Tooltip>
                       ) : (
@@ -866,7 +873,7 @@ export default function CandidateProfile() {
                           </span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Liberado apenas após o candidato autorizar o compartilhamento (LGPD)</p>
+                          <p>Liberado assim que o candidato entra em um processo seletivo da sua empresa</p>
                         </TooltipContent>
                       </Tooltip>
                     )}
