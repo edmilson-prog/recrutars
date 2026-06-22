@@ -52,3 +52,6 @@ verify_jwt = false
 # Auth: static x-migration-key header validated inside the function.
 [functions.migrate-certificates-to-storage]
 verify_jwt = false
+
+[functions.manage-data-consent]
+verify_jwt = false
