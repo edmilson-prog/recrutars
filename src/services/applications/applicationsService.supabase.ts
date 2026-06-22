@@ -8,6 +8,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 import type {
   Application,
@@ -297,6 +298,33 @@ export class ApplicationsServiceSupabase implements IApplicationsService {
       changed_by: userData?.user?.id ?? '',
       reason: reason ?? null,
     });
+
+    // On approval (→ offer), request data-disclosure consent: ensures a pending
+    // disclosure exists and notifies/e-mails the candidate. Best-effort: a failure
+    // here must not roll back the status change (the trigger guarantees the
+    // disclosure row; this invoke only drives notification + e-mail).
+    if (status === 'offer' && previousStatus !== 'offer') {
+      try {
+        const { error: consentError } = await supabase.functions.invoke(
+          'manage-data-consent',
+          { body: { action: 'notify_request', applicationId: id } },
+        );
+        if (consentError) {
+          let detail = consentError.message;
+          if (consentError instanceof FunctionsHttpError) {
+            try {
+              const body = await consentError.context.json();
+              if (body?.message) detail = body.message as string;
+            } catch {
+              // Body was not JSON — keep the original message.
+            }
+          }
+          console.error('[consent] notify_request failed:', detail);
+        }
+      } catch (err) {
+        console.error('[consent] notify_request threw:', err);
+      }
+    }
 
     return applicationRowToApplication(data);
   }
