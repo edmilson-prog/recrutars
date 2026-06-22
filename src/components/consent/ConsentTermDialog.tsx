@@ -138,6 +138,9 @@ export function ConsentTermDialog({
             <p className="text-muted-foreground break-all">
               Hash (SHA-256): {disclosure.termHash ?? '—'}
             </p>
+            <p className="text-muted-foreground">
+              Versão do termo: {disclosure.termVersion ?? CONSENT_TERM_VERSION}
+            </p>
           </div>
         </div>
 

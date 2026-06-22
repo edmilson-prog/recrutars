@@ -3,7 +3,7 @@
  * PRD-009: Minhas Candidaturas
  */
 
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -124,10 +124,9 @@ export default function CandidateApplications() {
         termVersion: CONSENT_TERM_VERSION,
         termHash,
       });
-      toast.success('Compartilhamento autorizado');
       setConsentAppId(null);
     } catch {
-      toast.error('Não foi possível registrar o consentimento. Tente novamente.');
+      // toast is fired by useConsentDecision onError
     }
   };
 
@@ -142,14 +141,15 @@ export default function CandidateApplications() {
     }
   };
 
-  const handleRevoke = async () => {
+  const handleRevoke = async (e: MouseEvent) => {
+    e.preventDefault(); // prevent AlertDialogAction from auto-closing before async completes
     if (!revokeAppId) return;
     try {
       await revoke.mutateAsync(revokeAppId);
-      toast.success('Consentimento revogado. Os dados foram novamente ocultados.');
-      setRevokeAppId(null);
     } catch {
-      toast.error('Não foi possível revogar o consentimento. Tente novamente.');
+      // toast is fired by useConsentDecision onError
+    } finally {
+      setRevokeAppId(null);
     }
   };
 
@@ -505,9 +505,14 @@ export default function CandidateApplications() {
             <AlertDialogCancel>Voltar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRevoke}
+              disabled={revoke.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Confirmar revogação
+              {revoke.isPending ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Revogando…</>
+              ) : (
+                'Confirmar revogação'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
