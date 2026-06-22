@@ -11,6 +11,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RedirectIfAuthenticated } from "@/components/auth/RedirectIfAuthenticated";
 import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
 import { CompanyOnboardingGuard } from "@/components/auth/CompanyOnboardingGuard";
+import { PendingApprovalGate } from "@/components/auth/PendingApprovalGate";
 
 // Public pages
 import Landing from "./pages/Landing";
@@ -228,6 +229,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <ChatbotWidget />
+              <PendingApprovalGate />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
