@@ -14,6 +14,10 @@ export const consentKeys = {
   all: ['consent'] as const,
   disclosure: (applicationId: string) =>
     [...consentKeys.all, 'disclosure', applicationId] as const,
+  // Distinct key for the FULL disclosure object (term/banner), so it never
+  // collides with `disclosure` which caches only the status string.
+  disclosureFull: (applicationId: string) =>
+    [...consentKeys.all, 'disclosureFull', applicationId] as const,
   byCandidate: (candidateId: string) =>
     [...consentKeys.all, 'byCandidate', candidateId] as const,
 };

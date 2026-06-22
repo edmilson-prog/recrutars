@@ -21,6 +21,9 @@ export function useConsentDecision() {
     queryClient.invalidateQueries({
       queryKey: consentKeys.disclosure(applicationId),
     });
+    queryClient.invalidateQueries({
+      queryKey: consentKeys.disclosureFull(applicationId),
+    });
     if (currentCandidate?.id) {
       queryClient.invalidateQueries({
         queryKey: consentKeys.byCandidate(currentCandidate.id),

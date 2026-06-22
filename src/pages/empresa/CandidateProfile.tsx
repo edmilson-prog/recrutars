@@ -365,7 +365,7 @@ export default function CandidateProfile() {
 
   // Disclosure completo (faixa "Liberado em" + termo) — só busca quando aceito
   const { data: consentDisclosure } = useQuery<DataDisclosure | null>({
-    queryKey: consentKeys.disclosure(consentApplicationId),
+    queryKey: consentKeys.disclosureFull(consentApplicationId),
     queryFn: () => getConsentService().then(svc => svc.getDisclosure(consentApplicationId)),
     enabled: isPiiRevealed && !!consentApplicationId,
   });
