@@ -13,23 +13,28 @@ import { ApprovalConsentModal } from '@/components/consent/ApprovalConsentModal'
 
 export function PendingApprovalGate() {
   const { user, currentCandidate, loading, isImpersonationActive } = useAuth();
-  const candidateId = currentCandidate?.id ?? '';
+  // Only an active (non-impersonated) candidate session drives the gate. Gating
+  // candidateId here keeps both queries disabled (enabled: !!candidateId) while
+  // auth resolves, during admin impersonation (read-only), and for non-candidate
+  // sessions — so no wasted fetch happens before the early return below.
+  const isActiveCandidate =
+    !loading && !isImpersonationActive && user?.type === 'candidate';
+  const candidateId = isActiveCandidate ? currentCandidate?.id ?? '' : '';
   const pending = usePendingApprovals(candidateId);
 
-  // Bypass while auth resolves, during admin impersonation (read-only), and for
-  // any non-candidate session.
-  if (loading || isImpersonationActive) return null;
-  if (!user || user.type !== 'candidate' || !currentCandidate) return null;
+  if (!isActiveCandidate || !currentCandidate) return null;
   if (pending.length === 0) return null;
 
   const current = pending[0];
   return (
     <ApprovalConsentModal
+      // Remount per application so internal state (consent checkbox, decline
+      // confirmation) never leaks from one queued approval to the next.
+      key={current.application.id}
       open
       blocking
       application={current.application}
       disclosure={current.disclosure}
-      queueIndex={1}
       queueTotal={pending.length}
     />
   );

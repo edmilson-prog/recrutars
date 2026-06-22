@@ -67,8 +67,7 @@ export interface ApprovalConsentModalProps {
   disclosure: DataDisclosure;
   /** When true: no Esc / outside-click / X — the candidate must decide. */
   blocking?: boolean;
-  /** 1-based position in the pending queue (shown only when queueTotal > 1). */
-  queueIndex?: number;
+  /** Total pending approvals in the queue (shown as a count when > 1). */
   queueTotal?: number;
   onOpenChange?: (open: boolean) => void;
   /** Called after any of the three actions succeeds. */
@@ -80,7 +79,6 @@ export function ApprovalConsentModal({
   application,
   disclosure,
   blocking = false,
-  queueIndex,
   queueTotal,
   onOpenChange,
   onResolved,
@@ -95,8 +93,12 @@ export function ApprovalConsentModal({
   const [consentChecked, setConsentChecked] = useState(false);
   const [declineConfirm, setDeclineConfirm] = useState(false);
   const [showTerm, setShowTerm] = useState(false);
+  // In blocking mode the modal stays mounted between a successful action and the
+  // gate's refetch-driven unmount; `resolved` locks the footer so a second,
+  // conflicting decision can't be fired on the same application in that window.
+  const [resolved, setResolved] = useState(false);
 
-  const busy = accept.isPending || refuse.isPending || updateStatus.isPending;
+  const busy = resolved || accept.isPending || refuse.isPending || updateStatus.isPending;
   const showQueue = !!queueTotal && queueTotal > 1;
 
   const parties: ConsentTermParties = {
@@ -119,6 +121,7 @@ export function ApprovalConsentModal({
         termVersion: CONSENT_TERM_VERSION,
         termHash,
       });
+      setResolved(true);
       onResolved?.();
       close();
     } catch {
@@ -129,6 +132,7 @@ export function ApprovalConsentModal({
   const handleRefuseData = async () => {
     try {
       await refuse.mutateAsync(application.id);
+      setResolved(true);
       onResolved?.();
       close();
     } catch {
@@ -153,6 +157,7 @@ export function ApprovalConsentModal({
       toast.success('Candidatura recusada', {
         description: 'Você desistiu desta proposta. Seus dados seguem ocultos.',
       });
+      setResolved(true);
       onResolved?.();
       setDeclineConfirm(false);
       close();
@@ -187,7 +192,7 @@ export function ApprovalConsentModal({
           <DialogHeader className="items-center text-center">
             {showQueue && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
-                Aprovação {queueIndex} de {queueTotal}
+                {queueTotal} aprovações pendentes
               </span>
             )}
             <motion.div
