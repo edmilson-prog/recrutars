@@ -56,6 +56,7 @@ interface HiringModalProps {
   matchScore: number;
   testStatus: TestRequestStatus;
   candidateHasTest?: boolean;
+  consentAccepted?: boolean;
   onHired: (result: HireResult) => void;
 }
 
@@ -69,6 +70,7 @@ export function HiringModal({
   matchScore,
   testStatus,
   candidateHasTest,
+  consentAccepted,
   onHired,
 }: HiringModalProps) {
   const { currentCompany } = useAuth();
@@ -92,6 +94,7 @@ export function HiringModal({
     departmentId.length > 0 &&
     positionTitle.trim().length > 0 &&
     hireDate.length > 0 &&
+    consentAccepted === true &&
     !hireMutation.isPending;
 
   const handleSubmitClick = () => {
@@ -196,6 +199,18 @@ export function HiringModal({
               </Badge>
             </div>
           </div>
+
+          {/* LGPD: Aviso de consentimento pendente */}
+          {consentAccepted !== true && (
+            <Alert className="border-amber-500/40 bg-amber-500/10">
+              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertDescription className="text-amber-700 dark:text-amber-400">
+                Aguardando consentimento do candidato. A contratação só é
+                liberada após o candidato autorizar o compartilhamento dos
+                dados (LGPD).
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Form */}
           <div className="space-y-4 mt-2">

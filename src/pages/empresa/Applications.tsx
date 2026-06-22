@@ -90,6 +90,8 @@ import {
   useAddApplicationNote,
 } from '@/hooks/useApplicationsQuery';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useConsentStatus } from '@/hooks/useConsentStatus';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
 import { useAllGaugeProResults } from '@/hooks/useGaugeProQuery';
 import { useAuth } from '@/contexts/AuthContext';
@@ -764,6 +766,12 @@ export default function CompanyApplications() {
   const selectedCandidate = selectedApplication
     ? candidatesMap[selectedApplication.candidateId] ?? null
     : null;
+
+  // LGPD: consentimento da candidatura selecionada (gate de UI do "Contratar")
+  const { data: selectedConsentStatus } = useConsentStatus(
+    selectedApplication?.id ?? ''
+  );
+  const selectedConsentAccepted = selectedConsentStatus === 'accepted';
 
   const selectedMatch = selectedApplication
     ? calculateMatch(selectedApplication.candidateId)
@@ -1531,20 +1539,34 @@ export default function CompanyApplications() {
 
                     {/* PRD-077: Botão de contratar (apenas para status offer/aprovado) */}
                     {selectedApplication.status === 'offer' && (
-                      <Button
-                        onClick={() => {
-                          if (duplicateCheck?.exists) {
-                            setDuplicateWarningOpen(true);
-                          } else {
-                            setHiringModalOpen(true);
-                          }
-                        }}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white w-full"
-                        size="sm"
-                      >
-                        <Trophy className="w-4 h-4 mr-2" />
-                        Contratar
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="block w-full">
+                              <Button
+                                onClick={() => {
+                                  if (duplicateCheck?.exists) {
+                                    setDuplicateWarningOpen(true);
+                                  } else {
+                                    setHiringModalOpen(true);
+                                  }
+                                }}
+                                disabled={!selectedConsentAccepted}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white w-full"
+                                size="sm"
+                              >
+                                <Trophy className="w-4 h-4 mr-2" />
+                                Contratar
+                              </Button>
+                            </span>
+                          </TooltipTrigger>
+                          {!selectedConsentAccepted && (
+                            <TooltipContent>
+                              <p>Aguardando consentimento do candidato para liberar a contratação</p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
 
                     {/* PRD-034: Botão de agendar entrevista */}
@@ -1814,6 +1836,7 @@ export default function CompanyApplications() {
           matchScore={calculateMatch(selectedApplication.candidateId)}
           testStatus={selectedApplication.testStatus}
           candidateHasTest={selectedCandidate.hasTest}
+          consentAccepted={selectedConsentAccepted}
           onHired={(result) => {
             setLastHireResult(result);
             setHiringModalOpen(false);
