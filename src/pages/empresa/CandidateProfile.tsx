@@ -1323,7 +1323,9 @@ export default function CandidateProfile() {
               </Card>
             </motion.div>
 
-            {/* Currículo Anexado — PDF + vídeo, liberados após o consentimento LGPD */}
+            {/* Currículo Anexado — PDF + vídeo, liberados após o consentimento LGPD.
+                O mascaramento é feito no servidor (view curriculums_for_company); este
+                gate é apenas de apresentação. */}
             {profile?.resumePdfUrl || profile?.presentationVideoUrl ? (
               <CandidateDocumentsCard
                 resumePdfUrl={profile.resumePdfUrl}

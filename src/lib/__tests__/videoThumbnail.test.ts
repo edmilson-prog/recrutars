@@ -29,4 +29,12 @@ describe('videoThumbnail', () => {
   it('getVideoThumbnail returns null for unknown provider', () => {
     expect(getVideoThumbnail('https://example.com/video.mp4')).toBeNull();
   });
+
+  it('extracts a Vimeo id from the /video/ path variant', () => {
+    expect(extractVimeoId('https://vimeo.com/video/123456789')).toBe('123456789');
+  });
+
+  it('extracts a YouTube id from an embed URL', () => {
+    expect(extractYouTubeId('https://www.youtube.com/embed/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ');
+  });
 });

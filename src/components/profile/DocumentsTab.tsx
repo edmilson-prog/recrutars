@@ -24,8 +24,7 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { getVideoThumbnail } from '@/lib/videoThumbnail';
-import type { VideoThumbnail } from '@/lib/videoThumbnail';
+import { getVideoThumbnail, type VideoThumbnail } from '@/lib/videoThumbnail';
 import type { Curriculum } from '@/types/curriculum';
 
 // ---------------------------------------------------------------------------

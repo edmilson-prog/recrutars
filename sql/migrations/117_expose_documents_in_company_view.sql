@@ -1,6 +1,6 @@
 -- Migration 117: expose the candidate's attached documents (resume PDF + presentation
 -- video) to the company through curriculums_for_company, MASKED BY CONSENT — same rule
--- as email/cpf/date_of_birth (admin OR accepted data disclosure).
+-- as email/cpf (admin OR accepted data disclosure).
 --
 -- Rationale: the resume PDF typically contains email/cpf/phone, which the LGPD consent
 -- system keeps hidden until the candidate accepts the data-sharing term. So the documents
