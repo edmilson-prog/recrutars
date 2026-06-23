@@ -36,6 +36,7 @@ import {
   Award,
   Phone,
   Search,
+  Paperclip,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CertificateViewer } from '@/components/profile/CertificateViewer';
@@ -64,6 +65,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { ScheduleInterviewModal } from '@/components/empresa/ScheduleInterviewModal';
+import { CandidateDocumentsCard } from '@/components/empresa/CandidateDocumentsCard';
 import { useCompanyInterviews } from '@/hooks/useCompanyInterviews';
 import { useCandidateActivity, type ActivityType } from '@/hooks/useCandidateActivity';
 import { getOrGenerateIdealProfile, gaugeProToBehavioralProfile } from '@/lib/behavioralProfiles';
@@ -1320,6 +1322,44 @@ export default function CandidateProfile() {
                 </CardContent>
               </Card>
             </motion.div>
+
+            {/* Currículo Anexado — PDF + vídeo, liberados após o consentimento LGPD */}
+            {profile?.resumePdfUrl || profile?.presentationVideoUrl ? (
+              <CandidateDocumentsCard
+                resumePdfUrl={profile.resumePdfUrl}
+                resumePdfName={profile.resumePdfName}
+                resumePdfSize={profile.resumePdfSize}
+                resumePdfUploadedAt={profile.resumePdfUploadedAt}
+                presentationVideoUrl={profile.presentationVideoUrl}
+                presentationVideoType={profile.presentationVideoType}
+                presentationVideoName={profile.presentationVideoName}
+                delay={0.32}
+              />
+            ) : isInCompanyProcess && !isPiiRevealed ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.32 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Paperclip className="w-5 h-5" />
+                      Currículo Anexado
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-3 rounded-lg border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+                      <Lock className="w-4 h-4 flex-shrink-0" />
+                      <span>
+                        Currículo e vídeo de apresentação serão liberados após o candidato
+                        autorizar o compartilhamento dos dados (LGPD).
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : null}
 
             {/* Notas Internas */}
             {currentCompany?.id && candidate?.id && (
