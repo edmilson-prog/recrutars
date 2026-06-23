@@ -1,12 +1,53 @@
 {
   "versions": [
     {
+      "version": "1.69.0",
+      "codename": "Folio",
+      "type": "minor",
+      "releaseDate": "2026-06-23",
+      "description": "A empresa passa a ver, na tela de detalhes do candidato, o currículo em PDF e o vídeo de apresentação que o candidato anexou — liberados somente após o candidato autorizar o compartilhamento dos dados (LGPD).",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Currículo anexado (PDF) e vídeo de apresentação do candidato agora aparecem na tela de detalhes, com botões para visualizar, baixar e assistir.",
+            "Enquanto o candidato não autorizar o compartilhamento dos dados, a empresa vê um aviso de que o currículo e o vídeo serão liberados após o aceite (LGPD)."
+          ],
+          "details": {
+            "0": {
+              "description": "Na página de detalhes do candidato, um novo card 'Currículo Anexado' exibe o currículo em PDF (nome, tamanho e data de envio, com 'Visualizar' e 'Baixar') e o vídeo de apresentação (com 'Assistir'). Os arquivos só ficam disponíveis para a empresa depois que o candidato aceita o termo de compartilhamento de dados.",
+              "files": [
+                "src/pages/empresa/CandidateProfile.tsx",
+                "src/components/empresa/CandidateDocumentsCard.tsx",
+                "src/lib/videoThumbnail.ts",
+                "sql/migrations/117_expose_documents_in_company_view.sql"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
+            },
+            "1": {
+              "description": "Quando o candidato está em um processo seletivo da empresa mas ainda não autorizou o compartilhamento, o card 'Currículo Anexado' mostra um aviso com cadeado explicando que o currículo e o vídeo serão liberados após o aceite do termo (LGPD), em linha com os demais dados sensíveis ocultos.",
+              "files": [
+                "src/pages/empresa/CandidateProfile.tsx",
+                "src/components/empresa/CandidateDocumentsCard.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.68.1",
       "codename": "Beacon",
       "type": "patch",
       "releaseDate": "2026-06-18",
       "description": "Ajustes no tour guiado: ele passa a aparecer só no computador, não atrapalha quem está com o teste encerrado, e ficou mais preciso e acessível.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
