@@ -5,6 +5,12 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.69.0] - 2026-06-23 "Folio"
+
+### Added
+- **Currículo anexado (PDF + vídeo) na tela de detalhes do candidato** — a empresa passa a ver, em `/empresa/candidatos/:id`, o currículo em PDF (nome, tamanho, data de envio, com "Visualizar" e "Baixar") e o vídeo de apresentação (com "Assistir") que o candidato anexou. Os arquivos só são liberados após o candidato aceitar o termo de compartilhamento de dados (LGPD): a view `curriculums_for_company` ganhou 7 colunas (`resume_pdf_*`, `presentation_video_*`) mascaradas por `admin OR company_has_data_consent` — mesmo gate de e-mail/CPF, sem o carve-out de telefone "em processo seletivo". Helper de thumbnail de vídeo extraído para reuso entre o perfil do candidato e o card da empresa (`sql/migrations/117_expose_documents_in_company_view.sql`, `src/components/empresa/CandidateDocumentsCard.tsx`, `src/pages/empresa/CandidateProfile.tsx`, `src/lib/videoThumbnail.ts`)
+- **Aviso de "Currículo Anexado" bloqueado sem consentimento** — com o candidato em um processo seletivo da empresa mas sem o aceite do termo, o card mostra um cadeado informando que o currículo e o vídeo serão liberados após a autorização (LGPD); a URL do arquivo não chega ao frontend nesse estado, em linha com os demais dados sensíveis ocultos (`src/pages/empresa/CandidateProfile.tsx`, `src/components/empresa/CandidateDocumentsCard.tsx`)
+
 ## [1.68.1] - 2026-06-18 "Beacon"
 
 ### Fixed
