@@ -24,6 +24,8 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { getVideoThumbnail } from '@/lib/videoThumbnail';
+import type { VideoThumbnail } from '@/lib/videoThumbnail';
 import type { Curriculum } from '@/types/curriculum';
 
 // ---------------------------------------------------------------------------
@@ -42,32 +44,6 @@ function formatDate(iso: string): string {
     month: 'short',
     year: 'numeric',
   });
-}
-
-function extractYouTubeId(url: string): string | null {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
-  }
-  return null;
-}
-
-function extractVimeoId(url: string): string | null {
-  const match = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  return match ? match[1] : null;
-}
-
-type VideoThumbnail = { type: 'youtube' | 'vimeo'; id: string } | null;
-
-function getVideoThumbnail(url: string): VideoThumbnail {
-  const ytId = extractYouTubeId(url);
-  if (ytId) return { type: 'youtube', id: ytId };
-  const vimeoId = extractVimeoId(url);
-  if (vimeoId) return { type: 'vimeo', id: vimeoId };
-  return null;
 }
 
 // ---------------------------------------------------------------------------
