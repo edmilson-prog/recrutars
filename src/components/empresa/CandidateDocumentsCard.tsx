@@ -28,7 +28,9 @@ function formatBytes(bytes: number): string {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('pt-BR', {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -118,7 +120,7 @@ export function CandidateDocumentsCard({
                   <div className="relative h-16 w-28 overflow-hidden rounded-lg">
                     <img
                       src={`https://img.youtube.com/vi/${videoThumb.id}/hqdefault.jpg`}
-                      alt="Thumbnail do vídeo"
+                      alt=""
                       className="h-full w-full object-cover"
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30">
@@ -136,7 +138,11 @@ export function CandidateDocumentsCard({
                   Vídeo de apresentação
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {presentationVideoType === 'upload' ? 'Arquivo enviado' : 'Link externo'}
+                  {presentationVideoType === 'upload'
+                    ? 'Arquivo enviado'
+                    : presentationVideoType === 'external'
+                    ? 'Link externo'
+                    : null}
                 </p>
                 <div className="mt-3 flex gap-2">
                   <Button
