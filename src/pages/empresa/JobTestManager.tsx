@@ -32,6 +32,7 @@ import {
 import type { InternalCandidate } from '@/components/job-assessment';
 import { useJob } from '@/hooks/useJobsQuery';
 import { useApplicationsByJob } from '@/hooks/useApplicationsQuery';
+import { useCandidates } from '@/hooks/useCandidatesQuery';
 import {
   useJobAssessmentByJob,
   useJobAssessmentInvites,
@@ -77,18 +78,32 @@ export default function JobTestManager() {
 
   // Fetch real candidates who applied to this job
   const { data: applications = [] } = useApplicationsByJob(jobId || '');
+  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
+
+  // The applications service no longer embeds candidateName/candidateAvatar (removed
+  // in the LGPD embed migration), so join them client-side from the candidates list.
+  const candidatesById = useMemo(() => {
+    const map = new Map<string, { name: string; avatar?: string }>();
+    for (const c of candidatesResult?.data ?? []) {
+      map.set(c.id, { name: c.name, avatar: c.avatar });
+    }
+    return map;
+  }, [candidatesResult]);
 
   // Map applications to InternalCandidate format
   const candidates: InternalCandidate[] = useMemo(() => {
-    return applications.map((app) => ({
-      id: app.candidateId,
-      name: app.candidateName,
-      email: '', // Email not available in Application type, kept empty
-      avatar: app.candidateAvatar,
-      appliedAt: app.appliedAt,
-      status: mapApplicationStatus(app.status),
-    }));
-  }, [applications]);
+    return applications.map((app) => {
+      const c = candidatesById.get(app.candidateId);
+      return {
+        id: app.candidateId,
+        name: c?.name ?? app.candidateName ?? '',
+        email: '', // Email not available in Application type, kept empty
+        avatar: c?.avatar ?? app.candidateAvatar,
+        appliedAt: app.appliedAt,
+        status: mapApplicationStatus(app.status),
+      };
+    });
+  }, [applications, candidatesById]);
 
   // Mutations
   const createBulkInvites = useCreateBulkJobAssessmentInvites();
