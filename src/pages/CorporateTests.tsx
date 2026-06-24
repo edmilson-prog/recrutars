@@ -1,7 +1,7 @@
 import { Header } from '@/components/landing/Header';
 import { Footer } from '@/components/landing/Footer';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion, type MotionProps } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import {
@@ -32,7 +32,7 @@ import {
   Globe,
   Puzzle,
   CheckCircle2,
-  Star,
+  Sparkles,
   ArrowRight,
 } from 'lucide-react';
 
@@ -112,10 +112,16 @@ const differentials = [
   { icon: Puzzle, title: 'Integração Total', description: 'Resultados integrados ao perfil do candidato na plataforma RecrutaRS.' },
 ];
 
-const pricing = [
-  { name: 'Avulso', price: 'R$ 49', unit: '/teste', description: 'Ideal para contratações pontuais', features: ['1 teste individual', 'Relatório completo', 'Válido por 30 dias'], popular: false },
-  { name: 'Pacote', price: 'R$ 299', unit: '/10 testes', description: 'Para empresas em crescimento', features: ['10 testes', 'Relatórios completos', 'Válido por 90 dias', 'Suporte prioritário'], popular: true },
-  { name: 'Ilimitado', price: 'R$ 599', unit: '/mês', description: 'Para alto volume de contratações', features: ['Testes ilimitados', 'Dashboard de analytics', 'API de integração', 'Gerente de conta'], popular: false },
+const reportScores: Record<string, number> = { D: 75, I: 60, S: 45, C: 80 };
+
+const reportItems = [
+  'Gráfico de perfil comportamental',
+  'Pontos fortes identificados',
+  'Áreas de desenvolvimento',
+  'Estilo de comunicação',
+  'Como motivar este perfil',
+  'Ambientes de trabalho ideais',
+  'Recomendações de gestão',
 ];
 
 const faqs = [
@@ -141,92 +147,146 @@ const faqs = [
   },
 ];
 
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true },
-  transition: { duration: 0.5 },
+type SectionHeaderProps = {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  reveal: MotionProps;
 };
 
+function SectionHeader({ eyebrow, title, subtitle, reveal }: SectionHeaderProps) {
+  return (
+    <motion.div {...reveal} className="text-center mb-14 md:mb-16 max-w-2xl mx-auto">
+      <div className="inline-flex items-center gap-2.5 mb-4">
+        <span className="h-px w-8 bg-gradient-to-r from-transparent to-secondary/60" />
+        <span className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{eyebrow}</span>
+        <span className="h-px w-8 bg-gradient-to-l from-transparent to-secondary/60" />
+      </div>
+      <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">{title}</h2>
+      <p className="text-muted-foreground text-lg leading-relaxed">{subtitle}</p>
+    </motion.div>
+  );
+}
+
 export default function CorporateTests() {
+  const prefersReduced = useReducedMotion();
+
+  // Animação de revelação que respeita prefers-reduced-motion
+  const reveal = (delay = 0): MotionProps =>
+    prefersReduced
+      ? { initial: false }
+      : {
+          initial: { opacity: 0, y: 24 },
+          whileInView: { opacity: 1, y: 0 },
+          viewport: { once: true, margin: '-80px' },
+          transition: { duration: 0.5, delay, ease: 'easeOut' },
+        };
+
   return (
     <PublicLayout>
       <div className="min-h-screen pb-12">
         <Header />
 
         {/* Hero */}
-        <div className="pt-20 gradient-hero min-h-[50vh] flex items-center">
-          <div className="container py-16 text-center text-primary-foreground">
-            <motion.div
-              className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-6"
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
+        <header className="relative overflow-hidden pt-28 pb-32 md:pb-36 gradient-hero">
+          {/* Decoração de fundo */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -top-24 -right-16 w-80 h-80 rounded-full bg-secondary/20 blur-3xl" />
+            <div className="absolute -bottom-32 -left-16 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
+            <div
+              className="absolute inset-0 opacity-[0.07]"
+              style={{
+                backgroundImage:
+                  'linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)',
+                backgroundSize: '56px 56px',
+                maskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent)',
+                WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent)',
+              }}
+            />
+          </div>
+
+          <div className="container relative text-center text-primary-foreground">
+            <motion.span
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium backdrop-blur-sm mb-6"
+              initial={prefersReduced ? false : { opacity: 0, y: -10 }}
+              animate={prefersReduced ? undefined : { opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Brain className="w-8 h-8" />
-            </motion.div>
+              <Sparkles className="w-4 h-4 text-secondary" />
+              Gauge-Pro · Avaliação Comportamental
+            </motion.span>
+
             <motion.h1
-              className="text-4xl md:text-5xl font-bold mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              className="text-4xl md:text-6xl font-bold mb-5 tracking-tight"
+              initial={prefersReduced ? false : { opacity: 0, y: 20 }}
+              animate={prefersReduced ? undefined : { opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.05 }}
             >
               Testes Corporativos
             </motion.h1>
+
             <motion.p
-              className="text-xl md:text-2xl text-primary-foreground/80 max-w-3xl mx-auto mb-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              className="text-lg md:text-2xl text-primary-foreground/80 max-w-3xl mx-auto mb-9 leading-relaxed"
+              initial={prefersReduced ? false : { opacity: 0, y: 20 }}
+              animate={prefersReduced ? undefined : { opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              Gauge-Pro: Avaliação comportamental científica para contratações mais assertivas
+              Avaliação comportamental científica para contratações mais assertivas e equipes de alta performance
             </motion.p>
+
             <motion.div
               className="flex flex-col sm:flex-row gap-4 justify-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+              initial={prefersReduced ? false : { opacity: 0, y: 20 }}
+              animate={prefersReduced ? undefined : { opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.15 }}
             >
-              <Button asChild size="lg" variant="secondary">
+              <Button asChild size="lg" variant="secondary" className="shadow-glow">
                 <Link to="/cadastro">Solicitar Demo</Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
                 <Link to="/planos">Ver Planos</Link>
               </Button>
             </motion.div>
-          </div>
-        </div>
 
-        {/* Stats */}
-        <section className="relativepy-16 bg-muted/30">
-          <div className="container">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="text-center"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center mx-auto mb-3">
-                    <stat.icon className="w-6 h-6 text-secondary" />
-                  </div>
-                  <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                </motion.div>
-              ))}
-            </div>
+            <motion.p
+              className="mt-7 text-sm text-primary-foreground/60"
+              initial={prefersReduced ? false : { opacity: 0 }}
+              animate={prefersReduced ? undefined : { opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.25 }}
+            >
+              Metodologia validada · +50 anos de pesquisa · Adaptada ao Brasil
+            </motion.p>
           </div>
+        </header>
+
+        {/* Stats — barra flutuante sobre o hero */}
+        <section className="container relative z-10 -mt-16 md:-mt-20">
+          <motion.div
+            {...reveal()}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-2 rounded-2xl border border-border/60 bg-card shadow-soft p-6 md:p-8 divide-border/60 md:divide-x"
+          >
+            {stats.map((stat) => (
+              <div key={stat.label} className="text-center md:px-4">
+                <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center mx-auto mb-3">
+                  <stat.icon className="w-6 h-6 text-secondary" />
+                </div>
+                <p className="text-2xl md:text-3xl font-bold text-foreground mb-1">{stat.value}</p>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+              </div>
+            ))}
+          </motion.div>
         </section>
 
-        {/* What is the Behavioral Test */}
-        <section className="relativepy-24">
+        {/* O que é o Teste Comportamental */}
+        <section className="py-20 md:py-24">
           <div className="container">
-            <motion.div {...fadeInUp} className="max-w-4xl mx-auto">
-              <div className="bg-card rounded-2xl shadow-soft p-8 md:p-12">
-                <h2 className="text-3xl font-bold text-foreground mb-6 text-center">O que é o Teste Comportamental?</h2>
+            <motion.div {...reveal()} className="max-w-4xl mx-auto">
+              <div className="relative bg-card rounded-2xl border border-border/60 shadow-soft p-8 md:p-12">
+                <div className="absolute left-0 top-10 bottom-10 w-1 rounded-r-full bg-gradient-to-b from-secondary to-secondary/30 hidden md:block" />
+                <div className="text-center mb-8">
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Metodologia</span>
+                  <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-3">O que é o Teste Comportamental?</h2>
+                </div>
                 <div className="space-y-4 text-muted-foreground leading-relaxed">
                   <p>
                     O teste comportamental é uma metodologia de avaliação desenvolvida a partir dos estudos do psicólogo William Moulton Marston na década de 1920. A avaliação mapeia as quatro dimensões principais do comportamento humano: <strong className="text-foreground">Dominância</strong>, <strong className="text-foreground">Influência</strong>, <strong className="text-foreground">Estabilidade</strong> e <strong className="text-foreground">Conformidade</strong>.
@@ -243,27 +303,24 @@ export default function CorporateTests() {
           </div>
         </section>
 
-        {/* Behavioral Dimensions */}
-        <section className="relativepy-24 bg-muted/30">
+        {/* Dimensões Comportamentais */}
+        <section className="py-20 md:py-24 bg-muted/30">
           <div className="container">
-            <motion.div {...fadeInUp} className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-foreground mb-4">As 4 Dimensões Comportamentais</h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Cada pessoa possui uma combinação única dessas dimensões comportamentais
-              </p>
-            </motion.div>
+            <SectionHeader
+              reveal={reveal()}
+              eyebrow="Modelo DISC"
+              title="As 4 Dimensões Comportamentais"
+              subtitle="Cada pessoa possui uma combinação única dessas dimensões comportamentais"
+            />
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {behavioralDimensions.map((dimension, index) => (
                 <motion.div
                   key={dimension.letter}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="bg-card rounded-2xl shadow-soft p-6 text-center hover:shadow-lg transition-shadow"
+                  {...reveal(index * 0.08)}
+                  className="group bg-card rounded-2xl border border-border/60 shadow-soft p-6 text-center transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
                 >
-                  <div className={`w-16 h-16 rounded-2xl ${dimension.color} text-white flex items-center justify-center mx-auto mb-4`}>
+                  <div className={`w-16 h-16 rounded-2xl ${dimension.color} text-white flex items-center justify-center mx-auto mb-4 transition-transform duration-200 group-hover:scale-105`}>
                     <span className="text-3xl font-bold">{dimension.letter}</span>
                   </div>
                   <h3 className={`text-xl font-semibold mb-3 ${dimension.textColor}`}>{dimension.name}</h3>
@@ -281,28 +338,25 @@ export default function CorporateTests() {
           </div>
         </section>
 
-        {/* Benefits */}
-        <section className="relativepy-24">
+        {/* Benefícios */}
+        <section className="py-20 md:py-24">
           <div className="container">
-            <motion.div {...fadeInUp} className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-foreground mb-4">Benefícios para sua Empresa</h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Transforme seu processo de RH com dados comportamentais científicos
-              </p>
-            </motion.div>
+            <SectionHeader
+              reveal={reveal()}
+              eyebrow="Por que usar"
+              title="Benefícios para sua Empresa"
+              subtitle="Transforme seu processo de RH com dados comportamentais científicos"
+            />
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
               {benefits.map((benefit, index) => (
                 <motion.div
                   key={benefit.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="bg-card rounded-2xl shadow-soft p-6 hover:shadow-lg transition-shadow"
+                  {...reveal(index * 0.06)}
+                  className="group bg-card rounded-2xl border border-border/60 shadow-soft p-6 transition-all duration-200 hover:shadow-lg hover:border-secondary/40"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center mb-4">
-                    <benefit.icon className="w-6 h-6 text-secondary" />
+                  <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center mb-4 transition-colors duration-200 group-hover:bg-secondary group-hover:text-white">
+                    <benefit.icon className="w-6 h-6 text-secondary transition-colors duration-200 group-hover:text-white" />
                   </div>
                   <h3 className="text-xl font-semibold text-foreground mb-3">{benefit.title}</h3>
                   <p className="text-muted-foreground leading-relaxed">{benefit.description}</p>
@@ -312,86 +366,79 @@ export default function CorporateTests() {
           </div>
         </section>
 
-        {/* How It Works */}
-        <section className="relativepy-24 bg-muted/30">
+        {/* Como Funciona */}
+        <section className="py-20 md:py-24 bg-muted/30">
           <div className="container">
-            <motion.div {...fadeInUp} className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-foreground mb-4">Como Funciona</h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Processo simples e rápido para avaliar seus candidatos
-              </p>
-            </motion.div>
+            <SectionHeader
+              reveal={reveal()}
+              eyebrow="Processo"
+              title="Como Funciona"
+              subtitle="Processo simples e rápido para avaliar seus candidatos"
+            />
 
-            <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-2 max-w-5xl mx-auto">
-              {steps.map((step, index) => (
-                <motion.div
-                  key={step.step}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="flex items-center"
-                >
-                  <div className="text-center w-48">
-                    <div className="w-14 h-14 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center mx-auto mb-3">
+            <div className="relative max-w-5xl mx-auto">
+              {/* Linha conectora (desktop) */}
+              <div className="hidden md:block absolute top-7 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-secondary/10 via-secondary/40 to-secondary/10" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 md:gap-4 relative">
+                {steps.map((step, index) => (
+                  <motion.div key={step.step} {...reveal(index * 0.1)} className="text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-secondary text-secondary-foreground flex items-center justify-center mx-auto mb-4 relative z-10 ring-4 ring-muted/30 shadow-glow">
                       <step.icon className="w-6 h-6" />
                     </div>
-                    <div className="text-sm font-bold text-secondary mb-1">{step.step}</div>
-                    <h4 className="font-semibold text-foreground mb-1">{step.title}</h4>
-                    <p className="text-sm text-muted-foreground">{step.description}</p>
-                  </div>
-                  {index < steps.length - 1 && (
-                    <ArrowRight className="w-5 h-5 text-muted-foreground mx-2 hidden md:block" />
-                  )}
-                </motion.div>
-              ))}
+                    <div className="text-xs font-bold text-secondary tracking-[0.2em] mb-1">PASSO {step.step}</div>
+                    <h4 className="font-semibold text-foreground mb-2">{step.title}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-[220px] mx-auto">{step.description}</p>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Report Preview */}
-        <section className="relativepy-24">
+        {/* Relatório Detalhado */}
+        <section className="py-20 md:py-24">
           <div className="container">
-            <motion.div {...fadeInUp} className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-foreground mb-4">Relatório Detalhado</h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Receba análises completas para tomar decisões embasadas
-              </p>
-            </motion.div>
+            <SectionHeader
+              reveal={reveal()}
+              eyebrow="Entregável"
+              title="Relatório Detalhado"
+              subtitle="Receba análises completas para tomar decisões embasadas"
+            />
 
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="max-w-4xl mx-auto"
-            >
-              <div className="bg-card rounded-2xl shadow-soft overflow-hidden">
-                <div className="bg-gradient-to-r from-primary to-primary/80 p-6 text-primary-foreground">
-                  <h3 className="text-xl font-semibold mb-2">Exemplo de Relatório Gauge-Pro</h3>
-                  <p className="text-primary-foreground/80">Análise comportamental completa</p>
+            <motion.div {...reveal()} className="max-w-4xl mx-auto">
+              <div className="bg-card rounded-2xl border border-border/60 shadow-soft overflow-hidden">
+                <div className="bg-gradient-to-r from-primary to-primary/80 p-6 text-primary-foreground flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-semibold mb-1">Exemplo de Relatório Gauge-Pro</h3>
+                    <p className="text-primary-foreground/80">Análise comportamental completa</p>
+                  </div>
+                  <BarChart3 className="w-10 h-10 text-primary-foreground/40 hidden sm:block" />
                 </div>
                 <div className="p-8">
-                  <div className="grid md:grid-cols-2 gap-8">
+                  <div className="grid md:grid-cols-2 gap-8 md:gap-10">
                     {/* Gráfico simulado */}
                     <div>
                       <h4 className="font-semibold text-foreground mb-4">Perfil Comportamental</h4>
                       <div className="space-y-3">
                         {behavioralDimensions.map((dim) => (
                           <div key={dim.letter} className="flex items-center gap-3">
-                            <span className={`w-8 h-8 rounded ${dim.color} text-white flex items-center justify-center text-sm font-bold`}>
+                            <span className={`w-8 h-8 rounded-lg ${dim.color} text-white flex items-center justify-center text-sm font-bold flex-shrink-0`}>
                               {dim.letter}
                             </span>
                             <div className="flex-1">
-                              <div className="h-4 bg-muted rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full ${dim.color}`}
-                                  style={{ width: dim.letter === 'D' ? '75%' : dim.letter === 'I' ? '60%' : dim.letter === 'S' ? '45%' : '80%' }}
+                              <div className="h-3 bg-muted rounded-full overflow-hidden">
+                                <motion.div
+                                  className={`h-full ${dim.color} rounded-full`}
+                                  initial={prefersReduced ? false : { width: 0 }}
+                                  whileInView={prefersReduced ? undefined : { width: `${reportScores[dim.letter]}%` }}
+                                  viewport={{ once: true }}
+                                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                                  style={prefersReduced ? { width: `${reportScores[dim.letter]}%` } : undefined}
                                 />
                               </div>
                             </div>
-                            <span className="text-sm font-medium text-foreground w-12 text-right">
-                              {dim.letter === 'D' ? '75%' : dim.letter === 'I' ? '60%' : dim.letter === 'S' ? '45%' : '80%'}
+                            <span className="text-sm font-semibold text-foreground w-10 text-right tabular-nums">
+                              {reportScores[dim.letter]}%
                             </span>
                           </div>
                         ))}
@@ -401,16 +448,8 @@ export default function CorporateTests() {
                     <div>
                       <h4 className="font-semibold text-foreground mb-4">O que você recebe</h4>
                       <ul className="space-y-3">
-                        {[
-                          'Gráfico de perfil comportamental',
-                          'Pontos fortes identificados',
-                          'Áreas de desenvolvimento',
-                          'Estilo de comunicação',
-                          'Como motivar este perfil',
-                          'Ambientes de trabalho ideais',
-                          'Recomendações de gestão',
-                        ].map((item) => (
-                          <li key={item} className="flex items-center gap-2 text-muted-foreground">
+                        {reportItems.map((item) => (
+                          <li key={item} className="flex items-center gap-2.5 text-muted-foreground">
                             <CheckCircle2 className="w-4 h-4 text-secondary flex-shrink-0" />
                             {item}
                           </li>
@@ -424,33 +463,30 @@ export default function CorporateTests() {
           </div>
         </section>
 
-        {/* Use Cases */}
-        <section className="relativepy-24 bg-muted/30">
+        {/* Casos de Uso */}
+        <section className="py-20 md:py-24 bg-muted/30">
           <div className="container">
-            <motion.div {...fadeInUp} className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-foreground mb-4">Casos de Uso</h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Diversas aplicações para potencializar sua gestão de pessoas
-              </p>
-            </motion.div>
+            <SectionHeader
+              reveal={reveal()}
+              eyebrow="Aplicações"
+              title="Casos de Uso"
+              subtitle="Diversas aplicações para potencializar sua gestão de pessoas"
+            />
 
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-6 lg:gap-8 max-w-4xl mx-auto">
               {useCases.map((useCase, index) => (
                 <motion.div
                   key={useCase.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="bg-card rounded-2xl shadow-soft p-6 hover:shadow-lg transition-shadow"
+                  {...reveal(index * 0.06)}
+                  className="group bg-card rounded-2xl border border-border/60 shadow-soft p-6 transition-all duration-200 hover:shadow-lg hover:border-secondary/40"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center flex-shrink-0">
-                      <useCase.icon className="w-6 h-6 text-secondary" />
+                    <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center flex-shrink-0 transition-colors duration-200 group-hover:bg-secondary group-hover:text-white">
+                      <useCase.icon className="w-6 h-6 text-secondary transition-colors duration-200 group-hover:text-white" />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-foreground mb-2">{useCase.title}</h3>
-                      <p className="text-muted-foreground">{useCase.description}</p>
+                      <p className="text-muted-foreground leading-relaxed">{useCase.description}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -459,28 +495,25 @@ export default function CorporateTests() {
           </div>
         </section>
 
-        {/* Differentials */}
-        <section className="relativepy-24">
+        {/* Diferenciais */}
+        <section className="py-20 md:py-24">
           <div className="container">
-            <motion.div {...fadeInUp} className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-foreground mb-4">Diferenciais Gauge-Pro</h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                O que torna nossa avaliação única no mercado
-              </p>
-            </motion.div>
+            <SectionHeader
+              reveal={reveal()}
+              eyebrow="Diferenciais"
+              title="Diferenciais Gauge-Pro"
+              subtitle="O que torna nossa avaliação única no mercado"
+            />
 
-            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
               {differentials.map((diff, index) => (
                 <motion.div
                   key={diff.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="bg-card rounded-2xl shadow-soft p-8 text-center hover:shadow-lg transition-shadow"
+                  {...reveal(index * 0.08)}
+                  className="group bg-card rounded-2xl border border-border/60 shadow-soft p-8 text-center transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center mx-auto mb-4">
-                    <diff.icon className="w-7 h-7 text-secondary" />
+                  <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center mx-auto mb-4 transition-colors duration-200 group-hover:bg-secondary group-hover:text-white">
+                    <diff.icon className="w-7 h-7 text-secondary transition-colors duration-200 group-hover:text-white" />
                   </div>
                   <h3 className="text-xl font-semibold text-foreground mb-3">{diff.title}</h3>
                   <p className="text-muted-foreground leading-relaxed">{diff.description}</p>
@@ -490,80 +523,23 @@ export default function CorporateTests() {
           </div>
         </section>
 
-        {/* Pricing */}
-        <section className="relativepy-24 bg-muted/30">
-          <div className="container">
-            <motion.div {...fadeInUp} className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-foreground mb-4">Planos e Preços</h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Escolha a opção ideal para o tamanho da sua operação
-              </p>
-            </motion.div>
-
-            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {pricing.map((plan, index) => (
-                <motion.div
-                  key={plan.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className={`bg-card rounded-2xl shadow-soft p-6 relative ${plan.popular ? 'border-2 border-secondary ring-4 ring-secondary/10' : ''
-                    }`}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-secondary text-secondary-foreground text-sm font-medium rounded-full flex items-center gap-1">
-                      <Star className="w-3 h-3" />
-                      Mais Popular
-                    </div>
-                  )}
-                  <div className="text-center mb-6 pt-2">
-                    <h3 className="text-xl font-semibold text-foreground mb-2">{plan.name}</h3>
-                    <div className="text-3xl font-bold text-foreground">
-                      {plan.price}
-                      <span className="text-lg font-normal text-muted-foreground">{plan.unit}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>
-                  </div>
-                  <ul className="space-y-3 mb-6">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <CheckCircle2 className="w-4 h-4 text-secondary flex-shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button asChild className="w-full" variant={plan.popular ? 'default' : 'outline'}>
-                    <Link to="/cadastro">Começar</Link>
-                  </Button>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* FAQ */}
-        <section className="relativepy-24">
+        <section className="py-20 md:py-24 bg-muted/30">
           <div className="container">
-            <motion.div {...fadeInUp} className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-foreground mb-4">Perguntas Frequentes</h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Tire suas dúvidas sobre o teste comportamental Gauge-Pro
-              </p>
-            </motion.div>
+            <SectionHeader
+              reveal={reveal()}
+              eyebrow="Dúvidas"
+              title="Perguntas Frequentes"
+              subtitle="Tire suas dúvidas sobre o teste comportamental Gauge-Pro"
+            />
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="max-w-3xl mx-auto"
-            >
+            <motion.div {...reveal()} className="max-w-3xl mx-auto">
               <Accordion type="single" collapsible className="space-y-4">
                 {faqs.map((faq, index) => (
                   <AccordionItem
                     key={index}
                     value={`item-${index}`}
-                    className="bg-card rounded-xl shadow-soft px-6 border-none"
+                    className="bg-card rounded-xl border border-border/60 shadow-soft px-6"
                   >
                     <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5">
                       {faq.question}
@@ -578,21 +554,33 @@ export default function CorporateTests() {
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="relativepy-24 gradient-hero">
+        {/* CTA final */}
+        <section className="py-20 md:py-24">
           <div className="container">
-            <motion.div {...fadeInUp} className="text-center text-primary-foreground max-w-3xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Comece a avaliar com ciência</h2>
-              <p className="text-xl text-primary-foreground/80 mb-8">
-                Junte-se às empresas que já utilizam o Gauge-Pro para contratações mais assertivas
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button asChild size="lg" variant="secondary">
-                  <Link to="/cadastro">Solicitar Demo</Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                  <Link to="/ajuda">Falar com Vendas</Link>
-                </Button>
+            <motion.div
+              {...reveal()}
+              className="relative overflow-hidden rounded-3xl gradient-hero px-6 py-16 md:px-12 md:py-20 text-center text-primary-foreground"
+            >
+              <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+                <div className="absolute -top-20 -right-10 w-72 h-72 rounded-full bg-secondary/20 blur-3xl" />
+                <div className="absolute -bottom-24 -left-10 w-80 h-80 rounded-full bg-white/5 blur-3xl" />
+              </div>
+              <div className="relative max-w-3xl mx-auto">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">Comece a avaliar com ciência</h2>
+                <p className="text-lg md:text-xl text-primary-foreground/80 mb-8 leading-relaxed">
+                  Junte-se às empresas que já utilizam o Gauge-Pro para contratações mais assertivas
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button asChild size="lg" variant="secondary" className="shadow-glow">
+                    <Link to="/cadastro">
+                      Solicitar Demo
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                    <Link to="/ajuda">Falar com Vendas</Link>
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </div>
