@@ -28,6 +28,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAdminJobs } from '@/hooks/useAdminJobs';
 import { useModeration } from '@/hooks/useModeration';
 import { useApplicationsByJob } from '@/hooks/useApplicationsQuery';
+import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,8 +52,33 @@ export default function JobDetail() {
   } = useAdminJobs();
   const { actions: moderationActions, config: moderationConfig } = useModeration();
   const { data: applications = [], isLoading: isLoadingApplications } = useApplicationsByJob(id ?? '');
+  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
 
   const [noteText, setNoteText] = useState('');
+
+  // The applications service no longer embeds candidateName/candidateAvatar (removed
+  // in the LGPD embed migration), so each page joins them client-side from the
+  // candidates list — same pattern as the company Applications page.
+  const candidatesById = useMemo(() => {
+    const map = new Map<string, { name: string; avatar?: string }>();
+    for (const c of candidatesResult?.data ?? []) {
+      map.set(c.id, { name: c.name, avatar: c.avatar });
+    }
+    return map;
+  }, [candidatesResult]);
+
+  const enrichedApplications = useMemo(
+    () =>
+      applications.map((app) => {
+        const c = candidatesById.get(app.candidateId);
+        return {
+          ...app,
+          candidateName: c?.name ?? app.candidateName ?? '',
+          candidateAvatar: c?.avatar ?? app.candidateAvatar,
+        };
+      }),
+    [applications, candidatesById],
+  );
 
   const job = useMemo(() => jobs.find((j) => j.id === id), [jobs, id]);
 
@@ -495,7 +521,7 @@ export default function JobDetail() {
                 {/* Candidate list */}
                 {!isLoadingApplications && applications.length > 0 && (
                   <div className="space-y-2">
-                    {applications.map((app) => {
+                    {enrichedApplications.map((app) => {
                       const statusCfg = APPLICATION_STATUS_CONFIG[app.status] ?? APPLICATION_STATUS_CONFIG['pending'];
                       const testCfg = TEST_STATUS_CONFIG[app.testStatus] ?? TEST_STATUS_CONFIG['nao_solicitado'];
                       const initials = app.candidateName
