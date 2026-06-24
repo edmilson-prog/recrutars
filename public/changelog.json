@@ -1,12 +1,49 @@
 {
   "versions": [
     {
+      "version": "1.69.1",
+      "codename": "Folio",
+      "type": "patch",
+      "releaseDate": "2026-06-24",
+      "description": "Correção de nomes de candidatos que apareciam em branco em duas telas: a aba 'Candidatos' do detalhamento da vaga (admin) e a lista de candidatos para envio de teste da vaga (empresa).",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Na aba 'Candidatos' do detalhamento da vaga (painel admin), o nome e as iniciais de cada candidato voltam a aparecer — antes a linha mostrava apenas a data da candidatura.",
+            "Na tela de gerenciamento do teste da vaga (empresa), a lista de candidatos inscritos volta a exibir o nome de cada candidato."
+          ],
+          "details": {
+            "0": {
+              "description": "A aba 'Candidatos' do detalhe da vaga no painel admin passou a buscar os dados dos candidatos e preenchê-los no cliente. Desde a mudança de privacidade (LGPD), o nome e o avatar do candidato não vêm mais embutidos na candidatura, então a tela exibia o nome em branco e o avatar sem iniciais. Agora os nomes e iniciais aparecem normalmente.",
+              "files": [
+                "src/pages/admin/JobDetail.tsx"
+              ],
+              "routes": [
+                "/admin/vagas/:id"
+              ]
+            },
+            "1": {
+              "description": "A lista de candidatos da tela de teste da vaga (empresa) recebeu o mesmo ajuste: os nomes e avatares dos candidatos inscritos são buscados e preenchidos no cliente, corrigindo a exibição em branco causada pela mesma mudança de privacidade (LGPD).",
+              "files": [
+                "src/pages/empresa/JobTestManager.tsx"
+              ],
+              "routes": [
+                "/empresa/vagas/:id/teste"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.69.0",
       "codename": "Folio",
       "type": "minor",
       "releaseDate": "2026-06-23",
       "description": "A empresa passa a ver, na tela de detalhes do candidato, o currículo em PDF e o vídeo de apresentação que o candidato anexou — liberados somente após o candidato autorizar o compartilhamento dos dados (LGPD).",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
