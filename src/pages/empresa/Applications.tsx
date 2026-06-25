@@ -41,6 +41,8 @@ import {
   MoreVertical,
   Loader2,
   Trophy,
+  PanelLeft,
+  ArrowLeft,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -89,6 +91,14 @@ import {
   useUpdateApplicationStatus,
   useAddApplicationNote,
 } from '@/hooks/useApplicationsQuery';
+import { useJobsNavigation } from '@/components/empresa/applications/useJobsNavigation';
+import { JobStatusFilter } from '@/components/empresa/applications/JobStatusFilter';
+import { useViewMode } from '@/components/empresa/applications/useViewMode';
+import { JobNavSwitcher } from '@/components/empresa/applications/JobNavSwitcher';
+import { JobCombobox } from '@/components/empresa/applications/JobCombobox';
+import { JobSidebar } from '@/components/empresa/applications/JobSidebar';
+import { JobCardsGrid } from '@/components/empresa/applications/JobCardsGrid';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useConsentStatus } from '@/hooks/useConsentStatus';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -188,7 +198,7 @@ const DEADLINE_OPTIONS = [
 const DEFAULT_TEST_MESSAGE = `Olá! Para darmos continuidade ao processo seletivo, gostaríamos que você realizasse nosso teste comportamental Gauge-Pro. O teste leva cerca de 15-20 minutos e nos ajuda a entender melhor seu perfil.`;
 
 // PRD-035: Cálculo dinâmico de match - esta função é usada em múltiplos lugares
-// NOTE: This uses candidatesMap, companyJobs and behavioralTests from the component scope
+// NOTE: This uses candidatesMap, _companyJobs and behavioralTests from the component scope
 // via closures, set during render
 let _candidatesMap: Record<string, import('@/types').Candidate> = {};
 let _companyJobs: import('@/types').Job[] = [];
@@ -355,7 +365,7 @@ export default function CompanyApplications() {
   const addNoteMutation = useAddApplicationNote();
 
   // Read jobId from URL query params (e.g. /empresa/candidaturas?jobId=xxx)
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialJobId = searchParams.get('jobId') ?? '';
 
   // State
@@ -427,17 +437,6 @@ export default function CompanyApplications() {
   // Statuses that count as active in the pipeline
   const activeStatuses = ['pending', 'reviewing', 'interview', 'offer'];
 
-  // Real application count per job (only active pipeline statuses)
-  const applicationsCountByJob = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const app of applications) {
-      if (activeStatuses.includes(app.status)) {
-        map[app.jobId] = (map[app.jobId] ?? 0) + 1;
-      }
-    }
-    return map;
-  }, [applications]);
-
   // Total de candidaturas ativas no pipeline — exibido no badge do titulo
   const totalActiveApplications = applications.filter(a => activeStatuses.includes(a.status)).length;
 
@@ -467,20 +466,31 @@ export default function CompanyApplications() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const { createInterview } = useCompanyInterviews(companyId);
 
-  // Get company jobs (active or paused)
-  const companyJobs = useMemo(() =>
-    fetchedCompanyJobs.filter(
-      (job) => job.status === 'active' || job.status === 'paused'
-    ),
-    [fetchedCompanyJobs]
+  // Job navigation engine (visible jobs + per-stage breakdowns + status filter)
+  const { visibleJobs, breakdowns, statusFilter, setStatusFilter } = useJobsNavigation(
+    fetchedCompanyJobs,
+    applications,
   );
 
-  // Set default job on load
+  const { viewMode, setViewMode } = useViewMode();
+
+  // Set default job on load (first visible job) — skip auto-select in cards mode (shows grid first)
   useEffect(() => {
-    if (companyJobs.length > 0 && !selectedJobId) {
-      setSelectedJobId(companyJobs[0].id);
+    if (viewMode !== 'cards' && visibleJobs.length > 0 && !selectedJobId) {
+      setSelectedJobId(visibleJobs[0].id);
     }
-  }, [companyJobs, selectedJobId]);
+  }, [viewMode, visibleJobs, selectedJobId]);
+
+  // Sync selected job to the URL (?jobId=) for deep-linking
+  useEffect(() => {
+    if (selectedJobId) {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('jobId', selectedJobId);
+        return next;
+      }, { replace: true });
+    }
+  }, [selectedJobId, setSearchParams]);
 
   // Filter applications for selected job (use enriched array so candidateName is populated)
   const jobApplications = applicationsWithCandidate.filter(
@@ -784,7 +794,7 @@ export default function CompanyApplications() {
       )
     : [];
 
-  const selectedJob = companyJobs.find((j) => j.id === selectedJobId);
+  const selectedJob = fetchedCompanyJobs.find((j) => j.id === selectedJobId);
 
   // PRD-077: Hired count for selected job
   const { data: hiredCount = 0 } = useHiredCountForJob(selectedJobId);
@@ -833,6 +843,7 @@ export default function CompanyApplications() {
         <PageHeader
           title="Candidaturas"
           description="Acompanhe e gerencie todas as candidaturas das suas vagas. Filtre por status, avalie candidatos e avance no processo seletivo."
+          actions={<JobNavSwitcher value={viewMode} onChange={setViewMode} />}
           badges={
             <Badge
               variant="secondary"
@@ -849,237 +860,329 @@ export default function CompanyApplications() {
           ]}
         />
 
-        {/* Job Selector and Filters */}
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Job Selector */}
-          <div className="flex-1">
-            <Select value={selectedJobId} onValueChange={setSelectedJobId}>
-              <SelectTrigger className="w-full lg:w-80">
-                <SelectValue placeholder="Selecione uma vaga" />
-              </SelectTrigger>
-              <SelectContent>
-                {companyJobs.map((job) => (
-                  <SelectItem key={job.id} value={job.id}>
-                    {job.title} ({applicationsCountByJob[job.id] ?? 0} candidaturas)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {(() => {
+          const candidateFilters = (
+            <div className="flex flex-wrap gap-2">
+              <Select value={matchFilter} onValueChange={setMatchFilter}>
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="Match" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value=">80">&gt; 80%</SelectItem>
+                  <SelectItem value=">60">&gt; 60%</SelectItem>
+                </SelectContent>
+              </Select>
 
-          {/* Filters */}
-          <div className="flex flex-wrap gap-2">
-            <Select value={matchFilter} onValueChange={setMatchFilter}>
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="Match" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value=">80">&gt; 80%</SelectItem>
-                <SelectItem value=">60">&gt; 60%</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={profileFilter} onValueChange={setProfileFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Perfil Comportamental" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os perfis</SelectItem>
+                  {BEHAVIORAL_PROFILES.map((profile) => (
+                    <SelectItem key={profile} value={profile}>
+                      {profile}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select value={profileFilter} onValueChange={setProfileFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Perfil Comportamental" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os perfis</SelectItem>
-                {BEHAVIORAL_PROFILES.map((profile) => (
-                  <SelectItem key={profile} value={profile}>
-                    {profile}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Select value={testFilter} onValueChange={setTestFilter}>
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="Teste" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="done">Realizado</SelectItem>
+                  <SelectItem value="pending">Pendente</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={testFilter} onValueChange={setTestFilter}>
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="Teste" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="done">Realizado</SelectItem>
-                <SelectItem value="pending">Pendente</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* PRD-032: Botão de exportar */}
-            {filteredApplications.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowExportModal(true)}
-              >
-                <FileDown className="w-4 h-4 mr-2" />
-                Exportar Lista
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Summary Strip — breakdown da vaga selecionada */}
-        {selectedJobId && !isLoading && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-wrap items-center gap-3 px-4 py-2.5 bg-muted/50 rounded-xl border border-border/50"
-            role="status"
-            aria-live="polite"
-          >
-            <span className="text-sm font-medium text-foreground">
-              {jobApplications.filter(a => a.status !== 'withdrawn').length} nesta vaga
-            </span>
-            <Separator orientation="vertical" className="h-4" />
-            {[
-              { key: 'pending',   label: 'Novos',       color: 'text-blue-600',   bg: 'bg-blue-500/10' },
-              { key: 'reviewing', label: 'Em Análise',   color: 'text-yellow-600', bg: 'bg-yellow-500/10' },
-              { key: 'interview', label: 'Entrevista',   color: 'text-purple-600', bg: 'bg-purple-500/10' },
-              { key: 'offer',     label: 'Aprovados',    color: 'text-green-600',  bg: 'bg-green-500/10' },
-            ].map(({ key, label, color, bg }) => (
-              <span
-                key={key}
-                className={cn(
-                  "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full",
-                  bg, color
-                )}
-              >
-                <span className="font-bold">
-                  {groupedApplications[key as keyof typeof groupedApplications]?.length ?? 0}
-                </span>
-                <span className="hidden sm:inline">{label}</span>
-              </span>
-            ))}
-          </motion.div>
-        )}
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        )}
-
-        {/* Kanban Board */}
-        {!isLoading && selectedJobId ? (
-          <>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCorners}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDragCancel={handleDragCancel}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto">
-                {(['pending', 'reviewing', 'interview', 'offer'] as const).map(
-                  (status) => (
-                    <KanbanColumn
-                      key={status}
-                      status={status}
-                      applications={groupedApplications[status]}
-                      onCardClick={handleCardClick}
-                      onNavigateToProfile={handleNavigateToProfile}
-                    />
-                  )
-                )}
-              </div>
-              <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }}>
-                {activeApplication ? (
-                  <ApplicationCard
-                    application={activeApplication}
-                    onManage={() => {}}
-                    onNavigate={() => {}}
-                    isDragOverlay
-                  />
-                ) : null}
-              </DragOverlay>
-            </DndContext>
-
-            {/* Rejected Section */}
-            {groupedApplications.rejected.length > 0 && (
-              <Collapsible open={rejectedOpen} onOpenChange={setRejectedOpen}>
-                <CollapsibleTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-between text-muted-foreground hover:text-foreground"
-                  >
-                    <span className="flex items-center gap-2">
-                      {rejectedOpen ? (
-                        <ChevronDown className="w-4 h-4" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4" />
-                      )}
-                      Reprovados ({groupedApplications.rejected.length})
-                    </span>
-                    <span className="text-sm">Ver lista</span>
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 py-4">
-                    {groupedApplications.rejected.map((app) => (
-                      <ApplicationCard
-                        key={app.id}
-                        application={app}
-                        onManage={() => handleCardClick(app)}
-                        onNavigate={() => handleNavigateToProfile(app.candidateId)}
-                        compact
-                      />
-                    ))}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            )}
-
-            {/* PRD-077: Hired Section */}
-            {groupedApplications.hired.length > 0 && (
-              <Collapsible open={hiredOpen} onOpenChange={setHiredOpen}>
-                <CollapsibleTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-between text-emerald-600 hover:text-emerald-700"
-                  >
-                    <span className="flex items-center gap-2">
-                      {hiredOpen ? (
-                        <ChevronDown className="w-4 h-4" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4" />
-                      )}
-                      <Trophy className="w-4 h-4" />
-                      Contratados ({groupedApplications.hired.length})
-                    </span>
-                    <span className="text-sm">Ver lista</span>
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 py-4">
-                    {groupedApplications.hired.map((app) => (
-                      <ApplicationCard
-                        key={app.id}
-                        application={app}
-                        onManage={() => handleCardClick(app)}
-                        onNavigate={() => handleNavigateToProfile(app.candidateId)}
-                        compact
-                      />
-                    ))}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-12 bg-card rounded-2xl shadow-soft">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-              <Users className="w-8 h-8 text-muted-foreground" />
+              {/* PRD-032: Botão de exportar */}
+              {filteredApplications.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowExportModal(true)}
+                >
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Exportar Lista
+                </Button>
+              )}
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              Selecione uma vaga
-            </h3>
-            <p className="text-muted-foreground">
-              Escolha uma vaga para ver as candidaturas
-            </p>
-          </div>
-        )}
+          );
+
+          const summaryStrip = selectedJobId && !isLoading ? (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-wrap items-center gap-3 px-4 py-2.5 bg-muted/50 rounded-xl border border-border/50"
+              role="status"
+              aria-live="polite"
+            >
+              <span className="text-sm font-medium text-foreground">
+                {jobApplications.filter(a => a.status !== 'withdrawn').length} nesta vaga
+              </span>
+              <Separator orientation="vertical" className="h-4" />
+              {[
+                { key: 'pending',   label: 'Novos',       color: 'text-blue-600',   bg: 'bg-blue-500/10' },
+                { key: 'reviewing', label: 'Em Análise',   color: 'text-yellow-600', bg: 'bg-yellow-500/10' },
+                { key: 'interview', label: 'Entrevista',   color: 'text-purple-600', bg: 'bg-purple-500/10' },
+                { key: 'offer',     label: 'Aprovados',    color: 'text-green-600',  bg: 'bg-green-500/10' },
+              ].map(({ key, label, color, bg }) => (
+                <span
+                  key={key}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full",
+                    bg, color
+                  )}
+                >
+                  <span className="font-bold">
+                    {groupedApplications[key as keyof typeof groupedApplications]?.length ?? 0}
+                  </span>
+                  <span className="hidden sm:inline">{label}</span>
+                </span>
+              ))}
+            </motion.div>
+          ) : null;
+
+          const board = (
+            <>
+              {/* Loading State */}
+              {isLoading && (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              )}
+
+              {/* Kanban Board */}
+              {!isLoading && selectedJobId ? (
+                <>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCorners}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    onDragCancel={handleDragCancel}
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto">
+                      {(['pending', 'reviewing', 'interview', 'offer'] as const).map(
+                        (status) => (
+                          <KanbanColumn
+                            key={status}
+                            status={status}
+                            applications={groupedApplications[status]}
+                            onCardClick={handleCardClick}
+                            onNavigateToProfile={handleNavigateToProfile}
+                          />
+                        )
+                      )}
+                    </div>
+                    <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }}>
+                      {activeApplication ? (
+                        <ApplicationCard
+                          application={activeApplication}
+                          onManage={() => {}}
+                          onNavigate={() => {}}
+                          isDragOverlay
+                        />
+                      ) : null}
+                    </DragOverlay>
+                  </DndContext>
+
+                  {/* Rejected Section */}
+                  {groupedApplications.rejected.length > 0 && (
+                    <Collapsible open={rejectedOpen} onOpenChange={setRejectedOpen}>
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-between text-muted-foreground hover:text-foreground"
+                        >
+                          <span className="flex items-center gap-2">
+                            {rejectedOpen ? (
+                              <ChevronDown className="w-4 h-4" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4" />
+                            )}
+                            Reprovados ({groupedApplications.rejected.length})
+                          </span>
+                          <span className="text-sm">Ver lista</span>
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 py-4">
+                          {groupedApplications.rejected.map((app) => (
+                            <ApplicationCard
+                              key={app.id}
+                              application={app}
+                              onManage={() => handleCardClick(app)}
+                              onNavigate={() => handleNavigateToProfile(app.candidateId)}
+                              compact
+                            />
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+
+                  {/* PRD-077: Hired Section */}
+                  {groupedApplications.hired.length > 0 && (
+                    <Collapsible open={hiredOpen} onOpenChange={setHiredOpen}>
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-between text-emerald-600 hover:text-emerald-700"
+                        >
+                          <span className="flex items-center gap-2">
+                            {hiredOpen ? (
+                              <ChevronDown className="w-4 h-4" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4" />
+                            )}
+                            <Trophy className="w-4 h-4" />
+                            Contratados ({groupedApplications.hired.length})
+                          </span>
+                          <span className="text-sm">Ver lista</span>
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 py-4">
+                          {groupedApplications.hired.map((app) => (
+                            <ApplicationCard
+                              key={app.id}
+                              application={app}
+                              onManage={() => handleCardClick(app)}
+                              onNavigate={() => handleNavigateToProfile(app.candidateId)}
+                              compact
+                            />
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-12 bg-card rounded-2xl shadow-soft">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                    <Users className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    Selecione uma vaga
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Escolha uma vaga para ver as candidaturas
+                  </p>
+                </div>
+              )}
+            </>
+          );
+
+          const comboboxView = (
+            <>
+              <div className="flex flex-col gap-4 lg:flex-row">
+                <div className="flex flex-1 gap-2">
+                  <JobCombobox
+                    jobs={visibleJobs}
+                    breakdowns={breakdowns}
+                    selectedJobId={selectedJobId}
+                    onSelect={setSelectedJobId}
+                    statusFilter={statusFilter}
+                    onStatusFilterChange={setStatusFilter}
+                  />
+                  <JobStatusFilter value={statusFilter} onChange={setStatusFilter} />
+                </div>
+                {candidateFilters}
+              </div>
+              {summaryStrip}
+              {board}
+            </>
+          );
+
+          return viewMode === 'combobox' ? comboboxView : viewMode === 'sidebar' ? (
+            <div className="flex flex-col gap-4 lg:flex-row">
+              {/* Desktop: coluna fixa */}
+              <aside className="hidden w-[300px] shrink-0 lg:block">
+                <div className="sticky top-4 h-[calc(100vh-8rem)]">
+                  <JobSidebar
+                    jobs={visibleJobs}
+                    breakdowns={breakdowns}
+                    selectedJobId={selectedJobId}
+                    onSelect={setSelectedJobId}
+                    statusFilter={statusFilter}
+                    onStatusFilterChange={setStatusFilter}
+                  />
+                </div>
+              </aside>
+
+              {/* Mobile: botão que abre Sheet */}
+              <div className="lg:hidden">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start gap-2">
+                      <PanelLeft className="h-4 w-4" />
+                      {selectedJob ? selectedJob.title : 'Trocar vaga'}
+                      <span className="ml-auto rounded-full bg-primary/15 px-2 text-xs text-primary">
+                        {visibleJobs.length}
+                      </span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[88vw] max-w-sm p-4">
+                    <JobSidebar
+                      jobs={visibleJobs}
+                      breakdowns={breakdowns}
+                      selectedJobId={selectedJobId}
+                      onSelect={setSelectedJobId}
+                      statusFilter={statusFilter}
+                      onStatusFilterChange={setStatusFilter}
+                    />
+                  </SheetContent>
+                </Sheet>
+              </div>
+
+              {/* Conteúdo */}
+              <div className="min-w-0 flex-1 space-y-6">
+                <div className="flex flex-wrap justify-end">{candidateFilters}</div>
+                {summaryStrip}
+                {board}
+              </div>
+            </div>
+        ) : (
+          /* Modo C — cards */
+          !selectedJobId ? (
+            <JobCardsGrid
+              jobs={visibleJobs}
+              breakdowns={breakdowns}
+              onOpen={setSelectedJobId}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+            />
+          ) : (
+            <div className="space-y-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedJobId('')} className="gap-2">
+                    <ArrowLeft className="h-4 w-4" /> Vagas
+                  </Button>
+                  <h2 className="truncate text-lg font-semibold text-foreground">{selectedJob?.title}</h2>
+                </div>
+                <JobCombobox
+                  jobs={visibleJobs}
+                  breakdowns={breakdowns}
+                  selectedJobId={selectedJobId}
+                  onSelect={setSelectedJobId}
+                  statusFilter={statusFilter}
+                  onStatusFilterChange={setStatusFilter}
+                />
+              </div>
+              <div className="flex flex-wrap justify-end">{candidateFilters}</div>
+              {summaryStrip}
+              {board}
+            </div>
+          )
+        );
+        })()}
+
       </div>
 
       {/* Candidate Drawer */}
