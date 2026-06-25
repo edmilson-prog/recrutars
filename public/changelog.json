@@ -1,12 +1,51 @@
 {
   "versions": [
     {
+      "version": "1.71.0",
+      "codename": "Dossier",
+      "type": "minor",
+      "releaseDate": "2026-06-25",
+      "description": "O currículo em PDF e o vídeo de apresentação do candidato passam a ser liberados ao recrutador durante o processo seletivo — assim que o candidato se candidata a uma vaga da empresa —, e não mais somente após o aceite do termo (LGPD). E-mail, CPF e data de nascimento continuam ocultos até a autorização.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Currículo (PDF) e vídeo de apresentação liberados durante o processo seletivo: o recrutador vê e baixa o currículo do candidato assim que ele se candidata a uma vaga da empresa, sem precisar esperar o aceite do termo de compartilhamento.",
+            "E-mail, CPF e data de nascimento seguem ocultos até o candidato autorizar o compartilhamento (LGPD); o aviso de 'currículo bloqueado' foi removido por não ser mais necessário durante o processo."
+          ],
+          "details": {
+            "0": {
+              "description": "A liberação do currículo anexado (PDF + vídeo) passou a seguir a mesma regra do telefone: é revelada à empresa assim que o candidato tem qualquer candidatura a uma de suas vagas (admin, consentimento aceito ou em processo seletivo). Antes, os documentos só apareciam após o aceite do termo LGPD. A mudança é feita no servidor: a view 'curriculums_for_company' passou a liberar as sete colunas de documento também para candidatos em processo, via a função 'company_has_application_from_candidate'. E-mail, CPF e nascimento continuam mascarados até o aceite.",
+              "files": [
+                "sql/migrations/118_reveal_documents_in_selection.sql",
+                "src/pages/empresa/CandidateProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
+            },
+            "1": {
+              "description": "Como o currículo agora é liberado durante o processo, o card 'Currículo Anexado' deixou de exibir o aviso de cadeado ('serão liberados após o candidato autorizar') para candidatos em processo seletivo — esse estado não ocorre mais. O comentário do componente e o gate de apresentação foram atualizados.",
+              "files": [
+                "src/pages/empresa/CandidateProfile.tsx",
+                "src/components/empresa/CandidateDocumentsCard.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.70.0",
       "codename": "Switchboard",
       "type": "minor",
       "releaseDate": "2026-06-25",
       "description": "Navegação multi-modo nas Candidaturas: alterne entre Combobox com busca, Lista lateral e painel de Cards. O seletor de vagas passa a exibir por padrão apenas vagas ativas com candidaturas.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
