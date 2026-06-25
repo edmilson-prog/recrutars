@@ -1058,19 +1058,17 @@ export default function CompanyApplications() {
                   )}
                 </>
               ) : (
-                !isLoading && (
-                  <div className="text-center py-12 bg-card rounded-2xl shadow-soft">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                      <Users className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
-                      Selecione uma vaga
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Escolha uma vaga para ver as candidaturas
-                    </p>
+                <div className="text-center py-12 bg-card rounded-2xl shadow-soft">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                    <Users className="w-8 h-8 text-muted-foreground" />
                   </div>
-                )
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    Selecione uma vaga
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Escolha uma vaga para ver as candidaturas
+                  </p>
+                </div>
               )}
             </>
           );
