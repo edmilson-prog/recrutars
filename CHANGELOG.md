@@ -5,6 +5,22 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.71.0] - 2026-06-25 "Dossier"
+
+### Changed
+- **Currículo do candidato liberado durante o processo seletivo** — o currículo em PDF e o vídeo de apresentação anexados pelo candidato passam a ser liberados ao recrutador assim que o candidato se candidata a uma vaga da empresa (admin OU consentimento aceito OU em processo seletivo), seguindo a mesma regra já aplicada ao telefone. Antes só apareciam após o aceite do termo (LGPD). A liberação é feita no servidor: a view `curriculums_for_company` passou a revelar as 7 colunas de documento (`resume_pdf_*`, `presentation_video_*`) também para candidatos em processo, via `company_has_application_from_candidate`. E-mail, CPF e data de nascimento continuam mascarados até o aceite. No frontend, o card "Currículo Anexado" deixou de mostrar o aviso de cadeado (estado que não ocorre mais durante o processo) (`sql/migrations/118_reveal_documents_in_selection.sql`, `src/pages/empresa/CandidateProfile.tsx`, `src/components/empresa/CandidateDocumentsCard.tsx`)
+
+## [1.70.0] - 2026-06-25 "Switchboard"
+
+### Added
+- **Navegação multi-modo nas Candidaturas** — novo switcher permite alternar entre três experiências na tela de Candidaturas: Combobox (seletor com busca rápida), Lista lateral (sidebar com scroll) e Cards (painel visual por vaga), com a preferência salva no `localStorage` e restaurada na próxima visita (`src/pages/empresa/Applications.tsx`, `src/components/empresa/applications/`)
+- **Filtro de status das vagas no seletor** — um filtro visível no topo do seletor de vagas controla quais vagas aparecem; por padrão, apenas vagas ativas com candidaturas são exibidas, e vagas pausadas, fechadas ou sem candidaturas são reveladas com um clique (`src/components/empresa/applications/jobsNavigation.helpers.ts`, `src/components/empresa/applications/JobStatusFilter.tsx`)
+
+## [1.69.1] - 2026-06-24 "Folio"
+
+### Fixed
+- **Nomes de candidatos em branco** — na aba "Candidatos" do detalhe da vaga (admin) e na lista de candidatos para envio de teste da vaga (empresa), o nome e as iniciais voltam a aparecer. Desde a mudança de privacidade (LGPD), nome e avatar não vêm mais embutidos na candidatura; ambas as telas passaram a buscar e preencher esses dados no cliente (`src/pages/admin/JobDetail.tsx`, `src/pages/empresa/JobTestManager.tsx`)
+
 ## [1.69.0] - 2026-06-23 "Folio"
 
 ### Added
