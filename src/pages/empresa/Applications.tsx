@@ -89,6 +89,8 @@ import {
   useUpdateApplicationStatus,
   useAddApplicationNote,
 } from '@/hooks/useApplicationsQuery';
+import { useJobsNavigation } from '@/components/empresa/applications/useJobsNavigation';
+import { JobStatusFilter } from '@/components/empresa/applications/JobStatusFilter';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useConsentStatus } from '@/hooks/useConsentStatus';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -355,7 +357,7 @@ export default function CompanyApplications() {
   const addNoteMutation = useAddApplicationNote();
 
   // Read jobId from URL query params (e.g. /empresa/candidaturas?jobId=xxx)
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialJobId = searchParams.get('jobId') ?? '';
 
   // State
@@ -427,17 +429,6 @@ export default function CompanyApplications() {
   // Statuses that count as active in the pipeline
   const activeStatuses = ['pending', 'reviewing', 'interview', 'offer'];
 
-  // Real application count per job (only active pipeline statuses)
-  const applicationsCountByJob = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const app of applications) {
-      if (activeStatuses.includes(app.status)) {
-        map[app.jobId] = (map[app.jobId] ?? 0) + 1;
-      }
-    }
-    return map;
-  }, [applications]);
-
   // Total de candidaturas ativas no pipeline — exibido no badge do titulo
   const totalActiveApplications = applications.filter(a => activeStatuses.includes(a.status)).length;
 
@@ -467,20 +458,29 @@ export default function CompanyApplications() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const { createInterview } = useCompanyInterviews(companyId);
 
-  // Get company jobs (active or paused)
-  const companyJobs = useMemo(() =>
-    fetchedCompanyJobs.filter(
-      (job) => job.status === 'active' || job.status === 'paused'
-    ),
-    [fetchedCompanyJobs]
+  // Job navigation engine (visible jobs + per-stage breakdowns + status filter)
+  const { visibleJobs, breakdowns, statusFilter, setStatusFilter } = useJobsNavigation(
+    fetchedCompanyJobs,
+    applications,
   );
 
-  // Set default job on load
+  // Set default job on load (first visible job)
   useEffect(() => {
-    if (companyJobs.length > 0 && !selectedJobId) {
-      setSelectedJobId(companyJobs[0].id);
+    if (visibleJobs.length > 0 && !selectedJobId) {
+      setSelectedJobId(visibleJobs[0].id);
     }
-  }, [companyJobs, selectedJobId]);
+  }, [visibleJobs, selectedJobId]);
+
+  // Sync selected job to the URL (?jobId=) for deep-linking
+  useEffect(() => {
+    if (selectedJobId) {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('jobId', selectedJobId);
+        return next;
+      }, { replace: true });
+    }
+  }, [selectedJobId, setSearchParams]);
 
   // Filter applications for selected job (use enriched array so candidateName is populated)
   const jobApplications = applicationsWithCandidate.filter(
@@ -784,7 +784,7 @@ export default function CompanyApplications() {
       )
     : [];
 
-  const selectedJob = companyJobs.find((j) => j.id === selectedJobId);
+  const selectedJob = fetchedCompanyJobs.find((j) => j.id === selectedJobId);
 
   // PRD-077: Hired count for selected job
   const { data: hiredCount = 0 } = useHiredCountForJob(selectedJobId);
@@ -852,19 +852,20 @@ export default function CompanyApplications() {
         {/* Job Selector and Filters */}
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Job Selector */}
-          <div className="flex-1">
+          <div className="flex flex-1 gap-2">
             <Select value={selectedJobId} onValueChange={setSelectedJobId}>
               <SelectTrigger className="w-full lg:w-80">
                 <SelectValue placeholder="Selecione uma vaga" />
               </SelectTrigger>
               <SelectContent>
-                {companyJobs.map((job) => (
+                {visibleJobs.map((job) => (
                   <SelectItem key={job.id} value={job.id}>
-                    {job.title} ({applicationsCountByJob[job.id] ?? 0} candidaturas)
+                    {job.title} ({breakdowns.get(job.id)?.total ?? 0} candidaturas)
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <JobStatusFilter value={statusFilter} onChange={setStatusFilter} />
           </div>
 
           {/* Filters */}
