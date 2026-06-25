@@ -41,6 +41,7 @@ import {
   MoreVertical,
   Loader2,
   Trophy,
+  PanelLeft,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -94,6 +95,8 @@ import { JobStatusFilter } from '@/components/empresa/applications/JobStatusFilt
 import { useViewMode } from '@/components/empresa/applications/useViewMode';
 import { JobNavSwitcher } from '@/components/empresa/applications/JobNavSwitcher';
 import { JobCombobox } from '@/components/empresa/applications/JobCombobox';
+import { JobSidebar } from '@/components/empresa/applications/JobSidebar';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useConsentStatus } from '@/hooks/useConsentStatus';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -1094,7 +1097,55 @@ export default function CompanyApplications() {
             </>
           );
 
-          return viewMode === 'combobox' ? comboboxView : comboboxView;
+          return viewMode === 'combobox' ? comboboxView : viewMode === 'sidebar' ? (
+            <div className="flex flex-col gap-4 lg:flex-row">
+              {/* Desktop: coluna fixa */}
+              <aside className="hidden w-[300px] shrink-0 lg:block">
+                <div className="sticky top-4 h-[calc(100vh-8rem)]">
+                  <JobSidebar
+                    jobs={visibleJobs}
+                    breakdowns={breakdowns}
+                    selectedJobId={selectedJobId}
+                    onSelect={setSelectedJobId}
+                    statusFilter={statusFilter}
+                    onStatusFilterChange={setStatusFilter}
+                  />
+                </div>
+              </aside>
+
+              {/* Mobile: botão que abre Sheet */}
+              <div className="lg:hidden">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start gap-2">
+                      <PanelLeft className="h-4 w-4" />
+                      {selectedJob ? selectedJob.title : 'Trocar vaga'}
+                      <span className="ml-auto rounded-full bg-primary/15 px-2 text-xs text-primary">
+                        {visibleJobs.length}
+                      </span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[88vw] max-w-sm p-4">
+                    <JobSidebar
+                      jobs={visibleJobs}
+                      breakdowns={breakdowns}
+                      selectedJobId={selectedJobId}
+                      onSelect={setSelectedJobId}
+                      statusFilter={statusFilter}
+                      onStatusFilterChange={setStatusFilter}
+                    />
+                  </SheetContent>
+                </Sheet>
+              </div>
+
+              {/* Conteúdo */}
+              <div className="min-w-0 flex-1 space-y-6">
+                <div className="flex flex-wrap justify-end">{candidateFilters}</div>
+                {summaryStrip}
+                {board}
+              </div>
+            </div>
+          ) : comboboxView;
         })()}
       </div>
 

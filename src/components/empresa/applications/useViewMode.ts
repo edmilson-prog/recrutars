@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 export type ViewMode = 'combobox' | 'sidebar' | 'cards';
 
 // Phases 3/4 append 'sidebar' and 'cards', and Phase 4 flips DEFAULT to 'cards'.
-export const VIEW_MODES: ViewMode[] = ['combobox'];
+export const VIEW_MODES: ViewMode[] = ['combobox', 'sidebar'];
 export const DEFAULT_VIEW_MODE: ViewMode = 'combobox';
 
 const STORAGE_KEY = 'recrutars-applications-view-mode';
