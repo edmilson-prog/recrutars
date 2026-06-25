@@ -42,6 +42,7 @@ import {
   Loader2,
   Trophy,
   PanelLeft,
+  ArrowLeft,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -96,6 +97,7 @@ import { useViewMode } from '@/components/empresa/applications/useViewMode';
 import { JobNavSwitcher } from '@/components/empresa/applications/JobNavSwitcher';
 import { JobCombobox } from '@/components/empresa/applications/JobCombobox';
 import { JobSidebar } from '@/components/empresa/applications/JobSidebar';
+import { JobCardsGrid } from '@/components/empresa/applications/JobCardsGrid';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useConsentStatus } from '@/hooks/useConsentStatus';
@@ -472,12 +474,12 @@ export default function CompanyApplications() {
 
   const { viewMode, setViewMode } = useViewMode();
 
-  // Set default job on load (first visible job)
+  // Set default job on load (first visible job) — skip auto-select in cards mode (shows grid first)
   useEffect(() => {
-    if (visibleJobs.length > 0 && !selectedJobId) {
+    if (viewMode !== 'cards' && visibleJobs.length > 0 && !selectedJobId) {
       setSelectedJobId(visibleJobs[0].id);
     }
-  }, [visibleJobs, selectedJobId]);
+  }, [viewMode, visibleJobs, selectedJobId]);
 
   // Sync selected job to the URL (?jobId=) for deep-linking
   useEffect(() => {
@@ -1145,8 +1147,42 @@ export default function CompanyApplications() {
                 {board}
               </div>
             </div>
-          ) : comboboxView;
+        ) : (
+          /* Modo C — cards */
+          !selectedJobId ? (
+            <JobCardsGrid
+              jobs={visibleJobs}
+              breakdowns={breakdowns}
+              onOpen={setSelectedJobId}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+            />
+          ) : (
+            <div className="space-y-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedJobId('')} className="gap-2">
+                    <ArrowLeft className="h-4 w-4" /> Vagas
+                  </Button>
+                  <h2 className="truncate text-lg font-semibold text-foreground">{selectedJob?.title}</h2>
+                </div>
+                <JobCombobox
+                  jobs={visibleJobs}
+                  breakdowns={breakdowns}
+                  selectedJobId={selectedJobId}
+                  onSelect={setSelectedJobId}
+                  statusFilter={statusFilter}
+                  onStatusFilterChange={setStatusFilter}
+                />
+              </div>
+              <div className="flex flex-wrap justify-end">{candidateFilters}</div>
+              {summaryStrip}
+              {board}
+            </div>
+          )
+        );
         })()}
+
       </div>
 
       {/* Candidate Drawer */}
