@@ -36,7 +36,6 @@ import {
   Award,
   Phone,
   Search,
-  Paperclip,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CertificateViewer } from '@/components/profile/CertificateViewer';
@@ -1323,10 +1322,11 @@ export default function CandidateProfile() {
               </Card>
             </motion.div>
 
-            {/* Currículo Anexado — PDF + vídeo, liberados após o consentimento LGPD.
-                O mascaramento é feito no servidor (view curriculums_for_company); este
-                gate é apenas de apresentação. */}
-            {profile?.resumePdfUrl || profile?.presentationVideoUrl ? (
+            {/* Currículo Anexado — PDF + vídeo. Liberados ao recrutador assim que o
+                candidato entra em um processo seletivo da empresa (mesma regra do
+                telefone), ou com o aceite do termo LGPD. O mascaramento é feito no
+                servidor (view curriculums_for_company); este render é só apresentação. */}
+            {(profile?.resumePdfUrl || profile?.presentationVideoUrl) && (
               <CandidateDocumentsCard
                 resumePdfUrl={profile.resumePdfUrl}
                 resumePdfName={profile.resumePdfName}
@@ -1337,31 +1337,7 @@ export default function CandidateProfile() {
                 presentationVideoName={profile.presentationVideoName}
                 delay={0.32}
               />
-            ) : isInCompanyProcess && !isPiiRevealed ? (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.32 }}
-              >
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Paperclip className="w-5 h-5" />
-                      Currículo Anexado
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-3 rounded-lg border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-                      <Lock className="w-4 h-4 flex-shrink-0" />
-                      <span>
-                        Currículo e vídeo de apresentação serão liberados após o candidato
-                        autorizar o compartilhamento dos dados (LGPD).
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ) : null}
+            )}
 
             {/* Notas Internas */}
             {currentCompany?.id && candidate?.id && (

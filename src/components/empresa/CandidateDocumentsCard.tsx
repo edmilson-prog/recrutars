@@ -2,7 +2,8 @@
  * Read-only card that shows the documents a candidate attached to their profile
  * (resume PDF + presentation video) on the company's candidate detail page.
  * Visibility is enforced server-side by the curriculums_for_company view, which
- * masks these fields until the candidate accepts the LGPD data-disclosure term.
+ * reveals these fields once the candidate is in the company's selective process
+ * (has applied to one of its jobs) or has accepted the LGPD data-disclosure term.
  */
 import { motion } from 'framer-motion';
 import { Paperclip, FileText, Eye, Download, Video, ExternalLink, Play } from 'lucide-react';
