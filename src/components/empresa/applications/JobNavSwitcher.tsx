@@ -34,7 +34,7 @@ export function JobNavSwitcher({ value, onChange }: JobNavSwitcherProps) {
           key={mode}
           value={mode}
           aria-label={LABELS[mode]}
-          className="gap-2 px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+          className="gap-2 px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:font-semibold"
         >
           {ICONS[mode]}
           <span className="hidden sm:inline">{LABELS[mode]}</span>

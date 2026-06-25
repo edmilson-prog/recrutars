@@ -84,7 +84,7 @@ export function JobCombobox({
                       }}
                     >
                       <Check className={cn('mr-2 h-4 w-4', job.id === selectedJobId ? 'opacity-100' : 'opacity-0')} />
-                      <span className={cn('mr-2 h-2 w-2 rounded-full', JOB_STATUS_META[job.status].dotClass)} />
+                      <span className={cn('mr-2 h-2 w-2 shrink-0 rounded-full', JOB_STATUS_META[job.status].dotClass)} />
                       <span className="flex-1 truncate">{job.title}</span>
                       <span className="ml-2 text-sm font-bold tabular-nums text-muted-foreground">{b?.total ?? 0}</span>
                     </CommandItem>

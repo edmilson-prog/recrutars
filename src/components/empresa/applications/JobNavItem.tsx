@@ -33,7 +33,7 @@ export function JobNavItem({ job, breakdown, selected, onSelect }: JobNavItemPro
       <JobFunnelBar breakdown={breakdown} />
       <div className="flex items-center justify-between text-[11px]">
         <span className={meta.textClass}>{meta.label}</span>
-        {breakdown.novos > 0 && <span className="text-blue-600">{breakdown.novos} novos</span>}
+        {breakdown.novos > 0 && <span className="text-blue-600 dark:text-blue-400">{breakdown.novos} novos</span>}
       </div>
     </button>
   );

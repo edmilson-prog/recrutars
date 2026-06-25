@@ -198,7 +198,7 @@ const DEADLINE_OPTIONS = [
 const DEFAULT_TEST_MESSAGE = `Olá! Para darmos continuidade ao processo seletivo, gostaríamos que você realizasse nosso teste comportamental Gauge-Pro. O teste leva cerca de 15-20 minutos e nos ajuda a entender melhor seu perfil.`;
 
 // PRD-035: Cálculo dinâmico de match - esta função é usada em múltiplos lugares
-// NOTE: This uses candidatesMap, companyJobs and behavioralTests from the component scope
+// NOTE: This uses candidatesMap, _companyJobs and behavioralTests from the component scope
 // via closures, set during render
 let _candidatesMap: Record<string, import('@/types').Candidate> = {};
 let _companyJobs: import('@/types').Job[] = [];

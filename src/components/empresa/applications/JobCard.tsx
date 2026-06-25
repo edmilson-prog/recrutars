@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { JobFunnelBar } from './JobFunnelBar';
 import { JOB_STATUS_META, PIPELINE_STAGES } from './statusColors';
@@ -14,13 +14,14 @@ interface JobCardProps {
 
 export function JobCard({ job, breakdown, onOpen, index = 0 }: JobCardProps) {
   const meta = JOB_STATUS_META[job.status];
+  const reduce = useReducedMotion();
   return (
     <motion.button
       type="button"
       onClick={onOpen}
-      initial={{ opacity: 0, y: 8 }}
+      initial={reduce ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.03, 0.3) }}
+      transition={{ delay: reduce ? 0 : Math.min(index * 0.03, 0.3) }}
       className={cn(
         'flex flex-col gap-3 rounded-xl border border-border bg-card p-4 text-left transition-colors',
         'hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -37,7 +38,7 @@ export function JobCard({ job, breakdown, onOpen, index = 0 }: JobCardProps) {
       <div className="flex items-end justify-between">
         <span className="text-2xl font-bold tabular-nums text-foreground">{breakdown.total}</span>
         {breakdown.novos > 0 && (
-          <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[11px] font-medium text-blue-600">
+          <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[11px] font-medium text-blue-600 dark:text-blue-400">
             {breakdown.novos} novos
           </span>
         )}
