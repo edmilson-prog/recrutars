@@ -1,12 +1,51 @@
 {
   "versions": [
     {
+      "version": "1.70.0",
+      "codename": "Switchboard",
+      "type": "minor",
+      "releaseDate": "2026-06-25",
+      "description": "Navegação multi-modo nas Candidaturas: alterne entre Combobox com busca, Lista lateral e painel de Cards. O seletor de vagas passa a exibir por padrão apenas vagas ativas com candidaturas.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Três modos de navegação nas Candidaturas (Combobox, Lista e Cards): switcher permite alternar entre seletor com busca, lista lateral e painel de cards, com preferência salva no navegador.",
+            "Filtro de status das vagas no seletor: vagas pausadas, fechadas e sem candidaturas ficam escondidas por padrão e podem ser reveladas com um clique."
+          ],
+          "details": {
+            "0": {
+              "description": "Novo switcher de modo de visualização na tela de Candidaturas permite alternar entre três experiências: Combobox (seletor com busca rápida), Lista lateral (sidebar com scroll) e Cards (painel visual por vaga). A preferência escolhida pelo usuário fica salva no localStorage e é restaurada na próxima visita.",
+              "files": [
+                "src/pages/empresa/Applications.tsx",
+                "src/components/empresa/applications/"
+              ],
+              "routes": [
+                "/empresa/candidaturas"
+              ]
+            },
+            "1": {
+              "description": "Um filtro de status visível no topo do seletor de vagas controla quais vagas aparecem na navegação. Por padrão, apenas vagas ativas com candidaturas são exibidas; vagas pausadas, fechadas ou sem candidaturas são ocultadas e reveladas ao ativar o filtro correspondente.",
+              "files": [
+                "src/components/empresa/applications/jobsNavigation.helpers.ts",
+                "src/components/empresa/applications/JobStatusFilter.tsx"
+              ],
+              "routes": [
+                "/empresa/candidaturas"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.69.1",
       "codename": "Folio",
       "type": "patch",
       "releaseDate": "2026-06-24",
       "description": "Correção de nomes de candidatos que apareciam em branco em duas telas: a aba 'Candidatos' do detalhamento da vaga (admin) e a lista de candidatos para envio de teste da vaga (empresa).",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

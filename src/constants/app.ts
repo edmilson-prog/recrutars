@@ -4,8 +4,8 @@
  * PRD-044: Pagina "Sobre" e Tooltip de Versao
  */
 
-export const APP_VERSION = "1.69.1";
-export const APP_CODENAME = "Folio";
+export const APP_VERSION = "1.70.0";
+export const APP_CODENAME = "Switchboard";
 export const APP_NAME = "RecrutaRS";
 export const APP_COMPANY = "AILA - Sistemas Inteligentes";
 export const APP_COMPANY_URL = "https://ailainteligente.com";
