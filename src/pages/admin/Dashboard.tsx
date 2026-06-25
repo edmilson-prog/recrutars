@@ -11,7 +11,7 @@ import { useApplications } from '@/hooks/useApplicationsQuery';
 import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, type TooltipProps } from 'recharts';
 import { Link } from 'react-router-dom';
 import { calculateMatchBreakdown, calculateMatchStatistics } from '@/lib/matchCalculator';
 import type { MatchResult } from '@/types/disc';
@@ -37,6 +37,62 @@ const CATEGORY_LABELS: Record<string, string> = {
   behavioral: 'Perfil Comportamental',
   location: 'Localização',
 };
+
+// Growth chart colors (consistent with ReportsGrowth)
+const COMPANIES_COLOR = '#1e3a8a';
+const CANDIDATES_COLOR = '#06b6d4';
+
+interface GrowthDataPoint {
+  date: string;
+  companies: number;      // cumulative total up to this day
+  candidates: number;     // cumulative total up to this day
+  newCompanies: number;   // sign-ups on this specific day
+  newCandidates: number;  // sign-ups on this specific day
+}
+
+// Custom tooltip: shows cumulative totals + same-day sign-ups
+function GrowthTooltip({ active, payload, label }: TooltipProps<number, string>) {
+  if (!active || !payload || payload.length === 0) return null;
+  const point = payload[0].payload as GrowthDataPoint;
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-3 shadow-md min-w-[180px]">
+      <p className="text-sm font-semibold text-foreground mb-2">{label}</p>
+
+      <div className="space-y-2 text-xs">
+        <div>
+          <p className="text-muted-foreground mb-1">Total acumulado</p>
+          <div className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-1.5 text-foreground">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COMPANIES_COLOR }} />
+              Empresas
+            </span>
+            <span className="font-semibold text-foreground">{point.companies.toLocaleString('pt-BR')}</span>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-1.5 text-foreground">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: CANDIDATES_COLOR }} />
+              Candidatos
+            </span>
+            <span className="font-semibold text-foreground">{point.candidates.toLocaleString('pt-BR')}</span>
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-border">
+          <p className="text-muted-foreground mb-1">Cadastros no dia</p>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-foreground">Empresas</span>
+            <span className="font-semibold text-foreground">+{point.newCompanies}</span>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-foreground">Candidatos</span>
+            <span className="font-semibold text-foreground">+{point.newCandidates}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function AdminDashboard() {
   // Fetch data via React Query hooks
@@ -139,21 +195,33 @@ export default function AdminDashboard() {
     },
   ], [adminStats]);
 
-  // Growth chart data: cumulative companies/candidates over last 30 days
-  const growthData = useMemo(() => {
+  // Growth chart data: cumulative companies/candidates + same-day sign-ups over last 30 days
+  const growthData = useMemo<GrowthDataPoint[]>(() => {
     const days = 30;
     const now = new Date();
-    const data = [];
+    const data: GrowthDataPoint[] = [];
     const getCreatedAt = (item: any) => new Date(item.createdAt ?? item.created_at);
 
     for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      date.setHours(23, 59, 59, 999);
-      const dateStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-      const companiesCount = companies.filter(c => getCreatedAt(c) <= date).length;
-      const candidatesCount = candidates.filter(c => getCreatedAt(c) <= date).length;
-      data.push({ date: dateStr, companies: companiesCount, candidates: candidatesCount });
+      const dayEnd = new Date(now);
+      dayEnd.setDate(dayEnd.getDate() - i);
+      dayEnd.setHours(23, 59, 59, 999);
+      const dayStart = new Date(dayEnd);
+      dayStart.setHours(0, 0, 0, 0);
+      const dateStr = dayEnd.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
+      const companiesCount = companies.filter(c => getCreatedAt(c) <= dayEnd).length;
+      const candidatesCount = candidates.filter(c => getCreatedAt(c) <= dayEnd).length;
+      const newCompanies = companies.filter(c => {
+        const created = getCreatedAt(c);
+        return created >= dayStart && created <= dayEnd;
+      }).length;
+      const newCandidates = candidates.filter(c => {
+        const created = getCreatedAt(c);
+        return created >= dayStart && created <= dayEnd;
+      }).length;
+
+      data.push({ date: dateStr, companies: companiesCount, candidates: candidatesCount, newCompanies, newCandidates });
     }
     return data;
   }, [companies, candidates]);
@@ -342,7 +410,7 @@ export default function AdminDashboard() {
               <h2 className="text-xl font-semibold text-foreground">Crescimento (Últimos 30 dias)</h2>
             </div>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={growthData}>
+              <ComposedChart data={growthData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
                 <XAxis
                   dataKey="date"
@@ -350,34 +418,64 @@ export default function AdminDashboard() {
                   fontSize={12}
                 />
                 <YAxis
+                  yAxisId="left"
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                 />
-                <RechartsTooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  allowDecimals={false}
                 />
+                <RechartsTooltip
+                  content={<GrowthTooltip />}
+                  cursor={{ fill: 'hsl(var(--muted) / 0.4)' }}
+                />
+                <Legend
+                  wrapperStyle={{ fontSize: 12 }}
+                  iconType="circle"
+                />
+                {/* Same-day sign-ups (right axis) */}
+                <Bar
+                  yAxisId="right"
+                  dataKey="newCompanies"
+                  name="Empresas (no dia)"
+                  fill={COMPANIES_COLOR}
+                  fillOpacity={0.45}
+                  radius={[2, 2, 0, 0]}
+                  maxBarSize={10}
+                />
+                <Bar
+                  yAxisId="right"
+                  dataKey="newCandidates"
+                  name="Candidatos (no dia)"
+                  fill={CANDIDATES_COLOR}
+                  fillOpacity={0.45}
+                  radius={[2, 2, 0, 0]}
+                  maxBarSize={10}
+                />
+                {/* Cumulative totals (left axis) */}
                 <Line
+                  yAxisId="left"
                   type="monotone"
                   dataKey="companies"
-                  stroke="#1e3a8a"
+                  stroke={COMPANIES_COLOR}
                   strokeWidth={2}
-                  name="Empresas"
-                  dot={{ fill: '#1e3a8a', r: 3 }}
+                  name="Empresas (total)"
+                  dot={{ fill: COMPANIES_COLOR, r: 3 }}
                 />
                 <Line
+                  yAxisId="left"
                   type="monotone"
                   dataKey="candidates"
-                  stroke="#06b6d4"
+                  stroke={CANDIDATES_COLOR}
                   strokeWidth={2}
-                  name="Candidatos"
-                  dot={{ fill: '#06b6d4', r: 3 }}
+                  name="Candidatos (total)"
+                  dot={{ fill: CANDIDATES_COLOR, r: 3 }}
                 />
-              </LineChart>
+              </ComposedChart>
             </ResponsiveContainer>
           </motion.div>
 
