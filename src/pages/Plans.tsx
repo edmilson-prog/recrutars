@@ -29,6 +29,13 @@ const PERIOD_LABELS: Record<PlanPeriod, string> = {
   annual: 'Anual',
 };
 
+const PERIOD_SUFFIX: Record<PlanPeriod, string> = {
+  monthly: '/mês',
+  quarterly: '/trimestre',
+  semiannual: '/semestre',
+  annual: '/ano',
+};
+
 export default function PlansPage() {
   const { companyPlans, candidatePlans, isLoading } = usePlans();
   const { isAuthenticated } = useAuth();
@@ -187,7 +194,7 @@ export default function PlansPage() {
                             <span className="text-3xl font-bold text-foreground">
                               {formatBRL(periodPrice)}
                             </span>
-                            {!isOneTime && <span className="text-muted-foreground text-sm">/mês</span>}
+                            {!isOneTime && <span className="text-muted-foreground text-sm">{PERIOD_SUFFIX[selectedPeriod]}</span>}
                           </div>
                           {hasDiscount && (
                             <Badge className="mt-2 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-0 text-xs">
