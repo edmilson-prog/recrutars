@@ -5,6 +5,14 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.72.0] - 2026-07-07 "Lens"
+
+### Added
+- **Ampliar foto do candidato** — nas telas de detalhes do candidato (Banco de Talentos da empresa e detalhe do admin), a foto do header agora é clicável e abre em um modal ampliado; o cursor muda para indicar que é possível clicar. Quando não há foto (apenas iniciais), o comportamento permanece o mesmo (`src/components/profile/CandidatePhotoLightbox.tsx`, `src/pages/empresa/CandidateProfile.tsx`, `src/pages/admin/CandidateDetail.tsx`)
+
+### Fixed
+- **Sufixo de período incorreto nos planos** — a página de Planos exibia sempre "/mês" ao lado do preço, mesmo para os períodos trimestral, semestral e anual; agora cada período mostra seu sufixo correto (`src/pages/Plans.tsx`)
+
 ## [1.71.0] - 2026-06-25 "Dossier"
 
 ### Changed

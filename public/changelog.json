@@ -1,12 +1,59 @@
 {
   "versions": [
     {
+      "version": "1.72.0",
+      "codename": "Lens",
+      "type": "minor",
+      "releaseDate": "2026-07-07",
+      "description": "A foto do candidato nas telas de detalhes agora pode ser ampliada com um clique, e a página de Planos passou a mostrar o sufixo de período correto (trimestral, semestral, anual) ao lado do preço.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Foto do candidato ampliável: nas telas de detalhes (Banco de Talentos da empresa e detalhe do admin), clicar na foto abre uma visualização ampliada em destaque."
+          ],
+          "details": {
+            "0": {
+              "description": "A foto do candidato exibida no topo da tela de detalhes agora é clicável — o cursor do mouse muda ao passar sobre ela, indicando a interação. Ao clicar, a foto abre ampliada em uma janela sobre o conteúdo, facilitando ver melhor o rosto do candidato. Quando o candidato não tem foto cadastrada (aparecem só as iniciais), a foto continua sem interação, como antes.",
+              "files": [
+                "src/components/profile/CandidatePhotoLightbox.tsx",
+                "src/pages/empresa/CandidateProfile.tsx",
+                "src/pages/admin/CandidateDetail.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id",
+                "/admin/candidatos/:id"
+              ]
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Sufixo de período incorreto na página de Planos: valores trimestrais, semestrais e anuais mostravam \"/mês\" por engano; agora cada período exibe seu próprio sufixo."
+          ],
+          "details": {
+            "0": {
+              "description": "Na página de Planos, ao escolher um período de cobrança diferente de mensal (trimestral, semestral ou anual), o preço continuava mostrando \"/mês\" ao lado do valor, o que confundia o usuário sobre a periodicidade real da cobrança. Agora cada período mostra o sufixo correto: \"/trimestre\", \"/semestre\" ou \"/ano\".",
+              "files": [
+                "src/pages/Plans.tsx"
+              ],
+              "routes": [
+                "/planos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.71.0",
       "codename": "Dossier",
       "type": "minor",
       "releaseDate": "2026-06-25",
       "description": "O currículo em PDF e o vídeo de apresentação do candidato passam a ser liberados ao recrutador durante o processo seletivo — assim que o candidato se candidata a uma vaga da empresa —, e não mais somente após o aceite do termo (LGPD). E-mail, CPF e data de nascimento continuam ocultos até a autorização.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "changed",
