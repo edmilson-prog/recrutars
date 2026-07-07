@@ -39,9 +39,9 @@ import {
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CertificateViewer } from '@/components/profile/CertificateViewer';
+import { CandidatePhotoLightbox } from '@/components/profile/CandidatePhotoLightbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
@@ -790,12 +790,13 @@ export default function CandidateProfile() {
           className="bg-card rounded-2xl p-6 shadow-soft"
         >
           <div className="flex flex-col md:flex-row gap-6">
-            <Avatar className="w-24 h-24 flex-shrink-0">
-              <AvatarImage src={candidate.avatar} />
-              <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                {getCandidateInitials(candidate)}
-              </AvatarFallback>
-            </Avatar>
+            <CandidatePhotoLightbox
+              src={candidate.avatar}
+              alt={getCandidateDisplayName(candidate)}
+              initials={getCandidateInitials(candidate)}
+              className="w-24 h-24"
+              fallbackClassName="text-2xl"
+            />
 
             <div className="flex-1">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
