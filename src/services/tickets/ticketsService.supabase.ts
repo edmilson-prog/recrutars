@@ -564,7 +564,10 @@ export class TicketsServiceSupabase implements ITicketsService {
         comment: comment ?? null,
       });
 
-    if (error) throw error;
+    // 23505 = unique_violation (ticket_csat_unique_ticket). A rating for this
+    // ticket already exists — treat as success instead of surfacing a 409,
+    // since the desired end state (ticket rated) is already satisfied.
+    if (error && error.code !== '23505') throw error;
   }
 
   async getPendingCSAT(userId: string): Promise<{ ticketId: string; subject: string; resolvedAt: string } | null> {
