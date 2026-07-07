@@ -64,7 +64,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useSendManualNotification } from '@/hooks/useNotificationSendsQuery';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { CandidatePhotoLightbox } from '@/components/profile/CandidatePhotoLightbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
@@ -475,17 +475,13 @@ export default function AdminCandidateDetail() {
           className="flex flex-col md:flex-row md:items-start gap-4"
         >
           {/* Avatar */}
-          <Avatar className="w-16 h-16 shrink-0">
-            {mergedCandidate.avatar ? (
-              <AvatarImage
-                src={mergedCandidate.avatar}
-                alt={`Foto de ${mergedCandidate.name}`}
-              />
-            ) : null}
-            <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
-              {getInitials(mergedCandidate.name)}
-            </AvatarFallback>
-          </Avatar>
+          <CandidatePhotoLightbox
+            src={mergedCandidate.avatar}
+            alt={mergedCandidate.name}
+            initials={getInitials(mergedCandidate.name)}
+            className="w-16 h-16"
+            fallbackClassName="text-lg font-semibold"
+          />
 
           {/* Info */}
           <div className="flex-1 min-w-0">
