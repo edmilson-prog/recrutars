@@ -42,7 +42,7 @@ export function CSATPrompt({ ticketSubject, onSubmit, onDismiss }: CSATPromptPro
   const { toast } = useToast();
 
   const handleSubmit = async () => {
-    if (rating === 0) return;
+    if (rating === 0 || isSubmitting) return;
 
     setIsSubmitting(true);
     try {
