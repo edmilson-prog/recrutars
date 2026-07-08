@@ -5,6 +5,12 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.72.1] - 2026-07-07 "Lens"
+
+### Fixed
+- **Banco de Talentos recarregando várias vezes** — a lista de candidatos disparava um `useQueries` com uma requisição por candidato (e por vaga) para buscar habilidades padronizadas; com ~700 candidatos isso gerava centenas de requisições concorrentes, causando reloads visíveis e violations de performance (`setTimeout`/`message` handler) no console. Substituído por busca em lote (`getSkillsForCandidates`/`getSkillsForJobs` com `.in()`) via um único `useQuery` cada; `filteredCandidates` também passou a ser memoizado, evitando invalidar a memoização downstream de `sortedCandidates`/`statsMetrics` a cada render (`src/pages/empresa/Candidates.tsx`, `src/hooks/useStandardizedSkillsQuery.ts`, `src/services/standardizedSkills/standardizedSkillsService.ts`, `src/services/standardizedSkills/standardizedSkillsService.supabase.ts`)
+- **Aviso "Missing Description" no modal de comparação de candidatos** — `CandidateComparisonModal` usava `DialogContent` sem `DialogDescription`/`aria-describedby`, gerando o warning de acessibilidade do Radix no console. Adicionada `DialogDescription` `sr-only`, seguindo o padrão já usado em `ExportCandidatesModal` (`src/components/compare/CandidateComparison.tsx`)
+
 ## [1.72.0] - 2026-07-07 "Lens"
 
 ### Added

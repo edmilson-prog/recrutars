@@ -17,11 +17,17 @@ export interface IStandardizedSkillsService {
   /** Get candidate's selected standardized skills ordered by priority */
   getCandidateSkills(candidateId: string): Promise<CandidateStandardizedSkill[]>;
 
+  /** Bulk fetch selected standardized skills for many candidates in a single query */
+  getSkillsForCandidates(candidateIds: string[]): Promise<CandidateStandardizedSkill[]>;
+
   /** Replace all candidate standardized skills (delete-all + insert) */
   setCandidateSkills(candidateId: string, skills: SkillSelection[]): Promise<void>;
 
   /** Get job's selected standardized skills ordered by priority */
   getJobSkills(jobId: string): Promise<JobStandardizedSkill[]>;
+
+  /** Bulk fetch selected standardized skills for many jobs in a single query */
+  getSkillsForJobs(jobIds: string[]): Promise<JobStandardizedSkill[]>;
 
   /** Replace all job standardized skills (delete-all + insert) */
   setJobSkills(jobId: string, skills: SkillSelection[]): Promise<void>;
