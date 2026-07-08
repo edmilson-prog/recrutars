@@ -54,6 +54,33 @@ export class StandardizedSkillsServiceSupabase implements IStandardizedSkillsSer
     }));
   }
 
+  async getSkillsForCandidates(candidateIds: string[]): Promise<CandidateStandardizedSkill[]> {
+    if (candidateIds.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from('candidate_standardized_skills')
+      .select('*, skill:standardized_skills(*)')
+      .in('candidate_id', candidateIds)
+      .order('priority');
+
+    if (error) throw error;
+
+    return (data || []).map((row) => ({
+      id: row.id,
+      candidateId: row.candidate_id,
+      skillId: row.skill_id,
+      priority: row.priority,
+      skill: row.skill ? {
+        id: row.skill.id,
+        name: row.skill.name,
+        slug: row.skill.slug,
+        type: row.skill.type as 'technical' | 'behavioral',
+        category: row.skill.category,
+        sortOrder: row.skill.sort_order,
+      } : undefined,
+    }));
+  }
+
   async setCandidateSkills(candidateId: string, skills: SkillSelection[]): Promise<void> {
     // Delete existing
     const { error: deleteError } = await supabase
@@ -88,6 +115,33 @@ export class StandardizedSkillsServiceSupabase implements IStandardizedSkillsSer
       .from('job_standardized_skills')
       .select('*, skill:standardized_skills(*)')
       .eq('job_id', jobId)
+      .order('priority');
+
+    if (error) throw error;
+
+    return (data || []).map((row) => ({
+      id: row.id,
+      jobId: row.job_id,
+      skillId: row.skill_id,
+      priority: row.priority,
+      skill: row.skill ? {
+        id: row.skill.id,
+        name: row.skill.name,
+        slug: row.skill.slug,
+        type: row.skill.type as 'technical' | 'behavioral',
+        category: row.skill.category,
+        sortOrder: row.skill.sort_order,
+      } : undefined,
+    }));
+  }
+
+  async getSkillsForJobs(jobIds: string[]): Promise<JobStandardizedSkill[]> {
+    if (jobIds.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from('job_standardized_skills')
+      .select('*, skill:standardized_skills(*)')
+      .in('job_id', jobIds)
       .order('priority');
 
     if (error) throw error;

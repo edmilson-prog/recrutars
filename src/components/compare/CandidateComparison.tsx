@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -284,6 +285,9 @@ export function CandidateComparisonModal({
       <DialogContent className="max-w-5xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="sr-only">Comparação de Candidatos</DialogTitle>
+          <DialogDescription className="sr-only">
+            Tabela comparativa lado a lado dos candidatos selecionados.
+          </DialogDescription>
         </DialogHeader>
         <ScrollArea className="h-full max-h-[80vh]">
           <CandidateComparison

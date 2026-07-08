@@ -5,9 +5,7 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useQueries } from '@tanstack/react-query';
-import { getStandardizedSkillsService } from '@/services/standardizedSkills/standardizedSkillsService';
-import { standardizedSkillKeys } from '@/hooks/useStandardizedSkillsQuery';
+import { useCandidatesStandardizedSkills, useJobsStandardizedSkills } from '@/hooks/useStandardizedSkillsQuery';
 import type { MatchSkillsInput } from '@/types/disc';
 import { Link, useSearchParams } from 'react-router-dom';
 import { usePaginationParams, loadStoredPagination } from '@/hooks/usePaginationParams';
@@ -366,7 +364,7 @@ export default function CompanyCandidates() {
   // Fetch data from service layer
   const { data: jobs = [] } = useJobsByCompany(companyId);
   const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
-  const allCandidates = candidatesResult?.data ?? [];
+  const allCandidates = useMemo(() => candidatesResult?.data ?? [], [candidatesResult]);
   const { data: behavioralTests = [] } = useBehavioralTests();
   const { data: allGaugeResults = [] } = useAllGaugeProResults();
 
@@ -520,56 +518,51 @@ export default function CompanyCandidates() {
     );
   }, [companyJobs, allSkills, matchJobId]);
 
-  // Standardized skills queries for all candidates and jobs
-  const candidateSkillsQueries = useQueries({
-    queries: allCandidates.map((c) => ({
-      queryKey: standardizedSkillKeys.candidateSkills(c.id),
-      queryFn: async () => {
-        const service = await getStandardizedSkillsService();
-        return service.getCandidateSkills(c.id);
-      },
-      enabled: !!c.id,
-    })),
-  });
+  // Standardized skills for all candidates and jobs — fetched in bulk (2 queries
+  // total) instead of one query per candidate/job, which was firing an N+1
+  // request storm and causing the list to re-render repeatedly as each
+  // individual query settled.
+  const candidateIds = useMemo(() => allCandidates.map((c) => c.id), [allCandidates]);
+  const jobIds = useMemo(() => companyJobs.map((j) => j.id), [companyJobs]);
 
-  const jobSkillsQueries = useQueries({
-    queries: companyJobs.map((j) => ({
-      queryKey: standardizedSkillKeys.jobSkills(j.id),
-      queryFn: async () => {
-        const service = await getStandardizedSkillsService();
-        return service.getJobSkills(j.id);
-      },
-      enabled: !!j.id,
-    })),
-  });
+  const { data: bulkCandidateSkills = [] } = useCandidatesStandardizedSkills(candidateIds);
+  const { data: bulkJobSkills = [] } = useJobsStandardizedSkills(jobIds);
 
   const candidateSkillsMap = useMemo(() => {
+    const byCandidate = new Map<string, typeof bulkCandidateSkills>();
+    bulkCandidateSkills.forEach((s) => {
+      const list = byCandidate.get(s.candidateId) ?? [];
+      list.push(s);
+      byCandidate.set(s.candidateId, list);
+    });
+
     const m = new Map<string, { tech: string[]; beh: string[] }>();
-    allCandidates.forEach((c, i) => {
-      const data = candidateSkillsQueries[i]?.data;
-      if (data) {
-        m.set(c.id, {
-          tech: data.filter((s) => s.skill?.type === 'technical').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
-          beh: data.filter((s) => s.skill?.type === 'behavioral').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
-        });
-      }
+    byCandidate.forEach((data, candidateId) => {
+      m.set(candidateId, {
+        tech: data.filter((s) => s.skill?.type === 'technical').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+        beh: data.filter((s) => s.skill?.type === 'behavioral').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+      });
     });
     return m;
-  }, [allCandidates, candidateSkillsQueries]);
+  }, [bulkCandidateSkills]);
 
   const jobSkillsMap = useMemo(() => {
+    const byJob = new Map<string, typeof bulkJobSkills>();
+    bulkJobSkills.forEach((s) => {
+      const list = byJob.get(s.jobId) ?? [];
+      list.push(s);
+      byJob.set(s.jobId, list);
+    });
+
     const m = new Map<string, { tech: string[]; beh: string[] }>();
-    companyJobs.forEach((j, i) => {
-      const data = jobSkillsQueries[i]?.data;
-      if (data) {
-        m.set(j.id, {
-          tech: data.filter((s) => s.skill?.type === 'technical').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
-          beh: data.filter((s) => s.skill?.type === 'behavioral').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
-        });
-      }
+    byJob.forEach((data, jobId) => {
+      m.set(jobId, {
+        tech: data.filter((s) => s.skill?.type === 'technical').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+        beh: data.filter((s) => s.skill?.type === 'behavioral').sort((a, b) => a.priority - b.priority).map((s) => s.skillId),
+      });
     });
     return m;
-  }, [companyJobs, jobSkillsQueries]);
+  }, [bulkJobSkills]);
 
   const buildSkillsInput = (candidateId: string, jobId: string): MatchSkillsInput | undefined => {
     const c = candidateSkillsMap.get(candidateId);
@@ -617,7 +610,9 @@ export default function CompanyCandidates() {
   };
 
   // Filter candidates (PRD-026: respeita visibilidade)
-  const filteredCandidates = allCandidates.filter((candidate) => {
+  // Memoized so sortedCandidates/statsMetrics (which depend on this array)
+  // don't recompute on every unrelated re-render.
+  const filteredCandidates = useMemo(() => allCandidates.filter((candidate) => {
     // PRD-026: Primeiro verificar se o candidato é visível nas buscas
     if (!isVisibleInSearch(candidate)) {
       return false;
@@ -662,7 +657,7 @@ export default function CompanyCandidates() {
       matchesExperience &&
       matchesSkills
     );
-  });
+  }), [allCandidates, debouncedSearch, stateFilter, locationFilter, profileFilter, experienceFilter, skillsFilter, gaugeResultsByCandidate]);
 
   // Sorting
   const sortedCandidates = useMemo(() => {

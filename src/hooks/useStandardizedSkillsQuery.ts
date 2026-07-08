@@ -11,7 +11,11 @@ export const standardizedSkillKeys = {
   all: ['standardized-skills'] as const,
   catalog: () => [...standardizedSkillKeys.all, 'catalog'] as const,
   candidateSkills: (candidateId: string) => [...standardizedSkillKeys.all, 'candidate', candidateId] as const,
+  candidateSkillsBulk: (candidateIds: string[]) =>
+    [...standardizedSkillKeys.all, 'candidates-bulk', [...candidateIds].sort()] as const,
   jobSkills: (jobId: string) => [...standardizedSkillKeys.all, 'job', jobId] as const,
+  jobSkillsBulk: (jobIds: string[]) =>
+    [...standardizedSkillKeys.all, 'jobs-bulk', [...jobIds].sort()] as const,
 };
 
 /** Fetch the full catalog of 80 standardized skills (cached for the session) */
@@ -47,6 +51,38 @@ export function useJobStandardizedSkills(jobId: string) {
       return service.getJobSkills(jobId);
     },
     enabled: !!jobId,
+  });
+}
+
+/**
+ * Bulk fetch standardized skills for many candidates in a single query.
+ * Use this instead of mapping useCandidateStandardizedSkills over a list —
+ * one query per candidate causes an N+1 request storm on list pages.
+ */
+export function useCandidatesStandardizedSkills(candidateIds: string[]) {
+  return useQuery({
+    queryKey: standardizedSkillKeys.candidateSkillsBulk(candidateIds),
+    queryFn: async () => {
+      const service = await getStandardizedSkillsService();
+      return service.getSkillsForCandidates(candidateIds);
+    },
+    enabled: candidateIds.length > 0,
+  });
+}
+
+/**
+ * Bulk fetch standardized skills for many jobs in a single query.
+ * Use this instead of mapping useJobStandardizedSkills over a list —
+ * one query per job causes an N+1 request storm on list pages.
+ */
+export function useJobsStandardizedSkills(jobIds: string[]) {
+  return useQuery({
+    queryKey: standardizedSkillKeys.jobSkillsBulk(jobIds),
+    queryFn: async () => {
+      const service = await getStandardizedSkillsService();
+      return service.getSkillsForJobs(jobIds);
+    },
+    enabled: jobIds.length > 0,
   });
 }
 

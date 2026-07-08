@@ -1,12 +1,52 @@
 {
   "versions": [
     {
+      "version": "1.72.1",
+      "codename": "Lens",
+      "type": "patch",
+      "releaseDate": "2026-07-07",
+      "description": "A tela de Banco de Talentos parou de recarregar a lista de candidatos repetidamente ao abrir, ficando mais rápida; a janela de comparação de candidatos também ganhou uma descrição para leitores de tela.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Banco de Talentos recarregando várias vezes: a lista de candidatos deixou de disparar centenas de solicitações ao servidor ao abrir a página, eliminando as travadas e recarregamentos repetidos.",
+            "Comparação de candidatos sem descrição para leitores de tela: a janela de comparação lado a lado passou a ter uma descrição associada, corrigindo um aviso de acessibilidade."
+          ],
+          "details": {
+            "0": {
+              "description": "Ao abrir o Banco de Talentos, a tela buscava as habilidades de cada candidato (e de cada vaga) uma por uma — com centenas de candidatos cadastrados, isso disparava centenas de solicitações simultâneas ao servidor, fazendo a lista piscar e recarregar diversas vezes seguidas. Agora essas informações são buscadas em um único pedido para todos os candidatos e vagas de uma vez, deixando a tela estável e mais rápida para carregar.",
+              "files": [
+                "src/pages/empresa/Candidates.tsx",
+                "src/hooks/useStandardizedSkillsQuery.ts",
+                "src/services/standardizedSkills/standardizedSkillsService.ts",
+                "src/services/standardizedSkills/standardizedSkillsService.supabase.ts"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
+            },
+            "1": {
+              "description": "A janela que compara candidatos lado a lado não tinha um texto descritivo associado a ela, o que gerava um aviso de acessibilidade e podia prejudicar quem usa leitor de tela. Foi adicionada uma descrição (invisível na tela, lida apenas por leitores de tela) explicando o conteúdo da janela.",
+              "files": [
+                "src/components/compare/CandidateComparison.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.72.0",
       "codename": "Lens",
       "type": "minor",
       "releaseDate": "2026-07-07",
       "description": "A foto do candidato nas telas de detalhes agora pode ser ampliada com um clique, e a página de Planos passou a mostrar o sufixo de período correto (trimestral, semestral, anual) ao lado do preço.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
