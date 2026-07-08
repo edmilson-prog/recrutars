@@ -1,12 +1,40 @@
 {
   "versions": [
     {
+      "version": "1.73.0",
+      "codename": "Aperture",
+      "type": "minor",
+      "releaseDate": "2026-07-08",
+      "description": "O Banco de Talentos ganhou um novo filtro para mostrar apenas candidatos que têm foto de perfil cadastrada.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Filtro \"Apenas perfis com foto\" no Banco de Talentos: um novo campo no topo do painel de filtros permite exibir só os candidatos que já cadastraram uma foto de perfil."
+          ],
+          "details": {
+            "0": {
+              "description": "No painel de filtros do Banco de Talentos, foi adicionada a opção \"Apenas perfis com foto\", logo no topo. Ao marcá-la, a lista passa a mostrar somente candidatos com foto de perfil cadastrada, facilitando encontrar talentos com perfil mais completo. O filtro pode ser combinado com os demais (estado, localização, perfil comportamental, experiência e skills) e aparece como uma etiqueta removível junto dos outros filtros ativos.",
+              "files": [
+                "src/hooks/useCandidateFilters.ts",
+                "src/pages/empresa/Candidates.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.72.1",
       "codename": "Lens",
       "type": "patch",
       "releaseDate": "2026-07-07",
       "description": "A tela de Banco de Talentos parou de recarregar a lista de candidatos repetidamente ao abrir, ficando mais rápida; a janela de comparação de candidatos também ganhou uma descrição para leitores de tela.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

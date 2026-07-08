@@ -5,6 +5,11 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.73.0] - 2026-07-08 "Aperture"
+
+### Added
+- **Filtro "Apenas perfis com foto" no Banco de Talentos** — novo checkbox no topo do painel de filtros permite exibir apenas candidatos com foto de perfil cadastrada; usa `getDisplayAvatar()` para respeitar corretamente candidatos em modo de visibilidade anônima (nunca contam como "com foto"). Segue o mesmo padrão dos demais filtros: sincronizado com a URL (`?hasPhoto=true`), persistido em `sessionStorage` e removível via chip de filtro ativo (`src/hooks/useCandidateFilters.ts`, `src/pages/empresa/Candidates.tsx`)
+
 ## [1.72.1] - 2026-07-07 "Lens"
 
 ### Fixed
