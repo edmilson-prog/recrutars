@@ -11,6 +11,7 @@ export interface CandidateFilters {
   profileFilter: string;
   experienceFilter: string;
   skillsFilter: string[];
+  hasPhotoFilter: boolean;
   sortBy: SortOption;
   matchJobId: string;
   viewMode: ViewMode;
@@ -23,6 +24,7 @@ export interface UseCandidateFiltersReturn extends CandidateFilters {
   setProfileFilter: (value: string) => void;
   setExperienceFilter: (value: string) => void;
   setSkillsFilter: (valueOrUpdater: string[] | ((prev: string[]) => string[])) => void;
+  setHasPhotoFilter: (value: boolean) => void;
   setSortBy: (value: SortOption) => void;
   setMatchJobId: (value: string) => void;
   setViewMode: (value: ViewMode) => void;
@@ -37,12 +39,13 @@ const DEFAULTS = {
   profile: 'all',
   experience: 'all',
   skills: '',
+  hasPhoto: 'false',
   sort: 'match',
   matchJob: 'best',
   view: 'list' as ViewMode,
 } as const;
 
-const FILTER_KEYS = ['q', 'state', 'location', 'profile', 'experience', 'skills'] as const;
+const FILTER_KEYS = ['q', 'state', 'location', 'profile', 'experience', 'skills', 'hasPhoto'] as const;
 
 const PAGE_RESET_KEYS: readonly (keyof typeof DEFAULTS)[] = [
   ...FILTER_KEYS,
@@ -116,6 +119,7 @@ export function useCandidateFilters(): UseCandidateFiltersReturn {
   const profileFilter = read('profile');
   const experienceFilter = read('experience');
   const skillsRaw = read('skills');
+  const hasPhotoFilter = read('hasPhoto') === 'true';
   const sortBy = read('sort');
   const matchJobId = read('matchJob');
   const viewMode = (read('view') === 'grid' ? 'grid' : 'list') as ViewMode;
@@ -153,6 +157,7 @@ export function useCandidateFilters(): UseCandidateFiltersReturn {
   const setLocationFilter = useCallback((v: string) => setParam('location', v), [setParam]);
   const setProfileFilter = useCallback((v: string) => setParam('profile', v), [setParam]);
   const setExperienceFilter = useCallback((v: string) => setParam('experience', v), [setParam]);
+  const setHasPhotoFilter = useCallback((v: boolean) => setParam('hasPhoto', v ? 'true' : 'false'), [setParam]);
   const setSortBy = useCallback((v: string) => setParam('sort', v), [setParam]);
   const setMatchJobId = useCallback((v: string) => setParam('matchJob', v), [setParam]);
   const setViewMode = useCallback((v: ViewMode) => setParam('view', v), [setParam]);
@@ -191,7 +196,8 @@ export function useCandidateFilters(): UseCandidateFiltersReturn {
     locationFilter !== 'all' ||
     profileFilter !== 'all' ||
     experienceFilter !== 'all' ||
-    skillsFilter.length > 0;
+    skillsFilter.length > 0 ||
+    hasPhotoFilter;
 
   return {
     searchTerm,
@@ -200,6 +206,7 @@ export function useCandidateFilters(): UseCandidateFiltersReturn {
     profileFilter,
     experienceFilter,
     skillsFilter,
+    hasPhotoFilter,
     sortBy,
     matchJobId,
     viewMode,
@@ -209,6 +216,7 @@ export function useCandidateFilters(): UseCandidateFiltersReturn {
     setProfileFilter,
     setExperienceFilter,
     setSkillsFilter,
+    setHasPhotoFilter,
     setSortBy,
     setMatchJobId,
     setViewMode,
