@@ -394,6 +394,7 @@ export default function CompanyCandidates() {
     profileFilter,
     experienceFilter,
     skillsFilter,
+    hasPhotoFilter,
     sortBy,
     matchJobId,
     viewMode,
@@ -403,6 +404,7 @@ export default function CompanyCandidates() {
     setProfileFilter,
     setExperienceFilter,
     setSkillsFilter,
+    setHasPhotoFilter,
     setSortBy,
     setMatchJobId,
     setViewMode,
@@ -649,15 +651,18 @@ export default function CompanyCandidates() {
         candidate.skills.map((cs) => cs.toLowerCase()).includes(s.toLowerCase())
       );
 
+    const matchesPhoto = !hasPhotoFilter || !!getDisplayAvatar(candidate);
+
     return (
       matchesSearch &&
       matchesState &&
       matchesLocation &&
       matchesProfile &&
       matchesExperience &&
-      matchesSkills
+      matchesSkills &&
+      matchesPhoto
     );
-  }), [allCandidates, debouncedSearch, stateFilter, locationFilter, profileFilter, experienceFilter, skillsFilter, gaugeResultsByCandidate]);
+  }), [allCandidates, debouncedSearch, stateFilter, locationFilter, profileFilter, experienceFilter, skillsFilter, hasPhotoFilter, gaugeResultsByCandidate]);
 
   // Sorting
   const sortedCandidates = useMemo(() => {
@@ -736,8 +741,11 @@ export default function CompanyCandidates() {
     skillsFilter.forEach(skill => chips.push({
       key: `skill-${skill}`, label: skill, onRemove: () => setSkillsFilter(prev => prev.filter(s => s !== skill))
     }));
+    if (hasPhotoFilter) chips.push({
+      key: 'hasPhoto', label: 'Com foto', onRemove: () => setHasPhotoFilter(false)
+    });
     return chips;
-  }, [stateFilter, stateOptions, locationFilter, profileFilter, experienceFilter, skillsFilter, setStateFilter, setLocationFilter, setProfileFilter, setExperienceFilter, setSkillsFilter]);
+  }, [stateFilter, stateOptions, locationFilter, profileFilter, experienceFilter, skillsFilter, hasPhotoFilter, setStateFilter, setLocationFilter, setProfileFilter, setExperienceFilter, setSkillsFilter, setHasPhotoFilter]);
 
   const handleOpenInviteModal = (candidate: Candidate, job: Job) => {
     setSelectedCandidate(candidate);
@@ -845,6 +853,18 @@ export default function CompanyCandidates() {
 
   const FilterContent = () => (
     <div className="space-y-6">
+      {/* Has photo */}
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="filter-has-photo"
+          checked={hasPhotoFilter}
+          onCheckedChange={(checked) => setHasPhotoFilter(checked === true)}
+        />
+        <label htmlFor="filter-has-photo" className="text-sm font-medium text-foreground cursor-pointer">
+          Apenas perfis com foto
+        </label>
+      </div>
+
       {/* Region section header */}
       <div>
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Região</span>
