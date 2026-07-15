@@ -5,6 +5,12 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.73.1] - 2026-07-15 "Aperture"
+
+### Fixed
+- **Convite duplicado no Banco de Talentos gerando erro 409** — `createApplication` só reaproveitava a candidatura existente quando o status era `withdrawn`; para qualquer outro status (`pending`, `reviewing`, etc.) o INSERT duplicado estourava a constraint `applications_job_id_candidate_id_key` como erro cru, exibindo "Erro ao enviar convite" mesmo com o candidato já vinculado à vaga. Agora qualquer candidatura existente é reaproveitada de forma idempotente (mesmo padrão do fix de CSAT 409 do PR #26), com tratamento defensivo do código `23505` em caso de corrida (`src/services/applications/applicationsService.supabase.ts`)
+- **Erro 400 ao carregar habilidades com muitos candidatos no Banco de Talentos** — `getSkillsForCandidates` montava um único `GET` com `in.(...)` contendo todos os IDs de candidatos; com 800+ candidatos cadastrados, a URL resultante estourava o limite de tamanho aceito pelo servidor/proxy. A lista agora é paginada em lotes de 100 IDs por requisição (`src/services/standardizedSkills/standardizedSkillsService.supabase.ts`)
+
 ## [1.73.0] - 2026-07-08 "Aperture"
 
 ### Added

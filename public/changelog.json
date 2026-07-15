@@ -1,12 +1,49 @@
 {
   "versions": [
     {
+      "version": "1.73.1",
+      "codename": "Aperture",
+      "type": "patch",
+      "releaseDate": "2026-07-15",
+      "description": "Convidar um candidato que já tinha uma candidatura para a vaga passou a funcionar normalmente, e o Banco de Talentos deixou de falhar ao carregar as habilidades quando há muitos candidatos cadastrados.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Convite duplicado no Banco de Talentos: convidar um candidato que já possui candidatura para a vaga escolhida agora é concluído normalmente, em vez de mostrar uma mensagem de erro.",
+            "Banco de Talentos não carregava as habilidades com muitos candidatos cadastrados: a busca das habilidades técnicas e comportamentais deixou de falhar quando há centenas de candidatos na base."
+          ],
+          "details": {
+            "0": {
+              "description": "Ao convidar, pelo Banco de Talentos, um candidato que já havia se candidatado (ou sido convidado antes) para a mesma vaga, a tela mostrava uma mensagem de erro genérica e o convite não era concluído. Agora, nesse caso, o sistema reconhece a candidatura já existente e conclui o convite normalmente, sem duplicar registros.",
+              "files": [
+                "src/services/applications/applicationsService.supabase.ts"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
+            },
+            "1": {
+              "description": "Ao abrir o Banco de Talentos com uma quantidade muito grande de candidatos cadastrados, a busca das habilidades de cada um deixava de carregar corretamente. A busca agora é feita em pequenos lotes, garantindo que a lista carregue normalmente independentemente da quantidade de candidatos.",
+              "files": [
+                "src/services/standardizedSkills/standardizedSkillsService.supabase.ts"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.73.0",
       "codename": "Aperture",
       "type": "minor",
       "releaseDate": "2026-07-08",
       "description": "O Banco de Talentos ganhou um novo filtro para mostrar apenas candidatos que têm foto de perfil cadastrada.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
