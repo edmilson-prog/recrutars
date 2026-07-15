@@ -57,15 +57,32 @@ export class StandardizedSkillsServiceSupabase implements IStandardizedSkillsSer
   async getSkillsForCandidates(candidateIds: string[]): Promise<CandidateStandardizedSkill[]> {
     if (candidateIds.length === 0) return [];
 
-    const { data, error } = await supabase
-      .from('candidate_standardized_skills')
-      .select('*, skill:standardized_skills(*)')
-      .in('candidate_id', candidateIds)
-      .order('priority');
+    // PostgREST sends .in() as a GET request with every id in the query
+    // string — large candidate lists (300+, as in the Banco de Talentos)
+    // build a URL long enough to be rejected with a 400 by the server/proxy.
+    // Chunking keeps each request well under that limit.
+    const CHUNK_SIZE = 100;
+    const chunks: string[][] = [];
+    for (let i = 0; i < candidateIds.length; i += CHUNK_SIZE) {
+      chunks.push(candidateIds.slice(i, i + CHUNK_SIZE));
+    }
 
-    if (error) throw error;
+    const chunkResults = await Promise.all(
+      chunks.map(async (chunk) => {
+        const { data, error } = await supabase
+          .from('candidate_standardized_skills')
+          .select('*, skill:standardized_skills(*)')
+          .in('candidate_id', chunk)
+          .order('priority');
 
-    return (data || []).map((row) => ({
+        if (error) throw error;
+        return data ?? [];
+      }),
+    );
+
+    const data = chunkResults.flat();
+
+    return data.map((row) => ({
       id: row.id,
       candidateId: row.candidate_id,
       skillId: row.skill_id,
