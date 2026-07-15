@@ -192,6 +192,8 @@ import AboutPage from "./pages/About";
 
 // PRD-040: Chatbot de Suporte
 import { ChatbotWidget } from "./components/chatbot";
+import { UpdateAvailableToast } from "./components/update/UpdateAvailableToast";
+import { WhatsNewModal } from "./components/update/WhatsNewModal";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -230,6 +232,8 @@ const App = () => (
               <Sonner />
               <ChatbotWidget />
               <PendingApprovalGate />
+              <UpdateAvailableToast />
+              <WhatsNewModal />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
