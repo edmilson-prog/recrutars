@@ -193,19 +193,26 @@ export class ApplicationsServiceSupabase implements IApplicationsService {
   }
 
   async createApplication(appData: CreateApplicationData): Promise<Application> {
-    // Check if there's a withdrawn application for this job — reactivate instead of inserting
+    // A candidate can only have one application per job (unique constraint
+    // applications_job_id_candidate_id_key). Re-inviting/re-applying to a job
+    // the candidate is already linked to must be idempotent instead of
+    // surfacing a raw 409 to the UI — the desired end state (candidate linked
+    // to job) is already satisfied.
     const { data: existing } = await supabase
       .from('applications')
       .select(APPLICATION_SELECT)
       .eq('job_id', appData.jobId)
       .eq('candidate_id', appData.candidateId)
-      .eq('status', 'withdrawn')
       .maybeSingle();
 
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id ?? appData.candidateId;
 
     if (existing) {
+      if (existing.status !== 'withdrawn') {
+        return applicationRowToApplication(existing);
+      }
+
       const { data, error } = await supabase
         .from('applications')
         .update({
@@ -242,6 +249,21 @@ export class ApplicationsServiceSupabase implements IApplicationsService {
       .single();
 
     if (error) {
+      // 23505 = unique_violation. A concurrent request already created this
+      // application (race with the existence check above) — fetch and
+      // return it instead of surfacing a 409.
+      if (error.code === '23505') {
+        const { data: raceWinner, error: refetchError } = await supabase
+          .from('applications')
+          .select(APPLICATION_SELECT)
+          .eq('job_id', appData.jobId)
+          .eq('candidate_id', appData.candidateId)
+          .single();
+
+        if (refetchError) throw new Error(`Failed to create application: ${refetchError.message}`);
+        return applicationRowToApplication(raceWinner);
+      }
+
       throw new Error(`Failed to create application: ${error.message}`);
     }
 
