@@ -16,6 +16,6 @@ export function writeLastSeenVersion(version: string): void {
   try {
     localStorage.setItem(STORAGE_KEY, version);
   } catch {
-    // localStorage indisponível (modo privado, cookies bloqueados) — ignora
+    // localStorage unavailable (private mode, blocked cookies) — ignore
   }
 }
