@@ -1,6 +1,24 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import fs from "fs";
+import { resolveBuildId } from "./src/lib/buildId";
+
+function buildMetaPlugin(buildId: string): Plugin {
+  let outDir = "dist";
+  return {
+    name: "write-build-meta",
+    configResolved(config) {
+      outDir = config.build.outDir;
+    },
+    closeBundle() {
+      const outPath = path.resolve(outDir, "build-meta.json");
+      fs.writeFileSync(outPath, JSON.stringify({ buildId }));
+    },
+  };
+}
+
+const buildId = resolveBuildId(process.env);
 
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
@@ -20,11 +38,14 @@ export default defineConfig(() => ({
       },
     },
   },
-  plugins: [react()],
+  plugins: [react(), buildMetaPlugin(buildId)],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  define: {
+    __BUILD_ID__: JSON.stringify(buildId),
   },
   build: {
     rollupOptions: {
