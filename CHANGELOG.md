@@ -5,6 +5,15 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.74.0] - 2026-07-20 "Herald"
+
+### Added
+- **Aviso de atualização disponível** — um `buildId` (SHA do commit) é embutido no bundle via `define` do Vite e gravado em `dist/build-meta.json`; `useUpdateChecker` faz polling desse arquivo (a cada 5 min + ao focar a aba) e, ao detectar divergência, dispara um toast persistente (sonner) com "Atualizar agora" (`location.reload()`) e "Agora não" (snooze de 30 min em memória). Funciona em qualquer rota, pública ou autenticada (`src/hooks/useUpdateChecker.tsx`, `src/components/update/UpdateAvailableToast.tsx`, `src/lib/buildId.ts`, `src/lib/updateChecker.ts`, `vite.config.ts`) (#30)
+- **Modal de novidades da versão** — após o reload, `WhatsNewModal` compara a versão atual do `changelog.json` com a última vista (`recrutars_last_seen_version` no localStorage) e exibe um `Dialog` com as mudanças quando ela muda; nunca aparece na primeira visita de sempre (grava a versão silenciosamente) (`src/components/update/WhatsNewModal.tsx`, `src/lib/whatsNewVersion.ts`, `src/App.tsx`) (#30)
+
+### Fixed
+- **Colaborador desligado não retornava ao Banco de Talentos** — ao contratar via processo, `hire_candidate()` marca `candidates.visibility_mode = 'private'` para ocultar o candidato do Banco de Talentos (migração 039). A restauração para `'public'` só existia na ação `unlink`; os caminhos de desligamento (`terminate` imediato, `terminate` em lote e o cron `process_scheduled_terminations()`) nunca revertiam, deixando ex-colaboradores presos em `private` e invisíveis em `isVisibleInSearch`. Adicionado um trigger `AFTER UPDATE OF status ON team_members` que sincroniza a visibilidade do candidato em todos os caminhos do ciclo de vida: `terminated`/`unlinked` retorna ao banco (`public`), `reactivate` oculta novamente (`private`). Salvaguardas: apenas candidatos de processo (`imported_from_candidate_id`), nunca sobrescreve perfis travados (`visibility_locked = true`), e só retorna ao banco quando não há outro vínculo ativo. Backfill corrige candidatos já presos (`sql/migrations/119_sync_candidate_visibility_on_lifecycle.sql`) (#31)
+
 ## [1.73.1] - 2026-07-15 "Aperture"
 
 ### Fixed

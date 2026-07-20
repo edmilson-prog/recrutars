@@ -1,12 +1,68 @@
 {
   "versions": [
     {
+      "version": "1.74.0",
+      "codename": "Herald",
+      "type": "minor",
+      "releaseDate": "2026-07-20",
+      "description": "O sistema passou a avisar quando há uma nova versão disponível e a apresentar as novidades logo após atualizar; além disso, colaboradores desligados voltam a aparecer no Banco de Talentos.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "added",
+          "items": [
+            "Aviso de atualização disponível: quando uma nova versão do sistema é publicada, aparece um aviso no canto da tela com a opção de atualizar na hora.",
+            "Novidades da versão: logo após atualizar, uma janela apresenta automaticamente o que mudou na nova versão."
+          ],
+          "details": {
+            "0": {
+              "description": "Antes, ao publicarmos uma nova versão do sistema, era preciso perceber sozinho que havia melhorias e recarregar a página manualmente. Agora, quando uma nova versão é publicada, aparece um aviso no canto inferior direito da tela informando que há atualização disponível, com os botões \"Atualizar agora\" (recarrega e traz a nova versão imediatamente) e \"Agora não\" (adia o aviso por um tempo). O aviso funciona em qualquer tela, dentro ou fora da sua conta.",
+              "files": [
+                "src/hooks/useUpdateChecker.tsx",
+                "src/components/update/UpdateAvailableToast.tsx",
+                "src/lib/buildId.ts",
+                "src/lib/updateChecker.ts",
+                "vite.config.ts"
+              ],
+              "routes": []
+            },
+            "1": {
+              "description": "Assim que você atualiza para uma nova versão, o sistema passa a exibir automaticamente uma janela com o resumo das novidades daquela versão, para que fique por dentro do que mudou sem precisar procurar. A janela não aparece no primeiro acesso de sempre — apenas quando a versão realmente muda de uma visita para a outra.",
+              "files": [
+                "src/components/update/WhatsNewModal.tsx",
+                "src/lib/whatsNewVersion.ts",
+                "src/App.tsx"
+              ],
+              "routes": []
+            }
+          }
+        },
+        {
+          "type": "fixed",
+          "items": [
+            "Colaborador desligado volta ao Banco de Talentos: ao desligar um colaborador que havia sido contratado pela plataforma, o perfil dele volta a aparecer no Banco de Talentos, disponível para novas oportunidades."
+          ],
+          "details": {
+            "0": {
+              "description": "Quando um candidato contratado pela plataforma era desligado da empresa, o perfil dele deixava de aparecer no Banco de Talentos e não podia mais ser encontrado por outras empresas — mesmo estando novamente disponível no mercado. Agora, ao desligar (ou desvincular) um colaborador, o perfil volta automaticamente para o Banco de Talentos; e, se ele for recontratado, volta a ficar oculto enquanto estiver na equipe. Perfis de pessoas que entraram apenas para responder testes seguem com o mesmo comportamento de antes.",
+              "files": [
+                "sql/migrations/119_sync_candidate_visibility_on_lifecycle.sql"
+              ],
+              "routes": [
+                "/empresa/candidatos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.73.1",
       "codename": "Aperture",
       "type": "patch",
       "releaseDate": "2026-07-15",
       "description": "Convidar um candidato que já tinha uma candidatura para a vaga passou a funcionar normalmente, e o Banco de Talentos deixou de falhar ao carregar as habilidades quando há muitos candidatos cadastrados.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
