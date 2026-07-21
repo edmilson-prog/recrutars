@@ -59,6 +59,18 @@
 
 ## Fase 1: Fundação de dados (migrations, RLS, RPCs, Storage, tipos)
 
+> **📍 STATUS (auditado em 2026-07-21): parte TypeScript concluída, parte SQL não iniciada.**
+>
+> | Task | Estado |
+> |------|--------|
+> | 1.1 Vitest | ✅ concluída (já na `main`, v3.2.6) |
+> | 1.2 Tipos canônicos | ✅ concluída |
+> | 1.3 `effectiveStatus` | ✅ concluída (em `status.ts`, ver Nota 1) |
+> | 1.4 Converters `rowToX` | ✅ concluída |
+> | 1.5–1.10 Migrations 120–125 | ⬜ **não iniciadas** |
+>
+> **Nenhum arquivo SQL foi criado e nenhuma tabela `financial_*` existe no Supabase** (verificado no banco). O próximo passo da feature é a **Task 1.5**. Pendência menor: o smoke test `sanity.test.ts` deveria ter sido removido na 1.3 e continua na suíte.
+
 > Pré-requisitos lidos do projeto:
 > - Última migration aplicada: `sql/migrations/119_sync_candidate_visibility_on_lifecycle.sql` → esta fase usa **120–125** (a Fase 7 usa 126–127).
 > - Trigger compartilhado já existe: `public.update_updated_at()` (migration 001).
@@ -97,7 +109,7 @@ npm test
 ```
 Saída esperada: a suíte roda verde (inclui os testes de `src/lib/finance/` e os já existentes na `main`).
 
-- [ ] Criar `vitest.config.ts` com resolução do alias `@/` (mesmo de `vite.config.ts`) e ambiente `node` (lógica pura não precisa de DOM):
+- [x] Criar `vitest.config.ts` com resolução do alias `@/` (mesmo de `vite.config.ts`) e ambiente `node` (lógica pura não precisa de DOM):
 ```ts
 import { defineConfig } from 'vitest/config';
 import path from 'path';
@@ -116,14 +128,14 @@ export default defineConfig({
 });
 ```
 
-- [ ] Adicionar os scripts `test` e `test:watch` ao `package.json` (bloco `scripts`, após `"preview": "vite preview"`):
+- [x] Adicionar os scripts `test` e `test:watch` ao `package.json` (bloco `scripts`, após `"preview": "vite preview"`):
 ```json
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
 ```
 
-- [ ] Criar `src/lib/finance/__tests__/sanity.test.ts` para validar o runner e o alias:
+- [x] Criar `src/lib/finance/__tests__/sanity.test.ts` para validar o runner e o alias:
 ```ts
 import { describe, it, expect } from 'vitest';
 
@@ -134,13 +146,13 @@ describe('vitest setup', () => {
 });
 ```
 
-- [ ] Rodar e ver passar:
+- [x] Rodar e ver passar:
 ```bash
 npm test
 ```
 Saída esperada: `Test Files  1 passed (1)` / `Tests  1 passed (1)`.
 
-- [ ] Commit:
+- [x] Commit:
 ```bash
 git add package.json package-lock.json vitest.config.ts src/lib/finance/__tests__/sanity.test.ts && git commit -m "$(cat <<'EOF'
 chore(finance): set up vitest runner for pure logic tests
@@ -153,6 +165,8 @@ EOF
 ---
 
 ### Task 1.2: Tipos canônicos do módulo financeiro
+
+> ✅ **JÁ CONCLUÍDA** (commit `2e7dde3`). `src/types/finance.ts` existe com os 6 tipos e as 7 interfaces do contrato. `tsc --noEmit` limpo.
 
 **Files:**
 - Create: `src/types/finance.ts`
@@ -170,7 +184,7 @@ EOF
 
 **Steps:**
 
-- [ ] Implementar `src/types/finance.ts` com o CONTRATO exato:
+- [x] Implementar `src/types/finance.ts` com o CONTRATO exato:
 ```ts
 /**
  * Types for the Financial / Cash Flow module (manual entries).
@@ -321,13 +335,13 @@ export interface CashflowSummary {
 }
 ```
 
-- [ ] Typecheck:
+- [x] Typecheck:
 ```bash
 npx tsc --noEmit
 ```
 Saída esperada: sem erros (0 de saída).
 
-- [ ] Commit:
+- [x] Commit:
 ```bash
 git add src/types/finance.ts && git commit -m "$(cat <<'EOF'
 feat(finance): add canonical finance domain types
@@ -340,6 +354,10 @@ EOF
 ---
 
 ### Task 1.3: `deriveEffectiveStatus` (TDD puro)
+
+> ✅ **JÁ CONCLUÍDA** (commit `c1982bb`) — **porém implementada conforme a Nota de consistência 1, não conforme o texto abaixo.** O helper canônico é `effectiveStatus(status, dueDateISO, todayISO?)` em **`src/lib/finance/status.ts`** (testes em `src/lib/finance/status.test.ts`, 6 casos verdes) — **não** `deriveEffectiveStatus` dentro de `financeConverters.ts`, como os steps dizem. Ignore as menções a `financeConverters.ts` nesta task; elas pertencem à Task 1.4.
+>
+> ⚠️ **Único step pendente da Fase 1 fora as migrations:** o smoke test `src/lib/finance/__tests__/sanity.test.ts` **não foi removido** e continua rodando na suíte. Removê-lo é inofensivo (é só um `expect(1+1).toBe(2)`).
 
 **Files:**
 - Create: `src/lib/finance/__tests__/financeConverters.test.ts`
@@ -357,7 +375,7 @@ EOF
 rm src/lib/finance/__tests__/sanity.test.ts
 ```
 
-- [ ] Escrever o teste falhando em `src/lib/finance/__tests__/financeConverters.test.ts`:
+- [x] Escrever o teste falhando em `src/lib/finance/__tests__/financeConverters.test.ts`:
 ```ts
 import { describe, it, expect } from 'vitest';
 import { deriveEffectiveStatus } from '@/lib/finance/financeConverters';
@@ -387,13 +405,13 @@ describe('deriveEffectiveStatus', () => {
 });
 ```
 
-- [ ] Rodar e ver falhar:
+- [x] Rodar e ver falhar:
 ```bash
 npm test
 ```
 Saída esperada: falha com `Failed to resolve import "@/lib/finance/financeConverters"` (o módulo ainda não existe).
 
-- [ ] Implementar o mínimo em `src/lib/finance/financeConverters.ts`:
+- [x] Implementar o mínimo em `src/lib/finance/financeConverters.ts`:
 ```ts
 /**
  * Finance row converters (snake_case DB -> camelCase TS) + derived helpers.
@@ -417,13 +435,13 @@ export function deriveEffectiveStatus(
 }
 ```
 
-- [ ] Rodar e ver passar:
+- [x] Rodar e ver passar:
 ```bash
 npm test
 ```
 Saída esperada: `Tests  5 passed (5)`.
 
-- [ ] Commit:
+- [x] Commit:
 ```bash
 git add src/lib/finance/financeConverters.ts src/lib/finance/__tests__/financeConverters.test.ts && git commit -m "$(cat <<'EOF'
 feat(finance): add deriveEffectiveStatus helper (TDD)
@@ -436,6 +454,8 @@ EOF
 ---
 
 ### Task 1.4: Normalizadores de linha `rowToX` (TDD puro)
+
+> ✅ **JÁ CONCLUÍDA** (commits `9041d93`, `9f86047`, `fec3f89`). As 4 funções `rowToFinancialCategory` / `rowToFinancialAttachment` / `rowToFinancialEntry` / `rowToFinancialRecurrence` existem em `src/lib/finance/financeConverters.ts`, com 11 testes verdes — incluindo o mapeamento do join `attachments` e a coerção de campos numéricos que o Supabase devolve como string (`numeric` → `string`). Lint e `tsc --noEmit` limpos nesses arquivos.
 
 **Files:**
 - Modify: `src/lib/finance/__tests__/financeConverters.test.ts` (adicionar describes)
@@ -451,7 +471,7 @@ EOF
 
 **Steps:**
 
-- [ ] Escrever os testes falhando (append no arquivo de teste). Adicionar ao topo o import:
+- [x] Escrever os testes falhando (append no arquivo de teste). Adicionar ao topo o import:
 ```ts
 import {
   deriveEffectiveStatus,
@@ -596,13 +616,13 @@ describe('rowToFinancialRecurrence', () => {
 });
 ```
 
-- [ ] Rodar e ver falhar:
+- [x] Rodar e ver falhar:
 ```bash
 npm test
 ```
 Saída esperada: falha (`rowToFinancialCategory is not a function` / import sem export).
 
-- [ ] Implementar os normalizadores em `src/lib/finance/financeConverters.ts` (append, mantendo `deriveEffectiveStatus`). Adicionar imports de tipo no topo:
+- [x] Implementar os normalizadores em `src/lib/finance/financeConverters.ts` (append, mantendo `deriveEffectiveStatus`). Adicionar imports de tipo no topo:
 ```ts
 import type {
   EntryStatus,
@@ -709,19 +729,19 @@ export function rowToFinancialRecurrence(row: Record<string, unknown>): Financia
 }
 ```
 
-- [ ] Rodar e ver passar:
+- [x] Rodar e ver passar:
 ```bash
 npm test
 ```
 Saída esperada: `Tests  11 passed (11)` (5 da 1.3 + 6 desta task).
 
-- [ ] Lint + typecheck:
+- [x] Lint + typecheck:
 ```bash
 npm run lint && npx tsc --noEmit
 ```
 Saída esperada: ESLint sem erros novos; `tsc` sem saída.
 
-- [ ] Commit:
+- [x] Commit:
 ```bash
 git add src/lib/finance/financeConverters.ts src/lib/finance/__tests__/financeConverters.test.ts && git commit -m "$(cat <<'EOF'
 feat(finance): add rowToX converters for finance rows (TDD)
