@@ -78,10 +78,12 @@ Convenção de verificação desta fase:
 
 ### Task 1.1: Instalar e configurar Vitest
 
+> ✅ **JÁ CONCLUÍDA — não reexecutar.** O runner do Vitest chegou à `main` por esta própria branch e depois foi atualizado para **v3.2.6**. `vitest.config.ts`, os scripts `test`/`test:watch` e o alias `@/` já existem. **O `npm install` abaixo faria downgrade para a v2 — pule-o.** Para conferir: `npm test` deve rodar a suíte inteira verde.
+
 **Files:**
-- Modify: `D:\claude\recrutars-maike\package.json` (devDep + scripts `test`/`test:watch`)
-- Create: `D:\claude\recrutars-maike\vitest.config.ts`
-- Create: `D:\claude\recrutars-maike\src\lib\finance\__tests__\sanity.test.ts` (smoke test, removido na 1.3)
+- Modify: `package.json` (devDep + scripts `test`/`test:watch`)
+- Create: `vitest.config.ts`
+- Create: `src/lib/finance/__tests__/sanity.test.ts` (smoke test, removido na 1.3)
 
 **Interfaces:**
 - Consumes: nada.
@@ -89,13 +91,13 @@ Convenção de verificação desta fase:
 
 **Steps:**
 
-- [ ] Instalar a devDependency do Vitest:
+- [x] ~~Instalar a devDependency do Vitest~~ — já presente como `vitest@^3.2.6`. **Não rodar `npm install -D vitest@^2.1.8`** (downgrade). Apenas confirme:
 ```bash
-cd /d/claude/recrutars-maike && npm install -D vitest@^2.1.8
+npm test
 ```
-Saída esperada: `added N packages` sem erros de peer dependency bloqueantes.
+Saída esperada: a suíte roda verde (inclui os testes de `src/lib/finance/` e os já existentes na `main`).
 
-- [ ] Criar `D:\claude\recrutars-maike\vitest.config.ts` com resolução do alias `@/` (mesmo de `vite.config.ts`) e ambiente `node` (lógica pura não precisa de DOM):
+- [ ] Criar `vitest.config.ts` com resolução do alias `@/` (mesmo de `vite.config.ts`) e ambiente `node` (lógica pura não precisa de DOM):
 ```ts
 import { defineConfig } from 'vitest/config';
 import path from 'path';
@@ -121,7 +123,7 @@ export default defineConfig({
     "test:watch": "vitest"
 ```
 
-- [ ] Criar `D:\claude\recrutars-maike\src\lib\finance\__tests__\sanity.test.ts` para validar o runner e o alias:
+- [ ] Criar `src/lib/finance/__tests__/sanity.test.ts` para validar o runner e o alias:
 ```ts
 import { describe, it, expect } from 'vitest';
 
@@ -134,13 +136,13 @@ describe('vitest setup', () => {
 
 - [ ] Rodar e ver passar:
 ```bash
-cd /d/claude/recrutars-maike && npm test
+npm test
 ```
 Saída esperada: `Test Files  1 passed (1)` / `Tests  1 passed (1)`.
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add package.json package-lock.json vitest.config.ts src/lib/finance/__tests__/sanity.test.ts && git commit -m "$(cat <<'EOF'
+git add package.json package-lock.json vitest.config.ts src/lib/finance/__tests__/sanity.test.ts && git commit -m "$(cat <<'EOF'
 chore(finance): set up vitest runner for pure logic tests
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -153,7 +155,7 @@ EOF
 ### Task 1.2: Tipos canônicos do módulo financeiro
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\src\types\finance.ts`
+- Create: `src/types/finance.ts`
 
 **Interfaces:**
 - Consumes: nada.
@@ -168,7 +170,7 @@ EOF
 
 **Steps:**
 
-- [ ] Implementar `D:\claude\recrutars-maike\src\types\finance.ts` com o CONTRATO exato:
+- [ ] Implementar `src/types/finance.ts` com o CONTRATO exato:
 ```ts
 /**
  * Types for the Financial / Cash Flow module (manual entries).
@@ -321,13 +323,13 @@ export interface CashflowSummary {
 
 - [ ] Typecheck:
 ```bash
-cd /d/claude/recrutars-maike && npx tsc --noEmit
+npx tsc --noEmit
 ```
 Saída esperada: sem erros (0 de saída).
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add src/types/finance.ts && git commit -m "$(cat <<'EOF'
+git add src/types/finance.ts && git commit -m "$(cat <<'EOF'
 feat(finance): add canonical finance domain types
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -340,9 +342,9 @@ EOF
 ### Task 1.3: `deriveEffectiveStatus` (TDD puro)
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\src\lib\finance\__tests__\financeConverters.test.ts`
-- Create: `D:\claude\recrutars-maike\src\lib\finance\financeConverters.ts`
-- Delete: `D:\claude\recrutars-maike\src\lib\finance\__tests__\sanity.test.ts`
+- Create: `src/lib/finance/__tests__/financeConverters.test.ts`
+- Create: `src/lib/finance/financeConverters.ts`
+- Delete: `src/lib/finance/__tests__/sanity.test.ts`
 
 **Interfaces:**
 - Consumes: `EntryStatus`, `EffectiveStatus` de `@/types/finance`.
@@ -352,10 +354,10 @@ EOF
 
 - [ ] Remover o smoke test da Task 1.1:
 ```bash
-cd /d/claude/recrutars-maike && rm src/lib/finance/__tests__/sanity.test.ts
+rm src/lib/finance/__tests__/sanity.test.ts
 ```
 
-- [ ] Escrever o teste falhando em `D:\claude\recrutars-maike\src\lib\finance\__tests__\financeConverters.test.ts`:
+- [ ] Escrever o teste falhando em `src/lib/finance/__tests__/financeConverters.test.ts`:
 ```ts
 import { describe, it, expect } from 'vitest';
 import { deriveEffectiveStatus } from '@/lib/finance/financeConverters';
@@ -387,11 +389,11 @@ describe('deriveEffectiveStatus', () => {
 
 - [ ] Rodar e ver falhar:
 ```bash
-cd /d/claude/recrutars-maike && npm test
+npm test
 ```
 Saída esperada: falha com `Failed to resolve import "@/lib/finance/financeConverters"` (o módulo ainda não existe).
 
-- [ ] Implementar o mínimo em `D:\claude\recrutars-maike\src\lib\finance\financeConverters.ts`:
+- [ ] Implementar o mínimo em `src/lib/finance/financeConverters.ts`:
 ```ts
 /**
  * Finance row converters (snake_case DB -> camelCase TS) + derived helpers.
@@ -417,13 +419,13 @@ export function deriveEffectiveStatus(
 
 - [ ] Rodar e ver passar:
 ```bash
-cd /d/claude/recrutars-maike && npm test
+npm test
 ```
 Saída esperada: `Tests  5 passed (5)`.
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add src/lib/finance/financeConverters.ts src/lib/finance/__tests__/financeConverters.test.ts && git commit -m "$(cat <<'EOF'
+git add src/lib/finance/financeConverters.ts src/lib/finance/__tests__/financeConverters.test.ts && git commit -m "$(cat <<'EOF'
 feat(finance): add deriveEffectiveStatus helper (TDD)
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -436,8 +438,8 @@ EOF
 ### Task 1.4: Normalizadores de linha `rowToX` (TDD puro)
 
 **Files:**
-- Modify: `D:\claude\recrutars-maike\src\lib\finance\__tests__\financeConverters.test.ts` (adicionar describes)
-- Modify: `D:\claude\recrutars-maike\src\lib\finance\financeConverters.ts` (adicionar normalizadores)
+- Modify: `src/lib/finance/__tests__/financeConverters.test.ts` (adicionar describes)
+- Modify: `src/lib/finance/financeConverters.ts` (adicionar normalizadores)
 
 **Interfaces:**
 - Consumes: tipos de `@/types/finance`.
@@ -596,11 +598,11 @@ describe('rowToFinancialRecurrence', () => {
 
 - [ ] Rodar e ver falhar:
 ```bash
-cd /d/claude/recrutars-maike && npm test
+npm test
 ```
 Saída esperada: falha (`rowToFinancialCategory is not a function` / import sem export).
 
-- [ ] Implementar os normalizadores em `D:\claude\recrutars-maike\src\lib\finance\financeConverters.ts` (append, mantendo `deriveEffectiveStatus`). Adicionar imports de tipo no topo:
+- [ ] Implementar os normalizadores em `src/lib/finance/financeConverters.ts` (append, mantendo `deriveEffectiveStatus`). Adicionar imports de tipo no topo:
 ```ts
 import type {
   EntryStatus,
@@ -709,19 +711,19 @@ export function rowToFinancialRecurrence(row: Record<string, unknown>): Financia
 
 - [ ] Rodar e ver passar:
 ```bash
-cd /d/claude/recrutars-maike && npm test
+npm test
 ```
 Saída esperada: `Tests  11 passed (11)` (5 da 1.3 + 6 desta task).
 
 - [ ] Lint + typecheck:
 ```bash
-cd /d/claude/recrutars-maike && npm run lint && npx tsc --noEmit
+npm run lint && npx tsc --noEmit
 ```
 Saída esperada: ESLint sem erros novos; `tsc` sem saída.
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add src/lib/finance/financeConverters.ts src/lib/finance/__tests__/financeConverters.test.ts && git commit -m "$(cat <<'EOF'
+git add src/lib/finance/financeConverters.ts src/lib/finance/__tests__/financeConverters.test.ts && git commit -m "$(cat <<'EOF'
 feat(finance): add rowToX converters for finance rows (TDD)
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -734,7 +736,7 @@ EOF
 ### Task 1.5: Migration 120 — `financial_categories` (tabela + RLS + seed)
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\sql\migrations\120_financial_categories.sql`
+- Create: `sql/migrations/120_financial_categories.sql`
 
 **Interfaces:**
 - Consumes: `public.update_updated_at()`, `public.get_user_type(uuid)`.
@@ -742,7 +744,7 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\120_financial_categories.sql` com o SQL COMPLETO:
+- [ ] Criar `sql/migrations/120_financial_categories.sql` com o SQL COMPLETO:
 ```sql
 -- Migration 120: financial_categories
 -- Categorias gerenciaveis de receitas/despesas para o modulo de fluxo de caixa.
@@ -813,7 +815,7 @@ Saída esperada: `expense 7`, `income 3`.
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add sql/migrations/120_financial_categories.sql && git commit -m "$(cat <<'EOF'
+git add sql/migrations/120_financial_categories.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add financial_categories table with admin RLS and seed
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -826,7 +828,7 @@ EOF
 ### Task 1.6: Migration 121 — `financial_entries` (tabela + RLS + índices)
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\sql\migrations\121_financial_entries.sql`
+- Create: `sql/migrations/121_financial_entries.sql`
 
 **Interfaces:**
 - Consumes: `public.update_updated_at()`, `public.get_user_type(uuid)`, FK → `public.financial_categories`, `public.companies`, `public.profiles`.
@@ -834,7 +836,7 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\121_financial_entries.sql`:
+- [ ] Criar `sql/migrations/121_financial_entries.sql`:
 ```sql
 -- Migration 121: financial_entries
 -- Lancamentos manuais de receita/despesa (contas a pagar/receber + caixa).
@@ -919,7 +921,7 @@ Saída esperada: 7 índices `idx_financial_entries_*` + a PK.
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add sql/migrations/121_financial_entries.sql && git commit -m "$(cat <<'EOF'
+git add sql/migrations/121_financial_entries.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add financial_entries table with admin/service RLS and indexes
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -932,7 +934,7 @@ EOF
 ### Task 1.7: Migration 122 — `financial_attachments` (tabela + RLS)
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\sql\migrations\122_financial_attachments.sql`
+- Create: `sql/migrations/122_financial_attachments.sql`
 
 **Interfaces:**
 - Consumes: FK → `public.financial_entries` (ON DELETE CASCADE), `public.profiles`, `public.get_user_type(uuid)`.
@@ -940,7 +942,7 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\122_financial_attachments.sql`:
+- [ ] Criar `sql/migrations/122_financial_attachments.sql`:
 ```sql
 -- Migration 122: financial_attachments
 -- Multiplos anexos (NF/comprovante/recibo) por lancamento. Bucket privado.
@@ -992,7 +994,7 @@ Saída esperada: `policies = 4`.
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add sql/migrations/122_financial_attachments.sql && git commit -m "$(cat <<'EOF'
+git add sql/migrations/122_financial_attachments.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add financial_attachments table with admin RLS
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -1005,7 +1007,7 @@ EOF
 ### Task 1.8: Migration 123 — `financial_recurrences` (tabela + RLS + FK em entries)
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\sql\migrations\123_financial_recurrences.sql`
+- Create: `sql/migrations/123_financial_recurrences.sql`
 
 **Interfaces:**
 - Consumes: `public.update_updated_at()`, `public.get_user_type(uuid)`, `public.financial_categories`, `public.companies`, `public.profiles`, `public.financial_entries` (para a FK `recurrence_id`).
@@ -1013,7 +1015,7 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\123_financial_recurrences.sql`:
+- [ ] Criar `sql/migrations/123_financial_recurrences.sql`:
 ```sql
 -- Migration 123: financial_recurrences
 -- Regras de recorrencia que materializam financial_entries pendentes ao longo do tempo.
@@ -1098,7 +1100,7 @@ Saída esperada: 1 linha.
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add sql/migrations/123_financial_recurrences.sql && git commit -m "$(cat <<'EOF'
+git add sql/migrations/123_financial_recurrences.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add financial_recurrences table and entries FK
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -1111,7 +1113,7 @@ EOF
 ### Task 1.9: Migration 124 — RPCs (`create_with_installments`, `mark_paid`, `generate_due_recurrences`)
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\sql\migrations\124_financial_rpcs.sql`
+- Create: `sql/migrations/124_financial_rpcs.sql`
 
 **Interfaces:**
 - Consumes: `public.financial_entries`, `public.financial_recurrences`, `public.get_user_type(uuid)`.
@@ -1122,7 +1124,7 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\124_financial_rpcs.sql`:
+- [ ] Criar `sql/migrations/124_financial_rpcs.sql`:
 ```sql
 -- Migration 124: financial RPCs
 -- create_financial_entry_with_installments: cria N parcelas atomicamente.
@@ -1316,7 +1318,7 @@ Saída esperada: `created = 0` (nenhuma recorrência cadastrada ainda) — confi
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add sql/migrations/124_financial_rpcs.sql && git commit -m "$(cat <<'EOF'
+git add sql/migrations/124_financial_rpcs.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add installments, mark-paid and recurrence RPCs
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -1329,7 +1331,7 @@ EOF
 ### Task 1.10: Migration 125 — bucket privado `financial-documents` + policies de Storage
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\sql\migrations\125_financial_storage_bucket.sql`
+- Create: `sql/migrations/125_financial_storage_bucket.sql`
 
 **Interfaces:**
 - Consumes: `public.get_user_type(uuid)`, `storage.buckets`, `storage.objects`.
@@ -1337,7 +1339,7 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\125_financial_storage_bucket.sql`:
+- [ ] Criar `sql/migrations/125_financial_storage_bucket.sql`:
 ```sql
 -- Migration 125: bucket privado financial-documents
 -- NF/comprovantes contem dados sensiveis -> bucket PRIVADO (public=false).
@@ -1409,13 +1411,13 @@ Saída esperada: 4 linhas (`select`/`insert`/`update`/`delete`).
 
 - [ ] Verificação final consolidada da fase (tipos + testes não regrediram):
 ```bash
-cd /d/claude/recrutars-maike && npm test && npx tsc --noEmit
+npm test && npx tsc --noEmit
 ```
 Saída esperada: `Tests  11 passed (11)`; `tsc` sem saída.
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add sql/migrations/125_financial_storage_bucket.sql && git commit -m "$(cat <<'EOF'
+git add sql/migrations/125_financial_storage_bucket.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add private financial-documents storage bucket and policies
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
