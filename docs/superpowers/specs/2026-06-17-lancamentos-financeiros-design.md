@@ -67,7 +67,7 @@ Todas as páginas usam `<DashboardLayout userType="admin">` + `AdminTabNav`.
 
 ## 4. Modelo de Dados
 
-Migrations a partir de **108** (última aplicada é `107_candidate_documents_image_mimes.sql`). Padrão: `NNN_descricao_snake_case.sql`, `snake_case`, `TIMESTAMPTZ`, `gen_random_uuid()`, trigger `update_updated_at()`, RLS habilitada.
+Migrations a partir de **120** (última aplicada é `119_sync_candidate_visibility_on_lifecycle.sql`). Padrão: `NNN_descricao_snake_case.sql`, `snake_case`, `TIMESTAMPTZ`, `gen_random_uuid()`, trigger `update_updated_at()`, RLS habilitada.
 
 ### 4.1 `financial_categories`
 | Coluna | Tipo | Notas |
@@ -240,7 +240,7 @@ Adicionar em `src/index.css` (light **e** dark), seguindo o padrão `--test-*`:
 
 ## 11. Fases de Implementação (entrada para o plano)
 
-1. **Fundação de dados** — migrations 108+ (categories, entries, attachments, recurrences), RLS, índices, RPCs (`mark_paid`, `create_with_installments`), bucket `financial-documents` + policies, seed de categorias; tipos TS + converters.
+1. **Fundação de dados** — migrations 120+ (categories, entries, attachments, recurrences), RLS, índices, RPCs (`mark_paid`, `create_with_installments`), bucket `financial-documents` + policies, seed de categorias; tipos TS + converters.
 2. **Serviço + hooks + util** — `finance`/`financialCategories` services, hooks React Query, `calcInstallments` (TDD).
 3. **Tela de Lançamentos** — rotas/abas/menu, KPIs, filtros, 3 views, Sheet de detalhe, bulk actions.
 4. **Formulário** — `FinancialEntryForm` (FormBody), `AttachmentDropzone`, parcelamento (preview), recorrência; página `/novo` + Sheet de edição.

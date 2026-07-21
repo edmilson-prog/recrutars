@@ -20,7 +20,7 @@
 - **Anexos:** bucket privado `financial-documents` + **signed URLs** (nunca `getPublicUrl`).
 - **Tokens** HSL `--fin-income`/`--fin-expense` (light+dark) no padrão `--test-*`. Cyan só para interação; status em badge (success/warning/destructive/muted). **Paleta de charts:** `#06b6d4` / `#3b82f6` / `#10b981` / `#f59e0b` / `#1e3a8a`. Roboto Mono, `tabular-nums`, `prefers-reduced-motion`.
 - **UI em PT-BR** com acentuação correta (UTF-8).
-- **Migrations a partir de 112** (a `main` já tem até `111_collaborator_tour`), salvas em `sql/migrations/` e aplicadas via MCP Supabase `apply_migration`.
+- **Migrations a partir de 120** (a `main` já tem até `119_sync_candidate_visibility_on_lifecycle`), salvas em `sql/migrations/` e aplicadas via MCP Supabase `apply_migration`.
 - `public/changelog.json`: cada item com `details` (description/files/routes); tipos válidos (added/changed/deprecated/removed/fixed/security); `isCurrent` em exatamente uma versão.
 - **Verificação:** Vitest (TDD) para lógica pura; `npm run lint` + `npx tsc --noEmit` para TS; verificação visual no dev server (porta 3000) para UI.
 
@@ -30,7 +30,20 @@
 
 > Correções que reconciliam divergências entre fases geradas em paralelo. **Em caso de conflito, estas notas prevalecem sobre o texto das tasks.**
 
-0. **⚠️ NUMERAÇÃO DE MIGRATIONS (crítico — o plano foi escrito quando a última era 107):** a `main` já contém migrations até `111_collaborator_tour`. TODAS as migrations desta feature sobem **+4** em relação ao texto das tasks: `108→112_financial_categories`, `109→113_financial_entries`, `110→114_financial_attachments`, `111→115_financial_recurrences`, `112→116_financial_rpcs`, `113→117_financial_storage_bucket`. Use **112–117** nos nomes de arquivo e em todas as referências.
+0. **⚠️ NUMERAÇÃO DE MIGRATIONS (crítico):** o corpo deste plano **já foi renumerado** — não aplique nenhum deslocamento adicional. A `main` contém migrations até `119_sync_candidate_visibility_on_lifecycle`, então esta feature ocupa **120–127**:
+
+   | # | Arquivo | Fase |
+   |---|---------|------|
+   | 120 | `120_financial_categories.sql` | 1 |
+   | 121 | `121_financial_entries.sql` | 1 |
+   | 122 | `122_financial_attachments.sql` | 1 |
+   | 123 | `123_financial_recurrences.sql` | 1 |
+   | 124 | `124_financial_rpcs.sql` | 1 |
+   | 125 | `125_financial_storage_bucket.sql` | 1 |
+   | 126 | `126_generate_due_recurrences.sql` | 7 |
+   | 127 | `127_schedule_recurrences_cron.sql` | 7 |
+
+   **Antes de criar a primeira migration, confira `ls sql/migrations/ | tail -5`.** Se a `main` tiver avançado além de 119 desde este rebase, desloque o bloco inteiro mantendo a ordem relativa. Nota: a `main` tem uma colisão pré-existente de número (dois arquivos `117_*`) — é dela, não desta feature; não tente "consertar" renumerando o que já foi aplicado.
 
 1. **O helper de status efetivo (`overdue`) é ÚNICO.** Canônico: `effectiveStatus(status: EntryStatus, dueDateISO: string, todayISO?: string): EffectiveStatus` em `src/lib/finance/status.ts` (Fase 2, Task 2.2), ao lado de `todayISO()` e `daysUntil()`.
    - **Fase 1 / Task 1.3:** NÃO criar `deriveEffectiveStatus` em `financeConverters.ts`. Crie-o já como `effectiveStatus` em `src/lib/finance/status.ts` (mesma lógica e testes). Os `rowToX` de `financeConverters.ts` permanecem puros sobre a row (não computam overdue).
@@ -40,12 +53,14 @@
 
 3. **Ordem de execução:** 1 → 2 → (3, 4, 5, 6 podem rodar em paralelo após a 2) → 7 → 8. A Fase 3 registra as rotas de Dashboard (Fase 5) e Categorias (Fase 6) com componentes placeholder; substitua-os ao chegar nessas fases.
 
+4. **Versão alvo (Fase 8):** o texto assume bump de `1.74.0 "Herald"` (estado da `main` neste rebase) para **`1.75.0 "Ledger"`**. Como a Fase 8 só roda no fim, **releia `src/constants/app.ts` antes do bump** — se a `main` já tiver avançado, use o próximo MINOR a partir do que estiver lá, mantendo o codename "Ledger". O mesmo vale para a versão a marcar como `isCurrent: false` em `public/changelog.json`.
+
 ---
 
 ## Fase 1: Fundação de dados (migrations, RLS, RPCs, Storage, tipos)
 
 > Pré-requisitos lidos do projeto:
-> - Última migration aplicada: `sql/migrations/107_candidate_documents_image_mimes.sql` → esta fase usa **108–113**.
+> - Última migration aplicada: `sql/migrations/119_sync_candidate_visibility_on_lifecycle.sql` → esta fase usa **120–125** (a Fase 7 usa 126–127).
 > - Trigger compartilhado já existe: `public.update_updated_at()` (migration 001).
 > - RLS admin: `public.get_user_type(auth.uid()) = 'admin'` (migration 001). **NUNCA** `EXISTS (SELECT 1 FROM public.users …)` — tabela não existe.
 > - Padrão de bucket: `032_create_brand_assets_bucket.sql` (mas **privado**, com signed URLs).
@@ -716,10 +731,10 @@ EOF
 
 ---
 
-### Task 1.5: Migration 108 — `financial_categories` (tabela + RLS + seed)
+### Task 1.5: Migration 120 — `financial_categories` (tabela + RLS + seed)
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\sql\migrations\108_financial_categories.sql`
+- Create: `D:\claude\recrutars-maike\sql\migrations\120_financial_categories.sql`
 
 **Interfaces:**
 - Consumes: `public.update_updated_at()`, `public.get_user_type(uuid)`.
@@ -727,9 +742,9 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\108_financial_categories.sql` com o SQL COMPLETO:
+- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\120_financial_categories.sql` com o SQL COMPLETO:
 ```sql
--- Migration 108: financial_categories
+-- Migration 120: financial_categories
 -- Categorias gerenciaveis de receitas/despesas para o modulo de fluxo de caixa.
 -- Admin-only (operador da plataforma). Seed inicial desativavel via is_active.
 
@@ -798,7 +813,7 @@ Saída esperada: `expense 7`, `income 3`.
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add sql/migrations/108_financial_categories.sql && git commit -m "$(cat <<'EOF'
+cd /d/claude/recrutars-maike && git add sql/migrations/120_financial_categories.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add financial_categories table with admin RLS and seed
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -808,23 +823,23 @@ EOF
 
 ---
 
-### Task 1.6: Migration 109 — `financial_entries` (tabela + RLS + índices)
+### Task 1.6: Migration 121 — `financial_entries` (tabela + RLS + índices)
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\sql\migrations\109_financial_entries.sql`
+- Create: `D:\claude\recrutars-maike\sql\migrations\121_financial_entries.sql`
 
 **Interfaces:**
 - Consumes: `public.update_updated_at()`, `public.get_user_type(uuid)`, FK → `public.financial_categories`, `public.companies`, `public.profiles`.
-- Produces: tabela `public.financial_entries` com RLS admin-only + policy `service_role` (para `generate_due_recurrences`), CHECK constraints (`type`, `status`, `payment_method`, `amount > 0`), 7 índices, trigger `update_updated_at`. FK `recurrence_id` adicionada **depois** (migration 111 cria `financial_recurrences`) — aqui a coluna existe sem FK e a constraint é adicionada na 111.
+- Produces: tabela `public.financial_entries` com RLS admin-only + policy `service_role` (para `generate_due_recurrences`), CHECK constraints (`type`, `status`, `payment_method`, `amount > 0`), 7 índices, trigger `update_updated_at`. FK `recurrence_id` adicionada **depois** (migration 123 cria `financial_recurrences`) — aqui a coluna existe sem FK e a constraint é adicionada na 123.
 
 **Steps:**
 
-- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\109_financial_entries.sql`:
+- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\121_financial_entries.sql`:
 ```sql
--- Migration 109: financial_entries
+-- Migration 121: financial_entries
 -- Lancamentos manuais de receita/despesa (contas a pagar/receber + caixa).
 -- amount SEMPRE positivo; sinal/cor vem do type. overdue e DERIVADO (nao armazenado).
--- recurrence_id existe aqui sem FK; a FK e adicionada na migration 111.
+-- recurrence_id existe aqui sem FK; a FK e adicionada na migration 123.
 
 CREATE TABLE public.financial_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -904,7 +919,7 @@ Saída esperada: 7 índices `idx_financial_entries_*` + a PK.
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add sql/migrations/109_financial_entries.sql && git commit -m "$(cat <<'EOF'
+cd /d/claude/recrutars-maike && git add sql/migrations/121_financial_entries.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add financial_entries table with admin/service RLS and indexes
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -914,10 +929,10 @@ EOF
 
 ---
 
-### Task 1.7: Migration 110 — `financial_attachments` (tabela + RLS)
+### Task 1.7: Migration 122 — `financial_attachments` (tabela + RLS)
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\sql\migrations\110_financial_attachments.sql`
+- Create: `D:\claude\recrutars-maike\sql\migrations\122_financial_attachments.sql`
 
 **Interfaces:**
 - Consumes: FK → `public.financial_entries` (ON DELETE CASCADE), `public.profiles`, `public.get_user_type(uuid)`.
@@ -925,9 +940,9 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\110_financial_attachments.sql`:
+- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\122_financial_attachments.sql`:
 ```sql
--- Migration 110: financial_attachments
+-- Migration 122: financial_attachments
 -- Multiplos anexos (NF/comprovante/recibo) por lancamento. Bucket privado.
 -- ON DELETE CASCADE: apagar o lancamento remove os registros de anexo.
 
@@ -977,7 +992,7 @@ Saída esperada: `policies = 4`.
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add sql/migrations/110_financial_attachments.sql && git commit -m "$(cat <<'EOF'
+cd /d/claude/recrutars-maike && git add sql/migrations/122_financial_attachments.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add financial_attachments table with admin RLS
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -987,10 +1002,10 @@ EOF
 
 ---
 
-### Task 1.8: Migration 111 — `financial_recurrences` (tabela + RLS + FK em entries)
+### Task 1.8: Migration 123 — `financial_recurrences` (tabela + RLS + FK em entries)
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\sql\migrations\111_financial_recurrences.sql`
+- Create: `D:\claude\recrutars-maike\sql\migrations\123_financial_recurrences.sql`
 
 **Interfaces:**
 - Consumes: `public.update_updated_at()`, `public.get_user_type(uuid)`, `public.financial_categories`, `public.companies`, `public.profiles`, `public.financial_entries` (para a FK `recurrence_id`).
@@ -998,11 +1013,11 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\111_financial_recurrences.sql`:
+- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\123_financial_recurrences.sql`:
 ```sql
--- Migration 111: financial_recurrences
+-- Migration 123: financial_recurrences
 -- Regras de recorrencia que materializam financial_entries pendentes ao longo do tempo.
--- Tambem adiciona a FK financial_entries.recurrence_id (a tabela ja existia na 109).
+-- Tambem adiciona a FK financial_entries.recurrence_id (a tabela ja existia na 121).
 
 CREATE TABLE public.financial_recurrences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1064,7 +1079,7 @@ CREATE TRIGGER set_updated_at
   BEFORE UPDATE ON public.financial_recurrences
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
--- FK retroativa em financial_entries.recurrence_id (coluna criada na 109)
+-- FK retroativa em financial_entries.recurrence_id (coluna criada na 121)
 ALTER TABLE public.financial_entries
   ADD CONSTRAINT financial_entries_recurrence_id_fkey
   FOREIGN KEY (recurrence_id) REFERENCES public.financial_recurrences(id) ON DELETE SET NULL;
@@ -1083,7 +1098,7 @@ Saída esperada: 1 linha.
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add sql/migrations/111_financial_recurrences.sql && git commit -m "$(cat <<'EOF'
+cd /d/claude/recrutars-maike && git add sql/migrations/123_financial_recurrences.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add financial_recurrences table and entries FK
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -1093,10 +1108,10 @@ EOF
 
 ---
 
-### Task 1.9: Migration 112 — RPCs (`create_with_installments`, `mark_paid`, `generate_due_recurrences`)
+### Task 1.9: Migration 124 — RPCs (`create_with_installments`, `mark_paid`, `generate_due_recurrences`)
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\sql\migrations\112_financial_rpcs.sql`
+- Create: `D:\claude\recrutars-maike\sql\migrations\124_financial_rpcs.sql`
 
 **Interfaces:**
 - Consumes: `public.financial_entries`, `public.financial_recurrences`, `public.get_user_type(uuid)`.
@@ -1107,9 +1122,9 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\112_financial_rpcs.sql`:
+- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\124_financial_rpcs.sql`:
 ```sql
--- Migration 112: financial RPCs
+-- Migration 124: financial RPCs
 -- create_financial_entry_with_installments: cria N parcelas atomicamente.
 -- mark_financial_entry_paid: baixa de um lancamento.
 -- generate_due_recurrences: materializa ocorrencias pendentes (idempotente).
@@ -1301,7 +1316,7 @@ Saída esperada: `created = 0` (nenhuma recorrência cadastrada ainda) — confi
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add sql/migrations/112_financial_rpcs.sql && git commit -m "$(cat <<'EOF'
+cd /d/claude/recrutars-maike && git add sql/migrations/124_financial_rpcs.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add installments, mark-paid and recurrence RPCs
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -1311,10 +1326,10 @@ EOF
 
 ---
 
-### Task 1.10: Migration 113 — bucket privado `financial-documents` + policies de Storage
+### Task 1.10: Migration 125 — bucket privado `financial-documents` + policies de Storage
 
 **Files:**
-- Create: `D:\claude\recrutars-maike\sql\migrations\113_financial_storage_bucket.sql`
+- Create: `D:\claude\recrutars-maike\sql\migrations\125_financial_storage_bucket.sql`
 
 **Interfaces:**
 - Consumes: `public.get_user_type(uuid)`, `storage.buckets`, `storage.objects`.
@@ -1322,9 +1337,9 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\113_financial_storage_bucket.sql`:
+- [ ] Criar `D:\claude\recrutars-maike\sql\migrations\125_financial_storage_bucket.sql`:
 ```sql
--- Migration 113: bucket privado financial-documents
+-- Migration 125: bucket privado financial-documents
 -- NF/comprovantes contem dados sensiveis -> bucket PRIVADO (public=false).
 -- Visualizacao via createSignedUrl (URL temporaria), nunca getPublicUrl.
 -- Path: financial/{entry_id}/{timestamp}-{safeName}.{ext}
@@ -1400,7 +1415,7 @@ Saída esperada: `Tests  11 passed (11)`; `tsc` sem saída.
 
 - [ ] Commit:
 ```bash
-cd /d/claude/recrutars-maike && git add sql/migrations/113_financial_storage_bucket.sql && git commit -m "$(cat <<'EOF'
+cd /d/claude/recrutars-maike && git add sql/migrations/125_financial_storage_bucket.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add private financial-documents storage bucket and policies
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
@@ -1419,7 +1434,7 @@ EOF
 > **Pre-requisitos (entregues pela Fase 1):**
 > - `src/types/finance.ts` exportando os tipos do CONTRATO (`FinancialType`, `EntryStatus`, `EffectiveStatus`, `PaymentMethod`, `RecurrenceFrequency`, `AttachmentKind`, `FinancialCategory`, `FinancialAttachment`, `FinancialEntry`, `FinancialRecurrence`, `EntryFilters`, `InstallmentItem`, `CashflowSummary`).
 > - Vitest instalado e configurado: `package.json` com scripts `"test": "vitest run"` e `"test:watch": "vitest"`, e bloco `test` no `vite.config.ts` (ou `vitest.config.ts`) com `environment: 'node'` e o alias `@`.
-> - Migrations 108-113 aplicadas (tabelas `financial_categories`, `financial_entries`, `financial_attachments`, `financial_recurrences`; RPCs `create_financial_entry_with_installments`, `mark_financial_entry_paid`, `generate_due_recurrences`; bucket privado `financial-documents`).
+> - Migrations 120-125 aplicadas (tabelas `financial_categories`, `financial_entries`, `financial_attachments`, `financial_recurrences`; RPCs `create_financial_entry_with_installments`, `mark_financial_entry_paid`, `generate_due_recurrences`; bucket privado `financial-documents`).
 >
 > Esta fase NAO toca em componentes/paginas/rotas — entrega apenas `src/lib/finance/*` (puro, TDD), `src/services/finance/*`, `src/services/financialCategories/*` e os 3 arquivos de hooks. Verificacao de logica pura = vitest; verificacao de servico/hooks = `npm run lint` + `npx tsc --noEmit -p tsconfig.app.json`.
 
@@ -9035,7 +9050,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ## Fase 7: Recorrência automática (geração agendada)
 
 > **Pré-requisitos (já entregues por fases anteriores):**
-> - Fase 1: tabelas `financial_entries`, `financial_recurrences`, RPCs base (`create_financial_entry_with_installments`, `mark_financial_entry_paid`), e um **stub** de `generate_due_recurrences()` (migration 112). Vitest configurado (`npm run test`).
+> - Fase 1: tabelas `financial_entries`, `financial_recurrences`, RPCs base (`create_financial_entry_with_installments`, `mark_financial_entry_paid`), e um **stub** de `generate_due_recurrences()` (migration 124). Vitest configurado (`npm run test`).
 > - Fase 2: serviço `IFinanceService` com `getRecurrences/createRecurrence/updateRecurrence/deleteRecurrence`, hooks `useRecurrences/useCreateRecurrence/useUpdateRecurrence/useDeleteRecurrence` em `src/hooks/useFinancialDashboardQuery.ts`, query keys `recurrenceKeys` e `financeKeys`. Util `calcInstallments` em `src/lib/finance/installments.ts`.
 > - Fase 4: componente `RecurrenceFields` (form de regra).
 >
@@ -9253,12 +9268,12 @@ EOF
 
 ---
 
-### Task 7.2: RPC `generate_due_recurrences()` idempotente (migration 114)
+### Task 7.2: RPC `generate_due_recurrences()` idempotente (migration 126)
 
-Reescreve a função `generate_due_recurrences()` (substituindo o stub da migration 112) para materializar, de cada `financial_recurrences` ativa, todos os `financial_entries` `pending` cujos vencimentos já chegaram — **sem duplicar** (guarda por `recurrence_id + due_date`). Replica a aritmética de datas do util da Task 7.1 num helper PL/pgSQL `next_recurrence_date`. Avança `next_run_date` da regra ao final. `SECURITY DEFINER`, padrão das migrations 057/060.
+Reescreve a função `generate_due_recurrences()` (substituindo o stub da migration 124) para materializar, de cada `financial_recurrences` ativa, todos os `financial_entries` `pending` cujos vencimentos já chegaram — **sem duplicar** (guarda por `recurrence_id + due_date`). Replica a aritmética de datas do util da Task 7.1 num helper PL/pgSQL `next_recurrence_date`. Avança `next_run_date` da regra ao final. `SECURITY DEFINER`, padrão das migrations 057/060.
 
 **Files:**
-- Create: `sql/migrations/114_generate_due_recurrences.sql`
+- Create: `sql/migrations/126_generate_due_recurrences.sql`
 
 **Interfaces:**
 - Consumes: tabelas `financial_recurrences` e `financial_entries` (Fase 1)
@@ -9266,13 +9281,13 @@ Reescreve a função `generate_due_recurrences()` (substituindo o stub da migrat
 
 **Steps:**
 
-- [ ] Escrever a migration completa em `sql/migrations/114_generate_due_recurrences.sql`:
+- [ ] Escrever a migration completa em `sql/migrations/126_generate_due_recurrences.sql`:
 ```sql
--- Migration 114: generate_due_recurrences (idempotent materialization)
--- Substitui o stub da migration 112. Para cada regra ativa em
+-- Migration 126: generate_due_recurrences (idempotent materialization)
+-- Substitui o stub da migration 124. Para cada regra ativa em
 -- financial_recurrences, cria os financial_entries pendentes cujos vencimentos
 -- ja chegaram (ate current_date), sem duplicar (guarda por recurrence_id + due_date).
--- Agendada via pg_cron (migration 115).
+-- Agendada via pg_cron (migration 127).
 
 -- ============================================================================
 -- Helper: next_recurrence_date — espelha src/lib/finance/recurrence.ts
@@ -9390,7 +9405,7 @@ GRANT EXECUTE ON FUNCTION public.generate_due_recurrences() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.next_recurrence_date(DATE, TEXT, INT, INT) TO authenticated;
 ```
 
-- [ ] Aplicar a migration via MCP Supabase (project_id `filackbesialiapjwijb`), `name: "114_generate_due_recurrences"`, com o SQL acima. Saída esperada: sucesso, sem erro.
+- [ ] Aplicar a migration via MCP Supabase (project_id `filackbesialiapjwijb`), `name: "126_generate_due_recurrences"`, com o SQL acima. Saída esperada: sucesso, sem erro.
 
 - [ ] Verificar idempotência manualmente via `execute_sql` (criar regra de teste, gerar duas vezes, conferir que a 2ª gera 0):
 ```sql
@@ -9431,9 +9446,9 @@ Se aparecer `function_search_path_mutable` para as duas funções novas, anexar 
 
 - [ ] Commit:
 ```bash
-git add sql/migrations/114_generate_due_recurrences.sql
+git add sql/migrations/126_generate_due_recurrences.sql
 git commit -m "$(cat <<'EOF'
-feat(finance): idempotent generate_due_recurrences RPC (migration 114)
+feat(finance): idempotent generate_due_recurrences RPC (migration 126)
 
 Materializes pending financial_entries per active recurrence rule up to
 current_date, guarded by (recurrence_id, due_date) to never duplicate.
@@ -9446,12 +9461,12 @@ EOF
 
 ---
 
-### Task 7.3: Agendamento diário via pg_cron (migration 115)
+### Task 7.3: Agendamento diário via pg_cron (migration 127)
 
 Agenda `generate_due_recurrences()` para rodar todo dia às 06:15 UTC (≈ 03:15 BRT) via pg_cron (extensão já instalada, `1.6.4`). Como a função é SQL puro, o cron a chama diretamente — sem pg_net nem Edge Function. Idempotente por design (Task 7.2), então rodar diariamente é seguro.
 
 **Files:**
-- Create: `sql/migrations/115_schedule_recurrences_cron.sql`
+- Create: `sql/migrations/127_schedule_recurrences_cron.sql`
 
 **Interfaces:**
 - Consumes: `public.generate_due_recurrences()` (Task 7.2), extensão `pg_cron`
@@ -9459,9 +9474,9 @@ Agenda `generate_due_recurrences()` para rodar todo dia às 06:15 UTC (≈ 03:15
 
 **Steps:**
 
-- [ ] Escrever a migration em `sql/migrations/115_schedule_recurrences_cron.sql`:
+- [ ] Escrever a migration em `sql/migrations/127_schedule_recurrences_cron.sql`:
 ```sql
--- Migration 115: agenda generate_due_recurrences via pg_cron
+-- Migration 127: agenda generate_due_recurrences via pg_cron
 -- pg_cron 1.6.4 ja instalado. A funcao e SQL puro (sem HTTP), entao o cron a
 -- chama diretamente. Idempotente: rodar diariamente nao duplica ocorrencias.
 
@@ -9485,7 +9500,7 @@ SELECT cron.schedule(
 );
 ```
 
-- [ ] Aplicar via MCP Supabase, `name: "115_schedule_recurrences_cron"`. Saída esperada: sucesso.
+- [ ] Aplicar via MCP Supabase, `name: "127_schedule_recurrences_cron"`. Saída esperada: sucesso.
 
 - [ ] Confirmar o job criado via `execute_sql`:
 ```sql
@@ -9502,16 +9517,16 @@ SELECT public.generate_due_recurrences() AS generated_now;
 ```
 Saída esperada: inteiro `>= 0` sem erro. (O histórico real do cron aparece em `cron.job_run_details` após o horário agendado.)
 
-- [ ] Documentar no spec a alternativa Edge Function (apenas referência, **não** implementar agora). Adicionar como comentário no topo da própria migration 115 — **já incluído** no cabeçalho. Para o caso futuro (disparar webhook/notificação ao gerar), o caminho seria: habilitar `pg_net`, criar Edge Function `generate-financial-recurrences` (`verify_jwt = false`, validada por `x-cron-key` header igual ao padrão de `migrate-certificates-to-storage`) que chama a RPC via `service_role`, e trocar o `command` do cron por `SELECT net.http_post(...)`. Registrar isso no design spec.
+- [ ] Documentar no spec a alternativa Edge Function (apenas referência, **não** implementar agora). Adicionar como comentário no topo da própria migration 127 — **já incluído** no cabeçalho. Para o caso futuro (disparar webhook/notificação ao gerar), o caminho seria: habilitar `pg_net`, criar Edge Function `generate-financial-recurrences` (`verify_jwt = false`, validada por `x-cron-key` header igual ao padrão de `migrate-certificates-to-storage`) que chama a RPC via `service_role`, e trocar o `command` do cron por `SELECT net.http_post(...)`. Registrar isso no design spec.
 
 - [ ] Atualizar o design spec com a decisão de agendamento. Editar `docs/superpowers/specs/2026-06-17-lancamentos-financeiros-design.md`, na seção "4.5 Funções / RPCs", substituindo a linha de `generate_due_recurrences()` para refletir pg_cron direto:
 ```
-- `generate_due_recurrences()` — para cada `financial_recurrences` ativa, materializa as ocorrências `pending` faltantes até `current_date`. **Idempotente** (guarda por `recurrence_id + due_date`). Agendada via **pg_cron diário** (`15 6 * * *`, migration 115) chamando a RPC diretamente — função é SQL puro, não requer pg_net/Edge Function. Alternativa documentada (Edge Function + pg_net) reservada para disparo de webhook/notificação no futuro.
+- `generate_due_recurrences()` — para cada `financial_recurrences` ativa, materializa as ocorrências `pending` faltantes até `current_date`. **Idempotente** (guarda por `recurrence_id + due_date`). Agendada via **pg_cron diário** (`15 6 * * *`, migration 127) chamando a RPC diretamente — função é SQL puro, não requer pg_net/Edge Function. Alternativa documentada (Edge Function + pg_net) reservada para disparo de webhook/notificação no futuro.
 ```
 
 - [ ] Commit:
 ```bash
-git add sql/migrations/115_schedule_recurrences_cron.sql "docs/superpowers/specs/2026-06-17-lancamentos-financeiros-design.md"
+git add sql/migrations/127_schedule_recurrences_cron.sql "docs/superpowers/specs/2026-06-17-lancamentos-financeiros-design.md"
 git commit -m "$(cat <<'EOF'
 feat(finance): schedule generate_due_recurrences daily via pg_cron
 
@@ -10420,9 +10435,9 @@ EOF
 
 ---
 
-### Task 8.5: Version bump MINOR -> 1.66.0 "Ledger" + changelog
+### Task 8.5: Version bump MINOR -> 1.75.0 "Ledger" + changelog
 
-Eleva a versao para `1.66.0` com codename "Ledger" em `src/constants/app.ts` e adiciona a nova entrada de versao no `public/changelog.json` (com `details` por item: `description`/`files`/`routes`; tipos validos; `isCurrent` unico). Marca a versao anterior `1.65.1` como `isCurrent: false`.
+Eleva a versao para `1.75.0` com codename "Ledger" em `src/constants/app.ts` e adiciona a nova entrada de versao no `public/changelog.json` (com `details` por item: `description`/`files`/`routes`; tipos validos; `isCurrent` unico). Marca a versao anterior `1.74.0` como `isCurrent: false`.
 
 **Files:**
 - Modify: `src/constants/app.ts`
@@ -10430,31 +10445,31 @@ Eleva a versao para `1.66.0` com codename "Ledger" em `src/constants/app.ts` e a
 
 **Interfaces:**
 - Consumes: `Version`/`ChangeCategory`/`ChangeItemDetail` de `src/types/changelog.ts` (tipos: `added`/`changed`/`deprecated`/`removed`/`fixed`/`security`).
-- Produces: `APP_VERSION="1.66.0"`, `APP_CODENAME="Ledger"`; nova entrada de versao `1.66.0` no array `versions` (primeira posicao) com `isCurrent: true`.
+- Produces: `APP_VERSION="1.75.0"`, `APP_CODENAME="Ledger"`; nova entrada de versao `1.75.0` no array `versions` (primeira posicao) com `isCurrent: true`.
 
 **Steps:**
 
 - [ ] Atualizar `src/constants/app.ts`. Trocar:
 
 ```ts
-export const APP_VERSION = "1.65.1";
+export const APP_VERSION = "1.74.0";
 export const APP_CODENAME = "Switchboard";
 ```
 
 por:
 
 ```ts
-export const APP_VERSION = "1.66.0";
+export const APP_VERSION = "1.75.0";
 export const APP_CODENAME = "Ledger";
 ```
 
-- [ ] Em `public/changelog.json`, no objeto da versao `1.65.1` (atualmente `"isCurrent": true`), trocar para `"isCurrent": false`.
+- [ ] Em `public/changelog.json`, no objeto da versao `1.74.0` (atualmente `"isCurrent": true`), trocar para `"isCurrent": false`.
 
-- [ ] Inserir a nova versao como PRIMEIRO item do array `versions` (logo apos `"versions": [`), antes do objeto `1.65.1`. Codigo COMPLETO do objeto a inserir (atentar para a virgula apos o `}` de fechamento, separando do objeto `1.65.1`):
+- [ ] Inserir a nova versao como PRIMEIRO item do array `versions` (logo apos `"versions": [`), antes do objeto `1.74.0`. Codigo COMPLETO do objeto a inserir (atentar para a virgula apos o `}` de fechamento, separando do objeto `1.74.0`):
 
 ```json
     {
-      "version": "1.66.0",
+      "version": "1.75.0",
       "codename": "Ledger",
       "type": "minor",
       "releaseDate": "2026-06-17",
@@ -10491,11 +10506,11 @@ export const APP_CODENAME = "Ledger";
                 "src/services/finance/financeService.ts",
                 "src/services/finance/financeService.supabase.ts",
                 "src/lib/finance/installments.ts",
-                "sql/migrations/109_financial_entries.sql",
-                "sql/migrations/110_financial_attachments.sql",
-                "sql/migrations/111_financial_recurrences.sql",
-                "sql/migrations/112_financial_rpcs.sql",
-                "sql/migrations/113_financial_storage_bucket.sql"
+                "sql/migrations/121_financial_entries.sql",
+                "sql/migrations/122_financial_attachments.sql",
+                "sql/migrations/123_financial_recurrences.sql",
+                "sql/migrations/124_financial_rpcs.sql",
+                "sql/migrations/125_financial_storage_bucket.sql"
               ],
               "routes": ["/admin/financeiro/lancamentos", "/admin/financeiro/lancamentos/novo"]
             },
@@ -10522,14 +10537,14 @@ export const APP_CODENAME = "Ledger";
                 "src/services/financialCategories/financialCategoriesService.ts",
                 "src/services/financialCategories/financialCategoriesService.supabase.ts",
                 "src/hooks/useFinancialCategoriesQuery.ts",
-                "sql/migrations/108_financial_categories.sql"
+                "sql/migrations/120_financial_categories.sql"
               ],
               "routes": ["/admin/financeiro/categorias"]
             },
             "4": {
               "description": "Lançamentos recorrentes (como aluguel e mensalidades) são materializados automaticamente conforme as datas chegam, por uma rotina diária no banco de dados, de forma idempotente para não duplicar ocorrências.",
               "files": [
-                "sql/migrations/112_financial_rpcs.sql",
+                "sql/migrations/124_financial_rpcs.sql",
                 "src/hooks/useFinancialDashboardQuery.ts"
               ],
               "routes": ["/admin/financeiro"]
@@ -10589,7 +10604,7 @@ Saida esperada: `changelog.json OK`. Se der `SyntaxError`, corrigir virgula/colc
 node -e "const v=require('./public/changelog.json').versions; const c=v.filter(x=>x.isCurrent); console.log('isCurrent count:', c.length, '->', c.map(x=>x.version).join(','))"
 ```
 
-Saida esperada: `isCurrent count: 1 -> 1.66.0`.
+Saida esperada: `isCurrent count: 1 -> 1.75.0`.
 
 - [ ] Validar que todos os items de cada categoria possuem `details` com a chave de indice correspondente:
 
@@ -10597,7 +10612,7 @@ Saida esperada: `isCurrent count: 1 -> 1.66.0`.
 node -e "const v=require('./public/changelog.json').versions[0]; v.changes.forEach((c,ci)=>c.items.forEach((_,i)=>{if(!c.details||!c.details[String(i)]){throw new Error('faltando details '+ci+'/'+i)}})); console.log('details OK para', v.version)"
 ```
 
-Saida esperada: `details OK para 1.66.0`.
+Saida esperada: `details OK para 1.75.0`.
 
 - [ ] Rodar lint + typecheck:
 
@@ -10612,7 +10627,7 @@ Saida esperada: exit 0, sem novos erros.
 ```bash
 git add src/constants/app.ts public/changelog.json
 git commit -m "$(cat <<'EOF'
-chore: bump version to v1.66.0 Ledger and update changelog
+chore: bump version to v1.75.0 Ledger and update changelog
 
 Cash flow / manual financial entries module: dashboard, entries list with
 3 views, categories CRUD, attachments, installments and recurrences.
@@ -10626,7 +10641,7 @@ EOF
 
 ### Task 8.6: Verificacao final — pagina "Sobre" e checklist de completude
 
-Confirma que a release aparece corretamente na pagina "Sobre" (renderizada a partir do `changelog.json` via `VersionAccordion`) sem crash, que o tooltip de versao no footer reflete `1.66.0 Ledger`, e fecha o modulo com uma revisao de regressao.
+Confirma que a release aparece corretamente na pagina "Sobre" (renderizada a partir do `changelog.json` via `VersionAccordion`) sem crash, que o tooltip de versao no footer reflete `1.75.0 Ledger`, e fecha o modulo com uma revisao de regressao.
 
 **Files:**
 - Test: nenhum arquivo de codigo alterado (verificacao manual + leitura).
@@ -10645,9 +10660,9 @@ npm run build
 
 Saida esperada: build conclui com sucesso (`✓ built in ...`), sem erro de TypeScript nem de import.
 
-- [ ] Verificacao visual da pagina Sobre. Com o dev server rodando, abrir `http://localhost:3000/sobre`. Esperado: (1) a versao `1.66.0 — Ledger` aparece no topo marcada como atual; (2) expandir o accordion da `1.66.0` e confirmar que renderiza os grupos "Adicionado"/"Alterado" sem crash (nenhum tipo invalido tipo `enhanced`); (3) clicar nos items e confirmar que `description`, `files` e `routes` aparecem nos detalhes.
+- [ ] Verificacao visual da pagina Sobre. Com o dev server rodando, abrir `http://localhost:3000/sobre`. Esperado: (1) a versao `1.75.0 — Ledger` aparece no topo marcada como atual; (2) expandir o accordion da `1.75.0` e confirmar que renderiza os grupos "Adicionado"/"Alterado" sem crash (nenhum tipo invalido tipo `enhanced`); (3) clicar nos items e confirmar que `description`, `files` e `routes` aparecem nos detalhes.
 
-- [ ] Verificacao do footer/tooltip de versao: em qualquer pagina publica (`http://localhost:3000/`), passar o mouse sobre a versao no rodape e confirmar que mostra `v1.66.0 "Ledger"`.
+- [ ] Verificacao do footer/tooltip de versao: em qualquer pagina publica (`http://localhost:3000/`), passar o mouse sobre a versao no rodape e confirmar que mostra `v1.75.0 "Ledger"`.
 
 - [ ] Checklist de completude (regressao): navegar e confirmar que o modulo financeiro continua funcional ponta a ponta — (1) `/admin/financeiro` carrega KPIs e graficos com o toggle Consolidado/Avulsos/Assinaturas; (2) `/admin/financeiro/lancamentos` alterna as 3 views, filtra, e abre o Sheet de detalhe; (3) `/admin/financeiro/lancamentos/novo` cria um lancamento com anexo e parcelamento; (4) `/admin/financeiro/categorias` cria/edita categoria; (5) o `BillingDashboard` de assinaturas (`/admin/assinaturas/billing`) continua intacto. Confirmar tema claro e escuro em cada tela.
 
