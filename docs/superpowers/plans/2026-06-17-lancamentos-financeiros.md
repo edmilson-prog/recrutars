@@ -2375,7 +2375,7 @@ Interface `IFinanceService` completa + factory + a impl Supabase dos metodos de 
 
 **Steps:**
 
-- [ ] Implementar a interface + factory em `src/services/finance/financeService.ts` com o conteudo COMPLETO:
+- [x] Implementar a interface + factory em `src/services/finance/financeService.ts` com o conteudo COMPLETO:
 ```ts
 /**
  * Finance Service — Interface & Factory
@@ -2446,7 +2446,7 @@ export function resetFinanceService(): void {
   _instance = null;
 }
 ```
-- [ ] Criar a impl Supabase em `src/services/finance/financeService.supabase.ts` com a PRIMEIRA metade (normalizador + entries). Conteudo COMPLETO desta parte (a Task 2.6 acrescenta os metodos restantes no MESMO arquivo, antes do `}` final da classe):
+- [x] Criar a impl Supabase em `src/services/finance/financeService.supabase.ts` com a PRIMEIRA metade (normalizador + entries). Conteudo COMPLETO desta parte (a Task 2.6 acrescenta os metodos restantes no MESMO arquivo, antes do `}` final da classe):
 ```ts
 /**
  * Finance Service — Supabase Implementation
@@ -2759,8 +2759,8 @@ export class SupabaseFinanceService implements IFinanceService {
 
 > **Nota:** o uso de `effectiveStatus`/`aggregateCashflow` importados acima e consumido pela Task 2.6 (`getCashflowSummary`). Ate a Task 2.6 ser concluida o lint pode acusar import nao usado — por isso o lint/typecheck "verde" e validado ao final da 2.6, nao aqui. Para nao quebrar o pipeline, este step termina com typecheck (que ignora unused imports) e o lint completo roda na 2.6.
 
-- [ ] Verificar typecheck: `npx tsc --noEmit -p tsconfig.app.json` — esperado: sem erros de tipo nos arquivos `financeService.ts`/`financeService.supabase.ts` (a classe ainda nao implementa todos os metodos da interface, entao `class SupabaseFinanceService implements IFinanceService` ACUSARA erro de membros ausentes — isso e esperado e sera resolvido na Task 2.6; confirmar que os UNICOS erros sao "Class incorrectly implements interface ... missing: uploadAttachment, getAttachmentSignedUrl, removeAttachment, getCashflowSummary, getRecurrences, createRecurrence, updateRecurrence, deleteRecurrence").
-- [ ] Commit: `git add src/services/finance && git commit -m "feat(finance): add finance service entries CRUD/list/markPaid/installments (WIP)"`
+- [x] Verificar typecheck: `npx tsc --noEmit -p tsconfig.app.json` — esperado: sem erros de tipo nos arquivos `financeService.ts`/`financeService.supabase.ts` (a classe ainda nao implementa todos os metodos da interface, entao `class SupabaseFinanceService implements IFinanceService` ACUSARA erro de membros ausentes — isso e esperado e sera resolvido na Task 2.6; confirmar que os UNICOS erros sao "Class incorrectly implements interface ... missing: uploadAttachment, getAttachmentSignedUrl, removeAttachment, getCashflowSummary, getRecurrences, createRecurrence, updateRecurrence, deleteRecurrence").
+- [x] Commit: `git add src/services/finance && git commit -m "feat(finance): add finance service entries CRUD/list/markPaid/installments (WIP)"`
 
 ---
 
@@ -2777,7 +2777,7 @@ Acrescenta os metodos restantes a classe `SupabaseFinanceService` (anexos via bu
 
 **Steps:**
 
-- [ ] Inserir os metodos restantes ANTES do `}` final da classe `SupabaseFinanceService` em `src/services/finance/financeService.supabase.ts`. Codigo COMPLETO a inserir:
+- [x] Inserir os metodos restantes ANTES do `}` final da classe `SupabaseFinanceService` em `src/services/finance/financeService.supabase.ts`. Codigo COMPLETO a inserir:
 ```ts
   // -----------------------------------------------------------------------
   // Attachments — bucket privado, signed URLs
@@ -2953,7 +2953,7 @@ Acrescenta os metodos restantes a classe `SupabaseFinanceService` (anexos via bu
     }
   }
 ```
-- [ ] Adicionar o helper `recurrenceToRow` no nivel do modulo (apos a funcao `entryToRow`, fora da classe) em `src/services/finance/financeService.supabase.ts`. Codigo COMPLETO:
+- [x] Adicionar o helper `recurrenceToRow` no nivel do modulo (apos a funcao `entryToRow`, fora da classe) em `src/services/finance/financeService.supabase.ts`. Codigo COMPLETO:
 ```ts
 /** Converte um Partial<FinancialRecurrence> (camelCase) em colunas snake_case. */
 function recurrenceToRow(input: Partial<FinancialRecurrence>): Record<string, unknown> {
@@ -2975,10 +2975,10 @@ function recurrenceToRow(input: Partial<FinancialRecurrence>): Record<string, un
   return row;
 }
 ```
-- [ ] Remover o import nao utilizado de `effectiveStatus` se o lint acusar: a `getCashflowSummary` usa apenas `todayISO` e `aggregateCashflow` (a derivacao de overdue acontece dentro de `aggregateCashflow`). Editar a linha de import para `import { todayISO } from '@/lib/finance/status';` e manter `import { aggregateCashflow } from '@/lib/finance/cashflow';`.
-- [ ] Verificar lint: `npm run lint` — esperado: zero erros/warnings nos arquivos `src/services/finance/*`.
-- [ ] Verificar typecheck: `npx tsc --noEmit -p tsconfig.app.json` — esperado: ZERO erros (a classe agora implementa toda a `IFinanceService`; o erro "incorrectly implements interface" da Task 2.5 desaparece).
-- [ ] Commit: `git add src/services/finance && git commit -m "feat(finance): complete finance service (attachments, cashflow summary, recurrences)"`
+- [x] Remover o import nao utilizado de `effectiveStatus` se o lint acusar: a `getCashflowSummary` usa apenas `todayISO` e `aggregateCashflow` (a derivacao de overdue acontece dentro de `aggregateCashflow`). Editar a linha de import para `import { todayISO } from '@/lib/finance/status';` e manter `import { aggregateCashflow } from '@/lib/finance/cashflow';`.
+- [x] Verificar lint: `npm run lint` — esperado: zero erros/warnings nos arquivos `src/services/finance/*`.
+- [x] Verificar typecheck: `npx tsc --noEmit -p tsconfig.app.json` — esperado: ZERO erros (a classe agora implementa toda a `IFinanceService`; o erro "incorrectly implements interface" da Task 2.5 desaparece).
+- [x] Commit: `git add src/services/finance && git commit -m "feat(finance): complete finance service (attachments, cashflow summary, recurrences)"`
 
 ---
 
