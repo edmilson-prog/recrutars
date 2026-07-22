@@ -1174,7 +1174,7 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `sql/migrations/124_financial_rpcs.sql`:
+- [x] Criar `sql/migrations/124_financial_rpcs.sql`:
 ```sql
 -- Migration 124: financial RPCs
 -- create_financial_entry_with_installments: cria N parcelas atomicamente.
@@ -1348,9 +1348,9 @@ COMMENT ON FUNCTION public.generate_due_recurrences IS
   'Materializa financial_entries pendentes para recorrencias ativas ate a data atual. Idempotente. Agendar via pg_cron diario na Fase 7.';
 ```
 
-- [ ] Aplicar via MCP Supabase `apply_migration` (`name: "financial_rpcs"`).
+- [x] Aplicar via MCP Supabase `apply_migration` (`name: "financial_rpcs"`).
 
-- [ ] Verificar que as 3 funções existem via MCP `execute_sql`:
+- [x] Verificar que as 3 funções existem via MCP `execute_sql`:
 ```sql
 SELECT proname FROM pg_proc
 WHERE proname IN ('create_financial_entry_with_installments','mark_financial_entry_paid','generate_due_recurrences')
@@ -1358,15 +1358,15 @@ ORDER BY proname;
 ```
 Saída esperada: 3 linhas.
 
-- [ ] Smoke test de idempotência da geração via MCP `execute_sql` (não cria dados — só confirma que roda sem erro e retorna inteiro):
+- [x] Smoke test de idempotência da geração via MCP `execute_sql` (não cria dados — só confirma que roda sem erro e retorna inteiro):
 ```sql
 SELECT public.generate_due_recurrences() AS created;
 ```
 Saída esperada: `created = 0` (nenhuma recorrência cadastrada ainda) — confirma que a função executa.
 
-- [ ] Rodar MCP `get_advisors` (type `security`); se aparecer advisor "Function search_path mutable", confirmar que **não** é sobre estas funções (todas já têm `SET search_path = public`).
+- [x] Rodar MCP `get_advisors` (type `security`); se aparecer advisor "Function search_path mutable", confirmar que **não** é sobre estas funções (todas já têm `SET search_path = public`).
 
-- [ ] Commit:
+- [x] Commit:
 ```bash
 git add sql/migrations/124_financial_rpcs.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add installments, mark-paid and recurrence RPCs
