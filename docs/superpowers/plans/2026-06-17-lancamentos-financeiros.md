@@ -1682,7 +1682,7 @@ Calculo de parcelamento em **centavos** (rateio igual, ultima parcela absorve o 
 
 **Steps:**
 
-- [ ] Escrever o teste falhando em `src/lib/finance/installments.test.ts` com o conteudo COMPLETO:
+- [x] Escrever o teste falhando em `src/lib/finance/installments.test.ts` com o conteudo COMPLETO:
 ```ts
 import { describe, it, expect } from 'vitest';
 import { calcInstallments, addByFrequency } from './installments';
@@ -1753,8 +1753,8 @@ describe('calcInstallments', () => {
   });
 });
 ```
-- [ ] Rodar e ver falhar: `npx vitest run src/lib/finance/installments.test.ts` — esperado: erro de import (`Failed to resolve import "./installments"`) / "No test files were able to be collected" para esse arquivo. Confirma que os testes existem e falham.
-- [ ] Implementar o minimo em `src/lib/finance/installments.ts` com o conteudo COMPLETO:
+- [x] Rodar e ver falhar: `npx vitest run src/lib/finance/installments.test.ts` — esperado: erro de import (`Failed to resolve import "./installments"`) / "No test files were able to be collected" para esse arquivo. Confirma que os testes existem e falham.
+- [x] Implementar o minimo em `src/lib/finance/installments.ts` com o conteudo COMPLETO:
 ```ts
 /**
  * Lancamentos Financeiros — calculo puro de parcelas e datas de recorrencia.
@@ -1839,8 +1839,8 @@ function fmt(year: number, month: number, day: number): string {
   return `${year}-${mm}-${dd}`;
 }
 ```
-- [ ] Rodar e ver passar: `npx vitest run src/lib/finance/installments.test.ts` — esperado: `Test Files  1 passed (1)` e todos os `it` verdes (13 testes).
-- [ ] Commit: `git add src/lib/finance/installments.ts src/lib/finance/installments.test.ts && git commit -m "feat(finance): add pure calcInstallments util with cent-rounding (TDD)"`
+- [x] Rodar e ver passar: `npx vitest run src/lib/finance/installments.test.ts` — esperado: `Test Files  1 passed (1)` e todos os `it` verdes (13 testes).
+- [x] Commit: `git add src/lib/finance/installments.ts src/lib/finance/installments.test.ts && git commit -m "feat(finance): add pure calcInstallments util with cent-rounding (TDD)"`
 
 ---
 
