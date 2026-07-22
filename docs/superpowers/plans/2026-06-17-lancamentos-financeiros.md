@@ -788,7 +788,7 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `sql/migrations/120_financial_categories.sql` com o SQL COMPLETO:
+- [x] Criar `sql/migrations/120_financial_categories.sql` com o SQL COMPLETO:
 ```sql
 -- Migration 120: financial_categories
 -- Categorias gerenciaveis de receitas/despesas para o modulo de fluxo de caixa.
@@ -853,17 +853,17 @@ INSERT INTO public.financial_categories (name, type, color, sort_order) VALUES
   ('Outras receitas',    'income',  '#8b7fa8', 3);
 ```
 
-- [ ] Aplicar via MCP Supabase `apply_migration` com `name: "financial_categories"` e o conteúdo idêntico ao arquivo acima.
+- [x] Aplicar via MCP Supabase `apply_migration` com `name: "financial_categories"` e o conteúdo idêntico ao arquivo acima.
 
-- [ ] Verificar com MCP `list_tables` (schema `public`): confirmar que `financial_categories` aparece com RLS habilitada e 8 colunas. Em seguida rodar via MCP `execute_sql`:
+- [x] Verificar com MCP `list_tables` (schema `public`): confirmar que `financial_categories` aparece com RLS habilitada e 8 colunas. Em seguida rodar via MCP `execute_sql`:
 ```sql
 SELECT type, count(*) FROM public.financial_categories GROUP BY type ORDER BY type;
 ```
 Saída esperada: `expense 7`, `income 3`.
 
-- [ ] Rodar MCP `get_advisors` (type `security`) e confirmar que **não** há advisor novo do tipo "RLS disabled" ou "policy missing" sobre `financial_categories`.
+- [x] Rodar MCP `get_advisors` (type `security`) e confirmar que **não** há advisor novo do tipo "RLS disabled" ou "policy missing" sobre `financial_categories`.
 
-- [ ] Commit:
+- [x] Commit:
 ```bash
 git add sql/migrations/120_financial_categories.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add financial_categories table with admin RLS and seed
