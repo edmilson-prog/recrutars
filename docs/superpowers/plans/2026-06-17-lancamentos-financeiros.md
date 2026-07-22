@@ -1389,7 +1389,7 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `sql/migrations/125_financial_storage_bucket.sql`:
+- [x] Criar `sql/migrations/125_financial_storage_bucket.sql`:
 ```sql
 -- Migration 125: bucket privado financial-documents
 -- NF/comprovantes contem dados sensiveis -> bucket PRIVADO (public=false).
@@ -1442,15 +1442,15 @@ CREATE POLICY "financial_documents_delete_admin"
   );
 ```
 
-- [ ] Aplicar via MCP Supabase `apply_migration` (`name: "financial_storage_bucket"`).
+- [x] Aplicar via MCP Supabase `apply_migration` (`name: "financial_storage_bucket"`).
 
-- [ ] Verificar o bucket via MCP `execute_sql`:
+- [x] Verificar o bucket via MCP `execute_sql`:
 ```sql
 SELECT id, public, file_size_limit FROM storage.buckets WHERE id = 'financial-documents';
 ```
 Saída esperada: 1 linha, `public = false`, `file_size_limit = 10485760`.
 
-- [ ] Verificar as 4 policies via MCP `execute_sql`:
+- [x] Verificar as 4 policies via MCP `execute_sql`:
 ```sql
 SELECT policyname FROM pg_policies
 WHERE schemaname = 'storage' AND tablename = 'objects'
@@ -1459,13 +1459,13 @@ ORDER BY policyname;
 ```
 Saída esperada: 4 linhas (`select`/`insert`/`update`/`delete`).
 
-- [ ] Verificação final consolidada da fase (tipos + testes não regrediram):
+- [x] Verificação final consolidada da fase (tipos + testes não regrediram):
 ```bash
 npm test && npx tsc --noEmit
 ```
 Saída esperada: `Tests  11 passed (11)`; `tsc` sem saída.
 
-- [ ] Commit:
+- [x] Commit:
 ```bash
 git add sql/migrations/125_financial_storage_bucket.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add private financial-documents storage bucket and policies
