@@ -1976,7 +1976,7 @@ Extrai a logica de agregacao do dashboard para uma funcao pura, testavel sem Sup
 
 **Steps:**
 
-- [ ] Escrever o teste falhando em `src/lib/finance/cashflow.test.ts` com o conteudo COMPLETO:
+- [x] Escrever o teste falhando em `src/lib/finance/cashflow.test.ts` com o conteudo COMPLETO:
 ```ts
 import { describe, it, expect } from 'vitest';
 import { aggregateCashflow } from './cashflow';
@@ -2087,8 +2087,8 @@ describe('aggregateCashflow', () => {
   });
 });
 ```
-- [ ] Rodar e ver falhar: `npx vitest run src/lib/finance/cashflow.test.ts` — esperado: falha por import nao resolvido (`./cashflow`).
-- [ ] Implementar em `src/lib/finance/cashflow.ts` com o conteudo COMPLETO:
+- [x] Rodar e ver falhar: `npx vitest run src/lib/finance/cashflow.test.ts` — esperado: falha por import nao resolvido (`./cashflow`).
+- [x] Implementar em `src/lib/finance/cashflow.ts` com o conteudo COMPLETO:
 ```ts
 /**
  * Lancamentos Financeiros — agregacao PURA do resumo de fluxo de caixa.
@@ -2199,9 +2199,9 @@ export function aggregateCashflow(
   };
 }
 ```
-- [ ] Rodar e ver passar: `npx vitest run src/lib/finance/cashflow.test.ts` — esperado: `Test Files  1 passed (1)`, 7 testes verdes.
-- [ ] Rodar a suite completa: `npm test` — esperado: `Test Files  3 passed (3)` (installments + status + cashflow), todos verdes.
-- [ ] Commit: `git add src/lib/finance/cashflow.ts src/lib/finance/cashflow.test.ts && git commit -m "feat(finance): add pure aggregateCashflow summary builder (TDD)"`
+- [x] Rodar e ver passar: `npx vitest run src/lib/finance/cashflow.test.ts` — esperado: `Test Files  1 passed (1)`, 7 testes verdes.
+- [x] Rodar a suite completa: `npm test` — esperado: `Test Files  3 passed (3)` (installments + status + cashflow), todos verdes.
+- [x] Commit: `git add src/lib/finance/cashflow.ts src/lib/finance/cashflow.test.ts && git commit -m "feat(finance): add pure aggregateCashflow summary builder (TDD)"`
 
 ---
 
