@@ -992,7 +992,7 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `sql/migrations/122_financial_attachments.sql`:
+- [x] Criar `sql/migrations/122_financial_attachments.sql`:
 ```sql
 -- Migration 122: financial_attachments
 -- Multiplos anexos (NF/comprovante/recibo) por lancamento. Bucket privado.
@@ -1033,16 +1033,16 @@ CREATE POLICY "financial_attachments_delete_admin"
 CREATE INDEX idx_financial_attachments_entry ON public.financial_attachments(entry_id);
 ```
 
-- [ ] Aplicar via MCP Supabase `apply_migration` (`name: "financial_attachments"`).
+- [x] Aplicar via MCP Supabase `apply_migration` (`name: "financial_attachments"`).
 
-- [ ] Verificar com MCP `execute_sql`:
+- [x] Verificar com MCP `execute_sql`:
 ```sql
 SELECT count(*) AS policies FROM pg_policies
 WHERE schemaname = 'public' AND tablename = 'financial_attachments';
 ```
 Saída esperada: `policies = 4`.
 
-- [ ] Commit:
+- [x] Commit:
 ```bash
 git add sql/migrations/122_financial_attachments.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add financial_attachments table with admin RLS
@@ -1065,7 +1065,7 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `sql/migrations/123_financial_recurrences.sql`:
+- [x] Criar `sql/migrations/123_financial_recurrences.sql`:
 ```sql
 -- Migration 123: financial_recurrences
 -- Regras de recorrencia que materializam financial_entries pendentes ao longo do tempo.
@@ -1139,16 +1139,16 @@ ALTER TABLE public.financial_entries
 CREATE INDEX idx_financial_entries_recurrence ON public.financial_entries(recurrence_id);
 ```
 
-- [ ] Aplicar via MCP Supabase `apply_migration` (`name: "financial_recurrences"`).
+- [x] Aplicar via MCP Supabase `apply_migration` (`name: "financial_recurrences"`).
 
-- [ ] Verificar a FK com MCP `execute_sql`:
+- [x] Verificar a FK com MCP `execute_sql`:
 ```sql
 SELECT conname FROM pg_constraint
 WHERE conname = 'financial_entries_recurrence_id_fkey';
 ```
 Saída esperada: 1 linha.
 
-- [ ] Commit:
+- [x] Commit:
 ```bash
 git add sql/migrations/123_financial_recurrences.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add financial_recurrences table and entries FK
