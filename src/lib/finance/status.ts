@@ -26,11 +26,27 @@ import type { EntryStatus, EffectiveStatus, DueWindow } from '@/types/finance';
 export function effectiveStatus(
   status: EntryStatus,
   dueDateISO: string,
-  todayISO?: string,
+  today?: string,
 ): EffectiveStatus {
-  const today = todayISO ?? new Date().toISOString().slice(0, 10);
-  if (status === 'pending' && dueDateISO < today) return 'overdue';
+  const ref = today ?? todayISO();
+  if (status === 'pending' && dueDateISO < ref) return 'overdue';
   return status;
+}
+
+/**
+ * Today's date in the viewer's LOCAL timezone, as `YYYY-MM-DD`.
+ *
+ * Deliberately not `new Date().toISOString().slice(0, 10)`: that yields the UTC
+ * date, which in UTC-3 rolls over at 21:00 local. An entry due today would then
+ * be classified as overdue for the last three hours of every day.
+ */
+export function todayISO(): string {
+  const now = new Date();
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('-');
 }
 
 /** Parses an ISO `YYYY-MM-DD` into a UTC epoch, avoiding timezone drift. */
@@ -57,13 +73,21 @@ export function daysBetween(fromISO: string, toISO: string): number {
 export function dueWindowOf(
   status: EntryStatus,
   dueDateISO: string,
-  todayISO?: string,
+  today?: string,
 ): DueWindow | null {
   if (status !== 'pending') return null;
-  const today = todayISO ?? new Date().toISOString().slice(0, 10);
-  if (dueDateISO < today) return 'overdue';
-  const days = daysBetween(today, dueDateISO);
+  const ref = today ?? todayISO();
+  if (dueDateISO < ref) return 'overdue';
+  const days = daysBetween(ref, dueDateISO);
   if (days <= 7) return 'due7';
   if (days <= 30) return 'due8_30';
   return 'future';
+}
+
+/**
+ * Whole days from today to `dueDateISO`.
+ * Positive = future, negative = overdue, 0 = due today.
+ */
+export function daysUntil(dueDateISO: string, today?: string): number {
+  return daysBetween(today ?? todayISO(), dueDateISO);
 }

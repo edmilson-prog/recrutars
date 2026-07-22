@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { effectiveStatus, dueWindowOf, daysBetween } from '@/lib/finance/status';
+import { effectiveStatus, dueWindowOf, daysBetween, daysUntil, todayISO } from '@/lib/finance/status';
 
 describe('effectiveStatus', () => {
   const today = '2026-06-17';
@@ -68,5 +68,33 @@ describe('dueWindowOf', () => {
   it('retorna null para pago e cancelado, mesmo vencidos', () => {
     expect(dueWindowOf('paid', '2026-07-01', TODAY)).toBeNull();
     expect(dueWindowOf('canceled', '2026-07-01', TODAY)).toBeNull();
+  });
+});
+
+describe('todayISO', () => {
+  it('retorna a data LOCAL no formato YYYY-MM-DD', () => {
+    const iso = todayISO();
+    expect(iso).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    // Deve casar com a data local, nao com a UTC. Em UTC-3 as duas divergem
+    // depois das 21h: usar toISOString() faria "hoje" adiantar um dia e
+    // marcaria como atrasado um lancamento que vence hoje.
+    const now = new Date();
+    const local = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, '0'),
+      String(now.getDate()).padStart(2, '0'),
+    ].join('-');
+    expect(iso).toBe(local);
+  });
+});
+
+describe('daysUntil', () => {
+  const TODAY = '2026-07-21';
+
+  it('positivo para futuro, negativo para atrasado, zero para hoje', () => {
+    expect(daysUntil('2026-07-28', TODAY)).toBe(7);
+    expect(daysUntil('2026-07-20', TODAY)).toBe(-1);
+    expect(daysUntil(TODAY, TODAY)).toBe(0);
   });
 });

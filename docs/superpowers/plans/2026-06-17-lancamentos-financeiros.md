@@ -1861,7 +1861,7 @@ function fmt(year: number, month: number, day: number): string {
 
 **Steps:**
 
-- [ ] Escrever o teste falhando em `src/lib/finance/status.test.ts` com o conteudo COMPLETO:
+- [x] Escrever o teste falhando em `src/lib/finance/status.test.ts` com o conteudo COMPLETO:
 ```ts
 import { describe, it, expect } from 'vitest';
 import { effectiveStatus, daysUntil, todayISO } from './status';
@@ -1915,8 +1915,8 @@ describe('todayISO', () => {
   });
 });
 ```
-- [ ] Rodar e ver falhar: `npx vitest run src/lib/finance/status.test.ts` — esperado: falha por import nao resolvido (`./status`).
-- [ ] Implementar o minimo em `src/lib/finance/status.ts` com o conteudo COMPLETO:
+- [x] Rodar e ver falhar: `npx vitest run src/lib/finance/status.test.ts` — esperado: falha por import nao resolvido (`./status`).
+- [x] Implementar o minimo em `src/lib/finance/status.ts` com o conteudo COMPLETO:
 ```ts
 /**
  * Lancamentos Financeiros — derivacao pura de status (overdue) e dias ate o
@@ -1955,8 +1955,8 @@ export function daysUntil(dueDateISO: string, today: string = todayISO()): numbe
   return Math.round((due - now) / 86_400_000);
 }
 ```
-- [ ] Rodar e ver passar: `npx vitest run src/lib/finance/status.test.ts` — esperado: `Test Files  1 passed (1)`, 10 testes verdes.
-- [ ] Commit: `git add src/lib/finance/status.ts src/lib/finance/status.test.ts && git commit -m "feat(finance): add pure effectiveStatus/daysUntil helpers (TDD)"`
+- [x] Rodar e ver passar: `npx vitest run src/lib/finance/status.test.ts` — esperado: `Test Files  1 passed (1)`, 10 testes verdes.
+- [x] Commit: `git add src/lib/finance/status.ts src/lib/finance/status.test.ts && git commit -m "feat(finance): add pure effectiveStatus/daysUntil helpers (TDD)"`
 
 ---
 
