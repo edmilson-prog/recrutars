@@ -3003,7 +3003,7 @@ Tres arquivos de hooks seguindo o padrao `usePlansQuery`/`useCandidatesQuery`: q
 
 **Steps:**
 
-- [ ] Criar `src/hooks/useFinancialCategoriesQuery.ts` com o conteudo COMPLETO:
+- [x] Criar `src/hooks/useFinancialCategoriesQuery.ts` com o conteudo COMPLETO:
 ```ts
 /**
  * React Query Hooks — Financial Categories
@@ -3065,7 +3065,7 @@ export function useDeleteCategory() {
   });
 }
 ```
-- [ ] Criar `src/hooks/useFinancialEntriesQuery.ts` com o conteudo COMPLETO:
+- [x] Criar `src/hooks/useFinancialEntriesQuery.ts` com o conteudo COMPLETO:
 ```ts
 /**
  * React Query Hooks — Financial Entries
@@ -3244,7 +3244,7 @@ export function useUploadAttachment() {
   });
 }
 ```
-- [ ] Criar `src/hooks/useFinancialDashboardQuery.ts` com o conteudo COMPLETO:
+- [x] Criar `src/hooks/useFinancialDashboardQuery.ts` com o conteudo COMPLETO:
 ```ts
 /**
  * React Query Hooks — Financial Dashboard & Recurrences
@@ -3322,19 +3322,19 @@ export function useDeleteRecurrence() {
   });
 }
 ```
-- [ ] Verificar lint: `npm run lint` — esperado: zero erros/warnings nos 3 arquivos de hooks.
-- [ ] Verificar typecheck: `npx tsc --noEmit -p tsconfig.app.json` — esperado: ZERO erros (hooks tipados contra `IFinanceService`/`IFinancialCategoriesService`).
-- [ ] Rodar a suite de testes puros novamente para confirmar que nada regrediu: `npm test` — esperado: `Test Files  3 passed (3)`.
-- [ ] Commit: `git add src/hooks/useFinancialEntriesQuery.ts src/hooks/useFinancialDashboardQuery.ts src/hooks/useFinancialCategoriesQuery.ts && git commit -m "feat(finance): add React Query hooks for entries, dashboard and categories"`
+- [x] Verificar lint: `npm run lint` — esperado: zero erros/warnings nos 3 arquivos de hooks.
+- [x] Verificar typecheck: `npx tsc --noEmit -p tsconfig.app.json` — esperado: ZERO erros (hooks tipados contra `IFinanceService`/`IFinancialCategoriesService`).
+- [x] Rodar a suite de testes puros novamente para confirmar que nada regrediu: `npm test` — esperado: `Test Files  3 passed (3)`.
+- [x] Commit: `git add src/hooks/useFinancialEntriesQuery.ts src/hooks/useFinancialDashboardQuery.ts src/hooks/useFinancialCategoriesQuery.ts && git commit -m "feat(finance): add React Query hooks for entries, dashboard and categories"`
 
 ---
 
 #### Checklist de conclusao da Fase 2
-- [ ] `npm test` verde (3 arquivos: installments, status, cashflow).
-- [ ] `npm run lint` sem erros nos arquivos de `src/lib/finance`, `src/services/finance`, `src/services/financialCategories`, `src/hooks/useFinancial*`.
-- [ ] `npx tsc --noEmit -p tsconfig.app.json` sem erros.
-- [ ] Servicos `getFinanceService` e `getFinancialCategoriesService` exportados com assinaturas EXATAS do CONTRATO.
-- [ ] Hooks `useFinancial*` com key factories `financeKeys`/`categoryKeys`/`recurrenceKeys` prontos para as Fases 3-6 consumirem.
+- [x] `npm test` verde (3 arquivos: installments, status, cashflow).
+- [x] `npm run lint` sem erros nos arquivos de `src/lib/finance`, `src/services/finance`, `src/services/financialCategories`, `src/hooks/useFinancial*`.
+- [x] `npx tsc --noEmit -p tsconfig.app.json` sem erros.
+- [x] Servicos `getFinanceService` e `getFinancialCategoriesService` exportados com assinaturas EXATAS do CONTRATO.
+- [x] Hooks `useFinancial*` com key factories `financeKeys`/`categoryKeys`/`recurrenceKeys` prontos para as Fases 3-6 consumirem.
 
 ---
 
