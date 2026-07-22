@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { effectiveStatus } from '@/lib/finance/status';
+import { effectiveStatus, dueWindowOf, daysBetween } from '@/lib/finance/status';
 
 describe('effectiveStatus', () => {
   const today = '2026-06-17';
@@ -28,5 +28,45 @@ describe('effectiveStatus', () => {
     // A far-future due date should never be overdue regardless of today
     const result = effectiveStatus('pending', '2099-12-31');
     expect(result).toBe('pending');
+  });
+});
+
+describe('daysBetween', () => {
+  it('conta dias entre datas ISO ignorando timezone', () => {
+    expect(daysBetween('2026-07-21', '2026-07-28')).toBe(7);
+    expect(daysBetween('2026-07-28', '2026-07-21')).toBe(-7);
+    expect(daysBetween('2026-07-21', '2026-07-21')).toBe(0);
+  });
+
+  it('atravessa virada de mes e de ano', () => {
+    expect(daysBetween('2026-07-31', '2026-08-01')).toBe(1);
+    expect(daysBetween('2026-12-31', '2027-01-01')).toBe(1);
+  });
+});
+
+describe('dueWindowOf', () => {
+  const TODAY = '2026-07-21';
+
+  it('classifica pendente vencido como overdue', () => {
+    expect(dueWindowOf('pending', '2026-07-20', TODAY)).toBe('overdue');
+  });
+
+  it('classifica vencimento hoje e ate 7 dias como due7', () => {
+    expect(dueWindowOf('pending', TODAY, TODAY)).toBe('due7');
+    expect(dueWindowOf('pending', '2026-07-28', TODAY)).toBe('due7');
+  });
+
+  it('classifica 8 a 30 dias como due8_30', () => {
+    expect(dueWindowOf('pending', '2026-07-29', TODAY)).toBe('due8_30');
+    expect(dueWindowOf('pending', '2026-08-20', TODAY)).toBe('due8_30');
+  });
+
+  it('classifica alem de 30 dias como future', () => {
+    expect(dueWindowOf('pending', '2026-08-21', TODAY)).toBe('future');
+  });
+
+  it('retorna null para pago e cancelado, mesmo vencidos', () => {
+    expect(dueWindowOf('paid', '2026-07-01', TODAY)).toBeNull();
+    expect(dueWindowOf('canceled', '2026-07-01', TODAY)).toBeNull();
   });
 });

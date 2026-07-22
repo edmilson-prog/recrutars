@@ -1500,7 +1500,7 @@ EOF
 
 **Steps:**
 
-- [ ] **Passo 1: Escrever os testes falhando.** Append em `src/lib/finance/status.test.ts`:
+- [x] **Passo 1: Escrever os testes falhando.** Append em `src/lib/finance/status.test.ts`:
 
 ```ts
 import { dueWindowOf, daysBetween } from './status';
@@ -1546,12 +1546,12 @@ describe('dueWindowOf', () => {
 });
 ```
 
-- [ ] **Passo 2: Rodar e ver falhar.**
+- [x] **Passo 2: Rodar e ver falhar.**
 
 Run: `npx vitest run src/lib/finance/status.test.ts`
 Esperado: FAIL — `dueWindowOf is not a function` / `daysBetween is not a function`.
 
-- [ ] **Passo 3: Implementar.** Append em `src/lib/finance/status.ts`:
+- [x] **Passo 3: Implementar.** Append em `src/lib/finance/status.ts`:
 
 ```ts
 /** Derived due-date window. Orthogonal to the stored EntryStatus. */
@@ -1590,12 +1590,12 @@ export function dueWindowOf(
 }
 ```
 
-- [ ] **Passo 4: Rodar e ver passar.**
+- [x] **Passo 4: Rodar e ver passar.**
 
 Run: `npx vitest run src/lib/finance/status.test.ts`
 Esperado: PASS — todos os describes verdes.
 
-- [ ] **Passo 5: Corrigir `EntryFilters`.** Em `src/types/finance.ts`, substituir a interface inteira por:
+- [x] **Passo 5: Corrigir `EntryFilters`.** Em `src/types/finance.ts`, substituir a interface inteira por:
 
 ```ts
 export interface EntryFilters {
@@ -1622,12 +1622,12 @@ E adicionar o re-export do tipo, logo abaixo de `EffectiveStatus`:
 export type { DueWindow } from '@/lib/finance/status';
 ```
 
-- [ ] **Passo 6: Typecheck e suíte completa.**
+- [x] **Passo 6: Typecheck e suíte completa.**
 
 Run: `npx tsc --noEmit && npx vitest run`
 Esperado: `tsc` sem saída; Vitest com todos os arquivos verdes (o total sobe de 80 para 86).
 
-- [ ] **Passo 7: Commit.**
+- [x] **Passo 7: Commit.**
 
 ```bash
 git add src/types/finance.ts src/lib/finance/status.ts src/lib/finance/status.test.ts

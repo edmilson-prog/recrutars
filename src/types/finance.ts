@@ -15,6 +15,16 @@ export type EntryStatus = 'pending' | 'paid' | 'canceled';
 /** Derived status used by KPIs, filters and bands. */
 export type EffectiveStatus = EntryStatus | 'overdue';
 
+/**
+ * Derived due-date window — a second axis, orthogonal to EntryStatus.
+ *
+ * `overdue` is NOT a status: an overdue entry is a *pending* one whose due date
+ * has passed. Keeping the two axes apart is what lets "pending and overdue" and
+ * "pending but not overdue" both be expressible. Classifier: `dueWindowOf()` in
+ * `@/lib/finance/status`.
+ */
+export type DueWindow = 'overdue' | 'due7' | 'due8_30' | 'future';
+
 export type PaymentMethod =
   | 'card_credit'
   | 'card_debit'
@@ -110,8 +120,13 @@ export interface FinancialRecurrence {
 export interface EntryFilters {
   search?: string;
   type?: FinancialType;
-  /** May be `overdue` (derived) — the service translates it to status+date. */
-  status?: EffectiveStatus;
+  /**
+   * Stored status only. `overdue` is NOT valid here — it is derived.
+   * Use `dueWindow` for the orthogonal due-date axis.
+   */
+  status?: EntryStatus;
+  /** Derived due-date window. Combines freely with `status`. */
+  dueWindow?: DueWindow;
   categoryId?: string;
   paymentMethod?: PaymentMethod;
   dateField?: 'due' | 'competence';
