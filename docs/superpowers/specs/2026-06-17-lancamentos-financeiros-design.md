@@ -1,9 +1,11 @@
 # Design — Lançamentos Financeiros Avulsos (Fluxo de Caixa)
 
-- **Data:** 2026-06-17
-- **Branch:** `feat/financial-entries`
-- **Status:** Aprovado (parte visual) — aguardando revisão do spec
-- **Escopo do versionamento:** MINOR (nova feature). Codename sugerido: **"Ledger"**.
+- **Data:** 2026-06-17 · **revisado em 2026-07-21** após mockup navegável das 4 telas e auditoria de UI/UX
+- **Branch:** `feat/financial-entries` (PR #32)
+- **Status:** Aprovado
+- **Escopo do versionamento:** MINOR. Entregue em **3 PRs**, cada um com seu bump — ver `2026-07-21-implementacao-financeiro-faseada-design.md`. Codename **"Ledger"** no primeiro (v1.75.0).
+
+> **Revisão de 21/07 — o que mudou.** Seis decisões substituem o desenho original e estão marcadas inline com "(decidido em 21/07)": o filtro de vencimento separado do status (§7.1, corrige um bug funcional), os tokens `--fin-*` calibrados e o desvio de matiz para teal (§9, corrige contraste de 2,42:1 no dark), a paleta de gráficos refeita (§7.3), o `ToggleGroup` único de repetição (§7.2), as cores do seed de categorias (§4.1, muda **dados** da migration 120) e a view Foco redefinida como modo de teclado sem Sheet (§7.1).
 
 ---
 
@@ -75,13 +77,25 @@ Migrations a partir de **120** (última aplicada é `119_sync_candidate_visibili
 | `id` | uuid PK | |
 | `name` | text NOT NULL | |
 | `type` | text NOT NULL | CHECK (`income`, `expense`) |
-| `color` | text NULL | hex para gráficos/badges |
+| `color` | text NULL | hex — ver restrição de matiz abaixo |
 | `is_active` | boolean DEFAULT true | desativar sem apagar |
 | `sort_order` | int DEFAULT 0 | |
 | `created_at`/`updated_at` | timestamptz | |
 - UNIQUE(`name`, `type`).
 - **RLS:** SELECT/INSERT/UPDATE/DELETE somente admin.
 - **Seed inicial** (desativável): despesas — Marketing, Infraestrutura, Serviços, Equipamentos, Ocupação, Impostos, Pessoal; receitas — Consultoria avulsa, Reembolso, Outras receitas.
+- **⚠️ Restrição de matiz nas cores** (decidida em 21/07 na revisão do mockup): a cor da categoria é renderizada como dot **dentro de cada linha da lista**, onde convive com a cor de natureza (valor), o badge de status e a régua de atraso. Cores nas faixas **0–20°** (vermelho de atraso), **150–170°** (verde de receita) e **190–205°** (cyan de interação) fazem o dot contradizer a semântica da própria linha — uma categoria de despesa com dot verde, por exemplo. O seed usa tons dessaturados fora dessas faixas:
+
+  | Categoria | Cor | | Categoria | Cor |
+  |---|---|---|---|---|
+  | Marketing | `#9a7b4f` | | Pessoal | `#7c6f9e` |
+  | Infraestrutura | `#5b6b8c` | | Consultoria avulsa | `#5f8a85` |
+  | Serviços | `#4f7a8b` | | Reembolso | `#6e7fa3` |
+  | Equipamentos | `#3f4d6b` | | Outras receitas | `#8b7fa8` |
+  | Ocupação | `#6b7f5e` | | | |
+  | Impostos | `#8a6d5a` | | | |
+
+  O CRUD de categorias (§7.4) oferece **swatches fixos** dessa paleta, não color picker livre — senão o admin recria o problema na primeira categoria que cadastrar.
 
 ### 4.2 `financial_entries`
 | Coluna | Tipo | Notas |
@@ -176,16 +190,19 @@ Seguindo o padrão `interface + factory lazy + impl Supabase + normalizadores ro
 
 ### 7.1 Lançamentos — `/admin/financeiro/lancamentos`
 Container `FinancialEntries` carrega dados + estado de filtros + **view selecionada** (`localStorage 'finance:listView'`, default `table`). Elementos **comuns às 3 views**:
-- `FinancialKpiHeader` — KPIs por horizonte: Saldo do período, Entradas, Saídas, **Vencido** (clicável), **A vencer 7d** (clicável).
-- `FinancialFilterBar` — busca, status, categoria, range de datas, natureza (receita/despesa); filtros ativos viram **chips removíveis**; presets **Atrasados** e **A vencer 7d**.
+- `FinancialKpiHeader` — 4 KPIs por horizonte: Saldo do período (herói), Entradas, Saídas, **Vencido** (clicável, seta o filtro de vencimento). Mesma razão da §7.3 para não repetir "A vencer 7d" aqui: quem quer essa recorte usa o filtro de vencimento, que fica logo abaixo. **Os KPIs e a filter bar são idênticos e ficam na mesma posição nas 3 views** — só a área de conteúdo troca. É isso que faz o switcher parecer uma lente, e não navegação.
+- `FinancialFilterBar` — busca, **status**, **vencimento**, categoria, range de datas, natureza (receita/despesa); filtros ativos viram **chips removíveis**.
+  - **⚠️ Status e vencimento são dois eixos separados** (decidido em 21/07). `overdue` **não** aparece no select de status. Status filtra o valor armazenado (`pending` / `paid` / `canceled`); vencimento é um segundo controle independente e combinável: `Todos | Atrasados | Vencem em 7d | 8–30d | Futuros`.
+  - **Por quê:** atrasado é derivado (`pending` + `due_date < hoje`). Se "Atrasado" morasse no select de status ao lado de "Pendente", filtrar "Pendente" ou esconderia os atrasados — que também são pendentes — ou os incluiria e o rótulo mentiria. Não existe resposta correta com um controle só. Com dois eixos, "Pendente + atrasado" e "Pendente + não atrasado" viram perguntas expressáveis, e ambas são reais.
+  - Os presets **Atrasados** e **A vencer 7d** (e os blocos clicáveis da faixa de urgência do dashboard) passam a setar o filtro de *vencimento*, não o de status. O chip removível mostra qual eixo foi afetado.
 - `FinancialViewSwitcher` — segmented control **Tabela | Foco | Fluxo**.
-- `FinancialEntrySheet` — painel de detalhe (Sheet) aberto ao clicar qualquer linha em qualquer view: todos os campos, anexos (thumbnail + signed URL), timeline, **"Marcar como pago"**.
+- `FinancialEntrySheet` — painel de detalhe (Sheet) aberto ao clicar qualquer linha **nas views Tabela e Fluxo**: todos os campos, anexos (thumbnail + signed URL), timeline, **"Marcar como pago"**. Na view Foco o Sheet **não** existe — ver B abaixo.
 - `FinancialBulkActionBar` — seleção via checkbox → Marcar como pago / Cancelar / Exportar.
 
 **Views:**
 - **A · Tabela** (`FinancialEntriesTable`, default): shadcn `<Table>` (padrão de `UserTable`/`NotificationSendsTable`), header sticky, rodapé de totais, régua vermelha (`border-left`) em atrasados, menu `...` por linha, `overflow-x-auto`, colunas responsivas (`hidden md:table-cell` para forma/anexo/competência; abaixo de `md` colapsa em card de 2 linhas), valores `tabular-nums` à direita.
-- **B · Foco** (`FinancialEntriesMasterDetail`): lista enxuta à esquerda + painel de detalhe/baixa à direita (master-detail) para conciliação item-a-item.
-- **C · Fluxo** (`FinancialEntriesGrouped`): seções por vencimento — **Atrasados** / **A vencer 7d** / **8–30d** / **Pagos** — cada uma com mini-total e contador; "Pagos" recolhida por padrão.
+- **B · Foco** (`FinancialEntriesMasterDetail`): lista enxuta à esquerda + painel de detalhe/baixa à direita (master-detail) para conciliação item-a-item. **É um modo de trabalho por teclado, não uma lista alternativa** (decidido em 21/07): `J`/`K` navegam, `↵` dá baixa e **avança para o próximo item**, e o `FinancialEntrySheet` não abre nesta view. Sem essa distinção, Foco é "um Sheet que não fecha" e não justifica seu custo. A lista à esquerda não tem colunas nem header — cada item são duas linhas (contraparte + valor; data + status). Os atalhos aparecem na tela como `<kbd>`.
+- **C · Fluxo** (`FinancialEntriesGrouped`): seções por vencimento — **Atrasados** / **A vencer 7d** / **8–30d** / **Pagos** / **Cancelados** — cada uma com mini-total e contador; "Pagos" e "Cancelados" recolhidas por padrão. **As seções precisam cobrir todos os registros**: sem a seção "Cancelados", um lançamento cancelado não se encaixa em faixa nenhuma e simplesmente desaparece nesta view, fazendo a contagem divergir da Tabela. Layout de extrato: data numa coluna estreita à esquerda, descrição no meio, valor à direita. É view de **leitura** — sem checkbox e sem menu de ações.
 
 ### 7.2 Formulário — `/admin/financeiro/lancamentos/novo` (e edição)
 Base **A (linear em seções)** + **resumo ao vivo da B como rodapé sticky inteligente** (não coluna lateral, para não quebrar em <760px). Componente **`FinancialEntryForm` (FormBody) compartilhado** entre a página `/novo` e um **Sheet de edição rápida**.
@@ -194,16 +211,28 @@ Seções:
 1. **Essencial:** tipo (`ToggleGroup` Receita|Despesa que define o acento verde/vermelho), valor (grande, `tabular-nums`), categoria, contraparte (texto livre + vínculo opcional a empresa em receitas), forma de pagamento.
 2. **Datas e status:** competência, vencimento, status; **`paid_date` condicional** (só aparece com status=Pago) — progressive disclosure com microcopy via `Tooltip`.
 3. **Anexos:** `AttachmentDropzone` reutilizável (drag-and-drop + clique, múltiplos arquivos, progresso por arquivo, validação).
-4. **Parcelamento e recorrência** (toggles, **mutuamente exclusivos**): parcelamento expande **preview de parcelas** (tabela via `calcInstallments`, com aviso de ajuste de centavos na última); recorrência expande **frase em linguagem natural** ("Repete mensalmente no dia 5 até …").
+4. **Repetição** — um único `ToggleGroup` de opções mutuamente exclusivas (decidido em 21/07): dois toggles booleanos que se excluem são um radio group disfarçado, e o usuário vai tentar ligar os dois.
+   - **Desenho final:** `Único | Parcelado | Recorrente`.
+   - **No PR A:** apenas `Único | Parcelado`. "Recorrente" só entra no PR C, junto com a RPC `generate_due_recurrences` e o pg_cron que a materializam — oferecer antes gravaria uma regra que nada executa.
+   - `Parcelado` expande **preview de parcelas** (tabela via `calcInstallments`, máx. 6 linhas visíveis + "…e mais N", com aviso de ajuste de centavos na última).
+   - `Recorrente` expande uma **frase em linguagem natural com os controles embutidos nela**: `Repete [mensalmente ▾] no dia [5 ▾] até [31/12/2026 ▾]` — não a frase acompanhada de campos soltos abaixo.
 
 Rodapé sticky: resumo ao vivo (valor, parcelas, anexos) + **"Salvar" com guarda de submit** (desabilitado enquanto houver upload incompleto, com spinner de loading) + Cancelar.
 
 ### 7.3 Dashboard de Fluxo de Caixa — `/admin/financeiro`
-Base **A (Espelho do Dashboard de Assinaturas)** — máxima consistência com `ReportsFinancial.tsx`/`SubscriptionDashboard.tsx`. Componentes reais: `Card`/`KPICard`/`ComparisonIndicator`/`AdminTabNav`, animações `motion.div` staggered. Paleta de gráficos **`#06b6d4` / `#3b82f6` / `#10b981` / `#f59e0b` / `#1e3a8a`** (Recharts ^2.15.4).
+Base **A (Espelho do Dashboard de Assinaturas)** — máxima consistência com `ReportsFinancial.tsx`/`SubscriptionDashboard.tsx`. Componentes reais: `Card`/`KPICard`/`ComparisonIndicator`/`AdminTabNav`, animações `motion.div` staggered. Recharts ^2.15.4.
+
+**⚠️ Paleta de gráficos refeita em 21/07.** A paleta original (`#06b6d4` / `#3b82f6` / `#10b981` / `#f59e0b` / `#1e3a8a`) tinha três problemas simultâneos: `#06b6d4` é o cyan **reservado a interação** (faz o usuário procurar onde clicar), `#10b981` é o **verde de receita** aparecendo numa rosca de *despesas*, e três dos cinco são azuis que se fundem em fatias pequenas no dark. A substituição separa por função, porque são dois problemas diferentes:
+
+- **Gráfico âncora (entradas × saídas):** as séries **são** a natureza, então usam os próprios `--fin-income` / `--fin-expense` da §9. Assinaturas × Avulsos se distinguem por **luminância + textura** (a camada Avulsos recebe `L +14` e um `<pattern>` diagonal), nunca por matiz. Projeção em `--muted-foreground`.
+- **Rosca de categorias:** rampa **monocromática navy→cyan** de 6 passos, variando H e L juntos, **sensível ao tema** (no light `L 28%→62%`; no dark `L 52%→76%`). Todas as fatias são despesas — a diferença é só qual, e uma rampa diz isso honestamente. Com a rampa fixa do light, a maior fatia rendia **1,46:1** no dark, reprovando o mínimo de 3:1 da WCAG 1.4.11 para elementos não-textuais. Separador de `2px` na cor do card entre segmentos.
 
 - **Toggle Consolidado | Avulsos | Assinaturas** (padrão de `TimeFilter`).
-- **5 KPIs:** Resultado do mês (herói), Receita total (nota "inclui assinaturas/MRR"), Despesas, A vencer 7d (clicável), **Saldo em caixa** (acumulado de entradas pagas − saídas pagas até a data; caixa realizado).
-- **Faixa de vencimento clicável** (Atrasado / 7d / 8–30d, cor escalando) logo abaixo dos KPIs — enxerto da variação C (acionabilidade), secundária/colapsável.
+- **1 KPI herói + 3 secundários** (revisto em 21/07): Resultado do mês (herói), Receita total (nota "inclui assinaturas/MRR"), Despesas, Margem do mês.
+  - O KPI **"A vencer 7d" foi eliminado**: repetia um número que a faixa de urgência já mostra, e ler o mesmo valor em dois lugares faz duvidar de qual é o certo.
+  - **"Saldo em caixa" saiu da faixa de KPIs** para uma linha de contexto no header, ao lado do toggle de escopo (`Saldo em caixa · R$ … · atualizado agora`). É um *snapshot de agora*, não uma métrica do período — ao lado de quatro métricas mensais, o usuário lê os cinco como sendo do mesmo recorte.
+  - Hierarquia do herói por **três eixos somados**, não por tamanho isolado: valor a 40px/700 contra 22px nos secundários; **cor exclusiva** (só o herói tem valor colorido, na cor da natureza do resultado); e **elevação exclusiva** (herói com fundo `--card` sólido + `border-left` 3px + sombra; secundários vazados, só borda). Sparkline de 6 meses só no herói.
+- **Faixa de vencimento clicável** (Atrasado / 7d / 8–30d, cor escalando) logo abaixo dos KPIs — **componente de primeira classe, largura total, não colapsável**. É a coisa mais acionável da tela e absorveu o KPI eliminado. Cada bloco leva para `/lancamentos` com o **filtro de vencimento** correspondente já aplicado (§7.1).
 - **Gráfico âncora** entradas × saídas (6 meses): `ComposedChart` — entradas como `Area` + `stackId` (Assinaturas + Avulsos empilhados), saídas como `Line` tracejada (leitura daltônica); **linha de projeção** pontilhada (`dataKey` separada) — enxerto da B.
 - **Composição de despesas por categoria:** donut (`Pie` com `innerRadius`) — substitui o donut+barras redundante.
 - **Cards de origem** (Assinaturas ⚡ auto/Stripe vs Avulsos ✎ manual) — enxerto da B; componente `OriginBadge variant="auto|manual"` reutilizável em gráfico, cards e lista.
@@ -222,10 +251,37 @@ CRUD simples: tabela (nome, tipo, cor, ativo, ordem) + dialog de criar/editar; a
 ## 9. Design System
 
 Adicionar em `src/index.css` (light **e** dark), seguindo o padrão `--test-*`:
-- `--fin-income`, `--fin-income-bg`, `--fin-income-text` (verde) e `--fin-expense*` (vermelho) — para o **valor** (natureza).
-- Status reusa `--success` (pago) / `--warning` (pendente) / `--destructive` (atrasado) / `--muted` (cancelado) — em **badge com ícone+texto**.
-- `cyan` (`--secondary`) reservado a **interação**, nunca a status.
-- Gráficos: paleta fixa `#06b6d4/#3b82f6/#10b981/#f59e0b/#1e3a8a`.
+- **`--fin-income` / `--fin-expense` — valores calibrados, não derivados de `--success`/`--destructive`** (decidido em 21/07):
+
+  ```css
+  :root { --fin-income: 160 84% 27%;  --fin-expense:   0 72% 42%; }  /* 5,03:1 e 6,46:1 sobre --card */
+  .dark { --fin-income: 160 55% 45%;  --fin-expense:   4 80% 66%; }  /* 6,5:1  e 5,5:1  sobre --card */
+  ```
+
+  **Por que não reusar os tokens de status:** no dark, `--destructive` é `0 62% 40%` e rende **2,42:1** sobre `--card` — ele é um token de *fundo*, usado com `--destructive-foreground` branco por cima. Como cor de texto, tornaria o valor (o número mais importante da tela) ilegível justamente no tema que o admin mais usa. O mesmo vale para `--success` no dark.
+
+  **Por que 160° e não o verde 142° do `--success`:** sob deuteranopia, 142° e 0° convergem para dois marrons quase idênticos; 160° (teal) e 4° (coral) continuam separáveis. **Não alterar o `--success` global** — ele permanece como o status "Pago".
+
+- **Território de cor — cada família tem zona exclusiva:**
+
+  | Família | Pode aparecer em | Nunca em |
+  |---|---|---|
+  | Natureza (`--fin-*`) | o glifo do **valor** (número + sinal) e o `border-left` do KPI herói | fundo de linha, badge, ícone, legenda |
+  | Status (`--success`/`--warning`/`--destructive`/`--muted`) | dentro do badge (tint ~12% + ícone + texto) e na régua de atraso | valores, títulos, gráficos |
+  | Cyan (`--secondary`) | link, foco, item selecionado, aba ativa, botão primário | qualquer dado |
+  | Categóricas | dentro da moldura do gráfico, sua legenda, e o swatch da tela Categorias | tabela, KPIs, badges |
+
+  Teto: **no máximo 2 cores saturadas simultâneas por linha**. Em repouso, o valor é a única cor da linha.
+
+- **Dupla codificação (daltonismo)** — quatro camadas, e a primeira já resolve sozinha:
+  1. **Sinal explícito sempre**: `+ R$ 12.480,00` / `− R$ 3.219,50`, com **U+2212** (−), não hífen — em monoespaçada tem a mesma largura e é visivelmente mais longo.
+  2. **Ícone próprio por status**, nunca o mesmo ícone em cor diferente: `CheckCircle` pago · `Clock` pendente · `AlertTriangle` atrasado · `Ban` cancelado.
+  3. Matiz deslocado (160°/4°, acima).
+  4. No gráfico: entradas = área preenchida, saídas = linha **tracejada**; a legenda reproduz o padrão de traço, não só o quadrado de cor.
+
+  Teste de sanidade: screenshot em grayscale — receita/despesa e atrasado/pago devem continuar distinguíveis.
+
+- **Linha atrasada = 4 sinais de baixa intensidade**, nunca a linha inteira colorida: `border-left` 3px `--destructive`; fundo `--destructive / .04` no light e **`/.07` no dark** (diferenças de luminância são menos perceptíveis no escuro); badge "Atrasado" com ícone; e a **data de vencimento** em `--fin-expense` (é o fato que está errado). O ganho real do tint é que várias linhas atrasadas seguidas formam uma **faixa** visível de longe.
 - Roboto Mono, `tabular-nums`, BRL pt-BR (`formatBRL`), contraste WCAG AA, `prefers-reduced-motion`.
 
 ## 10. Decisões assumidas (revisar)
