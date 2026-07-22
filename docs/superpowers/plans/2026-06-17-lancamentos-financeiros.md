@@ -2223,7 +2223,7 @@ CRUD de `financial_categories` seguindo o padrao `plansService` (interface + fac
 
 **Steps:**
 
-- [ ] Implementar a interface + factory em `src/services/financialCategories/financialCategoriesService.ts` com o conteudo COMPLETO:
+- [x] Implementar a interface + factory em `src/services/financialCategories/financialCategoriesService.ts` com o conteudo COMPLETO:
 ```ts
 /**
  * Financial Categories Service — Interface & Factory
@@ -2258,7 +2258,7 @@ export function resetFinancialCategoriesService(): void {
   _instance = null;
 }
 ```
-- [ ] Implementar a impl Supabase em `src/services/financialCategories/financialCategoriesService.supabase.ts` com o conteudo COMPLETO:
+- [x] Implementar a impl Supabase em `src/services/financialCategories/financialCategoriesService.supabase.ts` com o conteudo COMPLETO:
 ```ts
 /**
  * Financial Categories Service — Supabase Implementation
@@ -2351,9 +2351,9 @@ export class SupabaseFinancialCategoriesService implements IFinancialCategoriesS
   }
 }
 ```
-- [ ] Verificar lint: `npm run lint` — esperado: zero erros nos arquivos novos (`financialCategoriesService.ts`, `financialCategoriesService.supabase.ts`).
-- [ ] Verificar typecheck: `npx tsc --noEmit -p tsconfig.app.json` — esperado: sem erros relacionados a `financialCategories` (depende de `src/types/finance.ts` da Fase 1).
-- [ ] Commit: `git add src/services/financialCategories && git commit -m "feat(finance): add financialCategories service (CRUD via Supabase)"`
+- [x] Verificar lint: `npm run lint` — esperado: zero erros nos arquivos novos (`financialCategoriesService.ts`, `financialCategoriesService.supabase.ts`).
+- [x] Verificar typecheck: `npx tsc --noEmit -p tsconfig.app.json` — esperado: sem erros relacionados a `financialCategories` (depende de `src/types/finance.ts` da Fase 1).
+- [x] Commit: `git add src/services/financialCategories && git commit -m "feat(finance): add financialCategories service (CRUD via Supabase)"`
 
 ---
 
