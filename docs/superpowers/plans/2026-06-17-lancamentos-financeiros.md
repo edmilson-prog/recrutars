@@ -886,7 +886,7 @@ EOF
 
 **Steps:**
 
-- [ ] Criar `sql/migrations/121_financial_entries.sql`:
+- [x] Criar `sql/migrations/121_financial_entries.sql`:
 ```sql
 -- Migration 121: financial_entries
 -- Lancamentos manuais de receita/despesa (contas a pagar/receber + caixa).
@@ -957,9 +957,9 @@ CREATE TRIGGER set_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 ```
 
-- [ ] Aplicar via MCP Supabase `apply_migration` (`name: "financial_entries"`).
+- [x] Aplicar via MCP Supabase `apply_migration` (`name: "financial_entries"`).
 
-- [ ] Verificar com MCP `execute_sql` que constraints e índices existem:
+- [x] Verificar com MCP `execute_sql` que constraints e índices existem:
 ```sql
 SELECT indexname FROM pg_indexes
 WHERE schemaname = 'public' AND tablename = 'financial_entries'
@@ -967,9 +967,9 @@ ORDER BY indexname;
 ```
 Saída esperada: 7 índices `idx_financial_entries_*` + a PK.
 
-- [ ] Rodar MCP `get_advisors` (type `security`); confirmar ausência de advisor "RLS disabled" sobre `financial_entries`.
+- [x] Rodar MCP `get_advisors` (type `security`); confirmar ausência de advisor "RLS disabled" sobre `financial_entries`.
 
-- [ ] Commit:
+- [x] Commit:
 ```bash
 git add sql/migrations/121_financial_entries.sql && git commit -m "$(cat <<'EOF'
 feat(finance): add financial_entries table with admin/service RLS and indexes
