@@ -6,7 +6,28 @@
 
 **Architecture:** Módulo admin-only sobre Supabase (4 tabelas novas + RLS + RPCs + bucket privado), camada de serviço (factory lazy + impl Supabase) + hooks React Query, e UI React/shadcn com lista de 3 visualizações alternáveis, formulário com upload, e dashboard Recharts. Spec aprovado: `docs/superpowers/specs/2026-06-17-lancamentos-financeiros-design.md`.
 
-**Tech Stack:** React 18 + TypeScript + Vite, Tailwind + shadcn/ui (Radix), React Router v6, React Query v5, React Hook Form + Zod, Recharts 2.15, Supabase, Vitest (adicionado na Fase 1).
+**Tech Stack:** React 18 + TypeScript + Vite, Tailwind + shadcn/ui (Radix), React Router v6, React Query v5, React Hook Form + Zod, Recharts 2.15, Supabase, Vitest (já presente, v3.2.6).
+
+---
+
+## 🚦 Roteiro de entrega — 3 PRs
+
+> **Decidido em 2026-07-22.** Spec de entrega: `../specs/2026-07-21-implementacao-financeiro-faseada-design.md`.
+> As fases **não** são executadas em sequência corrida até o fim: elas se agrupam em três PRs, cada um com seu bump MINOR e changelog.
+
+| PR | Conteúdo | Steps | Versão |
+|---|---|---|---|
+| **A** | Fases 1, 2, 4 · Fase 3 **sem a view Foco** · Tasks 8.1–8.2 | ~171 | v1.75.0 "Ledger" |
+| **B** | Fases 5 e 6 (dashboard + categorias) | 75 | v1.76.0 |
+| **C** | Fase 7 · Task 3.8b (view Foco) · Tasks 8.3–8.6 | ~61 | v1.77.0 |
+
+**Ao executar, respeite estes desvios do texto original das fases:**
+
+1. **Tasks 8.1 e 8.2 rodam ANTES da Fase 3**, não no fim. Elas criam os tokens `--fin-*` e os aplicam nos componentes de valor. Se ficarem para o PR C, a lista e o formulário nascem sem a cor que distingue receita de despesa e precisam ser reescritos.
+2. **A Task 3.8 foi dividida** em `3.8a` (view Fluxo — PR A) e `3.8b` (view Foco — PR C), porque as duas views caem em PRs diferentes. A Task 3.9 (container) fica no PR A e nasce registrando **duas** views; o PR C acrescenta a terceira.
+3. **O formulário do PR A tem `ToggleGroup` de 2 opções** (`Único | Parcelado`). "Recorrente" só aparece no PR C, junto com a RPC e o cron que o materializam — oferecer antes gravaria regras que nada executa.
+4. **A Task 8.5 (version bump) é o bump do PR C.** Os PRs A e B fecham com tasks de bump próprias, criadas na execução seguindo o mesmo formato da 8.5.
+5. **O spec de produto foi revisado em 21/07** com seis decisões vindas do mockup navegável. Onde o texto de uma task divergir do spec, **o spec prevalece** — as divergências conhecidas estão sinalizadas com `⚠️ REVISADO 21/07` na própria task.
 
 ## Global Constraints
 
@@ -18,7 +39,10 @@
 - `amount` **sempre positivo**; sinal/cor vêm do `type`. **`overdue` é DERIVADO** (`status='pending' AND due_date < hoje`), não armazenado.
 - `.delete()`/`.update()` sob RLS **retornam sem erro ao bloquear** — sempre `.select()` e conferir linhas afetadas.
 - **Anexos:** bucket privado `financial-documents` + **signed URLs** (nunca `getPublicUrl`).
-- **Tokens** HSL `--fin-income`/`--fin-expense` (light+dark) no padrão `--test-*`. Cyan só para interação; status em badge (success/warning/destructive/muted). **Paleta de charts:** `#06b6d4` / `#3b82f6` / `#10b981` / `#f59e0b` / `#1e3a8a`. Roboto Mono, `tabular-nums`, `prefers-reduced-motion`.
+- **Tokens** HSL `--fin-income`/`--fin-expense` (light+dark) no padrão `--test-*`, com os **valores calibrados da Task 8.1** (`160 84% 27%` / `0 72% 42%` no light; `160 55% 45%` / `4 80% 66%` no dark) — **não** derivar de `--success`/`--destructive`. Cyan só para interação; status em badge (success/warning/destructive/muted). Roboto Mono, `tabular-nums`, `prefers-reduced-motion`.
+- **Paleta de charts (⚠️ REVISADA 21/07):** a antiga `#06b6d4 / #3b82f6 / #10b981 / #f59e0b / #1e3a8a` foi **descartada** — usava o cyan de interação e o verde de receita numa rosca de despesas. Gráfico âncora usa os próprios `--fin-*` (Assinaturas × Avulsos por luminância + textura); rosca de categorias usa rampa navy→cyan sensível ao tema. Detalhes no topo da Fase 5.
+- **Cores de categoria** evitam as faixas **0–20°**, **150–170°** e **190–205°** (colidem com atraso, receita e interação dentro da linha da lista). Paleta do seed na Task 1.5.
+- **Dois eixos de filtro:** `status` (armazenado) e `dueWindow` (derivado) são **independentes e combináveis**. `'overdue'` nunca é valor de status. Ver Task 1.11.
 - **UI em PT-BR** com acentuação correta (UTF-8).
 - **Migrations a partir de 120** (a `main` já tem até `119_sync_candidate_visibility_on_lifecycle`), salvas em `sql/migrations/` e aplicadas via MCP Supabase `apply_migration`.
 - `public/changelog.json`: cada item com `details` (description/files/routes); tipos válidos (added/changed/deprecated/removed/fixed/security); `isCurrent` em exatamente uma versão.
@@ -810,17 +834,23 @@ CREATE TRIGGER set_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
 -- Seed: despesas + receitas (cores da paleta de graficos do dashboard)
+-- ⚠️ REVISADO 21/07 — cores dessaturadas, fora das faixas 0-20deg (vermelho de
+-- atraso), 150-170deg (verde de receita) e 190-205deg (cyan de interacao).
+-- O dot da categoria e renderizado DENTRO da linha da lista, ao lado do valor
+-- colorido e do badge de status; as cores originais faziam o dot contradizer a
+-- semantica da propria linha (ex.: despesa de "Ocupacao" com dot verde).
+-- Ver spec de produto, secao 4.1.
 INSERT INTO public.financial_categories (name, type, color, sort_order) VALUES
-  ('Marketing',          'expense', '#f59e0b', 1),
-  ('Infraestrutura',     'expense', '#3b82f6', 2),
-  ('Serviços',           'expense', '#06b6d4', 3),
-  ('Equipamentos',       'expense', '#1e3a8a', 4),
-  ('Ocupação',           'expense', '#10b981', 5),
-  ('Impostos',           'expense', '#ef4444', 6),
-  ('Pessoal',            'expense', '#8b5cf6', 7),
-  ('Consultoria avulsa', 'income',  '#10b981', 1),
-  ('Reembolso',          'income',  '#06b6d4', 2),
-  ('Outras receitas',    'income',  '#3b82f6', 3);
+  ('Marketing',          'expense', '#9a7b4f', 1),
+  ('Infraestrutura',     'expense', '#5b6b8c', 2),
+  ('Serviços',           'expense', '#4f7a8b', 3),
+  ('Equipamentos',       'expense', '#3f4d6b', 4),
+  ('Ocupação',           'expense', '#6b7f5e', 5),
+  ('Impostos',           'expense', '#8a6d5a', 6),
+  ('Pessoal',            'expense', '#7c6f9e', 7),
+  ('Consultoria avulsa', 'income',  '#5f8a85', 1),
+  ('Reembolso',          'income',  '#6e7fa3', 2),
+  ('Outras receitas',    'income',  '#8b7fa8', 3);
 ```
 
 - [ ] Aplicar via MCP Supabase `apply_migration` com `name: "financial_categories"` e o conteúdo idêntico ao arquivo acima.
@@ -1447,7 +1477,181 @@ EOF
 
 ---
 
-**Fim da Fase 1.** Saída para a Fase 2: tipos em `@/types/finance`, converters puros testados em `@/lib/finance/financeConverters`, schema completo no banco (4 tabelas + 3 RPCs + bucket privado), e Vitest configurado para o TDD de `calcInstallments` e da agregação pura de `CashflowSummary`.
+---
+
+### Task 1.11: Separar `status` de `dueWindow` em `EntryFilters` + helper `dueWindowOf` (TDD)
+
+> ⚠️ **Task criada em 22/07.** Corrige código **já commitado** na Task 1.2. O `EntryFilters` atual declara `status?: EffectiveStatus` com o comentário *"May be `overdue` (derived) — the service translates it to status+date"* — ou seja, carrega exatamente o bug que a revisão do spec eliminou (§7.1). Enquanto o tipo permitir `status: 'overdue'`, todo consumidor pode reintroduzi-lo.
+>
+> Este helper também vira a **fonte única** de classificação por janela, consumida por três lugares que hoje divergiriam: o filtro de vencimento (Task 3.5), as seções da view Fluxo (Task 3.8a) e a faixa de urgência do dashboard (Task 5.5).
+
+**Files:**
+- Modify: `src/types/finance.ts` (interface `EntryFilters` + novo `DueWindow`)
+- Modify: `src/lib/finance/status.ts` (adicionar `dueWindowOf` e `daysBetween`)
+- Test: `src/lib/finance/status.test.ts` (append)
+
+**Interfaces:**
+- Consumes: `EntryStatus` de `@/types/finance`.
+- Produces:
+  - `type DueWindow = 'overdue' | 'due7' | 'due8_30' | 'future'`
+  - `daysBetween(fromISO: string, toISO: string): number`
+  - `dueWindowOf(status: EntryStatus, dueDateISO: string, todayISO?: string): DueWindow | null` — retorna `null` para lançamentos que não estão `pending` (pagos e cancelados não têm janela de vencimento).
+  - `EntryFilters.status` passa a ser `EntryStatus` (não `EffectiveStatus`); ganha `dueWindow?: DueWindow`.
+
+**Steps:**
+
+- [ ] **Passo 1: Escrever os testes falhando.** Append em `src/lib/finance/status.test.ts`:
+
+```ts
+import { dueWindowOf, daysBetween } from './status';
+
+describe('daysBetween', () => {
+  it('conta dias entre datas ISO ignorando timezone', () => {
+    expect(daysBetween('2026-07-21', '2026-07-28')).toBe(7);
+    expect(daysBetween('2026-07-28', '2026-07-21')).toBe(-7);
+    expect(daysBetween('2026-07-21', '2026-07-21')).toBe(0);
+  });
+
+  it('atravessa virada de mes e de ano', () => {
+    expect(daysBetween('2026-07-31', '2026-08-01')).toBe(1);
+    expect(daysBetween('2026-12-31', '2027-01-01')).toBe(1);
+  });
+});
+
+describe('dueWindowOf', () => {
+  const TODAY = '2026-07-21';
+
+  it('classifica pendente vencido como overdue', () => {
+    expect(dueWindowOf('pending', '2026-07-20', TODAY)).toBe('overdue');
+  });
+
+  it('classifica vencimento hoje e ate 7 dias como due7', () => {
+    expect(dueWindowOf('pending', TODAY, TODAY)).toBe('due7');
+    expect(dueWindowOf('pending', '2026-07-28', TODAY)).toBe('due7');
+  });
+
+  it('classifica 8 a 30 dias como due8_30', () => {
+    expect(dueWindowOf('pending', '2026-07-29', TODAY)).toBe('due8_30');
+    expect(dueWindowOf('pending', '2026-08-20', TODAY)).toBe('due8_30');
+  });
+
+  it('classifica alem de 30 dias como future', () => {
+    expect(dueWindowOf('pending', '2026-08-21', TODAY)).toBe('future');
+  });
+
+  it('retorna null para pago e cancelado, mesmo vencidos', () => {
+    expect(dueWindowOf('paid', '2026-07-01', TODAY)).toBeNull();
+    expect(dueWindowOf('canceled', '2026-07-01', TODAY)).toBeNull();
+  });
+});
+```
+
+- [ ] **Passo 2: Rodar e ver falhar.**
+
+Run: `npx vitest run src/lib/finance/status.test.ts`
+Esperado: FAIL — `dueWindowOf is not a function` / `daysBetween is not a function`.
+
+- [ ] **Passo 3: Implementar.** Append em `src/lib/finance/status.ts`:
+
+```ts
+/** Derived due-date window. Orthogonal to the stored EntryStatus. */
+export type DueWindow = 'overdue' | 'due7' | 'due8_30' | 'future';
+
+/** Parses an ISO `YYYY-MM-DD` into a UTC epoch, avoiding timezone drift. */
+function toUTCDay(iso: string): number {
+  const [y, m, d] = iso.split('-').map(Number);
+  return Date.UTC(y, m - 1, d);
+}
+
+/** Whole days from `fromISO` to `toISO`. Negative when `toISO` is earlier. */
+export function daysBetween(fromISO: string, toISO: string): number {
+  return Math.round((toUTCDay(toISO) - toUTCDay(fromISO)) / 86_400_000);
+}
+
+/**
+ * Classifies an entry into a due-date window.
+ *
+ * Returns `null` for anything not `pending`: paid and canceled entries have no
+ * meaningful due window, and letting them fall into one would make the totals
+ * of the Flow view and the dashboard urgency band disagree with the table.
+ */
+export function dueWindowOf(
+  status: EntryStatus,
+  dueDateISO: string,
+  todayISO?: string,
+): DueWindow | null {
+  if (status !== 'pending') return null;
+  const today = todayISO ?? new Date().toISOString().slice(0, 10);
+  if (dueDateISO < today) return 'overdue';
+  const days = daysBetween(today, dueDateISO);
+  if (days <= 7) return 'due7';
+  if (days <= 30) return 'due8_30';
+  return 'future';
+}
+```
+
+- [ ] **Passo 4: Rodar e ver passar.**
+
+Run: `npx vitest run src/lib/finance/status.test.ts`
+Esperado: PASS — todos os describes verdes.
+
+- [ ] **Passo 5: Corrigir `EntryFilters`.** Em `src/types/finance.ts`, substituir a interface inteira por:
+
+```ts
+export interface EntryFilters {
+  search?: string;
+  type?: FinancialType;
+  /**
+   * Stored status only. `overdue` is NOT valid here — it is derived.
+   * Use `dueWindow` for the orthogonal due-date axis.
+   */
+  status?: EntryStatus;
+  /** Derived due-date window. Combines freely with `status`. */
+  dueWindow?: DueWindow;
+  categoryId?: string;
+  paymentMethod?: PaymentMethod;
+  dateField?: 'due' | 'competence';
+  dateFrom?: string;
+  dateTo?: string;
+}
+```
+
+E adicionar o re-export do tipo, logo abaixo de `EffectiveStatus`:
+
+```ts
+export type { DueWindow } from '@/lib/finance/status';
+```
+
+- [ ] **Passo 6: Typecheck e suíte completa.**
+
+Run: `npx tsc --noEmit && npx vitest run`
+Esperado: `tsc` sem saída; Vitest com todos os arquivos verdes (o total sobe de 80 para 86).
+
+- [ ] **Passo 7: Commit.**
+
+```bash
+git add src/types/finance.ts src/lib/finance/status.ts src/lib/finance/status.test.ts
+git commit -m "$(cat <<'EOF'
+fix(finance): split derived due window out of the status filter
+
+EntryFilters typed status as EffectiveStatus, which allowed `overdue` --
+a derived value, not a stored one. Filtering by `pending` would then either
+hide overdue entries (which are pending) or include them and contradict the
+label; there is no correct answer with a single axis.
+
+Status now accepts only stored values, and dueWindow carries the derived
+axis. dueWindowOf() becomes the single classifier shared by the filter bar,
+the Flow view sections and the dashboard urgency band, so those three cannot
+drift apart.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+EOF
+)"
+```
+
+---
+
+**Fim da Fase 1.** Saída para a Fase 2: tipos em `@/types/finance` (com `status` e `dueWindow` em eixos separados), converters puros testados em `@/lib/finance/financeConverters`, helpers `effectiveStatus` / `dueWindowOf` / `daysBetween` em `@/lib/finance/status`, schema completo no banco (4 tabelas + 3 RPCs + bucket privado), e Vitest para o TDD de `calcInstallments` e da agregação pura de `CashflowSummary`.
 
 ---
 
@@ -3702,6 +3906,9 @@ git add -A && git commit -m "feat(finance): add entry display metadata and Origi
 
 ### Task 3.4: FinancialKpiHeader (KPIs por horizonte, clicaveis)
 
+> ⚠️ **REVISADO 21/07 — são 4 KPIs, não 5.** Remova **"A vencer 7d"** do header: ele repete um número que o filtro de vencimento (Task 3.5) e a faixa do dashboard já expõem, e o mesmo valor em dois lugares faz o admin duvidar de qual é o certo. Ficam: **Saldo do período** (herói), **Entradas**, **Saídas**, **Vencido** (clicável).
+> O clique em "Vencido" seta `filters.dueWindow = 'overdue'` — **não** `filters.status`. Ver Task 1.11.
+
 **Files:**
 - Create: `src/components/finance/FinancialKpiHeader.tsx`
 
@@ -3889,6 +4096,16 @@ git add -A && git commit -m "feat(finance): add FinancialKpiHeader with horizon 
 ---
 
 ### Task 3.5: FinancialFilterBar + FinancialViewSwitcher
+
+> ⚠️ **REVISADO 21/07 — duas mudanças obrigatórias.**
+>
+> **1. O filtro de vencimento é um select próprio, separado do status.** O texto abaixo trata "Atrasados" como preset sobre o status; ele passa a ser um valor do novo controle. A barra tem **dois selects independentes e combináveis**:
+> - `Status: todos | Pendente | Pago | Cancelado` → escreve em `filters.status` (`EntryStatus`, nunca `'overdue'`)
+> - `Vencimento: todos | Atrasados | Vencem em 7 dias | 8 a 30 dias | Futuros` → escreve em `filters.dueWindow` (`DueWindow`, da Task 1.11)
+>
+> Os chips removíveis mostram **qual eixo** cada filtro afeta (`Vencimento: atrasados`), e `onApplyPreset('overdue' | 'due7')` passa a setar `dueWindow`. Um select em estado neutro ("todos") **não** deve receber destaque de cor — só fica com a borda cyan quando há valor ativo, senão um filtro vazio parece aplicado.
+>
+> **2. No PR A o switcher tem 2 opções, não 3.** `FinancialListView` continua sendo `'table' | 'focus' | 'flow'` no tipo, mas o componente renderiza apenas **Tabela** e **Fluxo** — a view Foco é a Task 3.8b, do PR C. Renderize a partir de um array de opções para que o PR C acrescente a terceira sem reescrever o componente.
 
 **Files:**
 - Create: `src/components/finance/FinancialFilterBar.tsx`
@@ -4686,7 +4903,16 @@ git add -A && git commit -m "feat(finance): add bulk action bar and entries tabl
 
 ---
 
-### Task 3.8: FinancialEntriesMasterDetail (view B) + FinancialEntriesGrouped (view C)
+### Task 3.8: ~~MasterDetail (view B) + Grouped (view C)~~ → DIVIDIDA em 3.8a e 3.8b
+
+> ⚠️ **DIVIDIDA em 22/07.** Esta task entregava as duas views numa só, mas elas caem em PRs diferentes. Execute **apenas a parte correspondente ao PR em curso**:
+>
+> **`3.8a` — view Fluxo (`FinancialEntriesGrouped`) · PR A.** Use as instruções de `FinancialEntriesGrouped` abaixo, com duas correções:
+> - As seções são **Atrasados / A vencer 7d / 8–30d / Pagos / Cancelados** — a seção "Cancelados" é obrigatória. Sem ela um lançamento cancelado não pertence a faixa nenhuma e **some** desta view, fazendo a contagem divergir da Tabela.
+> - A classificação vem de `dueWindowOf()` (Task 1.11), não de lógica local. "Pagos" e "Cancelados" são as duas seções onde `dueWindowOf` retorna `null`, separadas por `status`. "Pagos" e "Cancelados" nascem recolhidas.
+> - É view de **leitura**: sem checkbox de seleção e sem menu `...` por linha.
+>
+> **`3.8b` — view Foco (`FinancialEntriesMasterDetail`) · PR C.** Use as instruções de `FinancialEntriesMasterDetail` abaixo, com uma correção: **o `FinancialEntrySheet` não abre nesta view.** Foco é um modo de conciliação por teclado — `J`/`K` navegam, `↵` dá baixa **e avança para o próximo item**, e os atalhos aparecem na tela como `<kbd>`. Se o Sheet abrisse aqui também, a view seria "um Sheet que não fecha" e não justificaria seu custo.
 
 **Files:**
 - Create: `src/components/finance/FinancialEntriesMasterDetail.tsx`
@@ -6042,6 +6268,16 @@ EOF
 
 ### Task 4.5: `FinancialEntryForm` (FormBody) com RHF+Zod, secoes e rodape sticky
 
+> ⚠️ **REVISADO 21/07 — a seção 4 do formulário muda.**
+>
+> **Um único `ToggleGroup`, não dois toggles.** O texto abaixo trata parcelamento e recorrência como dois switches mutuamente exclusivos — que é um radio group disfarçado, e o usuário tentará ligar os dois. Substitua por um `ToggleGroup type="single"` com valor `'once' | 'installments' | 'recurring'`, rotulado **Repetição**.
+>
+> **No PR A, apenas `Único | Parcelado`.** A opção "Recorrente" entra no PR C, junto com a RPC `generate_due_recurrences` e o pg_cron que a materializam. Oferecê-la antes gravaria uma regra em `financial_recurrences` que nada executa — pior do que não oferecer. Monte as opções a partir de um array para o PR C só acrescentar a terceira.
+>
+> **Propagação do acento — exatamente 3 pontos, nunca mais:** (1) o segmento ativo do ToggleGroup de natureza (tint 12% + texto + borda na cor), (2) o campo Valor (`border-left` 3px + o prefixo `R$` na cor) e (3) o número no rodapé sticky. **Não** propague para o título da página, para o botão Salvar (que segue cyan — é interação) nem para as bordas dos outros campos: se a tela inteira fica verde, verde deixa de significar "isto é o valor".
+>
+> **Guarda ao trocar a natureza:** Receita↔Despesa invalida a categoria selecionada (categorias são tipadas). Limpe o campo **com aviso inline** — "Categoria redefinida: as opções mudam por natureza" — nunca silenciosamente.
+
 O componente central da fase. RHF + Zod, seguindo o padrao de `QuestionForm.tsx` (`Form`, `FormField`, `FormItem`, `zodResolver`). Quatro secoes (Essencial, Datas e status, Anexos, Parcelamento+Recorrencia), rodape sticky com resumo ao vivo e botao Salvar com guarda de submit (desabilitado durante upload). Funciona em modo `create` e `edit`, e tambem `embedded` (dentro do Sheet de edicao rapida — sem rodape full-screen).
 
 **Files:**
@@ -6896,12 +7132,71 @@ EOF
 
 ---
 
-**Resultado da Fase 4:** formulario completo de lancamentos funcionando em tres superficies (pagina `/novo`, pagina `/:id` e Sheet de edicao rapida), com upload multiplo de anexos com progresso, parcelamento (preview via `calcInstallments`) e recorrencia (frase em linguagem natural via `buildRecurrencePhrase`), toggles mutuamente exclusivos, rodape sticky com resumo ao vivo e guarda de submit durante upload. Helpers puros de recorrencia cobertos por testes Vitest.
+**Resultado da Fase 4:** formulario completo de lancamentos funcionando em tres superficies (pagina `/novo`, pagina `/:id` e Sheet de edicao rapida), com upload multiplo de anexos com progresso, parcelamento (preview via `calcInstallments`), `ToggleGroup` unico de repeticao (`Único | Parcelado` no PR A), rodape sticky com resumo ao vivo e guarda de submit durante upload. Helpers puros de recorrencia cobertos por testes Vitest.
+
+---
+
+### Task 4.8: Version bump v1.75.0 "Ledger" + changelog — **fecha o PR A**
+
+> **Task criada em 22/07.** O plano original previa um único bump (Task 8.5). Com a entrega em 3 PRs, cada um fecha com o seu: este é o do **PR A**. A Task 8.5 passa a ser o bump do PR C.
+
+**Files:**
+- Modify: `src/constants/app.ts`
+- Modify: `public/changelog.json`
+- Modify: `CHANGELOG.md`
+
+**Interfaces:**
+- Consumes: nada.
+- Produces: `APP_VERSION = "1.75.0"`, `APP_CODENAME = "Ledger"`, nova entrada de versão com `isCurrent: true`.
+
+**Steps:**
+
+- [ ] **Passo 1: Conferir a versão de partida.** O plano assume que a `main` está em `1.74.0 "Herald"`.
+
+Run: `grep -E 'APP_VERSION|APP_CODENAME' src/constants/app.ts`
+Se a `main` avançou desde 22/07, use o próximo MINOR a partir do que estiver lá, mantendo o codename "Ledger".
+
+- [ ] **Passo 2: Atualizar `src/constants/app.ts`.**
+
+```ts
+export const APP_VERSION = "1.75.0";
+export const APP_CODENAME = "Ledger";
+```
+
+- [ ] **Passo 3: Marcar a versão anterior como não-atual** em `public/changelog.json` — no objeto `1.74.0`, trocar `"isCurrent": true` por `"isCurrent": false`. **Exatamente uma versão pode ter `isCurrent: true`.**
+
+- [ ] **Passo 4: Inserir a nova versão** como PRIMEIRO item do array `versions`. Cada item de `changes` **precisa** de `details` com `description` (string), `files` (string[]) e `routes` (string[]) — as chaves de `details` são índices string ("0", "1"…) correspondendo à posição no array `items`. Tipos válidos: `added`, `changed`, `deprecated`, `removed`, `fixed`, `security` — **nunca** `enhanced` (causa crash no `VersionAccordion`).
+
+- [ ] **Passo 5: Acrescentar a entrada em `CHANGELOG.md`** no formato Keep a Changelog, com `## [1.75.0] - <data> "Ledger"`.
+
+- [ ] **Passo 6: Validar o changelog.**
+
+Run: `node -e "const d=require('./public/changelog.json');const v=d.versions||d;console.log('isCurrent:',v.filter(x=>x.isCurrent).map(x=>x.version));v[0].changes.forEach(c=>c.items.forEach((_,i)=>{if(!c.details||!c.details[String(i)])throw new Error('details ausente em '+c.type+'['+i+']')}));console.log('details OK')"`
+Esperado: `isCurrent: [ '1.75.0' ]` e `details OK`.
+
+- [ ] **Passo 7: Verificação visual.** Com o dev server na **porta 3000**, abrir `http://localhost:3000/sobre` e confirmar que `1.75.0 — Ledger` aparece como atual e que o accordion expande sem crash.
+
+- [ ] **Passo 8: Commit.**
+
+```bash
+git add src/constants/app.ts public/changelog.json CHANGELOG.md
+git commit -m "chore: bump version to v1.75.0 Ledger and update changelog"
+```
 
 
 ---
 
 ## Fase 5: Dashboard de Fluxo de Caixa
+
+> ⚠️ **REVISADO 21/07 — três mudanças que atravessam a fase inteira (PR B).**
+>
+> **1. A paleta `#06b6d4 / #3b82f6 / #10b981 / #f59e0b / #1e3a8a` foi descartada.** Ela usava o cyan reservado a interação, o verde de receita numa rosca de *despesas*, e três azuis que se fundem no dark. Substituição:
+> - **Gráfico âncora:** as séries *são* a natureza → usam `--fin-income` / `--fin-expense`. Assinaturas × Avulsos se distinguem por **luminância (`L +14`) + textura** (`<pattern>` diagonal na camada Avulsos), nunca por matiz. Projeção em `--muted-foreground`.
+> - **Rosca de categorias:** rampa monocromática **navy→cyan** de 6 passos, **sensível ao tema** (light `L 28%→62%`, dark `L 52%→76%`). Com a rampa fixa do light, a maior fatia rendia **1,46:1** no dark — reprova o mínimo de 3:1 da WCAG 1.4.11. Separador de 2px na cor do card entre segmentos.
+>
+> **2. São 4 KPIs, não 5.** "A vencer 7d" sai (duplicava a faixa de urgência) e **"Saldo em caixa" sai da faixa de KPIs** para uma linha de contexto no header, ao lado do toggle de escopo — é snapshot de agora, não métrica do período. Ficam: Resultado do mês (herói), Receita total, Despesas, Margem do mês.
+>
+> **3. A faixa de vencimento é componente de primeira classe** — largura total, logo abaixo dos KPIs, **não colapsável**. Cada bloco navega para `/lancamentos` setando `filters.dueWindow` (Task 1.11), e seus totais vêm de `dueWindowOf()` — a mesma fonte da view Fluxo, para que os dois não divirjam.
 
 Constroi a pagina `FluxoCaixaDashboard` (rota `/admin/financeiro`, aba "Visao Geral") espelhando o layout de `src/pages/admin/ReportsFinancial.tsx` para maxima consistencia. Consome `useCashflowSummary(params)` (Fase 2) e produz: toggle de escopo Consolidado|Avulsos|Assinaturas, 5 KPIs clicaveis, faixa de vencimento clicavel, grafico ancora (Recharts `ComposedChart` com Area empilhada assinaturas+avulsos, Line tracejada de saidas e linha de projecao pontilhada), donut de despesas por categoria, e cards de origem com `OriginBadge`.
 
@@ -8211,10 +8506,20 @@ interface FinancialCategoryDialogProps {
   onSubmit: (values: FinancialCategoryFormValues) => void;
 }
 
-/** Paleta sugerida (mesma dos graficos do dashboard + tons neutros). */
+/**
+ * Paleta de swatches — REVISADA 21/07.
+ *
+ * A cor da categoria e renderizada como dot DENTRO da linha da lista, ao lado
+ * do valor colorido e do badge de status. Cores em 0-20deg (vermelho de
+ * atraso), 150-170deg (verde de receita) e 190-205deg (cyan de interacao)
+ * fazem o dot contradizer a semantica da propria linha.
+ *
+ * Estes swatches sao a UNICA forma de escolher cor — nao ha color picker
+ * livre, senao o admin recria o problema na primeira categoria que cadastrar.
+ */
 const COLOR_SWATCHES = [
-  '#06b6d4', '#3b82f6', '#10b981', '#f59e0b', '#1e3a8a',
-  '#ef4444', '#8b5cf6', '#ec4899', '#64748b',
+  '#9a7b4f', '#5b6b8c', '#4f7a8b', '#3f4d6b', '#6b7f5e',
+  '#8a6d5a', '#7c6f9e', '#5f8a85', '#6e7fa3', '#8b7fa8', '#64748b',
 ];
 
 export function FinancialCategoryDialog({
@@ -10046,27 +10351,35 @@ Adiciona os tokens semanticos de receita/despesa em ambos os temas, espelhando o
 
 - [ ] Adicionar tokens `--fin-*` no bloco `:root` de `src/index.css`, logo apos a linha `--test-complete-text: 142 60% 28%;` (antes do fechamento `}` do `:root`). Codigo COMPLETO a inserir:
 
+⚠️ **REVISADO 21/07 — não use os valores antigos (`142 70% 38%` / `0 72% 48%`).** Duas correções, ambas verificadas por cálculo de contraste:
+> 1. **Não derivar de `--success`/`--destructive`.** No dark, `--destructive` (`0 62% 40%`) rende **2,42:1** sobre `--card` — é token de *fundo*, usado com foreground branco por cima. Como cor do valor, o número mais importante da tela ficaria ilegível.
+> 2. **Receita em teal 160°, não verde 142°.** Sob deuteranopia, 142° e 0° convergem para dois marrons quase idênticos; 160° e 4° continuam separáveis.
+
 ```css
     /* Finance semantic tokens (income/expense — light) */
-    /* income = verde (--success family), expense = vermelho (--destructive family) */
-    --fin-income: 142 70% 38%;
-    --fin-income-bg: 142 60% 95%;
-    --fin-income-text: 142 65% 26%;
-    --fin-expense: 0 72% 48%;
+    /* income = teal 160deg (NAO o verde 142deg do --success; ver spec 9)     */
+    /* --fin-income 5,03:1 e --fin-expense 6,46:1 sobre --card (WCAG AA)      */
+    --fin-income: 160 84% 27%;
+    --fin-income-bg: 160 60% 95%;
+    --fin-income-text: 160 84% 24%;
+    --fin-expense: 0 72% 42%;
     --fin-expense-bg: 0 75% 96%;
-    --fin-expense-text: 0 70% 38%;
+    --fin-expense-text: 0 72% 38%;
 ```
 
 - [ ] Adicionar tokens `--fin-*` no bloco `.dark` de `src/index.css`, logo apos a linha `--test-complete-text: 142 50% 75%;` (antes do fechamento `}` do `.dark`). Codigo COMPLETO a inserir:
 
 ```css
     /* Finance semantic tokens (income/expense — dark) */
-    --fin-income: 142 60% 45%;
-    --fin-income-bg: 142 40% 14%;
-    --fin-income-text: 142 50% 75%;
-    --fin-expense: 0 65% 55%;
-    --fin-expense-bg: 0 45% 16%;
-    --fin-expense-text: 0 60% 78%;
+    /* Saturacao mais baixa e luminancia mais alta que no light: vermelho      */
+    /* saturado sobre navy escuro causa chromostereopsis (parece flutuar).     */
+    /* --fin-income 6,5:1 e --fin-expense 5,5:1 sobre --card dark.             */
+    --fin-income: 160 55% 45%;
+    --fin-income-bg: 160 40% 15%;
+    --fin-income-text: 160 50% 72%;
+    --fin-expense: 4 80% 66%;
+    --fin-expense-bg: 4 45% 17%;
+    --fin-expense-text: 4 75% 78%;
 ```
 
 - [ ] Expor os tokens no `tailwind.config.ts`, no objeto `colors`, imediatamente apos a chave `test: { ... }` (e antes de `cyan: { ... }`). Codigo COMPLETO a inserir:
