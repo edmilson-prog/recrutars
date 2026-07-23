@@ -104,6 +104,18 @@ export default {
             text: "hsl(var(--test-complete-text))",
           },
         },
+        fin: {
+          income: {
+            DEFAULT: "hsl(var(--fin-income))",
+            bg: "hsl(var(--fin-income-bg))",
+            text: "hsl(var(--fin-income-text))",
+          },
+          expense: {
+            DEFAULT: "hsl(var(--fin-expense))",
+            bg: "hsl(var(--fin-expense-bg))",
+            text: "hsl(var(--fin-expense-text))",
+          },
+        },
         cyan: {
           50: "#ecfeff",
           100: "#cffafe",

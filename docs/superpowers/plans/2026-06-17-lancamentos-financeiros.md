@@ -10349,7 +10349,7 @@ Adiciona os tokens semanticos de receita/despesa em ambos os temas, espelhando o
 
 **Steps:**
 
-- [ ] Adicionar tokens `--fin-*` no bloco `:root` de `src/index.css`, logo apos a linha `--test-complete-text: 142 60% 28%;` (antes do fechamento `}` do `:root`). Codigo COMPLETO a inserir:
+- [x] Adicionar tokens `--fin-*` no bloco `:root` de `src/index.css`, logo apos a linha `--test-complete-text: 142 60% 28%;` (antes do fechamento `}` do `:root`). Codigo COMPLETO a inserir:
 
 ⚠️ **REVISADO 21/07 — não use os valores antigos (`142 70% 38%` / `0 72% 48%`).** Duas correções, ambas verificadas por cálculo de contraste:
 > 1. **Não derivar de `--success`/`--destructive`.** No dark, `--destructive` (`0 62% 40%`) rende **2,42:1** sobre `--card` — é token de *fundo*, usado com foreground branco por cima. Como cor do valor, o número mais importante da tela ficaria ilegível.
@@ -10367,7 +10367,7 @@ Adiciona os tokens semanticos de receita/despesa em ambos os temas, espelhando o
     --fin-expense-text: 0 72% 38%;
 ```
 
-- [ ] Adicionar tokens `--fin-*` no bloco `.dark` de `src/index.css`, logo apos a linha `--test-complete-text: 142 50% 75%;` (antes do fechamento `}` do `.dark`). Codigo COMPLETO a inserir:
+- [x] Adicionar tokens `--fin-*` no bloco `.dark` de `src/index.css`, logo apos a linha `--test-complete-text: 142 50% 75%;` (antes do fechamento `}` do `.dark`). Codigo COMPLETO a inserir:
 
 ```css
     /* Finance semantic tokens (income/expense — dark) */
@@ -10382,7 +10382,7 @@ Adiciona os tokens semanticos de receita/despesa em ambos os temas, espelhando o
     --fin-expense-text: 4 75% 78%;
 ```
 
-- [ ] Expor os tokens no `tailwind.config.ts`, no objeto `colors`, imediatamente apos a chave `test: { ... }` (e antes de `cyan: { ... }`). Codigo COMPLETO a inserir:
+- [x] Expor os tokens no `tailwind.config.ts`, no objeto `colors`, imediatamente apos a chave `test: { ... }` (e antes de `cyan: { ... }`). Codigo COMPLETO a inserir:
 
 ```ts
         fin: {
@@ -10399,7 +10399,7 @@ Adiciona os tokens semanticos de receita/despesa em ambos os temas, espelhando o
         },
 ```
 
-- [ ] Rodar typecheck e lint:
+- [x] Rodar typecheck e lint:
 
 ```bash
 npx tsc --noEmit && npm run lint
@@ -10407,7 +10407,7 @@ npx tsc --noEmit && npm run lint
 
 Saida esperada: `tsc` termina sem output (exit 0); `npm run lint` sem novos erros (apenas warnings pre-existentes, se houver).
 
-- [ ] Verificacao visual: iniciar o dev server e conferir que a app sobe sem erro de CSS/Tailwind.
+- [x] Verificacao visual: iniciar o dev server e conferir que a app sobe sem erro de CSS/Tailwind.
 
 ```bash
 npm run dev
@@ -10415,7 +10415,7 @@ npm run dev
 
 Abrir `http://localhost:3000/admin/financeiro/lancamentos`. Esperado: pagina carrega normalmente; nenhum erro de "unknown utility class" no console (os tokens ainda nao estao em uso, so disponiveis). Alternar tema claro/escuro no header e confirmar que nao quebra.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add src/index.css tailwind.config.ts
