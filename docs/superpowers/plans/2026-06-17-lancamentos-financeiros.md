@@ -4609,7 +4609,7 @@ git add -A && git commit -m "feat(finance): add FinancialEntrySheet detail panel
 
 **Steps:**
 
-- [ ] Implementar `src/components/finance/FinancialBulkActionBar.tsx` (copia do padrao de `InvitationBulkActionBar`):
+- [x] Implementar `src/components/finance/FinancialBulkActionBar.tsx` (copia do padrao de `InvitationBulkActionBar`):
 
 ```tsx
 /**
@@ -4702,7 +4702,7 @@ export function FinancialBulkActionBar({
 }
 ```
 
-- [ ] Implementar `src/components/finance/FinancialEntriesTable.tsx` (shadcn Table, header sticky, totais, regua vermelha em atrasados, colunas responsivas, menu `...`):
+- [x] Implementar `src/components/finance/FinancialEntriesTable.tsx` (shadcn Table, header sticky, totais, regua vermelha em atrasados, colunas responsivas, menu `...`):
 
 ```tsx
 /**
@@ -4892,7 +4892,7 @@ export function FinancialEntriesTable({
 }
 ```
 
-- [ ] Rodar lint + typecheck:
+- [x] Rodar lint + typecheck:
 
 ```bash
 npm run lint && npx tsc --noEmit
@@ -4900,7 +4900,7 @@ npm run lint && npx tsc --noEmit
 
 Saida esperada: sem erros.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add -A && git commit -m "feat(finance): add bulk action bar and entries table view"
