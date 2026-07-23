@@ -5192,7 +5192,7 @@ git add -A && git commit -m "feat(finance): add master-detail and grouped entry 
 
 **Steps:**
 
-- [ ] Reescrever `src/pages/admin/FinancialEntries.tsx` por completo:
+- [x] Reescrever `src/pages/admin/FinancialEntries.tsx` por completo:
 
 ```tsx
 /**
@@ -5409,7 +5409,7 @@ export default function FinancialEntries() {
 }
 ```
 
-- [ ] Criar o helper de data puro `src/lib/finance/dateUtils.ts` usado pelos presets (somar dias em string YYYY-MM-DD, local):
+- [x] Criar o helper de data puro `src/lib/finance/dateUtils.ts` usado pelos presets (somar dias em string YYYY-MM-DD, local):
 
 ```ts
 /**
@@ -5428,7 +5428,7 @@ export function addDays(dateISO: string, days: number): string {
 }
 ```
 
-- [ ] Escrever teste falhando `src/lib/finance/dateUtils.test.ts`:
+- [x] Escrever teste falhando `src/lib/finance/dateUtils.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -5447,7 +5447,7 @@ describe('addDays', () => {
 });
 ```
 
-- [ ] Rodar e ver passar (a implementacao ja existe; valida o comportamento):
+- [x] Rodar e ver passar (a implementacao ja existe; valida o comportamento):
 
 ```bash
 npm run test -- src/lib/finance/dateUtils.test.ts
@@ -5455,7 +5455,7 @@ npm run test -- src/lib/finance/dateUtils.test.ts
 
 Saida esperada: `3 passed`.
 
-- [ ] Rodar lint + typecheck do conjunto:
+- [x] Rodar lint + typecheck do conjunto:
 
 ```bash
 npm run lint && npx tsc --noEmit
@@ -5463,7 +5463,7 @@ npm run lint && npx tsc --noEmit
 
 Saida esperada: sem erros.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add -A && git commit -m "feat(finance): wire FinancialEntries container with 3 views and bulk actions"
