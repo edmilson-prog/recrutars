@@ -3373,7 +3373,7 @@ export function useDeleteRecurrence() {
 
 **Steps:**
 
-- [ ] Adicionar `Wallet` e `List` aos imports de `lucide-react` em `src/config/adminTabConfig.ts` (o arquivo ja importa de `lucide-react`; `List` ja existe na lista, adicionar apenas `Wallet`). Ajustar a linha de import existente:
+- [x] Adicionar `Wallet` e `List` aos imports de `lucide-react` em `src/config/adminTabConfig.ts` (o arquivo ja importa de `lucide-react`; `List` ja existe na lista, adicionar apenas `Wallet`). Ajustar a linha de import existente:
 
 ```ts
 import {
@@ -3387,7 +3387,7 @@ import {
 } from 'lucide-react';
 ```
 
-- [ ] Inserir o novo grupo de abas `fluxo-caixa` em `ADMIN_TAB_GROUPS` (logo apos o grupo `financeiro` existente, antes de `feature-flags`) em `src/config/adminTabConfig.ts`:
+- [x] Inserir o novo grupo de abas `fluxo-caixa` em `ADMIN_TAB_GROUPS` (logo apos o grupo `financeiro` existente, antes de `feature-flags`) em `src/config/adminTabConfig.ts`:
 
 ```ts
   {
@@ -3401,14 +3401,14 @@ import {
   },
 ```
 
-- [ ] Adicionar `Wallet` ao import de `lucide-react` em `src/components/layout/DashboardLayout.tsx` (a linha que ja importa `Package, Store`):
+- [x] Adicionar `Wallet` ao import de `lucide-react` em `src/components/layout/DashboardLayout.tsx` (a linha que ja importa `Package, Store`):
 
 ```ts
   ShieldCheck, BarChart3, CreditCard, DollarSign, ToggleLeft, Headset, Package, Store,
   Fingerprint, Wallet,
 ```
 
-- [ ] Adicionar o item `Fluxo de Caixa` ao grupo `Financeiro` de `adminNavGroups` em `src/components/layout/DashboardLayout.tsx` (apos `Pacotes de Creditos`):
+- [x] Adicionar o item `Fluxo de Caixa` ao grupo `Financeiro` de `adminNavGroups` em `src/components/layout/DashboardLayout.tsx` (apos `Pacotes de Creditos`):
 
 ```ts
   {
@@ -3422,7 +3422,7 @@ import {
   },
 ```
 
-- [ ] Criar `src/pages/admin/FluxoCaixaDashboard.tsx` como placeholder (a Fase 5 substitui o miolo; o shell de navegacao ja fica correto):
+- [x] Criar `src/pages/admin/FluxoCaixaDashboard.tsx` como placeholder (a Fase 5 substitui o miolo; o shell de navegacao ja fica correto):
 
 ```tsx
 /**
@@ -3453,7 +3453,7 @@ export default function FluxoCaixaDashboard() {
 }
 ```
 
-- [ ] Criar `src/pages/admin/FinancialCategories.tsx` como placeholder (a Fase 6 substitui o miolo):
+- [x] Criar `src/pages/admin/FinancialCategories.tsx` como placeholder (a Fase 6 substitui o miolo):
 
 ```tsx
 /**
@@ -3484,7 +3484,7 @@ export default function FinancialCategories() {
 }
 ```
 
-- [ ] Registrar os imports em `src/App.tsx` (junto ao bloco de imports admin, apos a linha `import AdminTests from "./pages/admin/AdminTests";`):
+- [x] Registrar os imports em `src/App.tsx` (junto ao bloco de imports admin, apos a linha `import AdminTests from "./pages/admin/AdminTests";`):
 
 ```tsx
 // Financial Entries (cash flow module)
@@ -3495,7 +3495,7 @@ import AdminFinancialCategories from "./pages/admin/FinancialCategories";
 
 > Nota: `FinancialEntries` so existe a partir da Task 3.9. Para esta task, registrar primeiro apenas as duas paginas placeholders e a rota de `lancamentos` apontando temporariamente para `AdminFluxoCaixaDashboard` **nao** — em vez disso, criar um stub minimo de `FinancialEntries` agora para o import resolver. Criar o stub abaixo.
 
-- [ ] Criar stub inicial `src/pages/admin/FinancialEntries.tsx` (sera totalmente reescrito na Task 3.9; serve para o import compilar ja nesta task):
+- [x] Criar stub inicial `src/pages/admin/FinancialEntries.tsx` (sera totalmente reescrito na Task 3.9; serve para o import compilar ja nesta task):
 
 ```tsx
 /**
@@ -3525,7 +3525,7 @@ export default function FinancialEntries() {
 }
 ```
 
-- [ ] Registrar as rotas em `src/App.tsx` (logo apos o bloco `/admin/assinaturas/billing`, antes do comentario `{/* Admin Tests Overview */}`):
+- [x] Registrar as rotas em `src/App.tsx` (logo apos o bloco `/admin/assinaturas/billing`, antes do comentario `{/* Admin Tests Overview */}`):
 
 ```tsx
             {/* Financial Entries (cash flow module) */}
@@ -3546,7 +3546,7 @@ export default function FinancialEntries() {
             } />
 ```
 
-- [ ] Rodar lint + typecheck:
+- [x] Rodar lint + typecheck:
 
 ```bash
 npm run lint && npx tsc --noEmit
@@ -3554,9 +3554,9 @@ npm run lint && npx tsc --noEmit
 
 Saida esperada: sem erros. (Os 3 imports resolvem, as 3 rotas montam.)
 
-- [ ] Verificar visual na porta 3000: `npm run dev`, logar como `admin@recrutars.com` / `Admin@123`, abrir `http://localhost:3000/admin/financeiro`. Observar: item **Fluxo de Caixa** (icone carteira) no grupo Financeiro do sidebar marcado como ativo; barra de abas com **Visao Geral | Lancamentos | Categorias**; trocar de aba navega entre as 3 paginas placeholders sem recarregar; aba ativa com underline primary.
+- [x] Verificar visual na porta 3000: `npm run dev`, logar como `admin@recrutars.com` / `Admin@123`, abrir `http://localhost:3000/admin/financeiro`. Observar: item **Fluxo de Caixa** (icone carteira) no grupo Financeiro do sidebar marcado como ativo; barra de abas com **Visao Geral | Lancamentos | Categorias**; trocar de aba navega entre as 3 paginas placeholders sem recarregar; aba ativa com underline primary.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add -A && git commit -m "feat(finance): scaffold cash-flow routes, tabs and sidebar entry"
