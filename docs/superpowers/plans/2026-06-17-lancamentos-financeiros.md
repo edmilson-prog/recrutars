@@ -3926,7 +3926,7 @@ git add -A && git commit -m "feat(finance): add entry display metadata and Origi
 
 **Steps:**
 
-- [ ] Implementar `src/components/finance/FinancialKpiHeader.tsx`:
+- [x] Implementar `src/components/finance/FinancialKpiHeader.tsx`:
 
 ```tsx
 /**
@@ -4084,7 +4084,7 @@ export function FinancialKpiHeader({ entries, isLoading, onSelectPreset }: Finan
 }
 ```
 
-- [ ] Rodar lint + typecheck:
+- [x] Rodar lint + typecheck:
 
 ```bash
 npm run lint && npx tsc --noEmit
@@ -4092,7 +4092,7 @@ npm run lint && npx tsc --noEmit
 
 Saida esperada: sem erros.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add -A && git commit -m "feat(finance): add FinancialKpiHeader with horizon KPIs"
