@@ -3566,6 +3566,9 @@ git add -A && git commit -m "feat(finance): scaffold cash-flow routes, tabs and 
 
 ### Task 3.2: Helpers puros de status efetivo e faixas de vencimento (TDD)
 
+> ⚠️ **RECONCILIADO 22/07.** O código abaixo reimplementa a lógica de datas do zero (`parseLocalDate`, `startOfDay`, `daysUntilDue` próprios), o que a **nota de consistência 1** proíbe ("use o `effectiveStatus` canônico, não crie um terceiro helper") e a **nota 2** confirma (a lógica pura vive em `status.ts`). O `entryStatus.ts` entregue é um **adaptador fino** sobre `@/lib/finance/status`: mantém a API por `Date` que os componentes querem, mas delega toda a lógica aos helpers canônicos.
+> Além disso, o `DueBucket` do plano usa `'other'` para juntar cancelado + futuro — o que esconderia lançamentos na view Fluxo (a mesma razão que exige a seção "Cancelados"). O entregue é `DueBucket = DueWindow | 'paid' | 'canceled'`, reusando o vocabulário do `DueWindow` (task 1.11): `canceled`, `future` e `paid` são buckets distintos. Os testes foram ajustados a esse contrato.
+
 **Files:**
 - Create: `src/lib/finance/entryStatus.ts`
 - Test: `src/lib/finance/entryStatus.test.ts`
@@ -3581,7 +3584,7 @@ git add -A && git commit -m "feat(finance): scaffold cash-flow routes, tabs and 
 
 **Steps:**
 
-- [ ] Escrever o teste falhando `src/lib/finance/entryStatus.test.ts`:
+- [x] Escrever o teste falhando `src/lib/finance/entryStatus.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -3652,7 +3655,7 @@ describe('bucketForEntry', () => {
 });
 ```
 
-- [ ] Rodar e ver falhar:
+- [x] Rodar e ver falhar:
 
 ```bash
 npm run test -- src/lib/finance/entryStatus.test.ts
@@ -3660,7 +3663,7 @@ npm run test -- src/lib/finance/entryStatus.test.ts
 
 Saida esperada: falha por modulo inexistente (`Failed to resolve import './entryStatus'`).
 
-- [ ] Implementar o minimo em `src/lib/finance/entryStatus.ts`:
+- [x] Implementar o minimo em `src/lib/finance/entryStatus.ts`:
 
 ```ts
 /**
@@ -3726,7 +3729,7 @@ export function bucketForEntry(
 }
 ```
 
-- [ ] Rodar e ver passar:
+- [x] Rodar e ver passar:
 
 ```bash
 npm run test -- src/lib/finance/entryStatus.test.ts
@@ -3734,7 +3737,7 @@ npm run test -- src/lib/finance/entryStatus.test.ts
 
 Saida esperada: todos os testes passando (`6 passed` em `getEffectiveStatus`/`isOverdue`/`daysUntilDue`/`bucketForEntry`).
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add -A && git commit -m "feat(finance): add pure effective-status and due-bucket helpers with tests"
