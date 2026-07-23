@@ -3747,6 +3747,8 @@ git add -A && git commit -m "feat(finance): add pure effective-status and due-bu
 
 ### Task 3.3: Metadados de exibicao (labels, cores de badge) + OriginBadge
 
+> ⚠️ **REVISADO 22/07 (spec, secao 9).** Duas correcoes ao codigo abaixo: (1) o VALOR usa `text-fin-income`/`text-fin-expense` (tokens calibrados), nao `text-emerald-600`/`text-red-600` — cor de natureza vem dos `--fin-*`; (2) o sinal de despesa e `−` (U+2212), nao hifen. Os badges de status usam tint das cores semanticas (`bg-success/12` etc.) + icone proprio, e o `OriginBadge` variant manual usa slate, nao cyan (reservado a interacao).
+
 **Files:**
 - Create: `src/lib/finance/entryDisplay.ts`
 - Create: `src/components/finance/OriginBadge.tsx`
@@ -3763,7 +3765,7 @@ git add -A && git commit -m "feat(finance): add pure effective-status and due-bu
 
 **Steps:**
 
-- [ ] Implementar `src/lib/finance/entryDisplay.ts`:
+- [x] Implementar `src/lib/finance/entryDisplay.ts`:
 
 ```ts
 /**
@@ -3849,7 +3851,7 @@ export function formatCompetencePeriod(competenceDate: string): string {
 }
 ```
 
-- [ ] Implementar `src/components/finance/OriginBadge.tsx` (reutilizavel em tabela, cards e graficos; assinaturas = auto/Stripe, avulsos = manual):
+- [x] Implementar `src/components/finance/OriginBadge.tsx` (reutilizavel em tabela, cards e graficos; assinaturas = auto/Stripe, avulsos = manual):
 
 ```tsx
 /**
@@ -3891,7 +3893,7 @@ export function OriginBadge({ variant, className }: OriginBadgeProps) {
 }
 ```
 
-- [ ] Rodar lint + typecheck:
+- [x] Rodar lint + typecheck:
 
 ```bash
 npm run lint && npx tsc --noEmit
@@ -3899,7 +3901,7 @@ npm run lint && npx tsc --noEmit
 
 Saida esperada: sem erros.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add -A && git commit -m "feat(finance): add entry display metadata and OriginBadge"
