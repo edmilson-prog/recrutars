@@ -4357,7 +4357,7 @@ git add -A && git commit -m "feat(finance): add FinancialFilterBar and view swit
 
 **Steps:**
 
-- [ ] Implementar `src/components/finance/FinancialEntrySheet.tsx`:
+- [x] Implementar `src/components/finance/FinancialEntrySheet.tsx`:
 
 ```tsx
 /**
@@ -4579,7 +4579,7 @@ export function FinancialEntrySheet({ entryId, open, onOpenChange }: FinancialEn
 }
 ```
 
-- [ ] Rodar lint + typecheck:
+- [x] Rodar lint + typecheck:
 
 ```bash
 npm run lint && npx tsc --noEmit
@@ -4587,7 +4587,7 @@ npm run lint && npx tsc --noEmit
 
 Saida esperada: sem erros.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add -A && git commit -m "feat(finance): add FinancialEntrySheet detail panel"
