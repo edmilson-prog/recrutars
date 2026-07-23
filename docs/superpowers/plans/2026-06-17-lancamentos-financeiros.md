@@ -4125,7 +4125,7 @@ git add -A && git commit -m "feat(finance): add FinancialKpiHeader with horizon 
 
 **Steps:**
 
-- [ ] Implementar `src/components/finance/FinancialViewSwitcher.tsx`:
+- [x] Implementar `src/components/finance/FinancialViewSwitcher.tsx`:
 
 ```tsx
 /**
@@ -4171,7 +4171,7 @@ export function FinancialViewSwitcher({ value, onChange }: FinancialViewSwitcher
 }
 ```
 
-- [ ] Implementar `src/components/finance/FinancialFilterBar.tsx` (busca, natureza, status, categoria, forma, dateField + range; presets Atrasados / A vencer 7d; chips removiveis):
+- [x] Implementar `src/components/finance/FinancialFilterBar.tsx` (busca, natureza, status, categoria, forma, dateField + range; presets Atrasados / A vencer 7d; chips removiveis):
 
 ```tsx
 /**
@@ -4330,7 +4330,7 @@ export function FinancialFilterBar({ filters, onChange, onApplyPreset }: Financi
 }
 ```
 
-- [ ] Rodar lint + typecheck:
+- [x] Rodar lint + typecheck:
 
 ```bash
 npm run lint && npx tsc --noEmit
@@ -4338,7 +4338,7 @@ npm run lint && npx tsc --noEmit
 
 Saida esperada: sem erros.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add -A && git commit -m "feat(finance): add FinancialFilterBar and view switcher"
