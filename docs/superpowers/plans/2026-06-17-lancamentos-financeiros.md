@@ -5504,7 +5504,7 @@ Saida esperada: `Local: http://localhost:3000/`.
 
 - [ ] Conferir o console do navegador: nenhum erro/warning de React (chaves duplicadas, controlled/uncontrolled, etc.).
 
-- [ ] Rodar a suite completa de testes puros + lint + typecheck uma ultima vez:
+- [x] Rodar a suite completa de testes puros + lint + typecheck uma ultima vez:
 
 ```bash
 npm run test && npm run lint && npx tsc --noEmit
@@ -5512,7 +5512,7 @@ npm run test && npm run lint && npx tsc --noEmit
 
 Saida esperada: todos os testes passando; sem erros de lint/typecheck.
 
-- [ ] Commit final da fase (mesmo que seja apenas um ajuste menor ou um no-op de verificacao registrado no historico via `--allow-empty` se nada mudou):
+- [x] Commit final da fase (mesmo que seja apenas um ajuste menor ou um no-op de verificacao registrado no historico via `--allow-empty` se nada mudou):
 
 ```bash
 git add -A && git commit -m "test(finance): verify entries list views, filters, sheet and bulk actions" --allow-empty

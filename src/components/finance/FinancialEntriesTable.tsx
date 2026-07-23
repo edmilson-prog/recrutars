@@ -81,7 +81,7 @@ export function FinancialEntriesTable({
           {!isLoading && entries.length === 0 && (
             <TableRow>
               <TableCell colSpan={9} className="py-12 text-center text-muted-foreground">
-                Nenhum lançamento encontrado com os filtros aplicados.
+                Nenhum lançamento encontrado.
               </TableCell>
             </TableRow>
           )}
