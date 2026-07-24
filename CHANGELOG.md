@@ -5,6 +5,13 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.74.1] - 2026-07-24 "Herald"
+
+### Fixed
+- **Candidatos somem do Dashboard, Gestão de Candidatos e Banco de Talentos além do 1000º** — três telas buscavam candidatos com `pageSize: 1000` fixo e tratavam o array retornado como se fosse o dataset inteiro (usando `.length` em vez do campo `total` do `count: 'exact'` que o service já calculava corretamente), escondendo permanentemente os candidatos mais antigos além da milésima linha (1033+ candidatos reais no banco). `admin/Dashboard.tsx` e `admin/Candidates.tsx` passaram a usar contagem/paginação/filtro real no servidor (`count: 'exact'`, `.range()`); `empresa/Candidates.tsx` passou a usar `useAllCandidates()` (novo utilitário genérico `fetchAllPages`, que drena todas as páginas até bater o `total` real), mantendo o motor de match client-side intacto (`sql/migrations/129_expose_visibility_and_archetype_in_company_view.sql`, `src/lib/fetchAllPages.ts`, `src/pages/admin/Dashboard.tsx`, `src/pages/admin/Candidates.tsx`, `src/pages/empresa/Candidates.tsx`, `src/services/candidates/candidatesService.ts`, `src/services/candidates/candidatesService.supabase.ts`, `src/hooks/useCandidatesQuery.ts`, `src/hooks/useApplicationsQuery.ts`, `src/hooks/useJobsQuery.ts`) (#34)
+- **Filtro "Origem: Colaborador" na Gestão de Candidatos nunca retornava resultados** — a view `candidates_for_company` nunca selecionava a coluna `visibility_locked` (existente na tabela desde a migração 039), então o filtro de origem sempre recebia `false`/`undefined` e nunca encontrava colaboradores. Migration 129 expõe `visibility_locked` (e, de brinde, `behavioral_archetype_id` — arquétipo Gauge-Pro mais recente do candidato, via subquery correlacionada) na view, permitindo filtrar por origem e por perfil comportamental direto no servidor (`sql/migrations/129_expose_visibility_and_archetype_in_company_view.sql`, `src/pages/admin/Candidates.tsx`) (#34)
+- **Contagem de vagas ativas no Dashboard administrativo considerava só 10 vagas** — `useJobs()` era chamado sem parâmetros de paginação, caindo no `pageSize` padrão do `jobsService` (10); com 78 vagas cadastradas, o card "Vagas ativas" e a seção de match do Dashboard operavam sobre uma fração da base. Substituído por contagem exata (`count: 'exact'`) para o card e por `useAllJobs()` (sem teto) para a seção de match (`src/pages/admin/Dashboard.tsx`) (#34)
+
 ## [1.74.0] - 2026-07-20 "Herald"
 
 ### Added
