@@ -93,7 +93,7 @@ import { cn } from '@/lib/utils';
 import { getOrGenerateIdealProfile, getCompositeBehavioralProfile } from '@/lib/behavioralProfiles';
 import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
 import { useJobsByCompany } from '@/hooks/useJobsQuery';
-import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useAllCandidates } from '@/hooks/useCandidatesQuery';
 import { useAllGaugeProResults } from '@/hooks/useGaugeProQuery';
 import type { GaugeProResult } from '@/types/gaugePro';
 import type { Candidate, Job } from '@/types';
@@ -363,8 +363,7 @@ export default function CompanyCandidates() {
 
   // Fetch data from service layer
   const { data: jobs = [] } = useJobsByCompany(companyId);
-  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
-  const allCandidates = useMemo(() => candidatesResult?.data ?? [], [candidatesResult]);
+  const { data: allCandidates = [] } = useAllCandidates();
   const { data: behavioralTests = [] } = useBehavioralTests();
   const { data: allGaugeResults = [] } = useAllGaugeProResults();
 
