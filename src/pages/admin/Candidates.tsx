@@ -229,7 +229,7 @@ const initialCandidateAdminActions: CandidateAdminAction[] = [
 ];
 import { useCandidates } from '@/hooks/useCandidatesQuery';
 import { useApplications } from '@/hooks/useApplicationsQuery';
-import { useGaugeProResultByCandidate, useAllGaugeProResults } from '@/hooks/useGaugeProQuery';
+import { useGaugeProResultByCandidate } from '@/hooks/useGaugeProQuery';
 import { ARCHETYPE_PROFILES } from '@/data/gaugeProArchetypes';
 import { GaugeProRadarChart } from '@/components/corporate-tests/GaugeProRadarChart';
 import { DimensionBarsGaugePro } from '@/components/corporate-tests/DimensionBarsGaugePro';
@@ -237,6 +237,9 @@ import type { Candidate, CandidateStatus, CandidateAdminAction } from '@/types';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import type { CandidateFilters } from '@/services/candidates/candidatesService';
 
 // Constantes
 const ITEMS_PER_PAGE = 20;
@@ -269,12 +272,6 @@ const BEHAVIORAL_PROFILES = ARCHETYPE_PROFILES.map((a) => ({
 
 export default function AdminCandidates() {
   const navigate = useNavigate();
-
-  // Fetch candidates via service layer
-  const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates(
-    undefined,
-    { page: 1, pageSize: 1000 }
-  );
 
   // Filters synced with URL search params (survive navigation to candidate detail)
   const {
@@ -313,6 +310,48 @@ export default function AdminCandidates() {
   // Pagination (synced with URL search params)
   const { page: currentPage, setPage: setCurrentPage, resetPage } = usePaginationParams({ defaultPage: 1 });
 
+  // Server-side filters derived from URL state
+  const candidateFilters = useMemo((): CandidateFilters => ({
+    status: statusFilter !== 'all' ? (statusFilter as Candidate['status']) : undefined,
+    search: debouncedSearch || undefined,
+    hasTest: testStatusFilter === 'completed' ? true : testStatusFilter === 'not_completed' ? false : undefined,
+    visibilityLocked: originFilter === 'collaborator' ? true : originFilter === 'candidate' ? false : undefined,
+    archetypeId: behavioralProfileFilter !== 'all' ? behavioralProfileFilter : undefined,
+  }), [statusFilter, debouncedSearch, testStatusFilter, originFilter, behavioralProfileFilter]);
+
+  // Fetch candidates via service layer — real server-side pagination + filtering
+  const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates(
+    candidateFilters,
+    { page: currentPage, pageSize: ITEMS_PER_PAGE },
+  );
+
+  // Global (unfiltered) header counts — cheap count-exact queries, independent
+  // of the active filters, so they always reflect the whole candidate pool.
+  const { data: totalCandidatesCount } = useQuery({
+    queryKey: ['admin', 'candidates-header-count', 'total'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('candidates_for_company' as never).select('*', { count: 'exact', head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const { data: activeCandidatesCount } = useQuery({
+    queryKey: ['admin', 'candidates-header-count', 'active'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('candidates_for_company' as never).select('*', { count: 'exact', head: true }).eq('status', 'active');
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const { data: testedCandidatesCount } = useQuery({
+    queryKey: ['admin', 'candidates-header-count', 'tested'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('candidates_for_company' as never).select('*', { count: 'exact', head: true }).eq('has_test', true);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   // UI state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -329,21 +368,6 @@ export default function AdminCandidates() {
   // Gauge-Pro result for selected candidate (side panel)
   const { data: selectedGaugeResult } = useGaugeProResultByCandidate(selectedCandidate?.id || '');
 
-  // All Gauge-Pro results for behavioral profile filtering
-  const { data: allGaugeResults } = useAllGaugeProResults();
-  const gaugeResultsMap = useMemo(() => {
-    const map = new Map<string, string>();
-    if (allGaugeResults) {
-      for (const r of allGaugeResults) {
-        // Keep latest result per candidate (already sorted by generated_at desc)
-        if (!map.has(r.candidateId)) {
-          map.set(r.candidateId, r.archetype?.id ?? '');
-        }
-      }
-    }
-    return map;
-  }, [allGaugeResults]);
-
   // Data
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [actions, setActions] = useState<CandidateAdminAction[]>(initialCandidateAdminActions);
@@ -359,40 +383,10 @@ export default function AdminCandidates() {
 
   // Filter changes reset page automatically via useAdminCandidateFilters
 
-  // Filter logic
-  const filteredCandidates = candidates.filter((candidate) => {
-    const searchLower = debouncedSearch.toLowerCase();
-    const matchesSearch =
-      candidate.name.toLowerCase().includes(searchLower) ||
-      (candidate.email ?? '').toLowerCase().includes(searchLower);
-
-    const matchesStatus = statusFilter === 'all' || candidate.status === statusFilter;
-
-    let matchesTestStatus = true;
-    if (testStatusFilter === 'completed') {
-      matchesTestStatus = candidate.hasTest === true;
-    } else if (testStatusFilter === 'not_completed') {
-      matchesTestStatus = candidate.hasTest === false;
-    }
-
-    const candidateArchetypeId = gaugeResultsMap.get(candidate.id);
-    const matchesDiscProfile =
-      behavioralProfileFilter === 'all' ||
-      candidateArchetypeId === behavioralProfileFilter;
-
-    const matchesOrigin = originFilter === 'all'
-      || (originFilter === 'collaborator' && candidate.visibilityLocked)
-      || (originFilter === 'candidate' && !candidate.visibilityLocked);
-
-    return matchesSearch && matchesStatus && matchesTestStatus && matchesDiscProfile && matchesOrigin;
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(filteredCandidates.length / ITEMS_PER_PAGE);
-  const paginatedCandidates = filteredCandidates.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  // Pagination (server-side): the query already returns just the current page
+  const totalCandidatesFiltered = candidatesResult?.total ?? 0;
+  const totalPages = Math.ceil(totalCandidatesFiltered / ITEMS_PER_PAGE);
+  const paginatedCandidates = candidates; // already the current server page
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -1033,19 +1027,19 @@ export default function AdminCandidates() {
           title="Gestão de Candidatos"
           description="Visualize e gerencie todos os candidatos cadastrados na plataforma. Acompanhe perfis comportamentais, status de testes e ações administrativas."
           badges={
-            candidates.length > 0 ? (
+            totalCandidatesCount !== undefined ? (
               <>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-xs font-medium text-muted-foreground">
                   <User className="w-3 h-3" />
-                  {candidates.length} {candidates.length === 1 ? 'candidato' : 'candidatos'}
+                  {totalCandidatesCount} {totalCandidatesCount === 1 ? 'candidato' : 'candidatos'}
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                   <CheckCircle2 className="w-3 h-3" />
-                  {candidates.filter(c => c.status === 'active').length} ativos
+                  {activeCandidatesCount ?? 0} ativos
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 text-xs font-medium text-violet-600 dark:text-violet-400">
                   <Brain className="w-3 h-3" />
-                  {candidates.filter(c => c.hasTest === true).length} com teste
+                  {testedCandidatesCount ?? 0} com teste
                 </span>
               </>
             ) : undefined
@@ -1114,7 +1108,7 @@ export default function AdminCandidates() {
             {/* Results count */}
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                {filteredCandidates.length} candidato(s) encontrado(s)
+                {totalCandidatesFiltered} candidato(s) encontrado(s)
               </p>
             </div>
 
