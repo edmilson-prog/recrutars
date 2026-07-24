@@ -3,9 +3,10 @@
  * PRD-066: Service Layer Core
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { getJobsService } from '@/services/jobs/jobsService';
 import type { JobFilters } from '@/services/jobs/jobsService';
+import { fetchAllPages } from '@/lib/fetchAllPages';
 import type { PaginationConfig, SortConfig } from '@/services/types';
 import type { Job } from '@/types';
 
@@ -115,5 +116,20 @@ export function useJobLocations() {
       return service.getJobLocations();
     },
     staleTime: 5 * 60 * 1000, // 5 min — localizações mudam raramente
+  });
+}
+
+export function useAllJobs(
+  filters?: JobFilters,
+  sort?: SortConfig,
+  options?: Omit<UseQueryOptions<Job[]>, 'queryKey' | 'queryFn'>,
+) {
+  return useQuery<Job[]>({
+    queryKey: [...jobKeys.lists(), 'all', { filters, sort }],
+    queryFn: async () => {
+      const service = await getJobsService();
+      return fetchAllPages((pagination) => service.getJobs(filters, pagination, sort));
+    },
+    ...options,
   });
 }

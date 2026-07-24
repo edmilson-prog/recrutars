@@ -18,6 +18,7 @@ import {
   getCandidatesService,
   type CandidateFilters,
 } from '@/services/candidates/candidatesService';
+import { fetchAllPages } from '@/lib/fetchAllPages';
 
 // ---------------------------------------------------------------------------
 // Query Keys
@@ -129,5 +130,27 @@ export function useUpdateCandidate() {
         queryKey: candidateKeys.byProfile(updated.userId),
       });
     },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// useAllCandidates — fetches every candidate matching filters, no hardcoded
+// page-size cap. Use ONLY when the screen genuinely needs the full dataset
+// in memory (e.g. client-side match scoring in the Talent Pool) — for
+// paginated lists, use useCandidates with real page/pageSize instead.
+// ---------------------------------------------------------------------------
+
+export function useAllCandidates(
+  filters?: CandidateFilters,
+  sort?: SortConfig,
+  options?: Omit<UseQueryOptions<Candidate[]>, 'queryKey' | 'queryFn'>,
+) {
+  return useQuery<Candidate[]>({
+    queryKey: [...candidateKeys.lists(), 'all', { filters, sort }],
+    queryFn: async () => {
+      const service = await getCandidatesService();
+      return fetchAllPages((pagination) => service.getCandidates(filters, pagination, sort));
+    },
+    ...options,
   });
 }

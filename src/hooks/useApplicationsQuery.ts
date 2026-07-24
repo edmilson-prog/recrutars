@@ -6,11 +6,12 @@
  * listings, details, creation, status updates, notes, and history.
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { getApplicationsService } from '@/services/applications/applicationsService';
 import type { ApplicationFilters } from '@/services/applications/applicationsService';
+import { fetchAllPages } from '@/lib/fetchAllPages';
 import type { PaginationConfig, SortConfig } from '@/services/types';
-import type { ApplicationStatus } from '@/types';
+import type { Application, ApplicationStatus } from '@/types';
 import type { NoteHistoryEntry, UpdateNoteInput } from '@/types/notes';
 import { toast } from 'sonner';
 
@@ -251,5 +252,27 @@ export function useRestoreApplicationNote(applicationId: string) {
     },
     onError: (e: Error) =>
       toast.error('Erro ao restaurar', { description: e.message }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// useAllApplications — fetches every application matching filters, no
+// hardcoded page-size cap. Use ONLY when the screen genuinely needs the full
+// dataset in memory (e.g. admin Dashboard match-scoring section) — for
+// paginated lists, use useApplications with real page/pageSize instead.
+// ---------------------------------------------------------------------------
+
+export function useAllApplications(
+  filters?: ApplicationFilters,
+  sort?: SortConfig,
+  options?: Omit<UseQueryOptions<Application[]>, 'queryKey' | 'queryFn'>,
+) {
+  return useQuery<Application[]>({
+    queryKey: [...applicationKeys.lists(), 'all', { filters, sort }],
+    queryFn: async () => {
+      const service = await getApplicationsService();
+      return fetchAllPages((pagination) => service.getApplications(filters, pagination, sort));
+    },
+    ...options,
   });
 }
