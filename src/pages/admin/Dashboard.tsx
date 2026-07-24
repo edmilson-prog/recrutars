@@ -94,6 +94,44 @@ function GrowthTooltip({ active, payload, label }: TooltipProps<number, string>)
   );
 }
 
+// Drena a query de created_at através do limite de página padrão do Supabase
+// (~1000 linhas), para a janela de 30 dias nunca ser silenciosamente truncada.
+async function fetchCompaniesCreatedSince(gteIso: string): Promise<{ created_at: string }[]> {
+  const pageSize = 1000;
+  const all: { created_at: string }[] = [];
+  let from = 0;
+  for (;;) {
+    const { data, error } = await supabase
+      .from('companies')
+      .select('created_at')
+      .gte('created_at', gteIso)
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    all.push(...((data ?? []) as { created_at: string }[]));
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
+
+async function fetchCandidatesCreatedSince(gteIso: string): Promise<{ created_at: string }[]> {
+  const pageSize = 1000;
+  const all: { created_at: string }[] = [];
+  let from = 0;
+  for (;;) {
+    const { data, error } = await supabase
+      .from('candidates_for_company')
+      .select('created_at')
+      .gte('created_at', gteIso)
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    all.push(...((data ?? []) as { created_at: string }[]));
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
+
 export default function AdminDashboard() {
   const startOfMonthIso = useMemo(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
@@ -210,19 +248,11 @@ export default function AdminDashboard() {
   });
   const { data: companiesInWindow = [] } = useQuery({
     queryKey: ['admin', 'dashboard-growth', 'companies-window', growthWindowStart.toISOString()],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('companies').select('created_at').gte('created_at', growthWindowStart.toISOString());
-      if (error) throw error;
-      return (data ?? []) as { created_at: string }[];
-    },
+    queryFn: () => fetchCompaniesCreatedSince(growthWindowStart.toISOString()),
   });
   const { data: candidatesInWindow = [] } = useQuery({
     queryKey: ['admin', 'dashboard-growth', 'candidates-window', growthWindowStart.toISOString()],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('candidates_for_company').select('created_at').gte('created_at', growthWindowStart.toISOString());
-      if (error) throw error;
-      return (data ?? []) as { created_at: string }[];
-    },
+    queryFn: () => fetchCandidatesCreatedSince(growthWindowStart.toISOString()),
   });
 
   // Full datasets, uncapped — only for the client-side match-scoring section
@@ -334,10 +364,11 @@ export default function AdminDashboard() {
     return data;
   }, [companiesBaseline, candidatesBaseline, companiesInWindow, candidatesInWindow]);
 
-  // PRD-035: Calcular estatísticas de match para todas as candidaturas
-  const matchStatistics = useMemo(() => {
-    // Calcular match para cada candidatura
-    const matchResults: MatchResult[] = [];
+  // PRD-035: Calcular o match uma única vez por candidatura e compartilhar o
+  // resultado entre as estatísticas e o alerta de vagas com poucos candidatos
+  // de alto match — evita recomputar o breakdown duas vezes por candidatura.
+  const applicationMatches = useMemo(() => {
+    const results: { job: (typeof jobs)[number]; matchResult: MatchResult }[] = [];
 
     for (const application of applications) {
       const candidate = candidates.find(c => c.id === application.candidateId);
@@ -348,35 +379,31 @@ export default function AdminDashboard() {
         // Admin dashboard usa fallback legado para evitar N×M fetches de std_skills.
         // Quando uma RPC otimizada estiver disponível, passar skillsInput aqui.
         const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
-        matchResults.push(matchResult);
+        results.push({ job, matchResult });
       }
     }
 
-    return calculateMatchStatistics(matchResults);
+    return results;
   }, [applications, candidates, jobs]);
+
+  // PRD-035: Calcular estatísticas de match para todas as candidaturas
+  const matchStatistics = useMemo(
+    () => calculateMatchStatistics(applicationMatches.map(m => m.matchResult)),
+    [applicationMatches],
+  );
 
   // PRD-035: Vagas com poucos candidatos de alto match
   const lowMatchJobs = useMemo(() => {
     const jobMatchCounts: Record<string, { high: number; total: number; title: string }> = {};
 
-    for (const application of applications) {
-      const candidate = candidates.find(c => c.id === application.candidateId);
-      const job = jobs.find(j => j.id === application.jobId);
+    for (const { job, matchResult } of applicationMatches) {
+      if (!jobMatchCounts[job.id]) {
+        jobMatchCounts[job.id] = { high: 0, total: 0, title: job.title };
+      }
 
-      if (candidate && job) {
-        if (!jobMatchCounts[job.id]) {
-          jobMatchCounts[job.id] = { high: 0, total: 0, title: job.title };
-        }
-
-        const idealProfile = getOrGenerateIdealProfile(job);
-        // Admin dashboard usa fallback legado para evitar N×M fetches de std_skills.
-        // Quando uma RPC otimizada estiver disponível, passar skillsInput aqui.
-        const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
-
-        jobMatchCounts[job.id].total++;
-        if (matchResult.totalScore >= 80) {
-          jobMatchCounts[job.id].high++;
-        }
+      jobMatchCounts[job.id].total++;
+      if (matchResult.totalScore >= 80) {
+        jobMatchCounts[job.id].high++;
       }
     }
 
@@ -391,7 +418,7 @@ export default function AdminDashboard() {
         totalCount: data.total,
       }))
       .slice(0, 3);
-  }, [applications, candidates, jobs]);
+  }, [applicationMatches]);
 
   return (
     <DashboardLayout userType="admin">
