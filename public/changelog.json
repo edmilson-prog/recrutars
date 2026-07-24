@@ -1,12 +1,73 @@
 {
   "versions": [
     {
+      "version": "1.74.1",
+      "codename": "Herald",
+      "type": "patch",
+      "releaseDate": "2026-07-24",
+      "description": "Candidatos cadastrados há mais tempo voltaram a aparecer no Dashboard administrativo, na Gestão de Candidatos e no Banco de Talentos, e o filtro por origem (colaborador) na Gestão de Candidatos passou a funcionar.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Candidatos mais antigos não apareciam nas listas: o Dashboard administrativo, a Gestão de Candidatos e o Banco de Talentos (empresa) só exibiam os 1.000 candidatos cadastrados mais recentemente, escondendo os cadastros mais antigos da contagem, da busca e dos filtros.",
+            "Filtro \"Origem: Colaborador\" na Gestão de Candidatos não retornava resultados: o filtro que identifica candidatos importados como colaboradores nunca funcionava; agora exibe corretamente os candidatos dessa origem.",
+            "Contagem de vagas ativas no Dashboard administrativo: o card de vagas ativas considerava apenas uma pequena parte das vagas cadastradas; agora reflete o total correto."
+          ],
+          "details": {
+            "0": {
+              "description": "Sempre que a plataforma passava de 1.000 candidatos cadastrados, os mais antigos além dessa marca deixavam de aparecer no Dashboard, na lista de Gestão de Candidatos (admin) e no Banco de Talentos (empresa) — mesmo estando ativos e disponíveis. Agora essas telas contam e exibem corretamente todos os candidatos cadastrados, independente de quantos sejam.",
+              "files": [
+                "sql/migrations/129_expose_visibility_and_archetype_in_company_view.sql",
+                "src/lib/fetchAllPages.ts",
+                "src/pages/admin/Dashboard.tsx",
+                "src/pages/admin/Candidates.tsx",
+                "src/pages/empresa/Candidates.tsx",
+                "src/services/candidates/candidatesService.ts",
+                "src/services/candidates/candidatesService.supabase.ts",
+                "src/hooks/useCandidatesQuery.ts",
+                "src/hooks/useApplicationsQuery.ts",
+                "src/hooks/useJobsQuery.ts"
+              ],
+              "routes": [
+                "/admin",
+                "/admin/candidatos",
+                "/empresa/candidatos"
+              ]
+            },
+            "1": {
+              "description": "Na Gestão de Candidatos, o filtro de Origem com a opção \"Colaborador\" nunca retornava nenhum resultado, mesmo havendo candidatos importados como colaboradores na base. Agora o filtro reconhece corretamente esses candidatos e os exibe.",
+              "files": [
+                "sql/migrations/129_expose_visibility_and_archetype_in_company_view.sql",
+                "src/services/candidates/candidatesService.ts",
+                "src/services/candidates/candidatesService.supabase.ts",
+                "src/pages/admin/Candidates.tsx"
+              ],
+              "routes": [
+                "/admin/candidatos"
+              ]
+            },
+            "2": {
+              "description": "O card \"Vagas ativas\" do Dashboard administrativo mostrava um número bem menor do que o real, considerando só uma pequena parte das vagas cadastradas na plataforma. Agora o card mostra a contagem correta de todas as vagas ativas.",
+              "files": [
+                "src/pages/admin/Dashboard.tsx"
+              ],
+              "routes": [
+                "/admin"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.74.0",
       "codename": "Herald",
       "type": "minor",
       "releaseDate": "2026-07-20",
       "description": "O sistema passou a avisar quando há uma nova versão disponível e a apresentar as novidades logo após atualizar; além disso, colaboradores desligados voltam a aparecer no Banco de Talentos.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "added",
