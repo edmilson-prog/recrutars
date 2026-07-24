@@ -4,10 +4,10 @@ import { Building2, Users, Briefcase, Brain, TrendingUp, ArrowUp, ArrowDown, Che
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { getOrGenerateIdealProfile } from '@/lib/behavioralProfiles';
-import { useJobs } from '@/hooks/useJobsQuery';
-import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useAllJobs } from '@/hooks/useJobsQuery';
+import { useAllCandidates } from '@/hooks/useCandidatesQuery';
 import { useCompanies } from '@/hooks/useCompaniesQuery';
-import { useApplications } from '@/hooks/useApplicationsQuery';
+import { useAllApplications } from '@/hooks/useApplicationsQuery';
 import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -94,13 +94,99 @@ function GrowthTooltip({ active, payload, label }: TooltipProps<number, string>)
   );
 }
 
+// Drena a query de created_at através do limite de página padrão do Supabase
+// (~1000 linhas), para a janela de 30 dias nunca ser silenciosamente truncada.
+async function fetchCompaniesCreatedSince(gteIso: string): Promise<{ created_at: string }[]> {
+  const pageSize = 1000;
+  const all: { created_at: string }[] = [];
+  let from = 0;
+  for (;;) {
+    const { data, error } = await supabase
+      .from('companies')
+      .select('created_at')
+      .gte('created_at', gteIso)
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    all.push(...((data ?? []) as { created_at: string }[]));
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
+
+async function fetchCandidatesCreatedSince(gteIso: string): Promise<{ created_at: string }[]> {
+  const pageSize = 1000;
+  const all: { created_at: string }[] = [];
+  let from = 0;
+  for (;;) {
+    const { data, error } = await supabase
+      .from('candidates_for_company')
+      .select('created_at')
+      .gte('created_at', gteIso)
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    all.push(...((data ?? []) as { created_at: string }[]));
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
+
 export default function AdminDashboard() {
-  // Fetch data via React Query hooks
-  const { data: jobsResult } = useJobs();
-  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
-  const { data: companiesResult } = useCompanies();
-  const { data: applicationsResult } = useApplications(undefined, { page: 1, pageSize: 1000 });
-  const { data: testsResult } = useBehavioralTests();
+  const startOfMonthIso = useMemo(
+    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
+    [],
+  );
+
+  // Stat cards: exact counts, no row fetch at all.
+  const { data: totalCompanies } = useQuery({
+    queryKey: ['admin', 'dashboard-count', 'companies-total'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('companies').select('*', { count: 'exact', head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const { data: newCompaniesThisMonth } = useQuery({
+    queryKey: ['admin', 'dashboard-count', 'companies-this-month'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('companies').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonthIso);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const { data: totalCandidates } = useQuery({
+    queryKey: ['admin', 'dashboard-count', 'candidates-total'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('candidates_for_company').select('*', { count: 'exact', head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const { data: newCandidatesThisMonth } = useQuery({
+    queryKey: ['admin', 'dashboard-count', 'candidates-this-month'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('candidates_for_company').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonthIso);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const { data: activeJobsCount } = useQuery({
+    queryKey: ['admin', 'dashboard-count', 'jobs-active'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('status', 'active');
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const { data: newJobsThisMonth } = useQuery({
+    queryKey: ['admin', 'dashboard-count', 'jobs-this-month'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('created_at', startOfMonthIso);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
 
   // Gauge-Pro completed tests count (modern test system)
   const { data: gaugeProCount } = useQuery({
@@ -117,39 +203,75 @@ export default function AdminDashboard() {
   const { data: gaugeProThisMonthCount } = useQuery({
     queryKey: ['admin', 'gauge-pro-completed-this-month'],
     queryFn: async () => {
-      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
       const { count, error } = await supabase
         .from('gauge_pro_results')
         .select('*', { count: 'exact', head: true })
-        .gte('generated_at', startOfMonth);
+        .gte('generated_at', startOfMonthIso);
       if (error) throw error;
       return count ?? 0;
     },
   });
-
-  const jobs = jobsResult?.data ?? [];
-  const candidates = candidatesResult?.data ?? [];
-  const companies = companiesResult?.data ?? [];
-  const applications = applicationsResult?.data ?? [];
+  const { data: testsResult } = useBehavioralTests();
   const tests = testsResult ?? [];
 
-  // Compute real metrics from Supabase data
+  // Recent + top companies: two small, dedicated, already-sorted queries —
+  // no need to fetch every company just to show 4 or 5 of them.
+  const { data: recentCompaniesResult } = useCompanies(undefined, { page: 1, pageSize: 4 }, { field: 'createdAt', direction: 'desc' });
+  const recentCompanies = recentCompaniesResult?.data ?? [];
+  const { data: topCompaniesResult } = useCompanies(undefined, { page: 1, pageSize: 5 }, { field: 'activeJobs', direction: 'desc' });
+  const topCompanies = topCompaniesResult?.data ?? [];
+
+  // Growth chart (last 30 days): lightweight created_at-only rows, bounded to
+  // the window, plus a baseline count of everything created before it — never
+  // fetches the full historical table, so it can't be capped by row count.
+  const growthWindowStart = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 29);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+  const { data: companiesBaseline } = useQuery({
+    queryKey: ['admin', 'dashboard-growth', 'companies-baseline', growthWindowStart.toISOString()],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('companies').select('*', { count: 'exact', head: true }).lt('created_at', growthWindowStart.toISOString());
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const { data: candidatesBaseline } = useQuery({
+    queryKey: ['admin', 'dashboard-growth', 'candidates-baseline', growthWindowStart.toISOString()],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('candidates_for_company').select('*', { count: 'exact', head: true }).lt('created_at', growthWindowStart.toISOString());
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const { data: companiesInWindow = [] } = useQuery({
+    queryKey: ['admin', 'dashboard-growth', 'companies-window', growthWindowStart.toISOString()],
+    queryFn: () => fetchCompaniesCreatedSince(growthWindowStart.toISOString()),
+  });
+  const { data: candidatesInWindow = [] } = useQuery({
+    queryKey: ['admin', 'dashboard-growth', 'candidates-window', growthWindowStart.toISOString()],
+    queryFn: () => fetchCandidatesCreatedSince(growthWindowStart.toISOString()),
+  });
+
+  // Full datasets, uncapped — only for the client-side match-scoring section
+  // below (matchStatistics / lowMatchJobs). See PRD-093 for the plan to move
+  // match scoring server-side and drop this fetch-all entirely.
+  const { data: jobs = [] } = useAllJobs();
+  const { data: candidates = [] } = useAllCandidates();
+  const { data: applications = [] } = useAllApplications();
+
+  // Compute real metrics — stat-card numbers now come straight from the
+  // exact-count queries above; only the match rate still needs the full
+  // applications array (client-side scoring, see PRD-093).
   const adminStats = useMemo(() => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const totalCompanies = companies.length;
-    const totalCandidates = candidates.length;
-    const activeJobs = jobs.filter((j: any) => (j.status ?? j.status) === 'active').length;
     const legacyCompleted = tests.filter((t: any) => (t.status ?? t.status) === 'completed').length;
     const testsCompleted = (gaugeProCount ?? 0) + legacyCompleted;
-
-    const getCreatedAt = (item: any) => new Date(item.createdAt ?? item.created_at);
-
-    const newCompaniesThisMonth = companies.filter(c => getCreatedAt(c) >= startOfMonth).length;
-    const newCandidatesThisMonth = candidates.filter(c => getCreatedAt(c) >= startOfMonth).length;
-    const newJobsThisMonth = jobs.filter((j: any) => (j.status ?? j.status) === 'active' && getCreatedAt(j) >= startOfMonth).length;
-    const legacyTestsThisMonth = tests.filter((t: any) => (t.status ?? t.status) === 'completed' && getCreatedAt(t) >= startOfMonth).length;
+    const legacyTestsThisMonth = tests.filter((t: any) => (t.status ?? t.status) === 'completed' && new Date(t.createdAt ?? t.created_at) >= startOfMonth).length;
     const newTestsThisMonth = (gaugeProThisMonthCount ?? 0) + legacyTestsThisMonth;
 
     // Match rate: percentage of applications with high match (>= 80%)
@@ -157,8 +279,18 @@ export default function AdminDashboard() {
       ? Math.round((applications.filter((a: any) => (a.matchScore ?? a.match_score ?? 0) >= 80).length / applications.length) * 100)
       : 0;
 
-    return { totalCompanies, totalCandidates, activeJobs, testsCompleted, newCompaniesThisMonth, newCandidatesThisMonth, newJobsThisMonth, newTestsThisMonth, matchRate };
-  }, [companies, candidates, jobs, tests, applications, gaugeProCount, gaugeProThisMonthCount]);
+    return {
+      totalCompanies: totalCompanies ?? 0,
+      totalCandidates: totalCandidates ?? 0,
+      activeJobs: activeJobsCount ?? 0,
+      testsCompleted,
+      newCompaniesThisMonth: newCompaniesThisMonth ?? 0,
+      newCandidatesThisMonth: newCandidatesThisMonth ?? 0,
+      newJobsThisMonth: newJobsThisMonth ?? 0,
+      newTestsThisMonth,
+      matchRate,
+    };
+  }, [totalCompanies, totalCandidates, activeJobsCount, tests, applications, gaugeProCount, gaugeProThisMonthCount, newCompaniesThisMonth, newCandidatesThisMonth, newJobsThisMonth]);
 
   const stats = useMemo(() => [
     {
@@ -195,12 +327,17 @@ export default function AdminDashboard() {
     },
   ], [adminStats]);
 
-  // Growth chart data: cumulative companies/candidates + same-day sign-ups over last 30 days
+  // Growth chart data: cumulative companies/candidates + same-day sign-ups
+  // over the last 30 days. Built from the lightweight windowed queries above
+  // (created_at only, last 30 days) plus a baseline count for everything
+  // before the window — never touches the full historical table.
   const growthData = useMemo<GrowthDataPoint[]>(() => {
     const days = 30;
     const now = new Date();
     const data: GrowthDataPoint[] = [];
-    const getCreatedAt = (item: any) => new Date(item.createdAt ?? item.created_at);
+
+    let companiesRunning = companiesBaseline ?? 0;
+    let candidatesRunning = candidatesBaseline ?? 0;
 
     for (let i = days - 1; i >= 0; i--) {
       const dayEnd = new Date(now);
@@ -210,26 +347,28 @@ export default function AdminDashboard() {
       dayStart.setHours(0, 0, 0, 0);
       const dateStr = dayEnd.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
-      const companiesCount = companies.filter(c => getCreatedAt(c) <= dayEnd).length;
-      const candidatesCount = candidates.filter(c => getCreatedAt(c) <= dayEnd).length;
-      const newCompanies = companies.filter(c => {
-        const created = getCreatedAt(c);
+      const newCompanies = companiesInWindow.filter((c) => {
+        const created = new Date(c.created_at);
         return created >= dayStart && created <= dayEnd;
       }).length;
-      const newCandidates = candidates.filter(c => {
-        const created = getCreatedAt(c);
+      const newCandidates = candidatesInWindow.filter((c) => {
+        const created = new Date(c.created_at);
         return created >= dayStart && created <= dayEnd;
       }).length;
 
-      data.push({ date: dateStr, companies: companiesCount, candidates: candidatesCount, newCompanies, newCandidates });
+      companiesRunning += newCompanies;
+      candidatesRunning += newCandidates;
+
+      data.push({ date: dateStr, companies: companiesRunning, candidates: candidatesRunning, newCompanies, newCandidates });
     }
     return data;
-  }, [companies, candidates]);
+  }, [companiesBaseline, candidatesBaseline, companiesInWindow, candidatesInWindow]);
 
-  // PRD-035: Calcular estatísticas de match para todas as candidaturas
-  const matchStatistics = useMemo(() => {
-    // Calcular match para cada candidatura
-    const matchResults: MatchResult[] = [];
+  // PRD-035: Calcular o match uma única vez por candidatura e compartilhar o
+  // resultado entre as estatísticas e o alerta de vagas com poucos candidatos
+  // de alto match — evita recomputar o breakdown duas vezes por candidatura.
+  const applicationMatches = useMemo(() => {
+    const results: { job: (typeof jobs)[number]; matchResult: MatchResult }[] = [];
 
     for (const application of applications) {
       const candidate = candidates.find(c => c.id === application.candidateId);
@@ -240,35 +379,31 @@ export default function AdminDashboard() {
         // Admin dashboard usa fallback legado para evitar N×M fetches de std_skills.
         // Quando uma RPC otimizada estiver disponível, passar skillsInput aqui.
         const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
-        matchResults.push(matchResult);
+        results.push({ job, matchResult });
       }
     }
 
-    return calculateMatchStatistics(matchResults);
+    return results;
   }, [applications, candidates, jobs]);
+
+  // PRD-035: Calcular estatísticas de match para todas as candidaturas
+  const matchStatistics = useMemo(
+    () => calculateMatchStatistics(applicationMatches.map(m => m.matchResult)),
+    [applicationMatches],
+  );
 
   // PRD-035: Vagas com poucos candidatos de alto match
   const lowMatchJobs = useMemo(() => {
     const jobMatchCounts: Record<string, { high: number; total: number; title: string }> = {};
 
-    for (const application of applications) {
-      const candidate = candidates.find(c => c.id === application.candidateId);
-      const job = jobs.find(j => j.id === application.jobId);
+    for (const { job, matchResult } of applicationMatches) {
+      if (!jobMatchCounts[job.id]) {
+        jobMatchCounts[job.id] = { high: 0, total: 0, title: job.title };
+      }
 
-      if (candidate && job) {
-        if (!jobMatchCounts[job.id]) {
-          jobMatchCounts[job.id] = { high: 0, total: 0, title: job.title };
-        }
-
-        const idealProfile = getOrGenerateIdealProfile(job);
-        // Admin dashboard usa fallback legado para evitar N×M fetches de std_skills.
-        // Quando uma RPC otimizada estiver disponível, passar skillsInput aqui.
-        const matchResult = calculateMatchBreakdown(candidate, job, idealProfile);
-
-        jobMatchCounts[job.id].total++;
-        if (matchResult.totalScore >= 80) {
-          jobMatchCounts[job.id].high++;
-        }
+      jobMatchCounts[job.id].total++;
+      if (matchResult.totalScore >= 80) {
+        jobMatchCounts[job.id].high++;
       }
     }
 
@@ -283,7 +418,7 @@ export default function AdminDashboard() {
         totalCount: data.total,
       }))
       .slice(0, 3);
-  }, [applications, candidates, jobs]);
+  }, [applicationMatches]);
 
   return (
     <DashboardLayout userType="admin">
@@ -493,7 +628,7 @@ export default function AdminDashboard() {
               </Link>
             </div>
             <div className="space-y-4">
-              {companies.slice(0, 4).map((company) => (
+              {recentCompanies.map((company) => (
                 <div key={company.id} className="flex items-center gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                     <Building2 className="w-6 h-6 text-primary" />
@@ -574,10 +709,7 @@ export default function AdminDashboard() {
               </Link>
             </div>
             <div className="space-y-4">
-              {[...companies]
-                .sort((a, b) => b.activeJobs - a.activeJobs)
-                .slice(0, 5)
-                .map((company, index) => (
+              {topCompanies.map((company, index) => (
                   <div key={company.id} className="flex items-center gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                       <span className="text-sm font-bold text-primary">#{index + 1}</span>

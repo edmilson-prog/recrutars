@@ -20,6 +20,10 @@ export interface CandidateFilters {
   location?: string;
   hasTest?: boolean;
   plan?: Candidate['plan'];
+  /** Origem: true = colaborador importado (visibilidade travada), false = candidato orgânico */
+  visibilityLocked?: boolean;
+  /** Filtra pelo archetype_id do resultado Gauge-Pro mais recente do candidato */
+  archetypeId?: string;
 }
 
 // ---------------------------------------------------------------------------

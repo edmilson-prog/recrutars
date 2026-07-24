@@ -70,6 +70,14 @@ export class CandidatesServiceSupabase implements ICandidatesService {
       query = query.eq('plan', filters.plan);
     }
 
+    if (filters?.visibilityLocked !== undefined) {
+      query = query.eq('visibility_locked', filters.visibilityLocked);
+    }
+
+    if (filters?.archetypeId) {
+      query = query.eq('behavioral_archetype_id', filters.archetypeId);
+    }
+
     // --- Sorting -----------------------------------------------------------
 
     if (sort) {
