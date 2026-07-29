@@ -1,12 +1,99 @@
 {
   "versions": [
     {
+      "version": "1.74.2",
+      "codename": "Herald",
+      "type": "patch",
+      "releaseDate": "2026-07-29",
+      "description": "Candidatos cadastrados há mais tempo voltaram a abrir normalmente pelo Banco de Talentos e deixaram de aparecer sem nome nas telas de Mensagens, Candidaturas e Entrevistas.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "items": [
+            "Perfil não abria pelo Banco de Talentos: ao clicar em \"Ver perfil\" de um candidato cadastrado há mais tempo, a tela mostrava \"Candidato não encontrado\", mesmo com o candidato aparecendo normalmente na lista.",
+            "Nome e foto do candidato apareciam em branco: nas telas de Mensagens, Candidaturas, Entrevistas e no gerenciamento de testes da vaga, candidatos cadastrados há mais tempo eram exibidos sem identificação.",
+            "Candidatos salvos sumiam da lista: candidatos favoritados que estavam cadastrados há mais tempo desapareciam da tela \"Candidatos Salvos\", que chegava a informar que nenhum candidato havia sido salvo.",
+            "Candidatos antigos ficavam de fora das sugestões: as sugestões de candidatos para uma vaga e as vagas recomendadas para o candidato ignoravam quem estava cadastrado há mais tempo."
+          ],
+          "details": {
+            "0": {
+              "description": "No Banco de Talentos, o candidato aparecia normalmente na listagem, mas ao abrir o detalhamento a plataforma respondia que o candidato não existia ou havia sido removido. Isso acontecia com quem estava entre os cadastros mais antigos da base. Agora o perfil abre corretamente para qualquer candidato.",
+              "files": [
+                "src/pages/empresa/CandidateProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
+            },
+            "1": {
+              "description": "Conversas, candidaturas e entrevistas de candidatos cadastrados há mais tempo eram exibidas sem o nome e sem a foto da pessoa, dificultando identificar com quem era cada registro. Agora todas essas telas mostram o nome e a foto corretamente.",
+              "files": [
+                "src/pages/empresa/Messages.tsx",
+                "src/pages/empresa/Applications.tsx",
+                "src/pages/empresa/Interviews.tsx",
+                "src/pages/empresa/JobTestManager.tsx",
+                "src/pages/admin/JobDetail.tsx",
+                "src/hooks/useCandidatesQuery.ts",
+                "src/services/candidates/candidatesService.ts",
+                "src/services/candidates/candidatesService.supabase.ts"
+              ],
+              "routes": [
+                "/empresa/mensagens",
+                "/empresa/candidaturas",
+                "/empresa/entrevistas",
+                "/empresa/vagas/:jobId/teste",
+                "/admin/vagas/:id"
+              ]
+            },
+            "2": {
+              "description": "Ao salvar um candidato dos cadastros mais antigos, ele era registrado como salvo, mas não aparecia na tela \"Candidatos Salvos\" — que podia inclusive exibir a mensagem de que nenhum candidato havia sido salvo ainda. Agora todos os candidatos salvos são exibidos.",
+              "files": [
+                "src/hooks/useFavoriteCandidates.ts"
+              ],
+              "routes": [
+                "/empresa/candidatos-salvos"
+              ]
+            },
+            "3": {
+              "description": "As sugestões de candidatos para uma vaga (empresa) e as vagas recomendadas (candidato) deixavam de considerar quem estava entre os cadastros mais antigos, reduzindo as opções apresentadas. Agora as recomendações levam em conta toda a base de candidatos.",
+              "files": [
+                "src/hooks/useCandidateRecommendations.ts",
+                "src/hooks/useJobRecommendations.ts"
+              ],
+              "routes": [
+                "/empresa/vagas/:id/candidatos-sugeridos",
+                "/candidato/vagas-recomendadas"
+              ]
+            }
+          }
+        },
+        {
+          "type": "changed",
+          "items": [
+            "Tela de Candidaturas mais leve: a lista deixou de consultar as habilidades de todos os candidatos da plataforma e passou a consultar apenas as de quem realmente se candidatou."
+          ],
+          "details": {
+            "0": {
+              "description": "Ao abrir a lista de Candidaturas, a plataforma buscava as habilidades de todos os candidatos cadastrados, mesmo os que não tinham relação com as vagas da empresa. Agora busca apenas os dados de quem se candidatou, deixando a tela mais rápida para carregar.",
+              "files": [
+                "src/pages/empresa/Applications.tsx"
+              ],
+              "routes": [
+                "/empresa/candidaturas"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.74.1",
       "codename": "Herald",
       "type": "patch",
       "releaseDate": "2026-07-24",
       "description": "Candidatos cadastrados há mais tempo voltaram a aparecer no Dashboard administrativo, na Gestão de Candidatos e no Banco de Talentos, e o filtro por origem (colaborador) na Gestão de Candidatos passou a funcionar.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",
