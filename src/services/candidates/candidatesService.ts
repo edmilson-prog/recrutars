@@ -39,6 +39,14 @@ export interface ICandidatesService {
 
   getCandidate(id: string): Promise<Candidate | null>;
 
+  /**
+   * Resolves a known, bounded set of candidates by id. Use this to join
+   * candidate data onto records a screen already has (applications,
+   * conversations, interviews, favorites) instead of listing every candidate
+   * and filtering client-side.
+   */
+  getCandidatesByIds(ids: string[]): Promise<Candidate[]>;
+
   getCandidateByProfileId(profileId: string): Promise<Candidate | null>;
 
   updateCandidate(

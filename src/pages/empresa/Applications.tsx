@@ -99,7 +99,7 @@ import { JobCombobox } from '@/components/empresa/applications/JobCombobox';
 import { JobSidebar } from '@/components/empresa/applications/JobSidebar';
 import { JobCardsGrid } from '@/components/empresa/applications/JobCardsGrid';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useCandidatesByIds } from '@/hooks/useCandidatesQuery';
 import { useConsentStatus } from '@/hooks/useConsentStatus';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
@@ -263,14 +263,19 @@ export default function CompanyApplications() {
     { companyId },
     { page: 1, pageSize: 500 }
   );
-  const { data: candidatesResult, isLoading: isLoadingCandidates } = useCandidates(
-    undefined,
-    { page: 1, pageSize: 1000 }
-  );
   const { data: behavioralTests = [] } = useBehavioralTests();
   const { data: allGaugeResults = [] } = useAllGaugeProResults();
 
-  const allCandidates = candidatesResult?.data ?? [];
+  // Resolve only the candidates that actually applied. Listing a capped page
+  // left applications outside it with an empty candidate name, and fired one
+  // standardized-skills query per candidate in the entire table.
+  const applicationCandidateIds = useMemo(
+    () => (applicationsResult?.data ?? []).map((a) => a.candidateId).filter(Boolean),
+    [applicationsResult],
+  );
+  const { data: candidatesData, isLoading: isLoadingCandidates } =
+    useCandidatesByIds(applicationCandidateIds);
+  const allCandidates = useMemo(() => candidatesData ?? [], [candidatesData]);
 
   const candidatesMap = useMemo(() => {
     const map: Record<string, import('@/types').Candidate> = {};

@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useJobFeedback, NotInterestedReason } from './useJobFeedback';
 import { useFavoriteJobs } from './useFavoriteJobs';
 import { useJobs } from './useJobsQuery';
-import { useCandidates } from './useCandidatesQuery';
+import { useCandidate } from './useCandidatesQuery';
 import { useApplicationsByCandidate } from './useApplicationsQuery';
 import {
   getRecommendedJobs,
@@ -63,8 +63,14 @@ export function useJobRecommendations(
     { page: 1, pageSize: 1000 }
   );
   const jobs = jobsResult?.data ?? [];
-  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
-  const candidates = candidatesResult?.data ?? [];
+  // getRecommendedJobs only looks up THIS candidate in the bundle, so fetching
+  // it directly by id replaces a capped full-table listing (which silently
+  // excluded candidates outside the first page).
+  const { data: currentCandidate } = useCandidate(candidateId);
+  const candidates = useMemo(
+    () => (currentCandidate ? [currentCandidate] : []),
+    [currentCandidate],
+  );
   const { data: applications = [] } = useApplicationsByCandidate(candidateId);
 
   // Estado local

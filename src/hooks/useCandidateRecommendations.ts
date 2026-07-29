@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useCandidateFeedback } from './useCandidateFeedback';
 import { useFavoriteCandidates } from './useFavoriteCandidates';
 import { useJobs } from './useJobsQuery';
-import { useCandidates } from './useCandidatesQuery';
+import { useAllCandidates } from './useCandidatesQuery';
 import { useApplications } from './useApplicationsQuery';
 import {
   getSuggestedCandidates,
@@ -61,8 +61,10 @@ export function useCandidateRecommendations(
   // Buscar dados via service layer (extrair .data do PaginatedResult)
   const { data: jobsResult } = useJobs();
   const jobs = jobsResult?.data ?? [];
-  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
-  const candidates = candidatesResult?.data ?? [];
+  // This engine scores EVERY candidate against the job, so it genuinely needs
+  // the full dataset — but drained page by page instead of capped at 1000.
+  const { data: candidatesData } = useAllCandidates();
+  const candidates = useMemo(() => candidatesData ?? [], [candidatesData]);
   const { data: applicationsResult } = useApplications(undefined, { page: 1, pageSize: 1000 });
   const applications = applicationsResult?.data ?? [];
 
