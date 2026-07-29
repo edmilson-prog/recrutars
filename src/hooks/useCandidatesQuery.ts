@@ -6,6 +6,7 @@
  * backed by the candidates service (mock or Supabase).
  */
 
+import { useMemo } from 'react';
 import {
   useQuery,
   useMutation,
@@ -31,6 +32,7 @@ export const candidateKeys = {
     [...candidateKeys.lists(), { filters, pagination, sort }] as const,
   details: () => [...candidateKeys.all, 'detail'] as const,
   detail: (id: string) => [...candidateKeys.details(), id] as const,
+  byIds: (ids: string[]) => [...candidateKeys.all, 'byIds', ids] as const,
   byProfile: (profileId: string) =>
     [...candidateKeys.all, 'byProfile', profileId] as const,
 };
@@ -76,6 +78,36 @@ export function useCandidate(
       return service.getCandidate(id);
     },
     enabled: !!id,
+    ...options,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// useCandidatesByIds — resolves a known, bounded set of candidates by id.
+// Prefer this over fetching the whole table when a screen only needs to join
+// candidate data (name, avatar...) onto records it already holds — e.g.
+// applications, conversations, interviews or favorites. Fetching a capped
+// page and filtering client-side silently drops candidates outside that page.
+// ---------------------------------------------------------------------------
+
+export function useCandidatesByIds(
+  ids: string[],
+  options?: Omit<UseQueryOptions<Candidate[]>, 'queryKey' | 'queryFn'>,
+) {
+  // Deduped + sorted so the cache key is stable regardless of input order,
+  // and so re-renders with an equivalent id list reuse the same query.
+  const normalizedIds = useMemo(
+    () => Array.from(new Set(ids.filter(Boolean))).sort(),
+    [ids],
+  );
+
+  return useQuery<Candidate[]>({
+    queryKey: candidateKeys.byIds(normalizedIds),
+    queryFn: async () => {
+      const service = await getCandidatesService();
+      return service.getCandidatesByIds(normalizedIds);
+    },
+    enabled: normalizedIds.length > 0,
     ...options,
   });
 }

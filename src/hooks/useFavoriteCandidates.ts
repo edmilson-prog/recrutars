@@ -3,7 +3,7 @@
 
 import { useCallback, useMemo } from 'react';
 import { useFavorites, useToggleFavorite } from '@/hooks/useFavoritesQuery';
-import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useCandidatesByIds } from '@/hooks/useCandidatesQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Candidate } from '@/types';
 
@@ -19,9 +19,11 @@ export function useFavoriteCandidates() {
   const { data: favoriteIds = [] } = useFavorites(userId, 'candidate');
   const toggleMutation = useToggleFavorite();
 
-  // Also fetch all candidates to support getFavoriteCandidates enrichment
-  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
-  const allCandidates = useMemo(() => candidatesResult?.data ?? [], [candidatesResult]);
+  // Resolve only the favorited candidates. Listing a capped page and filtering
+  // client-side used to drop favorites outside that page, making them vanish
+  // from "Candidatos Salvos".
+  const { data: favoriteCandidatesData } = useCandidatesByIds(favoriteIds);
+  const allCandidates = useMemo(() => favoriteCandidatesData ?? [], [favoriteCandidatesData]);
 
   // Verificar se um candidato está nos favoritos
   const isFavorite = useCallback(

@@ -3,7 +3,7 @@
  * PRD-034: Agendamento de Entrevistas (Empresa)
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -37,7 +37,7 @@ import { WeeklyCalendar } from '@/components/empresa/WeeklyCalendar';
 import { useCompanyInterviews, type CompanyCancellationReason } from '@/hooks/useCompanyInterviews';
 import { useAuth } from '@/contexts/AuthContext';
 import { useJobsByCompany } from '@/hooks/useJobsQuery';
-import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useCandidatesByIds } from '@/hooks/useCandidatesQuery';
 import { toast } from 'sonner';
 import type { Interview } from '@/types/interview';
 import { getCandidateDisplayName } from '@/lib/candidateDisplayName';
@@ -63,7 +63,22 @@ export default function CompanyInterviews() {
   } = useCompanyInterviews(companyId);
 
   const { data: jobsData, isLoading: jobsLoading } = useJobsByCompany(companyId);
-  const { data: candidatesData } = useCandidates(undefined, { page: 1, pageSize: 1000 });
+
+  // Resolve only the candidates taking part in this company's interviews — a
+  // capped listing left interviews outside it without name/avatar.
+  const interviewCandidateIds = useMemo(
+    () =>
+      [
+        ...waitingInterviews,
+        ...pendingCompanyInterviews,
+        ...confirmedInterviews,
+        ...completedInterviews,
+      ]
+        .map((interview) => interview.candidateId)
+        .filter(Boolean),
+    [waitingInterviews, pendingCompanyInterviews, confirmedInterviews, completedInterviews],
+  );
+  const { data: candidatesData } = useCandidatesByIds(interviewCandidateIds);
 
   const [activeTab, setActiveTab] = useState<TabValue>('pending');
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
@@ -85,7 +100,7 @@ export default function CompanyInterviews() {
   }
 
   const allJobs = jobsData ?? [];
-  const allCandidates = candidatesData?.data ?? [];
+  const allCandidates = candidatesData ?? [];
 
   // Vagas da empresa para filtro
   const companyJobs = allJobs.filter(

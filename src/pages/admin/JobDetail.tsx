@@ -28,7 +28,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAdminJobs } from '@/hooks/useAdminJobs';
 import { useModeration } from '@/hooks/useModeration';
 import { useApplicationsByJob } from '@/hooks/useApplicationsQuery';
-import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useCandidatesByIds } from '@/hooks/useCandidatesQuery';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,20 +52,24 @@ export default function JobDetail() {
   } = useAdminJobs();
   const { actions: moderationActions, config: moderationConfig } = useModeration();
   const { data: applications = [], isLoading: isLoadingApplications } = useApplicationsByJob(id ?? '');
-  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
-
   const [noteText, setNoteText] = useState('');
 
   // The applications service no longer embeds candidateName/candidateAvatar (removed
-  // in the LGPD embed migration), so each page joins them client-side from the
-  // candidates list — same pattern as the company Applications page.
+  // in the LGPD embed migration), so each page joins them client-side — same
+  // pattern as the company Applications page. Only this job's applicants are
+  // fetched; a capped listing left applicants outside it with an empty name.
+  const applicantIds = useMemo(
+    () => applications.map((app) => app.candidateId).filter(Boolean),
+    [applications],
+  );
+  const { data: applicantCandidates } = useCandidatesByIds(applicantIds);
   const candidatesById = useMemo(() => {
     const map = new Map<string, { name: string; avatar?: string }>();
-    for (const c of candidatesResult?.data ?? []) {
+    for (const c of applicantCandidates ?? []) {
       map.set(c.id, { name: c.name, avatar: c.avatar });
     }
     return map;
-  }, [candidatesResult]);
+  }, [applicantCandidates]);
 
   const enrichedApplications = useMemo(
     () =>

@@ -46,7 +46,7 @@ import { useMessages } from '@/hooks/useMessages';
 import { useCreateConversation } from '@/hooks/useMessagesQuery';
 import { useMessageTemplates } from '@/hooks/useMessageTemplates';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useCandidatesByIds } from '@/hooks/useCandidatesQuery';
 import {
   TemplateSelector,
   ToneSelector,
@@ -120,15 +120,21 @@ export default function CompanyMessages() {
     deleteCustomTemplate,
   } = useMessageTemplates({ companyId: currentCompany?.id ?? '' });
 
-  // Fetch candidates to populate candidateName client-side (C7: embed removed from service)
-  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
+  // Fetch candidates to populate candidateName client-side (C7: embed removed from service).
+  // Only the candidates in these conversations are fetched — listing a capped
+  // page left conversations outside it rendering with an empty name.
+  const conversationCandidateIds = useMemo(
+    () => conversations.map((c) => c.candidateId).filter(Boolean),
+    [conversations],
+  );
+  const { data: conversationCandidates } = useCandidatesByIds(conversationCandidateIds);
   const candidatesById = useMemo(() => {
     const map = new Map<string, { name: string }>();
-    for (const c of candidatesResult?.data ?? []) {
+    for (const c of conversationCandidates ?? []) {
       map.set(c.id, { name: c.name });
     }
     return map;
-  }, [candidatesResult]);
+  }, [conversationCandidates]);
 
   // Enrich conversations with candidateName from the candidates map
   const conversationsWithCandidate = useMemo(

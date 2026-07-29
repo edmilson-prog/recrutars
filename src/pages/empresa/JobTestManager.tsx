@@ -32,7 +32,7 @@ import {
 import type { InternalCandidate } from '@/components/job-assessment';
 import { useJob } from '@/hooks/useJobsQuery';
 import { useApplicationsByJob } from '@/hooks/useApplicationsQuery';
-import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useCandidatesByIds } from '@/hooks/useCandidatesQuery';
 import {
   useJobAssessmentByJob,
   useJobAssessmentInvites,
@@ -78,17 +78,22 @@ export default function JobTestManager() {
 
   // Fetch real candidates who applied to this job
   const { data: applications = [] } = useApplicationsByJob(jobId || '');
-  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
 
   // The applications service no longer embeds candidateName/candidateAvatar (removed
-  // in the LGPD embed migration), so join them client-side from the candidates list.
+  // in the LGPD embed migration), so join them client-side. Only this job's
+  // applicants are fetched — a capped listing left applicants outside it nameless.
+  const applicantIds = useMemo(
+    () => applications.map((app) => app.candidateId).filter(Boolean),
+    [applications],
+  );
+  const { data: applicantCandidates } = useCandidatesByIds(applicantIds);
   const candidatesById = useMemo(() => {
     const map = new Map<string, { name: string; avatar?: string }>();
-    for (const c of candidatesResult?.data ?? []) {
+    for (const c of applicantCandidates ?? []) {
       map.set(c.id, { name: c.name, avatar: c.avatar });
     }
     return map;
-  }, [candidatesResult]);
+  }, [applicantCandidates]);
 
   // Map applications to InternalCandidate format
   const candidates: InternalCandidate[] = useMemo(() => {

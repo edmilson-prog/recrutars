@@ -134,6 +134,40 @@ export class CandidatesServiceSupabase implements ICandidatesService {
   }
 
   // -----------------------------------------------------------------------
+  // Batch lookup by ids
+  // -----------------------------------------------------------------------
+
+  async getCandidatesByIds(ids: string[]): Promise<Candidate[]> {
+    const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+    if (uniqueIds.length === 0) return [];
+
+    // PostgREST serialises `in.(...)` onto the query string, so a long id list
+    // would blow the URL length limit — request them in chunks.
+    const CHUNK_SIZE = 100;
+    const chunks: string[][] = [];
+    for (let i = 0; i < uniqueIds.length; i += CHUNK_SIZE) {
+      chunks.push(uniqueIds.slice(i, i + CHUNK_SIZE));
+    }
+
+    const pages = await Promise.all(
+      chunks.map(async (chunk) => {
+        const { data, error } = await supabase
+          .from('candidates_for_company' as never)
+          .select('*')
+          .in('id', chunk);
+
+        if (error) {
+          throw new Error(`Failed to fetch candidates by ids: ${error.message}`);
+        }
+
+        return (data ?? []) as unknown as Parameters<typeof candidateRowToCandidate>[0][];
+      }),
+    );
+
+    return pages.flat().map(candidateRowToCandidate);
+  }
+
+  // -----------------------------------------------------------------------
   // Single record by profile (user) id
   // -----------------------------------------------------------------------
 
