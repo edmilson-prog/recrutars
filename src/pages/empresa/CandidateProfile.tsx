@@ -69,7 +69,7 @@ import { useCompanyInterviews } from '@/hooks/useCompanyInterviews';
 import { useCandidateActivity, type ActivityType } from '@/hooks/useCandidateActivity';
 import { getOrGenerateIdealProfile, gaugeProToBehavioralProfile } from '@/lib/behavioralProfiles';
 import { useJobsByCompany } from '@/hooks/useJobsQuery';
-import { useCandidates } from '@/hooks/useCandidatesQuery';
+import { useCandidate } from '@/hooks/useCandidatesQuery';
 import { useApplications, useApplicationNotes, useAddApplicationNote, useCreateApplication } from '@/hooks/useApplicationsQuery';
 import { useCreateConversation, useSendMessage } from '@/hooks/useMessagesQuery';
 import { useGaugeProResultByCandidate, useGaugeProSessionByCandidate } from '@/hooks/useGaugeProQuery';
@@ -287,12 +287,9 @@ export default function CandidateProfile() {
 
   // Fetch data from service layer
   const { data: allJobs = [] } = useJobsByCompany(companyId);
-  const { data: candidatesResult } = useCandidates(undefined, { page: 1, pageSize: 1000 });
-  const allCandidates = candidatesResult?.data ?? [];
+  const { data: candidate } = useCandidate(id || '');
   const { data: applicationsResult } = useApplications(undefined, { page: 1, pageSize: 1000 });
   const allApplications = applicationsResult?.data ?? [];
-
-  const candidate = allCandidates.find((c) => c.id === id);
 
   // Fetch Gauge-Pro result + assessment (respostas reais) for this candidate
   const { data: gaugeProResult } = useGaugeProResultByCandidate(candidate?.id || '');
