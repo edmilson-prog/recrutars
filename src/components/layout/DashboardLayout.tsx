@@ -14,7 +14,7 @@ import {
   Briefcase, MessageSquare, Brain, FileText, Search, User, ClipboardList, ClipboardCheck, Heart, Calendar, HelpCircle, Bell,
   ChevronLeft, ChevronRight, Sparkles, Info, UserCog, MoreHorizontal,
   ShieldCheck, BarChart3, CreditCard, DollarSign, ToggleLeft, Headset, Package, Store,
-  Fingerprint,
+  Fingerprint, Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdminNavItemActive, getTabLabelForPath } from '@/config/adminTabConfig';
@@ -88,6 +88,7 @@ const adminNavGroups: NavGroup[] = [
     items: [
       { href: '/admin/planos', label: 'Planos & Assinaturas', icon: CreditCard },
       { href: '/admin/pacotes', label: 'Pacotes de Créditos', icon: Package },
+      { href: '/admin/financeiro', label: 'Fluxo de Caixa', icon: Wallet },
       { href: '/admin/assinaturas/billing', label: 'Financeiro', icon: DollarSign },
     ],
   },

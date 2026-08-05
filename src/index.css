@@ -113,6 +113,17 @@
     --test-complete-bg: 142 60% 95%;
     --test-complete-border: 142 60% 55%;
     --test-complete-text: 142 60% 28%;
+
+    /* Finance — natureza do valor (income/expense), light. Calibrado por
+       contraste (nao derivar de --success/--destructive; ver spec, secao 9).
+       income = teal 160deg (nao 142deg): separavel de expense sob deuteranopia.
+       --fin-income 5,03:1 e --fin-expense 6,46:1 sobre --card. */
+    --fin-income: 160 84% 27%;
+    --fin-income-bg: 160 60% 95%;
+    --fin-income-text: 160 84% 24%;
+    --fin-expense: 0 72% 42%;
+    --fin-expense-bg: 0 75% 96%;
+    --fin-expense-text: 0 72% 38%;
   }
 
   .dark {
@@ -193,6 +204,17 @@
     --test-complete-bg: 142 40% 14%;
     --test-complete-border: 142 50% 40%;
     --test-complete-text: 142 50% 75%;
+
+    /* Finance — natureza do valor (income/expense), dark. Saturacao mais baixa
+       e luminancia mais alta que no light: vermelho saturado sobre navy escuro
+       causa chromostereopsis (parece flutuar).
+       --fin-income 6,5:1 e --fin-expense 5,5:1 sobre --card dark. */
+    --fin-income: 160 55% 45%;
+    --fin-income-bg: 160 40% 15%;
+    --fin-income-text: 160 50% 72%;
+    --fin-expense: 4 80% 66%;
+    --fin-expense-bg: 4 45% 17%;
+    --fin-expense-text: 4 75% 78%;
   }
 }
 

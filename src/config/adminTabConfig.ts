@@ -12,7 +12,7 @@ import {
   DollarSign, TrendingUp, Activity, Rss, Download,
   CreditCard, BarChart3, ToggleLeft, Webhook, FlaskConical, Settings,
   Headset, MessageSquare, BookOpen, Phone,
-  Type, UserCircle,
+  Type, UserCircle, Wallet,
 } from 'lucide-react';
 
 export interface AdminTab {
@@ -71,6 +71,15 @@ export const ADMIN_TAB_GROUPS: AdminTabGroup[] = [
       { href: '/admin/assinaturas/dashboard', label: 'Dashboard', icon: BarChart3 },
       { href: '/admin/assinaturas/billing', label: 'Financeiro', icon: DollarSign },
       { href: '/admin/assinaturas/webhooks', label: 'Webhooks', icon: Webhook },
+    ],
+  },
+  {
+    id: 'fluxo-caixa',
+    parentHref: '/admin/financeiro',
+    tabs: [
+      { href: '/admin/financeiro', label: 'Visão Geral', icon: BarChart3 },
+      { href: '/admin/financeiro/lancamentos', label: 'Lançamentos', icon: List },
+      { href: '/admin/financeiro/categorias', label: 'Categorias', icon: FolderTree },
     ],
   },
   {

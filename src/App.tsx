@@ -70,6 +70,10 @@ import AdminBillingDashboard from "./pages/admin/BillingDashboard";
 // Test Packages
 import AdminPackagesManagement from "./pages/admin/PackagesManagement";
 import AdminTests from "./pages/admin/AdminTests";
+// Financial Entries (cash flow module)
+import AdminFluxoCaixaDashboard from "./pages/admin/FluxoCaixaDashboard";
+import AdminFinancialEntries from "./pages/admin/FinancialEntries";
+import AdminFinancialCategories from "./pages/admin/FinancialCategories";
 import AdminPackageDetail from "./pages/admin/PackageDetail";
 import CompanyCheckoutSuccess from "./pages/empresa/CheckoutSuccess";
 import CompanyCheckoutCancel from "./pages/empresa/CheckoutCancel";
@@ -427,6 +431,23 @@ const App = () => (
             <Route path="/admin/assinaturas/billing" element={
               <ProtectedRoute allowedTypes={['admin']}>
                 <AdminBillingDashboard />
+              </ProtectedRoute>
+            } />
+
+            {/* Financial Entries (cash flow module) */}
+            <Route path="/admin/financeiro" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminFluxoCaixaDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/financeiro/lancamentos" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminFinancialEntries />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/financeiro/categorias" element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminFinancialCategories />
               </ProtectedRoute>
             } />
 
