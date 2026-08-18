@@ -93,6 +93,31 @@ All modules point directly to Supabase — no mock toggle, no mock implementatio
 - Use proper Portuguese accents (ã, ç, é, í, ó, ú, â, ê, ô) — UTF-8 charset
 
 ### Design System
+
+**Fonte da verdade do design: Claude Design.**
+O projeto **Recrutars Design System** no Claude Design
+(`b21affa4-1614-4787-bd2f-98ac35ff4446`) é a referência canônica de design deste
+repositório. Sempre que houver divergência entre o que está no código e o que
+está no Claude Design, **o Claude Design prevalece** — o código é ajustado para
+seguir o design, nunca o contrário.
+
+Como trabalhar com ele:
+- Antes de criar ou redesenhar qualquer tela/componente, leia o arquivo
+  correspondente no Claude Design (MCP `claude_design` / ferramenta `DesignSync`:
+  `list_files`, depois `get_file`).
+- Os templates `.dc.html` definem layout, copy (em português), estados
+  (vazio/carregando/erro), thresholds e comportamento de teclado. Implemente
+  todos os estados descritos, não apenas o caminho feliz.
+- Traduza os valores HSL literais dos templates para os **tokens semânticos** de
+  `src/index.css` (`bg-popover`, `text-muted-foreground`, `border-border`, ...).
+  Os templates são escritos sobre o tema dark; usar tokens mantém o light mode
+  funcionando.
+- Referencie o arquivo de origem do design no cabeçalho do componente
+  implementado, para manter o rastro entre design e código.
+- Estruturas de referência no projeto: `guidelines/` (marca, cores, tipografia,
+  espaçamento), `tokens/`, `components/` e `templates/`.
+
+Fundamentos visuais (espelham `tokens/` e `guidelines/` do Claude Design):
 - Colors: Navy (primary dark) + Cyan (accent)
 - Font: Roboto Mono
 - CSS variables for theming (HSL format)

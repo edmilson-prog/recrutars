@@ -101,6 +101,7 @@ import { JobMatchTabs } from '@/components/match/JobMatchTabs';
 import { MatchOverviewChart } from '@/components/match/MatchOverviewChart';
 import type { MatchResult } from '@/types/disc';
 import { cn } from '@/lib/utils';
+import { InviteJobPicker } from '@/components/empresa/InviteJobPicker';
 import { getCandidateDisplayName, getCandidateInitials } from '@/lib/candidateDisplayName';
 import { CandidateNotesCard, type CandidateNotesCardHandle } from '@/components/empresa/notes/CandidateNotesCard';
 import { ApplicationNotesCard, type ApplicationNotesCardHandle } from '@/components/empresa/notes/ApplicationNotesCard';
@@ -322,14 +323,11 @@ export default function CandidateProfile() {
   // External applications count (other companies)
   const { data: externalCount = 0 } = useExternalApplicationsCount(id || '');
 
-  // Jobs available for invite (exclude already-applied)
+  // Vagas em que o candidato já está — o InviteJobPicker as mostra marcadas
+  // e desabilitadas em vez de escondê-las (design InviteJobPicker.dc.html).
   const appliedJobIds = useMemo(
     () => new Set(candidateApplications.map((a) => a.jobId)),
     [candidateApplications]
-  );
-  const availableJobs = useMemo(
-    () => companyJobs.filter((job) => !appliedJobIds.has(job.id)),
-    [companyJobs, appliedJobIds]
   );
 
   const experienceYears = useMemo(() => {
@@ -1018,31 +1016,14 @@ export default function CandidateProfile() {
                     </Button>
                   </div>
 
-                  {availableJobs.length > 0 ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button>
-                          <Send className="w-4 h-4 mr-2" />
-                          Convidar para vaga
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        {availableJobs.map((job) => (
-                          <DropdownMenuItem
-                            key={job.id}
-                            onClick={() => handleOpenInviteModal(job)}
-                          >
-                            {job.title}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : (
-                    <Button disabled>
-                      <Send className="w-4 h-4 mr-2" />
-                      {companyJobs.length > 0 ? 'Candidato em todas as vagas' : 'Sem vagas ativas'}
-                    </Button>
-                  )}
+                  <InviteJobPicker
+                    jobs={companyJobs}
+                    scores={matchScoresMap}
+                    invitedJobIds={appliedJobIds}
+                    invitedLabel="Candidatado"
+                    onSelectJob={handleOpenInviteModal}
+                    triggerLabel="Convidar para vaga"
+                  />
                 </div>
               </div>
             </div>
@@ -1654,32 +1635,19 @@ export default function CandidateProfile() {
                   </Button>
 
                   {/* Invite to Job */}
-                  {availableJobs.length > 0 ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="w-full justify-start">
-                          <Send className="w-4 h-4 mr-2" />
-                          Convidar para Vaga
-                          <ChevronDown className="w-3 h-3 ml-auto" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-56">
-                        {availableJobs.map((job) => (
-                          <DropdownMenuItem
-                            key={job.id}
-                            onClick={() => handleOpenInviteModal(job)}
-                          >
-                            {job.title}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : (
-                    <Button variant="outline" size="sm" className="w-full justify-start" disabled>
-                      <Send className="w-4 h-4 mr-2" />
-                      {companyJobs.length > 0 ? 'Candidato em todas as vagas' : 'Sem vagas ativas'}
-                    </Button>
-                  )}
+                  <InviteJobPicker
+                    jobs={companyJobs}
+                    scores={matchScoresMap}
+                    invitedJobIds={appliedJobIds}
+                    invitedLabel="Candidatado"
+                    onSelectJob={handleOpenInviteModal}
+                    triggerLabel="Convidar para Vaga"
+                    triggerVariant="outline"
+                    triggerSize="sm"
+                    triggerClassName="w-full justify-start"
+                    triggerAdornment={<ChevronDown className="w-3 h-3 ml-auto" />}
+                    align="start"
+                  />
 
                   {/* Context-dependent actions */}
                   {candidateApplications.length > 0 ? (

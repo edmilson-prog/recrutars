@@ -1,12 +1,83 @@
 {
   "versions": [
     {
+      "version": "1.75.0",
+      "codename": "Herald",
+      "type": "minor",
+      "releaseDate": "2026-08-18",
+      "description": "O botão \"Convidar\" do Banco de Talentos, dos Candidatos Salvos e do Perfil do Candidato passou a abrir um seletor de vagas com busca, rolagem própria e ordenação pelo match do candidato.",
+      "isCurrent": true,
+      "changes": [
+        {
+          "type": "changed",
+          "items": [
+            "Seletor de vagas do convite refeito: o menu que listava todas as vagas foi substituído por um seletor com busca, rolagem interna e vagas ordenadas pelo match do candidato.",
+            "Vagas em que o candidato já está aparecem marcadas e desabilitadas no seletor, em vez de sumirem da lista.",
+            "Sem vagas ativas, o seletor mostra um estado vazio com atalho para criar a primeira vaga, no lugar do botão desabilitado."
+          ],
+          "details": {
+            "0": {
+              "description": "Com muitas vagas publicadas, o menu do botão \"Convidar\" listava todas de uma vez: passava da altura da tela e títulos longos quebravam em várias linhas. Agora o seletor mostra a busca a partir de 6 vagas (por título, empresa ou cidade, ignorando acentos), rola dentro da própria caixa, ordena as vagas pelo match do candidato — com selo de percentual e estrela na melhor opção — e responde ao teclado (↑ ↓ para navegar, Enter para convidar, Esc para fechar). Escolher uma vaga continua abrindo o mesmo modal de mensagem de antes. Design de origem: templates/invite-job-picker/InviteJobPicker.dc.html (Claude Design).",
+              "files": [
+                "src/components/empresa/InviteJobPicker.tsx",
+                "src/pages/empresa/Candidates.tsx",
+                "src/pages/empresa/SavedCandidates.tsx",
+                "src/pages/empresa/CandidateProfile.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos",
+                "/empresa/candidatos-salvos",
+                "/empresa/candidatos/:id"
+              ]
+            },
+            "1": {
+              "description": "No Perfil do Candidato, as vagas em que ele já tem candidatura eram simplesmente removidas da lista de convite, sem explicação. Agora elas continuam visíveis, marcadas como \"Candidatado\" e desabilitadas, deixando claro por que não podem ser escolhidas.",
+              "files": [
+                "src/pages/empresa/CandidateProfile.tsx",
+                "src/components/empresa/InviteJobPicker.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos/:id"
+              ]
+            },
+            "2": {
+              "description": "Quando a empresa não tem nenhuma vaga ativa, o botão \"Convidar\" ficava desabilitado sem indicar o próximo passo. Agora ele abre o seletor com a mensagem \"Sem vagas ativas\" e um atalho \"+ Criar vaga\" que leva direto ao formulário de nova vaga.",
+              "files": [
+                "src/components/empresa/InviteJobPicker.tsx"
+              ],
+              "routes": [
+                "/empresa/candidatos",
+                "/empresa/candidatos-salvos",
+                "/empresa/candidatos/:id",
+                "/empresa/vagas/nova"
+              ]
+            }
+          }
+        },
+        {
+          "type": "added",
+          "items": [
+            "Claude Design registrado no CLAUDE.md como fonte da verdade do design do projeto."
+          ],
+          "details": {
+            "0": {
+              "description": "O CLAUDE.md passou a registrar o projeto \"Recrutars Design System\" no Claude Design como referência canônica de design: em caso de divergência entre código e design, o Claude Design prevalece. A seção descreve como ler os templates antes de implementar e como mapear os valores dos templates para os tokens semânticos de src/index.css, preservando o light mode.",
+              "files": [
+                "CLAUDE.md"
+              ],
+              "routes": []
+            }
+          }
+        }
+      ]
+    },
+    {
       "version": "1.74.1",
       "codename": "Herald",
       "type": "patch",
       "releaseDate": "2026-07-24",
       "description": "Candidatos cadastrados há mais tempo voltaram a aparecer no Dashboard administrativo, na Gestão de Candidatos e no Banco de Talentos, e o filtro por origem (colaborador) na Gestão de Candidatos passou a funcionar.",
-      "isCurrent": true,
+      "isCurrent": false,
       "changes": [
         {
           "type": "fixed",

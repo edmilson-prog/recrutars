@@ -57,12 +57,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { InviteJobPicker } from '@/components/empresa/InviteJobPicker';
 import {
   Tooltip,
   TooltipContent,
@@ -122,6 +117,23 @@ const calculateMatch = (
   const skillsInput = buildSkillsInput ? buildSkillsInput(candidate.id, job.id) : undefined;
   const matchResult = calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile, skillsInput);
   return matchResult.totalScore;
+};
+
+// Score do candidato em cada vaga ativa — usado para ordenar o InviteJobPicker
+const calculateJobScores = (
+  candidate: Candidate,
+  jobs: Job[],
+  behavioralTests: Array<{ candidateId: string; status: string; result?: { dominance: number; influence: number; steadiness: number; compliance: number } | null }> = [],
+  gaugeResultsByCandidate: Map<string, GaugeProResult> = new Map(),
+  buildSkillsInput?: (candidateId: string, jobId: string) => MatchSkillsInput | undefined
+): Array<{ jobId: string; score: number }> => {
+  const candidateProfile = getCompositeBehavioralProfile(candidate.id, behavioralTests, gaugeResultsByCandidate);
+  return jobs.map((job) => {
+    const idealProfile = getOrGenerateIdealProfile(job);
+    const skillsInput = buildSkillsInput ? buildSkillsInput(candidate.id, job.id) : undefined;
+    const result = calculateMatchBreakdown(candidate, job, idealProfile, candidateProfile, skillsInput);
+    return { jobId: job.id, score: result.totalScore };
+  });
 };
 
 export default function SavedCandidates() {
@@ -382,6 +394,7 @@ export default function SavedCandidates() {
 
   const renderCandidateCard = (candidate: Candidate & { savedAt: string }, index: number) => {
     const matchScore = calculateMatch(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate, buildSkillsInput);
+    const jobScores = calculateJobScores(candidate, companyJobs, behavioralTests, gaugeResultsByCandidate, buildSkillsInput);
     const candidateIsAnonymous = isAnonymous(candidate);
     const displayName = getDisplayName(candidate);
     const displayAvatar = getDisplayAvatar(candidate);
@@ -535,31 +548,12 @@ export default function SavedCandidates() {
               </Link>
             </Button>
 
-            {companyJobs.length > 0 ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm">
-                    <Send className="w-4 h-4 mr-2" />
-                    Convidar
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  {companyJobs.map((job) => (
-                    <DropdownMenuItem
-                      key={job.id}
-                      onClick={() => handleOpenInviteModal(candidate, job)}
-                    >
-                      {job.title}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button size="sm" disabled>
-                <Send className="w-4 h-4 mr-2" />
-                Sem vagas ativas
-              </Button>
-            )}
+            <InviteJobPicker
+              jobs={companyJobs}
+              scores={jobScores}
+              onSelectJob={(job) => handleOpenInviteModal(candidate, job)}
+              triggerSize="sm"
+            />
 
             <Button
               variant="ghost"

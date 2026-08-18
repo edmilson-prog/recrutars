@@ -61,12 +61,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Command,
@@ -90,6 +84,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { cn } from '@/lib/utils';
+import { InviteJobPicker } from '@/components/empresa/InviteJobPicker';
 import { getOrGenerateIdealProfile, getCompositeBehavioralProfile } from '@/lib/behavioralProfiles';
 import { useBehavioralTests } from '@/hooks/useBehavioralTestsQuery';
 import { useJobsByCompany } from '@/hooks/useJobsQuery';
@@ -1395,28 +1390,14 @@ export default function CompanyCandidates() {
                             Ver perfil
                           </Link>
                         </Button>
-                        {companyJobs.length > 0 ? (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button size="sm" className="flex-1 text-xs">
-                                <Send className="w-3 h-3 mr-1" />
-                                Convidar
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                              {companyJobs.map((job) => (
-                                <DropdownMenuItem key={job.id} onClick={() => handleOpenInviteModal(candidate, job)}>
-                                  {job.title}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        ) : (
-                          <Button size="sm" className="flex-1 text-xs" disabled>
-                            <Send className="w-3 h-3 mr-1" />
-                            Sem vagas
-                          </Button>
-                        )}
+                        <InviteJobPicker
+                          jobs={companyJobs}
+                          scores={candidateScores?.allScores}
+                          onSelectJob={(job) => handleOpenInviteModal(candidate, job)}
+                          triggerSize="sm"
+                          triggerClassName="flex-1 text-xs"
+                          iconClassName="w-3 h-3 mr-1"
+                        />
                       </div>
                     </div>
                   </motion.div>
@@ -1609,31 +1590,12 @@ export default function CompanyCandidates() {
                         </Link>
                       </Button>
 
-                      {companyJobs.length > 0 ? (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button size="sm">
-                              <Send className="w-4 h-4 mr-2" />
-                              Convidar
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56">
-                            {companyJobs.map((job) => (
-                              <DropdownMenuItem
-                                key={job.id}
-                                onClick={() => handleOpenInviteModal(candidate, job)}
-                              >
-                                {job.title}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      ) : (
-                        <Button size="sm" disabled>
-                          <Send className="w-4 h-4 mr-2" />
-                          Sem vagas ativas
-                        </Button>
-                      )}
+                      <InviteJobPicker
+                        jobs={companyJobs}
+                        scores={candidateScores?.allScores}
+                        onSelectJob={(job) => handleOpenInviteModal(candidate, job)}
+                        triggerSize="sm"
+                      />
                     </div>
                   </div>
                 </motion.div>
